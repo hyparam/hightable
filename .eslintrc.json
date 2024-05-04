@@ -1,0 +1,21 @@
+{
+  "env": {
+    "browser": true
+  },
+  "parser": "@typescript-eslint/parser",
+  "extends": [
+    "eslint:recommended"
+  ],
+  "rules": {
+    "no-multi-spaces": "error",
+    "no-trailing-spaces": "error",
+    "no-var": "error",
+    "object-curly-spacing": ["error", "always"],
+    "prefer-const": "error",
+    "prefer-destructuring": ["warn", {"object": true, "array": false}],
+    "quotes": ["error", "single"],
+    "require-await": "warn",
+    "semi": ["error", "never"],
+    "space-infix-ops": "error"
+  }
+}

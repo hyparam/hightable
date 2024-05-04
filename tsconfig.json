@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": true,
+    "declaration": true,
+    "module": "nodenext",
+    "resolveJsonModule": true,
+    "skipLibCheck": false,
+    "strict": true,
+    "target": "esnext",
+    "outDir": "dist",
+    "rootDir": "src",
+    "jsx": "react-jsx"
+  },
+  "include": ["src"]
+}
