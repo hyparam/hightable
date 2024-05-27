@@ -1,5 +1,5 @@
 {
-  "name": "hypetable",
+  "name": "hightable",
   "version": "0.1.0",
   "description": "A dynamic windowed scrolling table component for react",
   "keywords": [
@@ -11,14 +11,14 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/hyparam/hypetable.git"
+    "url": "git+https://github.com/hyparam/hightable.git"
   },
-  "main": "dist/hypetable.js",
+  "main": "dist/hightable.js",
   "files": [
     "src"
   ],
   "type": "module",
-  "types": "dist/hypetable.d.ts",
+  "types": "dist/hightable.d.ts",
   "scripts": {
     "build": "tsc",
     "coverage": "vitest run --coverage --coverage.include=src",
@@ -26,10 +26,10 @@
     "test": "vitest run"
   },
   "devDependencies": {
-    "@types/node": "20.12.8",
-    "@types/react": "18.3.1",
+    "@types/node": "20.12.12",
+    "@types/react": "18.3.3",
     "@types/react-dom": "18.3.0",
-    "@typescript-eslint/eslint-plugin": "7.8.0",
+    "@typescript-eslint/eslint-plugin": "7.10.0",
     "@vitest/coverage-v8": "1.6.0",
     "eslint": "8.57.0",
     "typescript": "5.4.5",

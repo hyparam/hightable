@@ -3,7 +3,7 @@ import packageJson from '../package.json'
 
 describe('package.json', () => {
   it('should have the correct name', () => {
-    expect(packageJson.name).toBe('hypetable')
+    expect(packageJson.name).toBe('hightable')
   })
   it('should have a valid version', () => {
     expect(packageJson.version).toMatch(/^\d+\.\d+\.\d+$/)
