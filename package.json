@@ -13,9 +13,9 @@
     "type": "git",
     "url": "git+https://github.com/hyparam/hightable.git"
   },
-  "main": "dist/hightable.js",
+  "main": "dist/hightable.min.js",
   "files": [
-    "src"
+    "src", "dist"
   ],
   "type": "module",
   "types": "dist/hightable.d.ts",
