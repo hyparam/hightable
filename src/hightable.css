@@ -1,0 +1,140 @@
+.outer {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  position: relative;
+}
+.tableScroll {
+  flex: 1;
+  overflow: auto;
+}
+.tableScroll > div {
+  position: relative;
+}
+.tableScroll .table {
+  position: absolute;
+}
+
+.table {
+  border-collapse: separate;
+  border-spacing: 0;
+  border-top-right-radius: 4px;
+  border-bottom-right-radius: 4px;
+  border-bottom-left-radius: 4px;
+  max-width: 100%;
+  overflow-x: auto;
+}
+.table:focus-visible {
+  outline: none;
+}
+
+/* header */
+.table thead th {
+  background-color: #eaeaeb;
+  border: none;
+  border-top: 4px solid #706fb1;
+  border-bottom: 2px solid #c9c9c9;
+  box-sizing: content-box;
+  color: #444;
+  height: 20px;
+  position: sticky;
+  top: -1px; /* fix 1px gap above thead */
+  user-select: none;
+  z-index: 10;
+}
+.table thead th:first-child {
+  border: none;
+}
+.table thead th:first-child span {
+  cursor: default;
+  width: 0;
+}
+
+.table tbody tr:first-child td {
+  border-top: 1px solid transparent;
+}
+
+/* column resize */
+.table thead span {
+  position: absolute;
+  border-right: 1px solid #ddd;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 8px;
+  cursor: col-resize;
+  transition: background-color 0.2s ease;
+}
+.table thead span:hover {
+  background-color: #aab;
+}
+
+/* row numbers */
+.table td:first-child {
+  background-color: #eaeaeb;
+  border-right: 1px solid #ddd;
+  color: #888;
+  font-size: 10px;
+  padding: 0 2px;
+  position: sticky;
+  left: 0;
+  text-align: center;
+  user-select: none;
+  min-width: 32px;
+  max-width: none;
+  width: 32px;
+}
+
+.table th,
+.table td {
+  border-bottom: 1px solid #ddd;
+  border-right: 1px solid #ddd;
+  height: 32px;
+  max-width: 2000px; /* prevent columns expanding */
+  padding: 4px 12px;
+  text-align: left;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/* don't hover on mobile */
+@media (hover: hover) {
+  .table tbody tr:hover {
+    background-color: #dbdbe5;
+  }
+  .table tbody tr:hover td {
+    border-right-color: #bbb;
+  }
+  .table tbody tr:hover td:first-child {
+    background-color: #ccd;
+  }
+}
+
+/* row error */
+.table tr[title] {
+  color: #a11;
+}
+
+/* table corner */
+.tableCorner {
+  background-color: #e4e4e6;
+  border-right: 1px solid #ccc;
+  position: absolute;
+  height: 33px;
+  width: 32px;
+  top: 0;
+  left: 0;
+  z-index: 15;
+  box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.2);
+}
+/* mock row numbers */
+.mockRowLabel {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  background: #eaeaeb;
+  z-index: -10;
+}
