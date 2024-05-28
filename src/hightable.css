@@ -1,9 +1,16 @@
-.outer {
+.table-container {
   display: flex;
   flex: 1;
   min-height: 0;
   position: relative;
 }
+
+.table-container * {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
 .tableScroll {
   flex: 1;
   overflow: auto;

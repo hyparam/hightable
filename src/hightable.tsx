@@ -19,7 +19,7 @@ export default function HighTable({ header, data }: TableProps) {
     return undefined
   }
 
-  return <div className='outer'>
+  return <div className='table-container'>
     <div style={{ overflow: 'auto' }}>
       <table className='table'>
         <thead>
