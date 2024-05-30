@@ -1,16 +1,22 @@
-const header = ['ID', 'Name', 'Age']
-const data = [
-  [1, 'Alice', 25],
-  [2, 'Bob', 28],
-  [3, 'Carol', 32],
-]
+const data = {
+  header: ['ID', 'Name', 'Age', 'UUID'],
+  numRows: 10000,
+  async rows(start, end) {
+    const arr = []
+    for (let i = start; i < end; i++) {
+      const uuid = Math.random().toString(16).substring(2)
+      arr.push([i + 1, 'Name' + i, 20 + i, uuid])
+    }
+    return arr
+  },
+}
 
 // Load ./src/hightable.tsx and render
 function init() {
-  const HighTable = require('./src/hightable.tsx').default
+  const HighTable = require('./src/hightable.js').default
   const container = document.getElementById('app')
   const root = ReactDOM.createRoot(container)
-  root.render(React.createElement(HighTable, { header, data }))
+  root.render(React.createElement(HighTable, { data }))
 }
 init()
 
@@ -23,8 +29,8 @@ init()
 function require(path) {
   if (path === 'react') return React
   if (path === 'react-dom') return ReactDOM
-  if (path.startsWith('./src/')) return loadFromUrl(path.slice(6))
-  if (path.startsWith('./')) return loadFromUrl(path.slice(2))
+  if (path === './src/hightable.js') return requireUrl('hightable.tsx')
+  if (path === './tableheader.js') return requireUrl('tableheader.tsx')
   throw new Error(`Cannot find module '${path}'`)
 }
 
@@ -34,7 +40,7 @@ function require(path) {
  * @param {string} filename
  * @returns {string}
  */
-function loadFromUrl(filename) {
+function requireUrl(filename) {
   const req = new XMLHttpRequest()
   req.open('GET', `./src/${filename}`, false) // sync
   req.send()
@@ -43,6 +49,7 @@ function loadFromUrl(filename) {
 
   // compile with babel
   const js = Babel.transform(text, { filename, presets: ['env', 'react', 'typescript'] }).code
+    + `\n//# sourceURL=${filename}`
   // eval with custom require
   const run = eval('(require, exports, source) => eval(source)')
   const exports = {}
