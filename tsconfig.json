@@ -4,6 +4,7 @@
     "checkJs": true,
     "declaration": true,
     "module": "nodenext",
+    "noEmit": true,
     "resolveJsonModule": true,
     "skipLibCheck": false,
     "strict": true,
