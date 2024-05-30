@@ -15,7 +15,8 @@
   },
   "main": "dist/hightable.min.js",
   "files": [
-    "src", "dist"
+    "src",
+    "dist"
   ],
   "type": "module",
   "types": "dist/hightable.d.ts",

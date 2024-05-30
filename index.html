@@ -13,25 +13,12 @@
       padding: 0;
     }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
 </head>
 <body>
-  <div id="root"></div>
-  <script type="module">
-    import React from 'https://cdn.skypack.dev/react@17'
-    import ReactDOM from 'https://cdn.skypack.dev/react-dom@17'
-    import HighTable from './dist/hightable.min.js'
-
-    const header = ['ID', 'Name', 'Age']
-    const data = [
-      [1, 'Alice', 25],
-      [2, 'Bob', 28],
-      [3, 'Carol', 32],
-    ]
-
-    ReactDOM.render(
-      React.createElement(HighTable, { header, data }),
-      document.getElementById('root')
-    )
-  </script>
+  <div id="app"></div>
+  <script src="demo.js"></script>
 </body>
 </html>
