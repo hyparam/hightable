@@ -195,28 +195,28 @@ export default function HighTable({ data, onDoubleClickCell, setError }: TablePr
             dataReady={dataReady}
             header={data.header} />
           <tbody>
-            {prePadding.map((row, rowIndex) => (
+            {prePadding.map((row, rowIndex) =>
               <tr key={startIndex - prePadding.length + rowIndex}>
                 <td style={cornerStyle}>
                   {(startIndex - prePadding.length + rowIndex + 1).toLocaleString()}
                 </td>
               </tr>
-            ))}
-            {rows.map((row, rowIndex) => (
+            )}
+            {rows.map((row, rowIndex) =>
               <tr key={startIndex + rowIndex} title={rowError(row, rowIndex)}>
                 <td style={cornerStyle}>
                   {(startIndex + rowIndex + 1).toLocaleString()}
                 </td>
                 {Array.from(row).map((value, col) => Cell(value, col, startIndex + rowIndex))}
               </tr>
-            ))}
-            {postPadding.map((row, rowIndex) => (
+            )}
+            {postPadding.map((row, rowIndex) =>
               <tr key={startIndex + rows.length + rowIndex}>
                 <td style={cornerStyle}>
                   {(startIndex + rows.length + rowIndex + 1).toLocaleString()}
                 </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>

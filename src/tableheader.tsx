@@ -2,7 +2,7 @@ import { Dispatch, RefObject, SetStateAction, createRef, useEffect, useRef, useS
 import { flushSync } from 'react-dom'
 
 // Same as react useState
-type State<S> = [S, Dispatch<SetStateAction<S>>]
+export type State<S> = [S, Dispatch<SetStateAction<S>>]
 
 interface TableProps {
   header: string[]
@@ -98,7 +98,7 @@ export default function TableHeader({ header, columnWidths, dataReady }: TablePr
   return <thead>
     <tr>
       <th><span /></th>
-      {header.map((columnHeader, columnIndex) => (
+      {header.map((columnHeader, columnIndex) =>
         <th
           key={columnIndex}
           ref={headerRefs.current[columnIndex]}
@@ -109,7 +109,7 @@ export default function TableHeader({ header, columnWidths, dataReady }: TablePr
             onDoubleClick={() => autoResize(columnIndex)}
             onMouseDown={e => startResizing(columnIndex, e.clientX)} />
         </th>
-      ))}
+      )}
     </tr>
   </thead>
 }
