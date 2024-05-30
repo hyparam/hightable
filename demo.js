@@ -35,7 +35,9 @@ function require(path) {
 }
 
 /**
- * Load source code from URL and compile with Babel
+ * Load source code from URL and compile with babel.
+ * Needs to be synchronous for require() to work.
+ * Credit: https://github.com/hrgdavor/jscadui/tree/main/packages/require
  *
  * @param {string} filename
  * @returns {string}
