@@ -24,15 +24,10 @@
     "build": "rollup -c",
     "coverage": "vitest run --coverage --coverage.include=src",
     "demo": "http-server -o",
-    "lint": "eslint src/**/*.{ts,tsx}",
+    "lint": "eslint src/**/*.{ts,tsx} test/**/*.{ts,tsx}",
     "test": "vitest run"
   },
   "devDependencies": {
-    "@babel/core": "7.24.6",
-    "@babel/preset-env": "7.24.6",
-    "@babel/preset-react": "7.24.6",
-    "@babel/preset-typescript": "7.24.6",
-    "@rollup/plugin-babel": "6.0.4",
     "@rollup/plugin-commonjs": "25.0.8",
     "@rollup/plugin-node-resolve": "15.2.3",
     "@rollup/plugin-replace": "5.0.5",

@@ -1,6 +1,5 @@
-import resolve from '@rollup/plugin-node-resolve'
-import babel from '@rollup/plugin-babel'
 import commonjs from '@rollup/plugin-commonjs'
+import resolve from '@rollup/plugin-node-resolve'
 import replace from '@rollup/plugin-replace'
 import terser from '@rollup/plugin-terser'
 import typescript from '@rollup/plugin-typescript'
@@ -14,6 +13,7 @@ export default {
       react: 'React',
       'react-dom': 'ReactDOM',
     },
+    sourcemap: true,
   },
   plugins: [
     replace({
@@ -22,10 +22,8 @@ export default {
     }),
     resolve(),
     commonjs(),
-    typescript(),
-    babel({
-      presets: ['@babel/preset-env', '@babel/preset-react', '@babel/preset-typescript'],
-      babelHelpers: 'bundled',
+    typescript({
+      exclude: ['test/**'],
     }),
     terser(),
   ],
