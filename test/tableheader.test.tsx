@@ -1,15 +1,19 @@
 import { fireEvent, render } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import TableHeader, { cellStyle } from '../src/tableheader.js'
-import type { State } from '../src/tableheader.js'
 
-// Mock useState
-function useState<S>(initialState: S): State<S> {
-  const state: State<S> = [initialState, vi.fn((v: S | ((prev: S) => S)) => {
-    if (v instanceof Function) state[0] = v(state[0])
-    else state[0] = v
-  })]
-  return state
+// Mock columnWidths state
+function mockColumnWidths() {
+  const obj = {
+    columnWidths: [100, 200, undefined],
+    setColumnWidth: vi.fn((columnIndex: number, columnWidth: number | undefined) => {
+      obj.columnWidths[columnIndex] = columnWidth
+    }),
+    setColumnWidths: vi.fn((columnWidths: Array<number | undefined>) => {
+      obj.columnWidths = columnWidths
+    }),
+  }
+  return obj
 }
 
 describe('TableHeader', () => {
@@ -17,21 +21,32 @@ describe('TableHeader', () => {
   const dataReady = true
 
   it('renders table headers correctly', () => {
-    const columnWidths = useState<Array<number | undefined>>([100, 200, undefined])
+    const { columnWidths, setColumnWidth, setColumnWidths } = mockColumnWidths()
     const { getByTitle } = render(<table>
-      <TableHeader header={header} columnWidths={columnWidths} dataReady={dataReady} />
+      <TableHeader
+        header={header}
+        columnWidths={columnWidths}
+        setColumnWidth={setColumnWidth}
+        setColumnWidths={setColumnWidths}
+        dataReady={dataReady} />
     </table>)
     header.forEach(columnHeader => {
       expect(getByTitle(columnHeader)).toBeDefined()
     })
-    expect(columnWidths[0]).toEqual([-20, -20, -20])
-    expect(columnWidths[1]).toHaveBeenCalledTimes(1)
+    expect(columnWidths).toEqual([100, 200, undefined])
+    expect(setColumnWidth).toHaveBeenCalledTimes(0)
+    expect(setColumnWidths).toHaveBeenCalledTimes(1)
   })
 
   it('handles double click to auto resize', () => {
-    const columnWidths = useState<Array<number | undefined>>([100, 200, undefined])
+    const { columnWidths, setColumnWidth, setColumnWidths } = mockColumnWidths()
     const { getByTitle } = render(<table>
-      <TableHeader header={header} columnWidths={columnWidths} dataReady={dataReady} />
+      <TableHeader
+        header={header}
+        columnWidths={columnWidths}
+        setColumnWidth={setColumnWidth}
+        setColumnWidths={setColumnWidths}
+        dataReady={dataReady} />
     </table>)
 
     const firstHeader = getByTitle(header[0])
@@ -39,14 +54,20 @@ describe('TableHeader', () => {
     if (!resizeHandle) throw new Error('Resize handle not found')
 
     fireEvent.doubleClick(resizeHandle)
-    expect(columnWidths[0]).toEqual([-20, -20, -20])
-    expect(columnWidths[1]).toHaveBeenCalledTimes(3)
+    expect(columnWidths).toEqual([100, 200, undefined])
+    expect(setColumnWidth).toHaveBeenCalledTimes(2)
+    expect(setColumnWidths).toHaveBeenCalledTimes(1)
   })
 
   it('handles mouse click and drag to resize', () => {
-    const columnWidths = useState<Array<number | undefined>>([100, 200, undefined])
+    const { columnWidths, setColumnWidth, setColumnWidths } = mockColumnWidths()
     const { getByTitle } = render(<table>
-      <TableHeader header={header} columnWidths={columnWidths} dataReady={dataReady} />
+      <TableHeader
+        header={header}
+        columnWidths={columnWidths}
+        setColumnWidth={setColumnWidth}
+        setColumnWidths={setColumnWidths}
+        dataReady={dataReady} />
     </table>)
 
     const firstHeader = getByTitle(header[0])
@@ -58,8 +79,9 @@ describe('TableHeader', () => {
     fireEvent.mouseMove(document, { clientX: 160 })
     fireEvent.mouseUp(document)
 
-    expect(columnWidths[0]).toEqual([110, -20, -20])
-    expect(columnWidths[1]).toHaveBeenCalledTimes(2)
+    expect(columnWidths).toEqual([100, 200, undefined])
+    expect(setColumnWidth).toHaveBeenCalledTimes(1)
+    expect(setColumnWidths).toHaveBeenCalledTimes(1)
   })
 })
 

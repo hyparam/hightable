@@ -1,12 +1,11 @@
-import { Dispatch, RefObject, SetStateAction, createRef, useEffect, useRef, useState } from 'react'
+import { RefObject, createRef, useEffect, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
-
-// Same as react useState
-export type State<S> = [S, Dispatch<SetStateAction<S>>]
 
 interface TableProps {
   header: string[]
-  columnWidths: State<Array<number | undefined>>
+  columnWidths: Array<number | undefined>
+  setColumnWidth: (columnIndex: number, columnWidth: number | undefined) => void
+  setColumnWidths: (columnWidths: Array<number | undefined>) => void
   dataReady: boolean
 }
 
@@ -20,8 +19,7 @@ interface ResizingState {
 /**
  * Render a resizable header for a table.
  */
-export default function TableHeader({ header, columnWidths, dataReady }: TableProps) {
-  const [widths, setWidths] = columnWidths
+export default function TableHeader({ header, columnWidths, setColumnWidth, setColumnWidths, dataReady }: TableProps) {
   const [resizing, setResizing] = useState<ResizingState | undefined>()
   const headerRefs = useRef(header.map(() => createRef<HTMLTableCellElement>()))
 
@@ -33,7 +31,7 @@ export default function TableHeader({ header, columnWidths, dataReady }: TablePr
     if (dataReady) {
       // Measure default column widths
       const widths = headerRefs.current.map(measureWidth)
-      setWidths(widths)
+      setColumnWidths(widths)
     }
   }, [dataReady])
 
@@ -41,7 +39,7 @@ export default function TableHeader({ header, columnWidths, dataReady }: TablePr
   function startResizing(columnIndex: number, clientX: number) {
     setResizing({
       columnIndex,
-      clientX: clientX - (widths[columnIndex] || 0),
+      clientX: clientX - (columnWidths[columnIndex] || 0),
     })
   }
 
@@ -49,19 +47,10 @@ export default function TableHeader({ header, columnWidths, dataReady }: TablePr
   function autoResize(columnIndex: number) {
     // Remove the width, let it size naturally, and then measure it
     flushSync(() => {
-      setWidths(widths => {
-        const newWidths = [...widths]
-        newWidths[columnIndex] = undefined
-        return newWidths
-      })
+      setColumnWidth(columnIndex, undefined)
     })
     const newWidth = measureWidth(headerRefs.current[columnIndex])
-
-    setWidths(widths => {
-      const newWidths = [...widths]
-      newWidths[columnIndex] = newWidth
-      return newWidths
-    })
+    setColumnWidth(columnIndex, newWidth)
   }
 
   // Attach mouse move and mouse up events for column resizing
@@ -75,12 +64,7 @@ export default function TableHeader({ header, columnWidths, dataReady }: TablePr
     // Handle mouse move event during resizing
     function handleMouseMove({ clientX }: MouseEvent) {
       if (resizing) {
-        setWidths(widths => {
-          // get mouse position relative to the column
-          const newWidths = [...widths]
-          newWidths[resizing.columnIndex] = Math.max(1, clientX - resizing.clientX)
-          return newWidths
-        })
+        setColumnWidth(resizing.columnIndex, Math.max(1, clientX - resizing.clientX))
       }
     }
 
@@ -93,7 +77,7 @@ export default function TableHeader({ header, columnWidths, dataReady }: TablePr
       window.removeEventListener('mousemove', handleMouseMove)
       window.removeEventListener('mouseup', stopResizing)
     }
-  }, [header, resizing, widths, setWidths])
+  }, [header, resizing, setColumnWidths])
 
   return <thead>
     <tr>
@@ -102,7 +86,7 @@ export default function TableHeader({ header, columnWidths, dataReady }: TablePr
         <th
           key={columnIndex}
           ref={headerRefs.current[columnIndex]}
-          style={cellStyle(widths[columnIndex])}
+          style={cellStyle(columnWidths[columnIndex])}
           title={columnHeader}>
           {columnHeader}
           <span

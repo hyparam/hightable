@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useRef, useState } from 'react'
+import { ReactNode, useEffect, useReducer, useRef } from 'react'
 import TableHeader, { cellStyle } from './tableheader.js'
 
 const rowHeight = 33 // row height px
@@ -21,21 +21,69 @@ interface TableProps {
   setError: (error: Error) => void
 }
 
+type State = {
+  columnWidths: Array<number | undefined>
+  firstLoad: boolean
+  offsetTop: number
+  startIndex: number
+  rows: any[][]
+  dataReady: boolean
+}
+
+type Action =
+  | { type: 'INIT_LOAD' }
+  | { type: 'SET_ROWS'; start: number; rows: any[][] }
+  | { type: 'SET_ERROR'; error: Error }
+  | { type: 'SET_COLUMN_WIDTH'; columnIndex: number, columnWidth: number | undefined }
+  | { type: 'SET_COLUMN_WIDTHS'; columnWidths: Array<number | undefined> }
+
+function reducer(state: State, action: Action): State {
+  switch (action.type) {
+  case 'INIT_LOAD':
+    return { ...state, firstLoad: false }
+  case 'SET_ROWS':
+    return {
+      ...state,
+      dataReady: true,
+      startIndex: action.start,
+      rows: action.rows,
+      offsetTop: Math.max(0, action.start - padding) * rowHeight,
+    }
+  case 'SET_ERROR':
+    console.error(action.error)
+    return state
+  case 'SET_COLUMN_WIDTH':
+    return {
+      ...state,
+      columnWidths: state.columnWidths.map((width, i) => i === action.columnIndex ? action.columnWidth : width),
+    }
+  case 'SET_COLUMN_WIDTHS':
+    return { ...state, columnWidths: action.columnWidths }
+  default:
+    return state
+  }
+}
+
 /**
  * Render a table with streaming rows on demand from a DataFrame.
  */
 export default function HighTable({ data, onDoubleClickCell, setError }: TableProps) {
-  const columnWidths = useState<Array<number | undefined>>([])
-  const [firstLoad, setFirstLoad] = useState(true)
-  const [offsetTop, setOffsetTop] = useState(0)
-  const [startIndex, setStartIndex] = useState(0) // starting row to render
-  const [rows, setRows] = useState<any[][]>([])
+  const [state, dispatch] = useReducer(reducer, {
+    columnWidths: [],
+    firstLoad: true,
+    offsetTop: 0,
+    startIndex: 0,
+    rows: [],
+    dataReady: false,
+  })
+
+  const { columnWidths, firstLoad, offsetTop, startIndex, rows, dataReady } = state
+
   const scrollRef = useRef<HTMLDivElement>(null)
   const tableRef = useRef<HTMLTableElement>(null)
   const latestRequestRef = useRef(0)
   const pendingRequest = useRef<Promise<void>>()
-  const pendingUpdate = useRef(false) // true if user scrolled while fetching
-  const [dataReady, setDataReady] = useState(false)
+  const pendingUpdate = useRef(false)
 
   if (!data) throw new Error('HighTable: data is required')
 
@@ -71,10 +119,7 @@ export default function HighTable({ data, onDoubleClickCell, setError }: TablePr
       const isAbove = scrollTop < offsetTop
       if (isBelow || isAbove) {
         // Replace rows with blanks and reset position
-        setRows(Array.from({ length: end - start }, () => []))
-        setStartIndex(start)
-        const preStart = Math.max(0, start - padding) // start index of pre-padding
-        setOffsetTop(preStart * rowHeight)
+        dispatch({ type: 'SET_ROWS', start, rows: Array.from({ length: end - start }, () => []) })
       }
 
       // skip overlapping requests, but always request latest at the end
@@ -89,15 +134,11 @@ export default function HighTable({ data, onDoubleClickCell, setError }: TablePr
 
       // Fetch a chunk of rows from the data frame
       pendingRequest.current = data.rows(start, end).then(updatedRows => {
-        setDataReady(true)
         if (end - start !== updatedRows.length) {
           throw new Error(`unexpected number of rows ${end - start} !== ${updatedRows.length}`)
         }
         pendingRequest.current = undefined
-        setStartIndex(start)
-        setRows(updatedRows)
-        const preStart = Math.max(0, start - padding) // start index of pre-padding
-        setOffsetTop(preStart * rowHeight) // update position
+        dispatch({ type: 'SET_ROWS', start, rows: updatedRows })
 
         if (requestId !== latestRequestRef.current) {
           // TODO: stale requests should never happen
@@ -116,12 +157,10 @@ export default function HighTable({ data, onDoubleClickCell, setError }: TablePr
     }
 
     // fetch initial chunk
-    setFirstLoad(firstLoad => {
-      if (firstLoad) {
-        handleScroll()
-      }
-      return false
-    })
+    if (firstLoad) {
+      dispatch({ type: 'INIT_LOAD' })
+      handleScroll()
+    }
 
     // scroll listeners
     const scroller = scrollRef.current
@@ -147,7 +186,7 @@ export default function HighTable({ data, onDoubleClickCell, setError }: TablePr
    * Render a table cell <td> with title and optional custom rendering
    */
   function Cell(value: any, col: number, row: number): ReactNode {
-    const style = cellStyle(columnWidths[0]?.[col])
+    const style = cellStyle(columnWidths[col])
     // render as truncated text
     let str = stringify(value)
     let title: string | undefined
@@ -192,6 +231,8 @@ export default function HighTable({ data, onDoubleClickCell, setError }: TablePr
           tabIndex={0}>
           <TableHeader
             columnWidths={columnWidths}
+            setColumnWidth={(columnIndex, columnWidth) => dispatch({ type: 'SET_COLUMN_WIDTH', columnIndex, columnWidth })}
+            setColumnWidths={columnWidths => dispatch({ type: 'SET_COLUMN_WIDTHS', columnWidths })}
             dataReady={dataReady}
             header={data.header} />
           <tbody>
