@@ -1,11 +1,14 @@
+const header = ['ID', 'Name', 'Age', 'UUID', 'JSON']
 const data = {
-  header: ['ID', 'Name', 'Age', 'UUID'],
+  header,
   numRows: 10000,
   async rows(start, end) {
     const arr = []
     for (let i = start; i < end; i++) {
       const uuid = Math.random().toString(16).substring(2)
-      arr.push([i + 1, 'Name' + i, 20 + i, uuid])
+      const row = [i + 1, 'Name' + i, 20 + i, uuid]
+      const object = Object.fromEntries(header.map((key, index) => [key, row[index]]))
+      arr.push([...row, object])
     }
     return arr
   },
