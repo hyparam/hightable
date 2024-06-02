@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useReducer, useRef } from 'react'
+import { ReactNode, useEffect, useMemo, useReducer, useRef } from 'react'
 import TableHeader, { cellStyle } from './TableHeader.js'
 
 const rowHeight = 33 // row height px
@@ -52,11 +52,11 @@ function reducer(state: State, action: Action): State {
   case 'SET_ERROR':
     console.error(action.error)
     return state
-  case 'SET_COLUMN_WIDTH':
-    return {
-      ...state,
-      columnWidths: state.columnWidths.map((width, i) => i === action.columnIndex ? action.columnWidth : width),
-    }
+  case 'SET_COLUMN_WIDTH': {
+    const columnWidths = [...state.columnWidths]
+    columnWidths[action.columnIndex] = action.columnWidth
+    return { ...state, columnWidths }
+  }
   case 'SET_COLUMN_WIDTHS':
     return { ...state, columnWidths: action.columnWidths }
   default:
@@ -221,7 +221,7 @@ export default function HighTable({ data, onDoubleClickCell, onError = console.e
 
   // fixed corner width based on number of rows
   const cornerWidth = Math.ceil(Math.log10(data.numRows + 1)) * 4 + 22
-  const cornerStyle = cellStyle(cornerWidth)
+  const cornerStyle = useMemo(() => cellStyle(cornerWidth), [cornerWidth])
 
   return <div className='table-container'>
     <div className='table-scroll' ref={scrollRef}>
