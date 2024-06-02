@@ -1,5 +1,5 @@
 import { ReactNode, useEffect, useReducer, useRef } from 'react'
-import TableHeader, { cellStyle } from './tableheader.js'
+import TableHeader, { cellStyle } from './TableHeader.js'
 
 const rowHeight = 33 // row height px
 const overscan = 30 // number of rows to fetch outside of the viewport
@@ -264,8 +264,8 @@ export default function HighTable({ data, onDoubleClickCell, onError = console.e
         </table>
       </div>
     </div>
-    <div className='tableCorner' style={cornerStyle}>&nbsp;</div>
-    <div className='mockRowLabel' style={cornerStyle}>&nbsp;</div>
+    <div className='table-corner' style={cornerStyle}>&nbsp;</div>
+    <div className='mock-row-label' style={cornerStyle}>&nbsp;</div>
   </div>
 }
 

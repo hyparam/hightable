@@ -5,9 +5,9 @@ import terser from '@rollup/plugin-terser'
 import typescript from '@rollup/plugin-typescript'
 
 export default {
-  input: 'src/hightable.tsx',
+  input: 'src/HighTable.tsx',
   output: {
-    file: 'dist/hightable.min.js',
+    file: 'dist/HighTable.min.js',
     name: 'HighTable',
     globals: {
       react: 'React',

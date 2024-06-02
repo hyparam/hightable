@@ -124,7 +124,7 @@
 }
 
 /* table corner */
-.tableCorner {
+.table-corner {
   background-color: #e4e4e6;
   border-right: 1px solid #ccc;
   position: absolute;
@@ -136,7 +136,7 @@
   box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.2);
 }
 /* mock row numbers */
-.mockRowLabel {
+.mock-row-label {
   content: "";
   position: absolute;
   top: 0;

@@ -1,7 +1,7 @@
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import React, { act } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import HighTable from '../src/hightable.js'
+import HighTable from '../src/HighTable.js'
 
 describe('HighTable', () => {
   const mockData = {

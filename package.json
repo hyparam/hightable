@@ -13,13 +13,13 @@
     "type": "git",
     "url": "git+https://github.com/hyparam/hightable.git"
   },
-  "main": "dist/hightable.min.js",
+  "main": "dist/HighTable.min.js",
   "files": [
     "src",
     "dist"
   ],
   "type": "module",
-  "types": "dist/hightable.d.ts",
+  "types": "dist/HighTable.d.ts",
   "scripts": {
     "build": "rollup -c",
     "coverage": "vitest run --coverage --coverage.include=src",

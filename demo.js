@@ -14,9 +14,9 @@ const data = {
   },
 }
 
-// Load ./src/hightable.tsx and render
+// Load HighTable.tsx and render
 function init() {
-  const HighTable = require('./src/hightable.tsx').default
+  const HighTable = require('./src/HighTable.tsx').default
   const container = document.getElementById('app')
   const root = ReactDOM.createRoot(container)
   root.render(React.createElement(HighTable, { data }))
@@ -35,7 +35,7 @@ init()
 function require(url) {
   if (url === 'react') return React
   if (url === 'react-dom') return ReactDOM
-  if (url === './src/tableheader.js') url = './src/tableheader.tsx'
+  if (url === './src/TableHeader.js') url = './src/TableHeader.tsx'
 
   const filename = url.replace(/^\.\//, '')
   const req = new XMLHttpRequest()

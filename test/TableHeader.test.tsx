@@ -1,6 +1,6 @@
 import { fireEvent, render } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
-import TableHeader, { cellStyle } from '../src/tableheader.js'
+import TableHeader, { cellStyle } from '../src/TableHeader.js'
 
 // Mock columnWidths state
 function mockColumnWidths() {
