@@ -64,18 +64,20 @@ function reducer(state: State, action: Action): State {
   }
 }
 
+const initialState = {
+  columnWidths: [],
+  firstLoad: true,
+  offsetTop: 0,
+  startIndex: 0,
+  rows: [],
+  dataReady: false,
+}
+
 /**
  * Render a table with streaming rows on demand from a DataFrame.
  */
 export default function HighTable({ data, onDoubleClickCell, onError = console.error }: TableProps) {
-  const [state, dispatch] = useReducer(reducer, {
-    columnWidths: [],
-    firstLoad: true,
-    offsetTop: 0,
-    startIndex: 0,
-    rows: [],
-    dataReady: false,
-  })
+  const [state, dispatch] = useReducer(reducer, initialState)
 
   const { columnWidths, firstLoad, offsetTop, startIndex, rows, dataReady } = state
 
