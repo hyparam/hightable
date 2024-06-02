@@ -16,23 +16,17 @@ describe('HighTable', () => {
     vi.clearAllMocks()
   })
 
-  it('renders without crashing', async () => {
-    const { getByText } = render(<HighTable data={mockData} setError={vi.fn()} />)
+  it('renders initial rows', async () => {
+    const { getByText } = render(<HighTable data={mockData} />)
     await waitFor(() => {
       expect(getByText('ID')).toBeDefined()
-    })
-  })
-
-  it('loads initial rows on mount', async () => {
-    render(<HighTable data={mockData} setError={vi.fn()} />)
-    await waitFor(() => {
       expect(mockData.rows).toHaveBeenCalledOnce()
       expect(mockData.rows).toHaveBeenCalledWith(0, 34)
     })
   })
 
   it('handles scroll to load more rows', async () => {
-    const { container } = render(<HighTable data={mockData} setError={vi.fn()} />)
+    const { container } = render(<HighTable data={mockData} />)
     const scrollDiv = container.querySelector('.table-scroll')
     if (!scrollDiv) throw new Error('Scroll container not found')
 
@@ -47,7 +41,7 @@ describe('HighTable', () => {
 
   it('correctly handles double click on cell', async () => {
     const mockDoubleClick = vi.fn()
-    const { findByText } = render(<HighTable data={mockData} setError={vi.fn()} onDoubleClickCell={mockDoubleClick} />)
+    const { findByText } = render(<HighTable data={mockData} onDoubleClickCell={mockDoubleClick} />)
     const cell = await findByText('Name 0')
 
     fireEvent.doubleClick(cell)
@@ -58,7 +52,7 @@ describe('HighTable', () => {
   it('displays error when data fetch fails', async () => {
     const mockSetError = vi.fn()
     mockData.rows.mockRejectedValueOnce(new Error('Failed to fetch data'))
-    render(<HighTable data={mockData} setError={mockSetError} />)
+    render(<HighTable data={mockData} onError={mockSetError} />)
 
     await waitFor(() => {
       expect(mockSetError).toHaveBeenCalledWith(expect.any(Error))

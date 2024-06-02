@@ -18,7 +18,7 @@ export interface DataFrame {
 interface TableProps {
   data: DataFrame
   onDoubleClickCell?: (row: number, col: number) => void
-  setError: (error: Error) => void
+  onError?: (error: Error) => void
 }
 
 type State = {
@@ -67,7 +67,7 @@ function reducer(state: State, action: Action): State {
 /**
  * Render a table with streaming rows on demand from a DataFrame.
  */
-export default function HighTable({ data, onDoubleClickCell, setError }: TableProps) {
+export default function HighTable({ data, onDoubleClickCell, onError = console.error }: TableProps) {
   const [state, dispatch] = useReducer(reducer, {
     columnWidths: [],
     firstLoad: true,
@@ -135,7 +135,7 @@ export default function HighTable({ data, onDoubleClickCell, setError }: TablePr
       // Fetch a chunk of rows from the data frame
       pendingRequest.current = data.rows(start, end).then(updatedRows => {
         if (end - start !== updatedRows.length) {
-          throw new Error(`unexpected number of rows ${end - start} !== ${updatedRows.length}`)
+          onError(new Error(`dataframe rows expected ${end - start} received ${updatedRows.length}`))
         }
         pendingRequest.current = undefined
         dispatch({ type: 'SET_ROWS', start, rows: updatedRows })
@@ -152,7 +152,7 @@ export default function HighTable({ data, onDoubleClickCell, setError }: TablePr
         }
       }).catch(error => {
         pendingRequest.current = undefined
-        setError(error)
+        onError(error)
       })
     }
 
@@ -171,7 +171,7 @@ export default function HighTable({ data, onDoubleClickCell, setError }: TablePr
       scroller?.removeEventListener('scroll', handleScroll)
       window.removeEventListener('resize', handleScroll)
     }
-  }, [data, firstLoad, offsetTop, rows.length, scrollHeight, startIndex, setError])
+  }, [data, firstLoad, offsetTop, rows.length, scrollHeight, startIndex, onError])
 
   /**
    * Validate row length
