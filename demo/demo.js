@@ -1,13 +1,14 @@
-const header = ['ID', 'Name', 'Age', 'UUID', 'JSON']
+const header = ['ID', 'Name', 'Age', 'UUID', 'Text', 'JSON']
 const data = {
   header,
   numRows: 10000,
   async rows(start, end) {
     const arr = []
     for (let i = start; i < end; i++) {
-      const uuid = Math.random().toString(16).substring(2)
-      const row = [i + 1, 'Name' + i, 20 + i, uuid]
-      const object = Object.fromEntries(header.map((key, index) => [key, row[index]]))
+      const rand = Math.abs(Math.sin(i + 1))
+      const uuid = rand.toString(16).substring(2)
+      const row = [i + 1, 'Name' + i, 20 + i % 80, uuid, lorem(rand, 100)]
+      const object = Object.fromEntries(header.slice(0, -1).map((key, index) => [key, row[index]]))
       arr.push([...row, object])
     }
     return arr
@@ -22,6 +23,12 @@ function init() {
   root.render(React.createElement(HighTable, { data }))
 }
 init()
+
+function lorem(rand, length) {
+  const words = "lorem ipsum dolor sit amet consectetur adipiscing elit".split(' ')
+  let str = Array.from({ length }, (_, i) => words[Math.floor(i + rand * 8) % 8]).join(' ')
+  return str[0].toUpperCase() + str.slice(1)
+}
 
 /**
  * Magical require function to load modules and typescript from URLs.
