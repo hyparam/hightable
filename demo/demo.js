@@ -25,8 +25,8 @@ function init() {
 init()
 
 function lorem(rand, length) {
-  const words = "lorem ipsum dolor sit amet consectetur adipiscing elit".split(' ')
-  let str = Array.from({ length }, (_, i) => words[Math.floor(i + rand * 8) % 8]).join(' ')
+  const words = 'lorem ipsum dolor sit amet consectetur adipiscing elit'.split(' ')
+  const str = Array.from({ length }, (_, i) => words[Math.floor(i + rand * 8) % 8]).join(' ')
   return str[0].toUpperCase() + str.slice(1)
 }
 

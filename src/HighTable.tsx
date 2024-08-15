@@ -277,6 +277,7 @@ export function stringify(value: any): string | undefined {
   if (typeof value === 'number') return value.toLocaleString()
   if (Array.isArray(value)) return `[${value.map(stringify).join(', ')}]`
   if (value === null || value === undefined) return JSON.stringify(value)
+  if (value instanceof Date) return value.toISOString()
   if (typeof value === 'object') {
     return `{${Object.entries(value).map(([k, v]) => `${k}: ${stringify(v)}`).join(', ')}}`
   }
