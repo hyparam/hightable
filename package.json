@@ -1,6 +1,6 @@
 {
   "name": "hightable",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "A dynamic windowed scrolling table component for react",
   "keywords": [
     "component",
@@ -40,17 +40,17 @@
     "@rollup/plugin-terser": "0.4.4",
     "@rollup/plugin-typescript": "11.1.6",
     "@testing-library/react": "16.0.0",
-    "@types/node": "22.3.0",
-    "@types/react": "18.3.3",
+    "@types/node": "22.5.1",
+    "@types/react": "18.3.4",
     "@types/react-dom": "18.3.0",
-    "@typescript-eslint/eslint-plugin": "8.1.0",
+    "@typescript-eslint/eslint-plugin": "8.3.0",
     "@vitest/coverage-v8": "2.0.5",
     "eslint": "8.57.0",
     "eslint-plugin-import": "2.29.1",
     "http-server": "14.1.1",
-    "jsdom": "24.1.1",
-    "tslib": "2.6.3",
-    "typescript": "5.4.5",
+    "jsdom": "25.0.0",
+    "tslib": "2.7.0",
+    "typescript": "5.5.4",
     "vitest": "2.0.5"
   },
   "peerDependencies": {
