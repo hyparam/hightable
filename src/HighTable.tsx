@@ -1,6 +1,7 @@
 import { ReactNode, useEffect, useMemo, useReducer, useRef } from 'react'
 import type { DataFrame } from './dataframe.js'
 import TableHeader, { cellStyle } from './TableHeader.js'
+export { DataFrame }
 
 const rowHeight = 33 // row height px
 const overscan = 30 // number of rows to fetch outside of the viewport
