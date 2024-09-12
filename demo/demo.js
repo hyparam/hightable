@@ -7,9 +7,15 @@ const data = {
     for (let i = start; i < end; i++) {
       const rand = Math.abs(Math.sin(i + 1))
       const uuid = rand.toString(16).substring(2)
-      const row = [i + 1, 'Name' + i, 20 + i % 80, uuid, lorem(rand, 100)]
+      const row = {
+        ID: i + 1,
+        Name: 'Name' + i,
+        Age: 20 + i % 80,
+        UUID: uuid,
+        Text: lorem(rand, 100),
+      }
       const object = Object.fromEntries(header.slice(0, -1).map((key, index) => [key, row[index]]))
-      arr.push([...row, object])
+      arr.push({ ...row, object })
     }
     return arr
   },

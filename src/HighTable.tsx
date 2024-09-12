@@ -1,19 +1,10 @@
 import { ReactNode, useEffect, useMemo, useReducer, useRef } from 'react'
+import type { DataFrame } from './dataframe.js'
 import TableHeader, { cellStyle } from './TableHeader.js'
 
 const rowHeight = 33 // row height px
 const overscan = 30 // number of rows to fetch outside of the viewport
 const padding = 30 // number of padding rows to render outside of the viewport
-
-/**
- * Streamable row data
- */
-export interface DataFrame {
-  header: string[]
-  numRows: number
-  // Rows are 0-indexed, excludes the header, end is exclusive
-  rows(start: number, end: number): Promise<any[][]>
-}
 
 interface TableProps {
   data: DataFrame
@@ -26,13 +17,13 @@ type State = {
   firstLoad: boolean
   offsetTop: number
   startIndex: number
-  rows: any[][]
+  rows: Record<string, any>[]
   dataReady: boolean
 }
 
 type Action =
   | { type: 'INIT_LOAD' }
-  | { type: 'SET_ROWS'; start: number; rows: any[][] }
+  | { type: 'SET_ROWS'; start: number; rows: Record<string, any>[] }
   | { type: 'SET_ERROR'; error: Error }
   | { type: 'SET_COLUMN_WIDTH'; columnIndex: number, columnWidth: number | undefined }
   | { type: 'SET_COLUMN_WIDTHS'; columnWidths: Array<number | undefined> }
@@ -178,7 +169,7 @@ export default function HighTable({ data, onDoubleClickCell, onError = console.e
   /**
    * Validate row length
    */
-  function rowError(row: any[], rowIndex: number): string | undefined {
+  function rowError(row: Record<string, any>, rowIndex: number): string | undefined {
     if (row.length > 0 && row.length !== data.header.length) {
       return `Row ${rowIndex + 1} length ${row.length} does not match header length ${data.header.length}`
     }
@@ -250,7 +241,7 @@ export default function HighTable({ data, onDoubleClickCell, onError = console.e
                 <td style={cornerStyle}>
                   {(startIndex + rowIndex + 1).toLocaleString()}
                 </td>
-                {Array.from(row).map((value, col) => Cell(value, col, startIndex + rowIndex))}
+                {data.header.map((col, colIndex) => Cell(row[col], colIndex, startIndex + rowIndex))}
               </tr>
             )}
             {postPadding.map((row, rowIndex) =>

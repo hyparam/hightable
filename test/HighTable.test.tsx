@@ -8,7 +8,11 @@ describe('HighTable', () => {
     header: ['ID', 'Name', 'Age'],
     numRows: 100,
     rows: vi.fn((start, end) => Promise.resolve(
-      Array.from({ length: end - start }, (_, index) => [index + start, 'Name ' + (index + start), 20 + index % 50])
+      Array.from({ length: end - start }, (_, index) => ({
+        ID: index + start,
+        Name: 'Name ' + (index + start),
+        Age: 20 + index % 50,
+      }))
     )),
   }
 
