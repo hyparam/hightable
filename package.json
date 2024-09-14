@@ -1,6 +1,6 @@
 {
   "name": "hightable",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "A dynamic windowed scrolling table component for react",
   "keywords": [
     "component",
@@ -30,7 +30,7 @@
     "coverage": "vitest run --coverage --coverage.include=src",
     "demo": "http-server -o",
     "lint": "eslint src/**/*.{ts,tsx} test/**/*.{ts,tsx} demo/**/*.js",
-    "publish": "npm run build && npm publish",
+    "publish": "npm run build",
     "test": "vitest run"
   },
   "devDependencies": {
