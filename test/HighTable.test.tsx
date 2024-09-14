@@ -25,7 +25,7 @@ describe('HighTable', () => {
     await waitFor(() => {
       expect(getByText('ID')).toBeDefined()
       expect(mockData.rows).toHaveBeenCalledOnce()
-      expect(mockData.rows).toHaveBeenCalledWith(0, 34)
+      expect(mockData.rows).toHaveBeenCalledWith(0, 34, undefined)
     })
   })
 

@@ -4,8 +4,10 @@ import { flushSync } from 'react-dom'
 interface TableProps {
   header: string[]
   columnWidths: Array<number | undefined>
+  orderBy?: string | undefined
   setColumnWidth: (columnIndex: number, columnWidth: number | undefined) => void
   setColumnWidths: (columnWidths: Array<number | undefined>) => void
+  setOrderBy?: (orderBy: string | undefined) => void
   dataReady: boolean
 }
 
@@ -19,7 +21,7 @@ interface ResizingState {
 /**
  * Render a resizable header for a table.
  */
-export default function TableHeader({ header, columnWidths, setColumnWidth, setColumnWidths, dataReady }: TableProps) {
+export default function TableHeader({ header, columnWidths, orderBy, setColumnWidth, setColumnWidths, setOrderBy, dataReady }: TableProps) {
   const [resizing, setResizing] = useState<ResizingState | undefined>()
   const headerRefs = useRef(header.map(() => createRef<HTMLTableCellElement>()))
 
@@ -36,10 +38,11 @@ export default function TableHeader({ header, columnWidths, setColumnWidth, setC
   }, [dataReady])
 
   // Modify column width
-  function startResizing(columnIndex: number, clientX: number) {
+  function startResizing(columnIndex: number, e: React.MouseEvent<HTMLSpanElement, MouseEvent>) {
+    e.stopPropagation()
     setResizing({
       columnIndex,
-      clientX: clientX - (columnWidths[columnIndex] || 0),
+      clientX: e.clientX - (columnWidths[columnIndex] || 0),
     })
   }
 
@@ -79,19 +82,30 @@ export default function TableHeader({ header, columnWidths, setColumnWidth, setC
     }
   }, [header, resizing, setColumnWidths])
 
+  // Function to handle click for changing orderBy
+  function handleOrderByClick(columnHeader: string) {
+    if (orderBy === columnHeader) {
+      setOrderBy?.(undefined)
+    } else {
+      setOrderBy?.(columnHeader)
+    }
+  }
+
   return <thead>
     <tr>
       <th><span /></th>
       {header.map((columnHeader, columnIndex) =>
         <th
+          className={orderBy === columnHeader ? 'orderby' : undefined}
           key={columnIndex}
+          onClick={() => handleOrderByClick(columnHeader)}
           ref={headerRefs.current[columnIndex]}
           style={cellStyle(columnWidths[columnIndex])}
           title={columnHeader}>
           {columnHeader}
           <span
             onDoubleClick={() => autoResize(columnIndex)}
-            onMouseDown={e => startResizing(columnIndex, e.clientX)} />
+            onMouseDown={e => startResizing(columnIndex, e)} />
         </th>
       )}
     </tr>

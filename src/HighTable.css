@@ -56,9 +56,21 @@
   cursor: default;
   width: 0;
 }
-
 .table tbody tr:first-child td {
   border-top: 1px solid transparent;
+}
+
+/* sortable */
+.table.sortable thead th {
+  cursor: pointer;
+}
+.table th.orderby ::after {
+  position: absolute;
+  right: 8px;
+  top: 4px;
+  padding-left: 2px;
+  background-color: #eaeaeb;
+  content: "▾";
 }
 
 /* column resize */

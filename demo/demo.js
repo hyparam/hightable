@@ -1,5 +1,5 @@
 const header = ['ID', 'Name', 'Age', 'UUID', 'Text', 'JSON']
-const data = {
+const dataframe = {
   header,
   numRows: 10000,
   async rows(start, end) {
@@ -23,10 +23,11 @@ const data = {
 
 // Load HighTable.tsx and render
 function init() {
-  const HighTable = require('./src/HighTable.tsx').default
+  const { HighTable, sortableDataFrame } = require('./src/HighTable.tsx')
+  const sortable = sortableDataFrame(dataframe)
   const container = document.getElementById('app')
   const root = ReactDOM.createRoot(container)
-  root.render(React.createElement(HighTable, { data }))
+  root.render(React.createElement(HighTable, { data: sortable }))
 }
 init()
 
@@ -49,6 +50,7 @@ function require(url) {
   if (url === 'react') return React
   if (url === 'react-dom') return ReactDOM
   if (url === './src/TableHeader.js') url = './src/TableHeader.tsx'
+  if (url === './src/dataframe.js') url = './src/dataframe.ts'
 
   const filename = url.replace(/^\.\//, '')
   const req = new XMLHttpRequest()

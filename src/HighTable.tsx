@@ -1,7 +1,7 @@
 import { ReactNode, useEffect, useMemo, useReducer, useRef } from 'react'
-import type { DataFrame } from './dataframe.js'
+import { DataFrame, sortableDataFrame } from './dataframe.js'
 import TableHeader, { cellStyle } from './TableHeader.js'
-export { DataFrame }
+export { DataFrame, HighTable, sortableDataFrame }
 
 const rowHeight = 33 // row height px
 const overscan = 30 // number of rows to fetch outside of the viewport
@@ -15,24 +15,22 @@ interface TableProps {
 
 type State = {
   columnWidths: Array<number | undefined>
-  firstLoad: boolean
   offsetTop: number
   startIndex: number
   rows: Record<string, any>[]
+  orderBy?: string
   dataReady: boolean
 }
 
 type Action =
-  | { type: 'INIT_LOAD' }
   | { type: 'SET_ROWS'; start: number; rows: Record<string, any>[] }
   | { type: 'SET_ERROR'; error: Error }
   | { type: 'SET_COLUMN_WIDTH'; columnIndex: number, columnWidth: number | undefined }
   | { type: 'SET_COLUMN_WIDTHS'; columnWidths: Array<number | undefined> }
+  | { type: 'SET_ORDER'; orderBy: string | undefined }
 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
-  case 'INIT_LOAD':
-    return { ...state, firstLoad: false }
   case 'SET_ROWS':
     return {
       ...state,
@@ -51,6 +49,8 @@ function reducer(state: State, action: Action): State {
   }
   case 'SET_COLUMN_WIDTHS':
     return { ...state, columnWidths: action.columnWidths }
+  case 'SET_ORDER':
+    return { ...state, orderBy: action.orderBy }
   default:
     return state
   }
@@ -58,7 +58,6 @@ function reducer(state: State, action: Action): State {
 
 const initialState = {
   columnWidths: [],
-  firstLoad: true,
   offsetTop: 0,
   startIndex: 0,
   rows: [],
@@ -71,7 +70,7 @@ const initialState = {
 export default function HighTable({ data, onDoubleClickCell, onError = console.error }: TableProps) {
   const [state, dispatch] = useReducer(reducer, initialState)
 
-  const { columnWidths, firstLoad, offsetTop, startIndex, rows, dataReady } = state
+  const { columnWidths, offsetTop, startIndex, rows, orderBy, dataReady } = state
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const tableRef = useRef<HTMLTableElement>(null)
@@ -123,11 +122,8 @@ export default function HighTable({ data, onDoubleClickCell, onError = console.e
       }
       const requestId = ++latestRequestRef.current
 
-      // skip fetch if the rows requested haven't changed
-      if (start === startIndex && end === startIndex + rows.length) return
-
       // Fetch a chunk of rows from the data frame
-      pendingRequest.current = data.rows(start, end).then(updatedRows => {
+      pendingRequest.current = data.rows(start, end, orderBy).then(updatedRows => {
         if (end - start !== updatedRows.length) {
           onError(new Error(`dataframe rows expected ${end - start} received ${updatedRows.length}`))
         }
@@ -144,17 +140,14 @@ export default function HighTable({ data, onDoubleClickCell, onError = console.e
           pendingUpdate.current = false
           handleScroll()
         }
-      }).catch(error => {
+      }).finally(() => {
         pendingRequest.current = undefined
+      }).catch(error => {
         onError(error)
       })
     }
-
-    // fetch initial chunk
-    if (firstLoad) {
-      dispatch({ type: 'INIT_LOAD' })
-      handleScroll()
-    }
+    // update
+    handleScroll()
 
     // scroll listeners
     const scroller = scrollRef.current
@@ -165,7 +158,7 @@ export default function HighTable({ data, onDoubleClickCell, onError = console.e
       scroller?.removeEventListener('scroll', handleScroll)
       window.removeEventListener('resize', handleScroll)
     }
-  }, [data, firstLoad, offsetTop, rows.length, scrollHeight, startIndex, onError])
+  }, [data, orderBy, scrollHeight, onError])
 
   /**
    * Validate row length
@@ -185,8 +178,8 @@ export default function HighTable({ data, onDoubleClickCell, onError = console.e
     let str = stringify(value)
     let title: string | undefined
     if (typeof str === 'string') {
-      title = str.length > 200 ? str : undefined
-      str = str.slice(0, 200)
+      if (str.length > 400) str = `${str.slice(0, 397)}\u2026` // ...
+      if (str.length > 100) title = str
     }
     return <td
       key={col}
@@ -219,14 +212,18 @@ export default function HighTable({ data, onDoubleClickCell, onError = console.e
     <div className='table-scroll' ref={scrollRef}>
       <div style={{ height: `${scrollHeight}px` }}>
         <table
-          className='table'
+          className={data.sortable ? 'table sortable' : 'table'}
           ref={tableRef}
           style={{ top: `${offsetTop}px` }}
-          tabIndex={0}>
+          tabIndex={0}
+          role='grid'
+          aria-rowcount={data.numRows}>
           <TableHeader
             columnWidths={columnWidths}
+            orderBy={orderBy}
             setColumnWidth={(columnIndex, columnWidth) => dispatch({ type: 'SET_COLUMN_WIDTH', columnIndex, columnWidth })}
             setColumnWidths={columnWidths => dispatch({ type: 'SET_COLUMN_WIDTHS', columnWidths })}
+            setOrderBy={orderBy => data.sortable && dispatch({ type: 'SET_ORDER', orderBy })}
             dataReady={dataReady}
             header={data.header} />
           <tbody>

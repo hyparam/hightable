@@ -40,18 +40,18 @@
     "@rollup/plugin-terser": "0.4.4",
     "@rollup/plugin-typescript": "11.1.6",
     "@testing-library/react": "16.0.1",
-    "@types/node": "22.5.4",
+    "@types/node": "22.5.5",
     "@types/react": "18.3.5",
     "@types/react-dom": "18.3.0",
     "@typescript-eslint/eslint-plugin": "8.5.0",
-    "@vitest/coverage-v8": "2.1.0",
+    "@vitest/coverage-v8": "2.1.1",
     "eslint": "8.57.0",
     "eslint-plugin-import": "2.30.0",
     "http-server": "14.1.1",
     "jsdom": "25.0.0",
     "tslib": "2.7.0",
     "typescript": "5.6.2",
-    "vitest": "2.1.0"
+    "vitest": "2.1.1"
   },
   "peerDependencies": {
     "react": "^18.2.0",
