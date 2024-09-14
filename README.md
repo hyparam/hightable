@@ -7,42 +7,69 @@
 [![mit license](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 ![coverage](https://img.shields.io/badge/Coverage-89-darkred)
 
-HighTable is a windowed table component for viewing large-scale data in the browser.
-
-HighTable is designed to load only the necessary data to render the current view.
-
-Built on React.
+HighTable is a virtualized table component for React, designed to efficiently display large datasets in the browser. It loads and renders only the rows necessary for the current viewport, enabling smooth scrolling and performance even with millions of rows. HighTable supports asynchronous data fetching, dynamic loading, and optional column sorting.
 
 ## Features
 
- - **Virtual Scrolling**: Loads and renders rows based on the viewport, optimizing performance for large datasets.
- - **Customizable Cell Rendering**: Allows for custom rendering of cells.
+ - **Virtualized Scrolling**: Efficiently renders only the visible rows, optimizing performance for large datasets.
+ - **Asynchronous Data Loading**: Fetches data on-demand as the user scrolls, supporting datasets of any size.
+ - **Column Sorting**: Optional support for sorting data by columns.
+ - **Column Resizing**: Allows for resizing columns to fit the available space and auto-sizing.
  - **Event Handling**: Supports double-click events on cells.
 
 ## Demo
 
-https://hyparam.github.io/hightable/
+Live table demo: https://hyparam.github.io/hightable/
 
 ## Installation
 
-Ensure you have React set up in your project. Install HighTable package:
+Ensure you have React set up in your project. Install the HighTable package via npm:
 
 ```sh
 npm i hightable
 ```
 
+## Data Model
+
+HighTable uses a data model called `DataFrame`, which defines how data is fetched and structured. The `DataFrame` object should have the following properties:
+
+ - `header`: An array of strings representing the column names.
+ - `numRows`: The total number of rows in the dataset.
+ - `rows`: An asynchronous function that fetches rows. It should accept start and end row indices and return an array of row objects.
+ - `sortable` (optional): A boolean indicating whether the table supports column sorting.
+
+Each row object should be a mapping of column names to cell values.
+
+### DataFrame Example
+
+```js
+const dataframe = {
+  header: ['ID', 'Name', 'Email'],
+  numRows: 1000000,
+  rows: async (start, end, orderBy) => {
+    // Fetch rows from your data source here
+    // 'orderBy' is an optional parameter representing the column to sort by
+    return fetchRowsFromServer(start, end, orderBy)
+  },
+  sortable: true, // Set to true if your data source supports sorting
+}
+```
+
 ## Usage
+
+Here's a basic example of how to use HighTable in your React application:
 
 ```jsx
 import HighTable from 'hightable'
 
 const dataframe = {
-  header: ['Column 1', 'Column 2', 'Column 3'],
-  numRows: 1000,
-  rows: async (start, end) => {
+  header: ['ID', 'Name', 'Email'],
+  numRows: 1000000,
+  rows: async (start, end, orderBy) => {
     // fetch rows from your data source here
-    return fetchRows(start, end)
+    return fetchRowsFromServer(start, end, orderBy)
   },
+  sortable: true,
 }
 
 function App() {
@@ -59,10 +86,28 @@ function App() {
 
 ## Props
 
+HighTable accepts the following props:
+
  - `data`: The data model for the table. Must include methods for header and rows fetching.
- - `onDoubleClickCell`: Optional. Called when a cell is double-clicked. Receives the row and column indexes as arguments.
- - `setError`: Callback for error handling.
+ - `onDoubleClickCell` (optional): Called when a cell is double-clicked. Receives the row and column indexes as arguments.
+ - `onError` (optional): Callback for error handling.
+
+### Prop Types
+
+```typescript
+interface TableProps {
+  data: DataFrame
+  onDoubleClickCell?: (row: number, col: number) => void
+  onError?: (error: Error) => void
+}
+```
+
+## Sorting
+
+If your data source supports sorting, set the sortable property to true in your DataFrame object. When sorting is enabled, the rows function will receive an additional orderBy parameter, which represents the column name to sort by.
+
+Ensure your rows function handles the orderBy parameter appropriately to return sorted data.
 
 ## Styling
 
-HighTable includes core CSS styling to make the table work, but you can apply CSS styling to customize table elements.
+HighTable includes basic CSS styling to make the table functional. You can customize the appearance of the table using CSS.
