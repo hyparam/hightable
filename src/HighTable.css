@@ -39,11 +39,11 @@
 .table thead th {
   background-color: #eaeaeb;
   border: none;
-  border-top: 4px solid #706fb1;
   border-bottom: 2px solid #c9c9c9;
   box-sizing: content-box;
   color: #444;
   height: 20px;
+  padding-top: 8px;
   position: sticky;
   top: -1px; /* fix 1px gap above thead */
   user-select: none;
@@ -64,7 +64,7 @@
 .table.sortable thead th {
   cursor: pointer;
 }
-.table th.orderby ::after {
+.table thead th.orderby ::after {
   position: absolute;
   right: 8px;
   top: 4px;
@@ -104,6 +104,7 @@
   width: 32px;
 }
 
+/* cells */
 .table th,
 .table td {
   border-bottom: 1px solid #ddd;
@@ -115,6 +116,25 @@
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
+}
+
+/* pending state */
+.table th::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background-color: #706fb1;
+  z-index: 100;
+}
+.pending .table th::before {
+  animation: shimmer 2s infinite linear;
+}
+@keyframes shimmer {
+  0%, 100% { background-color: #6fb176; }
+  50% { background-color: #adc6b0; }
 }
 
 /* don't hover on mobile */

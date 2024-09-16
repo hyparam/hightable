@@ -20,6 +20,7 @@ type State = {
   rows: Record<string, any>[]
   orderBy?: string
   dataReady: boolean
+  pending: boolean
 }
 
 type Action =
@@ -28,16 +29,18 @@ type Action =
   | { type: 'SET_COLUMN_WIDTH'; columnIndex: number, columnWidth: number | undefined }
   | { type: 'SET_COLUMN_WIDTHS'; columnWidths: Array<number | undefined> }
   | { type: 'SET_ORDER'; orderBy: string | undefined }
+  | { type: 'SET_PENDING' }
 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
   case 'SET_ROWS':
     return {
       ...state,
-      dataReady: true,
       startIndex: action.start,
       rows: action.rows,
       offsetTop: Math.max(0, action.start - padding) * rowHeight,
+      dataReady: true,
+      pending: false,
     }
   case 'SET_ERROR':
     console.error(action.error)
@@ -51,6 +54,8 @@ function reducer(state: State, action: Action): State {
     return { ...state, columnWidths: action.columnWidths }
   case 'SET_ORDER':
     return { ...state, orderBy: action.orderBy }
+  case 'SET_PENDING':
+    return { ...state, pending: true }
   default:
     return state
   }
@@ -62,6 +67,7 @@ const initialState = {
   startIndex: 0,
   rows: [],
   dataReady: false,
+  pending: false,
 }
 
 /**
@@ -70,7 +76,7 @@ const initialState = {
 export default function HighTable({ data, onDoubleClickCell, onError = console.error }: TableProps) {
   const [state, dispatch] = useReducer(reducer, initialState)
 
-  const { columnWidths, offsetTop, startIndex, rows, orderBy, dataReady } = state
+  const { columnWidths, offsetTop, startIndex, rows, orderBy, dataReady, pending } = state
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const tableRef = useRef<HTMLTableElement>(null)
@@ -123,6 +129,7 @@ export default function HighTable({ data, onDoubleClickCell, onError = console.e
       const requestId = ++latestRequestRef.current
 
       // Fetch a chunk of rows from the data frame
+      dispatch({ type: 'SET_PENDING' })
       pendingRequest.current = data.rows(start, end, orderBy).then(updatedRows => {
         if (end - start !== updatedRows.length) {
           onError(new Error(`dataframe rows expected ${end - start} received ${updatedRows.length}`))
@@ -208,16 +215,16 @@ export default function HighTable({ data, onDoubleClickCell, onError = console.e
   const cornerWidth = Math.ceil(Math.log10(data.numRows + 1)) * 4 + 22
   const cornerStyle = useMemo(() => cellStyle(cornerWidth), [cornerWidth])
 
-  return <div className='table-container'>
+  return <div className={pending ? 'table-container pending' : 'table-container'}>
     <div className='table-scroll' ref={scrollRef}>
       <div style={{ height: `${scrollHeight}px` }}>
         <table
+          aria-rowcount={data.numRows}
           className={data.sortable ? 'table sortable' : 'table'}
           ref={tableRef}
-          style={{ top: `${offsetTop}px` }}
-          tabIndex={0}
           role='grid'
-          aria-rowcount={data.numRows}>
+          style={{ top: `${offsetTop}px` }}
+          tabIndex={0}>
           <TableHeader
             columnWidths={columnWidths}
             orderBy={orderBy}
