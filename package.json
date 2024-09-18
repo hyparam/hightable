@@ -29,7 +29,7 @@
     "build": "rollup -c",
     "coverage": "vitest run --coverage --coverage.include=src",
     "demo": "http-server -o",
-    "lint": "eslint src/**/*.{ts,tsx} test/**/*.{ts,tsx} demo/**/*.js",
+    "lint": "eslint",
     "publish": "npm run build",
     "test": "vitest run"
   },
@@ -41,16 +41,15 @@
     "@rollup/plugin-typescript": "11.1.6",
     "@testing-library/react": "16.0.1",
     "@types/node": "22.5.5",
-    "@types/react": "18.3.5",
+    "@types/react": "18.3.7",
     "@types/react-dom": "18.3.0",
-    "@typescript-eslint/eslint-plugin": "8.5.0",
     "@vitest/coverage-v8": "2.1.1",
-    "eslint": "8.57.0",
-    "eslint-plugin-import": "2.30.0",
+    "eslint": "9.10.0",
     "http-server": "14.1.1",
     "jsdom": "25.0.0",
     "tslib": "2.7.0",
     "typescript": "5.6.2",
+    "typescript-eslint": "8.6.0",
     "vitest": "2.1.1"
   },
   "peerDependencies": {

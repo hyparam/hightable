@@ -35,7 +35,7 @@ export default function TableHeader({ header, columnWidths, orderBy, setColumnWi
       const widths = headerRefs.current.map(measureWidth)
       setColumnWidths(widths)
     }
-  }, [dataReady])
+  }, [dataReady, header]) // re-measure if header changes
 
   // Modify column width
   function startResizing(columnIndex: number, e: React.MouseEvent<HTMLSpanElement, MouseEvent>) {
