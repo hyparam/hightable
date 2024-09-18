@@ -1,4 +1,4 @@
-import { RefObject, createRef, useEffect, useRef, useState } from 'react'
+import { RefObject, createRef, useEffect, useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 
 interface TableProps {
@@ -29,9 +29,9 @@ export default function TableHeader({ header, columnWidths, orderBy, setColumnWi
     return ref.current ? ref.current.offsetWidth - 2 * horizontalPadding : undefined
   }
 
+  // Measure default column widths when data is ready
   useEffect(() => {
     if (dataReady) {
-      // Measure default column widths
       const widths = headerRefs.current.map(measureWidth)
       setColumnWidths(widths)
     }
@@ -91,6 +91,8 @@ export default function TableHeader({ header, columnWidths, orderBy, setColumnWi
     }
   }
 
+  const memoizedStyles = useMemo(() => columnWidths.map(cellStyle), [columnWidths])
+
   return <thead>
     <tr>
       <th><span /></th>
@@ -100,7 +102,7 @@ export default function TableHeader({ header, columnWidths, orderBy, setColumnWi
           key={columnIndex}
           onClick={() => handleOrderByClick(columnHeader)}
           ref={headerRefs.current[columnIndex]}
-          style={cellStyle(columnWidths[columnIndex])}
+          style={memoizedStyles[columnIndex]}
           title={columnHeader}>
           {columnHeader}
           <span

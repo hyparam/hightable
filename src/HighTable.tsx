@@ -176,11 +176,12 @@ export default function HighTable({ data, onDoubleClickCell, onError = console.e
     }
   }
 
+  const memoizedStyles = useMemo(() => columnWidths.map(cellStyle), [columnWidths])
+
   /**
    * Render a table cell <td> with title and optional custom rendering
    */
   function Cell(value: any, col: number, row: number): ReactNode {
-    const style = cellStyle(columnWidths[col])
     // render as truncated text
     let str = stringify(value)
     let title: string | undefined
@@ -191,7 +192,7 @@ export default function HighTable({ data, onDoubleClickCell, onError = console.e
     return <td
       key={col}
       onDoubleClick={() => onDoubleClickCell?.(row, col)}
-      style={style}
+      style={memoizedStyles[col]}
       title={title}>
       {str}
     </td>
@@ -219,6 +220,7 @@ export default function HighTable({ data, onDoubleClickCell, onError = console.e
     <div className='table-scroll' ref={scrollRef}>
       <div style={{ height: `${scrollHeight}px` }}>
         <table
+          aria-colcount={data.header.length}
           aria-rowcount={data.numRows}
           className={data.sortable ? 'table sortable' : 'table'}
           ref={tableRef}
