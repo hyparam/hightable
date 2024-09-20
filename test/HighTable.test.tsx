@@ -56,10 +56,12 @@ describe('HighTable', () => {
   it('displays error when data fetch fails', async () => {
     const mockSetError = vi.fn()
     mockData.rows.mockRejectedValueOnce(new Error('Failed to fetch data'))
-    render(<HighTable data={mockData} onError={mockSetError} />)
+    const { container } = render(<HighTable data={mockData} onError={mockSetError} />)
 
     await waitFor(() => {
       expect(mockSetError).toHaveBeenCalledWith(expect.any(Error))
     })
+    // Clear pending state on error:
+    expect(container.querySelector('.pending')).toBeNull()
   })
 })

@@ -29,7 +29,7 @@ type Action =
   | { type: 'SET_COLUMN_WIDTH'; columnIndex: number, columnWidth: number | undefined }
   | { type: 'SET_COLUMN_WIDTHS'; columnWidths: Array<number | undefined> }
   | { type: 'SET_ORDER'; orderBy: string | undefined }
-  | { type: 'SET_PENDING' }
+  | { type: 'SET_PENDING'; pending: boolean }
 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
@@ -55,7 +55,7 @@ function reducer(state: State, action: Action): State {
   case 'SET_ORDER':
     return { ...state, orderBy: action.orderBy }
   case 'SET_PENDING':
-    return { ...state, pending: true }
+    return { ...state, pending: action.pending }
   default:
     return state
   }
@@ -129,7 +129,7 @@ export default function HighTable({ data, onDoubleClickCell, onError = console.e
       const requestId = ++latestRequestRef.current
 
       // Fetch a chunk of rows from the data frame
-      dispatch({ type: 'SET_PENDING' })
+      dispatch({ type: 'SET_PENDING', pending: true })
       pendingRequest.current = data.rows(start, end, orderBy).then(updatedRows => {
         if (end - start !== updatedRows.length) {
           onError(new Error(`dataframe rows expected ${end - start} received ${updatedRows.length}`))
@@ -147,9 +147,9 @@ export default function HighTable({ data, onDoubleClickCell, onError = console.e
           pendingUpdate.current = false
           handleScroll()
         }
-      }).finally(() => {
-        pendingRequest.current = undefined
       }).catch(error => {
+        dispatch({ type: 'SET_PENDING', pending: false })
+        pendingRequest.current = undefined
         onError(error)
       })
     }
