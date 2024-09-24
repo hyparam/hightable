@@ -25,7 +25,16 @@ describe('HighTable', () => {
     await waitFor(() => {
       expect(getByText('ID')).toBeDefined()
       expect(mockData.rows).toHaveBeenCalledOnce()
-      expect(mockData.rows).toHaveBeenCalledWith(0, 34, undefined)
+      expect(mockData.rows).toHaveBeenCalledWith(0, 24, undefined)
+    })
+  })
+
+  it('uses overscan option', async () => {
+    const { getByText } = render(<HighTable data={mockData} overscan={10} />)
+    await waitFor(() => {
+      expect(getByText('ID')).toBeDefined()
+      expect(mockData.rows).toHaveBeenCalledOnce()
+      expect(mockData.rows).toHaveBeenCalledWith(0, 14, undefined)
     })
   })
 

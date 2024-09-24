@@ -10,9 +10,11 @@ export interface DataFrame {
 }
 
 /**
- * Wraps a DataFrame to make it sortable
+ * Wraps a DataFrame to make it sortable.
+ * Requires fetching all rows to sort.
  */
 export function sortableDataFrame(data: DataFrame): DataFrame {
+  if (data.sortable) return data // already sortable
   return {
     ...data,
     async rows(start: number, end: number, orderBy?: string) {

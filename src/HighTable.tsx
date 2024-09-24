@@ -4,11 +4,12 @@ import TableHeader, { cellStyle } from './TableHeader.js'
 export { DataFrame, HighTable, sortableDataFrame }
 
 const rowHeight = 33 // row height px
-const overscan = 30 // number of rows to fetch outside of the viewport
-const padding = 30 // number of padding rows to render outside of the viewport
+const padding = 20 // number of padding rows to render outside of the viewport
 
 interface TableProps {
   data: DataFrame
+  overscan?: number // number of rows to fetch outside of the viewport
+  padding?: number // number of padding rows to render outside of the viewport
   onDoubleClickCell?: (row: number, col: number) => void
   onError?: (error: Error) => void
 }
@@ -73,7 +74,12 @@ const initialState = {
 /**
  * Render a table with streaming rows on demand from a DataFrame.
  */
-export default function HighTable({ data, onDoubleClickCell, onError = console.error }: TableProps) {
+export default function HighTable({
+  data,
+  overscan = 20,
+  onDoubleClickCell,
+  onError = console.error
+}: TableProps) {
   const [state, dispatch] = useReducer(reducer, initialState)
 
   const { columnWidths, offsetTop, startIndex, rows, orderBy, dataReady, pending } = state
