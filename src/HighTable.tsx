@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useMemo, useReducer, useRef } from 'react'
+import { ReactNode, useCallback, useEffect, useMemo, useReducer, useRef } from 'react'
 import { DataFrame, sortableDataFrame } from './dataframe.js'
 import TableHeader, { cellStyle } from './TableHeader.js'
 export { DataFrame, HighTable, sortableDataFrame }
@@ -222,6 +222,10 @@ export default function HighTable({
   const cornerWidth = Math.ceil(Math.log10(data.numRows + 1)) * 4 + 22
   const cornerStyle = useMemo(() => cellStyle(cornerWidth), [cornerWidth])
 
+  const rowNumber = useCallback((rowIndex: number) => {
+    return rows[rowIndex].__index__ ?? rowIndex + startIndex + 1
+  }, [rows, startIndex])
+
   return <div className={pending ? 'table-container pending' : 'table-container'}>
     <div className='table-scroll' ref={scrollRef}>
       <div style={{ height: `${scrollHeight}px` }}>
@@ -252,7 +256,7 @@ export default function HighTable({
             {rows.map((row, rowIndex) =>
               <tr key={startIndex + rowIndex} title={rowError(row, rowIndex)}>
                 <td style={cornerStyle}>
-                  {(startIndex + rowIndex + 1).toLocaleString()}
+                  {rowNumber(rowIndex).toLocaleString()}
                 </td>
                 {data.header.map((col, colIndex) => Cell(row[col], colIndex, startIndex + rowIndex))}
               </tr>

@@ -21,6 +21,9 @@ export function sortableDataFrame(data: DataFrame): DataFrame {
       if (orderBy) {
         // Get all rows, sort, and slice
         const rows = await data.rows(0, data.numRows)
+        for (let i = 0; i < rows.length; i++) {
+          rows[i].__index__ = i
+        }
         return rows.sort((a, b) => {
           if (a[orderBy] < b[orderBy]) return -1
           if (a[orderBy] > b[orderBy]) return 1
