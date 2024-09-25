@@ -31,6 +31,7 @@ type Action =
   | { type: 'SET_COLUMN_WIDTHS'; columnWidths: Array<number | undefined> }
   | { type: 'SET_ORDER'; orderBy: string | undefined }
   | { type: 'SET_PENDING'; pending: boolean }
+  | { type: 'DATA_CHANGED' }
 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
@@ -57,6 +58,8 @@ function reducer(state: State, action: Action): State {
     return { ...state, orderBy: action.orderBy }
   case 'SET_PENDING':
     return { ...state, pending: action.pending }
+  case 'DATA_CHANGED':
+    return { ...state, dataReady: false }
   default:
     return state
   }
@@ -208,6 +211,11 @@ export default function HighTable({
   useEffect(() => {
     tableRef.current?.focus()
   }, [])
+
+  // reset dataReady when data changes so that columns will auto-resize
+  useEffect(() => {
+    dispatch({ type: 'DATA_CHANGED' })
+  }, [data])
 
   // don't render table if header is empty
   if (!data.header.length) return
