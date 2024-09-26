@@ -10,7 +10,7 @@ interface TableProps {
   data: DataFrame
   overscan?: number // number of rows to fetch outside of the viewport
   padding?: number // number of padding rows to render outside of the viewport
-  onDoubleClickCell?: (row: number, col: number) => void
+  onDoubleClickCell?: (col: number, row: number) => void
   onError?: (error: Error) => void
 }
 
@@ -190,7 +190,7 @@ export default function HighTable({
   /**
    * Render a table cell <td> with title and optional custom rendering
    */
-  function Cell(value: any, col: number, row: number): ReactNode {
+  function Cell(value: any, col: number, row: number, rowIndex?: number): ReactNode {
     // render as truncated text
     let str = stringify(value)
     let title: string | undefined
@@ -200,7 +200,7 @@ export default function HighTable({
     }
     return <td
       key={col}
-      onDoubleClick={() => onDoubleClickCell?.(row, col)}
+      onDoubleClick={() => onDoubleClickCell?.(col, rowIndex ?? row)}
       style={memoizedStyles[col]}
       title={title}>
       {str}
@@ -217,6 +217,10 @@ export default function HighTable({
     dispatch({ type: 'DATA_CHANGED' })
   }, [data])
 
+  const rowNumber = useCallback((rowIndex: number) => {
+    return rows[rowIndex].__index__ ?? rowIndex + startIndex + 1
+  }, [rows, startIndex])
+
   // don't render table if header is empty
   if (!data.header.length) return
 
@@ -229,10 +233,6 @@ export default function HighTable({
   // fixed corner width based on number of rows
   const cornerWidth = Math.ceil(Math.log10(data.numRows + 1)) * 4 + 22
   const cornerStyle = useMemo(() => cellStyle(cornerWidth), [cornerWidth])
-
-  const rowNumber = useCallback((rowIndex: number) => {
-    return rows[rowIndex].__index__ ?? rowIndex + startIndex + 1
-  }, [rows, startIndex])
 
   return <div className={pending ? 'table-container pending' : 'table-container'}>
     <div className='table-scroll' ref={scrollRef}>
@@ -266,7 +266,7 @@ export default function HighTable({
                 <td style={cornerStyle}>
                   {rowNumber(rowIndex).toLocaleString()}
                 </td>
-                {data.header.map((col, colIndex) => Cell(row[col], colIndex, startIndex + rowIndex))}
+                {data.header.map((col, colIndex) => Cell(row[col], colIndex, startIndex + rowIndex, row.__index__))}
               </tr>
             )}
             {postPadding.map((row, rowIndex) =>

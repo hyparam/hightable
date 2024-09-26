@@ -59,7 +59,7 @@ describe('HighTable', () => {
 
     fireEvent.doubleClick(cell)
 
-    expect(mockDoubleClick).toHaveBeenCalledWith(0, 1)
+    expect(mockDoubleClick).toHaveBeenCalledWith(1, 0)
   })
 
   it('displays error when data fetch fails', async () => {
