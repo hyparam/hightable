@@ -42,6 +42,9 @@ describe('HighTable', () => {
     const { container } = render(<HighTable data={mockData} />)
     const scrollDiv = container.querySelector('.table-scroll')
     if (!scrollDiv) throw new Error('Scroll container not found')
+    await waitFor(() => {
+      expect(mockData.rows).toHaveBeenCalledTimes(1)
+    })
 
     act(() => {
       fireEvent.scroll(scrollDiv, { target: { scrollTop: 500 } })
@@ -63,12 +66,13 @@ describe('HighTable', () => {
   })
 
   it('displays error when data fetch fails', async () => {
-    const mockSetError = vi.fn()
+    const mockOnError = vi.fn()
     mockData.rows.mockRejectedValueOnce(new Error('Failed to fetch data'))
-    const { container } = render(<HighTable data={mockData} onError={mockSetError} />)
+    const { container } = render(<HighTable data={mockData} onError={mockOnError} />)
 
     await waitFor(() => {
-      expect(mockSetError).toHaveBeenCalledWith(expect.any(Error))
+      expect(mockData.rows).toHaveBeenCalledOnce()
+      expect(mockOnError).toHaveBeenCalledWith(expect.any(Error))
     })
     // Clear pending state on error:
     expect(container.querySelector('.pending')).toBeNull()

@@ -11,7 +11,12 @@ export default [
     ignores: ['dist/*'],
 
     languageOptions: {
-      globals: globals.browser,
+      globals: {
+        ...globals.browser,
+        Babel: 'readonly',
+        React: 'readonly',
+        ReactDOM: 'readonly',
+      },
     },
 
     rules: {
@@ -20,7 +25,13 @@ export default [
       'arrow-spacing': 'error',
       camelcase: 'off',
       'comma-spacing': 'error',
-      'comma-dangle': ['error', 'always-multiline'],
+      'comma-dangle': ['error', {
+        arrays: 'always-multiline',
+        objects: 'always-multiline',
+        imports: 'always-multiline',
+        exports: 'always-multiline',
+        functions: 'never',
+      }],
       'eol-last': 'error',
       eqeqeq: 'error',
       'func-style': ['error', 'declaration'],
@@ -29,8 +40,8 @@ export default [
       'no-extra-parens': 'error',
       'no-multi-spaces': 'error',
       'no-trailing-spaces': 'error',
-      'no-undef': 'warn',
-      'no-unused-vars': 'warn',
+      'no-undef': 'error',
+      'no-unused-vars': 'error',
       'no-useless-concat': 'error',
       'no-useless-rename': 'error',
       'no-useless-return': 'error',

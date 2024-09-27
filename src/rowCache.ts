@@ -1,9 +1,9 @@
-import type { DataFrame } from './dataframe.js'
+import { type DataFrame, type AsyncRow, asyncRows } from './dataframe.js'
 
 interface RowGroup {
   start: number
   end: number
-  rows: Promise<Record<string, any>[]>
+  rows: AsyncRow[]
 }
 
 /**
@@ -20,7 +20,7 @@ export function rowCache(df: DataFrame): DataFrame {
 
   return {
     ...df,
-    async rows(start: number, end: number, orderBy?: string): Promise<Record<string, any>[]> {
+    rows(start: number, end: number, orderBy?: string): AsyncRow[] {
       const cache = caches[orderBy || ''] ||= []
       const n = hits + misses
       if (n && !(n % 10)) {
@@ -36,8 +36,7 @@ export function rowCache(df: DataFrame): DataFrame {
         if (pre.end >= end) {
           // Return cached rows
           hits++
-          const rows = await pre.rows
-          return rows.slice(start - pre.start, end - pre.start)
+          return pre.rows.slice(start - pre.start, end - pre.start)
         }
       }
       // TODO: check for query spanning multiple cached blocks
@@ -51,16 +50,17 @@ export function rowCache(df: DataFrame): DataFrame {
 
       // Fetch rows
       misses++
-      const rows = await df.rows(requestStart, requestEnd, orderBy)
+      const unwrapped = df.rows(requestStart, requestEnd, orderBy)
+      const rows = asyncRows(unwrapped, requestEnd - requestStart, df.header)
 
       // Add new rows to the cache, and merge adjacent row groups
       if (pre && pre.end === requestStart) {
         // Append new rows to existing pre RowGroup
         pre.end = requestEnd
-        pre.rows = pre.rows.then(preRows => preRows.concat(rows))
+        pre.rows = pre.rows.concat(rows)
       } else {
         // Insert new RowGroup into cache
-        pre = { start: requestStart, end: requestEnd, rows: Promise.resolve(rows) }
+        pre = { start: requestStart, end: requestEnd, rows }
         // Insert cached row group into cache after pre
         cache.splice(cacheIndex + 1, 0, pre)
       }
@@ -68,7 +68,7 @@ export function rowCache(df: DataFrame): DataFrame {
       // merge adjacent row groups
       if (post && post.start === pre.end) {
         pre.end = post.end
-        pre.rows = pre.rows.then(preRows => post.rows.then(postRows => preRows.concat(postRows)))
+        pre.rows = pre.rows.concat(post.rows)
       }
 
       // get merged rows from cache
@@ -77,8 +77,7 @@ export function rowCache(df: DataFrame): DataFrame {
 
         // Return cached rows
         hits++
-        const rows = await pre.rows
-        return rows.slice(start - pre.start, end - pre.start)
+        return pre.rows.slice(start - pre.start, end - pre.start)
       }
 
       return rows

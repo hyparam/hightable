@@ -5,7 +5,7 @@
 [![npm](https://img.shields.io/npm/v/hightable)](https://www.npmjs.com/package/hightable)
 [![workflow status](https://github.com/hyparam/hightable/actions/workflows/ci.yml/badge.svg)](https://github.com/hyparam/hightable/actions)
 [![mit license](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-![coverage](https://img.shields.io/badge/Coverage-89-darkred)
+![coverage](https://img.shields.io/badge/Coverage-90-darkred)
 
 HighTable is a virtualized table component for React, designed to efficiently display large datasets in the browser. It loads and renders only the rows necessary for the current viewport, enabling smooth scrolling and performance even with millions of rows. HighTable supports asynchronous data fetching, dynamic loading, and optional column sorting.
 
@@ -42,13 +42,14 @@ Each row object should be a mapping of column names to cell values.
 
 ### DataFrame Example
 
-```js
+Data is provided to the table via a `DataFrame` interface.
+
+```typescript
 const dataframe = {
   header: ['ID', 'Name', 'Email'],
   numRows: 1000000,
-  rows: async (start, end, orderBy) => {
+  rows(start: number, end: number, orderBy?: string): Promise<Record<string, any>> {
     // Fetch rows from your data source here
-    // 'orderBy' is an optional parameter representing the column to sort by
     return fetchRowsFromServer(start, end, orderBy)
   },
   sortable: true, // Set to true if your data source supports sorting
@@ -65,7 +66,7 @@ import HighTable from 'hightable'
 const dataframe = {
   header: ['ID', 'Name', 'Email'],
   numRows: 1000000,
-  rows: async (start, end, orderBy) => {
+  rows(start, end, orderBy) {
     // fetch rows from your data source here
     return fetchRowsFromServer(start, end, orderBy)
   },
