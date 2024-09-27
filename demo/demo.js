@@ -17,6 +17,7 @@ const dataframe = {
       const object = Object.fromEntries(header.slice(0, -1).map((key, index) => [key, row[index]]))
       arr.push({ ...row, object })
     }
+    await delay(20)
     return arr
   },
 }
@@ -77,4 +78,8 @@ function require(url) {
   const exports = {}
   run(requireRelative, exports, js)
   return exports
+}
+
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms))
 }
