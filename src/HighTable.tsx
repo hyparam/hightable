@@ -1,7 +1,7 @@
 import { ReactNode, useCallback, useEffect, useMemo, useReducer, useRef } from 'react'
-import { DataFrame, sortableDataFrame } from './dataframe.js'
+import { DataFrame, wrappedPromise } from './dataframe.js'
 import TableHeader, { cellStyle } from './TableHeader.js'
-export { DataFrame, HighTable, sortableDataFrame }
+export { DataFrame, HighTable, wrappedPromise }
 
 const rowHeight = 33 // row height px
 const padding = 20 // number of padding rows to render outside of the viewport
@@ -26,7 +26,6 @@ type State = {
 
 type Action =
   | { type: 'SET_ROWS'; start: number; rows: Record<string, any>[] }
-  | { type: 'SET_ERROR'; error: Error }
   | { type: 'SET_COLUMN_WIDTH'; columnIndex: number, columnWidth: number | undefined }
   | { type: 'SET_COLUMN_WIDTHS'; columnWidths: Array<number | undefined> }
   | { type: 'SET_ORDER'; orderBy: string | undefined }
@@ -42,11 +41,7 @@ function reducer(state: State, action: Action): State {
       rows: action.rows,
       offsetTop: Math.max(0, action.start - padding) * rowHeight,
       dataReady: true,
-      pending: false,
     }
-  case 'SET_ERROR':
-    console.error(action.error)
-    return state
   case 'SET_COLUMN_WIDTH': {
     const columnWidths = [...state.columnWidths]
     columnWidths[action.columnIndex] = action.columnWidth
@@ -89,8 +84,6 @@ export default function HighTable({
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const tableRef = useRef<HTMLTableElement>(null)
-  const latestRequestRef = useRef(0)
-  const pendingRequest = useRef<Promise<void>>()
   const pendingUpdate = useRef(false)
 
   if (!data) throw new Error('HighTable: data is required')
@@ -104,9 +97,10 @@ export default function HighTable({
      * Compute the rows to fetch based on the current scroll position.
      */
     async function handleScroll() {
+      if (pendingUpdate.current) return
+
       const clientHeight = scrollRef.current?.clientHeight || 100 // view window height
       const scrollTop = scrollRef.current?.scrollTop || 0 // scroll position
-      const tableHeight = tableRef.current?.clientHeight || 0
 
       // determine rows to fetch based on current scroll position
       // TODO: compute the floor delta so offsetTop adjustment is smooth
@@ -118,49 +112,48 @@ export default function HighTable({
       if (isNaN(start)) throw new Error('invalid start row ' + start)
       if (isNaN(end)) throw new Error('invalid end row ' + end)
 
-      // TODO: always update rendered rows, but use blanks if data is not loaded
-
-      // User scrolled so far that the table is out of view.
-      // Update position BEFORE fetching rows, otherwise the header will jump.
-      const isNearBottom = scrollHeight - offsetTop - tableHeight < overscan * rowHeight
-      const isBelow = !isNearBottom && offsetTop + tableHeight - clientHeight < scrollTop
-      const isAbove = scrollTop < offsetTop
-      if (isBelow || isAbove) {
-        // Replace rows with blanks and reset position
-        dispatch({ type: 'SET_ROWS', start, rows: Array.from({ length: end - start }, () => []) })
-      }
-
-      // skip overlapping requests, but always request latest at the end
-      if (pendingRequest.current) {
-        pendingUpdate.current = true
-        return
-      }
-      const requestId = ++latestRequestRef.current
-
       // Fetch a chunk of rows from the data frame
-      dispatch({ type: 'SET_PENDING', pending: true })
-      pendingRequest.current = data.rows(start, end, orderBy).then(updatedRows => {
-        if (end - start !== updatedRows.length) {
-          onError(new Error(`dataframe rows expected ${end - start} received ${updatedRows.length}`))
-        }
-        pendingRequest.current = undefined
-        dispatch({ type: 'SET_ROWS', start, rows: updatedRows })
+      try {
+        const rows = data.rows(start, end, orderBy)
+        dispatch({ type: 'SET_ROWS', start, rows })
+        updateRows() // initial update
+        pendingUpdate.current = true
 
-        if (requestId !== latestRequestRef.current) {
-          // TODO: stale requests should never happen
-          console.log('request', requestId, 'is stale')
+        function updateRows() {
+          const resolved = []
+          for (const row of rows) {
+            const resolvedRow: Record<string, any> = {}
+            for (const [key, promise] of Object.entries(row)) {
+              if (typeof promise === 'object') {
+                resolvedRow[key] = promise.resolved
+              }
+            }
+            resolved.push(resolvedRow)
+          }
+          dispatch({ type: 'SET_ROWS', start, rows: resolved })
         }
 
-        // if user scrolled while fetching, fetch again
-        if (pendingUpdate.current) {
-          pendingUpdate.current = false
-          handleScroll()
+        // Subscribe to data updates
+        for (const row of rows) {
+          for (const [key, promise] of Object.entries(row)) {
+            if (typeof promise === 'object') {
+              promise.then(updateRows)
+            }
+          }
         }
-      }).catch(error => {
-        dispatch({ type: 'SET_PENDING', pending: false })
-        pendingRequest.current = undefined
-        onError(error)
-      })
+
+        // Await all pending promises
+        for (const row of rows) {
+          for (const promise of Object.values(row)) {
+            if (typeof promise === 'object') {
+              await promise
+            }
+          }
+        }
+        pendingUpdate.current = false
+      } catch (error) {
+        onError(error as Error)
+      }
     }
     // update
     handleScroll()
@@ -266,7 +259,9 @@ export default function HighTable({
                 <td style={cornerStyle}>
                   {rowNumber(rowIndex).toLocaleString()}
                 </td>
-                {data.header.map((col, colIndex) => Cell(row[col], colIndex, startIndex + rowIndex, row.__index__))}
+                {data.header.map((col, colIndex) =>
+                  Cell(row[col], colIndex, startIndex + rowIndex, row.__index__)
+                )}
               </tr>
             )}
             {postPadding.map((row, rowIndex) =>

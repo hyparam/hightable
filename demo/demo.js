@@ -1,34 +1,38 @@
+const { HighTable, wrappedPromise } = require('./src/HighTable.tsx')
+
 const header = ['ID', 'Name', 'Age', 'UUID', 'Text', 'JSON']
-const dataframe = {
+const data = {
   header,
   numRows: 10000,
-  async rows(start, end) {
+  rows(start, end) {
     const arr = []
     for (let i = start; i < end; i++) {
       const rand = Math.abs(Math.sin(i + 1))
       const uuid = rand.toString(16).substring(2)
-      const row = {
+      const partial = {
         ID: i + 1,
         Name: 'Name' + i,
         Age: 20 + i % 80,
         UUID: uuid,
         Text: lorem(rand, 100),
       }
-      const object = Object.fromEntries(header.slice(0, -1).map((key, index) => [key, row[index]]))
-      arr.push({ ...row, object })
+      const object = Object.fromEntries(header.slice(0, -1).map((key, index) => [key, partial[key]]))
+      const row = { ...partial, JSON: JSON.stringify(object) }
+      // Map to randomly delayed promises
+      const promised = Object.fromEntries(header.map(key =>
+        [key, wrappedPromise(delay(row[key], 1000 * Math.random()))]
+      ))
+      arr.push(promised)
     }
-    await delay(20)
     return arr
   },
 }
 
 // Load HighTable.tsx and render
 function init() {
-  const { HighTable, sortableDataFrame } = require('./src/HighTable.tsx')
-  const sortable = sortableDataFrame(dataframe)
   const container = document.getElementById('app')
   const root = ReactDOM.createRoot(container)
-  root.render(React.createElement(HighTable, { data: sortable }))
+  root.render(React.createElement(HighTable, { data }))
 }
 init()
 
@@ -80,6 +84,6 @@ function require(url) {
   return exports
 }
 
-function delay(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms))
+function delay(value, ms) {
+  return new Promise(resolve => setTimeout(() => resolve(value), ms))
 }
