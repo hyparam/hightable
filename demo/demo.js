@@ -24,11 +24,12 @@ const dataframe = {
 
 // Load HighTable.tsx and render
 function init() {
-  const { HighTable, sortableDataFrame } = require('./src/HighTable.tsx')
+  const { HighTable, rowCache, sortableDataFrame } = require('./src/HighTable.tsx')
   const sortable = sortableDataFrame(dataframe)
+  const cached = rowCache(sortable)
   const container = document.getElementById('app')
   const root = ReactDOM.createRoot(container)
-  root.render(React.createElement(HighTable, { data: sortable }))
+  root.render(React.createElement(HighTable, { data: cached }))
 }
 init()
 
@@ -52,6 +53,7 @@ function require(url) {
   if (url === 'react-dom') return ReactDOM
   if (url === './src/TableHeader.js') url = './src/TableHeader.tsx'
   if (url === './src/dataframe.js') url = './src/dataframe.ts'
+  if (url === './src/rowCache.js') url = './src/rowCache.ts'
 
   const filename = url.replace(/^\.\//, '')
   const req = new XMLHttpRequest()

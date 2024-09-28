@@ -1,7 +1,8 @@
 import { ReactNode, useCallback, useEffect, useMemo, useReducer, useRef } from 'react'
 import { DataFrame, sortableDataFrame } from './dataframe.js'
 import TableHeader, { cellStyle } from './TableHeader.js'
-export { DataFrame, HighTable, sortableDataFrame }
+import { rowCache } from './rowCache.js'
+export { DataFrame, HighTable, rowCache, sortableDataFrame }
 
 const rowHeight = 33 // row height px
 const padding = 20 // number of padding rows to render outside of the viewport
