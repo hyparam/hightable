@@ -26,7 +26,6 @@ type State = {
 
 type Action =
   | { type: 'SET_ROWS'; start: number; rows: Record<string, any>[] }
-  | { type: 'SET_ERROR'; error: Error }
   | { type: 'SET_COLUMN_WIDTH'; columnIndex: number, columnWidth: number | undefined }
   | { type: 'SET_COLUMN_WIDTHS'; columnWidths: Array<number | undefined> }
   | { type: 'SET_ORDER'; orderBy: string | undefined }
@@ -44,9 +43,6 @@ function reducer(state: State, action: Action): State {
       dataReady: true,
       pending: false,
     }
-  case 'SET_ERROR':
-    console.error(action.error)
-    return state
   case 'SET_COLUMN_WIDTH': {
     const columnWidths = [...state.columnWidths]
     columnWidths[action.columnIndex] = action.columnWidth
