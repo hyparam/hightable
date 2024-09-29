@@ -41,7 +41,7 @@ export function asyncRows(rows: AsyncRow[] | Promise<Row[]>, numRows: number, ke
     }
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i]
-      for (const key in row) {
+      for (const key of keys) {
         wrapped[i][key].resolve(row[key])
       }
     }
@@ -100,15 +100,18 @@ export function resolvablePromise<T>(): ResolvablePromise<T> {
 export function sortableDataFrame(data: DataFrame): DataFrame {
   if (data.sortable) return data // already sortable
   // Fetch all rows and add __index__ column
-  const keys = ['__index__', ...data.header]
-  const all: Promise<Record<string, any>[]> = awaitRows(data.rows(0, data.numRows))
-    .then(rows => rows.map((row, i) => ({ __index__: i, ...row })))
+  let all: Promise<Record<string, any>[]>
   return {
     ...data,
     rows(start: number, end: number, orderBy?: string): AsyncRow[] | Promise<Row[]> {
       if (orderBy) {
         if (!data.header.includes(orderBy)) {
           throw new Error(`Invalid orderBy field: ${orderBy}`)
+        }
+        if (!all) {
+          // Fetch all rows and add __index__ column
+          all = awaitRows(data.rows(0, data.numRows))
+            .then(rows => rows.map((row, i) => ({ __index__: i, ...row })))
         }
         const sorted = all.then(all => {
           return all.sort((a, b) => {
@@ -117,7 +120,7 @@ export function sortableDataFrame(data: DataFrame): DataFrame {
             return 0
           }).slice(start, end)
         })
-        return asyncRows(sorted, end - start, keys)
+        return sorted
       } else {
         return data.rows(start, end)
       }
