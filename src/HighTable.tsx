@@ -17,7 +17,6 @@ interface TableProps {
 
 type State = {
   columnWidths: Array<number | undefined>
-  offsetTop: number
   startIndex: number
   rows: AsyncRow[]
   orderBy?: string
@@ -40,7 +39,6 @@ function reducer(state: State, action: Action): State {
       ...state,
       startIndex: action.start,
       rows: action.rows,
-      offsetTop: Math.max(0, action.start - padding) * rowHeight,
       dataReady: state.dataReady || action.hasCompleteRow,
     }
   case 'SET_COLUMN_WIDTH': {
@@ -63,7 +61,6 @@ function reducer(state: State, action: Action): State {
 
 const initialState = {
   columnWidths: [],
-  offsetTop: 0,
   startIndex: 0,
   rows: [],
   dataReady: false,
@@ -81,7 +78,8 @@ export default function HighTable({
 }: TableProps) {
   const [state, dispatch] = useReducer(reducer, initialState)
 
-  const { columnWidths, offsetTop, startIndex, rows, orderBy, dataReady, pending } = state
+  const { columnWidths, startIndex, rows, orderBy, dataReady, pending } = state
+  const offsetTopRef = useRef(0)
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const tableRef = useRef<HTMLTableElement>(null)
@@ -117,6 +115,7 @@ export default function HighTable({
 
       // User scrolled so far that the table is out of view.
       // Update position BEFORE fetching rows, otherwise the header will jump.
+      const offsetTop = Math.max(0, scrollTop - padding * rowHeight)
       const isNearBottom = scrollHeight - offsetTop - tableHeight < overscan * rowHeight
       const isBelow = !isNearBottom && offsetTop + tableHeight - clientHeight < scrollTop
       const isAbove = scrollTop < offsetTop
@@ -133,10 +132,9 @@ export default function HighTable({
 
       // Fetch a chunk of rows from the data frame
       try {
+        pendingRequest.current = true
         const unwrapped = data.rows(start, end, orderBy)
         const rows = asyncRows(unwrapped, end - start, data.header)
-        updateRows() // initial update
-        pendingRequest.current = true
 
         function updateRows() {
           const resolved = []
@@ -155,6 +153,7 @@ export default function HighTable({
             if (isRowComplete) hasCompleteRow = true
             resolved.push(resolvedRow)
           }
+          offsetTopRef.current = offsetTop
           dispatch({ type: 'SET_ROWS', start, rows: resolved, hasCompleteRow })
         }
 
@@ -265,7 +264,7 @@ export default function HighTable({
           className={data.sortable ? 'table sortable' : 'table'}
           ref={tableRef}
           role='grid'
-          style={{ top: `${offsetTop}px` }}
+          style={{ top: `${offsetTopRef.current}px` }}
           tabIndex={0}>
           <TableHeader
             columnWidths={columnWidths}
