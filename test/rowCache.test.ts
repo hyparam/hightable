@@ -59,17 +59,36 @@ describe('rowCache', () => {
     expect(df.rows).toHaveBeenCalledTimes(2)
   })
 
-  // it('should handle overlapping cached blocks', async () => {
-  //   const df = makeDf()
-  //   const dfCached = rowCache(df)
+  it('should handle a gap in cached blocks', async () => {
+    const df = makeDf()
+    const dfCached = rowCache(df)
 
-  //   // Cache first block
-  //   dfCached.rows(6, 9)
+    // Cache first block
+    dfCached.rows(0, 2)
+    // Cache second block
+    dfCached.rows(4, 6)
+    // Fetch combined block
+    const gapRows = await awaitRows(dfCached.rows(0, 6))
+    expect(gapRows).toEqual([
+      { id: 0 }, { id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }, { id: 5 }
+    ])
+    expect(df.rows).toHaveBeenCalledTimes(3)
+    expect(df.rows).toHaveBeenCalledWith(2, 4, undefined)
+  })
 
-  //   // Fetch overlapping block
-  //   const overlappingRows = dfCached.rows(8, 11)
-  //   expect(overlappingRows).toEqual([[8], [9], [10]])
-  //   expect(df.rows).toHaveBeenCalledTimes(2)
-  //   expect(df.rows).toHaveBeenCalledWith(8, 10)
-  // })
+  it('should handle overlapping cached blocks', async () => {
+    const df = makeDf()
+    const dfCached = rowCache(df)
+
+    // Cache first block
+    dfCached.rows(6, 9)
+
+    // Fetch overlapping block
+    const overlappingRows = await awaitRows(dfCached.rows(8, 11))
+    expect(overlappingRows).toEqual([
+      { id: 8 }, { id: 9 }, { id: 10 }
+    ])
+    expect(df.rows).toHaveBeenCalledTimes(2)
+    expect(df.rows).toHaveBeenCalledWith(9, 11, undefined)
+  })
 })

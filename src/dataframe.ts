@@ -32,6 +32,7 @@ export interface DataFrame {
  * This function turns future data into a "grid" of wrapped promises.
  */
 export function asyncRows(rows: AsyncRow[] | Promise<Row[]>, numRows: number, keys: string[]): AsyncRow[] {
+  if (Array.isArray(rows)) return rows
   const wrapped = new Array(numRows).fill(null)
     .map(_ => Object.fromEntries(keys.map(key => [key, resolvablePromise<any>()])))
   const futureRows = rows instanceof Promise ? rows : Promise.resolve(rows)
