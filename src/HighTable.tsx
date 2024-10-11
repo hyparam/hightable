@@ -1,8 +1,8 @@
 import { ReactNode, useCallback, useEffect, useMemo, useReducer, useRef } from 'react'
-import { AsyncRow, DataFrame, Row, sortableDataFrame, wrapPromise, asyncRows } from './dataframe.js'
+import { AsyncRow, DataFrame, asyncRows, sortableDataFrame, wrapPromise } from './dataframe.js'
 import TableHeader, { cellStyle } from './TableHeader.js'
 import { rowCache } from './rowCache.js'
-export { DataFrame, HighTable, rowCache, sortableDataFrame, wrapPromise }
+export { AsyncRow, DataFrame, HighTable, rowCache, sortableDataFrame, wrapPromise }
 
 const rowHeight = 33 // row height px
 const padding = 20 // number of padding rows to render outside of the viewport

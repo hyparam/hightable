@@ -31,7 +31,8 @@ export function rowCache(df: DataFrame): DataFrame {
           }
         } else if (blockStart !== undefined) {
           const blockEnd = i
-          const futureRows = asyncRows(df.rows(blockStart, blockEnd, orderBy), df.numRows, df.header)
+          const numRows = blockEnd - blockStart
+          const futureRows = asyncRows(df.rows(blockStart, blockEnd, orderBy), numRows, df.header)
           for (let j = 0; j < blockEnd - blockStart; j++) {
             cache[blockStart + j] = futureRows[j]
           }
@@ -41,7 +42,8 @@ export function rowCache(df: DataFrame): DataFrame {
       // Fetch the last block if needed
       if (blockStart !== undefined) {
         const blockEnd = end
-        const futureRows = asyncRows(df.rows(blockStart, blockEnd, orderBy), df.numRows, df.header)
+        const numRows = blockEnd - blockStart
+        const futureRows = asyncRows(df.rows(blockStart, blockEnd, orderBy), numRows, df.header)
         for (let j = 0; j < blockEnd - blockStart; j++) {
           cache[blockStart + j] = futureRows[j]
       }

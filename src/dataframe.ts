@@ -33,12 +33,13 @@ export interface DataFrame {
  */
 export function asyncRows(rows: AsyncRow[] | Promise<Row[]>, numRows: number, keys: string[]): AsyncRow[] {
   if (Array.isArray(rows)) return rows
+  // Make grid of resolvable promises
   const wrapped = new Array(numRows).fill(null)
     .map(_ => Object.fromEntries(keys.map(key => [key, resolvablePromise<any>()])))
   const futureRows = rows instanceof Promise ? rows : Promise.resolve(rows)
   futureRows.then(rows => {
     if (rows.length !== numRows) {
-      throw new Error(`Expected ${numRows} rows, got ${rows.length}`)
+      console.warn(`Expected ${numRows} rows, got ${rows.length}`)
     }
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i]
