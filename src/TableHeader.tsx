@@ -36,7 +36,7 @@ export interface ColumnWidth {
  * Render a resizable header for a table.
  */
 export default function TableHeader({
-  header, cacheKey, columnWidths, orderBy, setOrderBy, setColumnWidth, setColumnWidths, dataReady
+  header, cacheKey, columnWidths, orderBy, setOrderBy, setColumnWidth, setColumnWidths, dataReady,
 }: TableProps) {
   const [resizing, setResizing] = useState<ResizingState | undefined>()
   const headerRefs = useRef(header.map(() => createRef<HTMLTableCellElement>()))

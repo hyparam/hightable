@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { awaitRows, DataFrame, resolvablePromise, Row, sortableDataFrame, wrapPromise } from '../src/dataframe.js'
+import { DataFrame, Row, awaitRows, resolvablePromise, sortableDataFrame, wrapPromise } from '../src/dataframe.js'
 
 function wrapObject(obj: Record<string, any>): Row {
   return Object.fromEntries(

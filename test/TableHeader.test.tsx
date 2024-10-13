@@ -1,6 +1,6 @@
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import TableHeader, { cellStyle, ColumnWidth, saveColumnWidth } from '../src/TableHeader.js'
+import TableHeader, { ColumnWidth, cellStyle, saveColumnWidth } from '../src/TableHeader.js'
 
 vi.stubGlobal('localStorage', (() => {
   let store: Record<string, string> = {}
@@ -38,11 +38,11 @@ describe('TableHeader', () => {
     const { columnWidths, setColumnWidth, setColumnWidths } = mockColumnWidths()
     const { getByTitle } = render(<table>
       <TableHeader
-        header={header}
         columnWidths={columnWidths}
+        dataReady={dataReady}
+        header={header}
         setColumnWidth={setColumnWidth}
-        setColumnWidths={setColumnWidths}
-        dataReady={dataReady} />
+        setColumnWidths={setColumnWidths} />
     </table>)
     header.forEach(columnHeader => {
       expect(getByTitle(columnHeader)).toBeDefined()
@@ -80,12 +80,12 @@ describe('TableHeader', () => {
     const { columnWidths, setColumnWidth, setColumnWidths } = mockColumnWidths()
     const { getByTitle } = render(<table>
       <TableHeader
-        header={header}
         cacheKey={cacheKey}
         columnWidths={columnWidths}
+        dataReady={dataReady}
+        header={header}
         setColumnWidth={setColumnWidth}
-        setColumnWidths={setColumnWidths}
-        dataReady={dataReady} />
+        setColumnWidths={setColumnWidths} />
     </table>)
 
     const firstHeader = getByTitle(header[0])
@@ -102,12 +102,12 @@ describe('TableHeader', () => {
     const { columnWidths, setColumnWidth, setColumnWidths } = mockColumnWidths()
     const { getByTitle } = render(<table>
       <TableHeader
-        header={header}
         cacheKey={cacheKey}
         columnWidths={columnWidths}
+        dataReady={dataReady}
+        header={header}
         setColumnWidth={setColumnWidth}
-        setColumnWidths={setColumnWidths}
-        dataReady={dataReady} />
+        setColumnWidths={setColumnWidths} />
     </table>)
 
     // Simulate resizing the first column
