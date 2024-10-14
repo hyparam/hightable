@@ -1,11 +1,10 @@
 import { ReactNode, useCallback, useEffect, useMemo, useReducer, useRef } from 'react'
-import { AsyncRow, DataFrame, asyncRows, sortableDataFrame, wrapPromise } from './dataframe.js'
+import { AsyncRow, DataFrame, Row, asyncRows, sortableDataFrame, wrapPromise } from './dataframe.js'
 import TableHeader, { cellStyle } from './TableHeader.js'
 import { rowCache } from './rowCache.js'
-export { AsyncRow, DataFrame, HighTable, rowCache, sortableDataFrame, wrapPromise }
+export { AsyncRow, DataFrame, HighTable, Row, asyncRows, rowCache, sortableDataFrame, wrapPromise }
 
 const rowHeight = 33 // row height px
-const padding = 20 // number of padding rows to render outside of the viewport
 
 interface TableProps {
   data: DataFrame
@@ -17,10 +16,10 @@ interface TableProps {
 
 type State = {
   columnWidths: Array<number | undefined>
+  dataReady: boolean
   startIndex: number
   rows: AsyncRow[]
   orderBy?: string
-  dataReady: boolean
   pending: boolean
 }
 
@@ -73,8 +72,9 @@ const initialState = {
 export default function HighTable({
   data,
   overscan = 20,
+  padding = 20,
   onDoubleClickCell,
-  onError = console.error
+  onError = console.error,
 }: TableProps) {
   const [state, dispatch] = useReducer(reducer, initialState)
 
@@ -195,7 +195,7 @@ export default function HighTable({
       scroller?.removeEventListener('scroll', handleScroll)
       window.removeEventListener('resize', handleScroll)
     }
-  }, [data, orderBy, scrollHeight, onError])
+  }, [data, orderBy, overscan, padding, scrollHeight, onError])
 
   /**
    * Validate row length
@@ -242,9 +242,6 @@ export default function HighTable({
     return rows[rowIndex].__index__ ?? rowIndex + startIndex + 1
   }, [rows, startIndex])
 
-  // don't render table if header is empty
-  if (!data.header.length) return
-
   // add empty pre and post rows to fill the viewport
   const prePadding = Array.from({ length: Math.min(padding, startIndex) }, () => [])
   const postPadding = Array.from({
@@ -254,6 +251,9 @@ export default function HighTable({
   // fixed corner width based on number of rows
   const cornerWidth = Math.ceil(Math.log10(data.numRows + 1)) * 4 + 22
   const cornerStyle = useMemo(() => cellStyle(cornerWidth), [cornerWidth])
+
+  // don't render table if header is empty
+  if (!data.header.length) return
 
   return <div className={pending ? 'table-container pending' : 'table-container'}>
     <div className='table-scroll' ref={scrollRef}>
@@ -268,12 +268,12 @@ export default function HighTable({
           tabIndex={0}>
           <TableHeader
             columnWidths={columnWidths}
+            dataReady={dataReady}
+            header={data.header}
             orderBy={orderBy}
             setColumnWidth={(columnIndex, columnWidth) => dispatch({ type: 'SET_COLUMN_WIDTH', columnIndex, columnWidth })}
             setColumnWidths={columnWidths => dispatch({ type: 'SET_COLUMN_WIDTHS', columnWidths })}
-            setOrderBy={orderBy => data.sortable && dispatch({ type: 'SET_ORDER', orderBy })}
-            dataReady={dataReady}
-            header={data.header} />
+            setOrderBy={orderBy => data.sortable && dispatch({ type: 'SET_ORDER', orderBy })} />
           <tbody>
             {prePadding.map((row, rowIndex) =>
               <tr key={startIndex - prePadding.length + rowIndex}>

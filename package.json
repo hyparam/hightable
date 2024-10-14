@@ -30,7 +30,6 @@
     "coverage": "vitest run --coverage --coverage.include=src",
     "demo": "http-server -o",
     "lint": "eslint",
-    "publish": "npm run build",
     "test": "vitest run"
   },
   "devDependencies": {

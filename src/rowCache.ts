@@ -1,4 +1,4 @@
-import { AsyncRow, asyncRows, DataFrame } from './dataframe.js'
+import { AsyncRow, DataFrame, asyncRows } from './dataframe.js'
 
 /**
  * Wrap a dataframe with cached rows.
@@ -46,7 +46,7 @@ export function rowCache(df: DataFrame): DataFrame {
         const futureRows = asyncRows(df.rows(blockStart, blockEnd, orderBy), numRows, df.header)
         for (let j = 0; j < blockEnd - blockStart; j++) {
           cache[blockStart + j] = futureRows[j]
-      }
+        }
       }
 
       return cache.slice(start, end)
