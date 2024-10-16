@@ -83,7 +83,7 @@ export default function HighTable({
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const tableRef = useRef<HTMLTableElement>(null)
-  const pendingRequest = useRef(false)
+  const pendingRequest = useRef(0)
   const pendingUpdate = useRef(false)
 
   if (!data) throw new Error('HighTable: data is required')
@@ -99,7 +99,6 @@ export default function HighTable({
     async function handleScroll() {
       const clientHeight = scrollRef.current?.clientHeight || 100 // view window height
       const scrollTop = scrollRef.current?.scrollTop || 0 // scroll position
-      const tableHeight = tableRef.current?.clientHeight || 0
 
       // determine rows to fetch based on current scroll position
       // TODO: compute the floor delta so offsetTop adjustment is smooth
@@ -111,37 +110,20 @@ export default function HighTable({
       if (isNaN(start)) throw new Error('invalid start row ' + start)
       if (isNaN(end)) throw new Error('invalid end row ' + end)
 
-      // TODO: always update rendered rows, but use blanks if data is not loaded
-
-      // User scrolled so far that the table is out of view.
-      // Update position BEFORE fetching rows, otherwise the header will jump.
       const offsetTop = Math.max(0, scrollTop - padding * rowHeight)
-      const isNearBottom = scrollHeight - offsetTop - tableHeight < overscan * rowHeight
-      const isBelow = !isNearBottom && offsetTop + tableHeight - clientHeight < scrollTop
-      const isAbove = scrollTop < offsetTop
-      if (isBelow || isAbove) {
-        // Replace rows with blanks and reset position
-        dispatch({ type: 'SET_ROWS', start, rows: Array.from({ length: end - start }, () => ({})), hasCompleteRow: false })
-      }
-
-      // skip overlapping requests, but always request latest at the end
-      if (pendingRequest.current) {
-        pendingUpdate.current = true
-        return
-      }
 
       // Fetch a chunk of rows from the data frame
       try {
-        pendingRequest.current = true
+        const requestId = ++pendingRequest.current
         const unwrapped = data.rows(start, end, orderBy)
         const rows = asyncRows(unwrapped, end - start, data.header)
 
-        function updateRows() {
+        const updateRows = throttle(() => {
           const resolved = []
           let hasCompleteRow = false // true if at least one row is fully resolved
           for (const row of rows) {
             // Return only resolved values
-            const resolvedRow: Record<string, any> = {}
+            const resolvedRow: Row = {}
             let isRowComplete = true
             for (const [key, promise] of Object.entries(row)) {
               if ('resolved' in promise) {
@@ -155,12 +137,17 @@ export default function HighTable({
           }
           offsetTopRef.current = offsetTop
           dispatch({ type: 'SET_ROWS', start, rows: resolved, hasCompleteRow })
-        }
+        }, 10)
+        updateRows() // initial update
 
         // Subscribe to data updates
         for (const row of rows) {
           for (const [key, promise] of Object.entries(row)) {
-            promise.then(updateRows).catch(() => {})
+            promise.then(() => {
+              if (pendingRequest.current === requestId) {
+                updateRows()
+              }
+            }).catch(() => {})
           }
         }
 
@@ -170,7 +157,6 @@ export default function HighTable({
             await promise
           }
         }
-        pendingRequest.current = false
 
         // if user scrolled while fetching, fetch again
         if (pendingUpdate.current) {
@@ -179,7 +165,6 @@ export default function HighTable({
         }
       } catch (error) {
         dispatch({ type: 'SET_PENDING', pending: false })
-        pendingRequest.current = false
         onError(error as Error)
       }
     }
@@ -321,4 +306,28 @@ export function stringify(value: any): string | undefined {
     return `{${Object.entries(value).map(([k, v]) => `${k}: ${stringify(v)}`).join(', ')}}`
   }
   return value.toString()
+}
+
+/**
+ * Throttle a function to run at most once every `wait` milliseconds.
+ */
+function throttle(fn: () => void, wait: number): () => void {
+  let last = 0
+  let pending = false
+  return () => {
+    const now = Date.now()
+    if (now - last > wait) {
+      last = now
+      fn()
+    } else if (!pending) {
+      // trailing edge
+      pending = true
+      const remaining = wait - (now - last)
+      setTimeout(() => {
+        last = Date.now()
+        pending = false
+        fn()
+      }, remaining)
+    }
+  }
 }

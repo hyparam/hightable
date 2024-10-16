@@ -20,7 +20,8 @@ const data = {
       const row = { ...partial, JSON: JSON.stringify(object) }
       // Map to randomly delayed promises
       const promised = Object.fromEntries(header.map(key =>
-        [key, wrapPromise(delay(row[key], 1000 * Math.random()))]
+        // discrete time delay for each cell to simulate async data loading
+        [key, wrapPromise(delay(row[key], 100 * Math.floor(10 * Math.random())))]
       ))
       arr.push(promised)
     }

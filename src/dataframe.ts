@@ -102,7 +102,7 @@ export function resolvablePromise<T>(): ResolvablePromise<T> {
 export function sortableDataFrame(data: DataFrame): DataFrame {
   if (data.sortable) return data // already sortable
   // Fetch all rows and add __index__ column
-  let all: Promise<Record<string, any>[]>
+  let all: Promise<Row[]>
   return {
     ...data,
     rows(start: number, end: number, orderBy?: string): AsyncRow[] | Promise<Row[]> {
@@ -131,11 +131,17 @@ export function sortableDataFrame(data: DataFrame): DataFrame {
   }
 }
 
+/**
+ * Await all promises in an AsyncRow and return resolved row.
+ */
 function awaitRow(row: AsyncRow): Promise<Row> {
   return Promise.all(Object.values(row))
     .then(values => Object.fromEntries(Object.keys(row).map((key, i) => [key, values[i]])))
 }
 
+/**
+ * Await all promises in list of AsyncRows and return resolved rows.
+ */
 export function awaitRows(rows: AsyncRow[] | Promise<Row[]>): Promise<Row[]> {
   if (rows instanceof Promise) return rows
   return Promise.all(rows.map(awaitRow))
