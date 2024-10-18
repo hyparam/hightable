@@ -1,8 +1,11 @@
 import { ReactNode, useCallback, useEffect, useMemo, useReducer, useRef } from 'react'
-import { AsyncRow, DataFrame, Row, asyncRows, sortableDataFrame, wrapPromise } from './dataframe.js'
+import { AsyncRow, DataFrame, Row, asyncRows } from './dataframe.js'
 import TableHeader, { cellStyle } from './TableHeader.js'
-import { rowCache } from './rowCache.js'
-export { AsyncRow, DataFrame, HighTable, Row, asyncRows, rowCache, sortableDataFrame, wrapPromise }
+export { rowCache } from './rowCache.js'
+export {
+  AsyncRow, DataFrame, ResolvablePromise, Row, asyncRows, resolvablePromise, sortableDataFrame, wrapPromise
+} from './dataframe.js'
+export { HighTable }
 
 const rowHeight = 33 // row height px
 

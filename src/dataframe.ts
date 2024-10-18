@@ -75,7 +75,7 @@ export function wrapPromise<T>(promise: Promise<T> | T): WrappedPromise<T> {
   return wrapped
 }
 
-type ResolvablePromise<T> = Promise<T> & {
+export type ResolvablePromise<T> = Promise<T> & {
   resolve: (value: T) => void
   reject: (error: Error) => void
 }
