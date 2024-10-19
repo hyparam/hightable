@@ -75,6 +75,6 @@ describe('HighTable', () => {
       expect(mockOnError).toHaveBeenCalledWith(expect.any(Error))
     })
     // Clear pending state on error:
-    expect(container.querySelector('.pending')).toBeNull()
+    expect(container.querySelector('div.pending')).toBeNull()
   })
 })

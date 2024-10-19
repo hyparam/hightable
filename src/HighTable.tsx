@@ -208,6 +208,7 @@ export default function HighTable({
       if (str.length > 100) title = str
     }
     return <td
+      className={str === undefined ? 'pending' : undefined}
       key={col}
       onDoubleClick={() => onDoubleClickCell?.(col, rowIndex ?? row)}
       style={memoizedStyles[col]}
