@@ -26,31 +26,33 @@ export interface DataFrame {
   sortable?: boolean
 }
 
+export function resolvableRow(header: string[]): { [key: string]: ResolvablePromise<any> } {
+  return Object.fromEntries(header.map(key => [key, resolvablePromise<any>()]))
+}
+
 /**
  * Helper method to wrap future rows into AsyncRows.
  * Helpful when you want to define a DataFrame with simple async fetching of rows.
  * This function turns future data into a "grid" of wrapped promises.
  */
-export function asyncRows(rows: AsyncRow[] | Promise<Row[]>, numRows: number, keys: string[]): AsyncRow[] {
+export function asyncRows(rows: AsyncRow[] | Promise<Row[]>, numRows: number, header: string[]): AsyncRow[] {
   if (Array.isArray(rows)) return rows
   // Make grid of resolvable promises
-  const wrapped = new Array(numRows).fill(null)
-    .map(_ => Object.fromEntries(keys.map(key => [key, resolvablePromise<any>()])))
-  const futureRows = rows instanceof Promise ? rows : Promise.resolve(rows)
-  futureRows.then(rows => {
+  const wrapped = new Array(numRows).fill(null).map(_ => resolvableRow(header))
+  rows.then(rows => {
     if (rows.length !== numRows) {
       console.warn(`Expected ${numRows} rows, got ${rows.length}`)
     }
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i]
-      for (const key of keys) {
+      for (const key of header) {
         wrapped[i][key].resolve(row[key])
       }
     }
   }).catch(error => {
     // Reject all promises on error
     for (let i = 0; i < numRows; i++) {
-      for (const key of keys) {
+      for (const key of header) {
         wrapped[i][key].reject(error)
       }
     }
