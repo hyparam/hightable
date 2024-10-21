@@ -83,6 +83,87 @@ describe('TableHeader', () => {
     expect(setColumnWidth).toHaveBeenCalledTimes(1)
     expect(setColumnWidths).toHaveBeenCalledTimes(1)
   })
+
+  it('sets orderBy to the column name when a header is clicked', () => {
+    const { columnWidths, setColumnWidth, setColumnWidths } = mockColumnWidths()
+    const setOrderBy = vi.fn()
+    const { getByTitle } = render(<table>
+      <TableHeader
+        header={header}
+        columnWidths={columnWidths}
+        setColumnWidth={setColumnWidth}
+        setColumnWidths={setColumnWidths}
+        setOrderBy={setOrderBy}
+        dataReady={dataReady} />
+    </table>)
+
+    const ageHeader = getByTitle('Age')
+    fireEvent.click(ageHeader)
+
+    expect(setOrderBy).toHaveBeenCalledWith('Age')
+  })
+
+  it('toggles orderBy to undefined when the same header is clicked again', () => {
+    const { columnWidths, setColumnWidth, setColumnWidths } = mockColumnWidths()
+    const setOrderBy = vi.fn()
+    const { getByTitle, rerender } = render(<table>
+      <TableHeader
+        header={header}
+        columnWidths={columnWidths}
+        setColumnWidth={setColumnWidth}
+        setColumnWidths={setColumnWidths}
+        setOrderBy={setOrderBy}
+        orderBy="Age"
+        dataReady={dataReady} />
+    </table>)
+
+    const ageHeader = getByTitle('Age')
+    fireEvent.click(ageHeader)
+
+    expect(setOrderBy).toHaveBeenCalledWith(undefined)
+  })
+
+  it('changes orderBy to a new column when a different header is clicked', () => {
+    const { columnWidths, setColumnWidth, setColumnWidths } = mockColumnWidths()
+    const setOrderBy = vi.fn()
+    const { getByTitle } = render(<table>
+      <TableHeader
+        header={header}
+        columnWidths={columnWidths}
+        setColumnWidth={setColumnWidth}
+        setColumnWidths={setColumnWidths}
+        setOrderBy={setOrderBy}
+        orderBy="Age"
+        dataReady={dataReady} />
+    </table>)
+
+    const addressHeader = getByTitle('Address')
+    fireEvent.click(addressHeader)
+
+    expect(setOrderBy).toHaveBeenCalledWith('Address')
+  })
+
+  it('does not change orderBy when clicking on the resize handle', () => {
+    const { columnWidths, setColumnWidth, setColumnWidths } = mockColumnWidths()
+    const setOrderBy = vi.fn()
+    const { getByTitle } = render(<table>
+      <TableHeader
+        header={header}
+        columnWidths={columnWidths}
+        setColumnWidth={setColumnWidth}
+        setColumnWidths={setColumnWidths}
+        setOrderBy={setOrderBy}
+        dataReady={dataReady} />
+    </table>)
+
+    const nameHeader = getByTitle('Name')
+    const resizeHandle = nameHeader.querySelector('span')
+    if (!resizeHandle) throw new Error('Resize handle not found')
+
+    fireEvent.click(resizeHandle)
+
+    expect(setOrderBy).not.toHaveBeenCalled()
+  })
 })
 
 describe('cellStyle', () => {

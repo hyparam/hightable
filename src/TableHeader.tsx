@@ -83,7 +83,9 @@ export default function TableHeader({ header, columnWidths, orderBy, setColumnWi
   }, [header, resizing, setColumnWidths])
 
   // Function to handle click for changing orderBy
-  function handleOrderByClick(columnHeader: string) {
+  function handleOrderByClick(columnHeader: string, e: React.MouseEvent) {
+    // Ignore clicks on resize handle
+    if ((e.target as HTMLElement).tagName === 'SPAN') return
     if (orderBy === columnHeader) {
       setOrderBy?.(undefined)
     } else {
@@ -100,7 +102,7 @@ export default function TableHeader({ header, columnWidths, orderBy, setColumnWi
         <th
           className={orderBy === columnHeader ? 'orderby' : undefined}
           key={columnIndex}
-          onClick={() => handleOrderByClick(columnHeader)}
+          onClick={e => handleOrderByClick(columnHeader, e)}
           ref={headerRefs.current[columnIndex]}
           style={memoizedStyles[columnIndex]}
           title={columnHeader}>
