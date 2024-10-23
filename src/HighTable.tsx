@@ -107,15 +107,16 @@ export default function HighTable({
 
       // determine rows to fetch based on current scroll position
       // TODO: compute the floor delta so offsetTop adjustment is smooth
-      let start = Math.floor(data.numRows * scrollTop / scrollHeight)
-      let end = Math.ceil(data.numRows * (scrollTop + clientHeight) / scrollHeight)
-      start = Math.max(0, start - overscan)
-      end = Math.min(data.numRows, end + overscan)
+      const startView = Math.floor(data.numRows * scrollTop / scrollHeight)
+      const endView = Math.ceil(data.numRows * (scrollTop + clientHeight) / scrollHeight)
+      const start = Math.max(0, startView - overscan)
+      const end = Math.min(data.numRows, endView + overscan)
 
       if (isNaN(start)) throw new Error('invalid start row ' + start)
       if (isNaN(end)) throw new Error('invalid end row ' + end)
 
-      const offsetTop = Math.max(0, scrollTop - padding * rowHeight)
+      const preOffset = Math.min(overscan + padding, startView) * rowHeight
+      const offsetTop = Math.max(0, scrollTop - preOffset)
 
       // Fetch a chunk of rows from the data frame
       try {
