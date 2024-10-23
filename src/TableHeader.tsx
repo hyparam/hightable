@@ -26,7 +26,7 @@ interface ResizingState {
  * - File contents can change, so column sizes are saved by name.
  * - There could be duplicate column names.
  */
-interface ColumnWidth {
+export interface ColumnWidth {
   columnIndex: number
   columnName: string
   width: number
@@ -47,20 +47,17 @@ export default function TableHeader({
 
   // Load persisted column widths
   useEffect(() => {
+    const userWidths: number[] = new Array(header.length)
     if (cacheKey) {
       // load user sized column widths
-      const userWidths = []
-      for (let i = 0; i < header.length; i++) {
-        userWidths.push(columnWidths[i])
-      }
       loadColumnWidths(cacheKey).forEach(({ columnIndex, columnName, width }) => {
         // use saved width, if column index and name match
         if (header[columnIndex] === columnName) {
           userWidths[columnIndex] = width
         }
       })
-      setColumnWidths(userWidths)
     }
+    setColumnWidths(userWidths)
   }, [cacheKey])
 
   // Measure default column widths when data is ready
