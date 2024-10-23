@@ -3,6 +3,7 @@ import { flushSync } from 'react-dom'
 
 interface TableProps {
   header: string[]
+  cacheKey?: string // used to persist column widths
   columnWidths: Array<number | undefined>
   orderBy?: string | undefined
   setColumnWidth: (columnIndex: number, columnWidth: number | undefined) => void
@@ -19,9 +20,24 @@ interface ResizingState {
 }
 
 /**
+ * Save column sizes per file in local storage.
+ *
+ * Considerations:
+ * - File contents can change, so column sizes are saved by name.
+ * - There could be duplicate column names.
+ */
+interface ColumnWidth {
+  columnIndex: number
+  columnName: string
+  width: number
+}
+
+/**
  * Render a resizable header for a table.
  */
-export default function TableHeader({ header, columnWidths, orderBy, setColumnWidth, setColumnWidths, setOrderBy, dataReady }: TableProps) {
+export default function TableHeader({
+  header, cacheKey, columnWidths, orderBy, setOrderBy, setColumnWidth, setColumnWidths, dataReady
+}: TableProps) {
   const [resizing, setResizing] = useState<ResizingState | undefined>()
   const headerRefs = useRef(header.map(() => createRef<HTMLTableCellElement>()))
 
@@ -29,13 +45,31 @@ export default function TableHeader({ header, columnWidths, orderBy, setColumnWi
     return ref.current ? ref.current.offsetWidth - 2 * horizontalPadding : undefined
   }
 
+  // Load persisted column widths
+  useEffect(() => {
+    if (cacheKey) {
+      // load user sized column widths
+      const userWidths = []
+      for (let i = 0; i < header.length; i++) {
+        userWidths.push(columnWidths[i])
+      }
+      loadColumnWidths(cacheKey).forEach(({ columnIndex, columnName, width }) => {
+        // use saved width, if column index and name match
+        if (header[columnIndex] === columnName) {
+          userWidths[columnIndex] = width
+        }
+      })
+      setColumnWidths(userWidths)
+    }
+  }, [cacheKey])
+
   // Measure default column widths when data is ready
   useEffect(() => {
     if (dataReady) {
       const widths = headerRefs.current.map(measureWidth)
       setColumnWidths(widths)
     }
-  }, [dataReady, header]) // re-measure if header changes
+  }, [cacheKey, dataReady, header]) // re-measure if header changes
 
   // Modify column width
   function startResizing(columnIndex: number, e: React.MouseEvent<HTMLSpanElement, MouseEvent>) {
@@ -53,6 +87,14 @@ export default function TableHeader({ header, columnWidths, orderBy, setColumnWi
       setColumnWidth(columnIndex, undefined)
     })
     const newWidth = measureWidth(headerRefs.current[columnIndex])
+
+    if (cacheKey && newWidth) {
+      saveColumnWidth(cacheKey, {
+        columnIndex,
+        columnName: header[columnIndex],
+        width: newWidth,
+      })
+    }
     setColumnWidth(columnIndex, newWidth)
   }
 
@@ -61,6 +103,15 @@ export default function TableHeader({ header, columnWidths, orderBy, setColumnWi
     function stopResizing() {
       // save width to local storage
       if (!resizing) return
+      const { columnIndex } = resizing
+      if (cacheKey && columnWidths[columnIndex]) {
+        const width = columnWidths[columnIndex]!
+        saveColumnWidth(cacheKey, {
+          columnIndex,
+          columnName: header[columnIndex],
+          width,
+        })
+      }
       setResizing(undefined)
     }
 
@@ -80,7 +131,7 @@ export default function TableHeader({ header, columnWidths, orderBy, setColumnWi
       window.removeEventListener('mousemove', handleMouseMove)
       window.removeEventListener('mouseup', stopResizing)
     }
-  }, [header, resizing, setColumnWidths])
+  }, [cacheKey, header, resizing, setColumnWidths])
 
   // Function to handle click for changing orderBy
   function handleOrderByClick(columnHeader: string, e: React.MouseEvent) {
@@ -100,6 +151,7 @@ export default function TableHeader({ header, columnWidths, orderBy, setColumnWi
       <th><span /></th>
       {header.map((columnHeader, columnIndex) =>
         <th
+          aria-sort={orderBy === columnHeader ? 'ascending' : undefined}
           className={orderBy === columnHeader ? 'orderby' : undefined}
           key={columnIndex}
           onClick={e => handleOrderByClick(columnHeader, e)}
@@ -119,4 +171,23 @@ export default function TableHeader({ header, columnWidths, orderBy, setColumnWi
 export function cellStyle(width: number | undefined) {
   const px = width ? `${width}px` : undefined
   return { minWidth: px, maxWidth: px }
+}
+
+/**
+ * Get column sizes from local storage for a key.
+ */
+export function loadColumnWidths(key: string): ColumnWidth[] {
+  const json = localStorage.getItem(`column-widths:${key}`)
+  return json ? JSON.parse(json) : []
+}
+
+/**
+ * Set column sizes in local storage for a key.
+ */
+export function saveColumnWidth(key: string, columnWidth: ColumnWidth) {
+  const widths = [
+    ...loadColumnWidths(key).filter(cw => cw.columnIndex !== columnWidth.columnIndex),
+    columnWidth,
+  ]
+  localStorage.setItem(`column-widths:${key}`, JSON.stringify(widths))
 }

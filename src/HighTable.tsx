@@ -11,6 +11,7 @@ const rowHeight = 33 // row height px
 
 interface TableProps {
   data: DataFrame
+  cacheKey?: string // used to persist column widths
   overscan?: number // number of rows to fetch outside of the viewport
   padding?: number // number of padding rows to render outside of the viewport
   onDoubleClickCell?: (col: number, row: number) => void
@@ -74,6 +75,7 @@ const initialState = {
  */
 export default function HighTable({
   data,
+  cacheKey,
   overscan = 20,
   padding = 20,
   onDoubleClickCell,
@@ -256,6 +258,7 @@ export default function HighTable({
           style={{ top: `${offsetTopRef.current}px` }}
           tabIndex={0}>
           <TableHeader
+            cacheKey={cacheKey}
             columnWidths={columnWidths}
             dataReady={dataReady}
             header={data.header}

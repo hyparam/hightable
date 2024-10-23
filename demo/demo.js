@@ -1,7 +1,7 @@
 const { HighTable, rowCache, sortableDataFrame, wrapPromise } = require('./src/HighTable.tsx')
 
 const header = ['ID', 'Name', 'Age', 'UUID', 'Text', 'JSON']
-const data = {
+const mockData = {
   header,
   numRows: 10000,
   rows(start, end) {
@@ -31,11 +31,12 @@ const data = {
 
 // Load HighTable.tsx and render
 function init() {
-  const sortable = sortableDataFrame(data)
-  const cached = rowCache(sortable)
+  let data = sortableDataFrame(mockData)
+  data = rowCache(data)
+  const cacheKey = 'demo'
   const container = document.getElementById('app')
   const root = ReactDOM.createRoot(container)
-  root.render(React.createElement(HighTable, { data: cached }))
+  root.render(React.createElement(HighTable, { data, cacheKey }))
 }
 init()
 

@@ -5,7 +5,7 @@
 [![npm](https://img.shields.io/npm/v/hightable)](https://www.npmjs.com/package/hightable)
 [![workflow status](https://github.com/hyparam/hightable/actions/workflows/ci.yml/badge.svg)](https://github.com/hyparam/hightable/actions)
 [![mit license](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-![coverage](https://img.shields.io/badge/Coverage-94-darkred)
+![coverage](https://img.shields.io/badge/Coverage-89-darkred)
 
 HighTable is a virtualized table component for React, designed to efficiently display large datasets in the browser. It loads and renders only the rows necessary for the current viewport, enabling smooth scrolling and performance even with millions of rows. HighTable supports asynchronous data fetching, dynamic loading, and optional column sorting.
 
@@ -16,6 +16,7 @@ HighTable is a virtualized table component for React, designed to efficiently di
  - **Column Sorting**: Optional support for sorting data by columns.
  - **Column Resizing**: Allows for resizing columns to fit the available space and auto-sizing.
  - **Event Handling**: Supports double-click events on cells.
+ - **Loading Placeholder**: Displays animated loading indicator per-cell.
 
 ## Demo
 

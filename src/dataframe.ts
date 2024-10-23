@@ -62,6 +62,7 @@ export function asyncRows(rows: AsyncRow[] | Promise<Row[]>, numRows: number, he
 
 /**
  * Wrap a promise to save the resolved value and error.
+ * Note: you can't await on a WrappedPromise, you must use then.
  */
 export function wrapPromise<T>(promise: Promise<T> | T): WrappedPromise<T> {
   if (!(promise instanceof Promise)) {

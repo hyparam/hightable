@@ -106,7 +106,7 @@ describe('TableHeader', () => {
   it('toggles orderBy to undefined when the same header is clicked again', () => {
     const { columnWidths, setColumnWidth, setColumnWidths } = mockColumnWidths()
     const setOrderBy = vi.fn()
-    const { getByTitle, rerender } = render(<table>
+    const { getByTitle } = render(<table>
       <TableHeader
         header={header}
         columnWidths={columnWidths}
