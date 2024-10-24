@@ -1,6 +1,6 @@
 {
   "name": "hightable",
-  "version": "0.5.6",
+  "version": "0.6.0",
   "description": "A dynamic windowed scrolling table component for react",
   "keywords": [
     "component",
