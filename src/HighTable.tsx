@@ -3,7 +3,17 @@ import { AsyncRow, DataFrame, Row, asyncRows } from './dataframe.js'
 import TableHeader, { cellStyle } from './TableHeader.js'
 export { rowCache } from './rowCache.js'
 export {
-  AsyncRow, DataFrame, ResolvablePromise, Row, asyncRows, awaitRows, resolvablePromise, resolvableRow, sortableDataFrame, wrapPromise,
+  AsyncRow,
+  DataFrame,
+  ResolvablePromise,
+  Row,
+  arrayDataFrame,
+  asyncRows,
+  awaitRows,
+  resolvablePromise,
+  resolvableRow,
+  sortableDataFrame,
+  wrapPromise,
 } from './dataframe.js'
 export { HighTable }
 

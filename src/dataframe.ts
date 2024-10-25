@@ -149,3 +149,14 @@ export function awaitRows(rows: AsyncRow[] | Promise<Row[]>): Promise<Row[]> {
   if (rows instanceof Promise) return rows
   return Promise.all(rows.map(awaitRow))
 }
+
+export function arrayDataFrame(data: Row[]): DataFrame {
+  if (!data.length) return { header: [], numRows: 0, rows: () => Promise.resolve([]) }
+  return {
+    header: Object.keys(data[0]),
+    numRows: data.length,
+    async rows(start: number, end: number): Promise<Row[]> {
+      return data.slice(start, end)
+    },
+  }
+}

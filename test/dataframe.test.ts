@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { DataFrame, Row, awaitRows, resolvablePromise, sortableDataFrame, wrapPromise } from '../src/dataframe.js'
+import {
+  DataFrame, Row, arrayDataFrame, awaitRows, resolvablePromise, sortableDataFrame, wrapPromise,
+} from '../src/dataframe.js'
 
 function wrapObject(obj: Record<string, any>): Row {
   return Object.fromEntries(
@@ -92,5 +94,47 @@ describe('sortableDataFrame', () => {
   it('should throw for invalid orderBy field', () => {
     expect(() => sortableDf.rows(0, 3, 'invalid'))
       .toThrowError('Invalid orderBy field: invalid')
+  })
+})
+
+describe('arrayDataFrame', () => {
+  const testData = [
+    { id: 1, name: 'Alice', age: 30 },
+    { id: 2, name: 'Bob', age: 25 },
+    { id: 3, name: 'Charlie', age: 35 },
+  ]
+
+  it('should create a DataFrame with correct header and numRows', () => {
+    const df = arrayDataFrame(testData)
+    expect(df.header).toEqual(['id', 'name', 'age'])
+    expect(df.numRows).toBe(3)
+  })
+
+  it('should handle empty data array', () => {
+    const df = arrayDataFrame([])
+    expect(df.header).toEqual([])
+    expect(df.numRows).toBe(0)
+    expect(df.rows(0, 1)).resolves.toEqual([])
+  })
+
+  it('should return correct rows for given range', async () => {
+    const df = arrayDataFrame(testData)
+    const rows = await df.rows(0, 2)
+    expect(rows).toEqual([
+      { id: 1, name: 'Alice', age: 30 },
+      { id: 2, name: 'Bob', age: 25 },
+    ])
+  })
+
+  it('should handle start index equal to end index', async () => {
+    const df = arrayDataFrame(testData)
+    const rows = await df.rows(1, 1)
+    expect(rows).toEqual([])
+  })
+
+  it('should return all rows when end index exceeds array length', async () => {
+    const df = arrayDataFrame(testData)
+    const rows = await df.rows(0, 10)
+    expect(rows).toEqual(testData)
   })
 })
