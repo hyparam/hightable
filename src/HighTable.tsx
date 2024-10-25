@@ -114,6 +114,7 @@ export default function HighTable({
 
       if (isNaN(start)) throw new Error('invalid start row ' + start)
       if (isNaN(end)) throw new Error('invalid end row ' + end)
+      if (end - start > 1000) throw new Error('too many rows to fetch ' + (end - start))
 
       const preOffset = Math.min(overscan + padding, startView) * rowHeight
       const offsetTop = Math.max(0, scrollTop - preOffset)
