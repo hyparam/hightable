@@ -137,7 +137,7 @@ export function sortableDataFrame(data: DataFrame): DataFrame {
 /**
  * Await all promises in an AsyncRow and return resolved row.
  */
-function awaitRow(row: AsyncRow): Promise<Row> {
+export function awaitRow(row: AsyncRow): Promise<Row> {
   return Promise.all(Object.values(row))
     .then(values => Object.fromEntries(Object.keys(row).map((key, i) => [key, values[i]])))
 }

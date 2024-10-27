@@ -9,6 +9,7 @@ export {
   Row,
   arrayDataFrame,
   asyncRows,
+  awaitRow,
   awaitRows,
   resolvablePromise,
   resolvableRow,
