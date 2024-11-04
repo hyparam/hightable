@@ -25,7 +25,7 @@ interface TableProps {
   cacheKey?: string // used to persist column widths
   overscan?: number // number of rows to fetch outside of the viewport
   padding?: number // number of padding rows to render outside of the viewport
-  focus?: boolean // focus table on mount (default true)
+  focus?: boolean // focus table on mount? (default true)
   onDoubleClickCell?: (col: number, row: number) => void
   onMouseDownCell?: (event: React.MouseEvent, col: number, row: number) => void
   onError?: (error: Error) => void

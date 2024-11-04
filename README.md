@@ -41,22 +41,6 @@ HighTable uses a data model called `DataFrame`, which defines how data is fetche
 
 Each row object should be a mapping of column names to cell values.
 
-### DataFrame Example
-
-Data is provided to the table via a `DataFrame` interface.
-
-```typescript
-const dataframe = {
-  header: ['ID', 'Name', 'Email'],
-  numRows: 1000000,
-  rows(start: number, end: number, orderBy?: string): Promise<Record<string, any>> {
-    // Fetch rows from your data source here
-    return fetchRowsFromServer(start, end, orderBy)
-  },
-  sortable: true, // Set to true if your data source supports sorting
-}
-```
-
 ## Usage
 
 Here's a basic example of how to use HighTable in your React application:
@@ -75,14 +59,12 @@ const dataframe = {
 }
 
 function App() {
-  function onDoubleClickCell(row, col) {
-    console.log(`Double clicked row ${row}, column ${col}`)
-  }
-
-  return <HighTable
-    data={dataframe}
-    setError={console.error}
-    onDoubleClickCell={onDoubleClickCell} />
+  return (
+    <HighTable
+      data={dataframe}
+      onError={console.error}
+    />
+  )
 }
 ```
 
@@ -90,25 +72,54 @@ function App() {
 
 HighTable accepts the following props:
 
- - `data`: The data model for the table. Must include methods for header and rows fetching.
- - `onDoubleClickCell` (optional): Called when a cell is double-clicked. Receives the row and column indexes as arguments.
- - `onError` (optional): Callback for error handling.
-
-### Prop Types
-
 ```typescript
 interface TableProps {
-  data: DataFrame
-  onDoubleClickCell?: (row: number, col: number) => void
-  onError?: (error: Error) => void
+  data: DataFrame // data provider for the table
+  focus?: boolean // focus table on mount? (default true)
+  onDoubleClickCell?: (col: number, row: number) => void // double-click handler
+  onError?: (error: Error) => void // error handler
 }
 ```
 
-## Sorting
+DataFrame is defined as:
+
+```typescript
+interface DataFrame {
+  header: string[]
+  numRows: number
+  // rows are 0-indexed, excludes the header, end is exclusive
+  rows(start: number, end: number, orderBy?: string): AsyncRow[] | Promise<Row[]>
+  sortable?: boolean
+}
+```
+
+## Sortable DataFrame
 
 If your data source supports sorting, set the sortable property to true in your DataFrame object. When sorting is enabled, the rows function will receive an additional orderBy parameter, which represents the column name to sort by.
 
 Ensure your rows function handles the orderBy parameter appropriately to return sorted data.
+
+## Async DataFrame
+
+HighTable supports async loading of individual cells.
+Dataframes can return `AsyncRow[]` to return future cell data to the table.
+
+```javascript
+const dataframe = {
+  header: ['a', 'b'],
+  numRows: 10,
+  rows(start, end) {
+    // resolvableRow makes a row where each column value is a wrapped promise with .resolve() and .reject() methods
+    const futureRows = Array.from({ length: end - start }, () => resolvableRow(this.header))
+    for (let row = start; row < end; row++) {
+      for (const col of this.header) {
+        fetchCell(row, col).then(value => futureRows[row - start][col].resolve(value))
+      }
+    }
+    return futureRows
+  },
+}
+```
 
 ## Styling
 
