@@ -25,6 +25,7 @@ interface TableProps {
   cacheKey?: string // used to persist column widths
   overscan?: number // number of rows to fetch outside of the viewport
   padding?: number // number of padding rows to render outside of the viewport
+  focus?: boolean // focus table on mount (default true)
   onDoubleClickCell?: (col: number, row: number) => void
   onMouseDownCell?: (event: React.MouseEvent, col: number, row: number) => void
   onError?: (error: Error) => void
@@ -90,6 +91,7 @@ export default function HighTable({
   cacheKey,
   overscan = 20,
   padding = 20,
+  focus = true,
   onDoubleClickCell,
   onMouseDownCell,
   onError = console.error,
@@ -126,7 +128,7 @@ export default function HighTable({
 
       if (isNaN(start)) throw new Error('invalid start row ' + start)
       if (isNaN(end)) throw new Error('invalid end row ' + end)
-      if (end - start > 1000) throw new Error('too many rows to fetch ' + (end - start))
+      if (end - start > 1000) throw new Error('attempted to render too many rows ' + (end - start) + ' table must be contained in a scrollable div')
 
       const offsetTop = Math.max(0, start - padding) * rowHeight
 
@@ -235,8 +237,10 @@ export default function HighTable({
 
   // focus table on mount so arrow keys work
   useEffect(() => {
-    tableRef.current?.focus()
-  }, [])
+    if (focus) {
+      tableRef.current?.focus()
+    }
+  }, [focus])
 
   // reset dataReady when data changes so that columns will auto-resize
   useEffect(() => {
