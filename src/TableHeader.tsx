@@ -12,8 +12,6 @@ interface TableProps {
   dataReady: boolean
 }
 
-const horizontalPadding = 10 // px
-
 interface ResizingState {
   columnIndex: number
   clientX: number
@@ -41,8 +39,12 @@ export default function TableHeader({
   const [resizing, setResizing] = useState<ResizingState | undefined>()
   const headerRefs = useRef(header.map(() => createRef<HTMLTableCellElement>()))
 
-  function measureWidth(ref: RefObject<HTMLTableCellElement>) {
-    return ref.current ? ref.current.offsetWidth - 2 * horizontalPadding : undefined
+  function measureWidth(ref: RefObject<HTMLTableCellElement>): number | undefined {
+    if (!ref.current) return undefined
+    // get computed cell padding
+    const style = window.getComputedStyle(ref.current)
+    const horizontalPadding = parseInt(style.paddingLeft) + parseInt(style.paddingRight)
+    return ref.current.offsetWidth - horizontalPadding
   }
 
   // Load persisted column widths
