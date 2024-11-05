@@ -50,3 +50,7 @@ nav {
   display: flex;
   flex: 1;
 }
+
+.table-corner {
+  background: url('hightable.svg') no-repeat center 8px;
+}
