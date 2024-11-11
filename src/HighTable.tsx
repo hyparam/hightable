@@ -26,6 +26,7 @@ interface TableProps {
   overscan?: number // number of rows to fetch outside of the viewport
   padding?: number // number of padding rows to render outside of the viewport
   focus?: boolean // focus table on mount? (default true)
+  tableControl?: TableControl // control the table from outside
   onDoubleClickCell?: (col: number, row: number) => void
   onMouseDownCell?: (event: React.MouseEvent, col: number, row: number) => void
   onError?: (error: Error) => void
@@ -44,7 +45,6 @@ type Action =
   | { type: 'SET_COLUMN_WIDTH', columnIndex: number, columnWidth: number | undefined }
   | { type: 'SET_COLUMN_WIDTHS', columnWidths: Array<number | undefined> }
   | { type: 'SET_ORDER', orderBy: string | undefined }
-  | { type: 'SET_PENDING', pending: boolean }
   | { type: 'DATA_CHANGED' }
 
 function reducer(state: State, action: Action): State {
@@ -88,6 +88,7 @@ export default function HighTable({
   overscan = 20,
   padding = 20,
   focus = true,
+  tableControl,
   onDoubleClickCell,
   onMouseDownCell,
   onError = console.error,
@@ -196,6 +197,14 @@ export default function HighTable({
       window.removeEventListener('resize', handleScroll)
     }
   }, [data, orderBy, overscan, padding, scrollHeight, onError])
+
+  // handle remote control of the table (e.g. sorting)
+  useEffect(() => {
+    tableControl?.publisher.subscribe(dispatch)
+    return () => {
+      tableControl?.publisher.unsubscribe(dispatch)
+    }
+  }, [tableControl])
 
   /**
    * Validate row length
@@ -349,5 +358,46 @@ function throttle(fn: () => void, wait: number): () => void {
         fn()
       }, remaining)
     }
+  }
+}
+
+interface Publisher<T> {
+  subscribe: (fn: (data: T) => void) => void
+  unsubscribe: (fn: (data: T) => void) => void
+}
+
+interface PubSub<T> extends Publisher<T> {
+  publish: (data: T) => void
+}
+
+export interface TableControl {
+  publisher: Publisher<Action>
+  setOrderBy: (columnName: string) => void
+}
+
+function createPubSub<T>(): PubSub<T> {
+  const subscribers = new Set<(data: T) => void>()
+  return {
+    subscribe(fn: (data: T) => void) {
+      subscribers.add(fn)
+    },
+    unsubscribe(fn: (data: T) => void) {
+      subscribers.delete(fn)
+    },
+    publish(data: T) {
+      for (const fn of subscribers) {
+        fn(data)
+      }
+    },
+  }
+}
+
+export function createTableControl(): TableControl {
+  const publisher = createPubSub<Action>()
+  return {
+    publisher,
+    setOrderBy(columnName: string) {
+      publisher.publish({ type: 'SET_ORDER', orderBy: columnName })
+    },
   }
 }
