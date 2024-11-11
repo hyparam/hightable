@@ -37,7 +37,6 @@ type State = {
   startIndex: number
   rows: AsyncRow[]
   orderBy?: string
-  pending: boolean
 }
 
 type Action =
@@ -66,8 +65,6 @@ function reducer(state: State, action: Action): State {
     return { ...state, columnWidths: action.columnWidths }
   case 'SET_ORDER':
     return { ...state, orderBy: action.orderBy }
-  case 'SET_PENDING':
-    return { ...state, pending: action.pending }
   case 'DATA_CHANGED':
     return { ...state, dataReady: false }
   default:
@@ -75,12 +72,11 @@ function reducer(state: State, action: Action): State {
   }
 }
 
-const initialState = {
+const initialState: State = {
   columnWidths: [],
   startIndex: 0,
   rows: [],
   dataReady: false,
-  pending: false,
 }
 
 /**
@@ -98,7 +94,7 @@ export default function HighTable({
 }: TableProps) {
   const [state, dispatch] = useReducer(reducer, initialState)
 
-  const { columnWidths, startIndex, rows, orderBy, dataReady, pending } = state
+  const { columnWidths, startIndex, rows, orderBy, dataReady } = state
   const offsetTopRef = useRef(0)
 
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -184,7 +180,6 @@ export default function HighTable({
           handleScroll()
         }
       } catch (error) {
-        dispatch({ type: 'SET_PENDING', pending: false })
         onError(error as Error)
       }
     }
@@ -264,7 +259,7 @@ export default function HighTable({
   // don't render table if header is empty
   if (!data.header.length) return
 
-  return <div className={pending ? 'table-container pending' : 'table-container'}>
+  return <div className='table-container'>
     <div className='table-scroll' ref={scrollRef}>
       <div style={{ height: `${scrollHeight}px` }}>
         <table
