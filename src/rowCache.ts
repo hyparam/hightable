@@ -24,6 +24,7 @@ export function rowCache(df: DataFrame): DataFrame {
 
       // Fetch missing rows in contiguous blocks
       let blockStart: number | undefined
+      let hasCacheMiss = false
       for (let i = start; i <= end; i++) {
         if (i < end && !cache[i]) {
           if (blockStart === undefined) {
@@ -37,8 +38,11 @@ export function rowCache(df: DataFrame): DataFrame {
             cache[blockStart + j] = futureRows[j]
           }
           blockStart = undefined
+          hasCacheMiss = true
         }
       }
+      if (hasCacheMiss) misses++
+      else hits++
 
       return cache.slice(start, end)
     },
