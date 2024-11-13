@@ -24,8 +24,8 @@ export function rowCache(df: DataFrame): DataFrame {
 
       // Fetch missing rows in contiguous blocks
       let blockStart: number | undefined
-      for (let i = start; i < end; i++) {
-        if (!cache[i]) {
+      for (let i = start; i <= end; i++) {
+        if (i < end && !cache[i]) {
           if (blockStart === undefined) {
             blockStart = i
           }
@@ -37,15 +37,6 @@ export function rowCache(df: DataFrame): DataFrame {
             cache[blockStart + j] = futureRows[j]
           }
           blockStart = undefined
-        }
-      }
-      // Fetch the last block if needed
-      if (blockStart !== undefined) {
-        const blockEnd = end
-        const numRows = blockEnd - blockStart
-        const futureRows = asyncRows(df.rows(blockStart, blockEnd, orderBy), numRows, df.header)
-        for (let j = 0; j < blockEnd - blockStart; j++) {
-          cache[blockStart + j] = futureRows[j]
         }
       }
 
