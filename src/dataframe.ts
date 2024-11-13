@@ -155,8 +155,8 @@ export function arrayDataFrame(data: Row[]): DataFrame {
   return {
     header: Object.keys(data[0]),
     numRows: data.length,
-    async rows(start: number, end: number): Promise<Row[]> {
-      return data.slice(start, end)
+    rows(start: number, end: number): Promise<Row[]> {
+      return Promise.resolve(data.slice(start, end))
     },
   }
 }
