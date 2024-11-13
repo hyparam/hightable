@@ -28,7 +28,6 @@
   "scripts": {
     "build": "rollup -c",
     "coverage": "vitest run --coverage --coverage.include=src",
-    "demo": "http-server -o",
     "lint": "eslint",
     "test": "vitest run"
   },
@@ -45,7 +44,6 @@
     "@vitest/coverage-v8": "2.1.4",
     "eslint": "9.14.0",
     "eslint-plugin-react": "7.37.2",
-    "http-server": "14.1.1",
     "jsdom": "25.0.1",
     "tslib": "2.8.1",
     "typescript": "5.6.3",

@@ -9,7 +9,7 @@ export default [
     ignores: ['coverage/', 'dist/'],
   },
   {
-    files: ['demo.js', '**/*.ts', '**/*.tsx'],
+    files: ['**/*.ts', '**/*.tsx'],
     plugins: {
       react,
       typescript,
