@@ -20,7 +20,7 @@ HighTable is a virtualized table component for React, designed to efficiently di
 
 ## Demo
 
-Live table demo: https://hyparam.github.io/hightable/. See the [source code](https://github.com/hyparam/hyperparam-cli/tree/master/apps/hightable-demo).
+Live table demo: [https://hyparam.github.io/hyperparam-cli/apps/hightable-demo/](https://hyparam.github.io/hyperparam-cli/apps/hightable-demo/). See the [source code](https://github.com/hyparam/hyperparam-cli/tree/master/apps/hightable-demo).
 
 ## Installation
 
