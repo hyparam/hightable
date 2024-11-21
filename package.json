@@ -29,6 +29,7 @@
     "build": "rollup -c",
     "coverage": "vitest run --coverage --coverage.include=src",
     "lint": "eslint",
+    "prepublish": "npm run build",
     "test": "vitest run"
   },
   "devDependencies": {
