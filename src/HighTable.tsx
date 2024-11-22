@@ -123,6 +123,11 @@ export default function HighTable({
       const start = Math.max(0, startView - overscan)
       const end = Math.min(data.numRows, endView + overscan)
 
+      // Don't update if view is unchanged
+      if (start === startIndex && rows.length === end - start) {
+        return
+      }
+
       if (isNaN(start)) throw new Error('invalid start row ' + start)
       if (isNaN(end)) throw new Error('invalid end row ' + end)
       if (end - start > 1000) throw new Error('attempted to render too many rows ' + (end - start) + ' table must be contained in a scrollable div')
@@ -196,7 +201,7 @@ export default function HighTable({
       scroller?.removeEventListener('scroll', handleScroll)
       window.removeEventListener('resize', handleScroll)
     }
-  }, [data, orderBy, overscan, padding, scrollHeight, onError])
+  }, [data, orderBy, overscan, padding, rows, startIndex, scrollHeight, onError])
 
   // handle remote control of the table (e.g. sorting)
   useEffect(() => {
