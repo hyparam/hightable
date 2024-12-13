@@ -110,11 +110,11 @@ describe('arrayDataFrame', () => {
     expect(df.numRows).toBe(3)
   })
 
-  it('should handle empty data array', () => {
+  it('should handle empty data array', async () => {
     const df = arrayDataFrame([])
     expect(df.header).toEqual([])
     expect(df.numRows).toBe(0)
-    expect(df.rows(0, 1)).resolves.toEqual([])
+    await expect(df.rows(0, 1)).resolves.toEqual([])
   })
 
   it('should return correct rows for given range', async () => {

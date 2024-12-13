@@ -44,6 +44,7 @@ describe('HighTable', () => {
     if (!scrollDiv) throw new Error('Scroll container not found')
     await waitFor(() => {
       expect(mockData.rows).toHaveBeenCalledTimes(1)
+      expect(mockData.rows).toHaveBeenCalledWith(0, 24, undefined)
     })
 
     act(() => {
@@ -51,7 +52,7 @@ describe('HighTable', () => {
     })
 
     await waitFor(() => {
-      expect(mockData.rows).toHaveBeenCalledTimes(2)
+      expect(mockData.rows).toHaveBeenCalledWith(0, 39, undefined)
     })
   })
 
