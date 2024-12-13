@@ -63,8 +63,13 @@ function reducer(state: State, action: Action): State {
   }
   case 'SET_COLUMN_WIDTHS':
     return { ...state, columnWidths: action.columnWidths }
-  case 'SET_ORDER':
-    return { ...state, orderBy: action.orderBy }
+  case 'SET_ORDER': {
+    if (state.orderBy === action.orderBy) {
+      return state
+    } else {
+      return { ...state, orderBy: action.orderBy, rows: [] }
+    }
+  }
   case 'DATA_CHANGED':
     return { ...state, dataReady: false }
   default:
