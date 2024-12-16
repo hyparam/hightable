@@ -1,6 +1,6 @@
 {
   "name": "hightable",
-  "version": "0.7.3",
+  "version": "0.7.4",
   "description": "A dynamic windowed scrolling table component for react",
   "author": "Hyperparam",
   "homepage": "https://hyperparam.app",
