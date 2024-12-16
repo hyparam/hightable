@@ -63,7 +63,17 @@ describe('HighTable', () => {
 
     fireEvent.doubleClick(cell)
 
-    expect(mockDoubleClick).toHaveBeenCalledWith(1, 0)
+    expect(mockDoubleClick).toHaveBeenCalledWith(expect.anything(), 1, 0)
+  })
+
+  it('correctly handles middle click on cell', async () => {
+    const mockMiddleClick = vi.fn()
+    const { findByText } = render(<HighTable data={mockData} onMouseDownCell={mockMiddleClick} />)
+    const cell = await findByText('Name 0')
+
+    fireEvent.mouseDown(cell, { button: 1 })
+
+    expect(mockMiddleClick).toHaveBeenCalledWith(expect.anything(), 1, 0)
   })
 
   it('displays error when data fetch fails', async () => {

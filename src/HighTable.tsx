@@ -27,7 +27,7 @@ interface TableProps {
   padding?: number // number of padding rows to render outside of the viewport
   focus?: boolean // focus table on mount? (default true)
   tableControl?: TableControl // control the table from outside
-  onDoubleClickCell?: (col: number, row: number) => void
+  onDoubleClickCell?: (event: React.MouseEvent, col: number, row: number) => void
   onMouseDownCell?: (event: React.MouseEvent, col: number, row: number) => void
   onError?: (error: Error) => void
 }
@@ -249,7 +249,7 @@ export default function HighTable({
     return <td
       className={str === undefined ? 'pending' : undefined}
       key={col}
-      onDoubleClick={() => onDoubleClickCell?.(col, rowIndex ?? row)}
+      onDoubleClick={e => onDoubleClickCell?.(e, col, rowIndex ?? row)}
       onMouseDown={e => onMouseDownCell?.(e, col, rowIndex ?? row)}
       style={memoizedStyles[col]}
       title={title}>
