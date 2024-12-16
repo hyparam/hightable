@@ -34,7 +34,8 @@ interface TableProps {
 
 type State = {
   columnWidths: Array<number | undefined>
-  dataReady: boolean
+  invalidate: boolean
+  hasCompleteRow: boolean
   startIndex: number
   rows: AsyncRow[]
   orderBy?: string
@@ -54,7 +55,8 @@ function reducer(state: State, action: Action): State {
       ...state,
       startIndex: action.start,
       rows: action.rows,
-      dataReady: state.dataReady || action.hasCompleteRow,
+      invalidate: false,
+      hasCompleteRow: state.hasCompleteRow || action.hasCompleteRow,
     }
   case 'SET_COLUMN_WIDTH': {
     const columnWidths = [...state.columnWidths]
@@ -71,7 +73,7 @@ function reducer(state: State, action: Action): State {
     }
   }
   case 'DATA_CHANGED':
-    return { ...state, dataReady: false }
+    return { ...state, invalidate: true, hasCompleteRow: false }
   default:
     return state
   }
@@ -81,7 +83,8 @@ const initialState: State = {
   columnWidths: [],
   startIndex: 0,
   rows: [],
-  dataReady: false,
+  invalidate: true,
+  hasCompleteRow: false,
 }
 
 /**
@@ -100,7 +103,7 @@ export default function HighTable({
 }: TableProps) {
   const [state, dispatch] = useReducer(reducer, initialState)
 
-  const { columnWidths, startIndex, rows, orderBy, dataReady } = state
+  const { columnWidths, startIndex, rows, orderBy, invalidate, hasCompleteRow } = state
   const offsetTopRef = useRef(0)
 
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -112,6 +115,11 @@ export default function HighTable({
 
   // total scrollable height
   const scrollHeight = (data.numRows + 1) * rowHeight
+
+  // invalidate when data changes so that columns will auto-resize
+  useEffect(() => {
+    dispatch({ type: 'DATA_CHANGED' })
+  }, [data])
 
   // handle scrolling
   useEffect(() => {
@@ -129,7 +137,7 @@ export default function HighTable({
       const end = Math.min(data.numRows, endView + overscan)
 
       // Don't update if view is unchanged
-      if (start === startIndex && rows.length === end - start) {
+      if (!invalidate && start === startIndex && rows.length === end - start) {
         return
       }
 
@@ -206,7 +214,7 @@ export default function HighTable({
       scroller?.removeEventListener('scroll', handleScroll)
       window.removeEventListener('resize', handleScroll)
     }
-  }, [data, orderBy, overscan, padding, rows, startIndex, scrollHeight, onError])
+  }, [data, invalidate, orderBy, overscan, padding, rows.length, startIndex, scrollHeight, onError])
 
   // handle remote control of the table (e.g. sorting)
   useEffect(() => {
@@ -256,11 +264,6 @@ export default function HighTable({
     }
   }, [focus])
 
-  // reset dataReady when data changes so that columns will auto-resize
-  useEffect(() => {
-    dispatch({ type: 'DATA_CHANGED' })
-  }, [data])
-
   const rowNumber = useCallback((rowIndex: number) => {
     return rows[rowIndex].__index__ ?? rowIndex + startIndex + 1
   }, [rows, startIndex])
@@ -292,7 +295,7 @@ export default function HighTable({
           <TableHeader
             cacheKey={cacheKey}
             columnWidths={columnWidths}
-            dataReady={dataReady}
+            dataReady={hasCompleteRow}
             header={data.header}
             orderBy={orderBy}
             setColumnWidth={(columnIndex, columnWidth) => dispatch({ type: 'SET_COLUMN_WIDTH', columnIndex, columnWidth })}
