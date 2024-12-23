@@ -353,23 +353,31 @@ export function stringify(value: any): string | undefined {
 /**
  * Throttle a function to run at most once every `wait` milliseconds.
  */
-function throttle(fn: () => void, wait: number): () => void {
-  let last = 0
+export function throttle(fn: () => void, wait: number): () => void {
+  let inCooldown = false
   let pending = false
+
+  function invoke() {
+    fn()
+    pending = false
+    inCooldown = true
+    // check if there are pending calls after cooldown
+    setTimeout(() => {
+      inCooldown = false
+      if (pending) {
+        // trailing call
+        invoke()
+      }
+    }, wait)
+  }
+
   return () => {
-    const now = Date.now()
-    if (now - last > wait) {
-      last = now
-      fn()
-    } else if (!pending) {
-      // trailing edge
+    if (!inCooldown) {
+      // leading call
+      invoke()
+    } else {
+      // schedule trailing call
       pending = true
-      const remaining = wait - (now - last)
-      setTimeout(() => {
-        last = Date.now()
-        pending = false
-        fn()
-      }, remaining)
     }
   }
 }
