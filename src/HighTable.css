@@ -103,6 +103,27 @@
   max-width: none;
   width: 32px;
 }
+.table td:first-child span {
+  display: inline;
+}
+.table td:first-child input {
+  display: none;
+}
+.table td:first-child:hover span, .table tr.selected td:first-child span {
+  display: none;
+}
+.table td:first-child:hover input, .table tr.selected td:first-child input {
+  display: inline;
+}
+.table tr.selected {
+  background-color: #e4e4e8;
+}
+.table tr.selected td {
+  border-right-color: #bbb;
+}
+.table tr.selected td:first-child {
+  background-color: #d0d0d8;
+}
 
 /* cells */
 .table th,

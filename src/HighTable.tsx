@@ -1,7 +1,7 @@
 import { ReactNode, useCallback, useEffect, useMemo, useReducer, useRef } from 'react'
 import { AsyncRow, DataFrame, Row, asyncRows } from './dataframe.js'
+import { Selection, isSelected, toggleIndex } from './selection.js'
 import TableHeader, { cellStyle } from './TableHeader.js'
-export { rowCache } from './rowCache.js'
 export {
   AsyncRow,
   DataFrame,
@@ -16,6 +16,7 @@ export {
   sortableDataFrame,
   wrapPromise,
 } from './dataframe.js'
+export { rowCache } from './rowCache.js'
 export { HighTable }
 
 const rowHeight = 33 // row height px
@@ -39,6 +40,7 @@ type State = {
   startIndex: number
   rows: AsyncRow[]
   orderBy?: string
+  selection: Selection
 }
 
 type Action =
@@ -47,6 +49,7 @@ type Action =
   | { type: 'SET_COLUMN_WIDTHS', columnWidths: Array<number | undefined> }
   | { type: 'SET_ORDER', orderBy: string | undefined }
   | { type: 'DATA_CHANGED' }
+  | { type: 'SET_SELECTION', selection: Selection }
 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
@@ -69,11 +72,13 @@ function reducer(state: State, action: Action): State {
     if (state.orderBy === action.orderBy) {
       return state
     } else {
-      return { ...state, orderBy: action.orderBy, rows: [] }
+      return { ...state, orderBy: action.orderBy, rows: [], selection: [] }
     }
   }
   case 'DATA_CHANGED':
-    return { ...state, invalidate: true, hasCompleteRow: false }
+    return { ...state, invalidate: true, hasCompleteRow: false, selection: [] }
+  case 'SET_SELECTION':
+    return { ...state, selection: action.selection }
   default:
     return state
   }
@@ -85,6 +90,7 @@ const initialState: State = {
   rows: [],
   invalidate: true,
   hasCompleteRow: false,
+  selection: [],
 }
 
 /**
@@ -103,7 +109,7 @@ export default function HighTable({
 }: TableProps) {
   const [state, dispatch] = useReducer(reducer, initialState)
 
-  const { columnWidths, startIndex, rows, orderBy, invalidate, hasCompleteRow } = state
+  const { columnWidths, startIndex, rows, orderBy, invalidate, hasCompleteRow, selection } = state
   const offsetTopRef = useRef(0)
 
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -264,8 +270,9 @@ export default function HighTable({
     }
   }, [focus])
 
-  const rowNumber = useCallback((rowIndex: number) => {
-    return rows[rowIndex].__index__ ?? rowIndex + startIndex + 1
+  const rowNumber = useCallback((rowIndex: number): number => {
+    return (rows[rowIndex].__index__ ?? rowIndex + startIndex + 1) as unknown as number
+    /// TODO(SL): improve rows typing
   }, [rows, startIndex])
 
   // add empty pre and post rows to fill the viewport
@@ -310,9 +317,10 @@ export default function HighTable({
               </tr>
             )}
             {rows.map((row, rowIndex) =>
-              <tr key={startIndex + rowIndex} title={rowError(row, rowIndex)}>
-                <td style={cornerStyle}>
-                  {rowNumber(rowIndex).toLocaleString()}
+              <tr key={startIndex + rowIndex} title={rowError(row, rowIndex)} className={isSelected({ selection, index: rowNumber(rowIndex) }) ? 'selected' : undefined}>
+                <td style={cornerStyle} onClick={() => dispatch({ type: 'SET_SELECTION', selection: toggleIndex({ selection, index: rowNumber(rowIndex) }) })}>
+                  <span>{rowNumber(rowIndex).toLocaleString()}</span>
+                  <input type='checkbox' checked={isSelected({ selection, index: rowNumber(rowIndex) })} />
                 </td>
                 {data.header.map((col, colIndex) =>
                   Cell(row[col], colIndex, startIndex + rowIndex, row.__index__?.resolved)
