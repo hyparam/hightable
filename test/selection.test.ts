@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { isValidIndex, isValidRange, isValidSelection, toggleIndex } from '../src/selection.js'
+import { isSelected, isValidIndex, isValidRange, isValidSelection, toggleIndex } from '../src/selection.js'
 
 describe('an index', () => {
   test('is a positive integer', () => {
@@ -85,9 +85,27 @@ describe('toggling an index', () => {
     expect(toggleIndex({ selection: [{ start: 0, end: 1 }, { start: 2, end: 3 }], index: 1 })).toEqual([{ start: 0, end: 3 }])
   })
 
-  test('shoud split a range if the index is inside', () => {
+  test('should split a range if the index is inside', () => {
     expect(toggleIndex({ selection: [{ start: 0, end: 2 }], index: 1 })).toEqual([{ start: 0, end: 1 }])
     expect(toggleIndex({ selection: [{ start: 0, end: 2 }], index: 0 })).toEqual([{ start: 1, end: 2 }])
     expect(toggleIndex({ selection: [{ start: 0, end: 3 }], index: 1 })).toEqual([{ start: 0, end: 1 }, { start: 2, end: 3 }])
+  })
+
+  test('should remove a range if it\'s only the index', () => {
+    expect(toggleIndex({ selection: [{ start: 0, end: 1 }], index: 0 })).toEqual([])
+  })
+
+  test('twice should be idempotent', () => {
+    const a = toggleIndex({ selection: [], index: 0 })
+    const b = toggleIndex({ selection: a, index: 0 })
+    expect(b).toEqual([])
+  })
+})
+
+describe('isSelected', () => {
+  test('should return true if the index is selected', () => {
+    expect(isSelected({ selection: [{ start: 0, end: 1 }], index: 0 })).toBe(true)
+    expect(isSelected({ selection: [{ start: 0, end: Infinity }], index: 1 })).toBe(true)
+    expect(isSelected({ selection: [{ start: 0, end: 1 }], index: 1 })).toBe(false)
   })
 })

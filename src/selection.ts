@@ -61,32 +61,31 @@ export function toggleIndex({ selection, index }: {selection: Selection, index: 
     if (start === index + 1) {
       // prepend the range with the index
       newSelection.push({ start: index, end })
-      rangeIndex++
     } else if (end === index) {
       // two cases:
       if (rangeIndex + 1 < selection.length && selection[rangeIndex + 1].start === index + 1) {
         // merge with following range
         newSelection.push({ start, end: selection[rangeIndex + 1].end })
-        rangeIndex += 2
+        rangeIndex ++ // remove the following range
       } else {
         // extend the range to the index
         newSelection.push({ start, end: index + 1 })
-        rangeIndex++
       }
     } else {
       // the index is inside the range, and must be removed
       if (start === index) {
-        newSelection.push({ start: index + 1, end })
-        rangeIndex++
+        if (end > index + 1) {
+          newSelection.push({ start: index + 1, end })
+        }
+        // else: the range is removed
       } else if (end === index + 1) {
         newSelection.push({ start, end: index })
-        rangeIndex++
       } else {
         newSelection.push({ start, end: index })
         newSelection.push({ start: index + 1, end })
-        rangeIndex++
       }
     }
+    rangeIndex++
   } else {
     // insert a new range for the index
     newSelection.push({ start: index, end: index + 1 })
@@ -99,4 +98,8 @@ export function toggleIndex({ selection, index }: {selection: Selection, index: 
   }
 
   return newSelection
+}
+
+export function isSelected({ selection, index }: {selection: Selection, index: number}): boolean {
+  return selection.some(range => range.start <= index && index < range.end)
 }
