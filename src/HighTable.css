@@ -116,13 +116,10 @@
   display: inline;
 }
 .table.selectable tr.selected {
-  background-color: #e4e4e8;
-}
-.table.selectable tr.selected td {
-  border-right-color: #bbb;
+  background-color: #fbf7bf;
 }
 .table.selectable tr.selected td:first-child {
-  background-color: #d0d0d8;
+  background-color: #f1edbb;
 }
 
 /* cells */
