@@ -102,6 +102,7 @@
   min-width: 32px;
   max-width: none;
   width: 32px;
+  cursor: pointer;
 }
 .table td:first-child span {
   display: inline;
@@ -114,6 +115,7 @@
 }
 .table.selectable td:first-child:hover input, .table.selectable tr.selected td:first-child input {
   display: inline;
+  cursor: pointer;
 }
 .table.selectable tr.selected {
   background-color: #fbf7bf;
