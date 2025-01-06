@@ -109,19 +109,19 @@
 .table td:first-child input {
   display: none;
 }
-.table td:first-child:hover span, .table tr.selected td:first-child span {
+.table.selectable td:first-child:hover span, .table.selectable tr.selected td:first-child span {
   display: none;
 }
-.table td:first-child:hover input, .table tr.selected td:first-child input {
+.table.selectable td:first-child:hover input, .table.selectable tr.selected td:first-child input {
   display: inline;
 }
-.table tr.selected {
+.table.selectable tr.selected {
   background-color: #e4e4e8;
 }
-.table tr.selected td {
+.table.selectable tr.selected td {
   border-right-color: #bbb;
 }
-.table tr.selected td:first-child {
+.table.selectable tr.selected td:first-child {
   background-color: #d0d0d8;
 }
 

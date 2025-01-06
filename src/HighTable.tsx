@@ -28,6 +28,7 @@ interface TableProps {
   padding?: number // number of padding rows to render outside of the viewport
   focus?: boolean // focus table on mount? (default true)
   tableControl?: TableControl // control the table from outside
+  selectable?: boolean // enable row selection (default false)
   onDoubleClickCell?: (event: React.MouseEvent, col: number, row: number) => void
   onMouseDownCell?: (event: React.MouseEvent, col: number, row: number) => void
   onError?: (error: Error) => void
@@ -103,6 +104,7 @@ export default function HighTable({
   padding = 20,
   focus = true,
   tableControl,
+  selectable = false,
   onDoubleClickCell,
   onMouseDownCell,
   onError = console.error,
@@ -294,7 +296,7 @@ export default function HighTable({
         <table
           aria-colcount={data.header.length}
           aria-rowcount={data.numRows}
-          className={data.sortable ? 'table sortable' : 'table'}
+          className={`table${data.sortable ? ' sortable' : ''}${selectable ? ' selectable' : ''}`}
           ref={tableRef}
           role='grid'
           style={{ top: `${offsetTopRef.current}px` }}
@@ -317,8 +319,8 @@ export default function HighTable({
               </tr>
             )}
             {rows.map((row, rowIndex) =>
-              <tr key={startIndex + rowIndex} title={rowError(row, rowIndex)} className={isSelected({ selection, index: rowNumber(rowIndex) }) ? 'selected' : undefined}>
-                <td style={cornerStyle} onClick={() => dispatch({ type: 'SET_SELECTION', selection: toggleIndex({ selection, index: rowNumber(rowIndex) }) })}>
+              <tr key={startIndex + rowIndex} title={rowError(row, rowIndex)} className={isSelected({ selection, index: rowNumber(rowIndex) }) ? 'selected' : ''}>
+                <td style={cornerStyle} onClick={() => selectable && dispatch({ type: 'SET_SELECTION', selection: toggleIndex({ selection, index: rowNumber(rowIndex) }) })}>
                   <span>{rowNumber(rowIndex).toLocaleString()}</span>
                   <input type='checkbox' checked={isSelected({ selection, index: rowNumber(rowIndex) })} />
                 </td>
