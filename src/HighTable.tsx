@@ -1,6 +1,6 @@
 import { ReactNode, useCallback, useEffect, useMemo, useReducer, useRef } from 'react'
 import { AsyncRow, DataFrame, Row, asyncRows } from './dataframe.js'
-import { Selection, isSelected, toggleIndex } from './selection.js'
+import { Selection, areAllSelected, isSelected, toggleAll, toggleIndex } from './selection.js'
 import TableHeader, { cellStyle } from './TableHeader.js'
 export {
   AsyncRow,
@@ -290,13 +290,13 @@ export default function HighTable({
   // don't render table if header is empty
   if (!data.header.length) return
 
-  return <div className='table-container'>
+  return <div className={`table-container${selectable ? ' selectable' : ''}`}>
     <div className='table-scroll' ref={scrollRef}>
       <div style={{ height: `${scrollHeight}px` }}>
         <table
           aria-colcount={data.header.length}
           aria-rowcount={data.numRows}
-          className={`table${data.sortable ? ' sortable' : ''}${selectable ? ' selectable' : ''}`}
+          className={`table${data.sortable ? ' sortable' : ''}`}
           ref={tableRef}
           role='grid'
           style={{ top: `${offsetTopRef.current}px` }}
@@ -340,7 +340,10 @@ export default function HighTable({
         </table>
       </div>
     </div>
-    <div className='table-corner' style={cornerStyle}>&nbsp;</div>
+    <div className='table-corner' style={cornerStyle} onClick={() => selectable && dispatch({ type: 'SET_SELECTION', selection: toggleAll({ selection, length: rows.length }) })}>
+      <span>&nbsp;</span>
+      <input type='checkbox' checked={areAllSelected({ selection, length: rows.length })} />
+    </div>
     <div className='mock-row-label' style={cornerStyle}>&nbsp;</div>
   </div>
 }
