@@ -110,7 +110,7 @@ export function isSelected({ selection, index }: {selection: Selection, index: n
   return selection.some(range => range.start <= index && index < range.end)
 }
 
-export function areAllSelected({ selection, length }: {selection: Selection, length ?: number}): boolean {
+export function areAllSelected({ selection, length }: { selection: Selection, length?: number }): boolean {
   if (!isValidSelection(selection)) {
     throw new Error('Invalid selection')
   }
