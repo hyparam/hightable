@@ -335,7 +335,7 @@ export default function HighTable({
             )}
             {rows.map((row, rowIndex) =>
               <tr key={startIndex + rowIndex} title={rowError(row, rowIndex)} className={isSelected({ selection, index: rowNumber(rowIndex) }) ? 'selected' : ''}>
-                <td style={cornerStyle} onClick={(event) => onRowNumberClick({ useAnchor: event.shiftKey, index: rowNumber(rowIndex) })}>
+                <td style={cornerStyle} onClick={event => onRowNumberClick({ useAnchor: event.shiftKey, index: rowNumber(rowIndex) })}>
                   <span>{rowNumber(rowIndex).toLocaleString()}</span>
                   <input type='checkbox' checked={isSelected({ selection, index: rowNumber(rowIndex) })} />
                 </td>
