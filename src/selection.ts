@@ -34,7 +34,7 @@ export function isValidSelection(selection: Selection): boolean {
   return true
 }
 
-export function isSelected({ selection, index }: {selection: Selection, index: number}): boolean {
+export function isSelected({ selection, index }: { selection: Selection, index: number }): boolean {
   if (!isValidIndex(index)) {
     throw new Error('Invalid index')
   }
@@ -67,7 +67,7 @@ export function toggleAll({ selection, length }: { selection: Selection, length:
   return [{ start: 0, end: length }]
 }
 
-export function selectRange({ selection, range }: {selection: Selection, range: Range}): Selection {
+export function selectRange({ selection, range }: { selection: Selection, range: Range }): Selection {
   if (!isValidSelection(selection)) {
     throw new Error('Invalid selection')
   }
@@ -101,7 +101,7 @@ export function selectRange({ selection, range }: {selection: Selection, range: 
   return newSelection
 }
 
-export function unselectRange({ selection, range }: {selection: Selection, range: Range}): Selection {
+export function unselectRange({ selection, range }: { selection: Selection, range: Range }): Selection {
   if (!isValidSelection(selection)) {
     throw new Error('Invalid selection')
   }
@@ -143,7 +143,7 @@ export function unselectRange({ selection, range }: {selection: Selection, range
  * Both bounds are inclusive.
  * It will handle the shift+click behavior. anchor is the first index clicked, index is the last index clicked.
  */
-export function extendFromAnchor({ selection, anchor, index }: {selection: Selection, anchor?: number, index: number}): Selection {
+export function extendFromAnchor({ selection, anchor, index }: { selection: Selection, anchor?: number, index: number }): Selection {
   if (!isValidSelection(selection)) {
     throw new Error('Invalid selection')
   }
@@ -171,7 +171,7 @@ export function extendFromAnchor({ selection, anchor, index }: {selection: Selec
   }
 }
 
-export function toggleIndex({ selection, index }: {selection: Selection, index: number}): Selection {
+export function toggleIndex({ selection, index }: { selection: Selection, index: number }): Selection {
   if (!isValidIndex(index)) {
     throw new Error('Invalid index')
   }
