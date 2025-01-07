@@ -34,72 +34,6 @@ export function isValidSelection(selection: Selection): boolean {
   return true
 }
 
-export function toggleIndex({ selection, index }: {selection: Selection, index: number}): Selection {
-  if (!isValidIndex(index)) {
-    throw new Error('Invalid index')
-  }
-  if (!isValidSelection(selection)) {
-    throw new Error('Invalid selection')
-  }
-
-  if (selection.length === 0) {
-    return [{ start: index, end: index + 1 }]
-  }
-
-  const newSelection: Selection = []
-  let rangeIndex = 0
-
-  // copy the ranges before the index
-  while (rangeIndex < selection.length && selection[rangeIndex].end < index) {
-    newSelection.push({ ...selection[rangeIndex] })
-    rangeIndex++
-  }
-
-  if (rangeIndex < selection.length && selection[rangeIndex].start <= index + 1) {
-    // the index affects one or two ranges
-    const { start, end } = selection[rangeIndex]
-    if (start === index + 1) {
-      // prepend the range with the index
-      newSelection.push({ start: index, end })
-    } else if (end === index) {
-      // two cases:
-      if (rangeIndex + 1 < selection.length && selection[rangeIndex + 1].start === index + 1) {
-        // merge with following range
-        newSelection.push({ start, end: selection[rangeIndex + 1].end })
-        rangeIndex ++ // remove the following range
-      } else {
-        // extend the range to the index
-        newSelection.push({ start, end: index + 1 })
-      }
-    } else {
-      // the index is inside the range, and must be removed
-      if (start === index) {
-        if (end > index + 1) {
-          newSelection.push({ start: index + 1, end })
-        }
-        // else: the range is removed
-      } else if (end === index + 1) {
-        newSelection.push({ start, end: index })
-      } else {
-        newSelection.push({ start, end: index })
-        newSelection.push({ start: index + 1, end })
-      }
-    }
-    rangeIndex++
-  } else {
-    // insert a new range for the index
-    newSelection.push({ start: index, end: index + 1 })
-  }
-
-  // copy the remaining ranges
-  while (rangeIndex < selection.length) {
-    newSelection.push({ ...selection[rangeIndex] })
-    rangeIndex++
-  }
-
-  return newSelection
-}
-
 export function isSelected({ selection, index }: {selection: Selection, index: number}): boolean {
   if (!isValidIndex(index)) {
     throw new Error('Invalid index')
@@ -131,4 +65,116 @@ export function toggleAll({ selection, length }: { selection: Selection, length:
     return []
   }
   return [{ start: 0, end: length }]
+}
+
+export function selectRange({ selection, range }: {selection: Selection, range: Range}): Selection {
+  if (!isValidSelection(selection)) {
+    throw new Error('Invalid selection')
+  }
+  if (!isValidRange(range)) {
+    throw new Error('Invalid range')
+  }
+  const newSelection: Selection = []
+  const { start, end } = range
+  let rangeIndex = 0
+
+  // copy the ranges before the new range
+  while (rangeIndex < selection.length && selection[rangeIndex].end < start) {
+    newSelection.push({ ...selection[rangeIndex] })
+    rangeIndex++
+  }
+
+  // merge with the new range
+  while (rangeIndex < selection.length && selection[rangeIndex].start <= end) {
+    range.start = Math.min(range.start, selection[rangeIndex].start)
+    range.end = Math.max(range.end, selection[rangeIndex].end)
+    rangeIndex++
+  }
+  newSelection.push(range)
+
+  // copy the remaining ranges
+  while (rangeIndex < selection.length) {
+    newSelection.push({ ...selection[rangeIndex] })
+    rangeIndex++
+  }
+
+  return newSelection
+}
+
+export function unselectRange({ selection, range }: {selection: Selection, range: Range}): Selection {
+  if (!isValidSelection(selection)) {
+    throw new Error('Invalid selection')
+  }
+  if (!isValidRange(range)) {
+    throw new Error('Invalid range')
+  }
+  const newSelection: Selection = []
+  const { start, end } = range
+  let rangeIndex = 0
+
+  // copy the ranges before the new range
+  while (rangeIndex < selection.length && selection[rangeIndex].end < start) {
+    newSelection.push({ ...selection[rangeIndex] })
+    rangeIndex++
+  }
+
+  // split the ranges intersecting with the new range
+  while (rangeIndex < selection.length && selection[rangeIndex].start < end) {
+    if (selection[rangeIndex].start < start) {
+      newSelection.push({ start: selection[rangeIndex].start, end: start })
+    }
+    if (selection[rangeIndex].end > end) {
+      newSelection.push({ start: end, end: selection[rangeIndex].end })
+    }
+    rangeIndex++
+  }
+
+  // copy the remaining ranges
+  while (rangeIndex < selection.length) {
+    newSelection.push({ ...selection[rangeIndex] })
+    rangeIndex++
+  }
+
+  return newSelection
+}
+
+/**
+ * Extend selection state from bound1 to bound2 (selecting or unselecting the range).
+ * Both bounds are inclusive.
+ * It will handle the shift+click behavior. bound1 is the first index clicked, bound2 is the last index clicked.
+ */
+export function extendToBound({ selection, bound1, bound2 }: {selection: Selection, bound1?: number, bound2: number}): Selection {
+  if (!isValidSelection(selection)) {
+    throw new Error('Invalid selection')
+  }
+  if (bound1 === undefined) {
+    // no initial bound, no operation
+    return selection
+  }
+  if (!isValidIndex(bound1) || !isValidIndex(bound2)) {
+    throw new Error('Invalid index')
+  }
+  if (bound1 === bound2) {
+    // no operation
+    return selection
+  }
+  const range = bound1 < bound2 ? { start: bound1, end: bound2 + 1 } : { start: bound2, end: bound1 + 1 }
+  if (!isValidRange(range)) {
+    throw new Error('Invalid range')
+  }
+  if (isSelected({ selection, index: bound1 })) {
+    // select the rest of the range
+    return selectRange({ selection, range })
+  } else {
+    // unselect the rest of the range
+    return unselectRange({ selection, range })
+  }
+}
+
+export function toggleIndex({ selection, index }: {selection: Selection, index: number}): Selection {
+  if (!isValidIndex(index)) {
+    throw new Error('Invalid index')
+  }
+  const range = { start: index, end: index + 1 }
+  return isSelected({ selection, index }) ? unselectRange({ selection, range }) : selectRange({ selection, range })
 }
