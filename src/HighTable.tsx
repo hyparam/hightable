@@ -1,6 +1,6 @@
 import { ReactNode, useCallback, useEffect, useMemo, useReducer, useRef } from 'react'
 import { AsyncRow, DataFrame, Row, asyncRows } from './dataframe.js'
-import { Selection, areAllSelected, isSelected, toggleAll, toggleIndex } from './selection.js'
+import { Selection, areAllSelected, extendFromAnchor, isSelected, toggleAll, toggleIndex } from './selection.js'
 import TableHeader, { cellStyle } from './TableHeader.js'
 export {
   AsyncRow,
@@ -42,6 +42,7 @@ type State = {
   rows: AsyncRow[]
   orderBy?: string
   selection: Selection
+  anchor?: number // anchor row index for selection, the first element when selecting a range
 }
 
 type Action =
@@ -50,7 +51,7 @@ type Action =
   | { type: 'SET_COLUMN_WIDTHS', columnWidths: Array<number | undefined> }
   | { type: 'SET_ORDER', orderBy: string | undefined }
   | { type: 'DATA_CHANGED' }
-  | { type: 'SET_SELECTION', selection: Selection }
+  | { type: 'SET_SELECTION', selection: Selection, anchor?: number }
 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
@@ -73,13 +74,13 @@ function reducer(state: State, action: Action): State {
     if (state.orderBy === action.orderBy) {
       return state
     } else {
-      return { ...state, orderBy: action.orderBy, rows: [], selection: [] }
+      return { ...state, orderBy: action.orderBy, rows: [], selection: [], anchor: undefined }
     }
   }
   case 'DATA_CHANGED':
-    return { ...state, invalidate: true, hasCompleteRow: false, selection: [] }
+    return { ...state, invalidate: true, hasCompleteRow: false, selection: [], anchor: undefined }
   case 'SET_SELECTION':
-    return { ...state, selection: action.selection }
+    return { ...state, selection: action.selection, anchor: action.anchor }
   default:
     return state
   }
@@ -111,7 +112,7 @@ export default function HighTable({
 }: TableProps) {
   const [state, dispatch] = useReducer(reducer, initialState)
 
-  const { columnWidths, startIndex, rows, orderBy, invalidate, hasCompleteRow, selection } = state
+  const { anchor, columnWidths, startIndex, rows, orderBy, invalidate, hasCompleteRow, selection } = state
   const offsetTopRef = useRef(0)
 
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -277,6 +278,20 @@ export default function HighTable({
     /// TODO(SL): improve rows typing
   }, [rows, startIndex])
 
+
+  const onRowNumberClick = useCallback(({ useAnchor, index }: {useAnchor: boolean, index: number}) => {
+    if (!selectable) return false
+    if (useAnchor) {
+      const newSelection = extendFromAnchor({ selection, anchor, index })
+      // did not throw: we can set the anchor (keep the same)
+      dispatch({ type: 'SET_SELECTION', selection: newSelection, anchor })
+    } else {
+      const newSelection = toggleIndex({ selection, index })
+      // did not throw: we can set the anchor
+      dispatch({ type: 'SET_SELECTION', selection: newSelection, anchor: index })
+    }
+  }, [selection, anchor])
+
   // add empty pre and post rows to fill the viewport
   const prePadding = Array.from({ length: Math.min(padding, startIndex) }, () => [])
   const postPadding = Array.from({
@@ -320,7 +335,7 @@ export default function HighTable({
             )}
             {rows.map((row, rowIndex) =>
               <tr key={startIndex + rowIndex} title={rowError(row, rowIndex)} className={isSelected({ selection, index: rowNumber(rowIndex) }) ? 'selected' : ''}>
-                <td style={cornerStyle} onClick={() => selectable && dispatch({ type: 'SET_SELECTION', selection: toggleIndex({ selection, index: rowNumber(rowIndex) }) })}>
+                <td style={cornerStyle} onClick={(event) => onRowNumberClick({ useAnchor: event.shiftKey, index: rowNumber(rowIndex) })}>
                   <span>{rowNumber(rowIndex).toLocaleString()}</span>
                   <input type='checkbox' checked={isSelected({ selection, index: rowNumber(rowIndex) })} />
                 </td>
@@ -340,7 +355,7 @@ export default function HighTable({
         </table>
       </div>
     </div>
-    <div className='table-corner' style={cornerStyle} onClick={() => selectable && dispatch({ type: 'SET_SELECTION', selection: toggleAll({ selection, length: rows.length }) })}>
+    <div className='table-corner' style={cornerStyle} onClick={() => selectable && dispatch({ type: 'SET_SELECTION', selection: toggleAll({ selection, length: rows.length }), anchor: undefined })}>
       <span>&nbsp;</span>
       <input type='checkbox' checked={areAllSelected({ selection, length: rows.length })} />
     </div>

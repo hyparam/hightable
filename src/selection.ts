@@ -139,30 +139,30 @@ export function unselectRange({ selection, range }: {selection: Selection, range
 }
 
 /**
- * Extend selection state from bound1 to bound2 (selecting or unselecting the range).
+ * Extend selection state from anchor to index (selecting or unselecting the range).
  * Both bounds are inclusive.
- * It will handle the shift+click behavior. bound1 is the first index clicked, bound2 is the last index clicked.
+ * It will handle the shift+click behavior. anchor is the first index clicked, index is the last index clicked.
  */
-export function extendToBound({ selection, bound1, bound2 }: {selection: Selection, bound1?: number, bound2: number}): Selection {
+export function extendFromAnchor({ selection, anchor, index }: {selection: Selection, anchor?: number, index: number}): Selection {
   if (!isValidSelection(selection)) {
     throw new Error('Invalid selection')
   }
-  if (bound1 === undefined) {
-    // no initial bound, no operation
+  if (anchor === undefined) {
+    // no anchor to start the range, no operation
     return selection
   }
-  if (!isValidIndex(bound1) || !isValidIndex(bound2)) {
+  if (!isValidIndex(anchor) || !isValidIndex(index)) {
     throw new Error('Invalid index')
   }
-  if (bound1 === bound2) {
+  if (anchor === index) {
     // no operation
     return selection
   }
-  const range = bound1 < bound2 ? { start: bound1, end: bound2 + 1 } : { start: bound2, end: bound1 + 1 }
+  const range = anchor < index ? { start: anchor, end: index + 1 } : { start: index, end: anchor + 1 }
   if (!isValidRange(range)) {
     throw new Error('Invalid range')
   }
-  if (isSelected({ selection, index: bound1 })) {
+  if (isSelected({ selection, index: anchor })) {
     // select the rest of the range
     return selectRange({ selection, range })
   } else {

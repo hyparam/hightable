@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { areAllSelected, extendToBound, isSelected, isValidIndex, isValidRange, isValidSelection, selectRange, toggleAll, toggleIndex, unselectRange } from '../src/selection.js'
+import { areAllSelected, extendFromAnchor, isSelected, isValidIndex, isValidRange, isValidSelection, selectRange, toggleAll, toggleIndex, unselectRange } from '../src/selection.js'
 
 describe('an index', () => {
   test('is a positive integer', () => {
@@ -183,28 +183,28 @@ describe('unselectRange', () => {
   })
 })
 
-describe('toggleBeextendToBoundtweenBounds', () => {
+describe('extendFromAnchor', () => {
   test('should throw an error if the selection is invalid', () => {
-    expect(() => extendToBound({ selection: [{ start: 1, end: 0 }], bound1: 0, bound2: 1 })).toThrow('Invalid selection')
+    expect(() => extendFromAnchor({ selection: [{ start: 1, end: 0 }], anchor: 0, index: 1 })).toThrow('Invalid selection')
   })
-  test('does nothing if the first bound is undefined', () => {
-    expect(extendToBound({ selection: [{ start: 0, end: 1 }], bound2: 1 })).toEqual([{ start: 0, end: 1 }])
+  test('does nothing if the anchor is undefined', () => {
+    expect(extendFromAnchor({ selection: [{ start: 0, end: 1 }], index: 1 })).toEqual([{ start: 0, end: 1 }])
   })
-  test('does nothing if the bounds are the same', () => {
-    expect(extendToBound({ selection: [{ start: 0, end: 1 }], bound1: 0, bound2: 0 })).toEqual([{ start: 0, end: 1 }])
+  test('does nothing if the anchor and the index are the same', () => {
+    expect(extendFromAnchor({ selection: [{ start: 0, end: 1 }], anchor: 0, index: 0 })).toEqual([{ start: 0, end: 1 }])
   })
-  test('should throw an error if the bounds are invalid', () => {
-    expect(() => extendToBound({ selection: [], bound1: -1, bound2: 0 })).toThrow('Invalid index')
-    expect(() => extendToBound({ selection: [], bound1: 0, bound2: -1 })).toThrow('Invalid index')
+  test('should throw an error if the anchor or the index are invalid', () => {
+    expect(() => extendFromAnchor({ selection: [], anchor: -1, index: 0 })).toThrow('Invalid index')
+    expect(() => extendFromAnchor({ selection: [], anchor: 0, index: -1 })).toThrow('Invalid index')
   })
-  test('should select the range between the bounds (inclusive) if bound1 was selected', () => {
-    expect(extendToBound({ selection: [{ start: 0, end: 1 }], bound1: 0, bound2: 1 })).toEqual([{ start: 0, end: 2 }])
-    expect(extendToBound({ selection: [{ start: 1, end: 2 }], bound1: 1, bound2: 0 })).toEqual([{ start: 0, end: 2 }])
-    expect(extendToBound({ selection: [{ start: 0, end: 1 }, { start: 3, end: 4 }], bound1: 0, bound2: 5 })).toEqual([{ start: 0, end: 6 }])
+  test('should select the range between the bounds (inclusive) if anchor was selected', () => {
+    expect(extendFromAnchor({ selection: [{ start: 0, end: 1 }], anchor: 0, index: 1 })).toEqual([{ start: 0, end: 2 }])
+    expect(extendFromAnchor({ selection: [{ start: 1, end: 2 }], anchor: 1, index: 0 })).toEqual([{ start: 0, end: 2 }])
+    expect(extendFromAnchor({ selection: [{ start: 0, end: 1 }, { start: 3, end: 4 }], anchor: 0, index: 5 })).toEqual([{ start: 0, end: 6 }])
   })
-  test('should unselect the range between the bounds (inclusive) if bound1 was not selected', () => {
-    expect(extendToBound({ selection: [{ start: 0, end: 1 }], bound1: 2, bound2: 3 })).toEqual([{ start: 0, end: 1 }])
-    expect(extendToBound({ selection: [{ start: 0, end: 1 }], bound1: 2, bound2: 0 })).toEqual([])
-    expect(extendToBound({ selection: [{ start: 0, end: 1 }, { start: 3, end: 4 }], bound1: 2, bound2: 3 })).toEqual([{ start: 0, end: 1 }])
+  test('should unselect the range between the bounds (inclusive) if anchor was not selected', () => {
+    expect(extendFromAnchor({ selection: [{ start: 0, end: 1 }], anchor: 2, index: 3 })).toEqual([{ start: 0, end: 1 }])
+    expect(extendFromAnchor({ selection: [{ start: 0, end: 1 }], anchor: 2, index: 0 })).toEqual([])
+    expect(extendFromAnchor({ selection: [{ start: 0, end: 1 }, { start: 3, end: 4 }], anchor: 2, index: 3 })).toEqual([{ start: 0, end: 1 }])
   })
 })
