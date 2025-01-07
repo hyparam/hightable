@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { isSelected, isValidIndex, isValidRange, isValidSelection, toggleIndex } from '../src/selection.js'
+import { areAllSelected, isSelected, isValidIndex, isValidRange, isValidSelection, toggleAll, toggleIndex } from '../src/selection.js'
 
 describe('an index', () => {
   test('is a positive integer', () => {
@@ -107,5 +107,53 @@ describe('isSelected', () => {
     expect(isSelected({ selection: [{ start: 0, end: 1 }], index: 0 })).toBe(true)
     expect(isSelected({ selection: [{ start: 0, end: Infinity }], index: 1 })).toBe(true)
     expect(isSelected({ selection: [{ start: 0, end: 1 }], index: 1 })).toBe(false)
+  })
+  test('should throw an error if the index is invalid', () => {
+    expect(() => isSelected({ selection: [], index: -1 })).toThrow('Invalid index')
+  })
+  test('should throw an error if the selection is invalid', () => {
+    expect(() => isSelected({ selection: [{ start: 1, end: 0 }], index: 0 })).toThrow('Invalid selection')
+  })
+})
+
+describe('areAllSelected', () => {
+  test('should return true if all indices are selected', () => {
+    expect(areAllSelected({ selection: [{ start: 0, end: Infinity }] })).toBe(true)
+    expect(areAllSelected({ selection: [{ start: 0, end: 1 }] })).toBe(false)
+    expect(areAllSelected({ selection: [{ start: 1, end: Infinity }] })).toBe(false)
+  })
+  test('should return true if all indices are selected and the length is provided', () => {
+    expect(areAllSelected({ selection: [{ start: 0, end: 1 }], length: 1 })).toBe(true)
+    expect(areAllSelected({ selection: [{ start: 0, end: Infinity }], length: 2 })).toBe(true)
+    expect(areAllSelected({ selection: [{ start: 0, end: 1 }], length: 2 })).toBe(false)
+  })
+  test('should throw an error if the selection is invalid', () => {
+    expect(() => areAllSelected({ selection: [{ start: 1, end: 0 }] })).toThrow('Invalid selection')
+    expect(() => areAllSelected({ selection: [{ start: 1, end: 0 }], length: 0 })).toThrow('Invalid selection')
+  })
+  test('should throw an error if the length is invalid', () => {
+    expect(() => areAllSelected({ selection: [], length: -1 })).toThrow('Invalid length')
+  })
+})
+
+describe('toggleAll', () => {
+  test('should return an empty selection if all indices are selected', () => {
+    expect(toggleAll({ selection: [{ start: 0, end: Infinity }] })).toEqual([])
+    expect(toggleAll({ selection: [{ start: 0, end: 1 }], length: 1 })).toEqual([])
+  })
+  test('should return a selection with all indices if none are selected', () => {
+    expect(toggleAll({ selection: [] })).toEqual([{ start: 0, end: Infinity }])
+    expect(toggleAll({ selection: [], length: 1 })).toEqual([{ start: 0, end: Infinity }])
+  })
+  test('should return a selection with all indices if some are selected', () => {
+    expect(toggleAll({ selection: [{ start: 0, end: 1 }] })).toEqual([{ start: 0, end: Infinity }])
+    expect(toggleAll({ selection: [{ start: 0, end: 1 }], length: 2 })).toEqual([{ start: 0, end: Infinity }])
+  })
+  test('should throw an error if the selection is invalid', () => {
+    expect(() => toggleAll({ selection: [{ start: 1, end: 0 }] })).toThrow('Invalid selection')
+    expect(() => toggleAll({ selection: [{ start: 1, end: 0 }], length: 0 })).toThrow('Invalid selection')
+  })
+  test('should throw an error if the length is invalid', () => {
+    expect(() => toggleAll({ selection: [], length: -1 })).toThrow('Invalid length')
   })
 })

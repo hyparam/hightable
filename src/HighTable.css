@@ -110,17 +110,17 @@
 .table td:first-child input {
   display: none;
 }
-.table.selectable td:first-child:hover span, .table.selectable tr.selected td:first-child span {
+.selectable td:first-child:hover span, .selectable tr.selected td:first-child span {
   display: none;
 }
-.table.selectable td:first-child:hover input, .table.selectable tr.selected td:first-child input {
+.selectable td:first-child:hover input, .selectable tr.selected td:first-child input {
   display: inline;
   cursor: pointer;
 }
-.table.selectable tr.selected {
+.selectable tr.selected {
   background-color: #fbf7bf;
 }
-.table.selectable tr.selected td:first-child {
+.selectable tr.selected td:first-child {
   background-color: #f1edbb;
 }
 
@@ -222,7 +222,26 @@
   left: 0;
   z-index: 15;
   box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.2);
+  cursor: default;
+  display: flex;
+  justify-content: center;
 }
+.selectable .table-corner {
+  background: #e4e4e6;
+  cursor: pointer;
+}
+.table-corner input {
+  display: none;
+}
+.selectable .table-corner span {
+  display: none;
+}
+.selectable .table-corner input {
+  display: inline;
+  cursor: pointer;
+  text-align: center;
+}
+
 /* mock row numbers */
 .mock-row-label {
   content: "";

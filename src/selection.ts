@@ -101,5 +101,34 @@ export function toggleIndex({ selection, index }: {selection: Selection, index: 
 }
 
 export function isSelected({ selection, index }: {selection: Selection, index: number}): boolean {
+  if (!isValidIndex(index)) {
+    throw new Error('Invalid index')
+  }
+  if (!isValidSelection(selection)) {
+    throw new Error('Invalid selection')
+  }
   return selection.some(range => range.start <= index && index < range.end)
+}
+
+export function areAllSelected({ selection, length }: {selection: Selection, length ?: number}): boolean {
+  if (!isValidSelection(selection)) {
+    throw new Error('Invalid selection')
+  }
+  if (length && !isValidIndex(length)) {
+    throw new Error('Invalid length')
+  }
+  return selection.length === 1 && selection[0].start === 0 && (selection[0].end === Infinity || selection[0].end === length)
+}
+
+export function toggleAll({ selection, length }: {selection: Selection, length ?: number}): Selection {
+  if (!isValidSelection(selection)) {
+    throw new Error('Invalid selection')
+  }
+  if (length && !isValidIndex(length)) {
+    throw new Error('Invalid length')
+  }
+  if (areAllSelected({ selection, length })) {
+    return []
+  }
+  return [{ start: 0, end: Infinity }]
 }
