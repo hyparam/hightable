@@ -6,7 +6,7 @@ export type Selection = Array<Range>
 
 interface Range {
     start: number // inclusive lower limit, positive integer
-    end: number // exclusive upper limit, positive integer or Infinity, strictly greater than start (no zero-length ranges).
+    end: number // exclusive upper limit, positive integer, strictly greater than start (no zero-length ranges).
 }
 
 export function isValidIndex(index: number): boolean {
@@ -15,7 +15,7 @@ export function isValidIndex(index: number): boolean {
 
 export function isValidRange(range: Range): boolean {
   return isValidIndex(range.start)
-    && (isValidIndex(range.end) || range.end === Infinity)
+    && isValidIndex(range.end)
     && range.end > range.start
 }
 
@@ -110,17 +110,17 @@ export function isSelected({ selection, index }: {selection: Selection, index: n
   return selection.some(range => range.start <= index && index < range.end)
 }
 
-export function areAllSelected({ selection, length }: { selection: Selection, length?: number }): boolean {
+export function areAllSelected({ selection, length }: { selection: Selection, length: number }): boolean {
   if (!isValidSelection(selection)) {
     throw new Error('Invalid selection')
   }
   if (length && !isValidIndex(length)) {
     throw new Error('Invalid length')
   }
-  return selection.length === 1 && selection[0].start === 0 && (selection[0].end === Infinity || selection[0].end === length)
+  return selection.length === 1 && selection[0].start === 0 && selection[0].end === length
 }
 
-export function toggleAll({ selection, length }: {selection: Selection, length ?: number}): Selection {
+export function toggleAll({ selection, length }: { selection: Selection, length: number }): Selection {
   if (!isValidSelection(selection)) {
     throw new Error('Invalid selection')
   }
@@ -130,5 +130,5 @@ export function toggleAll({ selection, length }: {selection: Selection, length ?
   if (areAllSelected({ selection, length })) {
     return []
   }
-  return [{ start: 0, end: Infinity }]
+  return [{ start: 0, end: length }]
 }

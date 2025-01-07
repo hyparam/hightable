@@ -27,11 +27,7 @@ describe('a range', () => {
     expect(isValidRange({ start: 0, end: 1.5 })).toBe(false)
     expect(isValidRange({ start: -1, end: 1 })).toBe(false)
     expect(isValidRange({ start: 0, end: NaN })).toBe(false)
-  })
-
-  test('accepts Infinity as the end boundary', () => {
-    expect(isValidRange({ start: 0, end: Infinity })).toBe(true)
-    expect(isValidRange({ start: Infinity, end: Infinity })).toBe(false)
+    expect(isValidRange({ start: 0, end: Infinity })).toBe(false)
   })
 })
 
@@ -42,14 +38,14 @@ describe('a selection', () => {
 
   test('has valid ranges', () => {
     expect(isValidSelection([{ start: 0, end: 1 }])).toBe(true)
-    expect(isValidSelection([{ start: 0, end: Infinity }])).toBe(true)
     expect(isValidSelection([{ start: 1, end: 0 }])).toBe(false)
     expect(isValidSelection([{ start: -1, end: 1 }])).toBe(false)
     expect(isValidSelection([{ start: NaN, end: 1 }])).toBe(false)
+    expect(isValidSelection([{ start: 0, end: Infinity }])).toBe(false)
   })
 
   test('has ordered ranges', () => {
-    expect(isValidSelection([{ start: 0, end: 1 }, { start: 2, end: Infinity }])).toBe(true)
+    expect(isValidSelection([{ start: 0, end: 1 }, { start: 2, end: 3 }])).toBe(true)
     expect(isValidSelection([{ start: 2, end: 3 }, { start: 0, end: 1 }])).toBe(false)
   })
 
@@ -105,7 +101,7 @@ describe('toggling an index', () => {
 describe('isSelected', () => {
   test('should return true if the index is selected', () => {
     expect(isSelected({ selection: [{ start: 0, end: 1 }], index: 0 })).toBe(true)
-    expect(isSelected({ selection: [{ start: 0, end: Infinity }], index: 1 })).toBe(true)
+    expect(isSelected({ selection: [{ start: 0, end: 2 }], index: 1 })).toBe(true)
     expect(isSelected({ selection: [{ start: 0, end: 1 }], index: 1 })).toBe(false)
   })
   test('should throw an error if the index is invalid', () => {
@@ -118,17 +114,11 @@ describe('isSelected', () => {
 
 describe('areAllSelected', () => {
   test('should return true if all indices are selected', () => {
-    expect(areAllSelected({ selection: [{ start: 0, end: Infinity }] })).toBe(true)
-    expect(areAllSelected({ selection: [{ start: 0, end: 1 }] })).toBe(false)
-    expect(areAllSelected({ selection: [{ start: 1, end: Infinity }] })).toBe(false)
-  })
-  test('should return true if all indices are selected and the length is provided', () => {
-    expect(areAllSelected({ selection: [{ start: 0, end: 1 }], length: 1 })).toBe(true)
-    expect(areAllSelected({ selection: [{ start: 0, end: Infinity }], length: 2 })).toBe(true)
-    expect(areAllSelected({ selection: [{ start: 0, end: 1 }], length: 2 })).toBe(false)
+    expect(areAllSelected({ selection: [{ start: 0, end: 3 }], length: 3 })).toBe(true)
+    expect(areAllSelected({ selection: [{ start: 0, end: 1 }], length: 3 })).toBe(false)
+    expect(areAllSelected({ selection: [{ start: 1, end: 3 }], length: 3 })).toBe(false)
   })
   test('should throw an error if the selection is invalid', () => {
-    expect(() => areAllSelected({ selection: [{ start: 1, end: 0 }] })).toThrow('Invalid selection')
     expect(() => areAllSelected({ selection: [{ start: 1, end: 0 }], length: 0 })).toThrow('Invalid selection')
   })
   test('should throw an error if the length is invalid', () => {
@@ -138,19 +128,15 @@ describe('areAllSelected', () => {
 
 describe('toggleAll', () => {
   test('should return an empty selection if all indices are selected', () => {
-    expect(toggleAll({ selection: [{ start: 0, end: Infinity }] })).toEqual([])
-    expect(toggleAll({ selection: [{ start: 0, end: 1 }], length: 1 })).toEqual([])
+    expect(toggleAll({ selection: [{ start: 0, end: 3 }], length: 3 })).toEqual([])
   })
   test('should return a selection with all indices if none are selected', () => {
-    expect(toggleAll({ selection: [] })).toEqual([{ start: 0, end: Infinity }])
-    expect(toggleAll({ selection: [], length: 1 })).toEqual([{ start: 0, end: Infinity }])
+    expect(toggleAll({ selection: [], length: 3 })).toEqual([{ start: 0, end: 3 }])
   })
   test('should return a selection with all indices if some are selected', () => {
-    expect(toggleAll({ selection: [{ start: 0, end: 1 }] })).toEqual([{ start: 0, end: Infinity }])
-    expect(toggleAll({ selection: [{ start: 0, end: 1 }], length: 2 })).toEqual([{ start: 0, end: Infinity }])
+    expect(toggleAll({ selection: [{ start: 0, end: 1 }], length: 3 })).toEqual([{ start: 0, end: 3 }])
   })
   test('should throw an error if the selection is invalid', () => {
-    expect(() => toggleAll({ selection: [{ start: 1, end: 0 }] })).toThrow('Invalid selection')
     expect(() => toggleAll({ selection: [{ start: 1, end: 0 }], length: 0 })).toThrow('Invalid selection')
   })
   test('should throw an error if the length is invalid', () => {
