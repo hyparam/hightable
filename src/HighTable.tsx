@@ -17,6 +17,7 @@ export {
   wrapPromise,
 } from './dataframe.js'
 export { rowCache } from './rowCache.js'
+export type { Selection } from './selection.js'
 export { HighTable }
 
 const rowHeight = 33 // row height px
@@ -37,6 +38,8 @@ interface TableProps {
   focus?: boolean // focus table on mount? (default true)
   tableControl?: TableControl // control the table from outside
   selectable?: boolean // enable row selection (default false)
+  onOrderByChange?: (orderBy: string | undefined) => void
+  onSelectionChange?: (selection: Selection) => void
   onDoubleClickCell?: MouseEventCellHandler
   onMouseDownCell?: MouseEventCellHandler
   onError?: (error: Error) => void
@@ -64,40 +67,6 @@ type Action =
   | { type: 'DATA_CHANGED' }
   | { type: 'SET_SELECTION', selection: Selection, anchor?: number }
 
-function reducer(state: State, action: Action): State {
-  switch (action.type) {
-  case 'SET_ROWS':
-    return {
-      ...state,
-      startIndex: action.start,
-      rows: action.rows,
-      invalidate: false,
-      hasCompleteRow: state.hasCompleteRow || action.hasCompleteRow,
-    }
-  case 'SET_COLUMN_WIDTH': {
-    const columnWidths = [...state.columnWidths]
-    columnWidths[action.columnIndex] = action.columnWidth
-    return { ...state, columnWidths }
-  }
-  case 'SET_COLUMN_WIDTHS':
-    return { ...state, columnWidths: action.columnWidths }
-  case 'SET_ORDER': {
-    if (state.orderBy === action.orderBy) {
-      return state
-    } else {
-      // the selection is relative to the order, and must be reset if the order changes
-      return { ...state, orderBy: action.orderBy, rows: [], selection: [], anchor: undefined }
-    }
-  }
-  case 'DATA_CHANGED':
-    return { ...state, invalidate: true, hasCompleteRow: false, selection: [], anchor: undefined }
-  case 'SET_SELECTION':
-    return { ...state, selection: action.selection, anchor: action.anchor }
-  default:
-    return state
-  }
-}
-
 const initialState: State = {
   columnWidths: [],
   startIndex: 0,
@@ -124,6 +93,8 @@ export default function HighTable({
   focus = true,
   tableControl,
   selectable = false,
+  onOrderByChange,
+  onSelectionChange,
   onDoubleClickCell,
   onMouseDownCell,
   onError = console.error,
@@ -136,6 +107,43 @@ export default function HighTable({
    *                  startIndex lives in the table domain: it's the first virtual row to be rendered in HTML.
    * data.rows(dataIndex, dataIndex + 1) is the same row as data.rows(tableIndex, tableIndex + 1, orderBy)
    */
+  function reducer(state: State, action: Action): State {
+    switch (action.type) {
+    case 'SET_ROWS':
+      return {
+        ...state,
+        startIndex: action.start,
+        rows: action.rows,
+        invalidate: false,
+        hasCompleteRow: state.hasCompleteRow || action.hasCompleteRow,
+      }
+    case 'SET_COLUMN_WIDTH': {
+      const columnWidths = [...state.columnWidths]
+      columnWidths[action.columnIndex] = action.columnWidth
+      return { ...state, columnWidths }
+    }
+    case 'SET_COLUMN_WIDTHS':
+      return { ...state, columnWidths: action.columnWidths }
+    case 'SET_ORDER': {
+      onOrderByChange?.(action.orderBy)
+      onSelectionChange?.([])
+      if (state.orderBy === action.orderBy) {
+        return state
+      } else {
+        // the selection is relative to the order, and must be reset if the order changes
+        return { ...state, orderBy: action.orderBy, rows: [], selection: [], anchor: undefined }
+      }
+    }
+    case 'DATA_CHANGED':
+      onSelectionChange?.([])
+      return { ...state, invalidate: true, hasCompleteRow: false, selection: [], anchor: undefined }
+    case 'SET_SELECTION':
+      onSelectionChange?.(action.selection)
+      return { ...state, selection: action.selection, anchor: action.anchor }
+    default:
+      return state
+    }
+  }
   const [state, dispatch] = useReducer(reducer, initialState)
 
   const { anchor, columnWidths, startIndex, rows, orderBy, invalidate, hasCompleteRow, selection } = state
@@ -258,7 +266,7 @@ export default function HighTable({
     return () => {
       tableControl?.publisher.unsubscribe(dispatch)
     }
-  }, [tableControl])
+  }, [tableControl, dispatch])
 
   /**
    * Validate row length
@@ -488,6 +496,7 @@ interface PubSub<T> extends Publisher<T> {
 export interface TableControl {
   publisher: Publisher<Action>
   setOrderBy: (columnName: string) => void
+  setSelection: (selection: Selection) => void
 }
 
 function createPubSub<T>(): PubSub<T> {
@@ -513,6 +522,9 @@ export function createTableControl(): TableControl {
     publisher,
     setOrderBy(columnName: string) {
       publisher.publish({ type: 'SET_ORDER', orderBy: columnName })
+    },
+    setSelection(selection: Selection) {
+      publisher.publish({ type: 'SET_SELECTION', selection })
     },
   }
 }
