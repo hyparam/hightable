@@ -1,6 +1,7 @@
 import { useReducer } from 'react'
 import type { Action, State, TableProps } from './ControlledHighTable.js'
 import ControlledHighTable from './ControlledHighTable.js'
+export { stringify, throttle } from './ControlledHighTable.js'
 export type { Action, ControlledTableProps, State, TableProps } from './ControlledHighTable.js'
 export {
   arrayDataFrame, AsyncRow, asyncRows,
