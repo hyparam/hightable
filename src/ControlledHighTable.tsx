@@ -21,27 +21,29 @@ export type { Selection } from './selection.js'
 
 const rowHeight = 33 // row height px
 
+export interface SelectionAndAnchor {
+  selection: Selection // rows selection. The values are indexes of the virtual table (sorted rows), and thus depend on the order.
+  anchor?: number // anchor row used as a reference for shift+click selection. It's a virtual table index (sorted), and thus depends on the order.
+}
+
 /**
  * State of the component
  */
-export type State = {
+export type InternalState = {
   columnWidths: Array<number | undefined> // width of each column
   invalidate: boolean // true if the data must be fetched again
   hasCompleteRow: boolean // true if at least one row is fully resolved (all of its cells)
   rows: Row[] // slice of the virtual table rows (sorted rows) to render as HTML. It might contain incomplete rows. Rows are expected to include __index__ if sorted.
   startIndex: number // offset of the slice of sorted rows to render (rows[0] is the startIndex'th sorted row)
   orderBy?: string // column name to sort by
-  selection: Selection // rows selection. The values are indexes of the virtual table (sorted rows), and thus depend on the order.
-  anchor?: number // anchor row used as a reference for shift+click selection. It's a virtual table index (sorted), and thus depends on the order.
 }
 
-export type Action =
-  | { type: 'SET_ROWS', start: number, rows: Row[], hasCompleteRow: boolean }
+export type InternalAction =
+| { type: 'SET_ROWS', start: number, rows: Row[], hasCompleteRow: boolean }
   | { type: 'SET_COLUMN_WIDTH', columnIndex: number, columnWidth: number | undefined }
   | { type: 'SET_COLUMN_WIDTHS', columnWidths: Array<number | undefined> }
   | { type: 'SET_ORDER', orderBy: string | undefined }
   | { type: 'DATA_CHANGED' }
-  | { type: 'SET_SELECTION', selection: Selection, anchor?: number }
 
 /**
  * Mouse event handler for a cell in the table.
@@ -57,7 +59,6 @@ export interface TableProps {
   overscan?: number // number of rows to fetch outside of the viewport
   padding?: number // number of padding rows to render outside of the viewport
   focus?: boolean // focus table on mount? (default true)
-  selectable?: boolean // enable row selection (default false)
   onDoubleClickCell?: MouseEventCellHandler
   onMouseDownCell?: MouseEventCellHandler
   onError?: (error: Error) => void
@@ -70,8 +71,10 @@ function rowLabel(rowIndex?: number): string {
 }
 
 export type ControlledTableProps = TableProps & {
-  state: State
-  dispatch: React.Dispatch<Action>
+  state: InternalState
+  dispatch: React.Dispatch<InternalAction>
+  selectionAndAnchor?: SelectionAndAnchor // controlled selection state
+  setSelectionAndAnchor?: (selectionAndAnchor: SelectionAndAnchor) => void // controlled selection state setter
 }
 
 /**
@@ -83,7 +86,8 @@ export default function ControlledHighTable({
   overscan = 20,
   padding = 20,
   focus = true,
-  selectable = false,
+  selectionAndAnchor,
+  setSelectionAndAnchor,
   state,
   dispatch,
   onDoubleClickCell,
@@ -98,7 +102,11 @@ export default function ControlledHighTable({
    *                  startIndex lives in the table domain: it's the first virtual row to be rendered in HTML.
    * data.rows(dataIndex, dataIndex + 1) is the same row as data.rows(tableIndex, tableIndex + 1, orderBy)
    */
-  const { anchor, columnWidths, startIndex, rows, orderBy, invalidate, hasCompleteRow, selection } = state
+  const { columnWidths, startIndex, rows, orderBy, invalidate, hasCompleteRow } = state
+
+  const selectable = selectionAndAnchor && setSelectionAndAnchor
+  const { selection, anchor } = selectionAndAnchor ?? { selection: [], anchor: undefined }
+
   const offsetTopRef = useRef(0)
 
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -277,18 +285,15 @@ export default function ControlledHighTable({
     return { dataIndex, tableIndex }
   }, [rows, startIndex, orderBy])
 
+
   const onRowNumberClick = useCallback(({ useAnchor, tableIndex }: {useAnchor: boolean, tableIndex: number}) => {
-    if (!selectable) return false
+    if (!setSelectionAndAnchor) return
     if (useAnchor) {
-      const newSelection = extendFromAnchor({ selection, anchor, index: tableIndex })
-      // did not throw: we can set the anchor (keep the same)
-      dispatch({ type: 'SET_SELECTION', selection: newSelection, anchor })
+      setSelectionAndAnchor({ selection: extendFromAnchor({ selection, anchor, index: tableIndex }), anchor })
     } else {
-      const newSelection = toggleIndex({ selection, index: tableIndex })
-      // did not throw: we can set the anchor
-      dispatch({ type: 'SET_SELECTION', selection: newSelection, anchor: tableIndex })
+      setSelectionAndAnchor({ selection: toggleIndex({ selection, index: tableIndex }), anchor: tableIndex })
     }
-  }, [selection, anchor, selectable, dispatch])
+  }, [setSelectionAndAnchor, selection, anchor])
 
   // add empty pre and post rows to fill the viewport
   const prePadding = Array.from({ length: Math.min(padding, startIndex) }, () => [])
@@ -351,12 +356,12 @@ export default function ControlledHighTable({
             {rows.map((row, rowIndex) => {
               const { tableIndex, dataIndex } = getRowIndexes(rowIndex)
               return <tr key={tableIndex} aria-rowindex={tableIndex + 2 /* 1-based + the header row */} title={rowError(row, dataIndex)}
-                className={isSelected({ selection, index: tableIndex }) ? 'selected' : ''}
+                className={selectable && isSelected({ selection, index: tableIndex }) ? 'selected' : ''}
                 aria-selected={isSelected({ selection, index: tableIndex })}
               >
-                <th scope="row" style={cornerStyle} onClick={event => onRowNumberClick({ useAnchor: event.shiftKey, tableIndex })}>
-                  <span>{ rowLabel(dataIndex) }</span>
-                  <input type='checkbox' checked={isSelected({ selection, index: tableIndex })} readOnly={true} />
+                <th scope="row" style={cornerStyle} onClick={selectable && (event => onRowNumberClick({ useAnchor: event.shiftKey, tableIndex }))}>
+                  <span>{rowLabel(dataIndex)}</span>
+                  { selectable && <input type='checkbox' checked={isSelected({ selection, index: tableIndex })} readOnly={true} /> }
                 </th>
                 {data.header.map((col, colIndex) =>
                   Cell(row[col], colIndex, dataIndex)
@@ -377,9 +382,9 @@ export default function ControlledHighTable({
         </table>
       </div>
     </div>
-    <div className='table-corner' style={cornerStyle} onClick={() => selectable && dispatch({ type: 'SET_SELECTION', selection: toggleAll({ selection, length: rows.length }), anchor: undefined })}>
+    <div className='table-corner' style={cornerStyle} onClick={selectable && (() => setSelectionAndAnchor({ selection: toggleAll({ selection, length: rows.length }), anchor: undefined }))}>
       <span>&nbsp;</span>
-      <input type='checkbox' checked={areAllSelected({ selection, length: rows.length })} readOnly={true} />
+      {selectable && <input type='checkbox' checked={selection && areAllSelected({ selection, length: rows.length })} readOnly={true} />}
     </div>
     <div className='mock-row-label' style={cornerStyle}>&nbsp;</div>
   </div>

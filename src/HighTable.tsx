@@ -1,8 +1,9 @@
-import { useReducer } from 'react'
-import type { Action, State, TableProps } from './ControlledHighTable.js'
+import { useCallback, useReducer } from 'react'
+import type { InternalAction, InternalState, SelectionAndAnchor, TableProps } from './ControlledHighTable.js'
 import ControlledHighTable from './ControlledHighTable.js'
+import type { Selection } from './selection.js'
 export { stringify, throttle } from './ControlledHighTable.js'
-export type { Action, ControlledTableProps, State, TableProps } from './ControlledHighTable.js'
+export type { ControlledTableProps, InternalAction, InternalState, SelectionAndAnchor, TableProps } from './ControlledHighTable.js'
 export {
   arrayDataFrame, AsyncRow, asyncRows,
   awaitRow,
@@ -23,6 +24,11 @@ export const initialState = {
   hasCompleteRow: false,
   selection: [],
 }
+
+type State = InternalState & SelectionAndAnchor
+
+type Action = InternalAction
+  | ({ type: 'SET_SELECTION' } & SelectionAndAnchor)
 
 export function reducer(state: State, action: Action): State {
   switch (action.type) {
@@ -58,6 +64,10 @@ export function reducer(state: State, action: Action): State {
   }
 }
 
+type HighTableProps = TableProps & {
+  onSelectionChange?: (selection: Selection) => void
+}
+
 /**
  * Render a table with streaming rows on demand from a DataFrame.
  */
@@ -67,12 +77,19 @@ export default function HighTable({
   overscan = 20,
   padding = 20,
   focus = true,
-  selectable = false,
+  onSelectionChange,
   onDoubleClickCell,
   onMouseDownCell,
   onError = console.error,
-}: TableProps) {
+}: HighTableProps) {
   const [state, dispatch] = useReducer(reducer, initialState)
+
+  const selectable = onSelectionChange !== undefined
+  const selectionAndAnchor = selectable ? { selection: state.selection, anchor: state.anchor } : undefined
+  const setSelectionAndAnchor = useCallback((selectionAndAnchor: SelectionAndAnchor) => {
+    onSelectionChange?.(selectionAndAnchor.selection)
+    dispatch({ type: 'SET_SELECTION', ...selectionAndAnchor })
+  }, [dispatch, onSelectionChange])
 
   return <ControlledHighTable
     data={data}
@@ -80,7 +97,8 @@ export default function HighTable({
     overscan={overscan}
     padding={padding}
     focus={focus}
-    selectable={selectable}
+    selectionAndAnchor={selectionAndAnchor}
+    setSelectionAndAnchor={selectable ? setSelectionAndAnchor : undefined}
     onDoubleClickCell={onDoubleClickCell}
     onMouseDownCell={onMouseDownCell}
     onError={onError}
