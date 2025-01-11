@@ -274,7 +274,9 @@ export default function HighTable({
   }, [focus])
 
   const rowNumber = useCallback((rowIndex: number): number => {
-    return (rows[rowIndex].__index__ ?? rowIndex + startIndex + 1) as unknown as number
+    const index = rows[rowIndex].__index__
+    const resolved = typeof index === 'object' ? index.resolved : index
+    return (resolved ?? rowIndex + startIndex) + 1
     /// TODO(SL): improve rows typing
   }, [rows, startIndex])
 
@@ -340,7 +342,7 @@ export default function HighTable({
                   <input type='checkbox' checked={isSelected({ selection, index: rowNumber(rowIndex) })} />
                 </td>
                 {data.header.map((col, colIndex) =>
-                  Cell(row[col], colIndex, startIndex + rowIndex, row.__index__?.resolved)
+                  Cell(row[col], colIndex, startIndex + rowIndex, rowNumber(rowIndex) - 1)
                 )}
               </tr>
             )}
