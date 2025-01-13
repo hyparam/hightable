@@ -21,6 +21,14 @@ export { HighTable }
 
 const rowHeight = 33 // row height px
 
+/**
+ * Mouse event handler for a cell in the table.
+ * @param event mouse event
+ * @param col column index
+ * @param row row index in the data frame
+ */
+type MouseEventCellHandler = (event: React.MouseEvent, col: number, row: number) => void
+
 interface TableProps {
   data: DataFrame
   cacheKey?: string // used to persist column widths
@@ -29,20 +37,23 @@ interface TableProps {
   focus?: boolean // focus table on mount? (default true)
   tableControl?: TableControl // control the table from outside
   selectable?: boolean // enable row selection (default false)
-  onDoubleClickCell?: (event: React.MouseEvent, col: number, row: number) => void
-  onMouseDownCell?: (event: React.MouseEvent, col: number, row: number) => void
+  onDoubleClickCell?: MouseEventCellHandler
+  onMouseDownCell?: MouseEventCellHandler
   onError?: (error: Error) => void
 }
 
+/**
+ * State of the component
+ */
 type State = {
-  columnWidths: Array<number | undefined>
-  invalidate: boolean
-  hasCompleteRow: boolean
-  startIndex: number
-  rows: AsyncRow[]
-  orderBy?: string
-  selection: Selection
-  anchor?: number // anchor row index for selection, the first element when selecting a range
+  columnWidths: Array<number | undefined> // width of each column
+  invalidate: boolean // true if the data must be fetched again
+  hasCompleteRow: boolean // true if at least one row is fully resolved (all of its cells)
+  rows: AsyncRow[] // slice of the virtual table rows (sorted rows) to render as HTML
+  startIndex: number // offset of the slice of sorted rows to render (rows[0] is the startIndex'th sorted row)
+  orderBy?: string // column name to sort by
+  selection: Selection // rows selection. The values are indexes of the virtual table (sorted rows), and thus depend on the order.
+  anchor?: number // anchor row used as a reference for shift+click selection. It's a virtual table index (sorted), and thus depend in the order.
 }
 
 type Action =
@@ -74,6 +85,7 @@ function reducer(state: State, action: Action): State {
     if (state.orderBy === action.orderBy) {
       return state
     } else {
+      // the selection is relative to the order, and must be reset if the order changes
       return { ...state, orderBy: action.orderBy, rows: [], selection: [], anchor: undefined }
     }
   }
@@ -110,6 +122,14 @@ export default function HighTable({
   onMouseDownCell,
   onError = console.error,
 }: TableProps) {
+  /**
+   * The component relies on the model of a virtual table which rows are ordered and only the visible rows are fetched and rendered as HTML <tr> elements.
+   * We use two reference domains for the rows:
+   * - data:          the index of a row in the original (unsorted) data frame is referred as dataRowIndex. The mouse event callbacks receive this index.
+   * - virtual table: the index of a row in the virtual table (sorted) is referred as tableRowIndex. The selection uses this index, and thus depends on the order.
+   *                  startIndex lives in the table domain: it's the first virtual row to be rendered in HTML.
+   * data.rows(originalRowIndex, originalRowIndex + 1) is the same row as data.rows(tableRowIndex, tableRowIndex + 1, orderBy)
+   */
   const [state, dispatch] = useReducer(reducer, initialState)
 
   const { anchor, columnWidths, startIndex, rows, orderBy, invalidate, hasCompleteRow, selection } = state
@@ -139,7 +159,7 @@ export default function HighTable({
       const clientHeight = scrollRef.current?.clientHeight || 100 // view window height
       const scrollTop = scrollRef.current?.scrollTop || 0 // scroll position
 
-      // determine rows to fetch based on current scroll position
+      // determine rows to fetch based on current scroll position (indexes refer to the virtual table domain)
       const startView = Math.floor(data.numRows * scrollTop / scrollHeight)
       const endView = Math.ceil(data.numRows * (scrollTop + clientHeight) / scrollHeight)
       const start = Math.max(0, startView - overscan)
@@ -163,7 +183,7 @@ export default function HighTable({
         const rows = asyncRows(unwrapped, end - start, data.header)
 
         const updateRows = throttle(() => {
-          const resolved = []
+          const resolved: Row[] = []
           let hasCompleteRow = false // true if at least one row is fully resolved
           for (const row of rows) {
             // Return only resolved values
@@ -233,12 +253,19 @@ export default function HighTable({
     }
   }, [tableControl])
 
+  const rowLabel = useCallback((rowIndex: number): string => {
+    // rowIndex + 1 because the displayed row numbers are 1-based
+    return (rowIndex + 1).toLocaleString()
+  }, [
+    // no dependencies, but we could add a setting to allow 0-based row numbers
+  ])
+
   /**
    * Validate row length
    */
-  function rowError(row: Record<string, any>, rowIndex: number): string | undefined {
+  function rowError(row: Record<string, any>, dataRowIndex: number): string | undefined {
     if (row.length > 0 && row.length !== data.header.length) {
-      return `Row ${rowIndex + 1} length ${row.length} does not match header length ${data.header.length}`
+      return `Row ${rowLabel(dataRowIndex)} length ${row.length} does not match header length ${data.header.length}`
     }
   }
 
@@ -246,8 +273,12 @@ export default function HighTable({
 
   /**
    * Render a table cell <td> with title and optional custom rendering
+   *
+   * @param value cell value
+   * @param col column index
+   * @param row row index in the original (unsorted) data frame
    */
-  function Cell(value: any, col: number, row: number, rowIndex?: number): ReactNode {
+  function Cell(value: any, col: number, row: number): ReactNode {
     // render as truncated text
     let str = stringify(value)
     let title: string | undefined
@@ -258,8 +289,8 @@ export default function HighTable({
     return <td
       className={str === undefined ? 'pending' : undefined}
       key={col}
-      onDoubleClick={e => onDoubleClickCell?.(e, col, rowIndex ?? row)}
-      onMouseDown={e => onMouseDownCell?.(e, col, rowIndex ?? row)}
+      onDoubleClick={e => onDoubleClickCell?.(e, col, row)}
+      onMouseDown={e => onMouseDownCell?.(e, col, row)}
       style={memoizedStyles[col]}
       title={title}>
       {str}
@@ -273,24 +304,33 @@ export default function HighTable({
     }
   }, [focus])
 
-  const rowNumber = useCallback((rowIndex: number): number => {
-    const index = rows[rowIndex].__index__
-    const resolved = typeof index === 'object' ? index.resolved : index
-    return (resolved ?? rowIndex + startIndex) + 1
-    /// TODO(SL): improve rows typing
-  }, [rows, startIndex])
+  /**
+   * Get the row index in the original (unsorted) data frame
+   *
+   * @param tableRowIndex row index in the virtual table (takes the sort order into account)
+   *
+   * @returns row index in the original (unsorted) data frame
+   */
+  const getDataRowIndex = useCallback((tableRowIndex: number): number => {
+    /// TODO(SL): improve row typing to get __index__ type if sorted
+    /// Maybe even better to always have an __index__, sorted or not
+    const dataRowIndex = rows[tableRowIndex].__index__
+    const resolved = typeof dataRowIndex === 'object' ? dataRowIndex.resolved : dataRowIndex
+    // .__index__ only exists if the rows are sorted, otherwise, the virtual table index is the same as the data index
+    return resolved ?? tableRowIndex
+  }, [rows])
 
 
-  const onRowNumberClick = useCallback(({ useAnchor, index }: {useAnchor: boolean, index: number}) => {
+  const onRowNumberClick = useCallback(({ useAnchor, tableRowIndex }: {useAnchor: boolean, tableRowIndex: number}) => {
     if (!selectable) return false
     if (useAnchor) {
-      const newSelection = extendFromAnchor({ selection, anchor, index })
+      const newSelection = extendFromAnchor({ selection, anchor, index: tableRowIndex })
       // did not throw: we can set the anchor (keep the same)
       dispatch({ type: 'SET_SELECTION', selection: newSelection, anchor })
     } else {
-      const newSelection = toggleIndex({ selection, index })
+      const newSelection = toggleIndex({ selection, index: tableRowIndex })
       // did not throw: we can set the anchor
-      dispatch({ type: 'SET_SELECTION', selection: newSelection, anchor: index })
+      dispatch({ type: 'SET_SELECTION', selection: newSelection, anchor: tableRowIndex })
     }
   }, [selection, anchor])
 
@@ -328,31 +368,48 @@ export default function HighTable({
             setColumnWidths={columnWidths => dispatch({ type: 'SET_COLUMN_WIDTHS', columnWidths })}
             setOrderBy={orderBy => data.sortable && dispatch({ type: 'SET_ORDER', orderBy })} />
           <tbody>
-            {prePadding.map((row, rowIndex) =>
-              <tr key={startIndex - prePadding.length + rowIndex}>
+            {prePadding.map((_, prePaddingIndex) => {
+              const tableRowIndex = startIndex - prePadding.length + prePaddingIndex
+              return <tr key={tableRowIndex}>
                 <td style={cornerStyle}>
-                  {(startIndex - prePadding.length + rowIndex + 1).toLocaleString()}
+                  {
+                    /// TODO(SL): if the data is sorted, this sequence of row labels is incorrect and might include duplicate
+                    /// labels with respect to the next slice of rows. Better to hide this number if the data is sorted?
+                    rowLabel(tableRowIndex)
+                  }
                 </td>
               </tr>
-            )}
-            {rows.map((row, rowIndex) =>
-              <tr key={startIndex + rowIndex} title={rowError(row, rowIndex)} className={isSelected({ selection, index: rowNumber(rowIndex) }) ? 'selected' : ''}>
-                <td style={cornerStyle} onClick={event => onRowNumberClick({ useAnchor: event.shiftKey, index: rowNumber(rowIndex) })}>
-                  <span>{rowNumber(rowIndex).toLocaleString()}</span>
-                  <input type='checkbox' checked={isSelected({ selection, index: rowNumber(rowIndex) })} />
+            })}
+            {rows.map((row, sliceIndex) => {
+              // tableRowIndex is the index of the row in the virtual table, ie: the sorted data
+              const tableRowIndex = startIndex + sliceIndex
+              // dataRowIndex is the index of the row in the original (unsorted) data frame
+              const dataRowIndex = getDataRowIndex(tableRowIndex)
+              return <tr key={tableRowIndex} title={rowError(row, dataRowIndex)} className={isSelected({ selection, index: tableRowIndex }) ? 'selected' : ''}>
+                <td style={cornerStyle} onClick={event => onRowNumberClick({ useAnchor: event.shiftKey, tableRowIndex })}>
+                  <span>{
+                    /// TODO(SL): we might want to show two columns: one for the tableRowIndex (for selection) and one for the dataRowIndex (to refer to the original data ids)
+                    rowLabel(dataRowIndex)
+                  }</span>
+                  <input type='checkbox' checked={isSelected({ selection, index: tableRowIndex })} />
                 </td>
                 {data.header.map((col, colIndex) =>
-                  Cell(row[col], colIndex, startIndex + rowIndex, rowNumber(rowIndex) - 1)
+                  Cell(row[col], colIndex, dataRowIndex)
                 )}
               </tr>
-            )}
-            {postPadding.map((row, rowIndex) =>
-              <tr key={startIndex + rows.length + rowIndex}>
+            })}
+            {postPadding.map((_, postPaddingIndex) => {
+              const tableRowIndex = startIndex + rows.length + postPaddingIndex
+              return <tr key={tableRowIndex}>
                 <td style={cornerStyle}>
-                  {(startIndex + rows.length + rowIndex + 1).toLocaleString()}
+                  {
+                    /// TODO(SL): if the data is sorted, this sequence of row labels is incorrect and might include duplicate
+                    /// labels with respect to the previous slice of rows. Better to hide this number if the data is sorted?
+                    rowLabel(tableRowIndex)
+                  }
                 </td>
               </tr>
-            )}
+            } )}
           </tbody>
         </table>
       </div>
