@@ -411,7 +411,7 @@ export default function HighTable({
                   }
                 </td>
               </tr>
-            } )}
+            })}
           </tbody>
         </table>
       </div>
