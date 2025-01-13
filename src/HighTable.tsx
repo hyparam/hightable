@@ -53,7 +53,7 @@ type State = {
   startIndex: number // offset of the slice of sorted rows to render (rows[0] is the startIndex'th sorted row)
   orderBy?: string // column name to sort by
   selection: Selection // rows selection. The values are indexes of the virtual table (sorted rows), and thus depend on the order.
-  anchor?: number // anchor row used as a reference for shift+click selection. It's a virtual table index (sorted), and thus depend on the order.
+  anchor?: number // anchor row used as a reference for shift+click selection. It's a virtual table index (sorted), and thus depends on the order.
 }
 
 type Action =
