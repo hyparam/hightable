@@ -305,20 +305,25 @@ export default function HighTable({
   }, [focus])
 
   /**
-   * Get the row index in the original (unsorted) data frame
+   * Get the row index in original (unsorted) data frame, and in the sorted virtual table.
    *
-   * @param tableRowIndex row index in the virtual table (takes the sort order into account)
+   * @param sliceIndex row index in the "rows" slice
    *
-   * @returns row index in the original (unsorted) data frame
+   * @returns an object with two properties:
+   *  dataRowIndex:  row index in the original (unsorted) data frame
+   *  tableRowIndex: row index in the virtual table (sorted)
    */
-  const getDataRowIndex = useCallback((tableRowIndex: number): number => {
+  const getRowIndexes = useCallback((sliceIndex: number): { dataRowIndex: number, tableRowIndex: number } => {
+    const tableRowIndex = startIndex + sliceIndex
     /// TODO(SL): improve row typing to get __index__ type if sorted
     /// Maybe even better to always have an __index__, sorted or not
-    const dataRowIndex = rows[tableRowIndex].__index__
-    const resolved = typeof dataRowIndex === 'object' ? dataRowIndex.resolved : dataRowIndex
-    // .__index__ only exists if the rows are sorted, otherwise, the virtual table index is the same as the data index
-    return resolved ?? tableRowIndex
-  }, [rows])
+    const index = rows[sliceIndex].__index__
+    const resolved = typeof index === 'object' ? index.resolved : index
+    return {
+      dataRowIndex: resolved ?? tableRowIndex, // .__index__ only exists if the rows are sorted. If not sorted, use the table index
+      tableRowIndex,
+    }
+  }, [rows, startIndex])
 
 
   const onRowNumberClick = useCallback(({ useAnchor, tableRowIndex }: {useAnchor: boolean, tableRowIndex: number}) => {
@@ -381,10 +386,7 @@ export default function HighTable({
               </tr>
             })}
             {rows.map((row, sliceIndex) => {
-              // tableRowIndex is the index of the row in the virtual table, ie: the sorted data
-              const tableRowIndex = startIndex + sliceIndex
-              // dataRowIndex is the index of the row in the original (unsorted) data frame
-              const dataRowIndex = getDataRowIndex(tableRowIndex)
+              const { tableRowIndex, dataRowIndex } = getRowIndexes(sliceIndex)
               return <tr key={tableRowIndex} title={rowError(row, dataRowIndex)} className={isSelected({ selection, index: tableRowIndex }) ? 'selected' : ''}>
                 <td style={cornerStyle} onClick={event => onRowNumberClick({ useAnchor: event.shiftKey, tableRowIndex })}>
                   <span>{
