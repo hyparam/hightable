@@ -128,7 +128,7 @@ export default function HighTable({
    * - data:          the index of a row in the original (unsorted) data frame is referred as dataIndex. The mouse event callbacks receive this index.
    * - virtual table: the index of a row in the virtual table (sorted) is referred as tableIndex. The selection uses this index, and thus depends on the order.
    *                  startIndex lives in the table domain: it's the first virtual row to be rendered in HTML.
-   * data.rows(originalRowIndex, originalRowIndex + 1) is the same row as data.rows(tableIndex, tableIndex + 1, orderBy)
+   * data.rows(dataIndex, dataIndex + 1) is the same row as data.rows(tableIndex, tableIndex + 1, orderBy)
    */
   const [state, dispatch] = useReducer(reducer, initialState)
 
