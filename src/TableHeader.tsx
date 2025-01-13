@@ -146,10 +146,11 @@ export default function TableHeader({
   const memoizedStyles = useMemo(() => columnWidths.map(cellStyle), [columnWidths])
 
   return <thead>
-    <tr>
+    <tr aria-rowindex={1}>
       <th><span /></th>
       {header.map((columnHeader, columnIndex) =>
         <th
+          scope="col"
           aria-sort={orderBy === columnHeader ? 'ascending' : undefined}
           className={orderBy === columnHeader ? 'orderby' : undefined}
           key={columnIndex}

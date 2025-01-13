@@ -1,7 +1,8 @@
-import { fireEvent, render, waitFor } from '@testing-library/react'
-import React, { act } from 'react'
+import { fireEvent, render, waitFor, within } from '@testing-library/react'
+import { act } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import HighTable from '../src/HighTable.js'
+import { sortableDataFrame } from '../src/dataframe.js'
 
 describe('HighTable', () => {
   const mockData = {
@@ -87,5 +88,51 @@ describe('HighTable', () => {
     })
     // Clear pending state on error:
     expect(container.querySelector('div.pending')).toBeNull()
+  })
+})
+
+
+describe('When sorted, HighTable', () => {
+  const data = {
+    header: ['ID', 'Count'],
+    numRows: 1000,
+    rows: (start: number, end: number) => Promise.resolve(
+      Array.from({ length: end - start }, (_, index) => ({
+        ID: 'row ' + (index + start),
+        Count: 1000 - start - index,
+      }))
+    ),
+  }
+
+  function checkRowContents(row: HTMLElement, rowNumber: string, ID: string, Count: string) {
+    const selectionCell = within(row).getByRole('rowheader')
+    expect(selectionCell).toBeDefined()
+    expect(selectionCell.textContent).toBe(rowNumber)
+
+    const columns = within(row).getAllByRole('cell')
+    expect(columns).toHaveLength(2)
+    expect(columns[0].textContent).toBe(ID)
+    expect(columns[1].textContent).toBe(Count)
+  }
+
+  it('shows the rows in the right order', async () => {
+    const { findByRole, getByRole, findAllByRole } = render(<HighTable data={sortableDataFrame(data)} />)
+
+    expect(getByRole('columnheader', { name: 'ID' })).toBeDefined()
+    await findByRole('cell', { name: 'row 1' })
+
+    const table = getByRole('grid') // not table! because the table is interactive. See https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Roles/grid_role
+    // first rowgroup is for the thead second is for tbody
+    const tbody = within(table).getAllByRole('rowgroup')[1]
+    let rows = within(tbody).getAllByRole('row')
+    checkRowContents(rows[0], '1', 'row 0', '1,000')
+
+    // Click on the Count header to sort by Count
+    const countHeader = getByRole('columnheader', { name: 'Count' })
+    fireEvent.click(countHeader)
+    await findAllByRole('cell', { name: 'row 999' })
+
+    rows = within(within(getByRole('grid')).getAllByRole('rowgroup')[1]).getAllByRole('row')
+    checkRowContents(rows[0], '1', 'row 999', '1')
   })
 })

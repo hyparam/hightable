@@ -356,8 +356,9 @@ export default function HighTable({
     <div className='table-scroll' ref={scrollRef}>
       <div style={{ height: `${scrollHeight}px` }}>
         <table
-          aria-colcount={data.header.length}
-          aria-rowcount={data.numRows}
+          aria-readonly={true}
+          aria-colcount={data.header.length + 1 /* don't forget the selection column */}
+          aria-rowcount={data.numRows + 1 /* don't forget the header row */}
           className={`table${data.sortable ? ' sortable' : ''}`}
           ref={tableRef}
           role='grid'
@@ -375,26 +376,29 @@ export default function HighTable({
           <tbody>
             {prePadding.map((_, prePaddingIndex) => {
               const tableIndex = startIndex - prePadding.length + prePaddingIndex
-              return <tr key={tableIndex}>
-                <td style={cornerStyle}>
+              return <tr key={tableIndex} aria-rowindex={tableIndex + 2 /* 1-based + the header row */} >
+                <th scope="row" style={cornerStyle}>
                   {
                     /// TODO(SL): if the data is sorted, this sequence of row labels is incorrect and might include duplicate
                     /// labels with respect to the next slice of rows. Better to hide this number if the data is sorted?
                     rowLabel(tableIndex)
                   }
-                </td>
+                </th>
               </tr>
             })}
             {rows.map((row, sliceIndex) => {
               const { tableIndex, dataIndex } = getRowIndexes(sliceIndex)
-              return <tr key={tableIndex} title={rowError(row, dataIndex)} className={isSelected({ selection, index: tableIndex }) ? 'selected' : ''}>
-                <td style={cornerStyle} onClick={event => onRowNumberClick({ useAnchor: event.shiftKey, tableIndex })}>
+              return <tr key={tableIndex} aria-rowindex={tableIndex + 2 /* 1-based + the header row */} title={rowError(row, dataIndex)}
+                className={isSelected({ selection, index: tableIndex }) ? 'selected' : ''}
+                aria-selected={isSelected({ selection, index: tableIndex })}
+              >
+                <th scope="row" style={cornerStyle} onClick={event => onRowNumberClick({ useAnchor: event.shiftKey, tableIndex })}>
                   <span>{
                     /// TODO(SL): we might want to show two columns: one for the tableIndex (for selection) and one for the dataIndex (to refer to the original data ids)
                     rowLabel(dataIndex)
                   }</span>
                   <input type='checkbox' checked={isSelected({ selection, index: tableIndex })} />
-                </td>
+                </th>
                 {data.header.map((col, colIndex) =>
                   Cell(row[col], colIndex, dataIndex)
                 )}
@@ -402,14 +406,14 @@ export default function HighTable({
             })}
             {postPadding.map((_, postPaddingIndex) => {
               const tableIndex = startIndex + rows.length + postPaddingIndex
-              return <tr key={tableIndex}>
-                <td style={cornerStyle}>
+              return <tr key={tableIndex} aria-rowindex={tableIndex + 2 /* 1-based + the header row */} >
+                <th scope="row" style={cornerStyle} >
                   {
                     /// TODO(SL): if the data is sorted, this sequence of row labels is incorrect and might include duplicate
                     /// labels with respect to the previous slice of rows. Better to hide this number if the data is sorted?
                     rowLabel(tableIndex)
                   }
-                </td>
+                </th>
               </tr>
             })}
           </tbody>
