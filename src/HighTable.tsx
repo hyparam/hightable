@@ -125,10 +125,10 @@ export default function HighTable({
   /**
    * The component relies on the model of a virtual table which rows are ordered and only the visible rows are fetched and rendered as HTML <tr> elements.
    * We use two reference domains for the rows:
-   * - data:          the index of a row in the original (unsorted) data frame is referred as dataRowIndex. The mouse event callbacks receive this index.
-   * - virtual table: the index of a row in the virtual table (sorted) is referred as tableRowIndex. The selection uses this index, and thus depends on the order.
+   * - data:          the index of a row in the original (unsorted) data frame is referred as dataIndex. The mouse event callbacks receive this index.
+   * - virtual table: the index of a row in the virtual table (sorted) is referred as tableIndex. The selection uses this index, and thus depends on the order.
    *                  startIndex lives in the table domain: it's the first virtual row to be rendered in HTML.
-   * data.rows(originalRowIndex, originalRowIndex + 1) is the same row as data.rows(tableRowIndex, tableRowIndex + 1, orderBy)
+   * data.rows(originalRowIndex, originalRowIndex + 1) is the same row as data.rows(tableIndex, tableIndex + 1, orderBy)
    */
   const [state, dispatch] = useReducer(reducer, initialState)
 
@@ -263,9 +263,9 @@ export default function HighTable({
   /**
    * Validate row length
    */
-  function rowError(row: Record<string, any>, dataRowIndex: number): string | undefined {
+  function rowError(row: Record<string, any>, dataIndex: number): string | undefined {
     if (row.length > 0 && row.length !== data.header.length) {
-      return `Row ${rowLabel(dataRowIndex)} length ${row.length} does not match header length ${data.header.length}`
+      return `Row ${rowLabel(dataIndex)} length ${row.length} does not match header length ${data.header.length}`
     }
   }
 
@@ -310,32 +310,32 @@ export default function HighTable({
    * @param sliceIndex row index in the "rows" slice
    *
    * @returns an object with two properties:
-   *  dataRowIndex:  row index in the original (unsorted) data frame
-   *  tableRowIndex: row index in the virtual table (sorted)
+   *  dataIndex:  row index in the original (unsorted) data frame
+   *  tableIndex: row index in the virtual table (sorted)
    */
-  const getRowIndexes = useCallback((sliceIndex: number): { dataRowIndex: number, tableRowIndex: number } => {
-    const tableRowIndex = startIndex + sliceIndex
+  const getRowIndexes = useCallback((sliceIndex: number): { dataIndex: number, tableIndex: number } => {
+    const tableIndex = startIndex + sliceIndex
     /// TODO(SL): improve row typing to get __index__ type if sorted
     /// Maybe even better to always have an __index__, sorted or not
     const index = rows[sliceIndex].__index__
     const resolved = typeof index === 'object' ? index.resolved : index
     return {
-      dataRowIndex: resolved ?? tableRowIndex, // .__index__ only exists if the rows are sorted. If not sorted, use the table index
-      tableRowIndex,
+      dataIndex: resolved ?? tableIndex, // .__index__ only exists if the rows are sorted. If not sorted, use the table index
+      tableIndex,
     }
   }, [rows, startIndex])
 
 
-  const onRowNumberClick = useCallback(({ useAnchor, tableRowIndex }: {useAnchor: boolean, tableRowIndex: number}) => {
+  const onRowNumberClick = useCallback(({ useAnchor, tableIndex }: {useAnchor: boolean, tableIndex: number}) => {
     if (!selectable) return false
     if (useAnchor) {
-      const newSelection = extendFromAnchor({ selection, anchor, index: tableRowIndex })
+      const newSelection = extendFromAnchor({ selection, anchor, index: tableIndex })
       // did not throw: we can set the anchor (keep the same)
       dispatch({ type: 'SET_SELECTION', selection: newSelection, anchor })
     } else {
-      const newSelection = toggleIndex({ selection, index: tableRowIndex })
+      const newSelection = toggleIndex({ selection, index: tableIndex })
       // did not throw: we can set the anchor
-      dispatch({ type: 'SET_SELECTION', selection: newSelection, anchor: tableRowIndex })
+      dispatch({ type: 'SET_SELECTION', selection: newSelection, anchor: tableIndex })
     }
   }, [selection, anchor])
 
@@ -374,40 +374,40 @@ export default function HighTable({
             setOrderBy={orderBy => data.sortable && dispatch({ type: 'SET_ORDER', orderBy })} />
           <tbody>
             {prePadding.map((_, prePaddingIndex) => {
-              const tableRowIndex = startIndex - prePadding.length + prePaddingIndex
-              return <tr key={tableRowIndex}>
+              const tableIndex = startIndex - prePadding.length + prePaddingIndex
+              return <tr key={tableIndex}>
                 <td style={cornerStyle}>
                   {
                     /// TODO(SL): if the data is sorted, this sequence of row labels is incorrect and might include duplicate
                     /// labels with respect to the next slice of rows. Better to hide this number if the data is sorted?
-                    rowLabel(tableRowIndex)
+                    rowLabel(tableIndex)
                   }
                 </td>
               </tr>
             })}
             {rows.map((row, sliceIndex) => {
-              const { tableRowIndex, dataRowIndex } = getRowIndexes(sliceIndex)
-              return <tr key={tableRowIndex} title={rowError(row, dataRowIndex)} className={isSelected({ selection, index: tableRowIndex }) ? 'selected' : ''}>
-                <td style={cornerStyle} onClick={event => onRowNumberClick({ useAnchor: event.shiftKey, tableRowIndex })}>
+              const { tableIndex, dataIndex } = getRowIndexes(sliceIndex)
+              return <tr key={tableIndex} title={rowError(row, dataIndex)} className={isSelected({ selection, index: tableIndex }) ? 'selected' : ''}>
+                <td style={cornerStyle} onClick={event => onRowNumberClick({ useAnchor: event.shiftKey, tableIndex })}>
                   <span>{
-                    /// TODO(SL): we might want to show two columns: one for the tableRowIndex (for selection) and one for the dataRowIndex (to refer to the original data ids)
-                    rowLabel(dataRowIndex)
+                    /// TODO(SL): we might want to show two columns: one for the tableIndex (for selection) and one for the dataIndex (to refer to the original data ids)
+                    rowLabel(dataIndex)
                   }</span>
-                  <input type='checkbox' checked={isSelected({ selection, index: tableRowIndex })} />
+                  <input type='checkbox' checked={isSelected({ selection, index: tableIndex })} />
                 </td>
                 {data.header.map((col, colIndex) =>
-                  Cell(row[col], colIndex, dataRowIndex)
+                  Cell(row[col], colIndex, dataIndex)
                 )}
               </tr>
             })}
             {postPadding.map((_, postPaddingIndex) => {
-              const tableRowIndex = startIndex + rows.length + postPaddingIndex
-              return <tr key={tableRowIndex}>
+              const tableIndex = startIndex + rows.length + postPaddingIndex
+              return <tr key={tableIndex}>
                 <td style={cornerStyle}>
                   {
                     /// TODO(SL): if the data is sorted, this sequence of row labels is incorrect and might include duplicate
                     /// labels with respect to the previous slice of rows. Better to hide this number if the data is sorted?
-                    rowLabel(tableRowIndex)
+                    rowLabel(tableIndex)
                   }
                 </td>
               </tr>
