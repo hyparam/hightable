@@ -118,7 +118,8 @@ export function sortableDataFrame(data: DataFrame): DataFrame {
     rows(start: number, end: number, orderBy?: string): AsyncRow[] | Promise<Row[]> {
       if (orderBy) {
         if (!data.header.includes(orderBy)) {
-          /// TODO(SL): should we allow '__index__'?
+          // '__index__' is not allowed, and it would not make sense anyway
+          // as it's the same as orderBy=undefined, since we only support ascending order
           throw new Error(`Invalid orderBy field: ${orderBy}`)
         }
         if (!all) {
