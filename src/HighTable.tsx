@@ -1,5 +1,5 @@
 import { ReactNode, useCallback, useEffect, useMemo, useReducer, useRef } from 'react'
-import { AsyncRow, DataFrame, Row, asyncRows } from './dataframe.js'
+import { DataFrame, Row, asyncRows } from './dataframe.js'
 import { Selection, areAllSelected, extendFromAnchor, isSelected, toggleAll, toggleIndex } from './selection.js'
 import TableHeader, { cellStyle } from './TableHeader.js'
 export {
@@ -49,7 +49,7 @@ type State = {
   columnWidths: Array<number | undefined> // width of each column
   invalidate: boolean // true if the data must be fetched again
   hasCompleteRow: boolean // true if at least one row is fully resolved (all of its cells)
-  rows: AsyncRow[] // slice of the virtual table rows (sorted rows) to render as HTML
+  rows: (Row | undefined)[] // slice of the virtual table rows (sorted rows) to render as HTML - undefined means pending
   startIndex: number // offset of the slice of sorted rows to render (rows[0] is the startIndex'th sorted row)
   orderBy?: string // column name to sort by
   selection: Selection // rows selection. The values are indexes of the virtual table (sorted rows), and thus depend on the order.
@@ -57,7 +57,7 @@ type State = {
 }
 
 type Action =
-  | { type: 'SET_ROWS', start: number, rows: AsyncRow[], hasCompleteRow: boolean }
+  | { type: 'SET_ROWS', start: number, rows: (Row | undefined)[], hasCompleteRow: boolean }
   | { type: 'SET_COLUMN_WIDTH', columnIndex: number, columnWidth: number | undefined }
   | { type: 'SET_COLUMN_WIDTHS', columnWidths: Array<number | undefined> }
   | { type: 'SET_ORDER', orderBy: string | undefined }
@@ -180,14 +180,20 @@ export default function HighTable({
       try {
         const requestId = ++pendingRequest.current
         const unwrapped = data.rows(start, end, orderBy)
-        const rows = asyncRows(unwrapped, end - start, data.header)
+        const rowsChunk = asyncRows(unwrapped, end - start, data.header)
 
         const updateRows = throttle(() => {
-          const resolved: Row[] = []
+          const resolved: (Row | undefined)[] = []
           let hasCompleteRow = false // true if at least one row is fully resolved
-          for (const row of rows) {
+          for (const row of rowsChunk) {
+            const __index__ = row.__index__.resolved
+            if (__index__ === undefined) {
+              // This is a pending row
+              resolved.push(undefined)
+              continue
+            }
             // Return only resolved values
-            const resolvedRow: Row = {}
+            const resolvedRow: Row = { __index__ }
             let isRowComplete = true
             for (const [key, promise] of Object.entries(row)) {
               if ('resolved' in promise) {
@@ -205,8 +211,8 @@ export default function HighTable({
         updateRows() // initial update
 
         // Subscribe to data updates
-        for (const row of rows) {
-          for (const [key, promise] of Object.entries(row)) {
+        for (const row of rowsChunk) {
+          for (const [_, promise] of Object.entries(row)) {
             promise.then(() => {
               if (pendingRequest.current === requestId) {
                 updateRows()
@@ -216,7 +222,7 @@ export default function HighTable({
         }
 
         // Await all pending promises
-        for (const row of rows) {
+        for (const row of rowsChunk) {
           for (const promise of Object.values(row)) {
             await promise
           }
@@ -263,9 +269,11 @@ export default function HighTable({
   /**
    * Validate row length
    */
-  function rowError(row: Record<string, any>, dataIndex: number): string | undefined {
-    if (row.length > 0 && row.length !== data.header.length) {
-      return `Row ${rowLabel(dataIndex)} length ${row.length} does not match header length ${data.header.length}`
+  function rowError(row?: Row): string | undefined {
+    if (!row) return 'Pending'
+    const numKeys = Object.keys(row).length - 1 // exclude __index__
+    if (numKeys > 0 && numKeys !== data.header.length) {
+      return `Row ${rowLabel(row.__index__)} length ${numKeys} does not match header length ${data.header.length}`
     }
   }
 
@@ -303,28 +311,6 @@ export default function HighTable({
       tableRef.current?.focus()
     }
   }, [focus])
-
-  /**
-   * Get the row index in original (unsorted) data frame, and in the sorted virtual table.
-   *
-   * @param sliceIndex row index in the "rows" slice
-   *
-   * @returns an object with two properties:
-   *  dataIndex:  row index in the original (unsorted) data frame
-   *  tableIndex: row index in the virtual table (sorted)
-   */
-  const getRowIndexes = useCallback((sliceIndex: number): { dataIndex: number, tableIndex: number } => {
-    const tableIndex = startIndex + sliceIndex
-    /// TODO(SL): improve row typing to get __index__ type if sorted
-    /// Maybe even better to always have an __index__, sorted or not
-    const index = rows[sliceIndex].__index__
-    const resolved = typeof index === 'object' ? index.resolved : index
-    return {
-      dataIndex: resolved ?? tableIndex, // .__index__ only exists if the rows are sorted. If not sorted, use the table index
-      tableIndex,
-    }
-  }, [rows, startIndex])
-
 
   const onRowNumberClick = useCallback(({ useAnchor, tableIndex }: {useAnchor: boolean, tableIndex: number}) => {
     if (!selectable) return false
@@ -376,7 +362,7 @@ export default function HighTable({
           <tbody>
             {prePadding.map((_, prePaddingIndex) => {
               const tableIndex = startIndex - prePadding.length + prePaddingIndex
-              return <tr key={tableIndex} aria-rowindex={tableIndex + 2 /* 1-based + the header row */} >
+              return <tr key={tableIndex /* it's not a useful React key */} aria-rowindex={tableIndex + 2 /* 1-based + the header row */} >
                 <th scope="row" style={cornerStyle}>
                   {
                     /// TODO(SL): if the data is sorted, this sequence of row labels is incorrect and might include duplicate
@@ -387,26 +373,23 @@ export default function HighTable({
               </tr>
             })}
             {rows.map((row, sliceIndex) => {
-              const { tableIndex, dataIndex } = getRowIndexes(sliceIndex)
-              return <tr key={tableIndex} aria-rowindex={tableIndex + 2 /* 1-based + the header row */} title={rowError(row, dataIndex)}
+              const tableIndex = startIndex + sliceIndex
+              return <tr key={tableIndex /* it's not a useful React key */} aria-rowindex={tableIndex + 2 /* 1-based + the header row */} title={rowError(row)}
                 className={isSelected({ selection, index: tableIndex }) ? 'selected' : ''}
                 aria-selected={isSelected({ selection, index: tableIndex })}
               >
                 <th scope="row" style={cornerStyle} onClick={event => onRowNumberClick({ useAnchor: event.shiftKey, tableIndex })}>
-                  <span>{
-                    /// TODO(SL): we might want to show two columns: one for the tableIndex (for selection) and one for the dataIndex (to refer to the original data ids)
-                    rowLabel(dataIndex)
-                  }</span>
+                  <span>{ row?.__index__ === undefined ? '' : rowLabel(row.__index__) }</span>
                   <input type='checkbox' checked={isSelected({ selection, index: tableIndex })} readOnly={true} />
                 </th>
-                {data.header.map((col, colIndex) =>
-                  Cell(row[col], colIndex, dataIndex)
+                {row && data.header.map((col, colIndex) =>
+                  Cell(row[col], colIndex, row.__index__)
                 )}
               </tr>
             })}
             {postPadding.map((_, postPaddingIndex) => {
               const tableIndex = startIndex + rows.length + postPaddingIndex
-              return <tr key={tableIndex} aria-rowindex={tableIndex + 2 /* 1-based + the header row */} >
+              return <tr key={tableIndex /* it's not a useful React key */} aria-rowindex={tableIndex + 2 /* 1-based + the header row */} >
                 <th scope="row" style={cornerStyle} >
                   {
                     /// TODO(SL): if the data is sorted, this sequence of row labels is incorrect and might include duplicate

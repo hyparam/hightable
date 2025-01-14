@@ -10,6 +10,7 @@ describe('HighTable', () => {
     numRows: 100,
     rows: vi.fn((start, end) => Promise.resolve(
       Array.from({ length: end - start }, (_, index) => ({
+        __index__: index + start,
         ID: index + start,
         Name: 'Name ' + (index + start),
         Age: 20 + index % 50,
@@ -98,6 +99,7 @@ describe('When sorted, HighTable', () => {
     numRows: 1000,
     rows: (start: number, end: number) => Promise.resolve(
       Array.from({ length: end - start }, (_, index) => ({
+        __index__: index + start,
         ID: 'row ' + (index + start),
         Count: 1000 - start - index,
       }))
@@ -119,7 +121,7 @@ describe('When sorted, HighTable', () => {
     const { findByRole, getByRole, findAllByRole } = render(<HighTable data={sortableDataFrame(data)} />)
 
     expect(getByRole('columnheader', { name: 'ID' })).toBeDefined()
-    await findByRole('cell', { name: 'row 1' })
+    await findByRole('cell', { name: 'row 0' })
 
     const table = getByRole('grid') // not table! because the table is interactive. See https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Roles/grid_role
     // first rowgroup is for the thead second is for tbody
@@ -133,6 +135,27 @@ describe('When sorted, HighTable', () => {
     await findAllByRole('cell', { name: 'row 999' })
 
     rows = within(within(getByRole('grid')).getAllByRole('rowgroup')[1]).getAllByRole('row')
-    checkRowContents(rows[0], '1', 'row 999', '1')
+    checkRowContents(rows[0], '1,000', 'row 999', '1')
+  })
+
+  it('provides the double click callback with the right row index', async () => {
+    const mockDoubleClick = vi.fn()
+    const { findByRole, getByRole } = render(<HighTable data={sortableDataFrame(data)} onDoubleClickCell={mockDoubleClick} />)
+    const cell0 = await findByRole('cell', { name: 'row 0' })
+
+    fireEvent.doubleClick(cell0)
+
+    expect(mockDoubleClick).toHaveBeenCalledWith(expect.anything(), 0, 0)
+    vi.clearAllMocks()
+
+    // Click on the Count header to sort by Count
+    const countHeader = getByRole('columnheader', { name: 'Count' })
+    fireEvent.click(countHeader)
+
+    const cell999 = await findByRole('cell', { name: 'row 999' })
+
+    fireEvent.doubleClick(cell999)
+
+    expect(mockDoubleClick).toHaveBeenCalledWith(expect.anything(), 0, 999)
   })
 })

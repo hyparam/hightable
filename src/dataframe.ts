@@ -7,13 +7,18 @@ type WrappedPromise<T> = Promise<T> & {
  * A row where each cell is a promise.
  * The promise must be wrapped with `wrapPromise` so that HighTable can render
  * the state synchronously.
+ *
+ * `__index__` is a promise that resolves to the row index in the "original data". Beware of
+ * the collisions with the header keys.
  */
-export type AsyncRow = Record<string, WrappedPromise<any>>
+export type AsyncRow = Record<string, WrappedPromise<any>> & { __index__: WrappedPromise<number> }
 
 /**
  * A row where each cell is a resolved value.
+ *
+ * `__index__` is the row index in the "original data". Beware of the collisions with the header keys.
  */
-export type Row = Record<string, any>
+export type Row = Record<string, any> & { __index__: number }
 
 /**
  * Streamable row data
@@ -26,8 +31,8 @@ export interface DataFrame {
   sortable?: boolean
 }
 
-export function resolvableRow(header: string[]): { [key: string]: ResolvablePromise<any> } {
-  return Object.fromEntries(header.map(key => [key, resolvablePromise<any>()]))
+export function resolvableRow(header: string[]): { [key: string]: ResolvablePromise<any> } & { __index__: ResolvablePromise<number> } {
+  return Object.fromEntries([...header.map(key => [key, resolvablePromise<any>()]), ['__index__', resolvablePromise<number>()]])
 }
 
 /**
@@ -48,6 +53,7 @@ export function asyncRows(rows: AsyncRow[] | Promise<Row[]>, numRows: number, he
       for (const key of header) {
         wrapped[i][key].resolve(row[key])
       }
+      wrapped[i].__index__.resolve(row.__index__)
     }
   }).catch(error => {
     // Reject all promises on error
@@ -55,6 +61,7 @@ export function asyncRows(rows: AsyncRow[] | Promise<Row[]>, numRows: number, he
       for (const key of header) {
         wrapped[i][key].reject(error)
       }
+      wrapped[i].__index__.reject(error)
     }
   })
   return wrapped
@@ -104,19 +111,19 @@ export function resolvablePromise<T>(): ResolvablePromise<T> {
  */
 export function sortableDataFrame(data: DataFrame): DataFrame {
   if (data.sortable) return data // already sortable
-  // Fetch all rows and add __index__ column
+  // Fetch all rows and set index
   let all: Promise<Row[]>
   return {
     ...data,
     rows(start: number, end: number, orderBy?: string): AsyncRow[] | Promise<Row[]> {
       if (orderBy) {
         if (!data.header.includes(orderBy)) {
+          /// TODO(SL): should we allow '__index__'?
           throw new Error(`Invalid orderBy field: ${orderBy}`)
         }
         if (!all) {
-          // Fetch all rows and add __index__ column
+          // Fetch all rows
           all = awaitRows(data.rows(0, data.numRows))
-            .then(rows => rows.map((row, i) => ({ __index__: i, ...row })))
         }
         const sorted = all.then(all => {
           return all.sort((a, b) => {
@@ -137,9 +144,13 @@ export function sortableDataFrame(data: DataFrame): DataFrame {
 /**
  * Await all promises in an AsyncRow and return resolved row.
  */
-export function awaitRow(row: AsyncRow): Promise<Row> {
-  return Promise.all(Object.values(row))
-    .then(values => Object.fromEntries(Object.keys(row).map((key, i) => [key, values[i]])))
+export async function awaitRow(row: AsyncRow): Promise<Row> {
+  const otherEntries = Object.entries(row).filter( ([key]) => key !== '__index__' )
+  const [ __index__, ...values ] = await Promise.all([row.__index__, ...otherEntries.map( ([_, value]) => value )])
+  return Object.fromEntries([
+    ['__index__', __index__],
+    ...otherEntries.map(([key, _], i) => [key, values[i]]),
+  ])
 }
 
 /**
@@ -150,13 +161,15 @@ export function awaitRows(rows: AsyncRow[] | Promise<Row[]>): Promise<Row[]> {
   return Promise.all(rows.map(awaitRow))
 }
 
-export function arrayDataFrame(data: Row[]): DataFrame {
+export function arrayDataFrame(data: Record<string, any>[]): DataFrame {
   if (!data.length) return { header: [], numRows: 0, rows: () => Promise.resolve([]) }
   return {
-    header: Object.keys(data[0]),
+    header: Object.keys(data[0]).filter(key => key !== '__index__'),
     numRows: data.length,
     rows(start: number, end: number): Promise<Row[]> {
-      return Promise.resolve(data.slice(start, end))
+      return Promise.resolve(data.slice(start, end).map(
+        (row, i) => ({ ...row, __index__: i + start })
+      ))
     },
   }
 }
