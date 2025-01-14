@@ -362,19 +362,18 @@ export default function HighTable({
           <tbody>
             {prePadding.map((_, prePaddingIndex) => {
               const tableIndex = startIndex - prePadding.length + prePaddingIndex
-              return <tr key={tableIndex /* it's not a useful React key */} aria-rowindex={tableIndex + 2 /* 1-based + the header row */} >
+              return <tr key={tableIndex} aria-rowindex={tableIndex + 2 /* 1-based + the header row */} >
                 <th scope="row" style={cornerStyle}>
                   {
-                    /// TODO(SL): if the data is sorted, this sequence of row labels is incorrect and might include duplicate
-                    /// labels with respect to the next slice of rows. Better to hide this number if the data is sorted?
-                    rowLabel(tableIndex)
+                    // If the data is sorted, we don't know the previous row indexes
+                    orderBy === undefined ? rowLabel(tableIndex) : ''
                   }
                 </th>
               </tr>
             })}
             {rows.map((row, sliceIndex) => {
               const tableIndex = startIndex + sliceIndex
-              return <tr key={tableIndex /* it's not a useful React key */} aria-rowindex={tableIndex + 2 /* 1-based + the header row */} title={rowError(row)}
+              return <tr key={tableIndex} aria-rowindex={tableIndex + 2 /* 1-based + the header row */} title={rowError(row)}
                 className={isSelected({ selection, index: tableIndex }) ? 'selected' : ''}
                 aria-selected={isSelected({ selection, index: tableIndex })}
               >
@@ -389,12 +388,11 @@ export default function HighTable({
             })}
             {postPadding.map((_, postPaddingIndex) => {
               const tableIndex = startIndex + rows.length + postPaddingIndex
-              return <tr key={tableIndex /* it's not a useful React key */} aria-rowindex={tableIndex + 2 /* 1-based + the header row */} >
+              return <tr key={tableIndex} aria-rowindex={tableIndex + 2 /* 1-based + the header row */} >
                 <th scope="row" style={cornerStyle} >
                   {
-                    /// TODO(SL): if the data is sorted, this sequence of row labels is incorrect and might include duplicate
-                    /// labels with respect to the previous slice of rows. Better to hide this number if the data is sorted?
-                    rowLabel(tableIndex)
+                    // If the data is sorted, we don't know the next row indexes
+                    orderBy === undefined ? rowLabel(tableIndex) : ''
                   }
                 </th>
               </tr>
