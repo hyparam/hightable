@@ -107,6 +107,11 @@ const initialState: State = {
   selection: [],
 }
 
+function rowLabel(rowIndex: number): string {
+  // rowIndex + 1 because the displayed row numbers are 1-based
+  return (rowIndex + 1).toLocaleString()
+}
+
 /**
  * Render a table with streaming rows on demand from a DataFrame.
  */
@@ -258,13 +263,6 @@ export default function HighTable({
       tableControl?.publisher.unsubscribe(dispatch)
     }
   }, [tableControl])
-
-  const rowLabel = useCallback((rowIndex: number): string => {
-    // rowIndex + 1 because the displayed row numbers are 1-based
-    return (rowIndex + 1).toLocaleString()
-  }, [
-    // no dependencies, but we could add a setting to allow 0-based row numbers
-  ])
 
   /**
    * Validate row length
