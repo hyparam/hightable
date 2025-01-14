@@ -397,7 +397,7 @@ export default function HighTable({
                     /// TODO(SL): we might want to show two columns: one for the tableIndex (for selection) and one for the dataIndex (to refer to the original data ids)
                     rowLabel(dataIndex)
                   }</span>
-                  <input type='checkbox' checked={isSelected({ selection, index: tableIndex })} />
+                  <input type='checkbox' checked={isSelected({ selection, index: tableIndex })} readOnly={true} />
                 </th>
                 {data.header.map((col, colIndex) =>
                   Cell(row[col], colIndex, dataIndex)
@@ -422,7 +422,7 @@ export default function HighTable({
     </div>
     <div className='table-corner' style={cornerStyle} onClick={() => selectable && dispatch({ type: 'SET_SELECTION', selection: toggleAll({ selection, length: rows.length }), anchor: undefined })}>
       <span>&nbsp;</span>
-      <input type='checkbox' checked={areAllSelected({ selection, length: rows.length })} />
+      <input type='checkbox' checked={areAllSelected({ selection, length: rows.length })} readOnly={true} />
     </div>
     <div className='mock-row-label' style={cornerStyle}>&nbsp;</div>
   </div>
