@@ -270,7 +270,7 @@ export default function HighTable({
    * Validate row length
    */
   function rowError(row?: Row): string | undefined {
-    if (!row) return 'Pending'
+    if (!row) return 'Loading the row contents...'
     const numKeys = Object.keys(row).length - 1 // exclude __index__
     if (numKeys > 0 && numKeys !== data.header.length) {
       return `Row ${rowLabel(row.__index__)} length ${numKeys} does not match header length ${data.header.length}`
