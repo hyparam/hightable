@@ -49,7 +49,7 @@ type State = {
   columnWidths: Array<number | undefined> // width of each column
   invalidate: boolean // true if the data must be fetched again
   hasCompleteRow: boolean // true if at least one row is fully resolved (all of its cells)
-  rows: Row[] // slice of the virtual table rows (sorted rows) to render as HTML. It might contain incomplete rows, and __index__ might be missing.
+  rows: Row[] // slice of the virtual table rows (sorted rows) to render as HTML. It might contain incomplete rows. Rows are expected to include __index__ if sorted.
   startIndex: number // offset of the slice of sorted rows to render (rows[0] is the startIndex'th sorted row)
   orderBy?: string // column name to sort by
   selection: Selection // rows selection. The values are indexes of the virtual table (sorted rows), and thus depend on the order.
