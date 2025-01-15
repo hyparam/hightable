@@ -26,8 +26,8 @@ export interface DataFrame {
   sortable?: boolean
 }
 
-export function resolvableRow(header: string[]): { [key: string]: ResolvablePromise<any> } & { __index__: ResolvablePromise<number> } {
-  return Object.fromEntries([...header.map(key => [key, resolvablePromise<any>()]), ['__index__', resolvablePromise<number>()]])
+export function resolvableRow(header: string[]): { [key: string]: ResolvablePromise<any> } {
+  return Object.fromEntries(header.map(key => [key, resolvablePromise<any>()]))
 }
 
 /**
