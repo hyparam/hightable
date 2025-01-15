@@ -48,6 +48,11 @@ export function asyncRows(rows: AsyncRow[] | Promise<Row[]>, numRows: number, he
       for (const key of header) {
         wrapped[i][key].resolve(row[key])
       }
+      // resolve the row index if present
+      if (!('__index__' in wrapped) && '__index__' in row && typeof row.__index__ === 'number') {
+        wrapped[i].__index__ = resolvablePromise<number>()
+        wrapped[i].__index__.resolve(row.__index__)
+      }
     }
   }).catch(error => {
     // Reject all promises on error
@@ -111,10 +116,12 @@ export function sortableDataFrame(data: DataFrame): DataFrame {
     rows(start: number, end: number, orderBy?: string): AsyncRow[] | Promise<Row[]> {
       if (orderBy) {
         if (!data.header.includes(orderBy)) {
+          // '__index__' is not allowed, and it would not make sense anyway
+          // as it's the same as orderBy=undefined, since we only support ascending order
           throw new Error(`Invalid orderBy field: ${orderBy}`)
         }
         if (!all) {
-          // Fetch all rows and add __index__ column
+          // Fetch all rows and add __index__ column (if not already present)
           all = awaitRows(data.rows(0, data.numRows))
             .then(rows => rows.map((row, i) => ({ __index__: i, ...row })))
         }

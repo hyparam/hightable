@@ -1,5 +1,5 @@
 import { ReactNode, useCallback, useEffect, useMemo, useReducer, useRef } from 'react'
-import { AsyncRow, DataFrame, Row, asyncRows } from './dataframe.js'
+import { DataFrame, Row, asyncRows } from './dataframe.js'
 import { Selection, areAllSelected, extendFromAnchor, isSelected, toggleAll, toggleIndex } from './selection.js'
 import TableHeader, { cellStyle } from './TableHeader.js'
 export {
@@ -49,7 +49,7 @@ type State = {
   columnWidths: Array<number | undefined> // width of each column
   invalidate: boolean // true if the data must be fetched again
   hasCompleteRow: boolean // true if at least one row is fully resolved (all of its cells)
-  rows: AsyncRow[] // slice of the virtual table rows (sorted rows) to render as HTML
+  rows: Row[] // slice of the virtual table rows (sorted rows) to render as HTML. It might contain incomplete rows. Rows are expected to include __index__ if sorted.
   startIndex: number // offset of the slice of sorted rows to render (rows[0] is the startIndex'th sorted row)
   orderBy?: string // column name to sort by
   selection: Selection // rows selection. The values are indexes of the virtual table (sorted rows), and thus depend on the order.
@@ -57,7 +57,7 @@ type State = {
 }
 
 type Action =
-  | { type: 'SET_ROWS', start: number, rows: AsyncRow[], hasCompleteRow: boolean }
+  | { type: 'SET_ROWS', start: number, rows: Row[], hasCompleteRow: boolean }
   | { type: 'SET_COLUMN_WIDTH', columnIndex: number, columnWidth: number | undefined }
   | { type: 'SET_COLUMN_WIDTHS', columnWidths: Array<number | undefined> }
   | { type: 'SET_ORDER', orderBy: string | undefined }
@@ -105,6 +105,12 @@ const initialState: State = {
   invalidate: true,
   hasCompleteRow: false,
   selection: [],
+}
+
+function rowLabel(rowIndex?: number): string {
+  if (rowIndex === undefined) return ''
+  // rowIndex + 1 because the displayed row numbers are 1-based
+  return (rowIndex + 1).toLocaleString()
 }
 
 /**
@@ -180,16 +186,17 @@ export default function HighTable({
       try {
         const requestId = ++pendingRequest.current
         const unwrapped = data.rows(start, end, orderBy)
-        const rows = asyncRows(unwrapped, end - start, data.header)
+        const rowsChunk = asyncRows(unwrapped, end - start, data.header)
 
         const updateRows = throttle(() => {
           const resolved: Row[] = []
           let hasCompleteRow = false // true if at least one row is fully resolved
-          for (const row of rows) {
+          for (const row of rowsChunk) {
             // Return only resolved values
             const resolvedRow: Row = {}
             let isRowComplete = true
             for (const [key, promise] of Object.entries(row)) {
+              // it might or not include __index__
               if ('resolved' in promise) {
                 resolvedRow[key] = promise.resolved
               } else {
@@ -205,8 +212,8 @@ export default function HighTable({
         updateRows() // initial update
 
         // Subscribe to data updates
-        for (const row of rows) {
-          for (const [key, promise] of Object.entries(row)) {
+        for (const row of rowsChunk) {
+          for (const [_, promise] of Object.entries(row)) {
             promise.then(() => {
               if (pendingRequest.current === requestId) {
                 updateRows()
@@ -216,7 +223,7 @@ export default function HighTable({
         }
 
         // Await all pending promises
-        for (const row of rows) {
+        for (const row of rowsChunk) {
           for (const promise of Object.values(row)) {
             await promise
           }
@@ -253,19 +260,14 @@ export default function HighTable({
     }
   }, [tableControl])
 
-  const rowLabel = useCallback((rowIndex: number): string => {
-    // rowIndex + 1 because the displayed row numbers are 1-based
-    return (rowIndex + 1).toLocaleString()
-  }, [
-    // no dependencies, but we could add a setting to allow 0-based row numbers
-  ])
-
   /**
    * Validate row length
    */
-  function rowError(row: Record<string, any>, dataIndex: number): string | undefined {
-    if (row.length > 0 && row.length !== data.header.length) {
-      return `Row ${rowLabel(dataIndex)} length ${row.length} does not match header length ${data.header.length}`
+  function rowError(row: Row, index?: number): string | undefined {
+    // __index__ is considered a reserved field - an error will be displayed if a column is named '__index__' in data.header
+    const numKeys = Object.keys(row).filter(d => d !== '__index__').length
+    if (numKeys > 0 && numKeys !== data.header.length) {
+      return `Row ${rowLabel(index)} length ${numKeys} does not match header length ${data.header.length}`
     }
   }
 
@@ -276,9 +278,9 @@ export default function HighTable({
    *
    * @param value cell value
    * @param col column index
-   * @param row row index in the original (unsorted) data frame
+   * @param row row index. If undefined, onDoubleClickCell and onMouseDownCell will not be called.
    */
-  function Cell(value: any, col: number, row: number): ReactNode {
+  function Cell(value: any, col: number, row?: number): ReactNode {
     // render as truncated text
     let str = stringify(value)
     let title: string | undefined
@@ -289,8 +291,8 @@ export default function HighTable({
     return <td
       className={str === undefined ? 'pending' : undefined}
       key={col}
-      onDoubleClick={e => onDoubleClickCell?.(e, col, row)}
-      onMouseDown={e => onMouseDownCell?.(e, col, row)}
+      onDoubleClick={e => row === undefined ? console.warn('Cell onDoubleClick is cancelled because row index is undefined') : onDoubleClickCell?.(e, col, row)}
+      onMouseDown={e => row === undefined ? console.warn('Cell onMouseDown is cancelled because row index is undefined') : onMouseDownCell?.(e, col, row)}
       style={memoizedStyles[col]}
       title={title}>
       {str}
@@ -307,24 +309,21 @@ export default function HighTable({
   /**
    * Get the row index in original (unsorted) data frame, and in the sorted virtual table.
    *
-   * @param sliceIndex row index in the "rows" slice
+   * @param rowIndex row index in the "rows" slice
    *
    * @returns an object with two properties:
    *  dataIndex:  row index in the original (unsorted) data frame
    *  tableIndex: row index in the virtual table (sorted)
    */
-  const getRowIndexes = useCallback((sliceIndex: number): { dataIndex: number, tableIndex: number } => {
-    const tableIndex = startIndex + sliceIndex
-    /// TODO(SL): improve row typing to get __index__ type if sorted
-    /// Maybe even better to always have an __index__, sorted or not
-    const index = rows[sliceIndex].__index__
-    const resolved = typeof index === 'object' ? index.resolved : index
-    return {
-      dataIndex: resolved ?? tableIndex, // .__index__ only exists if the rows are sorted. If not sorted, use the table index
-      tableIndex,
-    }
-  }, [rows, startIndex])
-
+  const getRowIndexes = useCallback((rowIndex: number): { dataIndex?: number, tableIndex: number } => {
+    const tableIndex = startIndex + rowIndex
+    const dataIndex = orderBy === undefined
+      ? tableIndex
+      : rowIndex >= 0 && rowIndex < rows.length && '__index__' in rows[rowIndex] && typeof rows[rowIndex].__index__ === 'number'
+        ? rows[rowIndex].__index__
+        : undefined
+    return { dataIndex, tableIndex }
+  }, [rows, startIndex, orderBy])
 
   const onRowNumberClick = useCallback(({ useAnchor, tableIndex }: {useAnchor: boolean, tableIndex: number}) => {
     if (!selectable) return false
@@ -356,8 +355,9 @@ export default function HighTable({
     <div className='table-scroll' ref={scrollRef}>
       <div style={{ height: `${scrollHeight}px` }}>
         <table
-          aria-colcount={data.header.length}
-          aria-rowcount={data.numRows}
+          aria-readonly={true}
+          aria-colcount={data.header.length + 1 /* don't forget the selection column */}
+          aria-rowcount={data.numRows + 1 /* don't forget the header row */}
           className={`table${data.sortable ? ' sortable' : ''}`}
           ref={tableRef}
           role='grid'
@@ -374,42 +374,38 @@ export default function HighTable({
             setOrderBy={orderBy => data.sortable && dispatch({ type: 'SET_ORDER', orderBy })} />
           <tbody>
             {prePadding.map((_, prePaddingIndex) => {
-              const tableIndex = startIndex - prePadding.length + prePaddingIndex
-              return <tr key={tableIndex}>
-                <td style={cornerStyle}>
+              const { tableIndex, dataIndex } = getRowIndexes(-prePadding.length + prePaddingIndex)
+              return <tr key={tableIndex} aria-rowindex={tableIndex + 2 /* 1-based + the header row */} >
+                <th scope="row" style={cornerStyle}>
                   {
-                    /// TODO(SL): if the data is sorted, this sequence of row labels is incorrect and might include duplicate
-                    /// labels with respect to the next slice of rows. Better to hide this number if the data is sorted?
-                    rowLabel(tableIndex)
+                    rowLabel(dataIndex)
                   }
-                </td>
+                </th>
               </tr>
             })}
-            {rows.map((row, sliceIndex) => {
-              const { tableIndex, dataIndex } = getRowIndexes(sliceIndex)
-              return <tr key={tableIndex} title={rowError(row, dataIndex)} className={isSelected({ selection, index: tableIndex }) ? 'selected' : ''}>
-                <td style={cornerStyle} onClick={event => onRowNumberClick({ useAnchor: event.shiftKey, tableIndex })}>
-                  <span>{
-                    /// TODO(SL): we might want to show two columns: one for the tableIndex (for selection) and one for the dataIndex (to refer to the original data ids)
-                    rowLabel(dataIndex)
-                  }</span>
-                  <input type='checkbox' checked={isSelected({ selection, index: tableIndex })} />
-                </td>
+            {rows.map((row, rowIndex) => {
+              const { tableIndex, dataIndex } = getRowIndexes(rowIndex)
+              return <tr key={tableIndex} aria-rowindex={tableIndex + 2 /* 1-based + the header row */} title={rowError(row, dataIndex)}
+                className={isSelected({ selection, index: tableIndex }) ? 'selected' : ''}
+                aria-selected={isSelected({ selection, index: tableIndex })}
+              >
+                <th scope="row" style={cornerStyle} onClick={event => onRowNumberClick({ useAnchor: event.shiftKey, tableIndex })}>
+                  <span>{ rowLabel(dataIndex) }</span>
+                  <input type='checkbox' checked={isSelected({ selection, index: tableIndex })} readOnly={true} />
+                </th>
                 {data.header.map((col, colIndex) =>
                   Cell(row[col], colIndex, dataIndex)
                 )}
               </tr>
             })}
             {postPadding.map((_, postPaddingIndex) => {
-              const tableIndex = startIndex + rows.length + postPaddingIndex
-              return <tr key={tableIndex}>
-                <td style={cornerStyle}>
+              const { tableIndex, dataIndex } = getRowIndexes(rows.length + postPaddingIndex)
+              return <tr key={tableIndex} aria-rowindex={tableIndex + 2 /* 1-based + the header row */} >
+                <th scope="row" style={cornerStyle} >
                   {
-                    /// TODO(SL): if the data is sorted, this sequence of row labels is incorrect and might include duplicate
-                    /// labels with respect to the previous slice of rows. Better to hide this number if the data is sorted?
-                    rowLabel(tableIndex)
+                    rowLabel(dataIndex)
                   }
-                </td>
+                </th>
               </tr>
             })}
           </tbody>
@@ -418,7 +414,7 @@ export default function HighTable({
     </div>
     <div className='table-corner' style={cornerStyle} onClick={() => selectable && dispatch({ type: 'SET_SELECTION', selection: toggleAll({ selection, length: rows.length }), anchor: undefined })}>
       <span>&nbsp;</span>
-      <input type='checkbox' checked={areAllSelected({ selection, length: rows.length })} />
+      <input type='checkbox' checked={areAllSelected({ selection, length: rows.length })} readOnly={true} />
     </div>
     <div className='mock-row-label' style={cornerStyle}>&nbsp;</div>
   </div>

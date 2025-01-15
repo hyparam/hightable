@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
-  DataFrame, Row, arrayDataFrame, awaitRows, resolvablePromise, sortableDataFrame, wrapPromise,
+  AsyncRow, DataFrame, Row, arrayDataFrame, awaitRows, resolvablePromise, sortableDataFrame, wrapPromise,
 } from '../src/dataframe.js'
 
-function wrapObject(obj: Record<string, any>): Row {
+export function wrapObject(obj: Row): AsyncRow {
   return Object.fromEntries(
     Object.entries(obj).map(([key, value]) => [key, wrapPromise(value)])
   )
@@ -41,7 +41,7 @@ describe('sortableDataFrame', () => {
   const dataFrame: DataFrame = {
     header: ['id', 'name', 'age'],
     numRows: data.length,
-    rows(start: number, end: number): Row[] {
+    rows(start: number, end: number): AsyncRow[] {
       // Return the slice of data between start and end indices
       return data.slice(start, end).map(wrapObject)
     },

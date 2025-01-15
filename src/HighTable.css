@@ -56,7 +56,7 @@
   cursor: default;
   width: 0;
 }
-.table tbody tr:first-child td {
+.table tbody tr:first-child td, .table tbody tr:first-child th {
   border-top: 1px solid transparent;
 }
 
@@ -89,7 +89,7 @@
 }
 
 /* row numbers */
-.table td:first-child {
+.table th:first-child {
   background-color: #eaeaeb;
   border-right: 1px solid #ddd;
   color: #888;
@@ -104,23 +104,23 @@
   width: 32px;
   cursor: pointer;
 }
-.table td:first-child span {
+.table th:first-child span {
   display: inline;
 }
-.table td:first-child input {
+.table th:first-child input {
   display: none;
 }
-.selectable td:first-child:hover span, .selectable tr.selected td:first-child span {
+.selectable th:first-child:hover span, .selectable tr.selected th:first-child span {
   display: none;
 }
-.selectable td:first-child:hover input, .selectable tr.selected td:first-child input {
+.selectable th:first-child:hover input, .selectable tr.selected th:first-child input {
   display: inline;
   cursor: pointer;
 }
 .selectable tr.selected {
   background-color: #fbf7bf;
 }
-.selectable tr.selected td:first-child {
+.selectable tr.selected th:first-child {
   background-color: #f1edbb;
 }
 
@@ -175,7 +175,7 @@
 }
 
 /* pending table state */
-.table th::before {
+.table thead th::before {
   content: '';
   position: absolute;
   top: 0;
@@ -185,7 +185,7 @@
   background-color: #706fb1;
   z-index: 100;
 }
-.pending .table th::before {
+.pending .table thead th::before {
   animation: shimmer 2s infinite linear;
 }
 @keyframes shimmer {
