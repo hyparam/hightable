@@ -49,7 +49,7 @@ type State = {
   columnWidths: Array<number | undefined> // width of each column
   invalidate: boolean // true if the data must be fetched again
   hasCompleteRow: boolean // true if at least one row is fully resolved (all of its cells)
-  rows: (Row | undefined)[] // slice of the virtual table rows (sorted rows) to render as HTML - undefined means pending
+  rows: Row[] // slice of the virtual table rows (sorted rows) to render as HTML. It might contain incomplete rows, and __index__ might be missing.
   startIndex: number // offset of the slice of sorted rows to render (rows[0] is the startIndex'th sorted row)
   orderBy?: string // column name to sort by
   selection: Selection // rows selection. The values are indexes of the virtual table (sorted rows), and thus depend on the order.
@@ -57,7 +57,7 @@ type State = {
 }
 
 type Action =
-  | { type: 'SET_ROWS', start: number, rows: (Row | undefined)[], hasCompleteRow: boolean }
+  | { type: 'SET_ROWS', start: number, rows: Row[], hasCompleteRow: boolean }
   | { type: 'SET_COLUMN_WIDTH', columnIndex: number, columnWidth: number | undefined }
   | { type: 'SET_COLUMN_WIDTHS', columnWidths: Array<number | undefined> }
   | { type: 'SET_ORDER', orderBy: string | undefined }
@@ -107,7 +107,8 @@ const initialState: State = {
   selection: [],
 }
 
-function rowLabel(rowIndex: number): string {
+function rowLabel(rowIndex?: number): string {
+  if (rowIndex === undefined) return ''
   // rowIndex + 1 because the displayed row numbers are 1-based
   return (rowIndex + 1).toLocaleString()
 }
@@ -188,19 +189,14 @@ export default function HighTable({
         const rowsChunk = asyncRows(unwrapped, end - start, data.header)
 
         const updateRows = throttle(() => {
-          const resolved: (Row | undefined)[] = []
+          const resolved: Row[] = []
           let hasCompleteRow = false // true if at least one row is fully resolved
           for (const row of rowsChunk) {
-            const __index__ = row.__index__.resolved
-            if (__index__ === undefined) {
-              // This is a pending row
-              resolved.push(undefined)
-              continue
-            }
             // Return only resolved values
-            const resolvedRow: Row = { __index__ }
+            const resolvedRow: Row = {}
             let isRowComplete = true
             for (const [key, promise] of Object.entries(row)) {
+              // it might or not include __index__
               if ('resolved' in promise) {
                 resolvedRow[key] = promise.resolved
               } else {
@@ -267,11 +263,11 @@ export default function HighTable({
   /**
    * Validate row length
    */
-  function rowError(row?: Row): string | undefined {
-    if (!row) return 'Loading the row contents...'
-    const numKeys = Object.keys(row).length - 1 // exclude __index__
+  function rowError(row: Row, index?: number): string | undefined {
+    // __index__ is considered a reserved field - an error will be displayed if a column is named '__index__' in data.header
+    const numKeys = Object.keys(row).filter(d => d !== '__index__').length
     if (numKeys > 0 && numKeys !== data.header.length) {
-      return `Row ${rowLabel(row.__index__)} length ${numKeys} does not match header length ${data.header.length}`
+      return `Row ${rowLabel(index)} length ${numKeys} does not match header length ${data.header.length}`
     }
   }
 
@@ -282,9 +278,9 @@ export default function HighTable({
    *
    * @param value cell value
    * @param col column index
-   * @param row row index in the original (unsorted) data frame
+   * @param row row index. Can be undefined.
    */
-  function Cell(value: any, col: number, row: number): ReactNode {
+  function Cell(value: any, col: number, row?: number): ReactNode {
     // render as truncated text
     let str = stringify(value)
     let title: string | undefined
@@ -295,8 +291,8 @@ export default function HighTable({
     return <td
       className={str === undefined ? 'pending' : undefined}
       key={col}
-      onDoubleClick={e => onDoubleClickCell?.(e, col, row)}
-      onMouseDown={e => onMouseDownCell?.(e, col, row)}
+      onDoubleClick={e => row === undefined ? console.warn('Cell onDoubleClick is cancelled because row index is undefined') : onDoubleClickCell?.(e, col, row)}
+      onMouseDown={e => row === undefined ? console.warn('Cell onMouseDown is cancelled because row index is undefined') : onMouseDownCell?.(e, col, row)}
       style={memoizedStyles[col]}
       title={title}>
       {str}
@@ -371,16 +367,17 @@ export default function HighTable({
             })}
             {rows.map((row, sliceIndex) => {
               const tableIndex = startIndex + sliceIndex
-              return <tr key={tableIndex} aria-rowindex={tableIndex + 2 /* 1-based + the header row */} title={rowError(row)}
+              const index = orderBy === undefined ? tableIndex : '__index__' in row && typeof row.__index__ === 'number' ? row.__index__ : undefined
+              return <tr key={tableIndex} aria-rowindex={tableIndex + 2 /* 1-based + the header row */} title={rowError(row, index)}
                 className={isSelected({ selection, index: tableIndex }) ? 'selected' : ''}
                 aria-selected={isSelected({ selection, index: tableIndex })}
               >
                 <th scope="row" style={cornerStyle} onClick={event => onRowNumberClick({ useAnchor: event.shiftKey, tableIndex })}>
-                  <span>{ row?.__index__ === undefined ? '' : rowLabel(row.__index__) }</span>
+                  <span>{ rowLabel(index) }</span>
                   <input type='checkbox' checked={isSelected({ selection, index: tableIndex })} readOnly={true} />
                 </th>
-                {row && data.header.map((col, colIndex) =>
-                  Cell(row[col], colIndex, row.__index__)
+                {data.header.map((col, colIndex) =>
+                  Cell(row[col], colIndex, index)
                 )}
               </tr>
             })}

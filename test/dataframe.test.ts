@@ -4,10 +4,9 @@ import {
 } from '../src/dataframe.js'
 
 export function wrapObject(obj: Row): AsyncRow {
-  return Object.fromEntries([
-    ['__index__', wrapPromise(obj.__index__)],
-    ...Object.entries(obj).filter(([key]) => key !== '__index__').map(([key, value]) => [key, wrapPromise(value)]),
-  ])
+  return Object.fromEntries(
+    Object.entries(obj).map(([key, value]) => [key, wrapPromise(value)])
+  )
 }
 
 describe('resolvablePromise', () => {
@@ -37,7 +36,7 @@ describe('sortableDataFrame', () => {
     { id: 1, name: 'Alice', age: 30 },
     { id: 2, name: 'Bob', age: 20 },
     { id: 4, name: 'Dani', age: 20 },
-  ].map((d, i) => ({ ...d, __index__: i }))
+  ]
 
   const dataFrame: DataFrame = {
     header: ['id', 'name', 'age'],
@@ -63,9 +62,9 @@ describe('sortableDataFrame', () => {
   it('should return unsorted data when orderBy is not provided', async () => {
     const rows = await awaitRows(sortableDf.rows(0, 3))
     expect(rows).toEqual([
-      { id: 3, name: 'Charlie', age: 25, __index__: 0 },
-      { id: 1, name: 'Alice', age: 30, __index__: 1 },
-      { id: 2, name: 'Bob', age: 20, __index__: 2 },
+      { id: 3, name: 'Charlie', age: 25 },
+      { id: 1, name: 'Alice', age: 30 },
+      { id: 2, name: 'Bob', age: 20 },
     ])
   })
 
@@ -103,7 +102,7 @@ describe('arrayDataFrame', () => {
     { id: 1, name: 'Alice', age: 30 },
     { id: 2, name: 'Bob', age: 25 },
     { id: 3, name: 'Charlie', age: 35 },
-  ].map((d, i) => ({ ...d, __index__: i }))
+  ]
 
   it('should create a DataFrame with correct header and numRows', () => {
     const df = arrayDataFrame(testData)
@@ -122,8 +121,8 @@ describe('arrayDataFrame', () => {
     const df = arrayDataFrame(testData)
     const rows = await df.rows(0, 2)
     expect(rows).toEqual([
-      { id: 1, name: 'Alice', age: 30, __index__: 0 },
-      { id: 2, name: 'Bob', age: 25, __index__: 1 },
+      { id: 1, name: 'Alice', age: 30 },
+      { id: 2, name: 'Bob', age: 25 },
     ])
   })
 

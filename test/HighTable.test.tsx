@@ -10,7 +10,6 @@ describe('HighTable', () => {
     numRows: 100,
     rows: vi.fn((start, end) => Promise.resolve(
       Array.from({ length: end - start }, (_, index) => ({
-        __index__: index + start,
         ID: index + start,
         Name: 'Name ' + (index + start),
         Age: 20 + index % 50,
@@ -99,7 +98,6 @@ describe('When sorted, HighTable', () => {
     numRows: 1000,
     rows: (start: number, end: number) => Promise.resolve(
       Array.from({ length: end - start }, (_, index) => ({
-        __index__: index + start,
         ID: 'row ' + (index + start),
         Count: 1000 - start - index,
       }))
