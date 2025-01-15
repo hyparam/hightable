@@ -278,7 +278,7 @@ export default function HighTable({
    *
    * @param value cell value
    * @param col column index
-   * @param row row index. Can be undefined.
+   * @param row row index. If undefined, onDoubleClickCell and onMouseDownCell will not be called.
    */
   function Cell(value: any, col: number, row?: number): ReactNode {
     // render as truncated text
