@@ -306,6 +306,25 @@ export default function HighTable({
     }
   }, [focus])
 
+  /**
+   * Get the row index in original (unsorted) data frame, and in the sorted virtual table.
+   *
+   * @param rowIndex row index in the "rows" slice
+   *
+   * @returns an object with two properties:
+   *  dataIndex:  row index in the original (unsorted) data frame
+   *  tableIndex: row index in the virtual table (sorted)
+   */
+  const getRowIndexes = useCallback((rowIndex: number): { dataIndex?: number, tableIndex: number } => {
+    const tableIndex = startIndex + rowIndex
+    const dataIndex = orderBy === undefined
+      ? tableIndex
+      : rowIndex >= 0 && rowIndex < rows.length && '__index__' in rows[rowIndex] && typeof rows[rowIndex].__index__ === 'number'
+        ? rows[rowIndex].__index__
+        : undefined
+    return { dataIndex, tableIndex }
+  }, [rows, startIndex, orderBy])
+
   const onRowNumberClick = useCallback(({ useAnchor, tableIndex }: {useAnchor: boolean, tableIndex: number}) => {
     if (!selectable) return false
     if (useAnchor) {
@@ -355,39 +374,36 @@ export default function HighTable({
             setOrderBy={orderBy => data.sortable && dispatch({ type: 'SET_ORDER', orderBy })} />
           <tbody>
             {prePadding.map((_, prePaddingIndex) => {
-              const tableIndex = startIndex - prePadding.length + prePaddingIndex
+              const { tableIndex, dataIndex } = getRowIndexes(-prePadding.length + prePaddingIndex)
               return <tr key={tableIndex} aria-rowindex={tableIndex + 2 /* 1-based + the header row */} >
                 <th scope="row" style={cornerStyle}>
                   {
-                    // If the data is sorted, we don't know the previous row indexes
-                    orderBy === undefined ? rowLabel(tableIndex) : ''
+                    rowLabel(dataIndex)
                   }
                 </th>
               </tr>
             })}
-            {rows.map((row, sliceIndex) => {
-              const tableIndex = startIndex + sliceIndex
-              const index = orderBy === undefined ? tableIndex : '__index__' in row && typeof row.__index__ === 'number' ? row.__index__ : undefined
-              return <tr key={tableIndex} aria-rowindex={tableIndex + 2 /* 1-based + the header row */} title={rowError(row, index)}
+            {rows.map((row, rowIndex) => {
+              const { tableIndex, dataIndex } = getRowIndexes(rowIndex)
+              return <tr key={tableIndex} aria-rowindex={tableIndex + 2 /* 1-based + the header row */} title={rowError(row, dataIndex)}
                 className={isSelected({ selection, index: tableIndex }) ? 'selected' : ''}
                 aria-selected={isSelected({ selection, index: tableIndex })}
               >
                 <th scope="row" style={cornerStyle} onClick={event => onRowNumberClick({ useAnchor: event.shiftKey, tableIndex })}>
-                  <span>{ rowLabel(index) }</span>
+                  <span>{ rowLabel(dataIndex) }</span>
                   <input type='checkbox' checked={isSelected({ selection, index: tableIndex })} readOnly={true} />
                 </th>
                 {data.header.map((col, colIndex) =>
-                  Cell(row[col], colIndex, index)
+                  Cell(row[col], colIndex, dataIndex)
                 )}
               </tr>
             })}
             {postPadding.map((_, postPaddingIndex) => {
-              const tableIndex = startIndex + rows.length + postPaddingIndex
+              const { tableIndex, dataIndex } = getRowIndexes(rows.length + postPaddingIndex)
               return <tr key={tableIndex} aria-rowindex={tableIndex + 2 /* 1-based + the header row */} >
                 <th scope="row" style={cornerStyle} >
                   {
-                    // If the data is sorted, we don't know the next row indexes
-                    orderBy === undefined ? rowLabel(tableIndex) : ''
+                    rowLabel(dataIndex)
                   }
                 </th>
               </tr>
