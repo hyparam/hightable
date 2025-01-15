@@ -26,8 +26,8 @@ export interface DataFrame {
   sortable?: boolean
 }
 
-export function resolvableRow(header: string[]): { [key: string]: ResolvablePromise<any> } & { __index__: ResolvablePromise<number> } {
-  return Object.fromEntries([...header.map(key => [key, resolvablePromise<any>()]), ['__index__', resolvablePromise<number>()]])
+export function resolvableRow(header: string[]): { [key: string]: ResolvablePromise<any> } {
+  return Object.fromEntries(header.map(key => [key, resolvablePromise<any>()]))
 }
 
 /**
@@ -49,7 +49,8 @@ export function asyncRows(rows: AsyncRow[] | Promise<Row[]>, numRows: number, he
         wrapped[i][key].resolve(row[key])
       }
       // resolve the row index if present
-      if ('__index__' in row) {
+      if (!('__index__' in wrapped) && '__index__' in row && typeof row.__index__ === 'number') {
+        wrapped[i].__index__ = resolvablePromise<number>()
         wrapped[i].__index__.resolve(row.__index__)
       }
     }
@@ -120,8 +121,7 @@ export function sortableDataFrame(data: DataFrame): DataFrame {
           throw new Error(`Invalid orderBy field: ${orderBy}`)
         }
         if (!all) {
-          // Fetch all rows and add __index__ column
-          // Note that it will erase any existing __index__ column
+          // Fetch all rows and add __index__ column (if not already present)
           all = awaitRows(data.rows(0, data.numRows))
             .then(rows => rows.map((row, i) => ({ __index__: i, ...row })))
         }
