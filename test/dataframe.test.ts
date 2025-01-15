@@ -3,7 +3,7 @@ import {
   AsyncRow, DataFrame, Row, arrayDataFrame, awaitRows, resolvablePromise, sortableDataFrame, wrapPromise,
 } from '../src/dataframe.js'
 
-export function wrapObject(obj: Row): AsyncRow {
+function wrapObject(obj: Row): AsyncRow {
   return Object.fromEntries(
     Object.entries(obj).map(([key, value]) => [key, wrapPromise(value)])
   )
