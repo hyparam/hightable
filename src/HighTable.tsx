@@ -336,7 +336,15 @@ export default function HighTable({
       // did not throw: we can set the anchor
       dispatch({ type: 'SET_SELECTION', selection: newSelection, anchor: tableIndex })
     }
-  }, [selection, anchor])
+  }, [selection, anchor, selectable])
+
+  const setColumnWidths = useCallback((columnWidths: Array<number | undefined>) => {
+    dispatch({ type: 'SET_COLUMN_WIDTHS', columnWidths })
+  }, [])
+
+  const setColumnWidth = useCallback((columnIndex: number, columnWidth: number | undefined) => {
+    dispatch({ type: 'SET_COLUMN_WIDTH', columnIndex, columnWidth })
+  }, [])
 
   // add empty pre and post rows to fill the viewport
   const prePadding = Array.from({ length: Math.min(padding, startIndex) }, () => [])
@@ -369,8 +377,8 @@ export default function HighTable({
             dataReady={hasCompleteRow}
             header={data.header}
             orderBy={orderBy}
-            setColumnWidth={(columnIndex, columnWidth) => dispatch({ type: 'SET_COLUMN_WIDTH', columnIndex, columnWidth })}
-            setColumnWidths={columnWidths => dispatch({ type: 'SET_COLUMN_WIDTHS', columnWidths })}
+            setColumnWidth={setColumnWidth}
+            setColumnWidths={setColumnWidths}
             setOrderBy={orderBy => data.sortable && dispatch({ type: 'SET_ORDER', orderBy })} />
           <tbody>
             {prePadding.map((_, prePaddingIndex) => {
