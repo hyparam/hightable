@@ -60,7 +60,7 @@ export default function TableHeader({
       })
     }
     setColumnWidths(userWidths)
-  }, [cacheKey])
+  }, [cacheKey, header, setColumnWidths])
 
   // Measure default column widths when data is ready
   useEffect(() => {
@@ -68,7 +68,7 @@ export default function TableHeader({
       const widths = headerRefs.current.map(measureWidth)
       setColumnWidths(widths)
     }
-  }, [cacheKey, dataReady, header]) // re-measure if header changes
+  }, [cacheKey, dataReady, header, setColumnWidths]) // re-measure if header changes
 
   // Modify column width
   function startResizing(columnIndex: number, e: React.MouseEvent<HTMLSpanElement, MouseEvent>) {
@@ -130,7 +130,7 @@ export default function TableHeader({
       window.removeEventListener('mousemove', handleMouseMove)
       window.removeEventListener('mouseup', stopResizing)
     }
-  }, [cacheKey, header, resizing, setColumnWidths])
+  }, [cacheKey, header, resizing, setColumnWidths, columnWidths, setColumnWidth])
 
   // Function to handle click for changing orderBy
   function handleOrderByClick(columnHeader: string, e: React.MouseEvent) {
