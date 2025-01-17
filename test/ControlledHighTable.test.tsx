@@ -2,8 +2,7 @@ import { act, render, waitFor } from '@testing-library/react'
 import { userEvent } from '@testing-library/user-event'
 import { useReducer } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import ControlledHighTable from '../src/ControlledHighTable.js'
-import { initialState, reducer } from '../src/HighTable.js'
+import HighTable, { initialState, reducer } from '../src/HighTable.js'
 
 const data = {
   header: ['Name', 'Age'],
@@ -20,14 +19,14 @@ const sortableData = {
   sortable: true,
 }
 
-describe('ControlledHighTable', () => {
+describe('HighTable', () => {
   const getData = vi.fn((sortable) => sortable ? sortableData : data)
 
   const appReducer = vi.fn(reducer)
   function App({ sortable, selectable }: { sortable?: boolean, selectable?: boolean } = {}) {
     const [state, dispatch] = useReducer(appReducer, initialState)
 
-    return <ControlledHighTable data={getData(sortable)} state={state} dispatch={dispatch} selectable={selectable} />
+    return <HighTable data={getData(sortable)} state={state} dispatch={dispatch} selectable={selectable} />
   }
 
   beforeEach(() => {

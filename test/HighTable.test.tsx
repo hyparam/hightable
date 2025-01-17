@@ -1,8 +1,8 @@
 import { fireEvent, render, waitFor, within } from '@testing-library/react'
 import { act } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import HighTable from '../src/HighTable.js'
 import { sortableDataFrame } from '../src/dataframe.js'
+import HighTable from '../src/HighTable.js'
 
 describe('HighTable', () => {
   const mockData = {
