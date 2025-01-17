@@ -1,15 +1,15 @@
 import { useCallback, useReducer, useState } from 'react'
-import type { InternalAction, InternalState, SelectionAndAnchor, TableProps } from './ControlledHighTable.js'
+import type { Action, SelectionAndAnchor, State, TableProps } from './ControlledHighTable.js'
 import ControlledHighTable from './ControlledHighTable.js'
 import { OrderBy } from './sort.js'
 export { stringify, throttle } from './ControlledHighTable.js'
-export type { ControlledTableProps, InternalAction, InternalState, SelectionAndAnchor, TableProps } from './ControlledHighTable.js'
+export type { Action, ControlledTableProps, SelectionAndAnchor, State, TableProps } from './ControlledHighTable.js'
 export {
-  AsyncRow, DataFrame,
-  ResolvablePromise, Row, arrayDataFrame, asyncRows,
+  arrayDataFrame, AsyncRow, asyncRows,
   awaitRow,
-  awaitRows, resolvablePromise,
-  resolvableRow, sortableDataFrame,
+  awaitRows, DataFrame,
+  ResolvablePromise, resolvablePromise,
+  resolvableRow, Row, sortableDataFrame,
   wrapPromise,
 } from './dataframe.js'
 export { rowCache } from './rowCache.js'
@@ -17,26 +17,12 @@ export type { Selection } from './selection.js'
 export { OrderBy } from './sort.js'
 export { ControlledHighTable, HighTable }
 
-type State = InternalState & {
-  orderBy?: OrderBy,
-  selectionAndAnchor?: SelectionAndAnchor
-}
-
-type Action = InternalAction
-| { type: 'SET_ORDER', orderBy: OrderBy | undefined }
-| { type: 'SET_SELECTION' } & { selectionAndAnchor: SelectionAndAnchor }
-
 export const initialState: State = {
   columnWidths: [],
   startIndex: 0,
   rows: [],
   invalidate: true,
   hasCompleteRow: false,
-  orderBy: {},
-  selectionAndAnchor: {
-    selection: [],
-    anchor: undefined,
-  },
 }
 
 export function reducer(state: State, action: Action): State {
@@ -56,15 +42,8 @@ export function reducer(state: State, action: Action): State {
   }
   case 'SET_COLUMN_WIDTHS':
     return { ...state, columnWidths: action.columnWidths }
-  case 'SET_ORDER': {
-    // Note: no need to invalidate the data, it will be done by useEffect
-    return { ...state, orderBy: action.orderBy }
-  }
   case 'DATA_CHANGED':
-    // side effect: invalidate the downloaded data, and clear the selection
-    return { ...state, invalidate: true, hasCompleteRow: false, selectionAndAnchor: { selection : [], anchor: undefined } }
-  case 'SET_SELECTION':
-    return { ...state, selectionAndAnchor: action.selectionAndAnchor }
+    return { ...state, invalidate: true, hasCompleteRow: false }
   default:
     return state
   }
@@ -109,6 +88,7 @@ export default function HighTable({
    * - disabled (data is not sortable, or orderBy and onOrderByChange are undefined): the sort is hidden and the user interactions are disabled. No local state.
    */
   const [initialOrderBy] = useState<OrderBy | undefined>(propOrderBy)
+  const [localOrderBy, setLocalOrderBy] = useState<OrderBy | undefined>({})
   const isOrderByControlled = initialOrderBy !== undefined
   const showOrderByInteractions = onOrderByChange !== undefined
   let orderBy: OrderBy | undefined
@@ -130,8 +110,7 @@ export default function HighTable({
       console.warn('The component sort is disabled because "onOrderByChange" is undefined. If you want to enable sort, you must provide "onOrderByChange".')
       orderBy = undefined
     } else {
-      // eslint-disable-next-line prefer-destructuring
-      orderBy = state.orderBy
+      orderBy = localOrderBy
     }
   }
   const getOnOrderByChange = useCallback(() => {
@@ -141,10 +120,10 @@ export default function HighTable({
     return (orderBy: OrderBy) => {
       onOrderByChange?.(orderBy)
       if (!isOrderByControlled) {
-        dispatch({ type: 'SET_ORDER', orderBy })
+        setLocalOrderBy(orderBy)
       }
     }
-  }, [dispatch, onOrderByChange, isOrderByControlled, showOrderByInteractions, data.sortable])
+  }, [onOrderByChange, isOrderByControlled, showOrderByInteractions, data.sortable])
 
   /**
    * Four modes:
@@ -154,6 +133,7 @@ export default function HighTable({
    * - disabled (selection and onSelectionChange are undefined): the selection is hidden and the user interactions are disabled. No local state.
    */
   const [initialSelection] = useState<SelectionAndAnchor | undefined>(selection)
+  const [localSelection, setLocalSelection] = useState<SelectionAndAnchor | undefined>({ selection: [], anchor: undefined })
   const isSelectionControlled = initialSelection !== undefined
   const showSelectionInteractions = onSelectionChange !== undefined
   let selectionAndAnchor: SelectionAndAnchor | undefined
@@ -172,8 +152,7 @@ export default function HighTable({
       console.warn('The component selection is disabled because "onSelectionChange" is undefined. If you want to enable selection, you must provide "onSelectionChange".')
       selectionAndAnchor = undefined
     } else {
-      // eslint-disable-next-line prefer-destructuring
-      selectionAndAnchor = state.selectionAndAnchor
+      selectionAndAnchor = localSelection
     }
   }
   const getOnSelectionAndAnchorChange = useCallback(() => {
@@ -183,10 +162,10 @@ export default function HighTable({
     return (selectionAndAnchor: SelectionAndAnchor) => {
       onSelectionChange?.(selectionAndAnchor)
       if (!isSelectionControlled) {
-        dispatch({ type: 'SET_SELECTION', selectionAndAnchor })
+        setLocalSelection(selectionAndAnchor)
       }
     }
-  }, [dispatch, onSelectionChange, isSelectionControlled, showSelectionInteractions])
+  }, [onSelectionChange, isSelectionControlled, showSelectionInteractions])
 
   return <ControlledHighTable
     data={data}

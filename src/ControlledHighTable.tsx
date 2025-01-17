@@ -30,7 +30,7 @@ export interface SelectionAndAnchor {
 /**
  * State of the component
  */
-export type InternalState = {
+export type State = {
   columnWidths: Array<number | undefined> // width of each column
   invalidate: boolean // true if the data must be fetched again
   hasCompleteRow: boolean // true if at least one row is fully resolved (all of its cells)
@@ -38,7 +38,7 @@ export type InternalState = {
   startIndex: number // offset of the slice of sorted rows to render (rows[0] is the startIndex'th sorted row)
 }
 
-export type InternalAction =
+export type Action =
 | { type: 'SET_ROWS', start: number, rows: Row[], hasCompleteRow: boolean }
   | { type: 'SET_COLUMN_WIDTH', columnIndex: number, columnWidth: number | undefined }
   | { type: 'SET_COLUMN_WIDTHS', columnWidths: Array<number | undefined> }
@@ -70,8 +70,8 @@ function rowLabel(rowIndex?: number): string {
 }
 
 export type ControlledTableProps = TableProps & {
-  state: InternalState
-  dispatch: React.Dispatch<InternalAction>
+  state: State
+  dispatch: React.Dispatch<Action>
   orderBy?: OrderBy // order by column. If undefined, the table is unordered, the sort elements are hidden and the interactions are disabled.
   onOrderByChange?: (orderBy: OrderBy) => void // callback to call when a user interaction changes the order. The interactions are disabled if undefined.
   selectionAndAnchor?: SelectionAndAnchor // selection and anchor rows. If undefined, the selection is hidden and the interactions are disabled.
@@ -156,7 +156,8 @@ export default function ControlledHighTable({
   // invalidate when data changes so that columns will auto-resize
   useEffect(() => {
     dispatch({ type: 'DATA_CHANGED' })
-  }, [data, dispatch])
+    onSelectionAndAnchorChange?.({ selection: [], anchor: undefined })
+  }, [data, dispatch, onSelectionAndAnchorChange])
 
   // handle scrolling
   useEffect(() => {
