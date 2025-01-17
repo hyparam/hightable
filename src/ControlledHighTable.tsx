@@ -1,6 +1,7 @@
 import { ReactNode, useCallback, useEffect, useMemo, useRef } from 'react'
 import { DataFrame, Row, asyncRows } from './dataframe.js'
 import { Selection, areAllSelected, extendFromAnchor, isSelected, toggleAll, toggleIndex } from './selection.js'
+import { OrderBy } from './sort.js'
 import TableHeader, { cellStyle } from './TableHeader.js'
 export {
   AsyncRow,
@@ -35,14 +36,12 @@ export type InternalState = {
   hasCompleteRow: boolean // true if at least one row is fully resolved (all of its cells)
   rows: Row[] // slice of the virtual table rows (sorted rows) to render as HTML. It might contain incomplete rows. Rows are expected to include __index__ if sorted.
   startIndex: number // offset of the slice of sorted rows to render (rows[0] is the startIndex'th sorted row)
-  orderBy?: string // column name to sort by
 }
 
 export type InternalAction =
 | { type: 'SET_ROWS', start: number, rows: Row[], hasCompleteRow: boolean }
   | { type: 'SET_COLUMN_WIDTH', columnIndex: number, columnWidth: number | undefined }
   | { type: 'SET_COLUMN_WIDTHS', columnWidths: Array<number | undefined> }
-  | { type: 'SET_ORDER', orderBy: string | undefined }
   | { type: 'DATA_CHANGED' }
 
 /**
@@ -73,8 +72,10 @@ function rowLabel(rowIndex?: number): string {
 export type ControlledTableProps = TableProps & {
   state: InternalState
   dispatch: React.Dispatch<InternalAction>
+  orderBy?: OrderBy // order by column. If undefined, the table is unordered, the sort elements are hidden and the interactions are disabled.
+  onOrderByChange?: (orderBy: OrderBy) => void // callback to call when a user interaction changes the order. The interactions are disabled if undefined.
   selectionAndAnchor?: SelectionAndAnchor // selection and anchor rows. If undefined, the selection is hidden and the interactions are disabled.
-  onSelectionAndAnchor?: (selectionAndAnchor: SelectionAndAnchor) => void // callback to call when a user interaction changes the selection. The interactions are disabled if undefined.
+  onSelectionAndAnchorChange?: (selectionAndAnchor: SelectionAndAnchor) => void // callback to call when a user interaction changes the selection. The interactions are disabled if undefined.
 }
 
 /**
@@ -86,8 +87,10 @@ export default function ControlledHighTable({
   overscan = 20,
   padding = 20,
   focus = true,
+  orderBy,
+  onOrderByChange,
   selectionAndAnchor,
-  onSelectionAndAnchor,
+  onSelectionAndAnchorChange,
   state,
   dispatch,
   onDoubleClickCell,
@@ -102,30 +105,30 @@ export default function ControlledHighTable({
    *                  startIndex lives in the table domain: it's the first virtual row to be rendered in HTML.
    * data.rows(dataIndex, dataIndex + 1) is the same row as data.rows(tableIndex, tableIndex + 1, orderBy)
    */
-  const { columnWidths, startIndex, rows, orderBy, invalidate, hasCompleteRow } = state
+  const { columnWidths, startIndex, rows, invalidate, hasCompleteRow } = state
 
   const showSelection = selectionAndAnchor !== undefined
-  const showSelectionControls = showSelection && onSelectionAndAnchor !== undefined
+  const showSelectionControls = showSelection && onSelectionAndAnchorChange !== undefined
   const getOnSelectAllRows = useCallback(() => {
-    if (!selectionAndAnchor || !onSelectionAndAnchor) return
+    if (!selectionAndAnchor || !onSelectionAndAnchorChange) return
     const { selection } = selectionAndAnchor
-    return () => onSelectionAndAnchor({
+    return () => onSelectionAndAnchorChange({
       selection: toggleAll({ selection, length: data.numRows }),
       anchor: undefined,
     })
-  }, [onSelectionAndAnchor, data.numRows, selectionAndAnchor])
+  }, [onSelectionAndAnchorChange, data.numRows, selectionAndAnchor])
   const getOnSelectRowClick = useCallback((tableIndex: number) => {
-    if (!selectionAndAnchor || !onSelectionAndAnchor) return
+    if (!selectionAndAnchor || !onSelectionAndAnchorChange) return
     const { selection, anchor } = selectionAndAnchor
     return (event: React.MouseEvent) => {
       const useAnchor = event.shiftKey && selectionAndAnchor.anchor !== undefined
       if (useAnchor) {
-        onSelectionAndAnchor({ selection: extendFromAnchor({ selection, anchor, index: tableIndex }), anchor })
+        onSelectionAndAnchorChange({ selection: extendFromAnchor({ selection, anchor, index: tableIndex }), anchor })
       } else {
-        onSelectionAndAnchor({ selection: toggleIndex({ selection, index: tableIndex }), anchor: tableIndex })
+        onSelectionAndAnchorChange({ selection: toggleIndex({ selection, index: tableIndex }), anchor: tableIndex })
       }
     }
-  }, [onSelectionAndAnchor, selectionAndAnchor])
+  }, [onSelectionAndAnchorChange, selectionAndAnchor])
   const allRowsSelected = useMemo(() => {
     if (!selectionAndAnchor) return false
     const { selection } = selectionAndAnchor
@@ -184,7 +187,7 @@ export default function ControlledHighTable({
       // Fetch a chunk of rows from the data frame
       try {
         const requestId = ++pendingRequest.current
-        const unwrapped = data.rows(start, end, orderBy)
+        const unwrapped = data.rows(start, end, orderBy?.column)
         const rowsChunk = asyncRows(unwrapped, end - start, data.header)
 
         const updateRows = throttle(() => {
@@ -308,7 +311,7 @@ export default function ControlledHighTable({
    */
   const getRowIndexes = useCallback((rowIndex: number): { dataIndex?: number, tableIndex: number } => {
     const tableIndex = startIndex + rowIndex
-    const dataIndex = orderBy === undefined
+    const dataIndex = orderBy?.column === undefined
       ? tableIndex
       : rowIndex >= 0 && rowIndex < rows.length && '__index__' in rows[rowIndex] && typeof rows[rowIndex].__index__ === 'number'
         ? rows[rowIndex].__index__
@@ -334,10 +337,6 @@ export default function ControlledHighTable({
     dispatch({ type: 'SET_COLUMN_WIDTH', columnIndex, columnWidth })
   }, [dispatch])
 
-  const setOrderBy = useCallback((orderBy: string | undefined) => {
-    data.sortable && dispatch({ type: 'SET_ORDER', orderBy })
-  }, [data.sortable, dispatch])
-
   // don't render table if header is empty
   if (!data.header.length) return
 
@@ -348,7 +347,7 @@ export default function ControlledHighTable({
           aria-readonly={true}
           aria-colcount={data.header.length + 1 /* don't forget the selection column */}
           aria-rowcount={data.numRows + 1 /* don't forget the header row */}
-          className={`table${data.sortable ? ' sortable' : ''}`}
+          className={`table${data.sortable && orderBy && onOrderByChange ? ' sortable' : ''}`}
           ref={tableRef}
           role='grid'
           style={{ top: `${offsetTopRef.current}px` }}
@@ -361,7 +360,7 @@ export default function ControlledHighTable({
             orderBy={orderBy}
             setColumnWidth={setColumnWidth}
             setColumnWidths={setColumnWidths}
-            setOrderBy={setOrderBy}
+            onOrderByChange={onOrderByChange}
           />
           <tbody>
             {prePadding.map((_, prePaddingIndex) => {
