@@ -73,8 +73,8 @@ function rowLabel(rowIndex?: number): string {
 export type ControlledTableProps = TableProps & {
   state: InternalState
   dispatch: React.Dispatch<InternalAction>
-  selectionAndAnchor?: SelectionAndAnchor // controlled selection state
-  setSelectionAndAnchor?: (selectionAndAnchor: SelectionAndAnchor) => void // controlled selection state setter
+  selectionAndAnchor?: SelectionAndAnchor // selection and anchor rows. If undefined, the selection is hidden and the interactions are disabled.
+  onSelectionAndAnchor?: (selectionAndAnchor: SelectionAndAnchor) => void // callback to call when a user interaction changes the selection. The interactions are disabled if undefined.
 }
 
 /**
@@ -87,7 +87,7 @@ export default function ControlledHighTable({
   padding = 20,
   focus = true,
   selectionAndAnchor,
-  setSelectionAndAnchor,
+  onSelectionAndAnchor,
   state,
   dispatch,
   onDoubleClickCell,
@@ -104,8 +104,39 @@ export default function ControlledHighTable({
    */
   const { columnWidths, startIndex, rows, orderBy, invalidate, hasCompleteRow } = state
 
-  const selectable = selectionAndAnchor && setSelectionAndAnchor
-  const { selection, anchor } = selectionAndAnchor ?? { selection: [], anchor: undefined }
+  const showSelection = selectionAndAnchor !== undefined
+  const showSelectionControls = showSelection && onSelectionAndAnchor !== undefined
+  const getOnSelectAllRows = useCallback(() => {
+    if (!selectionAndAnchor || !onSelectionAndAnchor) return
+    const { selection } = selectionAndAnchor
+    return () => onSelectionAndAnchor({
+      selection: toggleAll({ selection, length: data.numRows }),
+      anchor: undefined,
+    })
+  }, [onSelectionAndAnchor, data.numRows, selectionAndAnchor])
+  const getOnSelectRowClick = useCallback((tableIndex: number) => {
+    if (!selectionAndAnchor || !onSelectionAndAnchor) return
+    const { selection, anchor } = selectionAndAnchor
+    return (event: React.MouseEvent) => {
+      const useAnchor = event.shiftKey && selectionAndAnchor.anchor !== undefined
+      if (useAnchor) {
+        onSelectionAndAnchor({ selection: extendFromAnchor({ selection, anchor, index: tableIndex }), anchor })
+      } else {
+        onSelectionAndAnchor({ selection: toggleIndex({ selection, index: tableIndex }), anchor: tableIndex })
+      }
+    }
+  }, [onSelectionAndAnchor, selectionAndAnchor])
+  const allRowsSelected = useMemo(() => {
+    if (!selectionAndAnchor) return false
+    const { selection } = selectionAndAnchor
+    return areAllSelected({ selection, length: data.numRows })
+  }, [selectionAndAnchor, data.numRows])
+  const isRowSelected = useCallback((tableIndex: number) => {
+    if (!selectionAndAnchor) return undefined
+    const { selection } = selectionAndAnchor
+    return isSelected({ selection, index: tableIndex })
+  }, [selectionAndAnchor])
+
 
   const offsetTopRef = useRef(0)
 
@@ -285,16 +316,6 @@ export default function ControlledHighTable({
     return { dataIndex, tableIndex }
   }, [rows, startIndex, orderBy])
 
-
-  const onRowNumberClick = useCallback(({ useAnchor, tableIndex }: {useAnchor: boolean, tableIndex: number}) => {
-    if (!setSelectionAndAnchor) return
-    if (useAnchor) {
-      setSelectionAndAnchor({ selection: extendFromAnchor({ selection, anchor, index: tableIndex }), anchor })
-    } else {
-      setSelectionAndAnchor({ selection: toggleIndex({ selection, index: tableIndex }), anchor: tableIndex })
-    }
-  }, [setSelectionAndAnchor, selection, anchor])
-
   // add empty pre and post rows to fill the viewport
   const prePadding = Array.from({ length: Math.min(padding, startIndex) }, () => [])
   const postPadding = Array.from({
@@ -320,7 +341,7 @@ export default function ControlledHighTable({
   // don't render table if header is empty
   if (!data.header.length) return
 
-  return <div className={`table-container${selectable ? ' selectable' : ''}`}>
+  return <div className={`table-container${showSelectionControls ? ' selectable' : ''}${showSelection ? ' show-selection' : ''}`}>
     <div className='table-scroll' ref={scrollRef}>
       <div style={{ height: `${scrollHeight}px` }}>
         <table
@@ -346,22 +367,21 @@ export default function ControlledHighTable({
             {prePadding.map((_, prePaddingIndex) => {
               const { tableIndex, dataIndex } = getRowIndexes(-prePadding.length + prePaddingIndex)
               return <tr key={tableIndex} aria-rowindex={tableIndex + 2 /* 1-based + the header row */} >
-                <th scope="row" style={cornerStyle}>
-                  {
-                    rowLabel(dataIndex)
-                  }
-                </th>
+                <th scope="row" style={cornerStyle}>{
+                  rowLabel(dataIndex)
+                }</th>
               </tr>
             })}
             {rows.map((row, rowIndex) => {
               const { tableIndex, dataIndex } = getRowIndexes(rowIndex)
+              const selected = isRowSelected(tableIndex)
               return <tr key={tableIndex} aria-rowindex={tableIndex + 2 /* 1-based + the header row */} title={rowError(row, dataIndex)}
-                className={selectable && isSelected({ selection, index: tableIndex }) ? 'selected' : ''}
-                aria-selected={isSelected({ selection, index: tableIndex })}
+                className={selected ? 'selected' : ''}
+                aria-selected={selected}
               >
-                <th scope="row" style={cornerStyle} onClick={selectable && (event => onRowNumberClick({ useAnchor: event.shiftKey, tableIndex }))}>
+                <th scope="row" style={cornerStyle} onClick={getOnSelectRowClick(tableIndex)}>
                   <span>{rowLabel(dataIndex)}</span>
-                  { selectable && <input type='checkbox' checked={isSelected({ selection, index: tableIndex })} readOnly={true} /> }
+                  { showSelection && <input type='checkbox' checked={selected} readOnly /> }
                 </th>
                 {data.header.map((col, colIndex) =>
                   Cell(row[col], colIndex, dataIndex)
@@ -371,20 +391,18 @@ export default function ControlledHighTable({
             {postPadding.map((_, postPaddingIndex) => {
               const { tableIndex, dataIndex } = getRowIndexes(rows.length + postPaddingIndex)
               return <tr key={tableIndex} aria-rowindex={tableIndex + 2 /* 1-based + the header row */} >
-                <th scope="row" style={cornerStyle} >
-                  {
-                    rowLabel(dataIndex)
-                  }
-                </th>
+                <th scope="row" style={cornerStyle} >{
+                  rowLabel(dataIndex)
+                }</th>
               </tr>
             })}
           </tbody>
         </table>
       </div>
     </div>
-    <div className='table-corner' style={cornerStyle} onClick={selectable && (() => setSelectionAndAnchor({ selection: toggleAll({ selection, length: rows.length }), anchor: undefined }))}>
+    <div className='table-corner' style={cornerStyle} onClick={getOnSelectAllRows()}>
       <span>&nbsp;</span>
-      {selectable && <input type='checkbox' checked={selection && areAllSelected({ selection, length: rows.length })} readOnly={true} />}
+      { showSelection && <input type='checkbox' checked={allRowsSelected} readOnly /> }
     </div>
     <div className='mock-row-label' style={cornerStyle}>&nbsp;</div>
   </div>

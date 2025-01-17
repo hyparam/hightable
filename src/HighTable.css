@@ -110,18 +110,26 @@
 .table th:first-child input {
   display: none;
 }
-.selectable th:first-child:hover span, .selectable tr.selected th:first-child span {
+/* for selected rows, replace row numbers with checkboxes and highlight the rows */
+tr.selected th:first-child span {
   display: none;
 }
-.selectable th:first-child:hover input, .selectable tr.selected th:first-child input {
+tr.selected th:first-child input {
   display: inline;
-  cursor: pointer;
 }
-.selectable tr.selected {
+tr.selected {
   background-color: #fbf7bf;
 }
-.selectable tr.selected th:first-child {
+tr.selected th:first-child {
   background-color: #f1edbb;
+}
+/* if selectable, show checkboxes on hover (and focus) */
+th.selectable:first-child:hover span, th.selectable:first-child:focus span {
+  display: none;
+}
+th.selectable:first-child:hover input, th.selectable:first-child:focus input {
+  display: inline;
+  cursor: pointer;
 }
 
 /* cells */
@@ -226,20 +234,23 @@
   display: flex;
   justify-content: center;
 }
-.selectable .table-corner {
-  background: #e4e4e6;
-  cursor: pointer;
-}
+/* replace corner with checkbox if selection is enabled (read-only or not) */
 .table-corner input {
   display: none;
 }
-.selectable .table-corner span {
+.show-selection .table-corner {
+  background: #e4e4e6;
+}
+.show-selection .table-corner span {
   display: none;
 }
-.selectable .table-corner input {
+.show-selection .table-corner input {
   display: inline;
-  cursor: pointer;
   text-align: center;
+}
+/* if selectable, show pointer cursor on checkbox */
+.selectable .table-corner, .selectable .table-corner input {
+  cursor: pointer;
 }
 
 /* mock row numbers */
