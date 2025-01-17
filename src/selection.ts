@@ -4,6 +4,11 @@
  */
 export type Selection = Array<Range>
 
+export interface SelectionAndAnchor {
+  selection: Selection // rows selection. The values are indexes of the virtual table (sorted rows), and thus depend on the order.
+  anchor?: number // anchor row used as a reference for shift+click selection. It's a virtual table index (sorted), and thus depends on the order.
+}
+
 interface Range {
     start: number // inclusive lower limit, positive integer
     end: number // exclusive upper limit, positive integer, strictly greater than start (no zero-length ranges).

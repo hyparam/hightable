@@ -1,6 +1,6 @@
-import { ReactNode, useCallback, useEffect, useMemo, useRef } from 'react'
+import { ReactNode, useCallback, useEffect, useMemo, useReducer, useRef } from 'react'
 import { DataFrame, Row, asyncRows } from './dataframe.js'
-import { Selection, areAllSelected, extendFromAnchor, isSelected, toggleAll, toggleIndex } from './selection.js'
+import { SelectionAndAnchor, areAllSelected, extendFromAnchor, isSelected, toggleAll, toggleIndex } from './selection.js'
 import { OrderBy } from './sort.js'
 import TableHeader, { cellStyle } from './TableHeader.js'
 export {
@@ -20,12 +20,39 @@ export {
 export { rowCache } from './rowCache.js'
 export type { Selection } from './selection.js'
 
-const rowHeight = 33 // row height px
-
-export interface SelectionAndAnchor {
-  selection: Selection // rows selection. The values are indexes of the virtual table (sorted rows), and thus depend on the order.
-  anchor?: number // anchor row used as a reference for shift+click selection. It's a virtual table index (sorted), and thus depends on the order.
+export const initialState: State = {
+  columnWidths: [],
+  startIndex: 0,
+  rows: [],
+  invalidate: true,
+  hasCompleteRow: false,
 }
+
+export function reducer(state: State, action: Action): State {
+  switch (action.type) {
+  case 'SET_ROWS':
+    return {
+      ...state,
+      startIndex: action.start,
+      rows: action.rows,
+      invalidate: false,
+      hasCompleteRow: state.hasCompleteRow || action.hasCompleteRow,
+    }
+  case 'SET_COLUMN_WIDTH': {
+    const columnWidths = [...state.columnWidths]
+    columnWidths[action.columnIndex] = action.columnWidth
+    return { ...state, columnWidths }
+  }
+  case 'SET_COLUMN_WIDTHS':
+    return { ...state, columnWidths: action.columnWidths }
+  case 'DATA_CHANGED':
+    return { ...state, invalidate: true, hasCompleteRow: false }
+  default:
+    return state
+  }
+}
+
+const rowHeight = 33 // row height px
 
 /**
  * State of the component
@@ -61,21 +88,16 @@ export interface TableProps {
   onDoubleClickCell?: MouseEventCellHandler
   onMouseDownCell?: MouseEventCellHandler
   onError?: (error: Error) => void
+  orderBy?: OrderBy // order by column. If undefined, the table is unordered, the sort elements are hidden and the interactions are disabled.
+  onOrderByChange?: (orderBy: OrderBy) => void // callback to call when a user interaction changes the order. The interactions are disabled if undefined.
+  selectionAndAnchor?: SelectionAndAnchor // selection and anchor rows. If undefined, the selection is hidden and the interactions are disabled.
+  onSelectionAndAnchorChange?: (selectionAndAnchor: SelectionAndAnchor) => void // callback to call when a user interaction changes the selection. The interactions are disabled if undefined.
 }
 
 function rowLabel(rowIndex?: number): string {
   if (rowIndex === undefined) return ''
   // rowIndex + 1 because the displayed row numbers are 1-based
   return (rowIndex + 1).toLocaleString()
-}
-
-export type ControlledTableProps = TableProps & {
-  state: State
-  dispatch: React.Dispatch<Action>
-  orderBy?: OrderBy // order by column. If undefined, the table is unordered, the sort elements are hidden and the interactions are disabled.
-  onOrderByChange?: (orderBy: OrderBy) => void // callback to call when a user interaction changes the order. The interactions are disabled if undefined.
-  selectionAndAnchor?: SelectionAndAnchor // selection and anchor rows. If undefined, the selection is hidden and the interactions are disabled.
-  onSelectionAndAnchorChange?: (selectionAndAnchor: SelectionAndAnchor) => void // callback to call when a user interaction changes the selection. The interactions are disabled if undefined.
 }
 
 /**
@@ -91,12 +113,12 @@ export default function ControlledHighTable({
   onOrderByChange,
   selectionAndAnchor,
   onSelectionAndAnchorChange,
-  state,
-  dispatch,
   onDoubleClickCell,
   onMouseDownCell,
   onError = console.error,
-}: ControlledTableProps) {
+}: TableProps) {
+  const [state, dispatch] = useReducer(reducer, initialState)
+
   /**
    * The component relies on the model of a virtual table which rows are ordered and only the visible rows are fetched and rendered as HTML <tr> elements.
    * We use two reference domains for the rows:

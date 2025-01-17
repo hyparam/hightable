@@ -1,9 +1,8 @@
-import { useCallback, useReducer, useState } from 'react'
-import type { Action, SelectionAndAnchor, State, TableProps } from './ControlledHighTable.js'
-import ControlledHighTable from './ControlledHighTable.js'
+import { useCallback, useState } from 'react'
+import ControlledHighTable, { TableProps } from './ControlledHighTable.js'
+import { SelectionAndAnchor } from './selection.js'
 import { OrderBy } from './sort.js'
-export { stringify, throttle } from './ControlledHighTable.js'
-export type { Action, ControlledTableProps, SelectionAndAnchor, State, TableProps } from './ControlledHighTable.js'
+export { stringify, TableProps, throttle } from './ControlledHighTable.js'
 export {
   arrayDataFrame, AsyncRow, asyncRows,
   awaitRow,
@@ -13,48 +12,9 @@ export {
   wrapPromise,
 } from './dataframe.js'
 export { rowCache } from './rowCache.js'
-export type { Selection } from './selection.js'
+export { SelectionAndAnchor } from './selection.js'
 export { OrderBy } from './sort.js'
 export { ControlledHighTable, HighTable }
-
-export const initialState: State = {
-  columnWidths: [],
-  startIndex: 0,
-  rows: [],
-  invalidate: true,
-  hasCompleteRow: false,
-}
-
-export function reducer(state: State, action: Action): State {
-  switch (action.type) {
-  case 'SET_ROWS':
-    return {
-      ...state,
-      startIndex: action.start,
-      rows: action.rows,
-      invalidate: false,
-      hasCompleteRow: state.hasCompleteRow || action.hasCompleteRow,
-    }
-  case 'SET_COLUMN_WIDTH': {
-    const columnWidths = [...state.columnWidths]
-    columnWidths[action.columnIndex] = action.columnWidth
-    return { ...state, columnWidths }
-  }
-  case 'SET_COLUMN_WIDTHS':
-    return { ...state, columnWidths: action.columnWidths }
-  case 'DATA_CHANGED':
-    return { ...state, invalidate: true, hasCompleteRow: false }
-  default:
-    return state
-  }
-}
-
-type HighTableProps = TableProps & {
-  orderBy?: OrderBy
-  onOrderByChange?: (orderBy: OrderBy) => void
-  selection: SelectionAndAnchor
-  onSelectionChange?: (selection: SelectionAndAnchor) => void
-}
 
 /**
  * Render a table with streaming rows on demand from a DataFrame.
@@ -72,14 +32,12 @@ export default function HighTable({
   focus = true,
   orderBy: propOrderBy,
   onOrderByChange,
-  selection,
-  onSelectionChange,
+  selectionAndAnchor: propSelection,
+  onSelectionAndAnchorChange,
   onDoubleClickCell,
   onMouseDownCell,
   onError = console.error,
-}: HighTableProps) {
-  const [state, dispatch] = useReducer(reducer, initialState)
-
+}: TableProps) {
   /**
    * Four modes:
    * - controlled (orderBy and onOrderByChange are defined): the parent controls the sort and receives the user interactions. No local state.
@@ -127,29 +85,29 @@ export default function HighTable({
 
   /**
    * Four modes:
-   * - controlled (selection and onSelectionChange are defined): the parent controls the selection and receives the user interactions. No local state.
-   * - controlled read-only (selection is defined, onSelectionChange is undefined): the parent controls the selection and the user interactions are disabled. No local state.
-   * - uncontrolled (selection is undefined, onSelectionChange is defined): the component controls the selection and the user interactions. Local state.
-   * - disabled (selection and onSelectionChange are undefined): the selection is hidden and the user interactions are disabled. No local state.
+   * - controlled (selection and onSelectionAndAnchorChange are defined): the parent controls the selection and receives the user interactions. No local state.
+   * - controlled read-only (selection is defined, onSelectionAndAnchorChange is undefined): the parent controls the selection and the user interactions are disabled. No local state.
+   * - uncontrolled (selection is undefined, onSelectionAndAnchorChange is defined): the component controls the selection and the user interactions. Local state.
+   * - disabled (selection and onSelectionAndAnchorChange are undefined): the selection is hidden and the user interactions are disabled. No local state.
    */
-  const [initialSelection] = useState<SelectionAndAnchor | undefined>(selection)
+  const [initialSelection] = useState<SelectionAndAnchor | undefined>(propSelection)
   const [localSelection, setLocalSelection] = useState<SelectionAndAnchor | undefined>({ selection: [], anchor: undefined })
   const isSelectionControlled = initialSelection !== undefined
-  const showSelectionInteractions = onSelectionChange !== undefined
+  const showSelectionInteractions = onSelectionAndAnchorChange !== undefined
   let selectionAndAnchor: SelectionAndAnchor | undefined
   if (isSelectionControlled) {
-    if (selection === undefined) {
+    if (propSelection === undefined) {
       console.warn('The component selection is controlled (is has no local state) because "selection" was initially defined. "selection" cannot be set to undefined now (it is set back to the initial value).')
       selectionAndAnchor = initialSelection
     } else {
-      selectionAndAnchor = selection
+      selectionAndAnchor = propSelection
     }
   } else {
-    if (selection !== undefined) {
+    if (propSelection !== undefined) {
       console.warn('The component selection is uncontrolled (it only has a local state) because "selection" was initially undefined. "selection" cannot be set to a value now and is ignored.')
     }
-    if (onSelectionChange === undefined) {
-      console.warn('The component selection is disabled because "onSelectionChange" is undefined. If you want to enable selection, you must provide "onSelectionChange".')
+    if (onSelectionAndAnchorChange === undefined) {
+      console.warn('The component selection is disabled because "onSelectionAndAnchorChange" is undefined. If you want to enable selection, you must provide "onSelectionAndAnchorChange".')
       selectionAndAnchor = undefined
     } else {
       selectionAndAnchor = localSelection
@@ -160,12 +118,12 @@ export default function HighTable({
       return undefined
     }
     return (selectionAndAnchor: SelectionAndAnchor) => {
-      onSelectionChange?.(selectionAndAnchor)
+      onSelectionAndAnchorChange?.(selectionAndAnchor)
       if (!isSelectionControlled) {
         setLocalSelection(selectionAndAnchor)
       }
     }
-  }, [onSelectionChange, isSelectionControlled, showSelectionInteractions])
+  }, [onSelectionAndAnchorChange, isSelectionControlled, showSelectionInteractions])
 
   return <ControlledHighTable
     data={data}
@@ -180,7 +138,5 @@ export default function HighTable({
     onDoubleClickCell={onDoubleClickCell}
     onMouseDownCell={onMouseDownCell}
     onError={onError}
-    state={state}
-    dispatch={dispatch}
   ></ControlledHighTable>
 }
