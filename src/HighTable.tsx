@@ -10,10 +10,29 @@ export type { Selection } from './selection.js'
 export { OrderBy } from './sort.js'
 export { HighTable }
 
+/**
+ * State of the component
+ */
+export type State = {
+  columnWidths: Array<number | undefined> // width of each column
+  invalidate: boolean // true if the data must be fetched again
+  hasCompleteRow: boolean // true if at least one row is fully resolved (all of its cells)
+  rows: Row[] // slice of the virtual table rows (sorted rows) to render as HTML. It might contain incomplete rows. Rows are expected to include __index__ if sorted.
+  rowsOrderBy: OrderBy // order by column of the rows slice.
+  startIndex: number // offset of the slice of sorted rows to render (rows[0] is the startIndex'th sorted row)
+}
+
+export type Action =
+  | { type: 'SET_ROWS', start: number, rows: Row[], rowsOrderBy: OrderBy, hasCompleteRow: boolean }
+  | { type: 'SET_COLUMN_WIDTH', columnIndex: number, columnWidth: number | undefined }
+  | { type: 'SET_COLUMN_WIDTHS', columnWidths: Array<number | undefined> }
+  | { type: 'DATA_CHANGED' }
+
 export const initialState: State = {
   columnWidths: [],
   startIndex: 0,
   rows: [],
+  rowsOrderBy: {},
   invalidate: true,
   hasCompleteRow: false,
 }
@@ -25,6 +44,7 @@ export function reducer(state: State, action: Action): State {
       ...state,
       startIndex: action.start,
       rows: action.rows,
+      rowsOrderBy: action.rowsOrderBy,
       invalidate: false,
       hasCompleteRow: state.hasCompleteRow || action.hasCompleteRow,
     }
@@ -43,23 +63,6 @@ export function reducer(state: State, action: Action): State {
 }
 
 const rowHeight = 33 // row height px
-
-/**
- * State of the component
- */
-export type State = {
-  columnWidths: Array<number | undefined> // width of each column
-  invalidate: boolean // true if the data must be fetched again
-  hasCompleteRow: boolean // true if at least one row is fully resolved (all of its cells)
-  rows: Row[] // slice of the virtual table rows (sorted rows) to render as HTML. It might contain incomplete rows. Rows are expected to include __index__ if sorted.
-  startIndex: number // offset of the slice of sorted rows to render (rows[0] is the startIndex'th sorted row)
-}
-
-export type Action =
-| { type: 'SET_ROWS', start: number, rows: Row[], hasCompleteRow: boolean }
-  | { type: 'SET_COLUMN_WIDTH', columnIndex: number, columnWidth: number | undefined }
-  | { type: 'SET_COLUMN_WIDTHS', columnWidths: Array<number | undefined> }
-  | { type: 'DATA_CHANGED' }
 
 /**
  * Mouse event handler for a cell in the table.
@@ -121,7 +124,7 @@ export default function HighTable({
    *                  startIndex lives in the table domain: it's the first virtual row to be rendered in HTML.
    * data.rows(dataIndex, dataIndex + 1) is the same row as data.rows(tableIndex, tableIndex + 1, orderBy)
    */
-  const { columnWidths, startIndex, rows, invalidate, hasCompleteRow } = state
+  const { columnWidths, startIndex, rows, rowsOrderBy, invalidate, hasCompleteRow } = state
 
   /**
    * orderBy and onOrderByChange
@@ -129,17 +132,18 @@ export default function HighTable({
    * Four modes:
    * - controlled (orderBy and onOrderByChange are defined): the parent controls the sort and receives the user interactions. No local state.
    * - controlled read-only (orderBy is defined, onOrderByChange is undefined): the parent controls the sort and the user interactions are disabled. No local state.
-   * - uncontrolled (orderBy is undefined, onOrderByChange is defined): the component controls the sort and the user interactions. Local state.
-   * - disabled (data is not sortable, or orderBy and onOrderByChange are undefined): the sort is hidden and the user interactions are disabled. No local state.
+   * - uncontrolled (orderBy is undefined, onOrderByChange is defined or undefined): the component controls the sort and the user interactions. Local state.
+   * - disabled (data is not sortable): the sort is hidden and the user interactions are disabled. No local state.
    */
   const [initialOrderBy] = useState<OrderBy | undefined>(propOrderBy)
   const [localOrderBy, setLocalOrderBy] = useState<OrderBy | undefined>({})
   const isOrderByControlled = initialOrderBy !== undefined
-  const showOrderByInteractions = propOnOrderByChange !== undefined
+  let enableOrderByInteractions = true
   let orderBy: OrderBy | undefined
   if (!data.sortable) {
-    console.log('The component sort is disabled because the data is not sortable.')
+    // The component sort is disabled because the data is not sortable.
     orderBy = undefined
+    enableOrderByInteractions = false
   } else if (isOrderByControlled) {
     if (propOrderBy === undefined) {
       console.warn('The component sort is controlled (is has no local state) because "orderBy" was initially defined. "orderBy" cannot be set to undefined now (it is set back to the initial value).')
@@ -147,29 +151,24 @@ export default function HighTable({
     } else {
       orderBy = propOrderBy
     }
+    // read-only if onOrderByChange is undefined
+    enableOrderByInteractions = propOnOrderByChange !== undefined
   } else {
     if (propOrderBy !== undefined) {
       console.warn('The component sort is uncontrolled (it only has a local state) because "orderBy" was initially undefined. "orderBy" cannot be set to a value now and is ignored.')
     }
-    if (propOnOrderByChange === undefined) {
-      console.warn('The component sort is disabled because "onOrderByChange" is undefined. If you want to enable sort, you must provide "onOrderByChange".')
-      orderBy = undefined
-    } else {
-      orderBy = localOrderBy
-    }
+    orderBy = localOrderBy
+    enableOrderByInteractions = true
   }
-  const getOnOrderByChange = useCallback(() => {
-    if (!showOrderByInteractions || !data.sortable) {
-      return undefined
+  const onOrderByChange = useCallback((orderBy: OrderBy) => {
+    if (!enableOrderByInteractions) {
+      return
     }
-    return (orderBy: OrderBy) => {
-      propOnOrderByChange?.(orderBy)
-      if (!isOrderByControlled) {
-        setLocalOrderBy(orderBy)
-      }
+    propOnOrderByChange?.(orderBy)
+    if (!isOrderByControlled) {
+      setLocalOrderBy(orderBy)
     }
-  }, [propOnOrderByChange, isOrderByControlled, showOrderByInteractions, data.sortable])
-  const onOrderByChange = getOnOrderByChange()
+  }, [propOnOrderByChange, isOrderByControlled, enableOrderByInteractions])
 
   /**
    * Four modes:
@@ -181,7 +180,7 @@ export default function HighTable({
   const [initialSelection] = useState<SelectionAndAnchor | undefined>(propSelection)
   const [localSelection, setLocalSelection] = useState<SelectionAndAnchor | undefined>({ selection: [], anchor: undefined })
   const isSelectionControlled = initialSelection !== undefined
-  const showSelectionInteractions = propOnSelectionAndAnchorChange !== undefined
+  const enableSelectionInteractions = propOnSelectionAndAnchorChange !== undefined
   let selectionAndAnchor: SelectionAndAnchor | undefined
   if (isSelectionControlled) {
     if (propSelection === undefined) {
@@ -195,27 +194,24 @@ export default function HighTable({
       console.warn('The component selection is uncontrolled (it only has a local state) because "selection" was initially undefined. "selection" cannot be set to a value now and is ignored.')
     }
     if (propOnSelectionAndAnchorChange === undefined) {
-      console.warn('The component selection is disabled because "onSelectionAndAnchorChange" is undefined. If you want to enable selection, you must provide "onSelectionAndAnchorChange".')
+      // The component selection is disabled because onSelectionAndAnchorChange is undefined. If you want to enable selection, you must provide onSelectionAndAnchorChange
       selectionAndAnchor = undefined
     } else {
       selectionAndAnchor = localSelection
     }
   }
-  const getOnSelectionAndAnchorChange = useCallback(() => {
-    if (!showSelectionInteractions) {
-      return undefined
+  const onSelectionAndAnchorChange = useCallback((selectionAndAnchor: SelectionAndAnchor) => {
+    if (!enableSelectionInteractions) {
+      return
     }
-    return (selectionAndAnchor: SelectionAndAnchor) => {
-      propOnSelectionAndAnchorChange?.(selectionAndAnchor)
-      if (!isSelectionControlled) {
-        setLocalSelection(selectionAndAnchor)
-      }
+    propOnSelectionAndAnchorChange?.(selectionAndAnchor)
+    if (!isSelectionControlled) {
+      setLocalSelection(selectionAndAnchor)
     }
-  }, [propOnSelectionAndAnchorChange, isSelectionControlled, showSelectionInteractions])
-  const onSelectionAndAnchorChange = getOnSelectionAndAnchorChange()
+  }, [propOnSelectionAndAnchorChange, isSelectionControlled, enableSelectionInteractions])
 
   const showSelection = selectionAndAnchor !== undefined
-  const showSelectionControls = showSelection && onSelectionAndAnchorChange !== undefined
+  const showSelectionControls = showSelection && enableSelectionInteractions
   const getOnSelectAllRows = useCallback(() => {
     if (!selectionAndAnchor || !onSelectionAndAnchorChange) return
     const { selection } = selectionAndAnchor
@@ -281,7 +277,7 @@ export default function HighTable({
       const end = Math.min(data.numRows, endView + overscan)
 
       // Don't update if view is unchanged
-      if (!invalidate && start === startIndex && rows.length === end - start) {
+      if (!invalidate && start === startIndex && rows.length === end - start && rowsOrderBy.column === orderBy?.column ) {
         return
       }
 
@@ -316,7 +312,7 @@ export default function HighTable({
             resolved.push(resolvedRow)
           }
           offsetTopRef.current = offsetTop
-          dispatch({ type: 'SET_ROWS', start, rows: resolved, hasCompleteRow })
+          dispatch({ type: 'SET_ROWS', start, rows: resolved, hasCompleteRow, rowsOrderBy: { column: orderBy?.column } })
         }, 10)
         updateRows() // initial update
 
@@ -359,7 +355,7 @@ export default function HighTable({
       scroller?.removeEventListener('scroll', handleScroll)
       window.removeEventListener('resize', handleScroll)
     }
-  }, [data, invalidate, orderBy, overscan, padding, rows.length, startIndex, scrollHeight, onError, dispatch])
+  }, [data, invalidate, orderBy?.column, overscan, padding, rows.length, rowsOrderBy.column, startIndex, scrollHeight, onError, dispatch])
 
   /**
    * Validate row length
@@ -454,7 +450,7 @@ export default function HighTable({
           aria-readonly={true}
           aria-colcount={data.header.length + 1 /* don't forget the selection column */}
           aria-rowcount={data.numRows + 1 /* don't forget the header row */}
-          className={`table${data.sortable && orderBy && onOrderByChange ? ' sortable' : ''}`}
+          className={`table${enableOrderByInteractions ? ' sortable' : ''}`}
           ref={tableRef}
           role='grid'
           style={{ top: `${offsetTopRef.current}px` }}

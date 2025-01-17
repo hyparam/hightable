@@ -1,5 +1,5 @@
-import { fireEvent, render, waitFor, within } from '@testing-library/react'
-import { act } from 'react'
+import { act, fireEvent, render, waitFor, within } from '@testing-library/react'
+import { userEvent } from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { sortableDataFrame } from '../src/dataframe.js'
 import HighTable from '../src/HighTable.js'
@@ -156,4 +156,114 @@ describe('When sorted, HighTable', () => {
 
     expect(mockDoubleClick).toHaveBeenCalledWith(expect.anything(), 0, 999)
   })
+})
+
+describe('about selection, HighTable', () => {
+  const data = {
+    header: ['ID', 'Count'],
+    numRows: 1000,
+    rows: (start: number, end: number) => Promise.resolve(
+      Array.from({ length: end - start }, (_, index) => ({
+        ID: 'row ' + (index + start),
+        Count: 1000 - start - index,
+      }))
+    ),
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('mode 1: controlled - show the selection if passed', async () => {
+    const start = 2
+    const selectionAndAnchor = { selection: [{ start, end: start + 1 }], anchor: start }
+    const { container, findByText } = render(<HighTable data={data} selectionAndAnchor={selectionAndAnchor}/>)
+    await findByText('row 2')
+    expect(container.querySelector(`tr[aria-selected="true"][aria-rowindex="${start + 1}"]`)).toBeNull()
+    expect(container.querySelector(`tr[aria-selected="true"][aria-rowindex="${start + 2}"]`)).not.toBeNull()
+    expect(container.querySelector(`tr[aria-selected="true"][aria-rowindex="${start + 3}"]`)).toBeNull()
+  })
+
+  it('mode 1: controlled - onSelectionAndAnchor selects a row on click', async () => {
+    const start = 2
+    const selectionAndAnchor = { selection: [{ start, end: start + 1 }], anchor: start }
+    const onSelectionAndAnchorChange = vi.fn()
+    const { container, findByText } = render(<HighTable data={data} selectionAndAnchor={selectionAndAnchor} onSelectionAndAnchorChange={onSelectionAndAnchorChange}/>)
+    await findByText('row 2')
+    expect(container.querySelector(`tr[aria-selected="true"][aria-rowindex="${start + 2}"]`)).not.toBeNull()
+    expect(onSelectionAndAnchorChange).toHaveBeenCalledWith({ selection: [] })
+    // ^ TODO(SL): we don't want that AT ALL
+    onSelectionAndAnchorChange.mockClear()
+
+    const other = 5
+    const anotherCell = container.querySelector(`tr[aria-rowindex="${other + 2}"] th`)
+    await act(async () => {
+      anotherCell && await userEvent.click(anotherCell)
+    })
+    expect(onSelectionAndAnchorChange).toHaveBeenCalledWith({ selection: [{ start: start, end: start + 1 }, { start: other, end: other + 1 }], anchor: other })
+  })
+
+  it('mode 1: controlled - onSelectionAndAnchor unselects a row on click on a selected row', async () => {
+    const start = 2
+    const selectionAndAnchor = { selection: [{ start, end: start + 1 }], anchor: start }
+    const onSelectionAndAnchorChange = vi.fn()
+    const { container, findByText } = render(<HighTable data={data} selectionAndAnchor={selectionAndAnchor} onSelectionAndAnchorChange={onSelectionAndAnchorChange}/>)
+    await findByText('row 2')
+    expect(container.querySelector(`tr[aria-selected="true"][aria-rowindex="${start + 2}"]`)).not.toBeNull()
+    expect(onSelectionAndAnchorChange).toHaveBeenCalledWith({ selection: [] })
+    // ^ TODO(SL): we don't want that AT ALL
+    onSelectionAndAnchorChange.mockClear()
+
+    const sameCell = container.querySelector(`tr[aria-rowindex="${start + 2}"] th`)
+    await act(async () => {
+      sameCell && await userEvent.click(sameCell)
+    })
+    expect(onSelectionAndAnchorChange).toHaveBeenCalledWith({ selection: [], anchor: start })
+  })
+
+  it('mode 1: controlled - onSelectionAndAnchor is called on shift+click', async () => {
+    const start = 2
+    const selectionAndAnchor = { selection: [{ start, end: start + 1 }], anchor: start }
+    const onSelectionAndAnchorChange = vi.fn()
+    const { container, findByText } = render(<HighTable data={data} selectionAndAnchor={selectionAndAnchor} onSelectionAndAnchorChange={onSelectionAndAnchorChange}/>)
+    await findByText('row 2')
+    expect(container.querySelector(`tr[aria-selected="true"][aria-rowindex="${start + 2}"]`)).not.toBeNull()
+    expect(onSelectionAndAnchorChange).toHaveBeenCalledWith({ selection: [] })
+    // ^ TODO(SL): we don't want that AT ALL
+    onSelectionAndAnchorChange.mockClear()
+
+    const other = 5
+    const anotherCell = container.querySelector(`tr[aria-rowindex="${other + 2}"] th`)
+    await act(async () => {
+      // see https://testing-library.com/docs/user-event/setup/#starting-a-session-per-setup
+      const user = userEvent.setup()
+      await user.keyboard('[ShiftLeft>]') // Press Shift (without releasing it)
+      anotherCell && await user.click(anotherCell) // Perform a click with `shiftKey: true`
+    })
+    expect(onSelectionAndAnchorChange).toHaveBeenCalledWith({ selection: [{ start: start, end: other + 1 }], anchor: start })
+  })
+
+  // mode 2: controlled read-only - show the selection if passed + onSelectionChange is not called
+
+  it('mode 3: uncontrolled - onSelectionAndAnchor is called on user interaction', async () => {
+    const onSelectionAndAnchorChange = vi.fn()
+    const { container, findByText } = render(<HighTable data={data} onSelectionAndAnchorChange={onSelectionAndAnchorChange} />)
+    await findByText('row 2')
+    expect(container.querySelector('tr[aria-selected="true"]')).toBeNull()
+    expect(onSelectionAndAnchorChange).toHaveBeenCalledWith({ selection: [] })
+    // ^ TODO(SL): we don't want that AT ALL
+    onSelectionAndAnchorChange.mockClear()
+    const start = 5
+    const anotherCell = container.querySelector(`tr[aria-rowindex="${start + 2}"] th`)
+    await act(async () => {
+      anotherCell && await userEvent.click(anotherCell)
+    })
+    expect(onSelectionAndAnchorChange).toHaveBeenCalledWith({ selection: [{ start: start, end: start + 1 }], anchor: start })
+  })
+
+
+  // it('cannot select a row if selection and onSelectionChange are not passed', async () => {
+  // })
+
+
 })

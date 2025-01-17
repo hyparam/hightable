@@ -131,73 +131,73 @@ describe('TableHeader', () => {
 
   it('sets orderBy to the column name when a header is clicked', () => {
     const { columnWidths, setColumnWidth, setColumnWidths } = mockColumnWidths()
-    const setOrderBy = vi.fn()
+    const onOrderByChange = vi.fn()
     const { getByTitle } = render(<table>
       <TableHeader
         header={header}
         columnWidths={columnWidths}
         setColumnWidth={setColumnWidth}
         setColumnWidths={setColumnWidths}
-        setOrderBy={setOrderBy}
+        onOrderByChange={onOrderByChange}
         dataReady={dataReady} />
     </table>)
 
     const ageHeader = getByTitle('Age')
     fireEvent.click(ageHeader)
 
-    expect(setOrderBy).toHaveBeenCalledWith('Age')
+    expect(onOrderByChange).toHaveBeenCalledWith({ column: 'Age' })
   })
 
   it('toggles orderBy to undefined when the same header is clicked again', () => {
     const { columnWidths, setColumnWidth, setColumnWidths } = mockColumnWidths()
-    const setOrderBy = vi.fn()
+    const onOrderByChange = vi.fn()
     const { getByTitle } = render(<table>
       <TableHeader
         header={header}
         columnWidths={columnWidths}
         setColumnWidth={setColumnWidth}
         setColumnWidths={setColumnWidths}
-        setOrderBy={setOrderBy}
-        orderBy="Age"
+        onOrderByChange={onOrderByChange}
+        orderBy={{ column: 'Age' }}
         dataReady={dataReady} />
     </table>)
 
     const ageHeader = getByTitle('Age')
     fireEvent.click(ageHeader)
 
-    expect(setOrderBy).toHaveBeenCalledWith(undefined)
+    expect(onOrderByChange).toHaveBeenCalledWith({})
   })
 
   it('changes orderBy to a new column when a different header is clicked', () => {
     const { columnWidths, setColumnWidth, setColumnWidths } = mockColumnWidths()
-    const setOrderBy = vi.fn()
+    const onOrderByChange = vi.fn()
     const { getByTitle } = render(<table>
       <TableHeader
         header={header}
         columnWidths={columnWidths}
         setColumnWidth={setColumnWidth}
         setColumnWidths={setColumnWidths}
-        setOrderBy={setOrderBy}
-        orderBy="Age"
+        onOrderByChange={onOrderByChange}
+        orderBy={{ column: 'Age' }}
         dataReady={dataReady} />
     </table>)
 
     const addressHeader = getByTitle('Address')
     fireEvent.click(addressHeader)
 
-    expect(setOrderBy).toHaveBeenCalledWith('Address')
+    expect(onOrderByChange).toHaveBeenCalledWith({ column: 'Address' })
   })
 
   it('does not change orderBy when clicking on the resize handle', () => {
     const { columnWidths, setColumnWidth, setColumnWidths } = mockColumnWidths()
-    const setOrderBy = vi.fn()
+    const onOrderByChange = vi.fn()
     const { getByTitle } = render(<table>
       <TableHeader
         header={header}
         columnWidths={columnWidths}
         setColumnWidth={setColumnWidth}
         setColumnWidths={setColumnWidths}
-        setOrderBy={setOrderBy}
+        onOrderByChange={onOrderByChange}
         dataReady={dataReady} />
     </table>)
 
@@ -207,7 +207,7 @@ describe('TableHeader', () => {
 
     fireEvent.click(resizeHandle)
 
-    expect(setOrderBy).not.toHaveBeenCalled()
+    expect(onOrderByChange).not.toHaveBeenCalled()
   })
 
   it('reloads column widths when cacheKey changes', () => {
