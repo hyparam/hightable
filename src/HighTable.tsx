@@ -1,5 +1,6 @@
-import { ReactNode, useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
+import { ReactNode, useCallback, useEffect, useMemo, useReducer, useRef } from 'react'
 import { DataFrame, Row, asyncRows } from './dataframe.js'
+import { useInputState } from './hooks.js'
 import { Selection, areAllSelected, extendFromAnchor, isSelected, toggleAll, toggleIndex } from './selection.js'
 import { OrderBy } from './sort.js'
 import TableHeader, { cellStyle } from './TableHeader.js'
@@ -78,46 +79,6 @@ export interface TableProps {
   onSelectionChange?: (selection: Selection) => void // callback to call when a user interaction changes the selection. The interactions are disabled if undefined.
 }
 
-function useControlleableState<T>(propValue: T | undefined, propOnValueChange: ((value: T) => void) | undefined, defaultValue: T | undefined, disabled: boolean = false): [T | undefined, boolean, boolean, (value: T) => void] {
-  const [initialValue] = useState<T | undefined>(propValue)
-  const [initialDisabled] = useState<boolean>(disabled)
-  const [localValue, setLocalValue] = useState<T | undefined>(defaultValue)
-  const isValueControlled = initialValue !== undefined
-  let enableValueInteractions = true
-  let value: T | undefined
-  if (initialDisabled) {
-    value = undefined
-    enableValueInteractions = false
-  } else if (isValueControlled) {
-    if (propValue === undefined) {
-      // TODO: adapt the text
-      console.warn('The component selection is controlled (is has no local state) because "selection" was initially defined. "selection" cannot be set to undefined now (it is set back to the initial value).')
-      value = initialValue
-    } else {
-      value = propValue
-    }
-    // read-only if onValueChange is undefined
-    enableValueInteractions = propOnValueChange !== undefined
-  } else {
-    if (propValue !== undefined) {
-      // TODO: adapt the text
-      console.warn('The component selection is uncontrolled (it only has a local state) because "selection" was initially undefined. "selection" cannot be set to a value now and is ignored.')
-    }
-    value = localValue
-    enableValueInteractions = true
-  }
-  const onValueChange = useCallback((selection: T) => {
-    if (!enableValueInteractions) {
-      return
-    }
-    propOnValueChange?.(selection)
-    if (!isValueControlled) {
-      setLocalValue(selection)
-    }
-  }, [propOnValueChange, isValueControlled, enableValueInteractions])
-  return [value, isValueControlled, enableValueInteractions, onValueChange]
-}
-
 function rowLabel(rowIndex?: number): string {
   if (rowIndex === undefined) return ''
   // rowIndex + 1 because the displayed row numbers are 1-based
@@ -166,26 +127,31 @@ export default function HighTable({
    */
   const { columnWidths, startIndex, rows, rowsOrderBy, invalidate, hasCompleteRow, data: previousData } = state
 
-  /**
-   * orderBy and onOrderByChange
-   *
-   * Four modes:
-   * - controlled (orderBy and onOrderByChange are defined): the parent controls the sort and receives the user interactions. No local state.
-   * - controlled read-only (orderBy is defined, onOrderByChange is undefined): the parent controls the sort and the user interactions are disabled. No local state.
-   * - uncontrolled (orderBy is undefined, onOrderByChange is defined or undefined): the component controls the sort and the user interactions. Local state.
-   * - disabled (data is not sortable): the sort is hidden and the user interactions are disabled. No local state.
-   */
-  const [orderBy, isOrderByControlled, enableOrderByInteractions, onOrderByChange] = useControlleableState<OrderBy>(propOrderBy, propOnOrderByChange, {}, !data.sortable)
+  // Sorting is disabled if the data is not sortable
+  const {
+    value: orderBy,
+    onChange: onOrderByChange,
+    enableInteractions: enableOrderByInteractions,
+  } = useInputState<OrderBy>({
+    value: propOrderBy,
+    onChange: propOnOrderByChange,
+    defaultValue: {},
+    disabled: !data.sortable,
+  })
 
-  /**
-   * Four modes:
-   * - controlled (selection and onSelectionChange are defined): the parent controls the selection and receives the user interactions. No local state.
-   * - controlled read-only (selection is defined, onSelectionChange is undefined): the parent controls the selection and the user interactions are disabled. No local state.
-   * - uncontrolled (selection is undefined, onSelectionChange is defined): the component controls the selection and the user interactions. Local state.
-   * - disabled (selection and onSelectionChange are undefined): the selection is hidden and the user interactions are disabled. No local state.
-   */
+  // Selection is disabled if the parent passed no props
   const isSelectionDisabled = propSelection === undefined && propOnSelectionChange === undefined
-  const [selection, isSelectionControlled, enableSelectionInteractions, onSelectionChange] = useControlleableState<Selection>(propSelection, propOnSelectionChange, { ranges: [], anchor: undefined }, isSelectionDisabled)
+  const {
+    value: selection,
+    onChange: onSelectionChange,
+    enableInteractions: enableSelectionInteractions,
+    isControlled: isSelectionControlled,
+  } = useInputState<Selection>({
+    value: propSelection,
+    onChange: propOnSelectionChange,
+    defaultValue: { ranges: [], anchor: undefined },
+    disabled: isSelectionDisabled,
+  })
 
   const showSelection = selection !== undefined
   const showSelectionControls = showSelection && enableSelectionInteractions
