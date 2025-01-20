@@ -20,22 +20,14 @@ export type State = {
   rows: Row[] // slice of the virtual table rows (sorted rows) to render as HTML. It might contain incomplete rows. Rows are expected to include __index__ if sorted.
   rowsOrderBy: OrderBy // order by column of the rows slice.
   startIndex: number // offset of the slice of sorted rows to render (rows[0] is the startIndex'th sorted row)
+  data: DataFrame // data frame
 }
 
 export type Action =
   | { type: 'SET_ROWS', start: number, rows: Row[], rowsOrderBy: OrderBy, hasCompleteRow: boolean }
   | { type: 'SET_COLUMN_WIDTH', columnIndex: number, columnWidth: number | undefined }
   | { type: 'SET_COLUMN_WIDTHS', columnWidths: Array<number | undefined> }
-  | { type: 'DATA_CHANGED' }
-
-export const initialState: State = {
-  columnWidths: [],
-  startIndex: 0,
-  rows: [],
-  rowsOrderBy: {},
-  invalidate: true,
-  hasCompleteRow: false,
-}
+  | { type: 'DATA_CHANGED', data: DataFrame }
 
 export function reducer(state: State, action: Action): State {
   switch (action.type) {
@@ -56,7 +48,7 @@ export function reducer(state: State, action: Action): State {
   case 'SET_COLUMN_WIDTHS':
     return { ...state, columnWidths: action.columnWidths }
   case 'DATA_CHANGED':
-    return { ...state, invalidate: true, hasCompleteRow: false }
+    return { ...state, data: action.data, invalidate: true, hasCompleteRow: false }
   default:
     return state
   }
@@ -115,6 +107,15 @@ export default function HighTable({
   onMouseDownCell,
   onError = console.error,
 }: TableProps) {
+  const initialState: State = {
+    data,
+    columnWidths: [],
+    startIndex: 0,
+    rows: [],
+    rowsOrderBy: {},
+    invalidate: true,
+    hasCompleteRow: false,
+  }
   const [state, dispatch] = useReducer(reducer, initialState)
   /**
    * The component relies on the model of a virtual table which rows are ordered and only the visible rows are fetched and rendered as HTML <tr> elements.
@@ -124,7 +125,7 @@ export default function HighTable({
    *                  startIndex lives in the table domain: it's the first virtual row to be rendered in HTML.
    * data.rows(dataIndex, dataIndex + 1) is the same row as data.rows(tableIndex, tableIndex + 1, orderBy)
    */
-  const { columnWidths, startIndex, rows, rowsOrderBy, invalidate, hasCompleteRow } = state
+  const { columnWidths, startIndex, rows, rowsOrderBy, invalidate, hasCompleteRow, data: previousData } = state
 
   /**
    * orderBy and onOrderByChange
@@ -256,10 +257,13 @@ export default function HighTable({
   const scrollHeight = (data.numRows + 1) * rowHeight
 
   // invalidate when data changes so that columns will auto-resize
-  useEffect(() => {
-    dispatch({ type: 'DATA_CHANGED' })
-    onSelectionAndAnchorChange?.({ selection: [], anchor: undefined })
-  }, [data, dispatch, onSelectionAndAnchorChange])
+  if (data !== previousData) {
+    dispatch({ type: 'DATA_CHANGED', data })
+    // if uncontrolled, reset the selection (otherwise, it's the responsibility of the parent to do it if the data changes)
+    if (!isSelectionControlled) {
+      onSelectionAndAnchorChange?.({ selection: [], anchor: undefined })
+    }
+  }
 
   // handle scrolling
   useEffect(() => {
