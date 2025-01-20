@@ -406,38 +406,91 @@ describe('in selection mode 2 (controlled read-only), ', () => {
   })
 })
 
+describe('in selection mode 3 (uncontrolled), ', () => {
+  const data = {
+    header: ['ID', 'Count'],
+    numRows: 1000,
+    rows: (start: number, end: number) => Promise.resolve(
+      Array.from({ length: end - start }, (_, index) => ({
+        ID: 'row ' + (index + start),
+        Count: 1000 - start - index,
+      }))
+    ),
+  }
 
+  const otherData = {
+    header: ['ID', 'Count'],
+    numRows: 1000,
+    rows: (start: number, end: number) => Promise.resolve(
+      Array.from({ length: end - start }, (_, index) => ({
+        ID: 'other ' + (index + start),
+        Count: 1000 - start - index,
+      }))
+    ),
+  }
 
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
 
-// it('mode 3: uncontrolled - onSelection is called on data change', async () => {
-//   const start = 2
-//   const onSelectionChange = vi.fn()
-//   const { container, findByText, rerender } = render(<HighTable data={data} onSelectionChange={onSelectionChange}/>)
-//   await findByText('row 2')
-//   expect(onSelectionChange).not.toHaveBeenCalled()
-//   onSelectionChange.mockClear()
+  it('HighTable shows no selection initially and onSelectionChange is not called', async () => {
+    const start = 2
+    const onSelectionChange = vi.fn()
+    const { findByRole, queryByRole } = render(<HighTable data={data} onSelectionChange={onSelectionChange}/>)
+    // await because we have to wait for the data to be fetched first
+    await findByRole('cell', { name: 'row 2' })
+    expect(queryByRole('row', { selected: true })).toBeNull()
+    expect(onSelectionChange).not.toHaveBeenCalled()
+  })
 
-//   const newData = { ...data, numRows: 2000 }
-//   rerender(<HighTable data={newData} onSelectionChange={onSelectionChange}/>)
-//   await findByText('row 2')
-//   expect(onSelectionChange).toHaveBeenCalled()
-// })
+  it('the table is marked as multiselectable', () => {
+    const onSelectionChange = vi.fn()
+    const { getByRole } = render(<HighTable data={data} onSelectionChange={onSelectionChange}/>)
+    const table = getByRole('grid')
+    expect(table.getAttribute('aria-multiselectable')).toBe('true')
+  })
 
-// it('mode 3: uncontrolled - onSelection is called on user interaction', async () => {
-//   const onSelectionChange = vi.fn()
-//   const { container, findByText } = render(<HighTable data={data} onSelectionChange={onSelectionChange} />)
-//   await findByText('row 2')
-//   expect(container.querySelector('tr[aria-selected="true"]')).toBeNull()
-//   expect(onSelectionChange).not.toHaveBeenCalled()
-//   onSelectionChange.mockClear()
-//   const start = 5
-//   const anotherCell = container.querySelector(`tr[aria-rowindex="${start + 2}"] th`)
-//   await act(async () => {
-//     anotherCell && await userEvent.click(anotherCell)
-//   })
-//   expect(onSelectionChange).toHaveBeenCalledWith({ ranges: [{ start: start, end: start + 1 }], anchor: start })
-// })
+  it('click on a row number cell calls onSelection with the row selected, and changes the DOM to select the row', async () => {
+    const start = 2
+    const onSelectionChange = vi.fn()
+    const { findByRole, queryByRole } = render(<HighTable data={data} onSelectionChange={onSelectionChange}/>)
+    // await because we have to wait for the data to be fetched first
+    const cell = await findByRole('cell', { name: 'row 2' })
+    expect(onSelectionChange).not.toHaveBeenCalled()
+    onSelectionChange.mockClear()
 
+    const rowHeader = cell.closest('[role="row"]')?.querySelector('[role="rowheader"]')
+    expect(rowHeader).not.toBeNull()
+    await act(async () => {
+      rowHeader && await userEvent.click(rowHeader)
+    })
+    expect(onSelectionChange).toHaveBeenCalledWith({ ranges: [{ start, end: start + 1 }], anchor: start })
+    expect(queryByRole('row', { selected: true })?.getAttribute('aria-rowindex')).toBe(`${start + 2}`)
+  })
 
+  it('on data change, onSelection is called with an empty selection and the DOM is updated to unselect the rows', async () => {
+    const start = 2
+    const onSelectionChange = vi.fn()
+    const { rerender, findByRole, queryByRole } = render(<HighTable data={data} onSelectionChange={onSelectionChange}/>)
+    // await because we have to wait for the data to be fetched first
+    const cell = await findByRole('cell', { name: 'row 2' })
+    expect(onSelectionChange).not.toHaveBeenCalled()
+    onSelectionChange.mockClear()
+
+    // select a row
+    const rowHeader = cell.closest('[role="row"]')?.querySelector('[role="rowheader"]')
+    expect(rowHeader).not.toBeNull()
+    await act(async () => {
+      rowHeader && await userEvent.click(rowHeader)
+    })
+    expect(onSelectionChange).toHaveBeenCalledWith({ ranges: [{ start, end: start + 1 }], anchor: start })
+
+    rerender(<HighTable data={otherData} onSelectionChange={onSelectionChange}/>)
+    // await again, since we have to wait for the new data to be fetched
+    const other = await findByRole('cell', { name: 'other 2' })
+    expect(queryByRole('cell', { name: 'row 2' })).toBeNull()
+    expect(queryByRole('row', { selected: true })).toBeNull()
+    expect(onSelectionChange).toHaveBeenCalledWith({ ranges: [] })
+  })
+})
 // it('cannot select a row if selection and onSelectionChange are not passed', async () => {
-// })
