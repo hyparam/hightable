@@ -226,7 +226,6 @@ describe('about selection, HighTable', () => {
     await findByText('row 2')
     expect(container.querySelector(`tr[aria-selected="true"][aria-rowindex="${start + 2}"]`)).not.toBeNull()
     expect(onSelectionChange).not.toHaveBeenCalled()
-    // ^ TODO(SL): we don't want that AT ALL
     onSelectionChange.mockClear()
 
     const sameCell = container.querySelector(`tr[aria-rowindex="${start + 2}"] th`)
