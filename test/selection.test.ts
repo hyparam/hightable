@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { areAllSelected, extendFromAnchor, isSelected, isValidIndex, isValidRange, isValidSelection, selectRange, toggleAll, toggleIndex, unselectRange } from '../src/selection.js'
+import { areAllSelected, areValidRanges, extendFromAnchor, isSelected, isValidIndex, isValidRange, selectRange, toggleAll, toggleIndex, unselectRange } from '../src/selection.js'
 
 describe('an index', () => {
   test('is a positive integer', () => {
@@ -31,180 +31,180 @@ describe('a range', () => {
   })
 })
 
-describe('a selection', () => {
+describe('selection ranges', () => {
   test('can be empty', () => {
-    expect(isValidSelection([])).toBe(true)
+    expect(areValidRanges([])).toBe(true)
   })
 
-  test('has valid ranges', () => {
-    expect(isValidSelection([{ start: 0, end: 1 }])).toBe(true)
-    expect(isValidSelection([{ start: 1, end: 0 }])).toBe(false)
-    expect(isValidSelection([{ start: -1, end: 1 }])).toBe(false)
-    expect(isValidSelection([{ start: NaN, end: 1 }])).toBe(false)
-    expect(isValidSelection([{ start: 0, end: Infinity }])).toBe(false)
+  test('have valid ranges', () => {
+    expect(areValidRanges([{ start: 0, end: 1 }])).toBe(true)
+    expect(areValidRanges([{ start: 1, end: 0 }])).toBe(false)
+    expect(areValidRanges([{ start: -1, end: 1 }])).toBe(false)
+    expect(areValidRanges([{ start: NaN, end: 1 }])).toBe(false)
+    expect(areValidRanges([{ start: 0, end: Infinity }])).toBe(false)
   })
 
-  test('has ordered ranges', () => {
-    expect(isValidSelection([{ start: 0, end: 1 }, { start: 2, end: 3 }])).toBe(true)
-    expect(isValidSelection([{ start: 2, end: 3 }, { start: 0, end: 1 }])).toBe(false)
+  test('have ordered ranges', () => {
+    expect(areValidRanges([{ start: 0, end: 1 }, { start: 2, end: 3 }])).toBe(true)
+    expect(areValidRanges([{ start: 2, end: 3 }, { start: 0, end: 1 }])).toBe(false)
   })
 
-  test('has non-overlapping, separated ranges', () => {
-    expect(isValidSelection([{ start: 0, end: 1 }, { start: 2, end: 3 }])).toBe(true)
-    expect(isValidSelection([{ start: 0, end: 1 }, { start: 0, end: 1 }])).toBe(false)
-    expect(isValidSelection([{ start: 0, end: 2 }, { start: 1, end: 3 }])).toBe(false)
-    expect(isValidSelection([{ start: 0, end: 2 }, { start: 2, end: 3 }])).toBe(false)
+  test('have non-overlapping, separated ranges', () => {
+    expect(areValidRanges([{ start: 0, end: 1 }, { start: 2, end: 3 }])).toBe(true)
+    expect(areValidRanges([{ start: 0, end: 1 }, { start: 0, end: 1 }])).toBe(false)
+    expect(areValidRanges([{ start: 0, end: 2 }, { start: 1, end: 3 }])).toBe(false)
+    expect(areValidRanges([{ start: 0, end: 2 }, { start: 2, end: 3 }])).toBe(false)
   })
 
   test('can contain any number of ranges', () => {
-    expect(isValidSelection([{ start: 0, end: 1 }, { start: 2, end: 3 }, { start: 4, end: 5 }])).toBe(true)
+    expect(areValidRanges([{ start: 0, end: 1 }, { start: 2, end: 3 }, { start: 4, end: 5 }])).toBe(true)
   })
 })
 
 describe('toggling an index', () => {
   test('should throw an error if the index is invalid', () => {
-    expect(() => toggleIndex({ selection: [], index: -1 })).toThrow('Invalid index')
+    expect(() => toggleIndex({ ranges: [], index: -1 })).toThrow('Invalid index')
   })
 
   test('should throw an error if the selection is invalid', () => {
-    expect(() => toggleIndex({ selection: [{ start: 1, end: 0 }], index: 0 })).toThrow('Invalid selection')
+    expect(() => toggleIndex({ ranges: [{ start: 1, end: 0 }], index: 0 })).toThrow('Invalid ranges')
   })
 
   test('should add a new range if outside and separated from existing ranges', () => {
-    expect(toggleIndex({ selection: [], index: 0 })).toEqual([{ start: 0, end: 1 }])
-    expect(toggleIndex({ selection: [{ start: 0, end: 1 }, { start: 4, end: 5 }], index: 2 })).toEqual([{ start: 0, end: 1 }, { start: 2, end: 3 }, { start: 4, end: 5 }])
+    expect(toggleIndex({ ranges: [], index: 0 })).toEqual([{ start: 0, end: 1 }])
+    expect(toggleIndex({ ranges: [{ start: 0, end: 1 }, { start: 4, end: 5 }], index: 2 })).toEqual([{ start: 0, end: 1 }, { start: 2, end: 3 }, { start: 4, end: 5 }])
   })
 
   test('should merge with the previous and/or following ranges if adjacent', () => {
-    expect(toggleIndex({ selection: [{ start: 0, end: 1 }], index: 1 })).toEqual([{ start: 0, end: 2 }])
-    expect(toggleIndex({ selection: [{ start: 1, end: 2 }], index: 0 })).toEqual([{ start: 0, end: 2 }])
-    expect(toggleIndex({ selection: [{ start: 0, end: 1 }, { start: 2, end: 3 }], index: 1 })).toEqual([{ start: 0, end: 3 }])
+    expect(toggleIndex({ ranges: [{ start: 0, end: 1 }], index: 1 })).toEqual([{ start: 0, end: 2 }])
+    expect(toggleIndex({ ranges: [{ start: 1, end: 2 }], index: 0 })).toEqual([{ start: 0, end: 2 }])
+    expect(toggleIndex({ ranges: [{ start: 0, end: 1 }, { start: 2, end: 3 }], index: 1 })).toEqual([{ start: 0, end: 3 }])
   })
 
   test('should split a range if the index is inside', () => {
-    expect(toggleIndex({ selection: [{ start: 0, end: 2 }], index: 1 })).toEqual([{ start: 0, end: 1 }])
-    expect(toggleIndex({ selection: [{ start: 0, end: 2 }], index: 0 })).toEqual([{ start: 1, end: 2 }])
-    expect(toggleIndex({ selection: [{ start: 0, end: 3 }], index: 1 })).toEqual([{ start: 0, end: 1 }, { start: 2, end: 3 }])
+    expect(toggleIndex({ ranges: [{ start: 0, end: 2 }], index: 1 })).toEqual([{ start: 0, end: 1 }])
+    expect(toggleIndex({ ranges: [{ start: 0, end: 2 }], index: 0 })).toEqual([{ start: 1, end: 2 }])
+    expect(toggleIndex({ ranges: [{ start: 0, end: 3 }], index: 1 })).toEqual([{ start: 0, end: 1 }, { start: 2, end: 3 }])
   })
 
   test('should remove a range if it\'s only the index', () => {
-    expect(toggleIndex({ selection: [{ start: 0, end: 1 }], index: 0 })).toEqual([])
+    expect(toggleIndex({ ranges: [{ start: 0, end: 1 }], index: 0 })).toEqual([])
   })
 
   test('twice should be idempotent', () => {
-    const a = toggleIndex({ selection: [], index: 0 })
-    const b = toggleIndex({ selection: a, index: 0 })
+    const a = toggleIndex({ ranges: [], index: 0 })
+    const b = toggleIndex({ ranges: a, index: 0 })
     expect(b).toEqual([])
   })
 })
 
 describe('isSelected', () => {
   test('should return true if the index is selected', () => {
-    expect(isSelected({ selection: [{ start: 0, end: 1 }], index: 0 })).toBe(true)
-    expect(isSelected({ selection: [{ start: 0, end: 2 }], index: 1 })).toBe(true)
-    expect(isSelected({ selection: [{ start: 0, end: 1 }], index: 1 })).toBe(false)
+    expect(isSelected({ ranges: [{ start: 0, end: 1 }], index: 0 })).toBe(true)
+    expect(isSelected({ ranges: [{ start: 0, end: 2 }], index: 1 })).toBe(true)
+    expect(isSelected({ ranges: [{ start: 0, end: 1 }], index: 1 })).toBe(false)
   })
   test('should throw an error if the index is invalid', () => {
-    expect(() => isSelected({ selection: [], index: -1 })).toThrow('Invalid index')
+    expect(() => isSelected({ ranges: [], index: -1 })).toThrow('Invalid index')
   })
   test('should throw an error if the selection is invalid', () => {
-    expect(() => isSelected({ selection: [{ start: 1, end: 0 }], index: 0 })).toThrow('Invalid selection')
+    expect(() => isSelected({ ranges: [{ start: 1, end: 0 }], index: 0 })).toThrow('Invalid ranges')
   })
 })
 
 describe('areAllSelected', () => {
   test('should return true if all indices are selected', () => {
-    expect(areAllSelected({ selection: [{ start: 0, end: 3 }], length: 3 })).toBe(true)
-    expect(areAllSelected({ selection: [{ start: 0, end: 1 }], length: 3 })).toBe(false)
-    expect(areAllSelected({ selection: [{ start: 1, end: 3 }], length: 3 })).toBe(false)
+    expect(areAllSelected({ ranges: [{ start: 0, end: 3 }], length: 3 })).toBe(true)
+    expect(areAllSelected({ ranges: [{ start: 0, end: 1 }], length: 3 })).toBe(false)
+    expect(areAllSelected({ ranges: [{ start: 1, end: 3 }], length: 3 })).toBe(false)
   })
   test('should throw an error if the selection is invalid', () => {
-    expect(() => areAllSelected({ selection: [{ start: 1, end: 0 }], length: 0 })).toThrow('Invalid selection')
+    expect(() => areAllSelected({ ranges: [{ start: 1, end: 0 }], length: 0 })).toThrow('Invalid ranges')
   })
   test('should throw an error if the length is invalid', () => {
-    expect(() => areAllSelected({ selection: [], length: -1 })).toThrow('Invalid length')
+    expect(() => areAllSelected({ ranges: [], length: -1 })).toThrow('Invalid length')
   })
 })
 
 describe('toggleAll', () => {
   test('should return an empty selection if all indices are selected', () => {
-    expect(toggleAll({ selection: [{ start: 0, end: 3 }], length: 3 })).toEqual([])
+    expect(toggleAll({ ranges: [{ start: 0, end: 3 }], length: 3 })).toEqual([])
   })
   test('should return a selection with all indices if none are selected', () => {
-    expect(toggleAll({ selection: [], length: 3 })).toEqual([{ start: 0, end: 3 }])
+    expect(toggleAll({ ranges: [], length: 3 })).toEqual([{ start: 0, end: 3 }])
   })
   test('should return a selection with all indices if some are selected', () => {
-    expect(toggleAll({ selection: [{ start: 0, end: 1 }], length: 3 })).toEqual([{ start: 0, end: 3 }])
+    expect(toggleAll({ ranges: [{ start: 0, end: 1 }], length: 3 })).toEqual([{ start: 0, end: 3 }])
   })
   test('should throw an error if the selection is invalid', () => {
-    expect(() => toggleAll({ selection: [{ start: 1, end: 0 }], length: 0 })).toThrow('Invalid selection')
+    expect(() => toggleAll({ ranges: [{ start: 1, end: 0 }], length: 0 })).toThrow('Invalid ranges')
   })
   test('should throw an error if the length is invalid', () => {
-    expect(() => toggleAll({ selection: [], length: -1 })).toThrow('Invalid length')
+    expect(() => toggleAll({ ranges: [], length: -1 })).toThrow('Invalid length')
   })
 })
 
 describe('selectRange', () => {
   test('should throw an error if the range is invalid', () => {
-    expect(() => selectRange({ selection: [], range: { start: -1, end: 0 } })).toThrow('Invalid range')
+    expect(() => selectRange({ ranges: [], range: { start: -1, end: 0 } })).toThrow('Invalid range')
   })
   test('should throw an error if the selection is invalid', () => {
-    expect(() => selectRange({ selection: [{ start: 1, end: 0 }], range: { start: -1, end: 0 } })).toThrow('Invalid selection')
+    expect(() => selectRange({ ranges: [{ start: 1, end: 0 }], range: { start: -1, end: 0 } })).toThrow('Invalid ranges')
   })
   test('should add a new range if outside and separated from existing ranges', () => {
-    expect(selectRange({ selection: [], range: { start: 0, end: 1 } })).toEqual([{ start: 0, end: 1 }])
-    expect(selectRange({ selection: [{ start: 0, end: 1 }, { start: 4, end: 5 }], range: { start: 2, end: 3 } })).toEqual([{ start: 0, end: 1 }, { start: 2, end: 3 }, { start: 4, end: 5 }])
+    expect(selectRange({ ranges: [], range: { start: 0, end: 1 } })).toEqual([{ start: 0, end: 1 }])
+    expect(selectRange({ ranges: [{ start: 0, end: 1 }, { start: 4, end: 5 }], range: { start: 2, end: 3 } })).toEqual([{ start: 0, end: 1 }, { start: 2, end: 3 }, { start: 4, end: 5 }])
   })
   test('should merge with the previous and/or following ranges if adjacent', () => {
-    expect(selectRange({ selection: [{ start: 0, end: 1 }], range: { start: 1, end: 2 } })).toEqual([{ start: 0, end: 2 }])
-    expect(selectRange({ selection: [{ start: 1, end: 2 }], range: { start: 0, end: 1 } })).toEqual([{ start: 0, end: 2 }])
-    expect(selectRange({ selection: [{ start: 0, end: 1 }, { start: 2, end: 3 }], range: { start: 1, end: 2 } })).toEqual([{ start: 0, end: 3 }])
+    expect(selectRange({ ranges: [{ start: 0, end: 1 }], range: { start: 1, end: 2 } })).toEqual([{ start: 0, end: 2 }])
+    expect(selectRange({ ranges: [{ start: 1, end: 2 }], range: { start: 0, end: 1 } })).toEqual([{ start: 0, end: 2 }])
+    expect(selectRange({ ranges: [{ start: 0, end: 1 }, { start: 2, end: 3 }], range: { start: 1, end: 2 } })).toEqual([{ start: 0, end: 3 }])
   })
 })
 
 describe('unselectRange', () => {
   test('should throw an error if the range is invalid', () => {
-    expect(() => unselectRange({ selection: [], range: { start: -1, end: 0 } })).toThrow('Invalid range')
+    expect(() => unselectRange({ ranges: [], range: { start: -1, end: 0 } })).toThrow('Invalid range')
   })
   test('should throw an error if the selection is invalid', () => {
-    expect(() => unselectRange({ selection: [{ start: 1, end: 0 }], range: { start: -1, end: 0 } })).toThrow('Invalid selection')
+    expect(() => unselectRange({ ranges: [{ start: 1, end: 0 }], range: { start: -1, end: 0 } })).toThrow('Invalid ranges')
   })
   test('should remove the range if it exists', () => {
-    expect(unselectRange({ selection: [{ start: 0, end: 1 }], range: { start: 0, end: 1 } })).toEqual([])
-    expect(unselectRange({ selection: [{ start: 0, end: 1 }, { start: 2, end: 3 }], range: { start: 0, end: 1 } })).toEqual([{ start: 2, end: 3 }])
-    expect(unselectRange({ selection: [{ start: 0, end: 1 }, { start: 2, end: 3 }], range: { start: 2, end: 3 } })).toEqual([{ start: 0, end: 1 }])
+    expect(unselectRange({ ranges: [{ start: 0, end: 1 }], range: { start: 0, end: 1 } })).toEqual([])
+    expect(unselectRange({ ranges: [{ start: 0, end: 1 }, { start: 2, end: 3 }], range: { start: 0, end: 1 } })).toEqual([{ start: 2, end: 3 }])
+    expect(unselectRange({ ranges: [{ start: 0, end: 1 }, { start: 2, end: 3 }], range: { start: 2, end: 3 } })).toEqual([{ start: 0, end: 1 }])
   })
   test('should split the range if it is inside', () => {
-    expect(unselectRange({ selection: [{ start: 0, end: 3 }], range: { start: 1, end: 2 } })).toEqual([{ start: 0, end: 1 }, { start: 2, end: 3 }])
+    expect(unselectRange({ ranges: [{ start: 0, end: 3 }], range: { start: 1, end: 2 } })).toEqual([{ start: 0, end: 1 }, { start: 2, end: 3 }])
   })
   test('should do nothing if the range does not intersect with the selection', () => {
-    expect(unselectRange({ selection: [{ start: 0, end: 1 }], range: { start: 2, end: 3 } })).toEqual([{ start: 0, end: 1 }])
-    expect(unselectRange({ selection: [{ start: 0, end: 1 }, { start: 4, end: 5 }], range: { start: 2, end: 3 } })).toEqual([{ start: 0, end: 1 }, { start: 4, end: 5 }])
+    expect(unselectRange({ ranges: [{ start: 0, end: 1 }], range: { start: 2, end: 3 } })).toEqual([{ start: 0, end: 1 }])
+    expect(unselectRange({ ranges: [{ start: 0, end: 1 }, { start: 4, end: 5 }], range: { start: 2, end: 3 } })).toEqual([{ start: 0, end: 1 }, { start: 4, end: 5 }])
   })
 })
 
 describe('extendFromAnchor', () => {
   test('should throw an error if the selection is invalid', () => {
-    expect(() => extendFromAnchor({ selection: [{ start: 1, end: 0 }], anchor: 0, index: 1 })).toThrow('Invalid selection')
+    expect(() => extendFromAnchor({ ranges: [{ start: 1, end: 0 }], anchor: 0, index: 1 })).toThrow('Invalid ranges')
   })
   test('does nothing if the anchor is undefined', () => {
-    expect(extendFromAnchor({ selection: [{ start: 0, end: 1 }], index: 1 })).toEqual([{ start: 0, end: 1 }])
+    expect(extendFromAnchor({ ranges: [{ start: 0, end: 1 }], index: 1 })).toEqual([{ start: 0, end: 1 }])
   })
   test('does nothing if the anchor and the index are the same', () => {
-    expect(extendFromAnchor({ selection: [{ start: 0, end: 1 }], anchor: 0, index: 0 })).toEqual([{ start: 0, end: 1 }])
+    expect(extendFromAnchor({ ranges: [{ start: 0, end: 1 }], anchor: 0, index: 0 })).toEqual([{ start: 0, end: 1 }])
   })
   test('should throw an error if the anchor or the index are invalid', () => {
-    expect(() => extendFromAnchor({ selection: [], anchor: -1, index: 0 })).toThrow('Invalid index')
-    expect(() => extendFromAnchor({ selection: [], anchor: 0, index: -1 })).toThrow('Invalid index')
+    expect(() => extendFromAnchor({ ranges: [], anchor: -1, index: 0 })).toThrow('Invalid index')
+    expect(() => extendFromAnchor({ ranges: [], anchor: 0, index: -1 })).toThrow('Invalid index')
   })
   test('should select the range between the bounds (inclusive) if anchor was selected', () => {
-    expect(extendFromAnchor({ selection: [{ start: 0, end: 1 }], anchor: 0, index: 1 })).toEqual([{ start: 0, end: 2 }])
-    expect(extendFromAnchor({ selection: [{ start: 1, end: 2 }], anchor: 1, index: 0 })).toEqual([{ start: 0, end: 2 }])
-    expect(extendFromAnchor({ selection: [{ start: 0, end: 1 }, { start: 3, end: 4 }], anchor: 0, index: 5 })).toEqual([{ start: 0, end: 6 }])
+    expect(extendFromAnchor({ ranges: [{ start: 0, end: 1 }], anchor: 0, index: 1 })).toEqual([{ start: 0, end: 2 }])
+    expect(extendFromAnchor({ ranges: [{ start: 1, end: 2 }], anchor: 1, index: 0 })).toEqual([{ start: 0, end: 2 }])
+    expect(extendFromAnchor({ ranges: [{ start: 0, end: 1 }, { start: 3, end: 4 }], anchor: 0, index: 5 })).toEqual([{ start: 0, end: 6 }])
   })
   test('should unselect the range between the bounds (inclusive) if anchor was not selected', () => {
-    expect(extendFromAnchor({ selection: [{ start: 0, end: 1 }], anchor: 2, index: 3 })).toEqual([{ start: 0, end: 1 }])
-    expect(extendFromAnchor({ selection: [{ start: 0, end: 1 }], anchor: 2, index: 0 })).toEqual([])
-    expect(extendFromAnchor({ selection: [{ start: 0, end: 1 }, { start: 3, end: 4 }], anchor: 2, index: 3 })).toEqual([{ start: 0, end: 1 }])
+    expect(extendFromAnchor({ ranges: [{ start: 0, end: 1 }], anchor: 2, index: 3 })).toEqual([{ start: 0, end: 1 }])
+    expect(extendFromAnchor({ ranges: [{ start: 0, end: 1 }], anchor: 2, index: 0 })).toEqual([])
+    expect(extendFromAnchor({ ranges: [{ start: 0, end: 1 }, { start: 3, end: 4 }], anchor: 2, index: 3 })).toEqual([{ start: 0, end: 1 }])
   })
 })

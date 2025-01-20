@@ -176,76 +176,76 @@ describe('about selection, HighTable', () => {
 
   it('mode 1: controlled - show the selection if passed', async () => {
     const start = 2
-    const selectionAndAnchor = { selection: [{ start, end: start + 1 }], anchor: start }
-    const { container, findByText } = render(<HighTable data={data} selectionAndAnchor={selectionAndAnchor}/>)
+    const selection = { ranges: [{ start, end: start + 1 }], anchor: start }
+    const { container, findByText } = render(<HighTable data={data} selection={selection}/>)
     await findByText('row 2')
     expect(container.querySelector(`tr[aria-selected="true"][aria-rowindex="${start + 1}"]`)).toBeNull()
     expect(container.querySelector(`tr[aria-selected="true"][aria-rowindex="${start + 2}"]`)).not.toBeNull()
     expect(container.querySelector(`tr[aria-selected="true"][aria-rowindex="${start + 3}"]`)).toBeNull()
   })
 
-  it('mode 1: controlled - onSelectionAndAnchor is not called on data change', async () => {
+  it('mode 1: controlled - onSelection is not called on data change', async () => {
     const start = 2
-    const selectionAndAnchor = { selection: [{ start, end: start + 1 }], anchor: start }
-    const onSelectionAndAnchorChange = vi.fn()
-    const { container, findByText, rerender } = render(<HighTable data={data} selectionAndAnchor={selectionAndAnchor} onSelectionAndAnchorChange={onSelectionAndAnchorChange}/>)
+    const selection = { ranges: [{ start, end: start + 1 }], anchor: start }
+    const onSelectionChange = vi.fn()
+    const { container, findByText, rerender } = render(<HighTable data={data} selection={selection} onSelectionChange={onSelectionChange}/>)
     await findByText('row 2')
     expect(container.querySelector(`tr[aria-selected="true"][aria-rowindex="${start + 2}"]`)).not.toBeNull()
-    expect(onSelectionAndAnchorChange).not.toHaveBeenCalled()
-    onSelectionAndAnchorChange.mockClear()
+    expect(onSelectionChange).not.toHaveBeenCalled()
+    onSelectionChange.mockClear()
 
     const newData = { ...data, numRows: 2000 }
-    rerender(<HighTable data={newData} selectionAndAnchor={selectionAndAnchor} onSelectionAndAnchorChange={onSelectionAndAnchorChange}/>)
+    rerender(<HighTable data={newData} selection={selection} onSelectionChange={onSelectionChange}/>)
     await findByText('row 2')
-    expect(onSelectionAndAnchorChange).not.toHaveBeenCalled()
+    expect(onSelectionChange).not.toHaveBeenCalled()
   })
 
-  it('mode 1: controlled - click on a row number cell selects it, calling onSelectionAndAnchor', async () => {
+  it('mode 1: controlled - click on a row number cell selects it, calling onSelection', async () => {
     const start = 2
-    const selectionAndAnchor = { selection: [{ start, end: start + 1 }], anchor: start }
-    const onSelectionAndAnchorChange = vi.fn()
-    const { container, findByText } = render(<HighTable data={data} selectionAndAnchor={selectionAndAnchor} onSelectionAndAnchorChange={onSelectionAndAnchorChange}/>)
+    const selection = { ranges: [{ start, end: start + 1 }], anchor: start }
+    const onSelectionChange = vi.fn()
+    const { container, findByText } = render(<HighTable data={data} selection={selection} onSelectionChange={onSelectionChange}/>)
     await findByText('row 2')
     expect(container.querySelector(`tr[aria-selected="true"][aria-rowindex="${start + 2}"]`)).not.toBeNull()
-    expect(onSelectionAndAnchorChange).not.toHaveBeenCalled()
-    onSelectionAndAnchorChange.mockClear()
+    expect(onSelectionChange).not.toHaveBeenCalled()
+    onSelectionChange.mockClear()
 
     const other = 5
     const anotherCell = container.querySelector(`tr[aria-rowindex="${other + 2}"] th`)
     await act(async () => {
       anotherCell && await userEvent.click(anotherCell)
     })
-    expect(onSelectionAndAnchorChange).toHaveBeenCalledWith({ selection: [{ start: start, end: start + 1 }, { start: other, end: other + 1 }], anchor: other })
+    expect(onSelectionChange).toHaveBeenCalledWith({ ranges: [{ start: start, end: start + 1 }, { start: other, end: other + 1 }], anchor: other })
   })
 
-  it('mode 1: controlled - click on a selected row number cell unselects it, calling onSelectionAndAnchor', async () => {
+  it('mode 1: controlled - click on a selected row number cell unselects it, calling onSelection', async () => {
     const start = 2
-    const selectionAndAnchor = { selection: [{ start, end: start + 1 }], anchor: start }
-    const onSelectionAndAnchorChange = vi.fn()
-    const { container, findByText } = render(<HighTable data={data} selectionAndAnchor={selectionAndAnchor} onSelectionAndAnchorChange={onSelectionAndAnchorChange}/>)
+    const selection = { ranges: [{ start, end: start + 1 }], anchor: start }
+    const onSelectionChange = vi.fn()
+    const { container, findByText } = render(<HighTable data={data} selection={selection} onSelectionChange={onSelectionChange}/>)
     await findByText('row 2')
     expect(container.querySelector(`tr[aria-selected="true"][aria-rowindex="${start + 2}"]`)).not.toBeNull()
-    expect(onSelectionAndAnchorChange).not.toHaveBeenCalled()
+    expect(onSelectionChange).not.toHaveBeenCalled()
     // ^ TODO(SL): we don't want that AT ALL
-    onSelectionAndAnchorChange.mockClear()
+    onSelectionChange.mockClear()
 
     const sameCell = container.querySelector(`tr[aria-rowindex="${start + 2}"] th`)
     await act(async () => {
       sameCell && await userEvent.click(sameCell)
     })
-    expect(onSelectionAndAnchorChange).toHaveBeenCalledWith({ selection: [], anchor: start })
+    expect(onSelectionChange).toHaveBeenCalledWith({ ranges: [], anchor: start })
   })
 
-  it('mode 1: controlled - onSelectionAndAnchor is called with updated selection on shift+click', async () => {
+  it('mode 1: controlled - onSelection is called with updated selection on shift+click', async () => {
     const start = 2
-    const selectionAndAnchor = { selection: [{ start, end: start + 1 }], anchor: start }
-    const onSelectionAndAnchorChange = vi.fn()
-    const { container, findByText } = render(<HighTable data={data} selectionAndAnchor={selectionAndAnchor} onSelectionAndAnchorChange={onSelectionAndAnchorChange}/>)
+    const selection = { ranges: [{ start, end: start + 1 }], anchor: start }
+    const onSelectionChange = vi.fn()
+    const { container, findByText } = render(<HighTable data={data} selection={selection} onSelectionChange={onSelectionChange}/>)
     await findByText('row 2')
     expect(container.querySelector(`tr[aria-selected="true"][aria-rowindex="${start + 2}"]`)).not.toBeNull()
-    expect(onSelectionAndAnchorChange).not.toHaveBeenCalled()
+    expect(onSelectionChange).not.toHaveBeenCalled()
     // ^ TODO(SL): we don't want that AT ALL
-    onSelectionAndAnchorChange.mockClear()
+    onSelectionChange.mockClear()
 
     const other = 5
     const anotherCell = container.querySelector(`tr[aria-rowindex="${other + 2}"] th`)
@@ -255,38 +255,38 @@ describe('about selection, HighTable', () => {
       await user.keyboard('[ShiftLeft>]') // Press Shift (without releasing it)
       anotherCell && await user.click(anotherCell) // Perform a click with `shiftKey: true`
     })
-    expect(onSelectionAndAnchorChange).toHaveBeenCalledWith({ selection: [{ start: start, end: other + 1 }], anchor: start })
+    expect(onSelectionChange).toHaveBeenCalledWith({ ranges: [{ start: start, end: other + 1 }], anchor: start })
   })
 
   // mode 2: controlled read-only - show the selection if passed + onSelectionChange is not called
 
-  it('mode 3: uncontrolled - onSelectionAndAnchor is called on data change', async () => {
+  it('mode 3: uncontrolled - onSelection is called on data change', async () => {
     const start = 2
-    const onSelectionAndAnchorChange = vi.fn()
-    const { container, findByText, rerender } = render(<HighTable data={data} onSelectionAndAnchorChange={onSelectionAndAnchorChange}/>)
+    const onSelectionChange = vi.fn()
+    const { container, findByText, rerender } = render(<HighTable data={data} onSelectionChange={onSelectionChange}/>)
     await findByText('row 2')
-    expect(onSelectionAndAnchorChange).not.toHaveBeenCalled()
-    onSelectionAndAnchorChange.mockClear()
+    expect(onSelectionChange).not.toHaveBeenCalled()
+    onSelectionChange.mockClear()
 
     const newData = { ...data, numRows: 2000 }
-    rerender(<HighTable data={newData} onSelectionAndAnchorChange={onSelectionAndAnchorChange}/>)
+    rerender(<HighTable data={newData} onSelectionChange={onSelectionChange}/>)
     await findByText('row 2')
-    expect(onSelectionAndAnchorChange).toHaveBeenCalled()
+    expect(onSelectionChange).toHaveBeenCalled()
   })
 
-  it('mode 3: uncontrolled - onSelectionAndAnchor is called on user interaction', async () => {
-    const onSelectionAndAnchorChange = vi.fn()
-    const { container, findByText } = render(<HighTable data={data} onSelectionAndAnchorChange={onSelectionAndAnchorChange} />)
+  it('mode 3: uncontrolled - onSelection is called on user interaction', async () => {
+    const onSelectionChange = vi.fn()
+    const { container, findByText } = render(<HighTable data={data} onSelectionChange={onSelectionChange} />)
     await findByText('row 2')
     expect(container.querySelector('tr[aria-selected="true"]')).toBeNull()
-    expect(onSelectionAndAnchorChange).not.toHaveBeenCalled()
-    onSelectionAndAnchorChange.mockClear()
+    expect(onSelectionChange).not.toHaveBeenCalled()
+    onSelectionChange.mockClear()
     const start = 5
     const anotherCell = container.querySelector(`tr[aria-rowindex="${start + 2}"] th`)
     await act(async () => {
       anotherCell && await userEvent.click(anotherCell)
     })
-    expect(onSelectionAndAnchorChange).toHaveBeenCalledWith({ selection: [{ start: start, end: start + 1 }], anchor: start })
+    expect(onSelectionChange).toHaveBeenCalledWith({ ranges: [{ start: start, end: start + 1 }], anchor: start })
   })
 
 

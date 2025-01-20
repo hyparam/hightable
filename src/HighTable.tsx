@@ -1,12 +1,11 @@
 import { ReactNode, useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import { DataFrame, Row, asyncRows } from './dataframe.js'
-import { SelectionAndAnchor, areAllSelected, extendFromAnchor, isSelected, toggleAll, toggleIndex } from './selection.js'
+import { Selection, areAllSelected, extendFromAnchor, isSelected, toggleAll, toggleIndex } from './selection.js'
 import { OrderBy } from './sort.js'
 import TableHeader, { cellStyle } from './TableHeader.js'
 export { AsyncRow, DataFrame, ResolvablePromise, Row, arrayDataFrame, asyncRows, awaitRow, awaitRows, resolvablePromise, resolvableRow, sortableDataFrame, wrapPromise } from './dataframe.js'
 export { rowCache } from './rowCache.js'
-export { SelectionAndAnchor } from './selection.js'
-export type { Selection } from './selection.js'
+export { Selection } from './selection.js'
 export { OrderBy } from './sort.js'
 export { HighTable }
 
@@ -75,8 +74,8 @@ export interface TableProps {
   onError?: (error: Error) => void
   orderBy?: OrderBy // order by column. If undefined, the table is unordered, the sort elements are hidden and the interactions are disabled.
   onOrderByChange?: (orderBy: OrderBy) => void // callback to call when a user interaction changes the order. The interactions are disabled if undefined.
-  selectionAndAnchor?: SelectionAndAnchor // selection and anchor rows. If undefined, the selection is hidden and the interactions are disabled.
-  onSelectionAndAnchorChange?: (selectionAndAnchor: SelectionAndAnchor) => void // callback to call when a user interaction changes the selection. The interactions are disabled if undefined.
+  selection?: Selection // selection and anchor rows. If undefined, the selection is hidden and the interactions are disabled.
+  onSelectionChange?: (selection: Selection) => void // callback to call when a user interaction changes the selection. The interactions are disabled if undefined.
 }
 
 function rowLabel(rowIndex?: number): string {
@@ -101,8 +100,8 @@ export default function HighTable({
   focus = true,
   orderBy: propOrderBy,
   onOrderByChange: propOnOrderByChange,
-  selectionAndAnchor: propSelection,
-  onSelectionAndAnchorChange: propOnSelectionAndAnchorChange,
+  selection: propSelection,
+  onSelectionChange: propOnSelectionChange,
   onDoubleClickCell,
   onMouseDownCell,
   onError = console.error,
@@ -173,76 +172,76 @@ export default function HighTable({
 
   /**
    * Four modes:
-   * - controlled (selection and onSelectionAndAnchorChange are defined): the parent controls the selection and receives the user interactions. No local state.
-   * - controlled read-only (selection is defined, onSelectionAndAnchorChange is undefined): the parent controls the selection and the user interactions are disabled. No local state.
-   * - uncontrolled (selection is undefined, onSelectionAndAnchorChange is defined): the component controls the selection and the user interactions. Local state.
-   * - disabled (selection and onSelectionAndAnchorChange are undefined): the selection is hidden and the user interactions are disabled. No local state.
+   * - controlled (selection and onSelectionChange are defined): the parent controls the selection and receives the user interactions. No local state.
+   * - controlled read-only (selection is defined, onSelectionChange is undefined): the parent controls the selection and the user interactions are disabled. No local state.
+   * - uncontrolled (selection is undefined, onSelectionChange is defined): the component controls the selection and the user interactions. Local state.
+   * - disabled (selection and onSelectionChange are undefined): the selection is hidden and the user interactions are disabled. No local state.
    */
-  const [initialSelection] = useState<SelectionAndAnchor | undefined>(propSelection)
-  const [localSelection, setLocalSelection] = useState<SelectionAndAnchor | undefined>({ selection: [], anchor: undefined })
+  const [initialSelection] = useState<Selection | undefined>(propSelection)
+  const [localSelection, setLocalSelection] = useState<Selection | undefined>({ ranges: [], anchor: undefined })
   const isSelectionControlled = initialSelection !== undefined
-  const enableSelectionInteractions = propOnSelectionAndAnchorChange !== undefined
-  let selectionAndAnchor: SelectionAndAnchor | undefined
+  const enableSelectionInteractions = propOnSelectionChange !== undefined
+  let selection: Selection | undefined
   if (isSelectionControlled) {
     if (propSelection === undefined) {
       console.warn('The component selection is controlled (is has no local state) because "selection" was initially defined. "selection" cannot be set to undefined now (it is set back to the initial value).')
-      selectionAndAnchor = initialSelection
+      selection = initialSelection
     } else {
-      selectionAndAnchor = propSelection
+      selection = propSelection
     }
   } else {
     if (propSelection !== undefined) {
       console.warn('The component selection is uncontrolled (it only has a local state) because "selection" was initially undefined. "selection" cannot be set to a value now and is ignored.')
     }
-    if (propOnSelectionAndAnchorChange === undefined) {
-      // The component selection is disabled because onSelectionAndAnchorChange is undefined. If you want to enable selection, you must provide onSelectionAndAnchorChange
-      selectionAndAnchor = undefined
+    if (propOnSelectionChange === undefined) {
+      // The component selection is disabled because onSelectionChange is undefined. If you want to enable selection, you must provide onSelectionChange
+      selection = undefined
     } else {
-      selectionAndAnchor = localSelection
+      selection = localSelection
     }
   }
-  const onSelectionAndAnchorChange = useCallback((selectionAndAnchor: SelectionAndAnchor) => {
+  const onSelectionChange = useCallback((selection: Selection) => {
     if (!enableSelectionInteractions) {
       return
     }
-    propOnSelectionAndAnchorChange?.(selectionAndAnchor)
+    propOnSelectionChange?.(selection)
     if (!isSelectionControlled) {
-      setLocalSelection(selectionAndAnchor)
+      setLocalSelection(selection)
     }
-  }, [propOnSelectionAndAnchorChange, isSelectionControlled, enableSelectionInteractions])
+  }, [propOnSelectionChange, isSelectionControlled, enableSelectionInteractions])
 
-  const showSelection = selectionAndAnchor !== undefined
+  const showSelection = selection !== undefined
   const showSelectionControls = showSelection && enableSelectionInteractions
   const getOnSelectAllRows = useCallback(() => {
-    if (!selectionAndAnchor || !onSelectionAndAnchorChange) return
-    const { selection } = selectionAndAnchor
-    return () => onSelectionAndAnchorChange({
-      selection: toggleAll({ selection, length: data.numRows }),
+    if (!selection || !onSelectionChange) return
+    const { ranges } = selection
+    return () => onSelectionChange({
+      ranges: toggleAll({ ranges, length: data.numRows }),
       anchor: undefined,
     })
-  }, [onSelectionAndAnchorChange, data.numRows, selectionAndAnchor])
+  }, [onSelectionChange, data.numRows, selection])
   const getOnSelectRowClick = useCallback((tableIndex: number) => {
-    if (!selectionAndAnchor || !onSelectionAndAnchorChange) return
-    const { selection, anchor } = selectionAndAnchor
+    if (!selection || !onSelectionChange) return
+    const { ranges, anchor } = selection
     return (event: React.MouseEvent) => {
-      const useAnchor = event.shiftKey && selectionAndAnchor.anchor !== undefined
+      const useAnchor = event.shiftKey && selection.anchor !== undefined
       if (useAnchor) {
-        onSelectionAndAnchorChange({ selection: extendFromAnchor({ selection, anchor, index: tableIndex }), anchor })
+        onSelectionChange({ ranges: extendFromAnchor({ ranges, anchor, index: tableIndex }), anchor })
       } else {
-        onSelectionAndAnchorChange({ selection: toggleIndex({ selection, index: tableIndex }), anchor: tableIndex })
+        onSelectionChange({ ranges: toggleIndex({ ranges, index: tableIndex }), anchor: tableIndex })
       }
     }
-  }, [onSelectionAndAnchorChange, selectionAndAnchor])
+  }, [onSelectionChange, selection])
   const allRowsSelected = useMemo(() => {
-    if (!selectionAndAnchor) return false
-    const { selection } = selectionAndAnchor
-    return areAllSelected({ selection, length: data.numRows })
-  }, [selectionAndAnchor, data.numRows])
+    if (!selection) return false
+    const { ranges } = selection
+    return areAllSelected({ ranges, length: data.numRows })
+  }, [selection, data.numRows])
   const isRowSelected = useCallback((tableIndex: number) => {
-    if (!selectionAndAnchor) return undefined
-    const { selection } = selectionAndAnchor
-    return isSelected({ selection, index: tableIndex })
-  }, [selectionAndAnchor])
+    if (!selection) return undefined
+    const { ranges } = selection
+    return isSelected({ ranges, index: tableIndex })
+  }, [selection])
 
   const offsetTopRef = useRef(0)
 
@@ -261,7 +260,7 @@ export default function HighTable({
     dispatch({ type: 'DATA_CHANGED', data })
     // if uncontrolled, reset the selection (otherwise, it's the responsibility of the parent to do it if the data changes)
     if (!isSelectionControlled) {
-      onSelectionAndAnchorChange?.({ selection: [], anchor: undefined })
+      onSelectionChange?.({ ranges: [], anchor: undefined })
     }
   }
 
