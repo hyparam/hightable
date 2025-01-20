@@ -165,7 +165,7 @@ describe('When sorted, HighTable', () => {
   })
 })
 
-describe('in selection mode 1 (controlled: selection and onSelection props), ', () => {
+describe('in controlled selection state (selection and onSelection props), ', () => {
   const data = {
     header: ['ID', 'Count'],
     numRows: 1000,
@@ -329,7 +329,7 @@ describe('in selection mode 1 (controlled: selection and onSelection props), ', 
   })
 })
 
-describe('in selection mode 2 (controlled read-only: selection prop), ', () => {
+describe('in controlled selection state, read-only (selection prop), ', () => {
   const data = {
     header: ['ID', 'Count'],
     numRows: 1000,
@@ -424,7 +424,7 @@ describe('in selection mode 2 (controlled read-only: selection prop), ', () => {
   })
 })
 
-describe('in selection mode 3 (uncontrolled: onSelection prop), ', () => {
+describe('in uncontrolled selection state (onSelection prop), ', () => {
   const data = {
     header: ['ID', 'Count'],
     numRows: 1000,
@@ -531,7 +531,7 @@ describe('in selection mode 3 (uncontrolled: onSelection prop), ', () => {
   })
 })
 
-describe('in selection mode 4 (disabled: neither selection nor onSelection props), ', () => {
+describe('in disabled selection state (neither selection nor onSelection props), ', () => {
   const data = {
     header: ['ID', 'Count'],
     numRows: 1000,
