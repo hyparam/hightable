@@ -389,6 +389,7 @@ export default function HighTable({
       if (str.length > 100) title = str
     }
     return <td
+      role="cell"
       className={str === undefined ? 'pending' : undefined}
       key={col}
       onDoubleClick={e => row === undefined ? console.warn('Cell onDoubleClick is cancelled because row index is undefined') : onDoubleClickCell?.(e, col, row)}
@@ -453,6 +454,7 @@ export default function HighTable({
           aria-readonly={true}
           aria-colcount={data.header.length + 1 /* don't forget the selection column */}
           aria-rowcount={data.numRows + 1 /* don't forget the header row */}
+          aria-multiselectable={showSelectionControls}
           className={`table${enableOrderByInteractions ? ' sortable' : ''}`}
           ref={tableRef}
           role='grid'
@@ -468,11 +470,11 @@ export default function HighTable({
             setColumnWidths={setColumnWidths}
             onOrderByChange={onOrderByChange}
           />
-          <tbody>
+          <tbody role="rowgroup">
             {prePadding.map((_, prePaddingIndex) => {
               const { tableIndex, dataIndex } = getRowIndexes(-prePadding.length + prePaddingIndex)
-              return <tr key={tableIndex} aria-rowindex={tableIndex + 2 /* 1-based + the header row */} >
-                <th scope="row" style={cornerStyle}>{
+              return <tr role="row" key={tableIndex} aria-rowindex={tableIndex + 2 /* 1-based + the header row */} >
+                <th scope="row" role="rowheader" style={cornerStyle}>{
                   rowLabel(dataIndex)
                 }</th>
               </tr>
@@ -480,11 +482,11 @@ export default function HighTable({
             {rows.map((row, rowIndex) => {
               const { tableIndex, dataIndex } = getRowIndexes(rowIndex)
               const selected = isRowSelected(tableIndex)
-              return <tr key={tableIndex} aria-rowindex={tableIndex + 2 /* 1-based + the header row */} title={rowError(row, dataIndex)}
+              return <tr role="row" key={tableIndex} aria-rowindex={tableIndex + 2 /* 1-based + the header row */} title={rowError(row, dataIndex)}
                 className={selected ? 'selected' : ''}
                 aria-selected={selected}
               >
-                <th scope="row" style={cornerStyle} onClick={getOnSelectRowClick(tableIndex)}>
+                <th scope="row" role="rowheader" style={cornerStyle} onClick={getOnSelectRowClick(tableIndex)}>
                   <span>{rowLabel(dataIndex)}</span>
                   { showSelection && <input type='checkbox' checked={selected} readOnly /> }
                 </th>
@@ -495,8 +497,8 @@ export default function HighTable({
             })}
             {postPadding.map((_, postPaddingIndex) => {
               const { tableIndex, dataIndex } = getRowIndexes(rows.length + postPaddingIndex)
-              return <tr key={tableIndex} aria-rowindex={tableIndex + 2 /* 1-based + the header row */} >
-                <th scope="row" style={cornerStyle} >{
+              return <tr role="row" key={tableIndex} aria-rowindex={tableIndex + 2 /* 1-based + the header row */} >
+                <th scope="row" role="rowheader" style={cornerStyle} >{
                   rowLabel(dataIndex)
                 }</th>
               </tr>
