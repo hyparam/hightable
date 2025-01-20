@@ -231,6 +231,24 @@ describe('in selection mode 1 (controlled: selection and onSelection props), ', 
     expect(onSelectionChange).not.toHaveBeenCalled()
   })
 
+  it('removing selection prop is ignored and a warning is printed in the console', async () => {
+    const start = 2
+    const selection = { ranges: [{ start, end: start + 1 }], anchor: start }
+    const onSelectionChange = vi.fn()
+    console.warn = vi.fn()
+
+    const { queryByRole, findByRole, rerender } = render(<HighTable data={data} selection={selection} onSelectionChange={onSelectionChange}/>)
+    // await because we have to wait for the data to be fetched first
+    await findByRole('row', { selected: true })
+    expect(console.warn).not.toHaveBeenCalled()
+
+    const newSelection = undefined
+    rerender(<HighTable data={data} selection={newSelection} onSelectionChange={onSelectionChange}/>)
+    // no need to await because the data is already fetched
+    expect(queryByRole('row', { selected: true })).toBeDefined()
+    expect(console.warn).toHaveBeenNthCalledWith(1, expect.stringMatching(/cannot be set to undefined/))
+  })
+
   it('on data change, onSelection is not called and the selection stays the same', async () => {
     const start = 2
     const selection = { ranges: [{ start, end: start + 1 }], anchor: start }
@@ -491,6 +509,25 @@ describe('in selection mode 3 (uncontrolled: onSelection prop), ', () => {
     expect(queryByRole('cell', { name: 'row 2' })).toBeNull()
     expect(queryByRole('row', { selected: true })).toBeNull()
     expect(onSelectionChange).toHaveBeenCalledWith({ ranges: [] })
+  })
+
+  it('passing the selection prop is ignored and a warning is printed in the console', async () => {
+    const start = 2
+    const selection = undefined
+    const onSelectionChange = vi.fn()
+    console.warn = vi.fn()
+
+    const { queryByRole, findByRole, rerender } = render(<HighTable data={data} selection={selection} onSelectionChange={onSelectionChange}/>)
+    // await because we have to wait for the data to be fetched first
+    await findByRole('cell', { name: 'row 2' })
+    expect(queryByRole('row', { selected: true })).toBeNull()
+    expect(console.warn).not.toHaveBeenCalled()
+
+    const newSelection = { ranges: [{ start, end: start + 1 }], anchor: start }
+    rerender(<HighTable data={data} selection={newSelection} onSelectionChange={onSelectionChange}/>)
+    // no need to await because the data is already fetched
+    expect(queryByRole('row', { selected: true })).toBeNull()
+    expect(console.warn).toHaveBeenNthCalledWith(1, expect.stringMatching(/cannot be set to a value/))
   })
 })
 
