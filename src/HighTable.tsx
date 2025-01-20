@@ -19,7 +19,7 @@ export type State = {
   rows: Row[] // slice of the virtual table rows (sorted rows) to render as HTML. It might contain incomplete rows. Rows are expected to include __index__ if sorted.
   rowsOrderBy: OrderBy // order by column of the rows slice.
   startIndex: number // offset of the slice of sorted rows to render (rows[0] is the startIndex'th sorted row)
-  data: DataFrame // data frame
+  data: DataFrame // data frame used in the last rendering
 }
 
 export type Action =
@@ -76,6 +76,46 @@ export interface TableProps {
   onOrderByChange?: (orderBy: OrderBy) => void // callback to call when a user interaction changes the order. The interactions are disabled if undefined.
   selection?: Selection // selection and anchor rows. If undefined, the selection is hidden and the interactions are disabled.
   onSelectionChange?: (selection: Selection) => void // callback to call when a user interaction changes the selection. The interactions are disabled if undefined.
+}
+
+function useControlleableState<T>(propValue: T | undefined, propOnValueChange: ((value: T) => void) | undefined, defaultValue: T | undefined, disabled: boolean = false): [T | undefined, boolean, boolean, (value: T) => void] {
+  const [initialValue] = useState<T | undefined>(propValue)
+  const [initialDisabled] = useState<boolean>(disabled)
+  const [localValue, setLocalValue] = useState<T | undefined>(defaultValue)
+  const isValueControlled = initialValue !== undefined
+  let enableValueInteractions = true
+  let value: T | undefined
+  if (initialDisabled) {
+    value = undefined
+    enableValueInteractions = false
+  } else if (isValueControlled) {
+    if (propValue === undefined) {
+      // TODO: adapt the text
+      console.warn('The component selection is controlled (is has no local state) because "selection" was initially defined. "selection" cannot be set to undefined now (it is set back to the initial value).')
+      value = initialValue
+    } else {
+      value = propValue
+    }
+    // read-only if onValueChange is undefined
+    enableValueInteractions = propOnValueChange !== undefined
+  } else {
+    if (propValue !== undefined) {
+      // TODO: adapt the text
+      console.warn('The component selection is uncontrolled (it only has a local state) because "selection" was initially undefined. "selection" cannot be set to a value now and is ignored.')
+    }
+    value = localValue
+    enableValueInteractions = true
+  }
+  const onValueChange = useCallback((selection: T) => {
+    if (!enableValueInteractions) {
+      return
+    }
+    propOnValueChange?.(selection)
+    if (!isValueControlled) {
+      setLocalValue(selection)
+    }
+  }, [propOnValueChange, isValueControlled, enableValueInteractions])
+  return [value, isValueControlled, enableValueInteractions, onValueChange]
 }
 
 function rowLabel(rowIndex?: number): string {
@@ -135,40 +175,7 @@ export default function HighTable({
    * - uncontrolled (orderBy is undefined, onOrderByChange is defined or undefined): the component controls the sort and the user interactions. Local state.
    * - disabled (data is not sortable): the sort is hidden and the user interactions are disabled. No local state.
    */
-  const [initialOrderBy] = useState<OrderBy | undefined>(propOrderBy)
-  const [localOrderBy, setLocalOrderBy] = useState<OrderBy | undefined>({})
-  const isOrderByControlled = initialOrderBy !== undefined
-  let enableOrderByInteractions = true
-  let orderBy: OrderBy | undefined
-  if (!data.sortable) {
-    // The component sort is disabled because the data is not sortable.
-    orderBy = undefined
-    enableOrderByInteractions = false
-  } else if (isOrderByControlled) {
-    if (propOrderBy === undefined) {
-      console.warn('The component sort is controlled (is has no local state) because "orderBy" was initially defined. "orderBy" cannot be set to undefined now (it is set back to the initial value).')
-      orderBy = initialOrderBy
-    } else {
-      orderBy = propOrderBy
-    }
-    // read-only if onOrderByChange is undefined
-    enableOrderByInteractions = propOnOrderByChange !== undefined
-  } else {
-    if (propOrderBy !== undefined) {
-      console.warn('The component sort is uncontrolled (it only has a local state) because "orderBy" was initially undefined. "orderBy" cannot be set to a value now and is ignored.')
-    }
-    orderBy = localOrderBy
-    enableOrderByInteractions = true
-  }
-  const onOrderByChange = useCallback((orderBy: OrderBy) => {
-    if (!enableOrderByInteractions) {
-      return
-    }
-    propOnOrderByChange?.(orderBy)
-    if (!isOrderByControlled) {
-      setLocalOrderBy(orderBy)
-    }
-  }, [propOnOrderByChange, isOrderByControlled, enableOrderByInteractions])
+  const [orderBy, isOrderByControlled, enableOrderByInteractions, onOrderByChange] = useControlleableState<OrderBy>(propOrderBy, propOnOrderByChange, {}, !data.sortable)
 
   /**
    * Four modes:
@@ -177,38 +184,8 @@ export default function HighTable({
    * - uncontrolled (selection is undefined, onSelectionChange is defined): the component controls the selection and the user interactions. Local state.
    * - disabled (selection and onSelectionChange are undefined): the selection is hidden and the user interactions are disabled. No local state.
    */
-  const [initialSelection] = useState<Selection | undefined>(propSelection)
-  const [localSelection, setLocalSelection] = useState<Selection | undefined>({ ranges: [], anchor: undefined })
-  const isSelectionControlled = initialSelection !== undefined
-  const enableSelectionInteractions = propOnSelectionChange !== undefined
-  let selection: Selection | undefined
-  if (isSelectionControlled) {
-    if (propSelection === undefined) {
-      console.warn('The component selection is controlled (is has no local state) because "selection" was initially defined. "selection" cannot be set to undefined now (it is set back to the initial value).')
-      selection = initialSelection
-    } else {
-      selection = propSelection
-    }
-  } else {
-    if (propSelection !== undefined) {
-      console.warn('The component selection is uncontrolled (it only has a local state) because "selection" was initially undefined. "selection" cannot be set to a value now and is ignored.')
-    }
-    if (propOnSelectionChange === undefined) {
-      // The component selection is disabled because onSelectionChange is undefined. If you want to enable selection, you must provide onSelectionChange
-      selection = undefined
-    } else {
-      selection = localSelection
-    }
-  }
-  const onSelectionChange = useCallback((selection: Selection) => {
-    if (!enableSelectionInteractions) {
-      return
-    }
-    propOnSelectionChange?.(selection)
-    if (!isSelectionControlled) {
-      setLocalSelection(selection)
-    }
-  }, [propOnSelectionChange, isSelectionControlled, enableSelectionInteractions])
+  const isSelectionDisabled = propSelection === undefined && propOnSelectionChange === undefined
+  const [selection, isSelectionControlled, enableSelectionInteractions, onSelectionChange] = useControlleableState<Selection>(propSelection, propOnSelectionChange, { ranges: [], anchor: undefined }, isSelectionDisabled)
 
   const showSelection = selection !== undefined
   const showSelectionControls = showSelection && enableSelectionInteractions
