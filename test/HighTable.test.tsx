@@ -165,7 +165,7 @@ describe('When sorted, HighTable', () => {
   })
 })
 
-describe('in selection mode 1 (controlled), ', () => {
+describe('in selection mode 1 (controlled: selection and onSelection props), ', () => {
   const data = {
     header: ['ID', 'Count'],
     numRows: 1000,
@@ -311,7 +311,7 @@ describe('in selection mode 1 (controlled), ', () => {
   })
 })
 
-describe('in selection mode 2 (controlled read-only), ', () => {
+describe('in selection mode 2 (controlled read-only: selection prop), ', () => {
   const data = {
     header: ['ID', 'Count'],
     numRows: 1000,
@@ -406,7 +406,7 @@ describe('in selection mode 2 (controlled read-only), ', () => {
   })
 })
 
-describe('in selection mode 3 (uncontrolled), ', () => {
+describe('in selection mode 3 (uncontrolled: onSelection prop), ', () => {
   const data = {
     header: ['ID', 'Count'],
     numRows: 1000,
@@ -493,4 +493,50 @@ describe('in selection mode 3 (uncontrolled), ', () => {
     expect(onSelectionChange).toHaveBeenCalledWith({ ranges: [] })
   })
 })
-// it('cannot select a row if selection and onSelectionChange are not passed', async () => {
+
+describe('in selection mode 4 (disabled: neither selection nor onSelection props), ', () => {
+  const data = {
+    header: ['ID', 'Count'],
+    numRows: 1000,
+    rows: (start: number, end: number) => Promise.resolve(
+      Array.from({ length: end - start }, (_, index) => ({
+        ID: 'row ' + (index + start),
+        Count: 1000 - start - index,
+      }))
+    ),
+  }
+
+  const otherData = {
+    header: ['ID', 'Count'],
+    numRows: 1000,
+    rows: (start: number, end: number) => Promise.resolve(
+      Array.from({ length: end - start }, (_, index) => ({
+        ID: 'other ' + (index + start),
+        Count: 1000 - start - index,
+      }))
+    ),
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('the table is not marked as multiselectable', () => {
+    const { getByRole } = render(<HighTable data={data}/>)
+    const table = getByRole('grid')
+    expect(table.getAttribute('aria-multiselectable')).toBe('false')
+  })
+
+  it('click on a row number cell does nothing', async () => {
+    const { findByRole, queryByRole } = render(<HighTable data={data}/>)
+    // await because we have to wait for the data to be fetched first
+    const cell = await findByRole('cell', { name: 'row 2' })
+
+    const rowHeader = cell.closest('[role="row"]')?.querySelector('[role="rowheader"]')
+    expect(rowHeader).not.toBeNull()
+    await act(async () => {
+      rowHeader && await userEvent.click(rowHeader)
+    })
+    expect(queryByRole('row', { selected: true })).toBeNull()
+  })
+})
