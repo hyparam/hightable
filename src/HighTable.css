@@ -238,13 +238,13 @@ tr.selected th:first-child {
 .table-corner input {
   display: none;
 }
-.show-selection .table-corner {
+.table-corner.show-corner-selection  {
   background: #e4e4e6;
 }
-.show-selection .table-corner span {
+.table-corner.show-corner-selection  span {
   display: none;
 }
-.show-selection .table-corner input {
+.table-corner.show-corner-selection  input {
   display: inline;
   text-align: center;
 }

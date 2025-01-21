@@ -155,6 +155,7 @@ export default function HighTable({
 
   const showSelection = selection !== undefined
   const showSelectionControls = showSelection && enableSelectionInteractions
+  const showCornerSelection = showSelectionControls || showSelection && areAllSelected({ ranges: selection.ranges, length: data.numRows })
   const getOnSelectAllRows = useCallback(() => {
     if (!selection || !onSelectionChange) return
     const { ranges } = selection
@@ -390,7 +391,7 @@ export default function HighTable({
   // don't render table if header is empty
   if (!data.header.length) return
 
-  return <div className={`table-container${showSelectionControls ? ' selectable' : ''}${showSelection ? ' show-selection' : ''}`}>
+  return <div className={`table-container${showSelectionControls ? ' selectable' : ''}`}>
     <div className='table-scroll' ref={scrollRef}>
       <div style={{ height: `${scrollHeight}px` }}>
         <table
@@ -450,9 +451,9 @@ export default function HighTable({
         </table>
       </div>
     </div>
-    <div className='table-corner' style={cornerStyle} onClick={getOnSelectAllRows()}>
+    <div className={`table-corner${showCornerSelection ? ' show-corner-selection' : ''}`} style={cornerStyle} onClick={getOnSelectAllRows()}>
       <span>&nbsp;</span>
-      { showSelection && <input type='checkbox' checked={allRowsSelected} readOnly /> }
+      { showCornerSelection && <input type='checkbox' checked={allRowsSelected} readOnly /> }
     </div>
     <div className='mock-row-label' style={cornerStyle}>&nbsp;</div>
   </div>
