@@ -124,10 +124,10 @@ tr.selected th:first-child {
   background-color: #f1edbb;
 }
 /* if selectable, show checkboxes on hover (and focus) */
-th.selectable:first-child:hover span, th.selectable:first-child:focus span {
+.selectable th:first-child:hover span, .selectable th:first-child:focus span {
   display: none;
 }
-th.selectable:first-child:hover input, th.selectable:first-child:focus input {
+.selectable th:first-child:hover input, .selectable th:first-child:focus input {
   display: inline;
   cursor: pointer;
 }
