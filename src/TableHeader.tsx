@@ -1,6 +1,10 @@
 import { RefObject, createRef, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
-import { OrderBy } from './sort.js'
+
+export interface OrderBy {
+  column?: string // column name to sort by. If undefined, the table is unsorted.
+  direction?: 'ascending' // sort direction. Default: 'ascending'
+}
 
 interface TableProps {
   header: string[]
