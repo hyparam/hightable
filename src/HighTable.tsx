@@ -2,13 +2,16 @@ import { ReactNode, useCallback, useEffect, useMemo, useReducer, useRef } from '
 import { DataFrame, Row, asyncRows } from './dataframe.js'
 import { useInputState } from './hooks.js'
 import { Selection, areAllSelected, extendFromAnchor, isSelected, toggleAll, toggleIndex } from './selection.js'
-import { OrderBy } from './sort.js'
 import TableHeader, { cellStyle } from './TableHeader.js'
 export { AsyncRow, DataFrame, ResolvablePromise, Row, arrayDataFrame, asyncRows, awaitRow, awaitRows, resolvablePromise, resolvableRow, sortableDataFrame, wrapPromise } from './dataframe.js'
 export { rowCache } from './rowCache.js'
 export { Selection } from './selection.js'
-export { OrderBy } from './sort.js'
 export { HighTable }
+
+export interface OrderBy {
+  column?: string // column name to sort by. If undefined, the table is unsorted.
+  direction?: 'ascending' // sort direction. Default: 'ascending'
+}
 
 /**
  * State of the component
