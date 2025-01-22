@@ -1,8 +1,8 @@
-import { act, fireEvent, render, waitFor, within } from '@testing-library/react'
-import { userEvent } from '@testing-library/user-event'
+import { act, fireEvent, waitFor, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { sortableDataFrame } from '../src/dataframe.js'
 import HighTable from '../src/HighTable.js'
+import { render } from './userEvent.js'
 
 describe('HighTable', () => {
   const mockData = {
@@ -56,6 +56,8 @@ describe('HighTable', () => {
     })
 
     act(() => {
+      // not using userEvent because it doesn't support scroll events
+      // https://github.com/testing-library/user-event/issues/475
       fireEvent.scroll(scrollDiv, { target: { scrollTop: 500 } })
     })
 
@@ -66,20 +68,20 @@ describe('HighTable', () => {
 
   it('correctly handles double click on cell', async () => {
     const mockDoubleClick = vi.fn()
-    const { findByText } = render(<HighTable data={mockData} onDoubleClickCell={mockDoubleClick} />)
+    const { user, findByText } = render(<HighTable data={mockData} onDoubleClickCell={mockDoubleClick} />)
     const cell = await findByText('Name 0')
 
-    fireEvent.doubleClick(cell)
+    await user.dblClick(cell)
 
     expect(mockDoubleClick).toHaveBeenCalledWith(expect.anything(), 1, 0)
   })
 
   it('correctly handles middle click on cell', async () => {
     const mockMiddleClick = vi.fn()
-    const { findByText } = render(<HighTable data={mockData} onMouseDownCell={mockMiddleClick} />)
+    const { user, findByText } = render(<HighTable data={mockData} onMouseDownCell={mockMiddleClick} />)
     const cell = await findByText('Name 0')
 
-    fireEvent.mouseDown(cell, { button: 1 })
+    await user.pointer({ keys: '[MouseMiddle>]', target: cell }) // press the middle mouse button without releasing it
 
     expect(mockMiddleClick).toHaveBeenCalledWith(expect.anything(), 1, 0)
   })
@@ -123,7 +125,7 @@ describe('When sorted, HighTable', () => {
   }
 
   it('shows the rows in the right order', async () => {
-    const { findByRole, getByRole, findAllByRole } = render(<HighTable data={sortableDataFrame(data)} />)
+    const { user, findByRole, getByRole, findAllByRole } = render(<HighTable data={sortableDataFrame(data)} />)
 
     expect(getByRole('columnheader', { name: 'ID' })).toBeDefined()
     await findByRole('cell', { name: 'row 0' })
@@ -136,7 +138,7 @@ describe('When sorted, HighTable', () => {
 
     // Click on the Count header to sort by Count
     const countHeader = getByRole('columnheader', { name: 'Count' })
-    fireEvent.click(countHeader)
+    await user.click(countHeader)
     await findAllByRole('cell', { name: 'row 999' })
 
     rows = within(within(getByRole('grid')).getAllByRole('rowgroup')[1]).getAllByRole('row')
@@ -145,21 +147,21 @@ describe('When sorted, HighTable', () => {
 
   it('provides the double click callback with the right row index', async () => {
     const mockDoubleClick = vi.fn()
-    const { findByRole, getByRole } = render(<HighTable data={sortableDataFrame(data)} onDoubleClickCell={mockDoubleClick} />)
+    const { user, findByRole, getByRole } = render(<HighTable data={sortableDataFrame(data)} onDoubleClickCell={mockDoubleClick} />)
     const cell0 = await findByRole('cell', { name: 'row 0' })
 
-    fireEvent.doubleClick(cell0)
+    await user.dblClick(cell0)
 
     expect(mockDoubleClick).toHaveBeenCalledWith(expect.anything(), 0, 0)
     vi.clearAllMocks()
 
     // Click on the Count header to sort by Count
     const countHeader = getByRole('columnheader', { name: 'Count' })
-    fireEvent.click(countHeader)
+    await user.click(countHeader)
 
     const cell999 = await findByRole('cell', { name: 'row 999' })
 
-    fireEvent.doubleClick(cell999)
+    await user.dblClick(cell999)
 
     expect(mockDoubleClick).toHaveBeenCalledWith(expect.anything(), 0, 999)
   })
@@ -276,7 +278,7 @@ describe('in controlled selection state (selection and onSelection props), ', ()
     const start = 2
     const selection = { ranges: [] }
     const onSelectionChange = vi.fn()
-    const { findByRole, queryByRole } = render(<HighTable data={data} selection={selection} onSelectionChange={onSelectionChange}/>)
+    const { user, findByRole, queryByRole } = render(<HighTable data={data} selection={selection} onSelectionChange={onSelectionChange}/>)
     // await because we have to wait for the data to be fetched first
     const cell = await findByRole('cell', { name: 'row 2' })
     expect(onSelectionChange).not.toHaveBeenCalled()
@@ -285,7 +287,7 @@ describe('in controlled selection state (selection and onSelection props), ', ()
     const rowHeader = cell.closest('[role="row"]')?.querySelector('[role="rowheader"]')
     expect(rowHeader).not.toBeNull()
     await act(async () => {
-      rowHeader && await userEvent.click(rowHeader)
+      rowHeader && await user.click(rowHeader)
     })
     expect(onSelectionChange).toHaveBeenCalledWith({ ranges: [{ start, end: start + 1 }], anchor: start })
     expect(queryByRole('row', { selected: true })).toBeNull()
@@ -295,7 +297,7 @@ describe('in controlled selection state (selection and onSelection props), ', ()
     const start = 2
     const selection = { ranges: [{ start, end: start + 1 }], anchor: start }
     const onSelectionChange = vi.fn()
-    const { findByRole } = render(<HighTable data={data} selection={selection} onSelectionChange={onSelectionChange}/>)
+    const { user, findByRole } = render(<HighTable data={data} selection={selection} onSelectionChange={onSelectionChange}/>)
     // await because we have to wait for the data to be fetched first
     const row = await findByRole('row', { selected: true })
     onSelectionChange.mockClear()
@@ -303,7 +305,7 @@ describe('in controlled selection state (selection and onSelection props), ', ()
     const rowHeader = row.querySelector('[role="rowheader"]')
     expect(rowHeader).not.toBeNull()
     await act(async () => {
-      rowHeader && await userEvent.click(rowHeader)
+      rowHeader && await user.click(rowHeader)
     })
     expect(onSelectionChange).toHaveBeenCalledWith({ ranges: [], anchor: start })
   })
@@ -312,7 +314,7 @@ describe('in controlled selection state (selection and onSelection props), ', ()
     const start = 2
     const selection = { ranges: [{ start, end: start + 1 }], anchor: start }
     const onSelectionChange = vi.fn()
-    const { findByRole } = render(<HighTable data={data} selection={selection} onSelectionChange={onSelectionChange}/>)
+    const { user, findByRole } = render(<HighTable data={data} selection={selection} onSelectionChange={onSelectionChange}/>)
     // await because we have to wait for the data to be fetched first
     const other = 5
     const cell = await findByRole('cell', { name: `row ${other}` })
@@ -321,7 +323,6 @@ describe('in controlled selection state (selection and onSelection props), ', ()
     expect(otherRowHeader).not.toBeNull()
     await act(async () => {
       // see https://testing-library.com/docs/user-event/setup/#starting-a-session-per-setup
-      const user = userEvent.setup()
       await user.keyboard('[ShiftLeft>]') // Press Shift (without releasing it)
       otherRowHeader && await user.click(otherRowHeader) // Perform a click with `shiftKey: true`
     })
@@ -411,14 +412,14 @@ describe('in controlled selection state, read-only (selection prop), ', () => {
   it('click on a row number cell does nothing', async () => {
     const start = 2
     const selection = { ranges: [] }
-    const { findByRole, queryByRole } = render(<HighTable data={data} selection={selection}/>)
+    const { user, findByRole, queryByRole } = render(<HighTable data={data} selection={selection}/>)
     // await because we have to wait for the data to be fetched first
     const cell = await findByRole('cell', { name: 'row 2' })
 
     const rowHeader = cell.closest('[role="row"]')?.querySelector('[role="rowheader"]')
     expect(rowHeader).not.toBeNull()
     await act(async () => {
-      rowHeader && await userEvent.click(rowHeader)
+      rowHeader && await user.click(rowHeader)
     })
     expect(queryByRole('row', { selected: true })).toBeNull()
   })
@@ -471,7 +472,7 @@ describe('in uncontrolled selection state (onSelection prop), ', () => {
   it('click on a row number cell calls onSelection with the row selected, and changes the DOM to select the row', async () => {
     const start = 2
     const onSelectionChange = vi.fn()
-    const { findByRole, queryByRole } = render(<HighTable data={data} onSelectionChange={onSelectionChange}/>)
+    const { user, findByRole, queryByRole } = render(<HighTable data={data} onSelectionChange={onSelectionChange}/>)
     // await because we have to wait for the data to be fetched first
     const cell = await findByRole('cell', { name: 'row 2' })
     expect(onSelectionChange).not.toHaveBeenCalled()
@@ -480,7 +481,7 @@ describe('in uncontrolled selection state (onSelection prop), ', () => {
     const rowHeader = cell.closest('[role="row"]')?.querySelector('[role="rowheader"]')
     expect(rowHeader).not.toBeNull()
     await act(async () => {
-      rowHeader && await userEvent.click(rowHeader)
+      rowHeader && await user.click(rowHeader)
     })
     expect(onSelectionChange).toHaveBeenCalledWith({ ranges: [{ start, end: start + 1 }], anchor: start })
     expect(queryByRole('row', { selected: true })?.getAttribute('aria-rowindex')).toBe(`${start + 2}`)
@@ -489,7 +490,7 @@ describe('in uncontrolled selection state (onSelection prop), ', () => {
   it('on data change, onSelection is called with an empty selection and the DOM is updated to unselect the rows', async () => {
     const start = 2
     const onSelectionChange = vi.fn()
-    const { rerender, findByRole, queryByRole } = render(<HighTable data={data} onSelectionChange={onSelectionChange}/>)
+    const { user, rerender, findByRole, queryByRole } = render(<HighTable data={data} onSelectionChange={onSelectionChange}/>)
     // await because we have to wait for the data to be fetched first
     const cell = await findByRole('cell', { name: 'row 2' })
     expect(onSelectionChange).not.toHaveBeenCalled()
@@ -499,7 +500,7 @@ describe('in uncontrolled selection state (onSelection prop), ', () => {
     const rowHeader = cell.closest('[role="row"]')?.querySelector('[role="rowheader"]')
     expect(rowHeader).not.toBeNull()
     await act(async () => {
-      rowHeader && await userEvent.click(rowHeader)
+      rowHeader && await user.click(rowHeader)
     })
     expect(onSelectionChange).toHaveBeenCalledWith({ ranges: [{ start, end: start + 1 }], anchor: start })
 
@@ -565,14 +566,14 @@ describe('in disabled selection state (neither selection nor onSelection props),
   })
 
   it('click on a row number cell does nothing', async () => {
-    const { findByRole, queryByRole } = render(<HighTable data={data}/>)
+    const { user, findByRole, queryByRole } = render(<HighTable data={data}/>)
     // await because we have to wait for the data to be fetched first
     const cell = await findByRole('cell', { name: 'row 2' })
 
     const rowHeader = cell.closest('[role="row"]')?.querySelector('[role="rowheader"]')
     expect(rowHeader).not.toBeNull()
     await act(async () => {
-      rowHeader && await userEvent.click(rowHeader)
+      rowHeader && await user.click(rowHeader)
     })
     expect(queryByRole('row', { selected: true })).toBeNull()
   })
