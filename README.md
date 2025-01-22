@@ -80,6 +80,10 @@ interface TableProps {
   focus?: boolean // focus table on mount? (default true)
   onDoubleClickCell?: (col: number, row: number) => void // double-click handler
   onError?: (error: Error) => void // error handler
+  orderBy?: OrderBy; // order by column (if defined, the component order is controlled by the parent)
+  onOrderByChange?: (orderBy: OrderBy) => void; // orderBy change handler
+  selection?: Selection; // selection state (if defined, the component selection is controlled by the parent)
+  onSelectionChange?: (selection: Selection) => void; // selection change handler
 }
 ```
 
@@ -92,6 +96,27 @@ interface DataFrame {
   // rows are 0-indexed, excludes the header, end is exclusive
   rows(start: number, end: number, orderBy?: string): AsyncRow[] | Promise<Row[]>
   sortable?: boolean
+}
+```
+
+OrderBy is defined as:
+
+```typescript
+interface OrderBy {
+  column: string // column name
+  direction?: "ascending" // sort direction - only ascending is supported
+}
+```
+
+Selection is defined as:
+
+```typescript
+interface Selection {
+  ranges: Array<{
+    start: number // inclusive lower limit, positive integer
+    end: number // exclusive upper limit, positive integer, strictly greater than start (no zero-length ranges).
+  }>; // the rows selection is an array of row index ranges (0-based). The values are indexes of the virtual table (sorted rows), and thus depend on the order.
+  anchor?: number // anchor row used as a reference for shift+click selection. It's a virtual table index (sorted), and thus depends on the order.
 }
 ```
 

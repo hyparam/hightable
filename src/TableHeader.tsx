@@ -1,14 +1,19 @@
-import { RefObject, createRef, useEffect, useMemo, useRef, useState } from 'react'
+import { RefObject, createRef, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
+
+export interface OrderBy {
+  column?: string // column name to sort by. If undefined, the table is unsorted.
+  direction?: 'ascending' // sort direction. Default: 'ascending'
+}
 
 interface TableProps {
   header: string[]
   cacheKey?: string // used to persist column widths
   columnWidths: Array<number | undefined>
-  orderBy?: string | undefined
+  orderBy?: OrderBy // order by column. If undefined, the table is unordered, the sort elements are hidden and the interactions are disabled.
   setColumnWidth: (columnIndex: number, columnWidth: number | undefined) => void
   setColumnWidths: (columnWidths: Array<number | undefined>) => void
-  setOrderBy?: (orderBy: string | undefined) => void
+  onOrderByChange?: (orderBy: OrderBy) => void // callback to call when a user interaction changes the order. The interactions are disabled if undefined.
   dataReady: boolean
 }
 
@@ -34,7 +39,7 @@ export interface ColumnWidth {
  * Render a resizable header for a table.
  */
 export default function TableHeader({
-  header, cacheKey, columnWidths, orderBy, setOrderBy, setColumnWidth, setColumnWidths, dataReady,
+  header, cacheKey, columnWidths, orderBy, onOrderByChange, setColumnWidth, setColumnWidths, dataReady,
 }: TableProps) {
   const [resizing, setResizing] = useState<ResizingState | undefined>()
   const headerRefs = useRef(header.map(() => createRef<HTMLTableCellElement>()))
@@ -133,28 +138,32 @@ export default function TableHeader({
   }, [cacheKey, header, resizing, setColumnWidths, columnWidths, setColumnWidth])
 
   // Function to handle click for changing orderBy
-  function handleOrderByClick(columnHeader: string, e: React.MouseEvent) {
-    // Ignore clicks on resize handle
-    if ((e.target as HTMLElement).tagName === 'SPAN') return
-    if (orderBy === columnHeader) {
-      setOrderBy?.(undefined)
-    } else {
-      setOrderBy?.(columnHeader)
-    }
-  }
+  const getOnOrderByClick = useCallback((columnHeader: string) => {
+    if (!onOrderByChange) return undefined
+    return (e: React.MouseEvent) => {
+      // Ignore clicks on resize handle
+      if ((e.target as HTMLElement).tagName === 'SPAN') return
+      if (orderBy?.column === columnHeader) {
+        onOrderByChange({})
+      } else {
+        onOrderByChange({ column: columnHeader })
+      }
+    }}, [orderBy, onOrderByChange]
+  )
 
   const memoizedStyles = useMemo(() => columnWidths.map(cellStyle), [columnWidths])
 
-  return <thead>
-    <tr aria-rowindex={1}>
+  return <thead role="rowgroup">
+    <tr aria-rowindex={1} role="row">
       <th><span /></th>
       {header.map((columnHeader, columnIndex) =>
         <th
           scope="col"
-          aria-sort={orderBy === columnHeader ? 'ascending' : undefined}
-          className={orderBy === columnHeader ? 'orderby' : undefined}
+          role="columnheader"
+          aria-sort={orderBy?.column === columnHeader ? 'ascending' : undefined}
+          className={orderBy?.column === columnHeader ? 'orderby' : undefined}
           key={columnIndex}
-          onClick={e => handleOrderByClick(columnHeader, e)}
+          onClick={getOnOrderByClick(columnHeader)}
           ref={headerRefs.current[columnIndex]}
           style={memoizedStyles[columnIndex]}
           title={columnHeader}>

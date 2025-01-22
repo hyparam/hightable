@@ -1,8 +1,13 @@
 /**
- * A selection is an array of ordered and non-overlapping ranges.
+ * A selection is modelled as an array of ordered and non-overlapping ranges.
  * The ranges are separated, ie. the end of one range is strictly less than the start of the next range.
  */
-export type Selection = Array<Range>
+export type Ranges = Array<Range>
+
+export interface Selection {
+  ranges: Ranges // rows selection. The values are indexes of the virtual table (sorted rows), and thus depend on the order.
+  anchor?: number // anchor row used as a reference for shift+click selection. It's a virtual table index (sorted), and thus depends on the order.
+}
 
 interface Range {
     start: number // inclusive lower limit, positive integer
@@ -19,123 +24,123 @@ export function isValidRange(range: Range): boolean {
     && range.end > range.start
 }
 
-export function isValidSelection(selection: Selection): boolean {
-  if (selection.length === 0) {
+export function areValidRanges(ranges: Ranges): boolean {
+  if (ranges.length === 0) {
     return true
   }
-  if (selection.some(range => !isValidRange(range))) {
+  if (ranges.some(range => !isValidRange(range))) {
     return false
   }
-  for (let i = 0; i < selection.length - 1; i++) {
-    if (selection[i].end >= selection[i + 1].start) {
+  for (let i = 0; i < ranges.length - 1; i++) {
+    if (ranges[i].end >= ranges[i + 1].start) {
       return false
     }
   }
   return true
 }
 
-export function isSelected({ selection, index }: { selection: Selection, index: number }): boolean {
+export function isSelected({ ranges, index }: { ranges: Ranges, index: number }): boolean {
   if (!isValidIndex(index)) {
     throw new Error('Invalid index')
   }
-  if (!isValidSelection(selection)) {
-    throw new Error('Invalid selection')
+  if (!areValidRanges(ranges)) {
+    throw new Error('Invalid ranges')
   }
-  return selection.some(range => range.start <= index && index < range.end)
+  return ranges.some(range => range.start <= index && index < range.end)
 }
 
-export function areAllSelected({ selection, length }: { selection: Selection, length: number }): boolean {
-  if (!isValidSelection(selection)) {
-    throw new Error('Invalid selection')
+export function areAllSelected({ ranges, length }: { ranges: Ranges, length: number }): boolean {
+  if (!areValidRanges(ranges)) {
+    throw new Error('Invalid ranges')
   }
   if (length && !isValidIndex(length)) {
     throw new Error('Invalid length')
   }
-  return selection.length === 1 && selection[0].start === 0 && selection[0].end === length
+  return ranges.length === 1 && ranges[0].start === 0 && ranges[0].end === length
 }
 
-export function toggleAll({ selection, length }: { selection: Selection, length: number }): Selection {
-  if (!isValidSelection(selection)) {
-    throw new Error('Invalid selection')
+export function toggleAll({ ranges, length }: { ranges: Ranges, length: number }): Ranges {
+  if (!areValidRanges(ranges)) {
+    throw new Error('Invalid ranges')
   }
   if (length && !isValidIndex(length)) {
     throw new Error('Invalid length')
   }
-  if (areAllSelected({ selection, length })) {
+  if (areAllSelected({ ranges, length })) {
     return []
   }
   return [{ start: 0, end: length }]
 }
 
-export function selectRange({ selection, range }: { selection: Selection, range: Range }): Selection {
-  if (!isValidSelection(selection)) {
-    throw new Error('Invalid selection')
+export function selectRange({ ranges, range }: { ranges: Ranges, range: Range }): Ranges {
+  if (!areValidRanges(ranges)) {
+    throw new Error('Invalid ranges')
   }
   if (!isValidRange(range)) {
     throw new Error('Invalid range')
   }
-  const newSelection: Selection = []
+  const newRanges: Ranges = []
   const { start, end } = range
   let rangeIndex = 0
 
   // copy the ranges before the new range
-  while (rangeIndex < selection.length && selection[rangeIndex].end < start) {
-    newSelection.push({ ...selection[rangeIndex] })
+  while (rangeIndex < ranges.length && ranges[rangeIndex].end < start) {
+    newRanges.push({ ...ranges[rangeIndex] })
     rangeIndex++
   }
 
   // merge with the new range
-  while (rangeIndex < selection.length && selection[rangeIndex].start <= end) {
-    range.start = Math.min(range.start, selection[rangeIndex].start)
-    range.end = Math.max(range.end, selection[rangeIndex].end)
+  while (rangeIndex < ranges.length && ranges[rangeIndex].start <= end) {
+    range.start = Math.min(range.start, ranges[rangeIndex].start)
+    range.end = Math.max(range.end, ranges[rangeIndex].end)
     rangeIndex++
   }
-  newSelection.push(range)
+  newRanges.push(range)
 
   // copy the remaining ranges
-  while (rangeIndex < selection.length) {
-    newSelection.push({ ...selection[rangeIndex] })
+  while (rangeIndex < ranges.length) {
+    newRanges.push({ ...ranges[rangeIndex] })
     rangeIndex++
   }
 
-  return newSelection
+  return newRanges
 }
 
-export function unselectRange({ selection, range }: { selection: Selection, range: Range }): Selection {
-  if (!isValidSelection(selection)) {
-    throw new Error('Invalid selection')
+export function unselectRange({ ranges, range }: { ranges: Ranges, range: Range }): Ranges {
+  if (!areValidRanges(ranges)) {
+    throw new Error('Invalid ranges')
   }
   if (!isValidRange(range)) {
     throw new Error('Invalid range')
   }
-  const newSelection: Selection = []
+  const newRanges: Ranges = []
   const { start, end } = range
   let rangeIndex = 0
 
   // copy the ranges before the new range
-  while (rangeIndex < selection.length && selection[rangeIndex].end < start) {
-    newSelection.push({ ...selection[rangeIndex] })
+  while (rangeIndex < ranges.length && ranges[rangeIndex].end < start) {
+    newRanges.push({ ...ranges[rangeIndex] })
     rangeIndex++
   }
 
   // split the ranges intersecting with the new range
-  while (rangeIndex < selection.length && selection[rangeIndex].start < end) {
-    if (selection[rangeIndex].start < start) {
-      newSelection.push({ start: selection[rangeIndex].start, end: start })
+  while (rangeIndex < ranges.length && ranges[rangeIndex].start < end) {
+    if (ranges[rangeIndex].start < start) {
+      newRanges.push({ start: ranges[rangeIndex].start, end: start })
     }
-    if (selection[rangeIndex].end > end) {
-      newSelection.push({ start: end, end: selection[rangeIndex].end })
+    if (ranges[rangeIndex].end > end) {
+      newRanges.push({ start: end, end: ranges[rangeIndex].end })
     }
     rangeIndex++
   }
 
   // copy the remaining ranges
-  while (rangeIndex < selection.length) {
-    newSelection.push({ ...selection[rangeIndex] })
+  while (rangeIndex < ranges.length) {
+    newRanges.push({ ...ranges[rangeIndex] })
     rangeIndex++
   }
 
-  return newSelection
+  return newRanges
 }
 
 /**
@@ -143,38 +148,38 @@ export function unselectRange({ selection, range }: { selection: Selection, rang
  * Both bounds are inclusive.
  * It will handle the shift+click behavior. anchor is the first index clicked, index is the last index clicked.
  */
-export function extendFromAnchor({ selection, anchor, index }: { selection: Selection, anchor?: number, index: number }): Selection {
-  if (!isValidSelection(selection)) {
-    throw new Error('Invalid selection')
+export function extendFromAnchor({ ranges, anchor, index }: { ranges: Ranges, anchor?: number, index: number }): Ranges {
+  if (!areValidRanges(ranges)) {
+    throw new Error('Invalid ranges')
   }
   if (anchor === undefined) {
     // no anchor to start the range, no operation
-    return selection
+    return ranges
   }
   if (!isValidIndex(anchor) || !isValidIndex(index)) {
     throw new Error('Invalid index')
   }
   if (anchor === index) {
     // no operation
-    return selection
+    return ranges
   }
   const range = anchor < index ? { start: anchor, end: index + 1 } : { start: index, end: anchor + 1 }
   if (!isValidRange(range)) {
     throw new Error('Invalid range')
   }
-  if (isSelected({ selection, index: anchor })) {
+  if (isSelected({ ranges, index: anchor })) {
     // select the rest of the range
-    return selectRange({ selection, range })
+    return selectRange({ ranges, range })
   } else {
     // unselect the rest of the range
-    return unselectRange({ selection, range })
+    return unselectRange({ ranges, range })
   }
 }
 
-export function toggleIndex({ selection, index }: { selection: Selection, index: number }): Selection {
+export function toggleIndex({ ranges, index }: { ranges: Ranges, index: number }): Ranges {
   if (!isValidIndex(index)) {
     throw new Error('Invalid index')
   }
   const range = { start: index, end: index + 1 }
-  return isSelected({ selection, index }) ? unselectRange({ selection, range }) : selectRange({ selection, range })
+  return isSelected({ ranges, index }) ? unselectRange({ ranges, range }) : selectRange({ ranges, range })
 }

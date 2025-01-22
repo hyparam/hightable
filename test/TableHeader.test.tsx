@@ -1,6 +1,7 @@
-import { fireEvent, render, waitFor } from '@testing-library/react'
+import { waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import TableHeader, { ColumnWidth, cellStyle, saveColumnWidth } from '../src/TableHeader.js'
+import { render } from './userEvent.js'
 
 vi.stubGlobal('localStorage', (() => {
   let store: Record<string, string> = {}
@@ -76,9 +77,9 @@ describe('TableHeader', () => {
     expect(setColumnWidths).toHaveBeenCalledWith([150, 250, undefined])
   })
 
-  it('handles double click to auto resize', () => {
+  it('handles double click to auto resize', async () => {
     const { columnWidths, setColumnWidth, setColumnWidths } = mockColumnWidths()
-    const { getByTitle } = render(<table>
+    const { user, getByTitle } = render(<table>
       <TableHeader
         cacheKey={cacheKey}
         columnWidths={columnWidths}
@@ -92,7 +93,7 @@ describe('TableHeader', () => {
     const resizeHandle = firstHeader.querySelector('span')
     if (!resizeHandle) throw new Error('Resize handle not found')
 
-    fireEvent.doubleClick(resizeHandle)
+    await user.dblClick(resizeHandle)
     expect(columnWidths).toEqual([100, 200, undefined])
     expect(setColumnWidth).toHaveBeenCalledTimes(2)
     expect(setColumnWidths).toHaveBeenCalledTimes(2)
@@ -100,7 +101,7 @@ describe('TableHeader', () => {
 
   it('handles mouse click and drag to resize', async () => {
     const { columnWidths, setColumnWidth, setColumnWidths } = mockColumnWidths()
-    const { getByTitle } = render(<table>
+    const { user, getByTitle } = render(<table>
       <TableHeader
         cacheKey={cacheKey}
         columnWidths={columnWidths}
@@ -115,9 +116,14 @@ describe('TableHeader', () => {
     const resizeHandle = firstHeader.querySelector('span')
     if (!resizeHandle) throw new Error('Resize handle not found')
 
-    fireEvent.mouseDown(resizeHandle, { clientX: 150 })
-    fireEvent.mouseMove(window, { clientX: 160 })
-    fireEvent.mouseUp(window)
+    await user.pointer([
+      // press the left button on the resize handle, at x=150
+      { keys: '[MouseLeft>]', target: resizeHandle, coords: { x: 150, y: 0 } },
+      // move the pointer to x=160
+      { coords: { x: 160, y: 0 } },
+      // release the left button
+      { keys: '[/MouseLeft]' },
+    ])
 
     expect(setColumnWidth).toHaveBeenCalledWith(0, 110)
 
@@ -129,75 +135,75 @@ describe('TableHeader', () => {
     })
   })
 
-  it('sets orderBy to the column name when a header is clicked', () => {
+  it('sets orderBy to the column name when a header is clicked', async () => {
     const { columnWidths, setColumnWidth, setColumnWidths } = mockColumnWidths()
-    const setOrderBy = vi.fn()
-    const { getByTitle } = render(<table>
+    const onOrderByChange = vi.fn()
+    const { user, getByTitle } = render(<table>
       <TableHeader
         header={header}
         columnWidths={columnWidths}
         setColumnWidth={setColumnWidth}
         setColumnWidths={setColumnWidths}
-        setOrderBy={setOrderBy}
+        onOrderByChange={onOrderByChange}
         dataReady={dataReady} />
     </table>)
 
     const ageHeader = getByTitle('Age')
-    fireEvent.click(ageHeader)
+    await user.click(ageHeader)
 
-    expect(setOrderBy).toHaveBeenCalledWith('Age')
+    expect(onOrderByChange).toHaveBeenCalledWith({ column: 'Age' })
   })
 
-  it('toggles orderBy to undefined when the same header is clicked again', () => {
+  it('toggles orderBy to undefined when the same header is clicked again', async () => {
     const { columnWidths, setColumnWidth, setColumnWidths } = mockColumnWidths()
-    const setOrderBy = vi.fn()
-    const { getByTitle } = render(<table>
+    const onOrderByChange = vi.fn()
+    const { user, getByTitle } = render(<table>
       <TableHeader
         header={header}
         columnWidths={columnWidths}
         setColumnWidth={setColumnWidth}
         setColumnWidths={setColumnWidths}
-        setOrderBy={setOrderBy}
-        orderBy="Age"
+        onOrderByChange={onOrderByChange}
+        orderBy={{ column: 'Age' }}
         dataReady={dataReady} />
     </table>)
 
     const ageHeader = getByTitle('Age')
-    fireEvent.click(ageHeader)
+    await user.click(ageHeader)
 
-    expect(setOrderBy).toHaveBeenCalledWith(undefined)
+    expect(onOrderByChange).toHaveBeenCalledWith({})
   })
 
-  it('changes orderBy to a new column when a different header is clicked', () => {
+  it('changes orderBy to a new column when a different header is clicked', async () => {
     const { columnWidths, setColumnWidth, setColumnWidths } = mockColumnWidths()
-    const setOrderBy = vi.fn()
-    const { getByTitle } = render(<table>
+    const onOrderByChange = vi.fn()
+    const { user, getByTitle } = render(<table>
       <TableHeader
         header={header}
         columnWidths={columnWidths}
         setColumnWidth={setColumnWidth}
         setColumnWidths={setColumnWidths}
-        setOrderBy={setOrderBy}
-        orderBy="Age"
+        onOrderByChange={onOrderByChange}
+        orderBy={{ column: 'Age' }}
         dataReady={dataReady} />
     </table>)
 
     const addressHeader = getByTitle('Address')
-    fireEvent.click(addressHeader)
+    await user.click(addressHeader)
 
-    expect(setOrderBy).toHaveBeenCalledWith('Address')
+    expect(onOrderByChange).toHaveBeenCalledWith({ column: 'Address' })
   })
 
-  it('does not change orderBy when clicking on the resize handle', () => {
+  it('does not change orderBy when clicking on the resize handle', async () => {
     const { columnWidths, setColumnWidth, setColumnWidths } = mockColumnWidths()
-    const setOrderBy = vi.fn()
-    const { getByTitle } = render(<table>
+    const onOrderByChange = vi.fn()
+    const { user, getByTitle } = render(<table>
       <TableHeader
         header={header}
         columnWidths={columnWidths}
         setColumnWidth={setColumnWidth}
         setColumnWidths={setColumnWidths}
-        setOrderBy={setOrderBy}
+        onOrderByChange={onOrderByChange}
         dataReady={dataReady} />
     </table>)
 
@@ -205,9 +211,9 @@ describe('TableHeader', () => {
     const resizeHandle = nameHeader.querySelector('span')
     if (!resizeHandle) throw new Error('Resize handle not found')
 
-    fireEvent.click(resizeHandle)
+    await user.click(resizeHandle)
 
-    expect(setOrderBy).not.toHaveBeenCalled()
+    expect(onOrderByChange).not.toHaveBeenCalled()
   })
 
   it('reloads column widths when cacheKey changes', () => {

@@ -1,23 +1,57 @@
 import { ReactNode, useCallback, useEffect, useMemo, useReducer, useRef } from 'react'
 import { DataFrame, Row, asyncRows } from './dataframe.js'
+import { useInputState } from './hooks.js'
 import { Selection, areAllSelected, extendFromAnchor, isSelected, toggleAll, toggleIndex } from './selection.js'
-import TableHeader, { cellStyle } from './TableHeader.js'
-export {
-  AsyncRow,
-  DataFrame,
-  ResolvablePromise,
-  Row,
-  arrayDataFrame,
-  asyncRows,
-  awaitRow,
-  awaitRows,
-  resolvablePromise,
-  resolvableRow,
-  sortableDataFrame,
-  wrapPromise,
-} from './dataframe.js'
+import TableHeader, { OrderBy, cellStyle } from './TableHeader.js'
+export { AsyncRow, DataFrame, ResolvablePromise, Row, arrayDataFrame, asyncRows, awaitRow, awaitRows, resolvablePromise, resolvableRow, sortableDataFrame, wrapPromise } from './dataframe.js'
 export { rowCache } from './rowCache.js'
+export { Selection } from './selection.js'
+export { OrderBy } from './TableHeader.js'
 export { HighTable }
+
+/**
+ * State of the component
+ */
+export type State = {
+  columnWidths: Array<number | undefined> // width of each column
+  invalidate: boolean // true if the data must be fetched again
+  hasCompleteRow: boolean // true if at least one row is fully resolved (all of its cells)
+  rows: Row[] // slice of the virtual table rows (sorted rows) to render as HTML. It might contain incomplete rows. Rows are expected to include __index__ if sorted.
+  rowsOrderBy: OrderBy // order by column of the rows slice.
+  startIndex: number // offset of the slice of sorted rows to render (rows[0] is the startIndex'th sorted row)
+  data: DataFrame // data frame used in the last rendering
+}
+
+export type Action =
+  | { type: 'SET_ROWS', start: number, rows: Row[], rowsOrderBy: OrderBy, hasCompleteRow: boolean }
+  | { type: 'SET_COLUMN_WIDTH', columnIndex: number, columnWidth: number | undefined }
+  | { type: 'SET_COLUMN_WIDTHS', columnWidths: Array<number | undefined> }
+  | { type: 'DATA_CHANGED', data: DataFrame }
+
+export function reducer(state: State, action: Action): State {
+  switch (action.type) {
+  case 'SET_ROWS':
+    return {
+      ...state,
+      startIndex: action.start,
+      rows: action.rows,
+      rowsOrderBy: action.rowsOrderBy,
+      invalidate: false,
+      hasCompleteRow: state.hasCompleteRow || action.hasCompleteRow,
+    }
+  case 'SET_COLUMN_WIDTH': {
+    const columnWidths = [...state.columnWidths]
+    columnWidths[action.columnIndex] = action.columnWidth
+    return { ...state, columnWidths }
+  }
+  case 'SET_COLUMN_WIDTHS':
+    return { ...state, columnWidths: action.columnWidths }
+  case 'DATA_CHANGED':
+    return { ...state, data: action.data, invalidate: true, hasCompleteRow: false }
+  default:
+    return state
+  }
+}
 
 const rowHeight = 33 // row height px
 
@@ -29,82 +63,19 @@ const rowHeight = 33 // row height px
  */
 type MouseEventCellHandler = (event: React.MouseEvent, col: number, row: number) => void
 
-interface TableProps {
+export interface TableProps {
   data: DataFrame
   cacheKey?: string // used to persist column widths
   overscan?: number // number of rows to fetch outside of the viewport
   padding?: number // number of padding rows to render outside of the viewport
   focus?: boolean // focus table on mount? (default true)
-  tableControl?: TableControl // control the table from outside
-  selectable?: boolean // enable row selection (default false)
   onDoubleClickCell?: MouseEventCellHandler
   onMouseDownCell?: MouseEventCellHandler
   onError?: (error: Error) => void
-}
-
-/**
- * State of the component
- */
-type State = {
-  columnWidths: Array<number | undefined> // width of each column
-  invalidate: boolean // true if the data must be fetched again
-  hasCompleteRow: boolean // true if at least one row is fully resolved (all of its cells)
-  rows: Row[] // slice of the virtual table rows (sorted rows) to render as HTML. It might contain incomplete rows. Rows are expected to include __index__ if sorted.
-  startIndex: number // offset of the slice of sorted rows to render (rows[0] is the startIndex'th sorted row)
-  orderBy?: string // column name to sort by
-  selection: Selection // rows selection. The values are indexes of the virtual table (sorted rows), and thus depend on the order.
-  anchor?: number // anchor row used as a reference for shift+click selection. It's a virtual table index (sorted), and thus depends on the order.
-}
-
-type Action =
-  | { type: 'SET_ROWS', start: number, rows: Row[], hasCompleteRow: boolean }
-  | { type: 'SET_COLUMN_WIDTH', columnIndex: number, columnWidth: number | undefined }
-  | { type: 'SET_COLUMN_WIDTHS', columnWidths: Array<number | undefined> }
-  | { type: 'SET_ORDER', orderBy: string | undefined }
-  | { type: 'DATA_CHANGED' }
-  | { type: 'SET_SELECTION', selection: Selection, anchor?: number }
-
-function reducer(state: State, action: Action): State {
-  switch (action.type) {
-  case 'SET_ROWS':
-    return {
-      ...state,
-      startIndex: action.start,
-      rows: action.rows,
-      invalidate: false,
-      hasCompleteRow: state.hasCompleteRow || action.hasCompleteRow,
-    }
-  case 'SET_COLUMN_WIDTH': {
-    const columnWidths = [...state.columnWidths]
-    columnWidths[action.columnIndex] = action.columnWidth
-    return { ...state, columnWidths }
-  }
-  case 'SET_COLUMN_WIDTHS':
-    return { ...state, columnWidths: action.columnWidths }
-  case 'SET_ORDER': {
-    if (state.orderBy === action.orderBy) {
-      return state
-    } else {
-      // the selection is relative to the order, and must be reset if the order changes
-      return { ...state, orderBy: action.orderBy, rows: [], selection: [], anchor: undefined }
-    }
-  }
-  case 'DATA_CHANGED':
-    return { ...state, invalidate: true, hasCompleteRow: false, selection: [], anchor: undefined }
-  case 'SET_SELECTION':
-    return { ...state, selection: action.selection, anchor: action.anchor }
-  default:
-    return state
-  }
-}
-
-const initialState: State = {
-  columnWidths: [],
-  startIndex: 0,
-  rows: [],
-  invalidate: true,
-  hasCompleteRow: false,
-  selection: [],
+  orderBy?: OrderBy // order by column. If undefined, the table is unordered, the sort elements are hidden and the interactions are disabled.
+  onOrderByChange?: (orderBy: OrderBy) => void // callback to call when a user interaction changes the order. The interactions are disabled if undefined.
+  selection?: Selection // selection and anchor rows. If undefined, the selection is hidden and the interactions are disabled.
+  onSelectionChange?: (selection: Selection) => void // callback to call when a user interaction changes the selection. The interactions are disabled if undefined.
 }
 
 function rowLabel(rowIndex?: number): string {
@@ -115,6 +86,11 @@ function rowLabel(rowIndex?: number): string {
 
 /**
  * Render a table with streaming rows on demand from a DataFrame.
+ *
+ * orderBy: the column to order by. If set, the component is controlled, and the property cannot be unset (undefined) later. If undefined, the component is uncontrolled (internal state). If the data cannot be sorted, it's ignored.
+ * onOrderByChange: the callback to call when the order changes. If undefined, the component order is read-only if controlled (orderBy is set), or disabled if not (or if the data cannot be sorted).
+ * selection: the selected rows and the anchor row. If set, the component is controlled, and the property cannot be unset (undefined) later. If undefined, the component is uncontrolled (internal state).
+ * onSelectionChange: the callback to call when the selection changes. If undefined, the component selection is read-only if controlled (selection is set), or disabled if not.
  */
 export default function HighTable({
   data,
@@ -122,12 +98,24 @@ export default function HighTable({
   overscan = 20,
   padding = 20,
   focus = true,
-  tableControl,
-  selectable = false,
+  orderBy: propOrderBy,
+  onOrderByChange: propOnOrderByChange,
+  selection: propSelection,
+  onSelectionChange: propOnSelectionChange,
   onDoubleClickCell,
   onMouseDownCell,
   onError = console.error,
 }: TableProps) {
+  const initialState: State = {
+    data,
+    columnWidths: [],
+    startIndex: 0,
+    rows: [],
+    rowsOrderBy: {},
+    invalidate: true,
+    hasCompleteRow: false,
+  }
+  const [state, dispatch] = useReducer(reducer, initialState)
   /**
    * The component relies on the model of a virtual table which rows are ordered and only the visible rows are fetched and rendered as HTML <tr> elements.
    * We use two reference domains for the rows:
@@ -136,9 +124,68 @@ export default function HighTable({
    *                  startIndex lives in the table domain: it's the first virtual row to be rendered in HTML.
    * data.rows(dataIndex, dataIndex + 1) is the same row as data.rows(tableIndex, tableIndex + 1, orderBy)
    */
-  const [state, dispatch] = useReducer(reducer, initialState)
+  const { columnWidths, startIndex, rows, rowsOrderBy, invalidate, hasCompleteRow, data: previousData } = state
 
-  const { anchor, columnWidths, startIndex, rows, orderBy, invalidate, hasCompleteRow, selection } = state
+  // Sorting is disabled if the data is not sortable
+  const {
+    value: orderBy,
+    onChange: onOrderByChange,
+    enableInteractions: enableOrderByInteractions,
+  } = useInputState<OrderBy>({
+    value: propOrderBy,
+    onChange: propOnOrderByChange,
+    defaultValue: {},
+    disabled: !data.sortable,
+  })
+
+  // Selection is disabled if the parent passed no props
+  const isSelectionDisabled = propSelection === undefined && propOnSelectionChange === undefined
+  const {
+    value: selection,
+    onChange: onSelectionChange,
+    enableInteractions: enableSelectionInteractions,
+    isControlled: isSelectionControlled,
+  } = useInputState<Selection>({
+    value: propSelection,
+    onChange: propOnSelectionChange,
+    defaultValue: { ranges: [], anchor: undefined },
+    disabled: isSelectionDisabled,
+  })
+
+  const showSelection = selection !== undefined
+  const showSelectionControls = showSelection && enableSelectionInteractions
+  const showCornerSelection = showSelectionControls || showSelection && areAllSelected({ ranges: selection.ranges, length: data.numRows })
+  const getOnSelectAllRows = useCallback(() => {
+    if (!selection || !onSelectionChange) return
+    const { ranges } = selection
+    return () => onSelectionChange({
+      ranges: toggleAll({ ranges, length: data.numRows }),
+      anchor: undefined,
+    })
+  }, [onSelectionChange, data.numRows, selection])
+  const getOnSelectRowClick = useCallback((tableIndex: number) => {
+    if (!selection || !onSelectionChange) return
+    const { ranges, anchor } = selection
+    return (event: React.MouseEvent) => {
+      const useAnchor = event.shiftKey && selection.anchor !== undefined
+      if (useAnchor) {
+        onSelectionChange({ ranges: extendFromAnchor({ ranges, anchor, index: tableIndex }), anchor })
+      } else {
+        onSelectionChange({ ranges: toggleIndex({ ranges, index: tableIndex }), anchor: tableIndex })
+      }
+    }
+  }, [onSelectionChange, selection])
+  const allRowsSelected = useMemo(() => {
+    if (!selection) return false
+    const { ranges } = selection
+    return areAllSelected({ ranges, length: data.numRows })
+  }, [selection, data.numRows])
+  const isRowSelected = useCallback((tableIndex: number) => {
+    if (!selection) return undefined
+    const { ranges } = selection
+    return isSelected({ ranges, index: tableIndex })
+  }, [selection])
+
   const offsetTopRef = useRef(0)
 
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -152,9 +199,13 @@ export default function HighTable({
   const scrollHeight = (data.numRows + 1) * rowHeight
 
   // invalidate when data changes so that columns will auto-resize
-  useEffect(() => {
-    dispatch({ type: 'DATA_CHANGED' })
-  }, [data])
+  if (data !== previousData) {
+    dispatch({ type: 'DATA_CHANGED', data })
+    // if uncontrolled, reset the selection (otherwise, it's the responsibility of the parent to do it if the data changes)
+    if (!isSelectionControlled) {
+      onSelectionChange?.({ ranges: [], anchor: undefined })
+    }
+  }
 
   // handle scrolling
   useEffect(() => {
@@ -172,7 +223,7 @@ export default function HighTable({
       const end = Math.min(data.numRows, endView + overscan)
 
       // Don't update if view is unchanged
-      if (!invalidate && start === startIndex && rows.length === end - start) {
+      if (!invalidate && start === startIndex && rows.length === end - start && rowsOrderBy.column === orderBy?.column ) {
         return
       }
 
@@ -185,7 +236,7 @@ export default function HighTable({
       // Fetch a chunk of rows from the data frame
       try {
         const requestId = ++pendingRequest.current
-        const unwrapped = data.rows(start, end, orderBy)
+        const unwrapped = data.rows(start, end, orderBy?.column)
         const rowsChunk = asyncRows(unwrapped, end - start, data.header)
 
         const updateRows = throttle(() => {
@@ -207,7 +258,7 @@ export default function HighTable({
             resolved.push(resolvedRow)
           }
           offsetTopRef.current = offsetTop
-          dispatch({ type: 'SET_ROWS', start, rows: resolved, hasCompleteRow })
+          dispatch({ type: 'SET_ROWS', start, rows: resolved, hasCompleteRow, rowsOrderBy: { column: orderBy?.column } })
         }, 10)
         updateRows() // initial update
 
@@ -250,15 +301,7 @@ export default function HighTable({
       scroller?.removeEventListener('scroll', handleScroll)
       window.removeEventListener('resize', handleScroll)
     }
-  }, [data, invalidate, orderBy, overscan, padding, rows.length, startIndex, scrollHeight, onError])
-
-  // handle remote control of the table (e.g. sorting)
-  useEffect(() => {
-    tableControl?.publisher.subscribe(dispatch)
-    return () => {
-      tableControl?.publisher.unsubscribe(dispatch)
-    }
-  }, [tableControl])
+  }, [data, invalidate, orderBy?.column, overscan, padding, rows.length, rowsOrderBy.column, startIndex, scrollHeight, onError, dispatch])
 
   /**
    * Validate row length
@@ -289,6 +332,7 @@ export default function HighTable({
       if (str.length > 100) title = str
     }
     return <td
+      role="cell"
       className={str === undefined ? 'pending' : undefined}
       key={col}
       onDoubleClick={e => row === undefined ? console.warn('Cell onDoubleClick is cancelled because row index is undefined') : onDoubleClickCell?.(e, col, row)}
@@ -317,34 +361,13 @@ export default function HighTable({
    */
   const getRowIndexes = useCallback((rowIndex: number): { dataIndex?: number, tableIndex: number } => {
     const tableIndex = startIndex + rowIndex
-    const dataIndex = orderBy === undefined
+    const dataIndex = orderBy?.column === undefined
       ? tableIndex
       : rowIndex >= 0 && rowIndex < rows.length && '__index__' in rows[rowIndex] && typeof rows[rowIndex].__index__ === 'number'
         ? rows[rowIndex].__index__
         : undefined
     return { dataIndex, tableIndex }
   }, [rows, startIndex, orderBy])
-
-  const onRowNumberClick = useCallback(({ useAnchor, tableIndex }: {useAnchor: boolean, tableIndex: number}) => {
-    if (!selectable) return false
-    if (useAnchor) {
-      const newSelection = extendFromAnchor({ selection, anchor, index: tableIndex })
-      // did not throw: we can set the anchor (keep the same)
-      dispatch({ type: 'SET_SELECTION', selection: newSelection, anchor })
-    } else {
-      const newSelection = toggleIndex({ selection, index: tableIndex })
-      // did not throw: we can set the anchor
-      dispatch({ type: 'SET_SELECTION', selection: newSelection, anchor: tableIndex })
-    }
-  }, [selection, anchor, selectable])
-
-  const setColumnWidths = useCallback((columnWidths: Array<number | undefined>) => {
-    dispatch({ type: 'SET_COLUMN_WIDTHS', columnWidths })
-  }, [])
-
-  const setColumnWidth = useCallback((columnIndex: number, columnWidth: number | undefined) => {
-    dispatch({ type: 'SET_COLUMN_WIDTH', columnIndex, columnWidth })
-  }, [])
 
   // add empty pre and post rows to fill the viewport
   const prePadding = Array.from({ length: Math.min(padding, startIndex) }, () => [])
@@ -356,17 +379,26 @@ export default function HighTable({
   const cornerWidth = Math.ceil(Math.log10(data.numRows + 1)) * 4 + 22
   const cornerStyle = useMemo(() => cellStyle(cornerWidth), [cornerWidth])
 
+  const setColumnWidths = useCallback((columnWidths: Array<number | undefined>) => {
+    dispatch({ type: 'SET_COLUMN_WIDTHS', columnWidths })
+  }, [dispatch])
+
+  const setColumnWidth = useCallback((columnIndex: number, columnWidth: number | undefined) => {
+    dispatch({ type: 'SET_COLUMN_WIDTH', columnIndex, columnWidth })
+  }, [dispatch])
+
   // don't render table if header is empty
   if (!data.header.length) return
 
-  return <div className={`table-container${selectable ? ' selectable' : ''}`}>
+  return <div className={`table-container${showSelectionControls ? ' selectable' : ''}`}>
     <div className='table-scroll' ref={scrollRef}>
       <div style={{ height: `${scrollHeight}px` }}>
         <table
           aria-readonly={true}
           aria-colcount={data.header.length + 1 /* don't forget the selection column */}
           aria-rowcount={data.numRows + 1 /* don't forget the header row */}
-          className={`table${data.sortable ? ' sortable' : ''}`}
+          aria-multiselectable={showSelectionControls}
+          className={`table${enableOrderByInteractions ? ' sortable' : ''}`}
           ref={tableRef}
           role='grid'
           style={{ top: `${offsetTopRef.current}px` }}
@@ -379,27 +411,27 @@ export default function HighTable({
             orderBy={orderBy}
             setColumnWidth={setColumnWidth}
             setColumnWidths={setColumnWidths}
-            setOrderBy={orderBy => data.sortable && dispatch({ type: 'SET_ORDER', orderBy })} />
-          <tbody>
+            onOrderByChange={onOrderByChange}
+          />
+          <tbody role="rowgroup">
             {prePadding.map((_, prePaddingIndex) => {
               const { tableIndex, dataIndex } = getRowIndexes(-prePadding.length + prePaddingIndex)
-              return <tr key={tableIndex} aria-rowindex={tableIndex + 2 /* 1-based + the header row */} >
-                <th scope="row" style={cornerStyle}>
-                  {
-                    rowLabel(dataIndex)
-                  }
-                </th>
+              return <tr role="row" key={tableIndex} aria-rowindex={tableIndex + 2 /* 1-based + the header row */} >
+                <th scope="row" role="rowheader" style={cornerStyle}>{
+                  rowLabel(dataIndex)
+                }</th>
               </tr>
             })}
             {rows.map((row, rowIndex) => {
               const { tableIndex, dataIndex } = getRowIndexes(rowIndex)
-              return <tr key={tableIndex} aria-rowindex={tableIndex + 2 /* 1-based + the header row */} title={rowError(row, dataIndex)}
-                className={isSelected({ selection, index: tableIndex }) ? 'selected' : ''}
-                aria-selected={isSelected({ selection, index: tableIndex })}
+              const selected = isRowSelected(tableIndex)
+              return <tr role="row" key={tableIndex} aria-rowindex={tableIndex + 2 /* 1-based + the header row */} title={rowError(row, dataIndex)}
+                className={selected ? 'selected' : ''}
+                aria-selected={selected}
               >
-                <th scope="row" style={cornerStyle} onClick={event => onRowNumberClick({ useAnchor: event.shiftKey, tableIndex })}>
-                  <span>{ rowLabel(dataIndex) }</span>
-                  <input type='checkbox' checked={isSelected({ selection, index: tableIndex })} readOnly={true} />
+                <th scope="row" role="rowheader" style={cornerStyle} onClick={getOnSelectRowClick(tableIndex)}>
+                  <span>{rowLabel(dataIndex)}</span>
+                  { showSelection && <input type='checkbox' checked={selected} readOnly /> }
                 </th>
                 {data.header.map((col, colIndex) =>
                   Cell(row[col], colIndex, dataIndex)
@@ -408,25 +440,24 @@ export default function HighTable({
             })}
             {postPadding.map((_, postPaddingIndex) => {
               const { tableIndex, dataIndex } = getRowIndexes(rows.length + postPaddingIndex)
-              return <tr key={tableIndex} aria-rowindex={tableIndex + 2 /* 1-based + the header row */} >
-                <th scope="row" style={cornerStyle} >
-                  {
-                    rowLabel(dataIndex)
-                  }
-                </th>
+              return <tr role="row" key={tableIndex} aria-rowindex={tableIndex + 2 /* 1-based + the header row */} >
+                <th scope="row" role="rowheader" style={cornerStyle} >{
+                  rowLabel(dataIndex)
+                }</th>
               </tr>
             })}
           </tbody>
         </table>
       </div>
     </div>
-    <div className='table-corner' style={cornerStyle} onClick={() => selectable && dispatch({ type: 'SET_SELECTION', selection: toggleAll({ selection, length: rows.length }), anchor: undefined })}>
+    <div className={`table-corner${showCornerSelection ? ' show-corner-selection' : ''}`} style={cornerStyle} onClick={getOnSelectAllRows()}>
       <span>&nbsp;</span>
-      <input type='checkbox' checked={areAllSelected({ selection, length: rows.length })} readOnly={true} />
+      { showCornerSelection && <input type='checkbox' checked={allRowsSelected} readOnly /> }
     </div>
     <div className='mock-row-label' style={cornerStyle}>&nbsp;</div>
   </div>
 }
+
 
 /**
  * Robust stringification of any value, including json and bigints.
@@ -473,46 +504,5 @@ export function throttle(fn: () => void, wait: number): () => void {
       // schedule trailing call
       pending = true
     }
-  }
-}
-
-interface Publisher<T> {
-  subscribe: (fn: (data: T) => void) => void
-  unsubscribe: (fn: (data: T) => void) => void
-}
-
-interface PubSub<T> extends Publisher<T> {
-  publish: (data: T) => void
-}
-
-export interface TableControl {
-  publisher: Publisher<Action>
-  setOrderBy: (columnName: string) => void
-}
-
-function createPubSub<T>(): PubSub<T> {
-  const subscribers = new Set<(data: T) => void>()
-  return {
-    subscribe(fn: (data: T) => void) {
-      subscribers.add(fn)
-    },
-    unsubscribe(fn: (data: T) => void) {
-      subscribers.delete(fn)
-    },
-    publish(data: T) {
-      for (const fn of subscribers) {
-        fn(data)
-      }
-    },
-  }
-}
-
-export function createTableControl(): TableControl {
-  const publisher = createPubSub<Action>()
-  return {
-    publisher,
-    setOrderBy(columnName: string) {
-      publisher.publish({ type: 'SET_ORDER', orderBy: columnName })
-    },
   }
 }
