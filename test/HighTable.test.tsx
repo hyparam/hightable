@@ -4,6 +4,28 @@ import { sortableDataFrame } from '../src/dataframe.js'
 import HighTable from '../src/HighTable.js'
 import { render } from './userEvent.js'
 
+const data = {
+  header: ['ID', 'Count'],
+  numRows: 1000,
+  rows: (start: number, end: number) => Promise.resolve(
+    Array.from({ length: end - start }, (_, index) => ({
+      ID: 'row ' + (index + start),
+      Count: 1000 - start - index,
+    }))
+  ),
+}
+
+const otherData = {
+  header: ['ID', 'Count'],
+  numRows: 1000,
+  rows: (start: number, end: number) => Promise.resolve(
+    Array.from({ length: end - start }, (_, index) => ({
+      ID: 'other ' + (index + start),
+      Count: 1000 - start - index,
+    }))
+  ),
+}
+
 describe('HighTable', () => {
   const mockData = {
     header: ['ID', 'Name', 'Age'],
@@ -102,16 +124,6 @@ describe('HighTable', () => {
 
 
 describe('When sorted, HighTable', () => {
-  const data = {
-    header: ['ID', 'Count'],
-    numRows: 1000,
-    rows: (start: number, end: number) => Promise.resolve(
-      Array.from({ length: end - start }, (_, index) => ({
-        ID: 'row ' + (index + start),
-        Count: 1000 - start - index,
-      }))
-    ),
-  }
 
   function checkRowContents(row: HTMLElement, rowNumber: string, ID: string, Count: string) {
     const selectionCell = within(row).getByRole('rowheader')
@@ -168,27 +180,8 @@ describe('When sorted, HighTable', () => {
 })
 
 describe('in controlled selection state (selection and onSelection props), ', () => {
-  const data = {
-    header: ['ID', 'Count'],
-    numRows: 1000,
-    rows: (start: number, end: number) => Promise.resolve(
-      Array.from({ length: end - start }, (_, index) => ({
-        ID: 'row ' + (index + start),
-        Count: 1000 - start - index,
-      }))
-    ),
-  }
 
-  const otherData = {
-    header: ['ID', 'Count'],
-    numRows: 1000,
-    rows: (start: number, end: number) => Promise.resolve(
-      Array.from({ length: end - start }, (_, index) => ({
-        ID: 'other ' + (index + start),
-        Count: 1000 - start - index,
-      }))
-    ),
-  }
+
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -331,27 +324,8 @@ describe('in controlled selection state (selection and onSelection props), ', ()
 })
 
 describe('in controlled selection state, read-only (selection prop), ', () => {
-  const data = {
-    header: ['ID', 'Count'],
-    numRows: 1000,
-    rows: (start: number, end: number) => Promise.resolve(
-      Array.from({ length: end - start }, (_, index) => ({
-        ID: 'row ' + (index + start),
-        Count: 1000 - start - index,
-      }))
-    ),
-  }
 
-  const otherData = {
-    header: ['ID', 'Count'],
-    numRows: 1000,
-    rows: (start: number, end: number) => Promise.resolve(
-      Array.from({ length: end - start }, (_, index) => ({
-        ID: 'other ' + (index + start),
-        Count: 1000 - start - index,
-      }))
-    ),
-  }
+
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -426,27 +400,8 @@ describe('in controlled selection state, read-only (selection prop), ', () => {
 })
 
 describe('in uncontrolled selection state (onSelection prop), ', () => {
-  const data = {
-    header: ['ID', 'Count'],
-    numRows: 1000,
-    rows: (start: number, end: number) => Promise.resolve(
-      Array.from({ length: end - start }, (_, index) => ({
-        ID: 'row ' + (index + start),
-        Count: 1000 - start - index,
-      }))
-    ),
-  }
 
-  const otherData = {
-    header: ['ID', 'Count'],
-    numRows: 1000,
-    rows: (start: number, end: number) => Promise.resolve(
-      Array.from({ length: end - start }, (_, index) => ({
-        ID: 'other ' + (index + start),
-        Count: 1000 - start - index,
-      }))
-    ),
-  }
+
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -533,27 +488,8 @@ describe('in uncontrolled selection state (onSelection prop), ', () => {
 })
 
 describe('in disabled selection state (neither selection nor onSelection props), ', () => {
-  const data = {
-    header: ['ID', 'Count'],
-    numRows: 1000,
-    rows: (start: number, end: number) => Promise.resolve(
-      Array.from({ length: end - start }, (_, index) => ({
-        ID: 'row ' + (index + start),
-        Count: 1000 - start - index,
-      }))
-    ),
-  }
 
-  const otherData = {
-    header: ['ID', 'Count'],
-    numRows: 1000,
-    rows: (start: number, end: number) => Promise.resolve(
-      Array.from({ length: end - start }, (_, index) => ({
-        ID: 'other ' + (index + start),
-        Count: 1000 - start - index,
-      }))
-    ),
-  }
+
 
   beforeEach(() => {
     vi.clearAllMocks()
