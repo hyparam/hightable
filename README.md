@@ -103,8 +103,8 @@ OrderBy is defined as:
 
 ```typescript
 interface OrderBy {
-  column: string; // column name
-  direction?: "ascending"; // sort direction - only ascending is supported
+  column: string // column name
+  direction?: "ascending" // sort direction - only ascending is supported
 }
 ```
 
@@ -113,10 +113,10 @@ Selection is defined as:
 ```typescript
 interface Selection {
   ranges: Array<{
-    start: number; // inclusive lower limit, positive integer
-    end: number; // exclusive upper limit, positive integer, strictly greater than start (no zero-length ranges).
+    start: number // inclusive lower limit, positive integer
+    end: number // exclusive upper limit, positive integer, strictly greater than start (no zero-length ranges).
   }>; // the rows selection is an array of row index ranges (0-based). The values are indexes of the virtual table (sorted rows), and thus depend on the order.
-  anchor?: number; // anchor row used as a reference for shift+click selection. It's a virtual table index (sorted), and thus depends on the order.
+  anchor?: number // anchor row used as a reference for shift+click selection. It's a virtual table index (sorted), and thus depends on the order.
 }
 ```
 
