@@ -2,7 +2,7 @@ import { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 're
 import { DataFrame } from './dataframe.js'
 import { useInputState } from './hooks.js'
 import { PartialRow } from './row.js'
-import { Selection, areAllSelected, extendFromAnchor, isSelected, toggleAll, toggleIndex } from './selection.js'
+import { Selection, areAllSelected, extendFromAnchor, isSelected, toDataSelection, toTableSelection, toggleAll, toggleIndex } from './selection.js'
 import TableHeader, { OrderBy, cellStyle } from './TableHeader.js'
 export { DataFrame, arrayDataFrame, sortableDataFrame } from './dataframe.js'
 export { ResolvablePromise, resolvablePromise, wrapPromise } from './promise.js'
@@ -145,26 +145,33 @@ export default function HighTable({
     })
   }, [onSelectionChange, data.numRows, selection])
   const getOnSelectRowClick = useCallback((tableIndex: number) => {
+    // TODO(SL): as the conversion between table and data indexes can take time (promise), we should throttle
+    // and cancel a previous conversion if a new one is requested.
     if (!selection || !onSelectionChange) return
-    const { ranges, anchor } = selection
     return (event: React.MouseEvent) => {
       const useAnchor = event.shiftKey && selection.anchor !== undefined
-      if (useAnchor) {
-        onSelectionChange({ ranges: extendFromAnchor({ ranges, anchor, index: tableIndex }), anchor })
-      } else {
-        onSelectionChange({ ranges: toggleIndex({ ranges, index: tableIndex }), anchor: tableIndex })
-      }
+      toTableSelection({ selection, orderBy, data }).then(selection => {
+        const { ranges, anchor } = selection
+        if (useAnchor) {
+          return { ranges: extendFromAnchor({ ranges, anchor, index: tableIndex }), anchor }
+        } else {
+          return { ranges: toggleIndex({ ranges, index: tableIndex }), anchor: tableIndex }
+        }
+      }).then((tableSelection) => toDataSelection({ selection: tableSelection, orderBy, data })).then((selection) => {
+        onSelectionChange(selection)
+      })
     }
-  }, [onSelectionChange, selection])
+  }, [onSelectionChange, selection, data, orderBy])
   const allRowsSelected = useMemo(() => {
     if (!selection) return false
     const { ranges } = selection
     return areAllSelected({ ranges, length: data.numRows })
   }, [selection, data.numRows])
-  const isRowSelected = useCallback((tableIndex: number) => {
+  const isRowSelected = useCallback((dataIndex: number | undefined) => {
     if (!selection) return undefined
+    if (dataIndex === undefined) return undefined
     const { ranges } = selection
-    return isSelected({ ranges, index: tableIndex })
+    return isSelected({ ranges, index: dataIndex })
   }, [selection])
 
   // total scrollable height
