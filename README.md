@@ -94,7 +94,8 @@ interface DataFrame {
   header: string[]
   numRows: number
   // rows are 0-indexed, excludes the header, end is exclusive
-  rows(start: number, end: number, orderBy?: string): AsyncRow[] | Promise<Row[]>
+  // if orderBy is defined, start and end are applied on the sorted rows
+  rows(start: number, end: number, orderBy?: string): AsyncRow[]
   sortable?: boolean
 }
 ```
@@ -129,19 +130,21 @@ Ensure your rows function handles the orderBy parameter appropriately to return 
 ## Async DataFrame
 
 HighTable supports async loading of individual cells.
-Dataframes can return `AsyncRow[]` to return future cell data to the table.
+Dataframes return future cell data to the table as `AsyncRow[]`.
 
 ```javascript
 const dataframe = {
   header: ['a', 'b'],
   numRows: 10,
   rows(start, end) {
-    // resolvableRow makes a row where each column value is a wrapped promise with .resolve() and .reject() methods
+    // resolvableRow makes a row where each column value is a wrapped promise with .resolve() and .reject() methods;
+    // the row also contains a wrapped promise for the row index
     const futureRows = Array.from({ length: end - start }, () => resolvableRow(this.header))
     for (let row = start; row < end; row++) {
       for (const col of this.header) {
-        fetchCell(row, col).then(value => futureRows[row - start][col].resolve(value))
+        fetchCell(row, col).then(value => futureRows[row - start].cells[col].resolve(value))
       }
+      futureRows[row - start].index.resolve(row)
     }
     return futureRows
   },

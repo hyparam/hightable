@@ -2,18 +2,39 @@ type WrappedPromise<T> = Promise<T> & {
   resolved?: T
   rejected?: Error
 }
+// TODO(SL) maybe improve the type or structure so that the user does not provide a simple promise
+// maybe force adding a "pending: true" key while it's not resolved or rejected?
+// eg: {pending: true} | {resolved: T} | {rejected: Error}
 
 /**
  * A row where each cell is a promise.
  * The promise must be wrapped with `wrapPromise` so that HighTable can render
  * the state synchronously.
  */
-export type AsyncRow = Record<string, WrappedPromise<any>>
+export interface AsyncRow {
+  cells: Record<string, WrappedPromise<any>>
+  index: WrappedPromise<number>
+}
+
+type Cells = Record<string, any>
 
 /**
  * A row where each cell is a resolved value.
  */
-export type Row = Record<string, any>
+export interface Row {
+  cells: Cells
+  index: number
+}
+
+export interface PartialRow {
+  index?: number
+  cells: Cells
+}
+
+export interface ResolvableRow {
+  cells: Record<string, ResolvablePromise<any>>
+  index: ResolvablePromise<number>
+}
 
 /**
  * Streamable row data
@@ -22,12 +43,16 @@ export interface DataFrame {
   header: string[]
   numRows: number
   // Rows are 0-indexed, excludes the header, end is exclusive
-  rows(start: number, end: number, orderBy?: string): AsyncRow[] | Promise<Row[]>
+  // if orderBy is provided, start and end are applied to the sorted rows
+  rows(start: number, end: number, orderBy?: string): AsyncRow[]
   sortable?: boolean
 }
 
-export function resolvableRow(header: string[]): { [key: string]: ResolvablePromise<any> } {
-  return Object.fromEntries(header.map(key => [key, resolvablePromise<any>()]))
+export function resolvableRow(header: string[]): ResolvableRow {
+  return {
+    index: resolvablePromise<number>(),
+    cells: Object.fromEntries(header.map(key => [key, resolvablePromise<any>()])),
+  }
 }
 
 /**
@@ -35,8 +60,7 @@ export function resolvableRow(header: string[]): { [key: string]: ResolvableProm
  * Helpful when you want to define a DataFrame with simple async fetching of rows.
  * This function turns future data into a "grid" of wrapped promises.
  */
-export function asyncRows(rows: AsyncRow[] | Promise<Row[]>, numRows: number, header: string[]): AsyncRow[] {
-  if (Array.isArray(rows)) return rows
+export function asyncRows(rows: Promise<Row[]>, numRows: number, header: string[]): AsyncRow[] {
   // Make grid of resolvable promises
   const wrapped = new Array(numRows).fill(null).map(_ => resolvableRow(header))
   rows.then(rows => {
@@ -46,20 +70,17 @@ export function asyncRows(rows: AsyncRow[] | Promise<Row[]>, numRows: number, he
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i]
       for (const key of header) {
-        wrapped[i][key].resolve(row[key])
+        wrapped[i].cells[key].resolve(row.cells[key])
       }
-      // resolve the row index if present
-      if (!('__index__' in wrapped) && '__index__' in row && typeof row.__index__ === 'number') {
-        wrapped[i].__index__ = resolvablePromise<number>()
-        wrapped[i].__index__.resolve(row.__index__)
-      }
+      wrapped[i].index.resolve(row.index)
     }
   }).catch(error => {
     // Reject all promises on error
     for (let i = 0; i < numRows; i++) {
       for (const key of header) {
-        wrapped[i][key].reject(error)
+        wrapped[i].cells[key].reject(error)
       }
+      wrapped[i].index.reject(error)
     }
   })
   return wrapped
@@ -109,30 +130,27 @@ export function resolvablePromise<T>(): ResolvablePromise<T> {
  */
 export function sortableDataFrame(data: DataFrame): DataFrame {
   if (data.sortable) return data // already sortable
-  // Fetch all rows and add __index__ column
+  // Fetch all rows
   let all: Promise<Row[]>
   return {
     ...data,
-    rows(start: number, end: number, orderBy?: string): AsyncRow[] | Promise<Row[]> {
+    rows(start: number, end: number, orderBy?: string): AsyncRow[] {
       if (orderBy) {
         if (!data.header.includes(orderBy)) {
-          // '__index__' is not allowed, and it would not make sense anyway
-          // as it's the same as orderBy=undefined, since we only support ascending order
           throw new Error(`Invalid orderBy field: ${orderBy}`)
         }
         if (!all) {
-          // Fetch all rows and add __index__ column (if not already present)
+          // Fetch all rows
           all = awaitRows(data.rows(0, data.numRows))
-            .then(rows => rows.map((row, i) => ({ __index__: i, ...row })))
         }
         const sorted = all.then(all => {
           return all.sort((a, b) => {
-            if (a[orderBy] < b[orderBy]) return -1
-            if (a[orderBy] > b[orderBy]) return 1
+            if (a.cells[orderBy] < b.cells[orderBy]) return -1
+            if (a.cells[orderBy] > b.cells[orderBy]) return 1
             return 0
           }).slice(start, end)
         })
-        return sorted
+        return asyncRows(sorted, end - start, data.header)
       } else {
         return data.rows(start, end)
       }
@@ -144,26 +162,34 @@ export function sortableDataFrame(data: DataFrame): DataFrame {
 /**
  * Await all promises in an AsyncRow and return resolved row.
  */
-export function awaitRow(row: AsyncRow): Promise<Row> {
-  return Promise.all(Object.values(row))
-    .then(values => Object.fromEntries(Object.keys(row).map((key, i) => [key, values[i]])))
+export async function awaitRow(row: AsyncRow): Promise<Row> {
+  const indexPromise = row.index
+  const cellPromises = Object.values(row.cells)
+  const cellKeys = Object.keys(row.cells)
+  const [resolvedIndex, ...resolvedOtherValues] = await Promise.all([indexPromise, ...cellPromises])
+  return {
+    index: resolvedIndex,
+    cells: Object.fromEntries(cellKeys.map((key, i) => [key, resolvedOtherValues[i]])),
+  }
 }
 
 /**
  * Await all promises in list of AsyncRows and return resolved rows.
  */
-export function awaitRows(rows: AsyncRow[] | Promise<Row[]>): Promise<Row[]> {
-  if (rows instanceof Promise) return rows
+export function awaitRows(rows: AsyncRow[]): Promise<Row[]> {
   return Promise.all(rows.map(awaitRow))
 }
 
-export function arrayDataFrame(data: Row[]): DataFrame {
-  if (!data.length) return { header: [], numRows: 0, rows: () => Promise.resolve([]) }
+export function arrayDataFrame(data: Cells[]): DataFrame {
+  if (!data.length) return { header: [], numRows: 0, rows: () => [] }
   return {
     header: Object.keys(data[0]),
     numRows: data.length,
-    rows(start: number, end: number): Promise<Row[]> {
-      return Promise.resolve(data.slice(start, end))
+    rows(start: number, end: number): AsyncRow[] {
+      return data.slice(start, end).map((cells, i) => ({
+        index: wrapPromise(start + i),
+        cells: Object.fromEntries(Object.entries(cells).map(([key, value]) => [key, wrapPromise(value)])),
+      }))
     },
   }
 }

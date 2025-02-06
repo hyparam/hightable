@@ -1,5 +1,5 @@
 import { ReactNode, useCallback, useEffect, useMemo, useReducer, useRef } from 'react'
-import { DataFrame, Row, asyncRows } from './dataframe.js'
+import { DataFrame, PartialRow } from './dataframe.js'
 import { useInputState } from './hooks.js'
 import { Selection, areAllSelected, extendFromAnchor, isSelected, toggleAll, toggleIndex } from './selection.js'
 import TableHeader, { OrderBy, cellStyle } from './TableHeader.js'
@@ -16,14 +16,14 @@ export type State = {
   columnWidths: Array<number | undefined> // width of each column
   invalidate: boolean // true if the data must be fetched again
   hasCompleteRow: boolean // true if at least one row is fully resolved (all of its cells)
-  rows: Row[] // slice of the virtual table rows (sorted rows) to render as HTML. It might contain incomplete rows. Rows are expected to include __index__ if sorted.
+  rows: PartialRow[] // slice of the virtual table rows (sorted rows) to render as HTML. A row might have contain incomplete rows (not all the cells, or no index).
   rowsOrderBy: OrderBy // order by column of the rows slice.
   startIndex: number // offset of the slice of sorted rows to render (rows[0] is the startIndex'th sorted row)
   data: DataFrame // data frame used in the last rendering
 }
 
 export type Action =
-  | { type: 'SET_ROWS', start: number, rows: Row[], rowsOrderBy: OrderBy, hasCompleteRow: boolean }
+  | { type: 'SET_ROWS', start: number, rows: PartialRow[], rowsOrderBy: OrderBy, hasCompleteRow: boolean }
   | { type: 'SET_COLUMN_WIDTH', columnIndex: number, columnWidth: number | undefined }
   | { type: 'SET_COLUMN_WIDTHS', columnWidths: Array<number | undefined> }
   | { type: 'DATA_CHANGED', data: DataFrame }
@@ -236,23 +236,25 @@ export default function HighTable({
       // Fetch a chunk of rows from the data frame
       try {
         const requestId = ++pendingRequest.current
-        const unwrapped = data.rows(start, end, orderBy?.column)
-        const rowsChunk = asyncRows(unwrapped, end - start, data.header)
+        const rowsChunk = data.rows(start, end, orderBy?.column)
 
         const updateRows = throttle(() => {
-          const resolved: Row[] = []
+          const resolved: PartialRow[] = []
           let hasCompleteRow = false // true if at least one row is fully resolved
-          for (const row of rowsChunk) {
-            // Return only resolved values
-            const resolvedRow: Row = {}
+          for (const asyncRow of rowsChunk) {
+            const resolvedRow: PartialRow = { cells: {} }
             let isRowComplete = true
-            for (const [key, promise] of Object.entries(row)) {
-              // it might or not include __index__
+            for (const [key, promise] of Object.entries(asyncRow.cells)) {
               if ('resolved' in promise) {
-                resolvedRow[key] = promise.resolved
+                resolvedRow.cells[key] = promise.resolved
               } else {
                 isRowComplete = false
               }
+            }
+            if ('resolved' in asyncRow.index) {
+              resolvedRow.index = asyncRow.index.resolved
+            } else {
+              isRowComplete = false
             }
             if (isRowComplete) hasCompleteRow = true
             resolved.push(resolvedRow)
@@ -263,8 +265,8 @@ export default function HighTable({
         updateRows() // initial update
 
         // Subscribe to data updates
-        for (const row of rowsChunk) {
-          for (const [_, promise] of Object.entries(row)) {
+        for (const asyncRow of rowsChunk) {
+          for (const promise of [asyncRow.index, ...Object.values(asyncRow.cells)] ) {
             promise.then(() => {
               if (pendingRequest.current === requestId) {
                 updateRows()
@@ -274,9 +276,10 @@ export default function HighTable({
         }
 
         // Await all pending promises
-        for (const row of rowsChunk) {
-          for (const promise of Object.values(row)) {
+        for (const asyncRow of rowsChunk) {
+          for (const promise of [asyncRow.index, ...Object.values(asyncRow.cells)]) {
             await promise
+            // TODO(SL): shouldn't it be await Promise.all([...]) to run them in parallel?
           }
         }
 
@@ -306,11 +309,10 @@ export default function HighTable({
   /**
    * Validate row length
    */
-  function rowError(row: Row, index?: number): string | undefined {
-    // __index__ is considered a reserved field - an error will be displayed if a column is named '__index__' in data.header
-    const numKeys = Object.keys(row).filter(d => d !== '__index__').length
+  function rowError(row: PartialRow): string | undefined {
+    const numKeys = Object.keys(row.cells).length
     if (numKeys > 0 && numKeys !== data.header.length) {
-      return `Row ${rowLabel(index)} length ${numKeys} does not match header length ${data.header.length}`
+      return `Row ${rowLabel(row.index)} length ${numKeys} does not match header length ${data.header.length}`
     }
   }
 
@@ -349,25 +351,6 @@ export default function HighTable({
       tableRef.current?.focus()
     }
   }, [focus])
-
-  /**
-   * Get the row index in original (unsorted) data frame, and in the sorted virtual table.
-   *
-   * @param rowIndex row index in the "rows" slice
-   *
-   * @returns an object with two properties:
-   *  dataIndex:  row index in the original (unsorted) data frame
-   *  tableIndex: row index in the virtual table (sorted)
-   */
-  const getRowIndexes = useCallback((rowIndex: number): { dataIndex?: number, tableIndex: number } => {
-    const tableIndex = startIndex + rowIndex
-    const dataIndex = orderBy?.column === undefined
-      ? tableIndex
-      : rowIndex >= 0 && rowIndex < rows.length && '__index__' in rows[rowIndex] && typeof rows[rowIndex].__index__ === 'number'
-        ? rows[rowIndex].__index__
-        : undefined
-    return { dataIndex, tableIndex }
-  }, [rows, startIndex, orderBy])
 
   // add empty pre and post rows to fill the viewport
   const prePadding = Array.from({ length: Math.min(padding, startIndex) }, () => [])
@@ -415,17 +398,16 @@ export default function HighTable({
           />
           <tbody role="rowgroup">
             {prePadding.map((_, prePaddingIndex) => {
-              const { tableIndex, dataIndex } = getRowIndexes(-prePadding.length + prePaddingIndex)
+              const tableIndex = startIndex - prePadding.length + prePaddingIndex
               return <tr role="row" key={tableIndex} aria-rowindex={tableIndex + 2 /* 1-based + the header row */} >
-                <th scope="row" role="rowheader" style={cornerStyle}>{
-                  rowLabel(dataIndex)
-                }</th>
+                <th scope="row" role="rowheader" style={cornerStyle}></th>
               </tr>
             })}
             {rows.map((row, rowIndex) => {
-              const { tableIndex, dataIndex } = getRowIndexes(rowIndex)
+              const tableIndex = startIndex + rowIndex
+              const dataIndex = row?.index
               const selected = isRowSelected(tableIndex)
-              return <tr role="row" key={tableIndex} aria-rowindex={tableIndex + 2 /* 1-based + the header row */} title={rowError(row, dataIndex)}
+              return <tr role="row" key={tableIndex} aria-rowindex={tableIndex + 2 /* 1-based + the header row */} title={rowError(row)}
                 className={selected ? 'selected' : ''}
                 aria-selected={selected}
               >
@@ -434,16 +416,14 @@ export default function HighTable({
                   { showSelection && <input type='checkbox' checked={selected} readOnly /> }
                 </th>
                 {data.header.map((col, colIndex) =>
-                  Cell(row[col], colIndex, dataIndex)
+                  Cell(row?.cells[col], colIndex, dataIndex)
                 )}
               </tr>
             })}
             {postPadding.map((_, postPaddingIndex) => {
-              const { tableIndex, dataIndex } = getRowIndexes(rows.length + postPaddingIndex)
+              const tableIndex = startIndex + rows.length + postPaddingIndex
               return <tr role="row" key={tableIndex} aria-rowindex={tableIndex + 2 /* 1-based + the header row */} >
-                <th scope="row" role="rowheader" style={cornerStyle} >{
-                  rowLabel(dataIndex)
-                }</th>
+                <th scope="row" role="rowheader" style={cornerStyle} ></th>
               </tr>
             })}
           </tbody>

@@ -1,42 +1,46 @@
 import { act, fireEvent, waitFor, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { sortableDataFrame } from '../src/dataframe.js'
+import { sortableDataFrame, wrapPromise } from '../src/dataframe.js'
 import HighTable from '../src/HighTable.js'
 import { render } from './userEvent.js'
 
 const data = {
   header: ['ID', 'Count'],
   numRows: 1000,
-  rows: (start: number, end: number) => Promise.resolve(
-    Array.from({ length: end - start }, (_, index) => ({
-      ID: 'row ' + (index + start),
-      Count: 1000 - start - index,
-    }))
-  ),
+  rows: (start: number, end: number) => Array.from({ length: end - start }, (_, index) => ({
+    index: wrapPromise(index + start),
+    cells: {
+      ID: wrapPromise('row ' + (index + start)),
+      Count: wrapPromise(1000 - start - index),
+    },
+  })),
 }
 
 const otherData = {
   header: ['ID', 'Count'],
   numRows: 1000,
-  rows: (start: number, end: number) => Promise.resolve(
-    Array.from({ length: end - start }, (_, index) => ({
-      ID: 'other ' + (index + start),
-      Count: 1000 - start - index,
-    }))
-  ),
+  rows: (start: number, end: number) => Array.from({ length: end - start }, (_, index) => ({
+    index: wrapPromise(index + start),
+    cells: {
+      ID: wrapPromise('other ' + (index + start)),
+      Count: wrapPromise(1000 - start - index),
+    },
+  })),
 }
 
 describe('HighTable', () => {
   const mockData = {
     header: ['ID', 'Name', 'Age'],
     numRows: 100,
-    rows: vi.fn((start, end) => Promise.resolve(
-      Array.from({ length: end - start }, (_, index) => ({
-        ID: index + start,
-        Name: 'Name ' + (index + start),
-        Age: 20 + index % 50,
-      }))
-    )),
+    rows: vi.fn((start, end) => Array.from({ length: end - start }, (_, index) => ({
+      index: wrapPromise(index + start),
+      cells: {
+        ID: wrapPromise(index + start),
+        Name: wrapPromise('Name ' + (index + start)),
+        Age: wrapPromise(20 + index % 50),
+      },
+    }))
+    ),
   }
 
   beforeEach(() => {
@@ -62,7 +66,7 @@ describe('HighTable', () => {
   })
 
   it('creates the rows after having fetched the data', async () => {
-    const { findByRole, queryByText, queryByRole } = render(<HighTable data={mockData}/>)
+    const { findByRole, queryByRole } = render(<HighTable data={mockData}/>)
     expect(queryByRole('cell', { name: 'Name 0' })).toBeNull()
     // await because we have to wait for the data to be fetched first
     await findByRole('cell', { name: 'Name 0' })
@@ -180,9 +184,6 @@ describe('When sorted, HighTable', () => {
 })
 
 describe('in controlled selection state (selection and onSelection props), ', () => {
-
-
-
   beforeEach(() => {
     vi.clearAllMocks()
   })
@@ -324,9 +325,6 @@ describe('in controlled selection state (selection and onSelection props), ', ()
 })
 
 describe('in controlled selection state, read-only (selection prop), ', () => {
-
-
-
   beforeEach(() => {
     vi.clearAllMocks()
   })
@@ -400,9 +398,6 @@ describe('in controlled selection state, read-only (selection prop), ', () => {
 })
 
 describe('in uncontrolled selection state (onSelection prop), ', () => {
-
-
-
   beforeEach(() => {
     vi.clearAllMocks()
   })
@@ -488,9 +483,6 @@ describe('in uncontrolled selection state (onSelection prop), ', () => {
 })
 
 describe('in disabled selection state (neither selection nor onSelection props), ', () => {
-
-
-
   beforeEach(() => {
     vi.clearAllMocks()
   })
