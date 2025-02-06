@@ -201,6 +201,94 @@ function copy(selection: Selection): Selection {
   }
 }
 
+export interface SortIndex {
+  orderBy: OrderBy
+  dataIndexes: number[] // TODO(SL) use a typed array?
+  tableIndexes: number[] // TODO(SL) use a typed array?
+}
+
+/**
+ * Get the sort index of the data frame, for a given order.
+ *
+ * @param {Object} params
+ * @param {DataFrame} params.data - The data frame.
+ * @param {OrderBy} params.orderBy - The order of the rows in the table.
+ *
+ * @returns {Promise<SortIndex>} A Promise to the sort index.
+ */
+export async function getSortIndex({ data, orderBy }: { data: DataFrame, orderBy: OrderBy }): Promise<SortIndex> {
+  const { header, numRows, rows, sortable } = data
+  const { column } = orderBy
+  if (!column) {
+    const dataIndexes = Array.from({ length: numRows }, (_, i) => i)
+    // unsorted data
+    return { orderBy, dataIndexes, tableIndexes: dataIndexes }
+  }
+  if (column && !sortable) {
+    throw new Error('Data frame is not sortable')
+  }
+  if (!header.includes(column)) {
+    throw new Error('orderBy column is not in the data frame')
+  }
+  const dataIndexes = await Promise.all(asyncRows(rows(0, numRows, column), numRows, header).map(row => row.__index__))
+  const tableIndexes = Array.from({ length: numRows }, (_, i) => -1)
+  for (let i = 0; i < numRows; i++) {
+    const dataIndex = dataIndexes[i]
+    if (dataIndex === undefined) {
+      throw new Error('Data index not found in the data frame')
+    }
+    if (typeof dataIndex !== 'number') {
+      throw new Error('Invalid data index: not a number')
+    }
+    if (dataIndex < 0 || dataIndex >= numRows) {
+      throw new Error('Invalid data index: out of bounds')
+    }
+    if (tableIndexes[dataIndex] !== -1) {
+      throw new Error('Duplicate data index')
+    }
+    tableIndexes[dataIndex] = i
+  }
+  // check if there are missing indexes
+  if (tableIndexes.some(index => index === -1)) {
+    throw new Error('Missing indexes in the sort index')
+  }
+  return { orderBy, dataIndexes, tableIndexes }
+}
+
+/**
+ * Convert a table index to a data index, using the sort index.
+ *
+ * @param {Object} params
+ * @param {SortIndex} params.sortIndex - The sort index.
+ * @param {number} params.tableIndex - The index of the row in the sorted table.
+ *
+ * @returns {number} The index of the row in the data frame.
+ */
+export function getDataIndex({ sortIndex, tableIndex }: {sortIndex: SortIndex, tableIndex: number}): number {
+  const dataIndex = sortIndex.dataIndexes[tableIndex]
+  if (dataIndex === undefined) {
+    throw new Error('Table index not found in the data frame')
+  }
+  return dataIndex
+}
+
+/**
+ * Convert a data index to a table index, using the sort index.
+ *
+ * @param {Object} params
+ * @param {SortIndex} params.sortIndex - The sort index.
+ * @param {number} params.dataIndex - The index of the row in the data frame.
+ *
+ * @returns {number} The index of the row in the sorted table.
+ */
+export function getTableIndex({ sortIndex, dataIndex }: {sortIndex: SortIndex, dataIndex: number}): number {
+  const tableIndex = sortIndex.tableIndexes[dataIndex]
+  if (tableIndex === -1) {
+    throw new Error('Data index not found in the data frame')
+  }
+  return tableIndex
+}
+
 /**
  * Convert from a selection of data indexes to a selection of table indexes.
  *
@@ -216,7 +304,6 @@ function copy(selection: Selection): Selection {
  */
 export async function toTableSelection({ selection, orderBy, data }: { selection: Selection, orderBy: OrderBy | undefined, data: DataFrame }): Promise<Selection> {
   const { header, numRows, sortable, rows } = data
-  const { column } = orderBy ?? {}
   const { ranges, anchor } = selection
   if (!areValidRanges(selection.ranges)) {
     throw new Error('Invalid ranges')
@@ -224,46 +311,40 @@ export async function toTableSelection({ selection, orderBy, data }: { selection
   if (anchor !== undefined && !isValidIndex(anchor)) {
     throw new Error('Invalid anchor')
   }
-  if (column && !header.includes(column)) {
+  if (!orderBy || !orderBy.column) {
+    // unsorted data
+    return copy(selection)
+  }
+  const { column } = orderBy
+  if (!header.includes(column)) {
     throw new Error('orderBy column is not in the data frame')
   }
   if (column && !sortable) {
     throw new Error('Data frame is not sortable')
   }
+  // naive implementation, should be optimized
+
+  // TODO(SL) enforce at type level that the rows contain the field '__index__'
+  // TODO(SL) allow to fetch only the required columns (no need for all the columns)
+  const sortIndex = await getSortIndex({ data, orderBy })
+  let tableRanges: Ranges = []
   if (ranges.length === 0) {
     // empty selection
-    return copy(selection)
-  }
-  if (ranges.length === 1 && ranges[0].start === 0 && ranges[0].end === numRows) {
-    // all data selected
-    return copy(selection)
-  }
-  if (!column) {
-    // unsorted data
-    return copy(selection)
-  }
-  // naive implementation, should be optimized
-  const tableRanges: Ranges = []
-  for (const range of ranges) {
-    const { start, end } = range
-    // TODO(SL) enforce at type level that the rows contain the field '__index__'
-    // TODO(SL) allow to fetch only the required columns (no need for all the columns)
-    const sortedRows = rows(start, end, column)
-    const sortedAsyncRows = asyncRows(sortedRows, numRows, header)
-    const sortedIndexes = await Promise.all(sortedAsyncRows.map(row => row.__index__))
-    for (const sortedIndex of sortedIndexes) {
-      if (sortedIndex !== undefined) {
-        // TODO(SL) optimize the creation (or use a Set instead)
-        selectIndex({ ranges: tableRanges, index: sortedIndex })
+    tableRanges = []
+  } else if (ranges.length === 1 && ranges[0].start === 0 && ranges[0].end === numRows) {
+    // all rows selected
+    tableRanges = [{ start: 0, end: numRows }]
+  } else {
+    for (const range of ranges) {
+      const { start, end } = range
+      for (let dataIndex = start; dataIndex < end; dataIndex++) {
+        tableRanges = selectIndex({ ranges: tableRanges, index: getTableIndex({ sortIndex, dataIndex }) })
       }
-      // if no __index__ field, ignore the row
     }
   }
-  const anchorRow = anchor !== undefined ? await rows(anchor, anchor + 1) : undefined
-  const anchorIndex = anchorRow ? await anchorRow[0].__index__ : undefined
-  return { ranges: tableRanges, anchor: anchorIndex }
+  const anchorTableIndex = anchor !== undefined ? getTableIndex({ sortIndex, dataIndex: anchor }) : undefined
+  return { ranges: tableRanges, anchor: anchorTableIndex }
 }
-
 
 /**
  * Convert from a selection of table indexes to a selection of data indexes.
@@ -280,7 +361,6 @@ export async function toTableSelection({ selection, orderBy, data }: { selection
  */
 export async function toDataSelection({ selection, orderBy, data }: { selection: Selection, orderBy: OrderBy | undefined, data: DataFrame }): Promise<Selection> {
   const { header, numRows, sortable, rows } = data
-  const { column } = orderBy ?? {}
   const { ranges, anchor } = selection
   if (!areValidRanges(selection.ranges)) {
     throw new Error('Invalid ranges')
@@ -288,39 +368,34 @@ export async function toDataSelection({ selection, orderBy, data }: { selection:
   if (anchor !== undefined && !isValidIndex(anchor)) {
     throw new Error('Invalid anchor')
   }
+  if (!orderBy || !orderBy.column) {
+    // unsorted data
+    return copy(selection)
+  }
+  const { column } = orderBy
   if (column && !header.includes(column)) {
     throw new Error('orderBy column is not in the data frame')
   }
   if (column && !sortable) {
     throw new Error('Data frame is not sortable')
   }
+
+  // naive implementation, should be optimized
+  let dataRanges: Ranges = []
+  const sortIndex = await getSortIndex({ data, orderBy })
   if (ranges.length === 0) {
     // empty selection
-    return copy(selection)
-  }
-  if (ranges.length === 1 && ranges[0].start === 0 && ranges[0].end === numRows) {
+    dataRanges = []
+  } else if (ranges.length === 1 && ranges[0].start === 0 && ranges[0].end === numRows) {
     // all data selected
-    return copy(selection)
-  }
-  if (!column) {
-    // unsorted data
-    return copy(selection)
-  }
-  // naive implementation, should be optimized
-  const dataRanges: Ranges = []
-  // the most naive way:
-  // - create the list of all the sorted indexes (tableIndex -> dataIndex) - it can be too big for the memory, and we should cache it
-  // - add each index, one after the other
-  const sortedRows = rows(0, data.numRows, column)
-  const sortedAsyncRows = asyncRows(sortedRows, numRows, header)
-  const sortedIndexes = await Promise.all(sortedAsyncRows.map(row => row.__index__))
-  for (const range of ranges) {
-    for (let i = range.start; i < range.end; i++) {
-      if (sortedIndexes[i] !== undefined) {
-        selectIndex({ ranges: dataRanges, index: sortedIndexes[i] })
+    dataRanges = [{ start: 0, end: numRows }]
+  } else {
+    for (const range of ranges) {
+      for (let tableIndex = range.start; tableIndex < range.end; tableIndex++) {
+        dataRanges = selectIndex({ ranges: dataRanges, index: getDataIndex({ sortIndex, tableIndex }) })
       }
     }
   }
-  const anchorIndex = anchor !== undefined ? sortedIndexes[anchor] : undefined
+  const anchorIndex = anchor !== undefined ? getDataIndex({ sortIndex, tableIndex: anchor }) : undefined
   return { ranges: dataRanges, anchor: anchorIndex }
 }

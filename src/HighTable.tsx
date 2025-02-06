@@ -150,14 +150,18 @@ export default function HighTable({
     if (!selection || !onSelectionChange) return
     return (event: React.MouseEvent) => {
       const useAnchor = event.shiftKey && selection.anchor !== undefined
-      toTableSelection({ selection, orderBy, data }).then(selection => {
-        const { ranges, anchor } = selection
+      toTableSelection({ selection, orderBy, data }).then(tableSelection => {
+        const { ranges, anchor } = tableSelection
         if (useAnchor) {
           return { ranges: extendFromAnchor({ ranges, anchor, index: tableIndex }), anchor }
+          // ^ this operation is the one that requires the conversion between table and data indexes
+          // we could do better
         } else {
           return { ranges: toggleIndex({ ranges, index: tableIndex }), anchor: tableIndex }
         }
-      }).then((tableSelection) => toDataSelection({ selection: tableSelection, orderBy, data })).then((selection) => {
+      }).then((newTableSelection) => {
+        return toDataSelection({ selection: newTableSelection, orderBy, data })
+      }).then((selection) => {
         onSelectionChange(selection)
       })
     }
