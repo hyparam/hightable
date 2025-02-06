@@ -129,7 +129,6 @@ describe('HighTable', () => {
 
 
 describe('When sorted, HighTable', () => {
-
   function checkRowContents(row: HTMLElement, rowNumber: string, ID: string, Count: string) {
     const selectionCell = within(row).getByRole('rowheader')
     expect(selectionCell).toBeDefined()
@@ -281,9 +280,10 @@ describe('in controlled selection state (selection and onSelection props), ', ()
 
     const rowHeader = cell.closest('[role="row"]')?.querySelector('[role="rowheader"]')
     expect(rowHeader).not.toBeNull()
-    await act(async () => {
-      rowHeader && await user.click(rowHeader)
-    })
+
+    if (!rowHeader) throw new Error('rowHeader is null')
+    await user.click(rowHeader)
+
     expect(onSelectionChange).toHaveBeenCalledWith({ ranges: [{ start, end: start + 1 }], anchor: start })
     expect(queryByRole('row', { selected: true })).toBeNull()
   })
@@ -299,9 +299,10 @@ describe('in controlled selection state (selection and onSelection props), ', ()
 
     const rowHeader = row.querySelector('[role="rowheader"]')
     expect(rowHeader).not.toBeNull()
-    await act(async () => {
-      rowHeader && await user.click(rowHeader)
-    })
+    if (!rowHeader) throw new Error('rowHeader is null')
+
+    await user.click(rowHeader)
+
     expect(onSelectionChange).toHaveBeenCalledWith({ ranges: [], anchor: start })
   })
 
@@ -316,11 +317,12 @@ describe('in controlled selection state (selection and onSelection props), ', ()
     onSelectionChange.mockClear()
     const otherRowHeader = cell.closest('[role="row"]')?.querySelector('[role="rowheader"]')
     expect(otherRowHeader).not.toBeNull()
-    await act(async () => {
-      // see https://testing-library.com/docs/user-event/setup/#starting-a-session-per-setup
-      await user.keyboard('[ShiftLeft>]') // Press Shift (without releasing it)
-      otherRowHeader && await user.click(otherRowHeader) // Perform a click with `shiftKey: true`
-    })
+    if (!otherRowHeader) throw new Error('otherRowHeader is null')
+
+    // see https://testing-library.com/docs/user-event/setup/#starting-a-session-per-setup
+    await user.keyboard('[ShiftLeft>]') // Press Shift (without releasing it)
+    await user.click(otherRowHeader) // Perform a click with `shiftKey: true`
+
     expect(onSelectionChange).toHaveBeenCalledWith({ ranges: [{ start: start, end: other + 1 }], anchor: start })
   })
 })
@@ -431,9 +433,10 @@ describe('in uncontrolled selection state (onSelection prop), ', () => {
 
     const rowHeader = cell.closest('[role="row"]')?.querySelector('[role="rowheader"]')
     expect(rowHeader).not.toBeNull()
-    await act(async () => {
-      rowHeader && await user.click(rowHeader)
-    })
+
+    if (!rowHeader) throw new Error('rowHeader is null')
+    await user.click(rowHeader)
+
     expect(onSelectionChange).toHaveBeenCalledWith({ ranges: [{ start, end: start + 1 }], anchor: start })
     expect(queryByRole('row', { selected: true })?.getAttribute('aria-rowindex')).toBe(`${start + 2}`)
   })
@@ -450,9 +453,10 @@ describe('in uncontrolled selection state (onSelection prop), ', () => {
     // select a row
     const rowHeader = cell.closest('[role="row"]')?.querySelector('[role="rowheader"]')
     expect(rowHeader).not.toBeNull()
-    await act(async () => {
-      rowHeader && await user.click(rowHeader)
-    })
+
+    if (!rowHeader) throw new Error('rowHeader is null')
+    await user.click(rowHeader)
+
     expect(onSelectionChange).toHaveBeenCalledWith({ ranges: [{ start, end: start + 1 }], anchor: start })
 
     rerender(<HighTable data={otherData} onSelectionChange={onSelectionChange}/>)
@@ -501,9 +505,10 @@ describe('in disabled selection state (neither selection nor onSelection props),
 
     const rowHeader = cell.closest('[role="row"]')?.querySelector('[role="rowheader"]')
     expect(rowHeader).not.toBeNull()
-    await act(async () => {
-      rowHeader && await user.click(rowHeader)
-    })
+    if (!rowHeader) throw new Error('rowHeader is null')
+
+    await user.click(rowHeader)
+
     expect(queryByRole('row', { selected: true })).toBeNull()
   })
 })
