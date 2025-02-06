@@ -1,5 +1,6 @@
-import { describe, expect, test } from 'vitest'
-import { areAllSelected, areValidRanges, extendFromAnchor, isSelected, isValidIndex, isValidRange, selectRange, toggleAll, toggleIndex, unselectRange } from '../src/selection.js'
+import { describe, expect, it, test } from 'vitest'
+import { AsyncRow, DataFrame, Row, sortableDataFrame, wrapPromise } from '../src/dataframe.js'
+import { areAllSelected, areValidRanges, extendFromAnchor, isSelected, isValidIndex, isValidRange, selectRange, toTableSelection, toggleAll, toggleIndex, unselectRange } from '../src/selection.js'
 
 describe('an index', () => {
   test('is a positive integer', () => {
@@ -206,5 +207,68 @@ describe('extendFromAnchor', () => {
     expect(extendFromAnchor({ ranges: [{ start: 0, end: 1 }], anchor: 2, index: 3 })).toEqual([{ start: 0, end: 1 }])
     expect(extendFromAnchor({ ranges: [{ start: 0, end: 1 }], anchor: 2, index: 0 })).toEqual([])
     expect(extendFromAnchor({ ranges: [{ start: 0, end: 1 }, { start: 3, end: 4 }], anchor: 2, index: 3 })).toEqual([{ start: 0, end: 1 }])
+  })
+})
+
+const data = [
+  { id: 3, name: 'Charlie', age: 25 },
+  { id: 1, name: 'Alice', age: 30 },
+  { id: 2, name: 'Bob', age: 20 },
+  { id: 4, name: 'Dani', age: 20 },
+]
+
+export function wrapObject(obj: Row): AsyncRow {
+  return Object.fromEntries(
+    Object.entries(obj).map(([key, value]) => [key, wrapPromise(value)])
+  )
+}
+const dataFrame: DataFrame = {
+  header: ['id', 'name', 'age'],
+  numRows: data.length,
+  rows(start: number, end: number): AsyncRow[] {
+    // Return the slice of data between start and end indices
+    return data.slice(start, end).map(wrapObject)
+  },
+  sortable: false,
+}
+
+const sortableDf = sortableDataFrame(dataFrame)
+
+describe('toTableSelection', () => {
+  it('should throw an error if the ranges are invalid', async () => {
+    await expect(
+      toTableSelection({ selection: { ranges: [{ start: 1, end: 0 }], anchor: 0 }, orderBy: undefined, data: sortableDf })
+    ).rejects.toThrow('Invalid ranges')
+  })
+  it('should throw an error if the anchor is invalid', async () => {
+    await expect(
+      toTableSelection({ selection: { ranges: [{ start: 0, end: 1 }], anchor: -3 }, orderBy: undefined, data: sortableDf })
+    ).rejects.toThrow('Invalid anchor')
+  })
+  it('should throw an error if the orderBy column is not in the data headers', async () => {
+    await expect(
+      toTableSelection({ selection: { ranges: [{ start: 0, end: 1 }] }, orderBy: { column: 'doesnotexist' }, data: sortableDf })
+    ).rejects.toThrow('orderBy column is not in the data frame')
+  })
+  it('should throw an error if the orderBy column is set but the data is not sortable', async () => {
+    await expect(
+      toTableSelection({ selection: { ranges: [{ start: 0, end: 1 }] }, orderBy: { column: 'id' }, data: { ...sortableDf, sortable: false } })
+    ).rejects.toThrow('Data frame is not sortable')
+  })
+  it('should return the same selection if the data is not sorted', async () => {
+    await expect(
+      toTableSelection({ selection: { ranges: [{ start: 0, end: 1 }] }, orderBy: undefined, data: sortableDf })
+    ).resolves.toEqual({ ranges: [{ start: 0, end: 1 }] })
+  })
+  it('should return the same ranges, but not the same anchor, if no row is selected', async () => {
+    // the anchor data index is 2, ie: the third row (name=Bob) - its table index when sorted by id is 1
+    await expect(
+      toTableSelection({ selection: { ranges: [], anchor: 2 }, orderBy: { column: 'id' }, data: sortableDf })
+    ).resolves.toEqual({ ranges: [], anchor: 1 })
+  })
+  it('should return the same ranges, but not the same anchor, if all the rows are selected', async () => {
+    await expect(
+      toTableSelection({ selection: { ranges: [{ start: 0, end: sortableDf.numRows }], anchor: 2 }, orderBy: { column: 'id' }, data: sortableDf })
+    ).resolves.toEqual({ ranges: [{ start: 0, end: sortableDf.numRows }], anchor: 1 })
   })
 })
