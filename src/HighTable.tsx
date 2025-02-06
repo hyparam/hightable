@@ -276,12 +276,7 @@ export default function HighTable({
         }
 
         // Await all pending promises
-        for (const asyncRow of rowsChunk) {
-          for (const promise of [asyncRow.index, ...Object.values(asyncRow.cells)]) {
-            await promise
-            // TODO(SL): shouldn't it be await Promise.all([...]) to run them in parallel?
-          }
-        }
+        await Promise.all(rowsChunk.flatMap(asyncRow => [asyncRow.index, ...Object.values(asyncRow.cells)]))
 
         // if user scrolled while fetching, fetch again
         if (pendingUpdate.current) {
