@@ -247,14 +247,14 @@ export default function HighTable({
           for (const asyncRow of rowsChunk) {
             const resolvedRow: PartialRow = { cells: {} }
             let isRowComplete = true
-            for (const [key, { resolved }] of Object.entries(asyncRow.cells)) {
-              if (resolved !== undefined) {
-                resolvedRow.cells[key] = resolved
+            for (const [key, wrappedPromise] of Object.entries(asyncRow.cells)) {
+              if ('resolved' in wrappedPromise) {
+                resolvedRow.cells[key] = wrappedPromise.resolved
               } else {
                 isRowComplete = false
               }
             }
-            if (asyncRow.index.resolved !== undefined) {
+            if ('resolved' in asyncRow.index) {
               resolvedRow.index = asyncRow.index.resolved
             } else {
               isRowComplete = false
