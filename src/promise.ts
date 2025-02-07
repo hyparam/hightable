@@ -6,19 +6,19 @@ export type WrappedPromise<T> = {
 
 export function wrapPromise<T>(promise: Promise<T>): WrappedPromise<T>
 export function wrapPromise<T>(resolved: T): WrappedPromise<T>
-export function wrapPromise<T>(value: Promise<T> | T): WrappedPromise<T> {
+export function wrapPromise<T>(input: Promise<T> | T): WrappedPromise<T> {
   const wrappedPromise: WrappedPromise<T> = {
-    promise: value instanceof Promise ? value : Promise.resolve(value),
+    promise: input instanceof Promise ? input : Promise.resolve(input),
   }
   // add resolved or rejected property to the asyncValue
-  wrappedPromise.promise.then(value => {
-    wrappedPromise.resolved = value
+  wrappedPromise.promise.then(resolved => {
+    wrappedPromise.resolved = resolved
     wrappedPromise.rejected = undefined
-    return value
-  }).catch(error => {
+    return resolved
+  }).catch(rejected => {
     wrappedPromise.resolved = undefined
-    wrappedPromise.rejected = error
-    throw error
+    wrappedPromise.rejected = rejected
+    throw rejected
   })
   return wrappedPromise
 }
