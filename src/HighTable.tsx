@@ -5,7 +5,7 @@ import { PartialRow } from './row.js'
 import { Selection, areAllSelected, extendFromAnchor, isSelected, toggleAll, toggleIndex } from './selection.js'
 import TableHeader, { OrderBy, cellStyle } from './TableHeader.js'
 export { DataFrame, arrayDataFrame, sortableDataFrame } from './dataframe.js'
-export { ResolvablePromise, resolvablePromise, wrapPromise } from './promise.js'
+export { ResolvablePromise, WrappedPromise, resolvablePromise, wrapPromise } from './promise.js'
 export { AsyncRow, Cells, PartialRow, ResolvableRow, Row, asyncRows, awaitRow, awaitRows, resolvableRow } from './row.js'
 export { rowCache } from './rowCache.js'
 export { Selection } from './selection.js'
@@ -247,14 +247,14 @@ export default function HighTable({
           for (const asyncRow of rowsChunk) {
             const resolvedRow: PartialRow = { cells: {} }
             let isRowComplete = true
-            for (const [key, promise] of Object.entries(asyncRow.cells)) {
-              if ('resolved' in promise) {
-                resolvedRow.cells[key] = promise.resolved
+            for (const [key, { resolved }] of Object.entries(asyncRow.cells)) {
+              if (resolved !== undefined) {
+                resolvedRow.cells[key] = resolved
               } else {
                 isRowComplete = false
               }
             }
-            if ('resolved' in asyncRow.index) {
+            if (asyncRow.index.resolved !== undefined) {
               resolvedRow.index = asyncRow.index.resolved
             } else {
               isRowComplete = false
@@ -267,19 +267,19 @@ export default function HighTable({
         }, 10)
         updateRows() // initial update
 
+        const promises = rowsChunk.flatMap(asyncRow => [asyncRow.index, ...Object.values(asyncRow.cells)]).map(d => d.promise)
+
         // Subscribe to data updates
-        for (const asyncRow of rowsChunk) {
-          for (const promise of [asyncRow.index, ...Object.values(asyncRow.cells)] ) {
-            promise.then(() => {
-              if (pendingRequest.current === requestId) {
-                updateRows()
-              }
-            }).catch(() => {})
-          }
+        for (const promise of promises) {
+          promise.then(() => {
+            if (pendingRequest.current === requestId) {
+              updateRows()
+            }
+          }).catch(() => {})
         }
 
         // Await all pending promises
-        await Promise.all(rowsChunk.flatMap(asyncRow => [asyncRow.index, ...Object.values(asyncRow.cells)]))
+        await Promise.all(promises)
 
         // if user scrolled while fetching, fetch again
         if (pendingUpdate.current) {
