@@ -221,7 +221,7 @@ export default function HighTable({
       const scrollTop = scrollRef.current?.scrollTop || 0 // scroll position
 
       // determine rows to fetch based on current scroll position (indexes refer to the virtual table domain)
-      const startView = Math.floor(data.numRows * scrollTop / scrollHeight )
+      const startView = Math.floor(data.numRows * scrollTop / scrollHeight)
       const endView = Math.ceil(data.numRows * (scrollTop + clientHeight) / scrollHeight)
       const start = Math.max(0, startView - overscan)
       const end = Math.min(data.numRows, endView + overscan)
