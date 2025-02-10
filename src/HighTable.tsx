@@ -1,4 +1,4 @@
-import { ReactNode, useCallback, useEffect, useMemo, useReducer, useRef } from 'react'
+import { ReactNode, useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import { DataFrame } from './dataframe.js'
 import { useInputState } from './hooks.js'
 import { PartialRow } from './row.js'
@@ -21,13 +21,12 @@ type State = {
   hasCompleteRow: boolean // true if at least one row is fully resolved (all of its cells)
   rows: PartialRow[] // slice of the virtual table rows (sorted rows) to render as HTML. A row might have contain incomplete rows (not all the cells, or no index).
   rowsOrderBy: OrderBy // order by column of the rows slice.
-  startIndex: number // offset of the slice of sorted rows to render (rows[0] is the startIndex'th sorted row)
-  endIndex: number // end of the slice (excluded) of sorted rows to render (rows[rows.length - 1] is the (endIndex - 1)'th sorted row)
+  rowsStart: number // offset of the slice of sorted rows to render (rows[0] is the rowsStart'th sorted row)
   data: DataFrame // data frame used in the last rendering
 }
 
 type Action =
-  | { type: 'SET_ROWS', start: number, end: number, rows: PartialRow[], rowsOrderBy: OrderBy, hasCompleteRow: boolean }
+  | { type: 'SET_ROWS', start: number, rows: PartialRow[], rowsOrderBy: OrderBy, hasCompleteRow: boolean }
   | { type: 'SET_COLUMN_WIDTH', columnIndex: number, columnWidth: number | undefined }
   | { type: 'SET_COLUMN_WIDTHS', columnWidths: Array<number | undefined> }
   | { type: 'DATA_CHANGED', data: DataFrame }
@@ -37,8 +36,7 @@ function reducer(state: State, action: Action): State {
   case 'SET_ROWS':
     return {
       ...state,
-      startIndex: action.start,
-      endIndex: action.end,
+      rowsStart: action.start,
       rows: action.rows,
       rowsOrderBy: action.rowsOrderBy,
       invalidate: false,
@@ -114,23 +112,24 @@ export default function HighTable({
   const initialState: State = {
     data,
     columnWidths: [],
-    startIndex: 0,
-    endIndex: 0,
     rows: [],
     rowsOrderBy: {},
+    rowsStart: 0,
     invalidate: true,
     hasCompleteRow: false,
   }
   const [state, dispatch] = useReducer(reducer, initialState)
+  const [rowsRange, setRowsRange] = useState({ start: 0, end: data.numRows, offsetTop: 0 })
+
   /**
    * The component relies on the model of a virtual table which rows are ordered and only the visible rows are fetched and rendered as HTML <tr> elements.
    * We use two reference domains for the rows:
    * - data:          the index of a row in the original (unsorted) data frame is referred as dataIndex. The mouse event callbacks receive this index.
    * - virtual table: the index of a row in the virtual table (sorted) is referred as tableIndex. The selection uses this index, and thus depends on the order.
-   *                  startIndex/endIndex live in the table domain: they are the virtual rows to be rendered in HTML.
+   *                  rowsStart lives in the table domain: it's the first virtual row to be rendered in HTML.
    * data.rows(dataIndex, dataIndex + 1) is the same row as data.rows(tableIndex, tableIndex + 1, orderBy)
    */
-  const { columnWidths, startIndex, endIndex, rows, rowsOrderBy, invalidate, hasCompleteRow, data: previousData } = state
+  const { columnWidths, rowsStart, rows, rowsOrderBy, invalidate, hasCompleteRow, data: previousData } = state
 
   // Sorting is disabled if the data is not sortable
   const {
@@ -197,12 +196,8 @@ export default function HighTable({
   const scrollRef = useRef<HTMLDivElement>(null)
   const tableRef = useRef<HTMLTableElement>(null)
   const pendingRequest = useRef(0)
-  const pendingUpdate = useRef(false)
 
   if (!data) throw new Error('HighTable: data is required')
-
-  // total scrollable height
-  const scrollHeight = (data.numRows + 1) * rowHeight
 
   // invalidate when data changes so that columns will auto-resize
   if (data !== previousData) {
@@ -216,28 +211,50 @@ export default function HighTable({
   // handle scrolling
   useEffect(() => {
     /**
-     * Compute the rows to fetch based on the current scroll position.
+     * Compute the dimensions based on the current scroll position.
      */
-    async function handleScroll() {
+
+    function handleScroll() {
       const clientHeight = scrollRef.current?.clientHeight || 100 // view window height
       const scrollTop = scrollRef.current?.scrollTop || 0 // scroll position
 
       // determine rows to fetch based on current scroll position (indexes refer to the virtual table domain)
-      const startView = Math.floor(data.numRows * scrollTop / scrollHeight)
-      const endView = Math.ceil(data.numRows * (scrollTop + clientHeight) / scrollHeight)
+      const startView = Math.floor(data.numRows * scrollTop / (data.numRows + 1) * rowHeight ) // TODO(SL): do we really need this +1 offset?
+      const endView = Math.ceil(data.numRows * (scrollTop + clientHeight) / (data.numRows + 1) * rowHeight)
       const start = Math.max(0, startView - overscan)
       const end = Math.min(data.numRows, endView + overscan)
-
-      // Don't update if view is unchanged
-      if (!invalidate && start === startIndex && end === endIndex && rowsOrderBy.column === orderBy?.column ) {
-        return
-      }
 
       if (isNaN(start)) throw new Error('invalid start row ' + start)
       if (isNaN(end)) throw new Error('invalid end row ' + end)
       if (end - start > 1000) throw new Error('attempted to render too many rows ' + (end - start) + ' table must be contained in a scrollable div')
 
       const offsetTop = Math.max(0, start - padding) * rowHeight
+      setRowsRange({ start, end, offsetTop })
+    }
+
+    // scroll listeners
+    const scroller = scrollRef.current
+    scroller?.addEventListener('scroll', handleScroll)
+    window.addEventListener('resize', handleScroll)
+
+    return () => {
+      scroller?.removeEventListener('scroll', handleScroll)
+      window.removeEventListener('resize', handleScroll)
+    }
+  }, [data.numRows, overscan, padding])
+
+  // fetch rows
+  useEffect(() => {
+    /**
+     * Compute the rows to fetch based on the current scroll position.
+    */
+    async function fetchRows() {
+      const { start, end } = rowsRange
+
+      // Don't update if view is unchanged
+      if (!invalidate && start === rowsStart && end === rowsStart + rows.length && rowsOrderBy.column === orderBy?.column ) {
+        return
+      }
 
       // Fetch a chunk of rows from the data frame
       try {
@@ -265,8 +282,7 @@ export default function HighTable({
             if (isRowComplete) hasCompleteRow = true
             resolved.push(resolvedRow)
           }
-          offsetTopRef.current = offsetTop
-          dispatch({ type: 'SET_ROWS', start, end, rows: resolved, hasCompleteRow, rowsOrderBy: { column: orderBy?.column } })
+          dispatch({ type: 'SET_ROWS', start, rows: resolved, hasCompleteRow, rowsOrderBy: { column: orderBy?.column } })
         }, 10)
         updateRows() // initial update
 
@@ -283,29 +299,14 @@ export default function HighTable({
 
         // Await all pending promises
         await Promise.all(rowsChunk.flatMap(asyncRow => [asyncRow.index, ...Object.values(asyncRow.cells)]))
-
-        // if user scrolled while fetching, fetch again
-        if (pendingUpdate.current) {
-          pendingUpdate.current = false
-          handleScroll()
-        }
       } catch (error) {
         onError(error as Error)
       }
     }
     // update
-    handleScroll()
+    fetchRows()
 
-    // scroll listeners
-    const scroller = scrollRef.current
-    scroller?.addEventListener('scroll', handleScroll)
-    window.addEventListener('resize', handleScroll)
-
-    return () => {
-      scroller?.removeEventListener('scroll', handleScroll)
-      window.removeEventListener('resize', handleScroll)
-    }
-  }, [data, invalidate, orderBy?.column, overscan, padding, rows.length, rowsOrderBy.column, startIndex, endIndex, scrollHeight, onError, dispatch])
+  }, [data, invalidate, onError, orderBy?.column, rows.length, rowsOrderBy.column, rowsRange, rowsStart])
 
   /**
    * Validate row length
@@ -354,9 +355,9 @@ export default function HighTable({
   }, [focus])
 
   // add empty pre and post rows to fill the viewport
-  const prePadding = Array.from({ length: Math.min(padding, startIndex) }, () => [])
+  const prePadding = Array.from({ length: Math.min(padding, rowsStart) }, () => [])
   const postPadding = Array.from({
-    length: Math.min(padding, data.numRows - endIndex),
+    length: Math.min(padding, data.numRows - rowsStart - rows.length),
   }, () => [])
 
   // fixed corner width based on number of rows
@@ -374,6 +375,10 @@ export default function HighTable({
   // don't render table if header is empty
   if (!data.header.length) return
 
+
+  // total scrollable height
+  const scrollHeight = (data.numRows + 1) * rowHeight
+
   return <div className={`table-container${showSelectionControls ? ' selectable' : ''}`}>
     <div className='table-scroll' ref={scrollRef}>
       <div style={{ height: `${scrollHeight}px` }}>
@@ -385,7 +390,7 @@ export default function HighTable({
           className={`table${enableOrderByInteractions ? ' sortable' : ''}`}
           ref={tableRef}
           role='grid'
-          style={{ top: `${offsetTopRef.current}px` }}
+          style={{ top: `${rowsRange.offsetTop}px` }}
           tabIndex={0}>
           <TableHeader
             cacheKey={cacheKey}
@@ -399,13 +404,13 @@ export default function HighTable({
           />
           <tbody role="rowgroup">
             {prePadding.map((_, prePaddingIndex) => {
-              const tableIndex = startIndex - prePadding.length + prePaddingIndex
+              const tableIndex = rowsStart - prePadding.length + prePaddingIndex
               return <tr role="row" key={tableIndex} aria-rowindex={tableIndex + 2 /* 1-based + the header row */} >
                 <th scope="row" role="rowheader" style={cornerStyle}></th>
               </tr>
             })}
             {rows.map((row, rowIndex) => {
-              const tableIndex = startIndex + rowIndex
+              const tableIndex = rowsStart + rowIndex
               const dataIndex = row?.index
               const selected = isRowSelected(tableIndex)
               return <tr role="row" key={tableIndex} aria-rowindex={tableIndex + 2 /* 1-based + the header row */} title={rowError(row)}
@@ -422,7 +427,7 @@ export default function HighTable({
               </tr>
             })}
             {postPadding.map((_, postPaddingIndex) => {
-              const tableIndex = endIndex + postPaddingIndex
+              const tableIndex = rowsStart + rows.length + postPaddingIndex
               return <tr role="row" key={tableIndex} aria-rowindex={tableIndex + 2 /* 1-based + the header row */} >
                 <th scope="row" role="rowheader" style={cornerStyle} ></th>
               </tr>
