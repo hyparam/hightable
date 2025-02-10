@@ -1,4 +1,5 @@
-import { AsyncRow, DataFrame } from './dataframe.js'
+import { DataFrame } from './dataframe.js'
+import { AsyncRow } from './row.js'
 
 /**
  * Wrap a dataframe with cached rows.
