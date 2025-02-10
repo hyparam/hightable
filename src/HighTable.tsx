@@ -248,13 +248,13 @@ export default function HighTable({
             const resolvedRow: PartialRow = { cells: {} }
             let isRowComplete = true
             for (const [key, wrappedPromise] of Object.entries(asyncRow.cells)) {
-              if ('resolved' in wrappedPromise) {
+              if (wrappedPromise.resolved !== undefined) {
                 resolvedRow.cells[key] = wrappedPromise.resolved
               } else {
                 isRowComplete = false
               }
             }
-            if ('resolved' in asyncRow.index) {
+            if (asyncRow.index.resolved !== undefined) {
               resolvedRow.index = asyncRow.index.resolved
             } else {
               isRowComplete = false

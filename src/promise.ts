@@ -7,34 +7,31 @@ export type WrappedPromise<T> = {
 export function wrapPromise<T>(promise: Promise<T>): WrappedPromise<T>
 export function wrapPromise<T>(resolved: T): WrappedPromise<T>
 export function wrapPromise<T>(input: Promise<T> | T): WrappedPromise<T> {
-  const wrappedPromise: WrappedPromise<T> = {
+  const wrapped: WrappedPromise<T> = {
     promise: input instanceof Promise ? input : Promise.resolve(input),
   }
-  // add resolved or rejected property to the wrapped promise
-  wrappedPromise.promise.then(resolved => {
-    wrappedPromise.resolved = resolved
-    wrappedPromise.rejected = undefined
+  // add resolved or rejected property to the wrapped object
+  wrapped.promise.then(resolved => {
+    wrapped.resolved = resolved
+    wrapped.rejected = undefined
     return resolved
   }).catch(rejected => {
-    wrappedPromise.resolved = undefined
-    wrappedPromise.rejected = rejected
+    wrapped.resolved = undefined
+    wrapped.rejected = rejected
     throw rejected
   })
-  return wrappedPromise
+  return wrapped
 }
 
 export type ResolvablePromise<T> = WrappedPromise<T> & PromiseWithResolvers<T>
 
 export function resolvablePromise<T>(): ResolvablePromise<T> {
-  // const promiseWithResolvers = Promise.withResolvers<T>()
   // Promise.withResolvers is too recent. Let's use the polyfill instead.
   let resolve: PromiseWithResolvers<T>['resolve']
   let reject: PromiseWithResolvers<T>['reject']
-  const promise = new Promise<T>((resolve_, reject_) => {
+  const wrapped = wrapPromise(new Promise<T>((resolve_, reject_) => {
     resolve = resolve_
     reject = reject_
-  })
-  const promiseWithResolvers = { promise, resolve: resolve!, reject: reject! }
-
-  return Object.assign(promiseWithResolvers, wrapPromise<T>(promiseWithResolvers.promise))
+  }))
+  return Object.assign(wrapped, { resolve: resolve!, reject: reject! })
 }
