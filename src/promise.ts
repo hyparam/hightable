@@ -37,7 +37,7 @@ export function withResolvers<T>(): PromiseWithResolvers<T> {
 }
 
 export function resolvablePromise<T>(): ResolvablePromise<T> {
-  const w = withResolvers<T>()
-  const wrapped = wrapPromise(w.promise)
-  return Object.assign(wrapped, w)
+  const { promise, resolve, reject } = withResolvers<T>()
+  const wrapped = wrapPromise(promise)
+  return Object.assign(wrapped, { resolve, reject })
 }
