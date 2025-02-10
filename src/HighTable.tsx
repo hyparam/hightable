@@ -20,7 +20,7 @@ type State = {
   hasCompleteRow: boolean // true if at least one row is fully resolved (all of its cells)
   rows: PartialRow[] // slice of the virtual table rows (sorted rows) to render as HTML. A row might have contain incomplete rows (not all the cells, or no index).
   rowsOrderBy: OrderBy // order by column of the rows slice.
-  rowsStart: number // offset of the slice of sorted rows to render (rows[0] is the rowsStart'th sorted row)
+  startIndex: number // offset of the slice of sorted rows to render (rows[0] is the startIndex'th sorted row)
   data: DataFrame // data frame used in the last rendering
 }
 
@@ -33,7 +33,7 @@ function reducer(state: State, action: Action): State {
   case 'SET_ROWS':
     return {
       ...state,
-      rowsStart: action.start,
+      startIndex: action.start,
       rows: action.rows,
       rowsOrderBy: action.rowsOrderBy,
       invalidate: false,
@@ -103,7 +103,7 @@ export default function HighTable({
     data,
     rows: [],
     rowsOrderBy: {},
-    rowsStart: 0,
+    startIndex: 0,
     invalidate: true,
     hasCompleteRow: false,
   }
@@ -124,10 +124,10 @@ export default function HighTable({
    * We use two reference domains for the rows:
    * - data:          the index of a row in the original (unsorted) data frame is referred as dataIndex. The mouse event callbacks receive this index.
    * - virtual table: the index of a row in the virtual table (sorted) is referred as tableIndex. The selection uses this index, and thus depends on the order.
-   *                  rowsStart lives in the table domain: it's the first virtual row to be rendered in HTML.
+   *                  startIndex lives in the table domain: it's the first virtual row to be rendered in HTML.
    * data.rows(dataIndex, dataIndex + 1) is the same row as data.rows(tableIndex, tableIndex + 1, orderBy)
    */
-  const { rowsStart, rows, rowsOrderBy, invalidate, hasCompleteRow, data: previousData } = state
+  const { startIndex, rows, rowsOrderBy, invalidate, hasCompleteRow, data: previousData } = state
 
   // Sorting is disabled if the data is not sortable
   const {
@@ -253,7 +253,7 @@ export default function HighTable({
       const { start, end } = rowsRange
 
       // Don't update if view is unchanged
-      if (!invalidate && start === rowsStart && end === rowsStart + rows.length && rowsOrderBy.column === orderBy?.column ) {
+      if (!invalidate && start === startIndex && end === startIndex + rows.length && rowsOrderBy.column === orderBy?.column ) {
         return
       }
 
@@ -311,7 +311,7 @@ export default function HighTable({
     }
     // update
     fetchRows()
-  }, [data, invalidate, onError, orderBy?.column, rows.length, rowsOrderBy.column, rowsRange, rowsStart])
+  }, [data, invalidate, onError, orderBy?.column, rows.length, rowsOrderBy.column, rowsRange, startIndex])
 
   /**
    * Validate row length
@@ -360,9 +360,9 @@ export default function HighTable({
   }, [focus])
 
   // add empty pre and post rows to fill the viewport
-  const prePadding = Array.from({ length: Math.min(padding, rowsStart) }, () => [])
+  const prePadding = Array.from({ length: Math.min(padding, startIndex) }, () => [])
   const postPadding = Array.from({
-    length: Math.min(padding, data.numRows - rowsStart - rows.length),
+    length: Math.min(padding, data.numRows - startIndex - rows.length),
   }, () => [])
 
   // fixed corner width based on number of rows
@@ -397,13 +397,13 @@ export default function HighTable({
           />
           <tbody role="rowgroup">
             {prePadding.map((_, prePaddingIndex) => {
-              const tableIndex = rowsStart - prePadding.length + prePaddingIndex
+              const tableIndex = startIndex - prePadding.length + prePaddingIndex
               return <tr role="row" key={tableIndex} aria-rowindex={tableIndex + 2 /* 1-based + the header row */} >
                 <th scope="row" role="rowheader" style={cornerStyle}></th>
               </tr>
             })}
             {rows.map((row, rowIndex) => {
-              const tableIndex = rowsStart + rowIndex
+              const tableIndex = startIndex + rowIndex
               const dataIndex = row?.index
               const selected = isRowSelected(tableIndex)
               return <tr role="row" key={tableIndex} aria-rowindex={tableIndex + 2 /* 1-based + the header row */} title={rowError(row)}
@@ -420,7 +420,7 @@ export default function HighTable({
               </tr>
             })}
             {postPadding.map((_, postPaddingIndex) => {
-              const tableIndex = rowsStart + rows.length + postPaddingIndex
+              const tableIndex = startIndex + rows.length + postPaddingIndex
               return <tr role="row" key={tableIndex} aria-rowindex={tableIndex + 2 /* 1-based + the header row */} >
                 <th scope="row" role="rowheader" style={cornerStyle} ></th>
               </tr>
