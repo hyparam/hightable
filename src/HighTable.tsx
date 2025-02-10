@@ -119,7 +119,7 @@ export default function HighTable({
     hasCompleteRow: false,
   }
   const [state, dispatch] = useReducer(reducer, initialState)
-  const [rowsRange, setRowsRange] = useState({ start: 0, end: data.numRows, offsetTop: 0 })
+  const [rowsRange, setRowsRange] = useState({ start: 0, end: 0 })
 
   /**
    * The component relies on the model of a virtual table which rows are ordered and only the visible rows are fetched and rendered as HTML <tr> elements.
@@ -191,7 +191,9 @@ export default function HighTable({
     return isSelected({ ranges, index: tableIndex })
   }, [selection])
 
-  const offsetTopRef = useRef(0)
+  // total scrollable height
+  const scrollHeight = (data.numRows + 1) * rowHeight
+  const offsetTop = Math.max(0, rowsRange.start - padding) * rowHeight
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const tableRef = useRef<HTMLTableElement>(null)
@@ -208,7 +210,7 @@ export default function HighTable({
     }
   }
 
-  // handle scrolling
+  // handle scrolling and window resizing
   useEffect(() => {
     /**
      * Compute the dimensions based on the current scroll position.
@@ -219,8 +221,8 @@ export default function HighTable({
       const scrollTop = scrollRef.current?.scrollTop || 0 // scroll position
 
       // determine rows to fetch based on current scroll position (indexes refer to the virtual table domain)
-      const startView = Math.floor(data.numRows * scrollTop / (data.numRows + 1) * rowHeight ) // TODO(SL): do we really need this +1 offset?
-      const endView = Math.ceil(data.numRows * (scrollTop + clientHeight) / (data.numRows + 1) * rowHeight)
+      const startView = Math.floor(data.numRows * scrollTop / scrollHeight )
+      const endView = Math.ceil(data.numRows * (scrollTop + clientHeight) / scrollHeight)
       const start = Math.max(0, startView - overscan)
       const end = Math.min(data.numRows, endView + overscan)
 
@@ -228,9 +230,10 @@ export default function HighTable({
       if (isNaN(end)) throw new Error('invalid end row ' + end)
       if (end - start > 1000) throw new Error('attempted to render too many rows ' + (end - start) + ' table must be contained in a scrollable div')
 
-      const offsetTop = Math.max(0, start - padding) * rowHeight
-      setRowsRange({ start, end, offsetTop })
+      setRowsRange({ start, end })
     }
+    // run once
+    handleScroll()
 
     // scroll listeners
     const scroller = scrollRef.current
@@ -241,7 +244,7 @@ export default function HighTable({
       scroller?.removeEventListener('scroll', handleScroll)
       window.removeEventListener('resize', handleScroll)
     }
-  }, [data.numRows, overscan, padding])
+  }, [data.numRows, overscan, padding, scrollHeight])
 
   // fetch rows
   useEffect(() => {
@@ -253,6 +256,11 @@ export default function HighTable({
 
       // Don't update if view is unchanged
       if (!invalidate && start === rowsStart && end === rowsStart + rows.length && rowsOrderBy.column === orderBy?.column ) {
+        return
+      }
+
+      if (start === end) {
+        dispatch({ type: 'SET_ROWS', start, rows: [], hasCompleteRow: false, rowsOrderBy: { column: orderBy?.column } })
         return
       }
 
@@ -375,10 +383,6 @@ export default function HighTable({
   // don't render table if header is empty
   if (!data.header.length) return
 
-
-  // total scrollable height
-  const scrollHeight = (data.numRows + 1) * rowHeight
-
   return <div className={`table-container${showSelectionControls ? ' selectable' : ''}`}>
     <div className='table-scroll' ref={scrollRef}>
       <div style={{ height: `${scrollHeight}px` }}>
@@ -390,7 +394,7 @@ export default function HighTable({
           className={`table${enableOrderByInteractions ? ' sortable' : ''}`}
           ref={tableRef}
           role='grid'
-          style={{ top: `${rowsRange.offsetTop}px` }}
+          style={{ top: `${offsetTop}px` }}
           tabIndex={0}>
           <TableHeader
             cacheKey={cacheKey}
