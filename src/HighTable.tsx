@@ -16,7 +16,6 @@ export { HighTable }
  * State of the component
  */
 type State = {
-  columnWidths: Array<number | undefined> // width of each column
   invalidate: boolean // true if the data must be fetched again
   hasCompleteRow: boolean // true if at least one row is fully resolved (all of its cells)
   rows: PartialRow[] // slice of the virtual table rows (sorted rows) to render as HTML. A row might have contain incomplete rows (not all the cells, or no index).
@@ -27,8 +26,6 @@ type State = {
 
 type Action =
   | { type: 'SET_ROWS', start: number, rows: PartialRow[], rowsOrderBy: OrderBy, hasCompleteRow: boolean }
-  | { type: 'SET_COLUMN_WIDTH', columnIndex: number, columnWidth: number | undefined }
-  | { type: 'SET_COLUMN_WIDTHS', columnWidths: Array<number | undefined> }
   | { type: 'DATA_CHANGED', data: DataFrame }
 
 function reducer(state: State, action: Action): State {
@@ -42,13 +39,6 @@ function reducer(state: State, action: Action): State {
       invalidate: false,
       hasCompleteRow: state.hasCompleteRow || action.hasCompleteRow,
     }
-  case 'SET_COLUMN_WIDTH': {
-    const columnWidths = [...state.columnWidths]
-    columnWidths[action.columnIndex] = action.columnWidth
-    return { ...state, columnWidths }
-  }
-  case 'SET_COLUMN_WIDTHS':
-    return { ...state, columnWidths: action.columnWidths }
   case 'DATA_CHANGED':
     return { ...state, data: action.data, invalidate: true, hasCompleteRow: false }
   default:
@@ -111,7 +101,6 @@ export default function HighTable({
 }: TableProps) {
   const initialState: State = {
     data,
-    columnWidths: [],
     rows: [],
     rowsOrderBy: {},
     rowsStart: 0,
@@ -121,6 +110,15 @@ export default function HighTable({
   const [state, dispatch] = useReducer(reducer, initialState)
   const [rowsRange, setRowsRange] = useState({ start: 0, end: 0 })
 
+  const [columnWidths, setColumnWidths] = useState<Array<number | undefined>>([])
+  const setColumnWidth = useCallback((columnIndex: number, columnWidth: number | undefined) => {
+    setColumnWidths(columnWidths => {
+      const newColumnWidths = [...columnWidths]
+      newColumnWidths[columnIndex] = columnWidth
+      return newColumnWidths
+    })
+  }, [setColumnWidths])
+
   /**
    * The component relies on the model of a virtual table which rows are ordered and only the visible rows are fetched and rendered as HTML <tr> elements.
    * We use two reference domains for the rows:
@@ -129,7 +127,7 @@ export default function HighTable({
    *                  rowsStart lives in the table domain: it's the first virtual row to be rendered in HTML.
    * data.rows(dataIndex, dataIndex + 1) is the same row as data.rows(tableIndex, tableIndex + 1, orderBy)
    */
-  const { columnWidths, rowsStart, rows, rowsOrderBy, invalidate, hasCompleteRow, data: previousData } = state
+  const { rowsStart, rows, rowsOrderBy, invalidate, hasCompleteRow, data: previousData } = state
 
   // Sorting is disabled if the data is not sortable
   const {
@@ -370,14 +368,6 @@ export default function HighTable({
   // fixed corner width based on number of rows
   const cornerWidth = Math.ceil(Math.log10(data.numRows + 1)) * 4 + 22
   const cornerStyle = useMemo(() => cellStyle(cornerWidth), [cornerWidth])
-
-  const setColumnWidths = useCallback((columnWidths: Array<number | undefined>) => {
-    dispatch({ type: 'SET_COLUMN_WIDTHS', columnWidths })
-  }, [dispatch])
-
-  const setColumnWidth = useCallback((columnIndex: number, columnWidth: number | undefined) => {
-    dispatch({ type: 'SET_COLUMN_WIDTH', columnIndex, columnWidth })
-  }, [dispatch])
 
   // don't render table if header is empty
   if (!data.header.length) return
