@@ -249,7 +249,7 @@ export default function HighTable({
   // fetch rows
   useEffect(() => {
     /**
-     * Compute the rows to fetch based on the current scroll position.
+     * Fetch the rows in the range [start, end) and update the state.
     */
     async function fetchRows() {
       const { start, end } = rowsRange
@@ -313,7 +313,6 @@ export default function HighTable({
     }
     // update
     fetchRows()
-
   }, [data, invalidate, onError, orderBy?.column, rows.length, rowsOrderBy.column, rowsRange, rowsStart])
 
   /**
