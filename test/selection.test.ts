@@ -1,5 +1,7 @@
 import { describe, expect, it, test } from 'vitest'
-import { AsyncRow, DataFrame, Row, sortableDataFrame, wrapPromise } from '../src/dataframe.js'
+import { DataFrame, sortableDataFrame } from '../src/dataframe.js'
+import { wrapPromise } from '../src/promise.js'
+import { AsyncRow, Row } from '../src/row.js'
 import { areAllSelected, areValidRanges, extendFromAnchor, isSelected, isValidIndex, isValidRange, selectRange, toTableSelection, toggleAll, toggleIndex, unselectRange } from '../src/selection.js'
 
 describe('an index', () => {
@@ -215,13 +217,18 @@ const data = [
   { id: 1, name: 'Alice', age: 30 },
   { id: 2, name: 'Bob', age: 20 },
   { id: 4, name: 'Dani', age: 20 },
-]
+].map((cells, index) => ({ cells, index }))
 
-export function wrapObject(obj: Row): AsyncRow {
-  return Object.fromEntries(
-    Object.entries(obj).map(([key, value]) => [key, wrapPromise(value)])
-  )
+
+export function wrapObject({ index, cells }: Row): AsyncRow {
+  return {
+    index: wrapPromise(index),
+    cells: Object.fromEntries(
+      Object.entries(cells).map(([key, value]) => [key, wrapPromise(value)])
+    ),
+  }
 }
+
 const dataFrame: DataFrame = {
   header: ['id', 'name', 'age'],
   numRows: data.length,

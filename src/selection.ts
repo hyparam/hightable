@@ -1,6 +1,5 @@
-import { DataFrame, asyncRows } from './dataframe.js'
+import { DataFrame } from './dataframe.js'
 import { OrderBy } from './TableHeader.js'
-
 
 /**
  * A selection is modelled as an array of ordered and non-overlapping ranges.
@@ -230,7 +229,7 @@ export async function getSortIndex({ data, orderBy }: { data: DataFrame, orderBy
   if (!header.includes(column)) {
     throw new Error('orderBy column is not in the data frame')
   }
-  const dataIndexes = await Promise.all(asyncRows(rows(0, numRows, column), numRows, header).map(row => row.__index__))
+  const dataIndexes = await Promise.all(rows(0, numRows, column).map(row => row.index))
   const tableIndexes = Array.from({ length: numRows }, (_, i) => -1)
   for (let i = 0; i < numRows; i++) {
     const dataIndex = dataIndexes[i]
