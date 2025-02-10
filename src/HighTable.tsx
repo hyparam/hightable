@@ -15,7 +15,7 @@ export { HighTable }
 /**
  * State of the component
  */
-export type State = {
+type State = {
   columnWidths: Array<number | undefined> // width of each column
   invalidate: boolean // true if the data must be fetched again
   hasCompleteRow: boolean // true if at least one row is fully resolved (all of its cells)
@@ -25,13 +25,13 @@ export type State = {
   data: DataFrame // data frame used in the last rendering
 }
 
-export type Action =
+type Action =
   | { type: 'SET_ROWS', start: number, rows: PartialRow[], rowsOrderBy: OrderBy, hasCompleteRow: boolean }
   | { type: 'SET_COLUMN_WIDTH', columnIndex: number, columnWidth: number | undefined }
   | { type: 'SET_COLUMN_WIDTHS', columnWidths: Array<number | undefined> }
   | { type: 'DATA_CHANGED', data: DataFrame }
 
-export function reducer(state: State, action: Action): State {
+function reducer(state: State, action: Action): State {
   switch (action.type) {
   case 'SET_ROWS':
     return {
