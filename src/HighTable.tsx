@@ -22,11 +22,12 @@ type State = {
   rows: PartialRow[] // slice of the virtual table rows (sorted rows) to render as HTML. A row might have contain incomplete rows (not all the cells, or no index).
   rowsOrderBy: OrderBy // order by column of the rows slice.
   startIndex: number // offset of the slice of sorted rows to render (rows[0] is the startIndex'th sorted row)
+  endIndex: number // end of the slice (excluded) of sorted rows to render (rows[rows.length - 1] is the (endIndex - 1)'th sorted row)
   data: DataFrame // data frame used in the last rendering
 }
 
 type Action =
-  | { type: 'SET_ROWS', start: number, rows: PartialRow[], rowsOrderBy: OrderBy, hasCompleteRow: boolean }
+  | { type: 'SET_ROWS', start: number, end: number, rows: PartialRow[], rowsOrderBy: OrderBy, hasCompleteRow: boolean }
   | { type: 'SET_COLUMN_WIDTH', columnIndex: number, columnWidth: number | undefined }
   | { type: 'SET_COLUMN_WIDTHS', columnWidths: Array<number | undefined> }
   | { type: 'DATA_CHANGED', data: DataFrame }
@@ -37,6 +38,7 @@ function reducer(state: State, action: Action): State {
     return {
       ...state,
       startIndex: action.start,
+      endIndex: action.end,
       rows: action.rows,
       rowsOrderBy: action.rowsOrderBy,
       invalidate: false,
@@ -113,6 +115,7 @@ export default function HighTable({
     data,
     columnWidths: [],
     startIndex: 0,
+    endIndex: 0,
     rows: [],
     rowsOrderBy: {},
     invalidate: true,
@@ -124,10 +127,10 @@ export default function HighTable({
    * We use two reference domains for the rows:
    * - data:          the index of a row in the original (unsorted) data frame is referred as dataIndex. The mouse event callbacks receive this index.
    * - virtual table: the index of a row in the virtual table (sorted) is referred as tableIndex. The selection uses this index, and thus depends on the order.
-   *                  startIndex lives in the table domain: it's the first virtual row to be rendered in HTML.
+   *                  startIndex/endIndex live in the table domain: they are the virtual rows to be rendered in HTML.
    * data.rows(dataIndex, dataIndex + 1) is the same row as data.rows(tableIndex, tableIndex + 1, orderBy)
    */
-  const { columnWidths, startIndex, rows, rowsOrderBy, invalidate, hasCompleteRow, data: previousData } = state
+  const { columnWidths, startIndex, endIndex, rows, rowsOrderBy, invalidate, hasCompleteRow, data: previousData } = state
 
   // Sorting is disabled if the data is not sortable
   const {
@@ -226,7 +229,7 @@ export default function HighTable({
       const end = Math.min(data.numRows, endView + overscan)
 
       // Don't update if view is unchanged
-      if (!invalidate && start === startIndex && rows.length === end - start && rowsOrderBy.column === orderBy?.column ) {
+      if (!invalidate && start === startIndex && end === endIndex && rowsOrderBy.column === orderBy?.column ) {
         return
       }
 
@@ -263,7 +266,7 @@ export default function HighTable({
             resolved.push(resolvedRow)
           }
           offsetTopRef.current = offsetTop
-          dispatch({ type: 'SET_ROWS', start, rows: resolved, hasCompleteRow, rowsOrderBy: { column: orderBy?.column } })
+          dispatch({ type: 'SET_ROWS', start, end, rows: resolved, hasCompleteRow, rowsOrderBy: { column: orderBy?.column } })
         }, 10)
         updateRows() // initial update
 
@@ -302,7 +305,7 @@ export default function HighTable({
       scroller?.removeEventListener('scroll', handleScroll)
       window.removeEventListener('resize', handleScroll)
     }
-  }, [data, invalidate, orderBy?.column, overscan, padding, rows.length, rowsOrderBy.column, startIndex, scrollHeight, onError, dispatch])
+  }, [data, invalidate, orderBy?.column, overscan, padding, rows.length, rowsOrderBy.column, startIndex, endIndex, scrollHeight, onError, dispatch])
 
   /**
    * Validate row length
@@ -353,7 +356,7 @@ export default function HighTable({
   // add empty pre and post rows to fill the viewport
   const prePadding = Array.from({ length: Math.min(padding, startIndex) }, () => [])
   const postPadding = Array.from({
-    length: Math.min(padding, data.numRows - startIndex - rows.length),
+    length: Math.min(padding, data.numRows - endIndex),
   }, () => [])
 
   // fixed corner width based on number of rows
@@ -419,7 +422,7 @@ export default function HighTable({
               </tr>
             })}
             {postPadding.map((_, postPaddingIndex) => {
-              const tableIndex = startIndex + rows.length + postPaddingIndex
+              const tableIndex = endIndex + postPaddingIndex
               return <tr role="row" key={tableIndex} aria-rowindex={tableIndex + 2 /* 1-based + the header row */} >
                 <th scope="row" role="rowheader" style={cornerStyle} ></th>
               </tr>
