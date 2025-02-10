@@ -1,7 +1,8 @@
 import { act, fireEvent, waitFor, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { sortableDataFrame, wrapPromise } from '../src/dataframe.js'
+import { sortableDataFrame } from '../src/dataframe.js'
 import HighTable from '../src/HighTable.js'
+import { wrapPromise } from '../src/promise.js'
 import { render } from './userEvent.js'
 
 const data = {
