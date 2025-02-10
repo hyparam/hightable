@@ -22,7 +22,7 @@ export interface Row {
  */
 export interface PartialRow {
   index?: number
-  cells: Partial<Cells> // I added Partial for clarity, even if the result is the same
+  cells: Partial<Cells> // use Partial for clarity, even if the result is the same
 }
 
 /**
@@ -78,9 +78,10 @@ export function resolvableRow(header: string[]): ResolvableRow {
  * @param numRows Number of expected rows when the promise resolves.
  * @param header Column names.
  *
- * @returns Array of AsyncRows.
+ * @returns Array of ResolvableRow (AsyncRow + all the wrapped promises have resolve and reject functions).
+ * A ResolvableRow is also an AsyncRow.
  */
-export function asyncRows(rowsPromise: Promise<Row[]>, numRows: number, header: string[]): AsyncRow[] {
+export function asyncRows(rowsPromise: Promise<Row[]>, numRows: number, header: string[]): ResolvableRow[] {
   // Make grid of resolvable promises
   const resolvableRows = new Array(numRows).fill(null).map(_ => resolvableRow(header))
   rowsPromise.then(rows => {
@@ -103,8 +104,6 @@ export function asyncRows(rowsPromise: Promise<Row[]>, numRows: number, header: 
       resolvableRows[i].index.reject(error)
     }
   })
-  // TODO(SL): should we 'hide' the resolve/reject methods in the returned objects for them to be
-  // 'real' AsyncRow, or is it fine to return ResolvableRow?
   return resolvableRows
 }
 
