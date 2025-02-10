@@ -25,13 +25,19 @@ export function wrapPromise<T>(input: Promise<T> | T): WrappedPromise<T> {
 
 export type ResolvablePromise<T> = WrappedPromise<T> & PromiseWithResolvers<T>
 
-export function resolvablePromise<T>(): ResolvablePromise<T> {
-  // Promise.withResolvers is too recent. Let's use the polyfill instead.
-  let resolve: PromiseWithResolvers<T>['resolve']
-  let reject: PromiseWithResolvers<T>['reject']
-  const wrapped = wrapPromise(new Promise<T>((resolve_, reject_) => {
+// Promise.withResolvers is too recent. Let's use the polyfill instead.
+export function withResolvers<T>(): PromiseWithResolvers<T> {
+  let resolve!: PromiseWithResolvers<T>['resolve']
+  let reject!: PromiseWithResolvers<T>['reject']
+  const promise = new Promise<T>((resolve_, reject_) => {
     resolve = resolve_
     reject = reject_
-  }))
-  return Object.assign(wrapped, { resolve: resolve!, reject: reject! })
+  })
+  return { promise, resolve, reject }
+}
+
+export function resolvablePromise<T>(): ResolvablePromise<T> {
+  const w = withResolvers<T>()
+  const wrapped = wrapPromise(w.promise)
+  return Object.assign(wrapped, w)
 }
