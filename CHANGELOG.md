@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## [Unreleased]
+## [Unreleased](https://github.com/hyparam/hightable/compare/v0.9.1...HEAD)
 
 ### Changed
 
@@ -15,15 +15,15 @@
 
 - use `Promise.all` to fail fast when fetching the cells (#37).
 
-## [0.9.2] - 2025-01-30 [YANKED]
+## [0.9.2](https://github.com/hyparam/hightable/compare/v0.9.1...v0.9.2) - 2025-01-30 [DEPRECATED]
 
-The package was yanked because it was published with React 19 instead of the minimal one (18.2.0).
+The package was [deprecated](https://www.npmjs.com/package/hightable/v/0.9.2) because it was published with React 19 instead of the minimal one (18.2.0).
 
 ### Changed
 
 - add compatibility with React > 18 (#35).
 
-## [0.9.1] - 2025-01-22
+## [0.9.1](https://github.com/hyparam/hightable/compare/v0.9.0...v0.9.1) - 2025-01-22
 
 ### Added
 
@@ -58,7 +58,7 @@ The package was yanked because it was published with React 19 instead of the min
 - check React Hooks dependencies with eslint (#28).
 - add roles to the HTML elements (#28) to help screen readers and to test with testing-library based on semantics as recommended.
 
-## [0.9.0] - 2025-01-15
+## [0.9.0](https://github.com/hyparam/hightable/compare/v0.8.1...v0.9.0) - 2025-01-15
 
 ### Changed
 
