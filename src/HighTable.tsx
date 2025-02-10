@@ -1,9 +1,12 @@
 import { ReactNode, useCallback, useEffect, useMemo, useReducer, useRef } from 'react'
-import { DataFrame, PartialRow } from './dataframe.js'
+import { DataFrame } from './dataframe.js'
 import { useInputState } from './hooks.js'
+import { PartialRow } from './row.js'
 import { Selection, areAllSelected, extendFromAnchor, isSelected, toggleAll, toggleIndex } from './selection.js'
 import TableHeader, { OrderBy, cellStyle } from './TableHeader.js'
-export { AsyncRow, DataFrame, ResolvablePromise, Row, arrayDataFrame, asyncRows, awaitRow, awaitRows, resolvablePromise, resolvableRow, sortableDataFrame, wrapPromise } from './dataframe.js'
+export { DataFrame, arrayDataFrame, sortableDataFrame } from './dataframe.js'
+export { ResolvablePromise, resolvablePromise, wrapPromise } from './promise.js'
+export { AsyncRow, Cells, PartialRow, ResolvableRow, Row, asyncRows, awaitRow, awaitRows, resolvableRow } from './row.js'
 export { rowCache } from './rowCache.js'
 export { Selection } from './selection.js'
 export { OrderBy } from './TableHeader.js'
@@ -12,7 +15,7 @@ export { HighTable }
 /**
  * State of the component
  */
-export type State = {
+type State = {
   columnWidths: Array<number | undefined> // width of each column
   invalidate: boolean // true if the data must be fetched again
   hasCompleteRow: boolean // true if at least one row is fully resolved (all of its cells)
@@ -22,13 +25,13 @@ export type State = {
   data: DataFrame // data frame used in the last rendering
 }
 
-export type Action =
+type Action =
   | { type: 'SET_ROWS', start: number, rows: PartialRow[], rowsOrderBy: OrderBy, hasCompleteRow: boolean }
   | { type: 'SET_COLUMN_WIDTH', columnIndex: number, columnWidth: number | undefined }
   | { type: 'SET_COLUMN_WIDTHS', columnWidths: Array<number | undefined> }
   | { type: 'DATA_CHANGED', data: DataFrame }
 
-export function reducer(state: State, action: Action): State {
+function reducer(state: State, action: Action): State {
   switch (action.type) {
   case 'SET_ROWS':
     return {

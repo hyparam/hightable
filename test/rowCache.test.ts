@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
-import { AsyncRow, awaitRows, wrapPromise } from '../src/dataframe.js'
+import { wrapPromise } from '../src/promise.js'
+import { AsyncRow, awaitRows } from '../src/row.js'
 import { rowCache } from '../src/rowCache.js'
 
 // Mock DataFrame

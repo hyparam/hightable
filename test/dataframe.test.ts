@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import {
-  AsyncRow, DataFrame, Row, arrayDataFrame, awaitRows, resolvablePromise, sortableDataFrame, wrapPromise,
-} from '../src/dataframe.js'
+import { DataFrame, arrayDataFrame, sortableDataFrame } from '../src/dataframe.js'
+import { wrapPromise } from '../src/promise.js'
+import { AsyncRow, Row, awaitRows } from '../src/row.js'
 
 export function wrapObject({ index, cells }: Row): AsyncRow {
   return {
@@ -11,27 +11,6 @@ export function wrapObject({ index, cells }: Row): AsyncRow {
     ),
   }
 }
-
-describe('resolvablePromise', () => {
-  it('should resolve with a value', async () => {
-    const promise = resolvablePromise<number>()
-    promise.resolve(42)
-    expect(await promise).toBe(42)
-  })
-  it('should reject with an error', async () => {
-    const promise = resolvablePromise<number>()
-    promise.reject(new Error('Failed'))
-    await expect(promise).rejects.toThrow('Failed')
-  })
-})
-
-describe('awaitRows', () => {
-  it('should resolve with a row', async () => {
-    const row = wrapObject({ cells: { id: 1, name: 'Alice', age: 30 }, index: 0 })
-    const result = await awaitRows([row])
-    expect(result).toEqual([{ cells: { id: 1, name: 'Alice', age: 30 }, index: 0 }])
-  })
-})
 
 describe('sortableDataFrame', () => {
   const data = [
