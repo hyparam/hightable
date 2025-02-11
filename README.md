@@ -121,11 +121,31 @@ interface Selection {
 }
 ```
 
+## Array to DataFrame
+
+HighTable includes a helper function to convert an array of objects to a DataFrame object. The function accepts an array of objects and assume that all the objects share the same keys. The dataframe is not sortable, see `sortableDataFrame` for that.
+
+```javascript
+import { arrayDataFrame } from 'hightable'
+const data = [
+  { id: 1, name: 'Alice' },
+  { id: 2, name: 'Bob' },
+]
+const dataframe = arrayDataFrame(data)
+```
+
 ## Sortable DataFrame
 
 If your data source supports sorting, set the sortable property to true in your DataFrame object. When sorting is enabled, the rows function will receive an additional orderBy parameter, which represents the column name to sort by.
 
 Ensure your rows function handles the orderBy parameter appropriately to return sorted data.
+
+HighTable includes a helper function to transform a dataframe to a sorted dataframe:
+
+```javascript
+import { sortedDataFrame } from 'hightable'
+const sortableDf = sortableDataFrame(df)
+```
 
 ## Async DataFrame
 
