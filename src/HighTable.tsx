@@ -1,4 +1,4 @@
-import { ReactNode, useCallback, useEffect, useMemo, useReducer, useRef } from 'react'
+import { ReactNode, useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import { DataFrame } from './dataframe.js'
 import { useInputState } from './hooks.js'
 import { PartialRow } from './row.js'
@@ -16,7 +16,6 @@ export { HighTable }
  * State of the component
  */
 type State = {
-  columnWidths: Array<number | undefined> // width of each column
   invalidate: boolean // true if the data must be fetched again
   hasCompleteRow: boolean // true if at least one row is fully resolved (all of its cells)
   rows: PartialRow[] // slice of the virtual table rows (sorted rows) to render as HTML. A row might have contain incomplete rows (not all the cells, or no index).
@@ -27,8 +26,6 @@ type State = {
 
 type Action =
   | { type: 'SET_ROWS', start: number, rows: PartialRow[], rowsOrderBy: OrderBy, hasCompleteRow: boolean }
-  | { type: 'SET_COLUMN_WIDTH', columnIndex: number, columnWidth: number | undefined }
-  | { type: 'SET_COLUMN_WIDTHS', columnWidths: Array<number | undefined> }
   | { type: 'DATA_CHANGED', data: DataFrame }
 
 function reducer(state: State, action: Action): State {
@@ -42,13 +39,6 @@ function reducer(state: State, action: Action): State {
       invalidate: false,
       hasCompleteRow: state.hasCompleteRow || action.hasCompleteRow,
     }
-  case 'SET_COLUMN_WIDTH': {
-    const columnWidths = [...state.columnWidths]
-    columnWidths[action.columnIndex] = action.columnWidth
-    return { ...state, columnWidths }
-  }
-  case 'SET_COLUMN_WIDTHS':
-    return { ...state, columnWidths: action.columnWidths }
   case 'DATA_CHANGED':
     return { ...state, data: action.data, invalidate: true, hasCompleteRow: false }
   default:
@@ -111,14 +101,24 @@ export default function HighTable({
 }: TableProps) {
   const initialState: State = {
     data,
-    columnWidths: [],
-    startIndex: 0,
     rows: [],
     rowsOrderBy: {},
+    startIndex: 0,
     invalidate: true,
     hasCompleteRow: false,
   }
   const [state, dispatch] = useReducer(reducer, initialState)
+  const [rowsRange, setRowsRange] = useState({ start: 0, end: 0 })
+
+  const [columnWidths, setColumnWidths] = useState<Array<number | undefined>>([])
+  const setColumnWidth = useCallback((columnIndex: number, columnWidth: number | undefined) => {
+    setColumnWidths(columnWidths => {
+      const newColumnWidths = [...columnWidths]
+      newColumnWidths[columnIndex] = columnWidth
+      return newColumnWidths
+    })
+  }, [setColumnWidths])
+
   /**
    * The component relies on the model of a virtual table which rows are ordered and only the visible rows are fetched and rendered as HTML <tr> elements.
    * We use two reference domains for the rows:
@@ -127,7 +127,7 @@ export default function HighTable({
    *                  startIndex lives in the table domain: it's the first virtual row to be rendered in HTML.
    * data.rows(dataIndex, dataIndex + 1) is the same row as data.rows(tableIndex, tableIndex + 1, orderBy)
    */
-  const { columnWidths, startIndex, rows, rowsOrderBy, invalidate, hasCompleteRow, data: previousData } = state
+  const { startIndex, rows, rowsOrderBy, invalidate, hasCompleteRow, data: previousData } = state
 
   // Sorting is disabled if the data is not sortable
   const {
@@ -189,17 +189,15 @@ export default function HighTable({
     return isSelected({ ranges, index: tableIndex })
   }, [selection])
 
-  const offsetTopRef = useRef(0)
+  // total scrollable height
+  const scrollHeight = (data.numRows + 1) * rowHeight
+  const offsetTop = Math.max(0, rowsRange.start - padding) * rowHeight
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const tableRef = useRef<HTMLTableElement>(null)
   const pendingRequest = useRef(0)
-  const pendingUpdate = useRef(false)
 
   if (!data) throw new Error('HighTable: data is required')
-
-  // total scrollable height
-  const scrollHeight = (data.numRows + 1) * rowHeight
 
   // invalidate when data changes so that columns will auto-resize
   if (data !== previousData) {
@@ -210,12 +208,13 @@ export default function HighTable({
     }
   }
 
-  // handle scrolling
+  // handle scrolling and window resizing
   useEffect(() => {
     /**
-     * Compute the rows to fetch based on the current scroll position.
+     * Compute the dimensions based on the current scroll position.
      */
-    async function handleScroll() {
+
+    function handleScroll() {
       const clientHeight = scrollRef.current?.clientHeight || 100 // view window height
       const scrollTop = scrollRef.current?.scrollTop || 0 // scroll position
 
@@ -225,16 +224,43 @@ export default function HighTable({
       const start = Math.max(0, startView - overscan)
       const end = Math.min(data.numRows, endView + overscan)
 
-      // Don't update if view is unchanged
-      if (!invalidate && start === startIndex && rows.length === end - start && rowsOrderBy.column === orderBy?.column ) {
-        return
-      }
-
       if (isNaN(start)) throw new Error('invalid start row ' + start)
       if (isNaN(end)) throw new Error('invalid end row ' + end)
       if (end - start > 1000) throw new Error('attempted to render too many rows ' + (end - start) + ' table must be contained in a scrollable div')
 
-      const offsetTop = Math.max(0, start - padding) * rowHeight
+      setRowsRange({ start, end })
+    }
+    // run once
+    handleScroll()
+
+    // scroll listeners
+    const scroller = scrollRef.current
+    scroller?.addEventListener('scroll', handleScroll)
+    window.addEventListener('resize', handleScroll)
+
+    return () => {
+      scroller?.removeEventListener('scroll', handleScroll)
+      window.removeEventListener('resize', handleScroll)
+    }
+  }, [data.numRows, overscan, padding, scrollHeight])
+
+  // fetch rows
+  useEffect(() => {
+    /**
+     * Fetch the rows in the range [start, end) and update the state.
+    */
+    async function fetchRows() {
+      const { start, end } = rowsRange
+
+      // Don't update if view is unchanged
+      if (!invalidate && start === startIndex && end === startIndex + rows.length && rowsOrderBy.column === orderBy?.column ) {
+        return
+      }
+
+      if (start === end) {
+        dispatch({ type: 'SET_ROWS', start, rows: [], hasCompleteRow: false, rowsOrderBy: { column: orderBy?.column } })
+        return
+      }
 
       // Fetch a chunk of rows from the data frame
       try {
@@ -262,7 +288,6 @@ export default function HighTable({
             if (isRowComplete) hasCompleteRow = true
             resolved.push(resolvedRow)
           }
-          offsetTopRef.current = offsetTop
           dispatch({ type: 'SET_ROWS', start, rows: resolved, hasCompleteRow, rowsOrderBy: { column: orderBy?.column } })
         }, 10)
         updateRows() // initial update
@@ -280,29 +305,13 @@ export default function HighTable({
 
         // Await all pending promises
         await Promise.all(rowsChunk.flatMap(asyncRow => [asyncRow.index, ...Object.values(asyncRow.cells)]))
-
-        // if user scrolled while fetching, fetch again
-        if (pendingUpdate.current) {
-          pendingUpdate.current = false
-          handleScroll()
-        }
       } catch (error) {
         onError(error as Error)
       }
     }
     // update
-    handleScroll()
-
-    // scroll listeners
-    const scroller = scrollRef.current
-    scroller?.addEventListener('scroll', handleScroll)
-    window.addEventListener('resize', handleScroll)
-
-    return () => {
-      scroller?.removeEventListener('scroll', handleScroll)
-      window.removeEventListener('resize', handleScroll)
-    }
-  }, [data, invalidate, orderBy?.column, overscan, padding, rows.length, rowsOrderBy.column, startIndex, scrollHeight, onError, dispatch])
+    fetchRows()
+  }, [data, invalidate, onError, orderBy?.column, rows.length, rowsOrderBy.column, rowsRange, startIndex])
 
   /**
    * Validate row length
@@ -360,14 +369,6 @@ export default function HighTable({
   const cornerWidth = Math.ceil(Math.log10(data.numRows + 1)) * 4 + 22
   const cornerStyle = useMemo(() => cellStyle(cornerWidth), [cornerWidth])
 
-  const setColumnWidths = useCallback((columnWidths: Array<number | undefined>) => {
-    dispatch({ type: 'SET_COLUMN_WIDTHS', columnWidths })
-  }, [dispatch])
-
-  const setColumnWidth = useCallback((columnIndex: number, columnWidth: number | undefined) => {
-    dispatch({ type: 'SET_COLUMN_WIDTH', columnIndex, columnWidth })
-  }, [dispatch])
-
   // don't render table if header is empty
   if (!data.header.length) return
 
@@ -382,7 +383,7 @@ export default function HighTable({
           className={`table${enableOrderByInteractions ? ' sortable' : ''}`}
           ref={tableRef}
           role='grid'
-          style={{ top: `${offsetTopRef.current}px` }}
+          style={{ top: `${offsetTop}px` }}
           tabIndex={0}>
           <TableHeader
             cacheKey={cacheKey}
