@@ -1,19 +1,28 @@
 # CHANGELOG
 
-## [Unreleased](https://github.com/hyparam/hightable/compare/v0.9.1...HEAD)
+## [Unreleased](https://github.com/hyparam/hightable/compare/v0.10.0...HEAD)
+
+## [0.10.0](https://github.com/hyparam/hightable/compare/v0.9.2...v0.10.0) - 2025-02-11
 
 ### Changed
 
 - **Breaking** only support `AsyncRow[]` (instead of `AsyncRow[] | Promise<Row[]>`) as the return type of the `rows` function in the `DataFrame` object ([#36](https://github.com/hyparam/hightable/pull/36)).
 - **Breaking** changed the format of rows. Instead of `Record<string, any>` with an optional `__index__` field, rows are now `Row` objects with a mandatory index: `{index: number, cells: Record<string, any>[]}` ([#36](https://github.com/hyparam/hightable/pull/36)).
+- **Breaking** revert to being compatible only with React 18 ([#47](https://github.com/hyparam/hightable/pull/47)).
 
 ### Fixed
 
-- build the package with the lowest compatible React version: React 18.2.0. Note that HighTable is compatible with higher versions, like ^19.
+- use the minimal supported React version (18.2.0) to build the package ([#41](https://github.com/hyparam/hightable/pull/41)).
 
 ### Refactored
 
 - use `Promise.all` to fail fast when fetching the cells ([#37](https://github.com/hyparam/hightable/pull/37)).
+- upgrade the dev dependencies ([#42](https://github.com/hyparam/hightable/pull/42)).
+- move the code related to promises and rows to separate files ([#43](https://github.com/hyparam/hightable/pull/43) and [#44](https://github.com/hyparam/hightable/pull/44)).
+- decouple scroll and data fetch ([#45](https://github.com/hyparam/hightable/pull/45)).
+- use useCallback to avoid creating functions on each rendering ([#46](https://github.com/hyparam/hightable/pull/46)).
+- add this CHANGELOG file ([#39](https://github.com/hyparam/hightable/pull/39) and [#40](https://github.com/hyparam/hightable/pull/40)).
+- add doc about how to create a dataframe in the README ([#48](https://github.com/hyparam/hightable/pull/48)).
 
 ## [0.9.2](https://github.com/hyparam/hightable/compare/v0.9.1...v0.9.2) - 2025-01-30 [DEPRECATED]
 
