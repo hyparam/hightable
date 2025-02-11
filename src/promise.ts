@@ -2,9 +2,6 @@ export type WrappedPromise<T> = Promise<T> & {
   resolved?: T
   rejected?: Error
 }
-// TODO(SL) maybe improve the type or structure so that the user does not provide a simple promise
-// maybe force adding a "pending: true" key while it's not resolved or rejected?
-// eg: {pending: true} | {resolved: T} | {rejected: Error}
 
 /**
  * Wrap a promise to save the resolved value and error.

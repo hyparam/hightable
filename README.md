@@ -121,18 +121,59 @@ interface Selection {
 }
 ```
 
+## Array to DataFrame
+
+HighTable includes a helper function to convert an array of objects to a DataFrame object. The function accepts an array of objects and assume that all the objects share the same keys. The dataframe is not sortable, see `sortableDataFrame` for that.
+
+```javascript
+import { arrayDataFrame } from 'hightable'
+const data = [
+  { id: 1, name: 'Alice' },
+  { id: 2, name: 'Bob' },
+]
+const dataframe = arrayDataFrame(data)
+```
+
 ## Sortable DataFrame
 
 If your data source supports sorting, set the sortable property to true in your DataFrame object. When sorting is enabled, the rows function will receive an additional orderBy parameter, which represents the column name to sort by.
 
 Ensure your rows function handles the orderBy parameter appropriately to return sorted data.
 
-## Async DataFrame
-
-HighTable supports async loading of individual cells.
-Dataframes return future cell data to the table as `AsyncRow[]`.
+HighTable includes a helper function to transform a dataframe to a sorted dataframe:
 
 ```javascript
+import { sortedDataFrame } from 'hightable'
+const sortableDf = sortableDataFrame(df)
+```
+
+## Async DataFrame
+
+HighTable supports async loading of individual cells. Dataframes return future cell data to the table as `AsyncRow[]`.
+
+You can use the helper `asyncRows` (or the lower level `resolvableRow` and `wrapPromise`) to create the async rows. Their cells and index are Promises, with a field `resolved` set to the resolved value (or `rejected` set to the reason) when settled.
+
+High-level example:
+
+```javascript
+import { asyncRows } from 'hightable'
+const header = ['a', 'b']
+const numRows = 10
+// transform Promise<Row[]> to AsyncRow[]
+const rows = asyncRows(fetchRows(...), numRows, header)
+const dataframe = {
+  header,
+  numRows,
+  rows(start, end) {
+    return rows.slice(start, end)
+  },
+}
+```
+
+Low-level example:
+
+```javascript
+import { resolvableRow } from 'hightable'
 const dataframe = {
   header: ['a', 'b'],
   numRows: 10,
