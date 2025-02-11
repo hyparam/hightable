@@ -324,6 +324,20 @@ export default function HighTable({
   }
 
   const memoizedStyles = useMemo(() => columnWidths.map(cellStyle), [columnWidths])
+  const onDoubleClick = useCallback((e: React.MouseEvent, col: number, row?: number) => {
+    if (row === undefined) {
+      console.warn('Cell onDoubleClick is cancelled because row index is undefined')
+      return
+    }
+    onDoubleClickCell?.(e, col, row)
+  }, [onDoubleClickCell])
+  const onMouseDown = useCallback((e: React.MouseEvent, col: number, row?: number) => {
+    if (row === undefined) {
+      console.warn('Cell onMouseDown is cancelled because row index is undefined')
+      return
+    }
+    onMouseDownCell?.(e, col, row)
+  }, [onMouseDownCell])
 
   /**
    * Render a table cell <td> with title and optional custom rendering
@@ -332,7 +346,7 @@ export default function HighTable({
    * @param col column index
    * @param row row index. If undefined, onDoubleClickCell and onMouseDownCell will not be called.
    */
-  function Cell(value: any, col: number, row?: number): ReactNode {
+  const Cell = useCallback((value: any, col: number, row?: number): ReactNode => {
     // render as truncated text
     let str = stringify(value)
     let title: string | undefined
@@ -344,13 +358,13 @@ export default function HighTable({
       role="cell"
       className={str === undefined ? 'pending' : undefined}
       key={col}
-      onDoubleClick={e => row === undefined ? console.warn('Cell onDoubleClick is cancelled because row index is undefined') : onDoubleClickCell?.(e, col, row)}
-      onMouseDown={e => row === undefined ? console.warn('Cell onMouseDown is cancelled because row index is undefined') : onMouseDownCell?.(e, col, row)}
+      onDoubleClick={e => onDoubleClick(e, col, row)}
+      onMouseDown={e => onMouseDown(e, col, row)}
       style={memoizedStyles[col]}
       title={title}>
       {str}
     </td>
-  }
+  }, [memoizedStyles, onDoubleClick, onMouseDown])
 
   // focus table on mount so arrow keys work
   useEffect(() => {
