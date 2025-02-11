@@ -129,10 +129,31 @@ Ensure your rows function handles the orderBy parameter appropriately to return 
 
 ## Async DataFrame
 
-HighTable supports async loading of individual cells.
-Dataframes return future cell data to the table as `AsyncRow[]`.
+HighTable supports async loading of individual cells. Dataframes return future cell data to the table as `AsyncRow[]`.
+
+You can use the helper `asyncRows` (or the lower level `resolvableRow` and `wrapPromise`) to create the async rows. Their cells and index are Promises, with a field `resolved` set to the resolved value (or `rejected` set to the reason) when settled.
+
+High-level example:
 
 ```javascript
+import { asyncRows } from 'hightable'
+const header = ['a', 'b']
+const numRows = 10
+// transform Promise<Row[]> to AsyncRow[]
+const rows = asyncRows(fetchRows(...), numRows, header)
+const dataframe = {
+  header,
+  numRows,
+  rows(start, end) {
+    return rows.slice(start, end)
+  },
+}
+```
+
+Low-level example:
+
+```javascript
+import { resolvableRow } from 'hightable'
 const dataframe = {
   header: ['a', 'b'],
   numRows: 10,
