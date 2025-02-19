@@ -182,21 +182,16 @@ export default function HighTable({
     })
   }, [onSelectionChange, data.numRows, selection])
   const pendingSelectionRequest = useRef(0)
-  const getOnSelectRowClick = useCallback((dataIndex: number) => {
-    // TODO(SL): the selection action can only be done on rows that have a resolved index
-    // for a simple toggle, it means the row index must be resolved
-    // for an action over a range of rows, it means that all the indexes of the rows between the anchor and the target must be resolved
-    // otherwise:
-    // - the action is ignored and the selection is not updated
-    // - ideally: an explanation is displayed to the user
-    // - also: the selection could be disabled for the rows without a resolved index (if selecting a range of rows, but one row in the middle hasn't resolved yet, we should show a disabled state)
+  const getOnSelectRowClick = useCallback((tableIndex: number) => {
+    // no that the function expects the tableIndex, not the dataIndex, because the latter can be undefined
+    // the computeNewSelection is responsible to resolve the dataIndex if needed
     if (!selection || !onSelectionChange) return
     return async (event: React.MouseEvent) => {
       const useAnchor = event.shiftKey && selection.anchor !== undefined
       const requestId = ++pendingSelectionRequest.current
       const newSelection = await computeNewSelection({
         selection,
-        dataIndex,
+        tableIndex,
         useAnchor,
         orderBy,
         data,
@@ -450,14 +445,11 @@ export default function HighTable({
               const tableIndex = slice.offset + rowIndex
               const dataIndex = row?.index
               const selected = isRowSelected(dataIndex)
-              const canBeSelected = dataIndex !== undefined
-              const onClick = canBeSelected ? getOnSelectRowClick(dataIndex) : undefined
-              // TODO(SL): adapt the markup and the style if the row cannot be selected
               return <tr role="row" key={dataIndex ?? `missing-index-at-row-${tableIndex}`} aria-rowindex={tableIndex + 2 /* 1-based + the header row */} title={rowError(row)}
                 className={selected ? 'selected' : ''}
                 aria-selected={selected}
               >
-                <th scope="row" role="rowheader" style={cornerStyle} onClick={onClick}>
+                <th scope="row" role="rowheader" style={cornerStyle} onClick={getOnSelectRowClick(tableIndex)}>
                   <span>{rowLabel(dataIndex)}</span>
                   { showSelection && <input type='checkbox' checked={selected} readOnly /> }
                 </th>
