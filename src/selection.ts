@@ -432,7 +432,7 @@ export async function computeNewSelection({
   }
   if (!orderBy) {
     // unsorted data: the table and data indexes are the same
-    return { ranges: extendFromAnchor({ ranges: selection.ranges, anchor: selection.anchor, index: dataIndex }), anchor: dataIndex }
+    return { ranges: extendFromAnchor({ ranges: selection.ranges, anchor: selection.anchor, index: dataIndex }), anchor: selection.anchor }
   }
   // sorted data: we need to convert between table and data indexes
   const sortIndex = await getSortIndex({ data, orderBy })
