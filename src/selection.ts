@@ -10,6 +10,10 @@ interface Range {
   end: number // exclusive upper limit, positive integer, strictly greater than start (no zero-length ranges).
 }
 export type Ranges = Array<Range>
+
+// TODO(SL): rename 'ranges' to 'selection' or something else, that does not disclose the implementation.
+// It would make it easier to switch to a Set for example, if needed
+// If we rename to Ranges to Selection, then Selection could be renamed to SelectionState to account for the current gesture/anchor?
 export interface Selection {
   ranges: Ranges // rows selection.
   anchor?: number // anchor row used as a reference for shift+click selection.
