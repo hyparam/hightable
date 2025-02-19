@@ -165,7 +165,10 @@ export function extendFromAnchor({ ranges, anchor, index }: { ranges: Ranges, an
     // no anchor to start the range, no operation
     return ranges
   }
-  if (!isValidIndex(anchor) || !isValidIndex(index)) {
+  if (!isValidIndex(anchor)) {
+    throw new Error('Invalid anchor')
+  }
+  if (!isValidIndex(index)) {
     throw new Error('Invalid index')
   }
   if (anchor === index) {
@@ -303,7 +306,7 @@ export function getTableIndex({ sortIndex, dataIndex }: {sortIndex: SortIndex, d
  * @returns {Promise<Selection>} A Promise to the selection of table indexes.
  */
 export async function toTableSelection({ selection, orderBy, data }: { selection: Selection, orderBy: OrderBy | undefined, data: DataFrame }): Promise<Selection> {
-  const { header, numRows, sortable, rows } = data
+  const { header, numRows, sortable } = data
   const { ranges, anchor } = selection
   if (!areValidRanges(selection.ranges)) {
     throw new Error('Invalid ranges')
@@ -360,7 +363,7 @@ export async function toTableSelection({ selection, orderBy, data }: { selection
  * @returns {Promise<Selection>} A Promise to the selection of data indexes.
  */
 export async function toDataSelection({ selection, orderBy, data }: { selection: Selection, orderBy: OrderBy | undefined, data: DataFrame }): Promise<Selection> {
-  const { header, numRows, sortable, rows } = data
+  const { header, numRows, sortable } = data
   const { ranges, anchor } = selection
   if (!areValidRanges(selection.ranges)) {
     throw new Error('Invalid ranges')
@@ -403,7 +406,7 @@ export async function toDataSelection({ selection, orderBy, data }: { selection:
 /**
  * Compute the new selection state after a click (or shift-click) on the row with the given index.
  *
- * If useAnchor is false, the row at the index is toggled and the selection is returned directly.
+ * If useAnchor is false or undefined, the row at the index is toggled and the selection is returned directly.
  *
  * If useAnchor is true, the selection is extended from the anchor to the index. Importantly, this
  * range is done in the visual space of the user, ie: between the rows as they appear in the table.
@@ -414,7 +417,7 @@ export async function toDataSelection({ selection, orderBy, data }: { selection:
  *
  * @param {Object} params
  * @param {number} params.dataIndex - The index of the row in the data (data domain, row indexes).
- * @param {boolean} params.useAnchor - Whether to use the anchor for shift+click selection.
+ * @param {boolean | undefined} params.useAnchor - Whether to use the anchor for shift+click selection.
  * @param {Selection} params.selection - The current selection state (data domain, row indexes).
  * @param {OrderBy | undefined} params.orderBy - The order if the rows are sorted.
  * @param {DataFrame} params.data - The data frame.
@@ -425,7 +428,7 @@ export async function computeNewSelection({
   selection,
   orderBy,
   data,
-}: { dataIndex: number, useAnchor: boolean, selection: Selection, orderBy: OrderBy | undefined, data: DataFrame }): Promise<Selection> {
+}: { dataIndex: number, useAnchor?: boolean, selection: Selection, orderBy?: OrderBy, data?: DataFrame }): Promise<Selection> {
   if (!useAnchor) {
     // no anchor: toggle the row at the index
     return { ranges: toggleIndex({ ranges: selection.ranges, index: dataIndex }), anchor: dataIndex }
@@ -433,6 +436,9 @@ export async function computeNewSelection({
   if (!orderBy) {
     // unsorted data: the table and data indexes are the same
     return { ranges: extendFromAnchor({ ranges: selection.ranges, anchor: selection.anchor, index: dataIndex }), anchor: selection.anchor }
+  }
+  if (!data) {
+    throw new Error('Missing data frame. Cannot compute the new selection.')
   }
   // sorted data: we need to convert between table and data indexes
   const sortIndex = await getSortIndex({ data, orderBy })

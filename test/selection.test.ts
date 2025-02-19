@@ -2,7 +2,7 @@ import { describe, expect, it, test } from 'vitest'
 import { DataFrame, sortableDataFrame } from '../src/dataframe.js'
 import { wrapPromise } from '../src/promise.js'
 import { AsyncRow, Row } from '../src/row.js'
-import { areAllSelected, areValidRanges, extendFromAnchor, isSelected, isValidIndex, isValidRange, selectRange, toDataSelection, toTableSelection, toggleAll, toggleIndex, unselectRange } from '../src/selection.js'
+import { areAllSelected, areValidRanges, computeNewSelection, extendFromAnchor, isSelected, isValidIndex, isValidRange, selectRange, toDataSelection, toTableSelection, toggleAll, toggleIndex, unselectRange } from '../src/selection.js'
 
 describe('an index', () => {
   test('is a positive integer', () => {
@@ -197,7 +197,7 @@ describe('extendFromAnchor', () => {
     expect(extendFromAnchor({ ranges: [{ start: 0, end: 1 }], anchor: 0, index: 0 })).toEqual([{ start: 0, end: 1 }])
   })
   test('should throw an error if the anchor or the index are invalid', () => {
-    expect(() => extendFromAnchor({ ranges: [], anchor: -1, index: 0 })).toThrow('Invalid index')
+    expect(() => extendFromAnchor({ ranges: [], anchor: -1, index: 0 })).toThrow('Invalid anchor')
     expect(() => extendFromAnchor({ ranges: [], anchor: 0, index: -1 })).toThrow('Invalid index')
   })
   test('should select the range between the bounds (inclusive) if anchor was selected', () => {
@@ -320,4 +320,24 @@ describe('toDataSelection', () => {
     ).resolves.toEqual({ ranges: [{ start: 0, end: sortableDf.numRows }], anchor: 2 })
   })
   // add more tests here
+})
+
+describe('computeNewSelection', () => {
+  it('should throw an error if the index is invalid', async () => {
+    await expect(
+      computeNewSelection({ dataIndex: -3, selection: { ranges: [{ start: 0, end: 1 }], anchor: 0 } })
+    ).rejects.toThrow('Invalid index')
+  })
+  it('should throw an error if the ranges are invalid', async () => {
+    await expect(
+      computeNewSelection({ dataIndex: 0, selection: { ranges: [{ start: 1, end: 0 }], anchor: 0 } })
+    ).rejects.toThrow('Invalid ranges')
+  })
+  it('should throw an error if the anchor is invalid and the selection must be extended', async () => {
+    await expect(
+      computeNewSelection({ dataIndex: 0, selection: { ranges: [{ start: 0, end: 1 }], anchor: -3 }, useAnchor: true })
+    ).rejects.toThrow('Invalid anchor')
+  })
+
+
 })
