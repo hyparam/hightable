@@ -443,7 +443,11 @@ export default function HighTable({
               const canBeSelected = dataIndex !== undefined
               const onClick = canBeSelected ? getOnSelectRowClick(dataIndex) : undefined
               // TODO(SL): adapt the markup and the style if the row cannot be selected
+<<<<<<< HEAD
               return <tr role="row" key={key} aria-rowindex={ariaRowIndex} title={rowError(row)}
+=======
+              return <tr role="row" key={dataIndex ?? `missing-index-at-row-${tableIndex}`} aria-rowindex={tableIndex + 2 /* 1-based + the header row */} title={rowError(row)}
+>>>>>>> 35e1732 (avoid same key=undefined when multiple rows have not resolved their index yet)
                 className={selected ? 'selected' : ''}
                 aria-selected={selected}
               >
