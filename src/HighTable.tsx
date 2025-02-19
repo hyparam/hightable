@@ -446,7 +446,7 @@ export default function HighTable({
               const tableIndex = slice.offset + rowIndex
               const dataIndex = row?.index
               const selected = isRowSelected(dataIndex)
-              return <tr role="row" key={tableIndex} aria-rowindex={tableIndex + 2 /* 1-based + the header row */} title={rowError(row)}
+              return <tr role="row" key={dataIndex} aria-rowindex={tableIndex + 2 /* 1-based + the header row */} title={rowError(row)}
                 className={selected ? 'selected' : ''}
                 aria-selected={selected}
               >
