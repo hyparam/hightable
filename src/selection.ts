@@ -216,6 +216,7 @@ export interface SortIndex {
  * @returns {Promise<SortIndex>} A Promise to the sort index.
  */
 export async function getSortIndex({ data, orderBy }: { data: DataFrame, orderBy: OrderBy }): Promise<SortIndex> {
+  // TODO(SL): rename as fetch/compute instead of get, to make it clear it's async
   const { header, numRows, rows, sortable } = data
   const { column } = orderBy
   if (!column) {
@@ -397,4 +398,51 @@ export async function toDataSelection({ selection, orderBy, data }: { selection:
   }
   const anchorIndex = anchor !== undefined ? getDataIndex({ sortIndex, tableIndex: anchor }) : undefined
   return { ranges: dataRanges, anchor: anchorIndex }
+}
+
+/**
+ * Compute the new selection state after a click (or shift-click) on the row with the given index.
+ *
+ * If useAnchor is false, the row at the index is toggled and the selection is returned directly.
+ *
+ * If useAnchor is true, the selection is extended from the anchor to the index. Importantly, this
+ * range is done in the visual space of the user, ie: between the rows as they appear in the table.
+ * If the rows are sorted, the indexes are converted from data domain to table domain and vice versa,
+ * which requires the sort index of the data frame. If not available, it must be computed, which is
+ * an async operation that can be expensive.
+ * TODO(SL): let the data frame provide the sort index (direct and reverse) for a given orderBy
+ *
+ * @param {Object} params
+ * @param {number} params.dataIndex - The index of the row in the data (data domain, row indexes).
+ * @param {boolean} params.useAnchor - Whether to use the anchor for shift+click selection.
+ * @param {Selection} params.selection - The current selection state (data domain, row indexes).
+ * @param {OrderBy | undefined} params.orderBy - The order if the rows are sorted.
+ * @param {DataFrame} params.data - The data frame.
+ */
+export async function computeNewSelection({
+  dataIndex,
+  useAnchor,
+  selection,
+  orderBy,
+  data,
+}: { dataIndex: number, useAnchor: boolean, selection: Selection, orderBy: OrderBy | undefined, data: DataFrame }): Promise<Selection> {
+  if (!useAnchor) {
+    // no anchor: toggle the row at the index
+    return { ranges: toggleIndex({ ranges: selection.ranges, index: dataIndex }), anchor: dataIndex }
+  }
+  if (!orderBy) {
+    // unsorted data: the table and data indexes are the same
+    return { ranges: extendFromAnchor({ ranges: selection.ranges, anchor: selection.anchor, index: dataIndex }), anchor: dataIndex }
+  }
+  // sorted data: we need to convert between table and data indexes
+  const sortIndex = await getSortIndex({ data, orderBy })
+  // note that we could have passed tableIndex directly, but
+  // 1. it's fast to get it if the sort index is already computed,
+  // 2. we ensure the table index is coherent with the rest of the rows
+  const tableIndex = getTableIndex({ sortIndex, dataIndex }) // <- TODO(SL) getTableIndex({ dataIndex, data, orderBy }) and hide the sort index
+  const tableSelection = await toTableSelection({ selection, orderBy, data })
+  const { ranges, anchor } = tableSelection
+  const newTableSelection = { ranges: extendFromAnchor({ ranges, anchor, index: tableIndex }), anchor }
+  const newDataSelection = await toDataSelection({ selection: newTableSelection, orderBy, data })
+  return newDataSelection
 }

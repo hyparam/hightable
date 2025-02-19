@@ -2,7 +2,7 @@ import { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 're
 import { DataFrame } from './dataframe.js'
 import { useInputState } from './hooks.js'
 import { PartialRow } from './row.js'
-import { Selection, areAllSelected, extendFromAnchor, isSelected, toDataSelection, toTableSelection, toggleAll, toggleIndex } from './selection.js'
+import { Selection, areAllSelected, computeNewSelection, isSelected, toggleAll } from './selection.js'
 import TableHeader, { OrderBy, cellStyle } from './TableHeader.js'
 export { DataFrame, arrayDataFrame, sortableDataFrame } from './dataframe.js'
 export { ResolvablePromise, resolvablePromise, wrapPromise } from './promise.js'
@@ -144,26 +144,30 @@ export default function HighTable({
       anchor: undefined,
     })
   }, [onSelectionChange, data.numRows, selection])
-  const getOnSelectRowClick = useCallback((tableIndex: number) => {
-    // TODO(SL): as the conversion between table and data indexes can take time (promise), we should throttle
-    // and cancel a previous conversion if a new one is requested.
+  const pendingSelectionRequest = useRef(0)
+  const getOnSelectRowClick = useCallback((dataIndex: number) => {
+    // TODO(SL): the selection action can only be done on rows that have a resolved index
+    // for a simple toggle, it means the row index must be resolved
+    // for an action over a range of rows, it means that all the indexes of the rows between the anchor and the target must be resolved
+    // otherwise:
+    // - the action is ignored and the selection is not updated
+    // - ideally: an explanation is displayed to the user
+    // - also: the selection could be disabled for the rows without a resolved index (if selecting a range of rows, but one row in the middle hasn't resolved yet, we should show a disabled state)
     if (!selection || !onSelectionChange) return
-    return (event: React.MouseEvent) => {
+    return async (event: React.MouseEvent) => {
       const useAnchor = event.shiftKey && selection.anchor !== undefined
-      toTableSelection({ selection, orderBy, data }).then(tableSelection => {
-        const { ranges, anchor } = tableSelection
-        if (useAnchor) {
-          return { ranges: extendFromAnchor({ ranges, anchor, index: tableIndex }), anchor }
-          // ^ this operation is the one that requires the conversion between table and data indexes
-          // we could do better
-        } else {
-          return { ranges: toggleIndex({ ranges, index: tableIndex }), anchor: tableIndex }
-        }
-      }).then((newTableSelection) => {
-        return toDataSelection({ selection: newTableSelection, orderBy, data })
-      }).then((selection) => {
-        onSelectionChange(selection)
+      const requestId = ++pendingSelectionRequest.current
+      const newSelection = await computeNewSelection({
+        selection,
+        dataIndex,
+        useAnchor,
+        orderBy,
+        data,
       })
+      if (requestId === pendingSelectionRequest.current) {
+        // only update the selection if the request is still the last one
+        onSelectionChange(newSelection)
+      }
     }
   }, [onSelectionChange, selection, data, orderBy])
   const allRowsSelected = useMemo(() => {
@@ -436,11 +440,14 @@ export default function HighTable({
                * but we want to be able to select them, without the element being recreated.
                */
               const key = tableIndex
+              const canBeSelected = dataIndex !== undefined
+              const onClick = canBeSelected ? getOnSelectRowClick(dataIndex) : undefined
+              // TODO(SL): adapt the markup and the style if the row cannot be selected
               return <tr role="row" key={key} aria-rowindex={ariaRowIndex} title={rowError(row)}
                 className={selected ? 'selected' : ''}
                 aria-selected={selected}
               >
-                <th scope="row" role="rowheader" style={cornerStyle} onClick={getOnSelectRowClick(tableIndex)}>
+                <th scope="row" role="rowheader" style={cornerStyle} onClick={onClick}>
                   <span>{rowLabel(dataIndex)}</span>
                   { showSelection && <input type='checkbox' checked={selected} readOnly /> }
                 </th>
