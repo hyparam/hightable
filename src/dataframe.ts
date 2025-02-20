@@ -4,20 +4,31 @@ import { AsyncRow, Cells, Row, asyncRows, awaitRows } from './row.js'
 /**
  * Streamable row data
  */
-export interface DataFrame {
+export interface BaseDataFrame {
   header: string[]
   numRows: number
   // Rows are 0-indexed, excludes the header, end is exclusive
+  rows(start: number, end: number): AsyncRow[]
+  sortable?: false
+}
+
+/**
+ * Streamable row data
+ */
+export type SortableDataFrame = Omit<BaseDataFrame, 'sortable' | 'rows'> & {
+  // Rows are 0-indexed, excludes the header, end is exclusive
   // if orderBy is provided, start and end are applied to the sorted rows
   rows(start: number, end: number, orderBy?: string): AsyncRow[]
-  sortable?: boolean
+  sortable: true
 }
+
+export type DataFrame = SortableDataFrame | BaseDataFrame
 
 /**
  * Wraps a DataFrame to make it sortable.
  * Requires fetching all rows to sort.
  */
-export function sortableDataFrame(data: DataFrame): DataFrame {
+export function sortableDataFrame(data: DataFrame): SortableDataFrame {
   if (data.sortable) return data // already sortable
   // Fetch all rows
   let all: Promise<Row[]>
