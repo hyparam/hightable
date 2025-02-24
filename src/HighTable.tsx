@@ -440,8 +440,12 @@ export default function HighTable({
               const tableIndex = slice.offset + rowIndex
               const dataIndex = row?.index
               const selected = isRowSelected(tableIndex)
-              const key = dataIndex ?? `missing-index-at-row-${tableIndex}`
               const ariaRowIndex = tableIndex + 2 // 1-based + the header row
+              /**
+               * use the tableIndex as the key because the dataIndex is not available for pending rows
+               * but we want to be able to select them, without the element being recreated.
+               */
+              const key = tableIndex
               return <tr role="row" key={key} aria-rowindex={ariaRowIndex} title={rowError(row)}
                 className={selected ? 'selected' : ''}
                 aria-selected={selected}
