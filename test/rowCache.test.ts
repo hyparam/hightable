@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
+import { RowsArgs } from '../src/dataframe.js'
 import { wrapPromise } from '../src/promise.js'
 import { AsyncRow, awaitRows } from '../src/row.js'
 import { rowCache } from '../src/rowCache.js'
@@ -8,7 +9,7 @@ function makeDf() {
   return {
     header: ['id'],
     numRows: 10,
-    rows: vi.fn((start: number, end: number): AsyncRow[] =>
+    rows: vi.fn(({ start, end }: RowsArgs): AsyncRow[] =>
       new Array(end - start)
         .fill(null)
         .map((_, index) => ({
@@ -25,7 +26,7 @@ describe('rowCache', () => {
   it('should fetch uncached rows', async () => {
     const df = makeDf()
     const dfCached = rowCache(df)
-    const rows = await awaitRows(dfCached.rows(0, 3))
+    const rows = await awaitRows(dfCached.rows({ start: 0, end: 3 }))
     expect(rows).toEqual([{ id: 0 }, { id: 1 }, { id: 2 }].map((cells, index) => ({ cells, index })))
     expect(df.rows).toHaveBeenCalledTimes(1)
     expect(df.rows).toHaveBeenCalledWith(0, 3, undefined)
@@ -36,13 +37,13 @@ describe('rowCache', () => {
     const dfCached = rowCache(df)
 
     // Initial fetch to cache rows
-    const rowsPre = await awaitRows(dfCached.rows(3, 6))
+    const rowsPre = await awaitRows(dfCached.rows({ start: 3, end: 6 }))
     expect(rowsPre).toEqual([{ id: 3 }, { id: 4 }, { id: 5 }].map((cells, index) => ({ cells, index: index + 3 })))
     expect(df.rows).toHaveBeenCalledTimes(1)
     expect(df.rows).toHaveBeenCalledWith(3, 6, undefined)
 
     // Subsequent fetch should use cache
-    const rowsPost = await awaitRows(dfCached.rows(3, 6))
+    const rowsPost = await awaitRows(dfCached.rows({ start: 3, end: 6 }))
     expect(rowsPost).toEqual([{ id: 3 }, { id: 4 }, { id: 5 }].map((cells, index) => ({ cells, index: index + 3 })))
     expect(df.rows).toHaveBeenCalledTimes(1)
   })
@@ -52,13 +53,13 @@ describe('rowCache', () => {
     const dfCached = rowCache(df)
 
     // Cache first block
-    dfCached.rows(0, 3)
+    dfCached.rows({ start: 0, end: 3 })
     expect(df.rows).toHaveBeenCalledTimes(1)
     // Cache adjacent block
-    dfCached.rows(3, 6)
+    dfCached.rows({ start: 3, end: 6 })
     expect(df.rows).toHaveBeenCalledTimes(2)
     // Fetch combined block
-    const adjacentRows = await awaitRows(dfCached.rows(0, 6))
+    const adjacentRows = await awaitRows(dfCached.rows({ start: 0, end: 6 }))
 
     expect(adjacentRows).toEqual([
       { id: 0 }, { id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }, { id: 5 },
@@ -71,11 +72,11 @@ describe('rowCache', () => {
     const dfCached = rowCache(df)
 
     // Cache first block
-    dfCached.rows(0, 2)
+    dfCached.rows({ start: 0, end: 2 })
     // Cache second block
-    dfCached.rows(4, 6)
+    dfCached.rows({ start: 4, end: 6 })
     // Fetch combined block
-    const gapRows = await awaitRows(dfCached.rows(0, 6))
+    const gapRows = await awaitRows(dfCached.rows({ start: 0, end: 6 }))
     expect(gapRows).toEqual([
       { id: 0 }, { id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }, { id: 5 },
     ].map((cells, index) => ({ cells, index })))
@@ -88,10 +89,10 @@ describe('rowCache', () => {
     const dfCached = rowCache(df)
 
     // Cache first block
-    dfCached.rows(6, 9)
+    dfCached.rows({ start: 6, end: 9 })
 
     // Fetch overlapping block
-    const overlappingRows = await awaitRows(dfCached.rows(8, 11))
+    const overlappingRows = await awaitRows(dfCached.rows({ start: 8, end: 11 }))
     expect(overlappingRows).toEqual([
       { id: 8 }, { id: 9 }, { id: 10 },
     ].map((cells, index) => ({ cells, index: index + 8 })))

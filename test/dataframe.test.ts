@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DataFrame, arrayDataFrame, sortableDataFrame } from '../src/dataframe.js'
+import { DataFrame, RowsArgs, arrayDataFrame, sortableDataFrame } from '../src/dataframe.js'
 import { wrapPromise } from '../src/promise.js'
 import { AsyncRow, Row, awaitRows } from '../src/row.js'
 
@@ -23,7 +23,7 @@ describe('sortableDataFrame', () => {
   const dataFrame: DataFrame = {
     header: ['id', 'name', 'age'],
     numRows: data.length,
-    rows(start: number, end: number): AsyncRow[] {
+    rows({ start, end }: RowsArgs): AsyncRow[] {
       // Return the slice of data between start and end indices
       return data.slice(start, end).map(wrapObject)
     },
@@ -42,7 +42,7 @@ describe('sortableDataFrame', () => {
   })
 
   it('should return unsorted data when orderBy is not provided', async () => {
-    const rows = await awaitRows(sortableDf.rows(0, 3))
+    const rows = await awaitRows(sortableDf.rows({ start: 0, end: 3 }))
     expect(rows).toEqual([
       { id: 3, name: 'Charlie', age: 25 },
       { id: 1, name: 'Alice', age: 30 },
@@ -51,7 +51,7 @@ describe('sortableDataFrame', () => {
   })
 
   it('should return data sorted by column "age"', async () => {
-    const rows = await awaitRows(sortableDf.rows(0, 4, 'age'))
+    const rows = await awaitRows(sortableDf.rows({ start: 0, end: 4, orderBy: 'age' }))
     expect(rows).toEqual([
       { index: 2, cells:{ id: 2, name: 'Bob', age: 20 } },
       { index: 3, cells:{ id: 4, name: 'Dani', age: 20 } },
@@ -61,7 +61,7 @@ describe('sortableDataFrame', () => {
   })
 
   it('should slice the sorted data correctly', async () => {
-    const rows = await awaitRows(sortableDf.rows(1, 3, 'id'))
+    const rows = await awaitRows(sortableDf.rows({ start: 1, end: 3, orderBy: 'id' }))
     expect(rows).toEqual([
       { index: 2, cells:{ id: 2, name: 'Bob', age: 20 } },
       { index: 0, cells:{ id: 3, name: 'Charlie', age: 25 } },
@@ -74,7 +74,7 @@ describe('sortableDataFrame', () => {
   })
 
   it('should throw for invalid orderBy field', () => {
-    expect(() => sortableDf.rows(0, 3, 'invalid'))
+    expect(() => sortableDf.rows({ start: 0, end: 3, orderBy: 'invalid' }))
       .toThrowError('Invalid orderBy field: invalid')
   })
 })
@@ -96,12 +96,12 @@ describe('arrayDataFrame', () => {
     const df = arrayDataFrame([])
     expect(df.header).toEqual([])
     expect(df.numRows).toBe(0)
-    await expect(awaitRows(df.rows(0, 1))).resolves.toEqual([])
+    await expect(awaitRows(df.rows({ start: 0, end: 1 }))).resolves.toEqual([])
   })
 
   it('should return correct rows for given range', async () => {
     const df = arrayDataFrame(testData)
-    const rows = await awaitRows(df.rows(0, 2))
+    const rows = await awaitRows(df.rows({ start: 0, end: 2 }))
     expect(rows).toEqual([
       { id: 1, name: 'Alice', age: 30 },
       { id: 2, name: 'Bob', age: 25 },
@@ -110,13 +110,13 @@ describe('arrayDataFrame', () => {
 
   it('should handle start index equal to end index', async () => {
     const df = arrayDataFrame(testData)
-    const rows = await awaitRows(df.rows(1, 1))
+    const rows = await awaitRows(df.rows({ start: 1, end: 1 }))
     expect(rows).toEqual([])
   })
 
   it('should return all rows when end index exceeds array length', async () => {
     const df = arrayDataFrame(testData)
-    const rows = await awaitRows(df.rows(0, 10))
+    const rows = await awaitRows(df.rows({ start: 0, end: 10 }))
     expect(rows).toEqual(testData.map((cells, index) => ({ cells, index })))
   })
 })

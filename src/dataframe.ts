@@ -1,6 +1,12 @@
 import { wrapPromise } from './promise.js'
 import { AsyncRow, Cells, Row, asyncRows, awaitRows } from './row.js'
 
+export interface RowsArgs {
+  start: number
+  end: number
+  orderBy?: string
+}
+
 /**
  * Streamable row data
  */
@@ -9,7 +15,7 @@ export interface DataFrame {
   numRows: number
   // Rows are 0-indexed, excludes the header, end is exclusive
   // if orderBy is provided, start and end are applied to the sorted rows
-  rows(start: number, end: number, orderBy?: string): AsyncRow[]
+  rows(args: RowsArgs): AsyncRow[]
   sortable?: boolean
 }
 
@@ -23,14 +29,14 @@ export function sortableDataFrame(data: DataFrame): DataFrame {
   let all: Promise<Row[]>
   return {
     ...data,
-    rows(start: number, end: number, orderBy?: string): AsyncRow[] {
+    rows({ start, end, orderBy }: RowsArgs): AsyncRow[] {
       if (orderBy) {
         if (!data.header.includes(orderBy)) {
           throw new Error(`Invalid orderBy field: ${orderBy}`)
         }
         if (!all) {
           // Fetch all rows
-          all = awaitRows(data.rows(0, data.numRows))
+          all = awaitRows(data.rows({ start: 0, end: data.numRows }))
         }
         const sorted = all.then(all => {
           return all.sort((a, b) => {
@@ -41,7 +47,7 @@ export function sortableDataFrame(data: DataFrame): DataFrame {
         })
         return asyncRows(sorted, end - start, data.header)
       } else {
-        return data.rows(start, end)
+        return data.rows({ start, end })
       }
     },
     sortable: true,
@@ -53,7 +59,7 @@ export function arrayDataFrame(data: Cells[]): DataFrame {
   return {
     header: Object.keys(data[0]),
     numRows: data.length,
-    rows(start: number, end: number): AsyncRow[] {
+    rows({ start, end }: RowsArgs): AsyncRow[] {
       return data.slice(start, end).map((cells, i) => ({
         index: wrapPromise(start + i),
         cells: Object.fromEntries(Object.entries(cells).map(([key, value]) => [key, wrapPromise(value)])),
