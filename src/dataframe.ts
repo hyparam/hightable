@@ -7,13 +7,19 @@ export interface RowsArgs {
   orderBy?: string
 }
 
-export interface GetColumnArgs {
-  column: string
-  start?: number
-  end?: number
-}
-
-export type GetColumn = (args: GetColumnArgs) => Promise<any[]>
+/**
+ * Function that gets values in a column.
+ *
+ * If start and end are provided, only get values in that range.
+ * Negative start and end are allowed.
+ *
+ * @param column Column name
+ * @param start Start index (inclusive)
+ * @param end End index (exclusive)
+ *
+ * @returns Values in the column
+ */
+export type GetColumn = ({ column, start, end }: {column: string, start?: number, end?: number}) => Promise<any[]>
 
 /**
  * Streamable row data
@@ -46,7 +52,7 @@ export interface DataFrame {
  */
 export function getGetColumn(data: DataFrame): GetColumn {
   if (data.getColumn) return data.getColumn
-  return function getColumn({ column, start = 0, end = data.numRows }: GetColumnArgs): Promise<any[]> {
+  return function getColumn({ column, start = 0, end = data.numRows }): Promise<any[]> {
     if (!data.header.includes(column)) {
       throw new Error(`Invalid column: ${column}`)
     }
@@ -118,7 +124,7 @@ export function arrayDataFrame(data: Cells[]): DataFrame {
         cells: Object.fromEntries(Object.entries(cells).map(([key, value]) => [key, wrapPromise(value)])),
       }))
     },
-    getColumn({ column, start = 0, end = data.length }: GetColumnArgs): Promise<unknown[]> {
+    getColumn({ column, start = 0, end = data.length }): Promise<any[]> {
       if (!header.includes(column)) {
         throw new Error(`Invalid column: ${column}`)
       }
