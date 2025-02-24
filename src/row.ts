@@ -42,7 +42,7 @@ export function resolvableRow(header: string[]): ResolvableRow {
  * Helpful when you want to define a DataFrame with simple async fetching of rows.
  * This function turns future data into a "grid" of wrapped promises.
  */
-export function asyncRows(rows: Promise<Row[]>, numRows: number, header: string[]): AsyncRow[] {
+export function asyncRows(rows: Promise<Row[] | AsyncRow[]>, numRows: number, header: string[]): AsyncRow[] {
   // Make grid of resolvable promises
   const wrapped = new Array(numRows).fill(null).map(_ => resolvableRow(header))
   rows.then(rows => {
@@ -52,9 +52,19 @@ export function asyncRows(rows: Promise<Row[]>, numRows: number, header: string[
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i]
       for (const key of header) {
-        wrapped[i].cells[key].resolve(row.cells[key])
+        if (row.cells[key] instanceof Promise) {
+          // each cell can reject or resolve
+          row.cells[key].then(cell => wrapped[i].cells[key].resolve(cell)).catch(error => wrapped[i].cells[key].reject(error))
+        } else {
+          wrapped[i].cells[key].resolve(row.cells[key])
+        }
       }
-      wrapped[i].index.resolve(row.index)
+      if (row.index instanceof Promise) {
+        // the index can reject or resolve
+        row.index.then(index => wrapped[i].index.resolve(index)).catch(error => wrapped[i].index.reject(error))
+      } else {
+        wrapped[i].index.resolve(row.index)
+      }
     }
   }).catch(error => {
     // Reject all promises on error
