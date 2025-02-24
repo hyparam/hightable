@@ -13,7 +13,7 @@ import { AsyncRow, Cells, asyncRows } from './row.js'
  *
  * @returns Values in the column
  */
-export type GetColumn = ({ column, start, end }: {column: string, start?: number, end?: number}) => Promise<any[]>
+export type GetColumn = ({ column, start, end }: { column: string, start?: number, end?: number }) => Promise<any[]>
 
 /**
  * Streamable row data
@@ -24,7 +24,7 @@ export interface DataFrame {
   // Rows are 0-indexed, excludes the header, end is exclusive
   // if orderBy is provided, start and end are applied to the sorted rows
   // negative start and end are allowed
-  rows({ start, end, orderBy }: {start: number, end: number, orderBy?: string}): AsyncRow[]
+  rows({ start, end, orderBy }: { start: number, end: number, orderBy?: string }): AsyncRow[]
   // Get all values in a column. If start and end are provided, only get values in that range.
   getColumn?: GetColumn
   sortable?: boolean
