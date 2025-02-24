@@ -440,8 +440,9 @@ export default function HighTable({
               const tableIndex = slice.offset + rowIndex
               const dataIndex = row?.index
               const selected = isRowSelected(tableIndex)
+              const key = dataIndex ?? `missing-index-at-row-${tableIndex}`
               const ariaRowIndex = tableIndex + 2 // 1-based + the header row
-              return <tr role="row" key={dataIndex ?? `missing-index-at-row-${tableIndex}`} aria-rowindex={ariaRowIndex} title={rowError(row)}
+              return <tr role="row" key={key} aria-rowindex={ariaRowIndex} title={rowError(row)}
                 className={selected ? 'selected' : ''}
                 aria-selected={selected}
               >
