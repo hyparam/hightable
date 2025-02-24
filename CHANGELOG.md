@@ -12,6 +12,10 @@
 - **Breaking** the minimal supported React version is now 18.3.1 ([ef4a642](https://github.com/hyparam/hightable/commit/ef4a642c0c8dc5478abb675e200e2bab2c274518)).
 - changed colors in CSS.
 
+### Fixed
+
+- fixed the `key` identifier in list of table rows ([#56](https://github.com/hyparam/hightable/pull/56)).
+
 ### Refactored
 
 - updated the link to the demo in the README ([ef4a642](https://github.com/hyparam/hightable/commit/ef4a642c0c8dc5478abb675e200e2bab2c274518)).
