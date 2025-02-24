@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DataFrame, RowsArgs, arrayDataFrame, sortableDataFrame } from '../src/dataframe.js'
+import { DataFrame, RowsArgs, arrayDataFrame, getGetColumn, sortableDataFrame } from '../src/dataframe.js'
 import { wrapPromise } from '../src/promise.js'
 import { AsyncRow, Row, awaitRows } from '../src/row.js'
 
@@ -120,17 +120,26 @@ describe('arrayDataFrame', () => {
     expect(rows).toEqual(testData.map((cells, index) => ({ cells, index })))
   })
 
+  it('provides getColumn', () => {
+    const df = arrayDataFrame([])
+    expect(df.getColumn).toBeDefined()
+  })
+
   it.each([ [0, 2], [-1, 2], [0.1, 2.8] ])('should return correct column data for given range', async (start, end) => {
     const df = arrayDataFrame(testData)
-    expect(df.getColumn).toBeDefined()
-    if (!df.getColumn) return
+    if (!df.getColumn) throw new Error('getColumn not defined')
     const column = await df.getColumn({ column: 'name', start, end })
     expect(column).toEqual(['Alice', 'Bob'])
   })
 
   it('should throw for invalid column', () => {
     const df = arrayDataFrame(testData)
-    expect(() => df.getColumn?.({ column: 'invalid' })).toThrowError('Invalid column: invalid')
+    expect(() => {
+      if (!df.getColumn) {
+        throw new Error('getColumn not defined')
+      }
+      df.getColumn({ column: 'invalid' })
+    }).toThrowError('Invalid column: invalid')
   })
 
   it.each([
@@ -140,7 +149,18 @@ describe('arrayDataFrame', () => {
     [testData.length, 20],
   ])('should handle start and end index out of bounds', async (start, end) => {
     const df = arrayDataFrame(testData)
-    const rows = await awaitRows(df.rows({ start, end }))
-    expect(rows).toEqual([])
+    if (!df.getColumn) throw new Error('getColumn not defined')
+    const values = await df.getColumn({ start, end, column: 'name' })
+    expect(values).toEqual([])
   })
+})
+
+describe('getGetColumn', () => {
+  it('should return the dataframe getColumn function if it exists', () => {
+    const df = arrayDataFrame([])
+    const getColumn = getGetColumn(df)
+    // arrayDataFrame provides getColumn (see above)
+    expect(getColumn).toBe(df.getColumn)
+  })
+
 })

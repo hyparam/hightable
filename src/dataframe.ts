@@ -106,7 +106,7 @@ export function sortableDataFrame(data: DataFrame): DataFrame {
 }
 
 export function arrayDataFrame(data: Cells[]): DataFrame {
-  if (!data.length) return { header: [], numRows: 0, rows: () => [] }
+  if (!data.length) return { header: [], numRows: 0, rows: () => [], getColumn: () => Promise.resolve([]) }
   const header = Object.keys(data[0])
   return {
     header,
