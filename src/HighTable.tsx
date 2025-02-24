@@ -69,6 +69,7 @@ export interface TableProps {
   onOrderByChange?: (orderBy: OrderBy) => void // callback to call when a user interaction changes the order. The interactions are disabled if undefined.
   selection?: Selection // selection and anchor rows. If undefined, the selection is hidden and the interactions are disabled.
   onSelectionChange?: (selection: Selection) => void // callback to call when a user interaction changes the selection. The interactions are disabled if undefined.
+  stringify?: (value: any) => string | undefined
 }
 
 function rowLabel(rowIndex?: number): string {
@@ -98,6 +99,7 @@ export default function HighTable({
   onDoubleClickCell,
   onMouseDownCell,
   onError = console.error,
+  stringify = stringifyDefault,
 }: TableProps) {
   const initialState: State = {
     data,
@@ -364,7 +366,7 @@ export default function HighTable({
       title={title}>
       {str}
     </td>
-  }, [memoizedStyles, onDoubleClick, onMouseDown])
+  }, [memoizedStyles, onDoubleClick, onMouseDown, stringify])
 
   // focus table on mount so arrow keys work
   useEffect(() => {
@@ -467,6 +469,7 @@ export function stringify(value: any): string | undefined {
   }
   return value.toString()
 }
+const stringifyDefault = stringify
 
 /**
  * Throttle a function to run at most once every `wait` milliseconds.
