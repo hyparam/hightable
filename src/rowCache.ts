@@ -1,4 +1,4 @@
-import { DataFrame } from './dataframe.js'
+import { DataFrame, RowsArgs } from './dataframe.js'
 import { AsyncRow } from './row.js'
 
 /**
@@ -15,7 +15,7 @@ export function rowCache(df: DataFrame): DataFrame {
 
   return {
     ...df,
-    rows(start: number, end: number, orderBy?: string): AsyncRow[] {
+    rows({ start, end, orderBy }: RowsArgs): AsyncRow[] {
       // Cache per sort order
       const cache = caches[orderBy || ''] ||= new Array(df.numRows)
       const n = hits + misses
@@ -33,7 +33,7 @@ export function rowCache(df: DataFrame): DataFrame {
           }
         } else if (blockStart !== undefined) {
           const blockEnd = i
-          const futureRows = df.rows(blockStart, blockEnd, orderBy)
+          const futureRows = df.rows({ start: blockStart, end: blockEnd, orderBy })
           for (let j = 0; j < blockEnd - blockStart; j++) {
             cache[blockStart + j] = futureRows[j]
           }

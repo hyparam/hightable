@@ -2,6 +2,20 @@
 
 ## [Unreleased](https://github.com/hyparam/hightable/compare/v0.10.0...HEAD)
 
+### Added
+
+- expose the `stringify` function as a prop of the `HighTable` component ([ef4a642](https://github.com/hyparam/hightable/commit/ef4a642c0c8dc5478abb675e200e2bab2c274518)).
+
+### Changed
+
+- **Breaking** the `rows` method in a data frame now takes a single object argument with the following properties: `start`, `end` and `orderBy` ([#52](https://github.com/hyparam/hightable/pull/52)).
+- **Breaking** the minimal supported React version is now 18.3.1 ([ef4a642](https://github.com/hyparam/hightable/commit/ef4a642c0c8dc5478abb675e200e2bab2c274518)).
+- changed colors in CSS.
+
+### Refactored
+
+- updated the link to the demo in the README.
+
 ## [0.10.0](https://github.com/hyparam/hightable/compare/v0.9.2...v0.10.0) - 2025-02-11
 
 ### Changed

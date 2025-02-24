@@ -267,7 +267,7 @@ export default function HighTable({
       // Fetch a chunk of rows from the data frame
       try {
         const requestId = ++pendingRequest.current
-        const rowsChunk = data.rows(start, end, orderBy?.column)
+        const rowsChunk = data.rows({ start, end, orderBy: orderBy?.column })
 
         const updateRows = throttle(() => {
           const resolved: PartialRow[] = []

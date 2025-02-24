@@ -1,6 +1,6 @@
 import { act, fireEvent, waitFor, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { sortableDataFrame } from '../src/dataframe.js'
+import { RowsArgs, sortableDataFrame } from '../src/dataframe.js'
 import HighTable from '../src/HighTable.js'
 import { wrapPromise } from '../src/promise.js'
 import { render } from './userEvent.js'
@@ -8,7 +8,7 @@ import { render } from './userEvent.js'
 const data = {
   header: ['ID', 'Count'],
   numRows: 1000,
-  rows: (start: number, end: number) => Array.from({ length: end - start }, (_, index) => ({
+  rows: ({ start, end }: RowsArgs) => Array.from({ length: end - start }, (_, index) => ({
     index: wrapPromise(index + start),
     cells: {
       ID: wrapPromise('row ' + (index + start)),
@@ -20,7 +20,7 @@ const data = {
 const otherData = {
   header: ['ID', 'Count'],
   numRows: 1000,
-  rows: (start: number, end: number) => Array.from({ length: end - start }, (_, index) => ({
+  rows: ({ start, end }: RowsArgs) => Array.from({ length: end - start }, (_, index) => ({
     index: wrapPromise(index + start),
     cells: {
       ID: wrapPromise('other ' + (index + start)),
@@ -33,7 +33,7 @@ describe('HighTable', () => {
   const mockData = {
     header: ['ID', 'Name', 'Age'],
     numRows: 100,
-    rows: vi.fn((start, end) => Array.from({ length: end - start }, (_, index) => ({
+    rows: vi.fn(({ start, end }: RowsArgs) => Array.from({ length: end - start }, (_, index) => ({
       index: wrapPromise(index + start),
       cells: {
         ID: wrapPromise(index + start),
@@ -53,7 +53,7 @@ describe('HighTable', () => {
     await waitFor(() => {
       expect(getByText('ID')).toBeDefined()
       expect(mockData.rows).toHaveBeenCalledOnce()
-      expect(mockData.rows).toHaveBeenCalledWith(0, 24, undefined)
+      expect(mockData.rows).toHaveBeenCalledWith({ start: 0, end: 24 })
     })
   })
 
@@ -62,7 +62,7 @@ describe('HighTable', () => {
     await waitFor(() => {
       expect(getByText('ID')).toBeDefined()
       expect(mockData.rows).toHaveBeenCalledOnce()
-      expect(mockData.rows).toHaveBeenCalledWith(0, 14, undefined)
+      expect(mockData.rows).toHaveBeenCalledWith({ start:0, end:14, orderBy:undefined })
     })
   })
 
@@ -79,7 +79,7 @@ describe('HighTable', () => {
     if (!scrollDiv) throw new Error('Scroll container not found')
     await waitFor(() => {
       expect(mockData.rows).toHaveBeenCalledTimes(1)
-      expect(mockData.rows).toHaveBeenCalledWith(0, 24, undefined)
+      expect(mockData.rows).toHaveBeenCalledWith({ start:0, end: 24 })
     })
 
     act(() => {
@@ -89,7 +89,7 @@ describe('HighTable', () => {
     })
 
     await waitFor(() => {
-      expect(mockData.rows).toHaveBeenCalledWith(0, 39, undefined)
+      expect(mockData.rows).toHaveBeenCalledWith({ start:0, end: 39 })
     })
   })
 
