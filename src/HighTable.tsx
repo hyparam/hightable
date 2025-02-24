@@ -403,13 +403,15 @@ export default function HighTable({
   // don't render table if header is empty
   if (!data.header.length) return
 
+  const ariaColCount = data.header.length + 1 // don't forget the selection column
+  const ariaRowCount = data.numRows + 1 // don't forget the header row
   return <div className={`table-container${showSelectionControls ? ' selectable' : ''}`}>
     <div className='table-scroll' ref={scrollRef}>
       <div style={{ height: `${scrollHeight}px` }}>
         <table
           aria-readonly={true}
-          aria-colcount={data.header.length + 1 /* don't forget the selection column */}
-          aria-rowcount={data.numRows + 1 /* don't forget the header row */}
+          aria-colcount={ariaColCount}
+          aria-rowcount={ariaRowCount}
           aria-multiselectable={showSelectionControls}
           className={`table${enableOrderByInteractions ? ' sortable' : ''}`}
           ref={tableRef}
@@ -429,7 +431,8 @@ export default function HighTable({
           <tbody role="rowgroup">
             {prePadding.map((_, prePaddingIndex) => {
               const tableIndex = slice.offset - prePadding.length + prePaddingIndex
-              return <tr role="row" key={tableIndex} aria-rowindex={tableIndex + 2 /* 1-based + the header row */} >
+              const ariaRowIndex = tableIndex + 2 // 1-based + the header row
+              return <tr role="row" key={tableIndex} aria-rowindex={ariaRowIndex} >
                 <th scope="row" role="rowheader" style={cornerStyle}></th>
               </tr>
             })}
@@ -437,7 +440,8 @@ export default function HighTable({
               const tableIndex = slice.offset + rowIndex
               const dataIndex = row?.index
               const selected = isRowSelected(tableIndex)
-              return <tr role="row" key={dataIndex ?? `missing-index-at-row-${tableIndex}`} aria-rowindex={tableIndex + 2 /* 1-based + the header row */} title={rowError(row)}
+              const ariaRowIndex = tableIndex + 2 // 1-based + the header row
+              return <tr role="row" key={dataIndex ?? `missing-index-at-row-${tableIndex}`} aria-rowindex={ariaRowIndex} title={rowError(row)}
                 className={selected ? 'selected' : ''}
                 aria-selected={selected}
               >
@@ -452,7 +456,8 @@ export default function HighTable({
             })}
             {postPadding.map((_, postPaddingIndex) => {
               const tableIndex = slice.offset + slice.rows.length + postPaddingIndex
-              return <tr role="row" key={tableIndex} aria-rowindex={tableIndex + 2 /* 1-based + the header row */} >
+              const ariaRowIndex = tableIndex + 2 // 1-based + the header row
+              return <tr role="row" key={tableIndex} aria-rowindex={ariaRowIndex} >
                 <th scope="row" role="rowheader" style={cornerStyle} ></th>
               </tr>
             })}
