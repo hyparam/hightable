@@ -78,34 +78,6 @@ export function asyncRows(rows: Promise<Row[] | AsyncRow[]>, numRows: number, he
   return wrapped
 }
 
-export function asyncRowsPromiseToAsyncRows(rows: Promise<AsyncRow[]>, numRows: number, header: string[]): AsyncRow[] {
-  const wrapped = new Array(numRows).fill(null).map(_ => resolvableRow(header))
-  rows.then(rows => {
-    if (rows.length !== numRows) {
-      console.warn(`Expected ${numRows} rows, got ${rows.length}`)
-    }
-    for (let i = 0; i < rows.length; i++) {
-      const row = rows[i]
-      for (const key of header) {
-        // each cell can reject or resolve
-        row.cells[key].then(cell => wrapped[i].cells[key].resolve(cell)).catch(error => wrapped[i].cells[key].reject(error))
-      }
-      // the index can reject or resolve
-      row.index.then(index => wrapped[i].index.resolve(index)).catch(error => wrapped[i].index.reject(error))
-    }
-  }).catch(error => {
-    // Reject all promises on error
-    for (let i = 0; i < numRows; i++) {
-      for (const key of header) {
-        wrapped[i].cells[key].reject(error)
-      }
-      wrapped[i].index.reject(error)
-    }
-  })
-  return wrapped
-}
-
-
 /**
  * Await all promises in an AsyncRow and return resolved row.
  */
