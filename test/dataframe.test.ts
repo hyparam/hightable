@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DataFrame, RowsArgs, arrayDataFrame, getGetColumn, sortableDataFrame } from '../src/dataframe.js'
+import { DataFrame, arrayDataFrame, getGetColumn, sortableDataFrame } from '../src/dataframe.js'
 import { wrapPromise } from '../src/promise.js'
 import { AsyncRow, Row, awaitRows } from '../src/row.js'
 
@@ -23,7 +23,7 @@ describe('getGetColumn', () => {
   const dataFrame: DataFrame = {
     header: ['id', 'name', 'age'],
     numRows: data.length,
-    rows({ start, end }: RowsArgs): AsyncRow[] {
+    rows({ start, end }): AsyncRow[] {
       // Return the slice of data between start and end indices
       return data.slice(start, end).map(wrapObject)
     },
@@ -72,7 +72,7 @@ describe('sortableDataFrame', () => {
   const dataFrame: DataFrame = {
     header: ['id', 'name', 'age'],
     numRows: data.length,
-    rows({ start, end }: RowsArgs): AsyncRow[] {
+    rows({ start, end }): AsyncRow[] {
       // Return the slice of data between start and end indices
       return data.slice(start, end).map(wrapObject)
     },

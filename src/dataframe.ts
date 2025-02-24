@@ -1,12 +1,6 @@
 import { wrapPromise } from './promise.js'
 import { AsyncRow, Cells, asyncRows } from './row.js'
 
-export interface RowsArgs {
-  start: number
-  end: number
-  orderBy?: string
-}
-
 /**
  * Function that gets values in a column.
  *
@@ -30,7 +24,7 @@ export interface DataFrame {
   // Rows are 0-indexed, excludes the header, end is exclusive
   // if orderBy is provided, start and end are applied to the sorted rows
   // negative start and end are allowed
-  rows(args: RowsArgs): AsyncRow[]
+  rows({ start, end, orderBy }: {start: number, end: number, orderBy?: string}): AsyncRow[]
   // Get all values in a column. If start and end are provided, only get values in that range.
   getColumn?: GetColumn
   sortable?: boolean
@@ -81,7 +75,7 @@ export function sortableDataFrame(data: DataFrame): DataFrame {
   const indexesByColumn = new Map<string, Promise<number[]>>()
   return {
     ...data,
-    rows({ start, end, orderBy }: RowsArgs): AsyncRow[] {
+    rows({ start, end, orderBy }): AsyncRow[] {
       if (orderBy) {
         if (!data.header.includes(orderBy)) {
           throw new Error(`Invalid orderBy field: ${orderBy}`)
@@ -118,7 +112,7 @@ export function arrayDataFrame(data: Cells[]): DataFrame {
   return {
     header,
     numRows: data.length,
-    rows({ start, end }: RowsArgs): AsyncRow[] {
+    rows({ start, end }): AsyncRow[] {
       return data.slice(start, end).map((cells, i) => ({
         index: wrapPromise(start + i),
         cells: Object.fromEntries(Object.entries(cells).map(([key, value]) => [key, wrapPromise(value)])),

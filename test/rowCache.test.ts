@@ -1,5 +1,4 @@
 import { describe, expect, it, vi } from 'vitest'
-import { RowsArgs } from '../src/dataframe.js'
 import { wrapPromise } from '../src/promise.js'
 import { AsyncRow, awaitRows } from '../src/row.js'
 import { rowCache } from '../src/rowCache.js'
@@ -9,7 +8,7 @@ function makeDf() {
   return {
     header: ['id'],
     numRows: 10,
-    rows: vi.fn(({ start, end }: RowsArgs): AsyncRow[] =>
+    rows: vi.fn(({ start, end }): AsyncRow[] =>
       new Array(end - start)
         .fill(null)
         .map((_, index) => ({

@@ -1,14 +1,14 @@
 import { act, fireEvent, waitFor, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { RowsArgs, sortableDataFrame } from '../src/dataframe.js'
+import { DataFrame, sortableDataFrame } from '../src/dataframe.js'
 import HighTable from '../src/HighTable.js'
 import { wrapPromise } from '../src/promise.js'
 import { render } from './userEvent.js'
 
-const data = {
+const data: DataFrame = {
   header: ['ID', 'Count'],
   numRows: 1000,
-  rows: ({ start, end }: RowsArgs) => Array.from({ length: end - start }, (_, index) => ({
+  rows: ({ start, end }) => Array.from({ length: end - start }, (_, index) => ({
     index: wrapPromise(index + start),
     cells: {
       ID: wrapPromise('row ' + (index + start)),
@@ -17,10 +17,10 @@ const data = {
   })),
 }
 
-const otherData = {
+const otherData: DataFrame = {
   header: ['ID', 'Count'],
   numRows: 1000,
-  rows: ({ start, end }: RowsArgs) => Array.from({ length: end - start }, (_, index) => ({
+  rows: ({ start, end }) => Array.from({ length: end - start }, (_, index) => ({
     index: wrapPromise(index + start),
     cells: {
       ID: wrapPromise('other ' + (index + start)),
@@ -33,7 +33,7 @@ describe('HighTable', () => {
   const mockData = {
     header: ['ID', 'Name', 'Age'],
     numRows: 100,
-    rows: vi.fn(({ start, end }: RowsArgs) => Array.from({ length: end - start }, (_, index) => ({
+    rows: vi.fn(({ start, end }) => Array.from({ length: end - start }, (_, index) => ({
       index: wrapPromise(index + start),
       cells: {
         ID: wrapPromise(index + start),
