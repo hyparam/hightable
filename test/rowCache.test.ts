@@ -29,7 +29,7 @@ describe('rowCache', () => {
     const rows = await awaitRows(dfCached.rows({ start: 0, end: 3 }))
     expect(rows).toEqual([{ id: 0 }, { id: 1 }, { id: 2 }].map((cells, index) => ({ cells, index })))
     expect(df.rows).toHaveBeenCalledTimes(1)
-    expect(df.rows).toHaveBeenCalledWith(0, 3, undefined)
+    expect(df.rows).toHaveBeenCalledWith({ start: 0, end: 3 })
   })
 
   it('should return cached rows', async () => {
@@ -40,7 +40,7 @@ describe('rowCache', () => {
     const rowsPre = await awaitRows(dfCached.rows({ start: 3, end: 6 }))
     expect(rowsPre).toEqual([{ id: 3 }, { id: 4 }, { id: 5 }].map((cells, index) => ({ cells, index: index + 3 })))
     expect(df.rows).toHaveBeenCalledTimes(1)
-    expect(df.rows).toHaveBeenCalledWith(3, 6, undefined)
+    expect(df.rows).toHaveBeenCalledWith({ start: 3, end: 6 })
 
     // Subsequent fetch should use cache
     const rowsPost = await awaitRows(dfCached.rows({ start: 3, end: 6 }))
@@ -81,7 +81,7 @@ describe('rowCache', () => {
       { id: 0 }, { id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }, { id: 5 },
     ].map((cells, index) => ({ cells, index })))
     expect(df.rows).toHaveBeenCalledTimes(3)
-    expect(df.rows).toHaveBeenCalledWith(2, 4, undefined)
+    expect(df.rows).toHaveBeenCalledWith({ start: 2, end: 4 })
   })
 
   it('should handle overlapping cached blocks', async () => {
@@ -97,6 +97,6 @@ describe('rowCache', () => {
       { id: 8 }, { id: 9 }, { id: 10 },
     ].map((cells, index) => ({ cells, index: index + 8 })))
     expect(df.rows).toHaveBeenCalledTimes(2)
-    expect(df.rows).toHaveBeenCalledWith(9, 11, undefined)
+    expect(df.rows).toHaveBeenCalledWith({ start: 9, end: 11 })
   })
 })
