@@ -119,4 +119,28 @@ describe('arrayDataFrame', () => {
     const rows = await awaitRows(df.rows({ start: 0, end: 10 }))
     expect(rows).toEqual(testData.map((cells, index) => ({ cells, index })))
   })
+
+  it.each([ [0, 2], [-1, 2], [0.1, 2.8] ])('should return correct column data for given range', async (start, end) => {
+    const df = arrayDataFrame(testData)
+    expect(df.getColumn).toBeDefined()
+    if (!df.getColumn) return
+    const column = await df.getColumn({ column: 'name', start, end })
+    expect(column).toEqual(['Alice', 'Bob'])
+  })
+
+  it('should throw for invalid column', () => {
+    const df = arrayDataFrame(testData)
+    expect(() => df.getColumn?.({ column: 'invalid' })).toThrowError('Invalid column: invalid')
+  })
+
+  it.each([
+    [10, 20],
+    [0, 0],
+    [2, 1],
+    [testData.length, 20],
+  ])('should handle start and end index out of bounds', async (start, end) => {
+    const df = arrayDataFrame(testData)
+    const rows = await awaitRows(df.rows({ start, end }))
+    expect(rows).toEqual([])
+  })
 })
