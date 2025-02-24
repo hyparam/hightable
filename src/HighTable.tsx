@@ -147,7 +147,7 @@ export default function HighTable({
   const pendingSelectionRequest = useRef(0)
   const getOnSelectRowClick = useCallback((tableIndex: number) => {
     // note that the function expects the tableIndex, not the dataIndex, because the latter can be undefined
-    // the computeNewSelection is responsible to resolve the dataIndex if needed
+    // computeNewSelection is responsible to resolve the dataIndex if needed
     if (!selection || !onSelectionChange) return
     return async (event: React.MouseEvent) => {
       const useAnchor = event.shiftKey && selection.anchor !== undefined

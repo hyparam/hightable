@@ -233,7 +233,7 @@ export async function getSortIndex({ data, orderBy }: { data: DataFrame, orderBy
   if (!header.includes(column)) {
     throw new Error('orderBy column is not in the data frame')
   }
-  const dataIndexes = await Promise.all(rows(0, numRows, column).map(row => row.index))
+  const dataIndexes = await Promise.all(rows({ start: 0, end: numRows, orderBy: column }).map(row => row.index))
   const tableIndexes = Array.from({ length: numRows }, (_, i) => -1)
   for (let i = 0; i < numRows; i++) {
     const dataIndex = dataIndexes[i]

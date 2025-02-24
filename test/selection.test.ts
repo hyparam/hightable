@@ -232,7 +232,7 @@ export function wrapObject({ index, cells }: Row): AsyncRow {
 const dataFrame: DataFrame = {
   header: ['id', 'name', 'age'],
   numRows: data.length,
-  rows(start: number, end: number): AsyncRow[] {
+  rows({ start, end }): AsyncRow[] {
     // Return the slice of data between start and end indices
     return data.slice(start, end).map(wrapObject)
   },
