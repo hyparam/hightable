@@ -14,7 +14,8 @@
 
 ### Refactored
 
-- updated the link to the demo in the README.
+- updated the link to the demo in the README ([ef4a642](https://github.com/hyparam/hightable/commit/ef4a642c0c8dc5478abb675e200e2bab2c274518)).
+- removed call to `act()` in tests where not required ([#54](https://github.com/hyparam/hightable/pull/54)).
 
 ## [0.10.0](https://github.com/hyparam/hightable/compare/v0.9.2...v0.10.0) - 2025-02-11
 
