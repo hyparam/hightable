@@ -1,5 +1,5 @@
 import { wrapPromise } from './promise.js'
-import { AsyncRow, Cells, asyncRowsPromiseToAsyncRows } from './row.js'
+import { AsyncRow, Cells, asyncRows } from './row.js'
 
 export interface RowsArgs {
   start: number
@@ -90,8 +90,9 @@ export function sortableDataFrame(data: DataFrame): DataFrame {
           ))
         }
         const indexesSlice = indexesByColumn.get(orderBy)!.then(indexes => indexes.slice(start, end))
-        const promiseToRowsSlice = indexesSlice.then(indexes => Promise.all(indexes.map(i => data.rows({ start: i, end: i + 1 })[0])))
-        return asyncRowsPromiseToAsyncRows(promiseToRowsSlice, end - start, data.header)
+        // TODO: optimize to group the indexes and fetch them in one go
+        const rowsSlice = indexesSlice.then(indexes => Promise.all(indexes.map(i => data.rows({ start: i, end: i + 1 })[0])))
+        return asyncRows(rowsSlice, end - start, data.header)
       } else {
         return data.rows({ start, end })
       }
