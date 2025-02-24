@@ -79,19 +79,23 @@ export function sortableDataFrame(data: DataFrame): DataFrame {
         if (!data.header.includes(orderBy)) {
           throw new Error(`Invalid orderBy field: ${orderBy}`)
         }
+        const columnIndexes = indexesByColumn.get(orderBy)
+         ?? getColumn({ column: orderBy }).then(values =>
+           Array.from(values.keys())
+             .sort((a, b) => {
+               if (values[a] < values[b]) return -1
+               if (values[a] > values[b]) return 1
+               return 0
+             })
+         )
         if (!indexesByColumn.has(orderBy)) {
-          indexesByColumn.set(orderBy, getColumn({ column: orderBy }).then(values =>
-            Array.from(values.keys())
-              .sort((a, b) => {
-                if (values[a] < values[b]) return -1
-                if (values[a] > values[b]) return 1
-                return 0
-              })
-          ))
+          indexesByColumn.set(orderBy, columnIndexes)
         }
-        const indexesSlice = indexesByColumn.get(orderBy)!.then(indexes => indexes.slice(start, end))
-        // TODO: optimize to group the indexes and fetch them in one go
-        const rowsSlice = indexesSlice.then(indexes => Promise.all(indexes.map(i => data.rows({ start: i, end: i + 1 })[0])))
+        const indexesSlice = columnIndexes.then(indexes => indexes.slice(start, end))
+        const rowsSlice = indexesSlice.then(indexes => Promise.all(
+          // TODO(SL): optimize to fetch groups of rows instead of individual rows?
+          indexes.map(i => data.rows({ start: i, end: i + 1 })[0])
+        ))
         return asyncRows(rowsSlice, end - start, data.header)
       } else {
         return data.rows({ start, end })
