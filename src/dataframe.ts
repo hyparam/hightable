@@ -23,6 +23,7 @@ export interface DataFrame {
   numRows: number
   // Rows are 0-indexed, excludes the header, end is exclusive
   // if orderBy is provided, start and end are applied to the sorted rows
+  // negative start and end are allowed
   rows(args: RowsArgs): AsyncRow[]
   // Get all values in a column. If start and end are provided, only get values in that range.
   getColumn?: GetColumn
@@ -121,12 +122,9 @@ export function arrayDataFrame(data: Cells[]): DataFrame {
       if (!header.includes(column)) {
         throw new Error(`Invalid column: ${column}`)
       }
-      start = Math.floor(Math.max(0, start))
-      end = Math.floor(Math.min(data.length, end))
-      if (start >= end) {
-        return Promise.resolve([])
-      }
-      return Promise.resolve(Array(end - start).fill(null).map((_, i) => data[start + i][column]))
+      // TODO(SL): optimize to create the array without the intermediate slice?
+      // beware: start and end can be negative, be sure to respect it when slicing
+      return Promise.resolve(data.slice(start, end).map(row => row[column]))
     },
   }
 }

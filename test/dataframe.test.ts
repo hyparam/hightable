@@ -12,6 +12,55 @@ export function wrapObject({ index, cells }: Row): AsyncRow {
   }
 }
 
+describe('getGetColumn', () => {
+  const data = [
+    { id: 3, name: 'Charlie', age: 25 },
+    { id: 1, name: 'Alice', age: 30 },
+    { id: 2, name: 'Bob', age: 20 },
+    { id: 4, name: 'Dani', age: 20 },
+  ].map((cells, index) => ({ cells, index }))
+
+  const dataFrame: DataFrame = {
+    header: ['id', 'name', 'age'],
+    numRows: data.length,
+    rows({ start, end }: RowsArgs): AsyncRow[] {
+      // Return the slice of data between start and end indices
+      return data.slice(start, end).map(wrapObject)
+    },
+  }
+  const getColumn = getGetColumn(dataFrame)
+
+  it('should return the dataframe getColumn function if it exists', () => {
+    const df = {
+      header: ['id', 'name', 'age'],
+      numRows: 3,
+      rows: () => [],
+      getColumn: () => Promise.resolve(['Alice', 'Bob', 'Charlie']),
+    }
+    expect(getGetColumn(df)).toBe(df.getColumn)
+  })
+
+  it('should return a function that throws if getColumn is not defined', () => {
+    expect(() => getColumn({ column: 'invalid' })).toThrowError('Invalid column: invalid')
+  })
+
+  it('should return a function that returns the correct column data', async () => {
+    const column = await getColumn({ column: 'name' })
+    expect(column).toEqual(['Charlie', 'Alice', 'Bob', 'Dani'])
+  })
+
+  it.each([ [0, 2], [0, -2], [-4, 2], [0.1, 2.8] ])('should return correct column data for given range', async (start, end) => {
+    const column = await getColumn({ column: 'name', start, end })
+    expect(column).toEqual(['Charlie', 'Alice'])
+  })
+
+  it.each([ [10, 20], [0, 0], [2, 1], [data.length, 20] ])('should handle start and end index out of bounds', async (start, end) => {
+    const values = await getColumn({ start, end, column: 'name' })
+    expect(values).toEqual([])
+  })
+
+})
+
 describe('sortableDataFrame', () => {
   const data = [
     { id: 3, name: 'Charlie', age: 25 },
@@ -125,11 +174,14 @@ describe('arrayDataFrame', () => {
     expect(df.getColumn).toBeDefined()
   })
 
-  it.each([ [0, 2], [-1, 2], [0.1, 2.8] ])('should return correct column data for given range', async (start, end) => {
+  it.each([ [0, 2], [0, -2], [-4, 2], [0.1, 2.8], [10, 20], [0, 0], [2, 1], [testData.length, 20] ])('should return the same as getGetColumn', async (start, end) => {
     const df = arrayDataFrame(testData)
     if (!df.getColumn) throw new Error('getColumn not defined')
     const column = await df.getColumn({ column: 'name', start, end })
-    expect(column).toEqual(['Alice', 'Bob'])
+    delete df.getColumn
+    const getColumn = getGetColumn(df)
+    const column2 = await getColumn({ column: 'name', start, end })
+    expect(column).toEqual(column2)
   })
 
   it('should throw for invalid column', () => {
@@ -141,26 +193,5 @@ describe('arrayDataFrame', () => {
       df.getColumn({ column: 'invalid' })
     }).toThrowError('Invalid column: invalid')
   })
-
-  it.each([
-    [10, 20],
-    [0, 0],
-    [2, 1],
-    [testData.length, 20],
-  ])('should handle start and end index out of bounds', async (start, end) => {
-    const df = arrayDataFrame(testData)
-    if (!df.getColumn) throw new Error('getColumn not defined')
-    const values = await df.getColumn({ start, end, column: 'name' })
-    expect(values).toEqual([])
-  })
 })
 
-describe('getGetColumn', () => {
-  it('should return the dataframe getColumn function if it exists', () => {
-    const df = arrayDataFrame([])
-    const getColumn = getGetColumn(df)
-    // arrayDataFrame provides getColumn (see above)
-    expect(getColumn).toBe(df.getColumn)
-  })
-
-})
