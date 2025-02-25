@@ -155,7 +155,7 @@ export default function TableHeader({
 
   return <thead role="rowgroup">
     <tr aria-rowindex={1} role="row">
-      <th><span /></th>
+      <td><span /></td>
       {header.map((columnHeader, columnIndex) =>
         <th
           scope="col"

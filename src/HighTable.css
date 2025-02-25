@@ -36,7 +36,7 @@
 }
 
 /* header */
-.table thead th {
+.table thead th, .table thead td {
   background-color: #f1f1f3;
   border: none;
   border-bottom: 2px solid #c9c9c9;
@@ -49,10 +49,10 @@
   user-select: none;
   z-index: 10;
 }
-.table thead th:first-child {
+.table thead td:first-child {
   border: none;
 }
-.table thead th:first-child span {
+.table thead td:first-child span {
   cursor: default;
   width: 0;
 }
@@ -89,7 +89,7 @@
 }
 
 /* row numbers */
-.table th:first-child {
+.tbody th:first-child {
   background-color: #f1f1f3;
   border-right: 1px solid #ddd;
   color: #888;
@@ -104,10 +104,10 @@
   width: 32px;
   cursor: pointer;
 }
-.table th:first-child span {
+.tbody th:first-child span {
   display: inline;
 }
-.table th:first-child input {
+.tbody th:first-child input {
   display: none;
 }
 /* for selected rows, replace row numbers with checkboxes and highlight the rows */
@@ -124,10 +124,10 @@ tr.selected th:first-child {
   background-color: #f1edbb;
 }
 /* if selectable, show checkboxes on hover (and focus) */
-.selectable th:first-child:hover span, .selectable th:first-child:focus span {
+.selectable tbody th:first-child:hover span, .selectable tbody th:first-child:focus span {
   display: none;
 }
-.selectable th:first-child:hover input, .selectable th:first-child:focus input {
+.selectable tbody th:first-child:hover input, .selectable tbody th:first-child:focus input {
   display: inline;
   cursor: pointer;
 }
