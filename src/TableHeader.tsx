@@ -165,7 +165,8 @@ export default function TableHeader({
           key={columnIndex}
           onClick={getOnOrderByClick(columnHeader)}
           ref={headerRefs.current[columnIndex]}
-          style={memoizedStyles[columnIndex]}>
+          style={memoizedStyles[columnIndex]}
+          title={columnHeader}>
           {columnHeader}
           <span
             onDoubleClick={() => autoResize(columnIndex)}
