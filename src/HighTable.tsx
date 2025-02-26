@@ -305,7 +305,7 @@ export default function HighTable({
     }
     // update
     fetchRows()
-  }, [data, onError, orderBy?.column, slice, rowsRange])
+  }, [data, onError, orderBy?.column, slice, rowsRange, hasCompleteRow])
 
   /**
    * Validate row length
