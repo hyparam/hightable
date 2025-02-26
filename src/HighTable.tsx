@@ -432,7 +432,7 @@ export default function HighTable({
             {slice?.rows.map((row, rowIndex) => {
               const tableIndex = slice.offset + rowIndex
               const dataIndex = row?.index
-              const selected = isRowSelected(dataIndex)
+              const selected = isRowSelected(dataIndex) ?? false
               const ariaRowIndex = tableIndex + 2 // 1-based + the header row
               /**
                * use the tableIndex as the key because the dataIndex is not available for pending rows
