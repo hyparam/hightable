@@ -19,9 +19,8 @@
 
 - updated the link to the demo in the README ([ef4a642](https://github.com/hyparam/hightable/commit/ef4a642c0c8dc5478abb675e200e2bab2c274518)).
 - removed call to `act()` in tests where not required ([#54](https://github.com/hyparam/hightable/pull/54)).
-- group three properties in internal state into the new `slice` property ([#55](https://github.com/hyparam/hightable/pull/55)).
 - small code reorganization ([#56](https://github.com/hyparam/hightable/pull/56)).
-- simplify the internal state management ([#58](https://github.com/hyparam/hightable/pull/58)).
+- simplify the internal state management ([#55](https://github.com/hyparam/hightable/pull/55) and [#58](https://github.com/hyparam/hightable/pull/58)).
 
 ## [0.10.0](https://github.com/hyparam/hightable/compare/v0.9.2...v0.10.0) - 2025-02-11
 
