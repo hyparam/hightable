@@ -111,11 +111,10 @@ export default function HighTable({
     if (!slice) {
       return false
     }
-    const { header } = slice.data
+    const columnsSet = new Set(slice.data.header)
     return slice.rows.some(row => {
-      const columns = Object.keys(row.cells)
-      if (header.length !== columns.length) return false
-      return columns.every(column => header.includes(column))
+      const keys = Object.keys(row.cells)
+      return keys.length === columnsSet.size && keys.every(key => columnsSet.has(key))
     })
   }, [slice])
 
