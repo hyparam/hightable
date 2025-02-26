@@ -79,6 +79,7 @@ export default function HighTable({
 }: TableProps) {
   const [slice, setSlice] = useState<Slice | undefined>(undefined)
   const [rowsRange, setRowsRange] = useState({ start: 0, end: 0 })
+  const [hasCompleteRow, setHasCompleteRow] = useState(false)
 
   const [columnWidths, setColumnWidths] = useState<Array<number | undefined>>([])
   const setColumnWidth = useCallback((columnIndex: number, columnWidth: number | undefined) => {
@@ -107,16 +108,16 @@ export default function HighTable({
    */
 
   // true if at least one row is fully resolved (all of its cells)
-  const hasCompleteRow = useMemo(() => {
-    if (!slice) {
-      return false
-    }
+  if (!hasCompleteRow && slice && slice.rows.length > 0 && slice.data === data) {
+    // the conditions are met to check if at least one row is complete
     const columnsSet = new Set(slice.data.header)
-    return slice.rows.some(row => {
+    if (slice.rows.some(row => {
       const keys = Object.keys(row.cells)
       return keys.length === columnsSet.size && keys.every(key => columnsSet.has(key))
-    })
-  }, [slice])
+    })) {
+      setHasCompleteRow(true)
+    }
+  }
 
   // Sorting is disabled if the data is not sortable
   const {
@@ -191,6 +192,7 @@ export default function HighTable({
   // invalidate when data changes so that columns will auto-resize
   if (slice && data !== slice.data) {
     setSlice(undefined)
+    setHasCompleteRow(false)
     // if uncontrolled, reset the selection (otherwise, it's the responsibility of the parent to do it if the data changes)
     if (!isSelectionControlled) {
       onSelectionChange?.({ ranges: [], anchor: undefined })
