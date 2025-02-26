@@ -32,6 +32,23 @@ const rowHeight = 33 // row height px
  */
 type MouseEventCellHandler = (event: React.MouseEvent, col: number, row: number) => void
 
+
+function rowLabel(rowIndex?: number): string {
+  if (rowIndex === undefined) return ''
+  // rowIndex + 1 because the displayed row numbers are 1-based
+  return (rowIndex + 1).toLocaleString()
+}
+
+/**
+ * Validate row length
+ */
+function rowError(row: PartialRow, length: number): string | undefined {
+  const numKeys = Object.keys(row.cells).length
+  if (numKeys > 0 && numKeys !== length) {
+    return `Row ${rowLabel(row.index)} length ${numKeys} does not match header length ${length}`
+  }
+}
+
 export interface TableProps {
   data: DataFrame
   cacheKey?: string // used to persist column widths
@@ -46,12 +63,6 @@ export interface TableProps {
   selection?: Selection // selection and anchor rows, expressed as data indexes (not as indexes in the table). If undefined, the selection is hidden and the interactions are disabled.
   onSelectionChange?: (selection: Selection) => void // callback to call when a user interaction changes the selection. The selection is expressed as data indexes (not as indexes in the table). The interactions are disabled if undefined.
   stringify?: (value: any) => string | undefined
-}
-
-function rowLabel(rowIndex?: number): string {
-  if (rowIndex === undefined) return ''
-  // rowIndex + 1 because the displayed row numbers are 1-based
-  return (rowIndex + 1).toLocaleString()
 }
 
 /**
@@ -317,15 +328,6 @@ export default function HighTable({
     fetchRows()
   }, [data, onError, orderBy?.column, slice, rowsRange, hasCompleteRow])
 
-  /**
-   * Validate row length
-   */
-  function rowError(row: PartialRow): string | undefined {
-    const numKeys = Object.keys(row.cells).length
-    if (numKeys > 0 && numKeys !== data.header.length) {
-      return `Row ${rowLabel(row.index)} length ${numKeys} does not match header length ${data.header.length}`
-    }
-  }
 
   const memoizedStyles = useMemo(() => columnWidths.map(cellStyle), [columnWidths])
   const onDoubleClick = useCallback((e: React.MouseEvent, col: number, row?: number) => {
@@ -435,7 +437,7 @@ export default function HighTable({
                * but we want to be able to select them, without the element being recreated.
                */
               const key = tableIndex
-              return <tr role="row" key={key} aria-rowindex={ariaRowIndex} title={rowError(row)}
+              return <tr role="row" key={key} aria-rowindex={ariaRowIndex} title={rowError(row, data.header.length)}
                 className={selected ? 'selected' : ''}
                 aria-selected={selected}
               >
