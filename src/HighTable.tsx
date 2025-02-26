@@ -198,9 +198,13 @@ export default function HighTable({
 
   // invalidate when data changes so that columns will auto-resize
   if (slice && data !== slice.data) {
+    // delete the slice
     setSlice(undefined)
+    // reset the flag, the column widths will be recalculated
     setHasCompleteRow(false)
-    // if uncontrolled, reset the selection (otherwise, it's the responsibility of the parent to do it if the data changes)
+    // delete the cached sort indexes
+    setSortIndexes(new Map())
+    // if uncontrolled, reset the selection (if controlled, it's the responsibility of the parent to do it)
     if (!isSelectionControlled) {
       onSelectionChange?.({ ranges: [], anchor: undefined })
     }
