@@ -393,8 +393,7 @@ export function toDataSelection({ selection, column, data, sortIndex }: { select
  * the data index using the sort index, which, again, might not be available, and require an expensive
  * async operation.
  *
- * TODO(SL): let the data frame provide the sort index (direct and reverse) for a given orderBy
- * TODO(SL): add typescript overloads for the function to make it clear which parameters work together
+ * TODO(SL): add typescript overloads for the function to make it clear which parameters work together?
  *
  * @param {Object} params
  * @param {number} params.tableIndex - The index of the row in the table (table domain, sorted row indexes).
