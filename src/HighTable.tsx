@@ -1,4 +1,4 @@
-import { ReactNode, useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
+import { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DataFrame } from './dataframe.js'
 import { useInputState } from './hooks.js'
 import { PartialRow } from './row.js'
@@ -19,40 +19,7 @@ interface Slice {
   offset: number // offset (slice.rows[0] corresponds to the row #offset in the sorted data frame)
   orderedBy: OrderBy // the order used to fetch the rows slice.
   rows: PartialRow[] // slice of the (optionally sorted) rows to render as HTML. The rows might be incomplete (not all the cells, or no index).
-}
-
-/**
- * State of the component
- */
-type State = {
-  data: DataFrame // data frame used in the last rendering
-  hasCompleteRow: boolean // true if at least one row is fully resolved (all of its cells)
-  invalidate: boolean // true if the data must be fetched again
-  slice: Slice // slice of the (optionally sorted) rows to render as HTML
-}
-
-type Action =
-  | { type: 'SET_ROWS', start: number, rows: PartialRow[], orderBy: OrderBy, hasCompleteRow: boolean }
-  | { type: 'DATA_CHANGED', data: DataFrame }
-
-function reducer(state: State, action: Action): State {
-  switch (action.type) {
-  case 'SET_ROWS':
-    return {
-      ...state,
-      hasCompleteRow: state.hasCompleteRow || action.hasCompleteRow,
-      invalidate: false,
-      slice: {
-        offset: action.start,
-        orderedBy: action.orderBy,
-        rows: action.rows,
-      },
-    }
-  case 'DATA_CHANGED':
-    return { ...state, data: action.data, invalidate: true, hasCompleteRow: false }
-  default:
-    return state
-  }
+  data: DataFrame // the data frame used to fetch the slice
 }
 
 const rowHeight = 33 // row height px
@@ -110,14 +77,9 @@ export default function HighTable({
   onError = console.error,
   stringify = stringifyDefault,
 }: TableProps) {
-  const initialState: State = {
-    data,
-    hasCompleteRow: false,
-    invalidate: true,
-    slice: { offset: 0, orderedBy: {}, rows: [] },
-  }
-  const [state, dispatch] = useReducer(reducer, initialState)
+  const [slice, setSlice] = useState<Slice | undefined>(undefined)
   const [rowsRange, setRowsRange] = useState({ start: 0, end: 0 })
+  const [hasCompleteRow, setHasCompleteRow] = useState(false)
 
   const [columnWidths, setColumnWidths] = useState<Array<number | undefined>>([])
   const setColumnWidth = useCallback((columnIndex: number, columnWidth: number | undefined) => {
@@ -144,7 +106,6 @@ export default function HighTable({
    * - data.rows(dataIndex, dataIndex + 1)
    * - data.rows(tableIndex, tableIndex + 1, orderBy)
    */
-  const { slice, invalidate, hasCompleteRow, data: previousData } = state
 
   // Sorting is disabled if the data is not sortable
   const {
@@ -217,8 +178,9 @@ export default function HighTable({
   if (!data) throw new Error('HighTable: data is required')
 
   // invalidate when data changes so that columns will auto-resize
-  if (data !== previousData) {
-    dispatch({ type: 'DATA_CHANGED', data })
+  if (slice && data !== slice.data) {
+    setSlice(undefined)
+    setHasCompleteRow(false)
     // if uncontrolled, reset the selection (otherwise, it's the responsibility of the parent to do it if the data changes)
     if (!isSelectionControlled) {
       onSelectionChange?.({ ranges: [], anchor: undefined })
@@ -270,12 +232,18 @@ export default function HighTable({
       const { start, end } = rowsRange
 
       // Don't update if the view, or slice, is unchanged
-      if (!invalidate && start === slice.offset && end === slice.offset + slice.rows.length && slice.orderedBy.column === orderBy?.column ) {
+      if (slice && slice.data === data && start === slice.offset && end === slice.offset + slice.rows.length && slice.orderedBy.column === orderBy?.column ) {
         return
       }
 
       if (start === end) {
-        dispatch({ type: 'SET_ROWS', start, rows: [], hasCompleteRow: false, orderBy: { column: orderBy?.column } })
+        const slice = {
+          offset: start,
+          rows: [],
+          orderedBy: { column: orderBy?.column },
+          data,
+        }
+        setSlice(slice)
         return
       }
 
@@ -286,26 +254,35 @@ export default function HighTable({
 
         const updateRows = throttle(() => {
           const resolved: PartialRow[] = []
-          let hasCompleteRow = false // true if at least one row is fully resolved
           for (const asyncRow of rowsChunk) {
             const resolvedRow: PartialRow = { cells: {} }
-            let isRowComplete = true
             for (const [key, promise] of Object.entries(asyncRow.cells)) {
               if ('resolved' in promise) {
                 resolvedRow.cells[key] = promise.resolved
-              } else {
-                isRowComplete = false
               }
             }
             if ('resolved' in asyncRow.index) {
               resolvedRow.index = asyncRow.index.resolved
-            } else {
-              isRowComplete = false
             }
-            if (isRowComplete) hasCompleteRow = true
             resolved.push(resolvedRow)
           }
-          dispatch({ type: 'SET_ROWS', start, rows: resolved, hasCompleteRow, orderBy: { column: orderBy?.column } })
+          const slice = {
+            offset: start,
+            rows: resolved,
+            orderedBy: { column: orderBy?.column },
+            data,
+          }
+          setSlice(slice)
+          if (!hasCompleteRow) {
+            // check if at least one row is complete
+            const columnsSet = new Set(slice.data.header)
+            if (slice.rows.some(row => {
+              const keys = Object.keys(row.cells)
+              return keys.length === columnsSet.size && keys.every(key => columnsSet.has(key))
+            })) {
+              setHasCompleteRow(true)
+            }
+          }
         }, 10)
         updateRows() // initial update
 
@@ -328,7 +305,7 @@ export default function HighTable({
     }
     // update
     fetchRows()
-  }, [data, invalidate, onError, orderBy?.column, slice.rows.length, slice.orderedBy.column, rowsRange, slice.offset])
+  }, [data, onError, orderBy?.column, slice, rowsRange])
 
   /**
    * Validate row length
@@ -391,9 +368,11 @@ export default function HighTable({
   }, [focus])
 
   // add empty pre and post rows to fill the viewport
-  const prePadding = Array.from({ length: Math.min(padding, slice.offset) }, () => [])
+  const offset = slice?.offset ?? 0
+  const rowsLength = slice?.rows.length ?? 0
+  const prePadding = Array.from({ length: Math.min(padding, offset) }, () => [])
   const postPadding = Array.from({
-    length: Math.min(padding, data.numRows - slice.offset - slice.rows.length),
+    length: Math.min(padding, data.numRows - offset - rowsLength),
   }, () => [])
 
   // fixed corner width based on number of rows
@@ -430,13 +409,13 @@ export default function HighTable({
           />
           <tbody role="rowgroup">
             {prePadding.map((_, prePaddingIndex) => {
-              const tableIndex = slice.offset - prePadding.length + prePaddingIndex
+              const tableIndex = offset - prePadding.length + prePaddingIndex
               const ariaRowIndex = tableIndex + 2 // 1-based + the header row
               return <tr role="row" key={tableIndex} aria-rowindex={ariaRowIndex} >
                 <th scope="row" role="rowheader" style={cornerStyle}></th>
               </tr>
             })}
-            {slice.rows.map((row, rowIndex) => {
+            {slice?.rows.map((row, rowIndex) => {
               const tableIndex = slice.offset + rowIndex
               const dataIndex = row?.index
               const selected = isRowSelected(tableIndex)
@@ -460,7 +439,7 @@ export default function HighTable({
               </tr>
             })}
             {postPadding.map((_, postPaddingIndex) => {
-              const tableIndex = slice.offset + slice.rows.length + postPaddingIndex
+              const tableIndex = offset + rowsLength + postPaddingIndex
               const ariaRowIndex = tableIndex + 2 // 1-based + the header row
               return <tr role="row" key={tableIndex} aria-rowindex={ariaRowIndex} >
                 <th scope="row" role="rowheader" style={cornerStyle} ></th>
