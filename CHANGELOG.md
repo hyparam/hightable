@@ -5,18 +5,23 @@
 ### Added
 
 - expose the `stringify` function as a prop of the `HighTable` component ([ef4a642](https://github.com/hyparam/hightable/commit/ef4a642c0c8dc5478abb675e200e2bab2c274518)).
+- export the new function `getGetColumn()` and let the data frame provide its own `getColumn()` function. `getColumn({column, start, end}): any[]` let fetch the data of an individual column ([#53](https://github.com/hyparam/hightable/pull/53)).
 
 ### Changed
 
 - **Breaking** the `rows` method in a data frame now takes a single object argument with the following properties: `start`, `end` and `orderBy` ([#52](https://github.com/hyparam/hightable/pull/52)).
 - **Breaking** the minimal supported React version is now 18.3.1 ([ef4a642](https://github.com/hyparam/hightable/commit/ef4a642c0c8dc5478abb675e200e2bab2c274518)).
+- **Breaking** for accessibility, the top-left cell of the table is now a `<td>` element instead of a `<th>` element ([#57](https://github.com/hyparam/hightable/pull/57)).
 - changed colors in CSS.
+- for accessibility, increased the font size of the cell numbers and made it proportional to the default user font size ([#57](https://github.com/hyparam/hightable/pull/57)).
 
 ### Refactored
 
 - updated the link to the demo in the README ([ef4a642](https://github.com/hyparam/hightable/commit/ef4a642c0c8dc5478abb675e200e2bab2c274518)).
 - removed call to `act()` in tests where not required ([#54](https://github.com/hyparam/hightable/pull/54)).
 - group three properties in internal state into the new `slice` property ([#55](https://github.com/hyparam/hightable/pull/55)).
+- small code reorganization ([#56](https://github.com/hyparam/hightable/pull/56)).
+- simplify the internal state management ([#58](https://github.com/hyparam/hightable/pull/58)).
 
 ## [0.10.0](https://github.com/hyparam/hightable/compare/v0.9.2...v0.10.0) - 2025-02-11
 
