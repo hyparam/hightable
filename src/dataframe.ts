@@ -67,7 +67,6 @@ export async function getColumnIndex({ data, column }: {data: DataFrame, column:
   })
 }
 
-
 /**
  * Wraps a DataFrame to make it sortable.
  *

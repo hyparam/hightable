@@ -32,7 +32,6 @@ const rowHeight = 33 // row height px
  */
 type MouseEventCellHandler = (event: React.MouseEvent, col: number, row: number) => void
 
-
 export interface TableProps {
   data: DataFrame
   cacheKey?: string // used to persist column widths
