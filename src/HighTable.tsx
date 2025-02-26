@@ -107,12 +107,17 @@ export default function HighTable({
    */
 
   // true if at least one row is fully resolved (all of its cells)
-  const hasCompleteRow = useMemo(() => slice ? slice.rows.some(row => {
+  const hasCompleteRow = useMemo(() => {
+    if (!slice) {
+      return false
+    }
     const { header } = slice.data
-    const columns = Object.keys(row.cells)
-    if (header.length !== columns.length) return false
-    return columns.every(column => header.includes(column))
-  }) : false, [slice])
+    return slice.rows.some(row => {
+      const columns = Object.keys(row.cells)
+      if (header.length !== columns.length) return false
+      return columns.every(column => header.includes(column))
+    })
+  }, [slice])
 
   // Sorting is disabled if the data is not sortable
   const {
