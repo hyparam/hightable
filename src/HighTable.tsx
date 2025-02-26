@@ -25,31 +25,25 @@ interface Slice {
  * State of the component
  */
 type State = {
-  data: DataFrame // data frame used in the last rendering
-  hasCompleteRow: boolean // true if at least one row is fully resolved (all of its cells)
+  previousData: DataFrame // data frame used in the previous rendering
   invalidate: boolean // true if the data must be fetched again
   slice: Slice // slice of the (optionally sorted) rows to render as HTML
 }
 
 type Action =
-  | { type: 'SET_ROWS', start: number, rows: PartialRow[], orderBy: OrderBy, hasCompleteRow: boolean }
+  | { type: 'FETCHED_ROWS_SLICE', slice: Slice }
   | { type: 'DATA_CHANGED', data: DataFrame }
 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
-  case 'SET_ROWS':
+  case 'FETCHED_ROWS_SLICE':
     return {
       ...state,
-      hasCompleteRow: state.hasCompleteRow || action.hasCompleteRow,
       invalidate: false,
-      slice: {
-        offset: action.start,
-        orderedBy: action.orderBy,
-        rows: action.rows,
-      },
+      slice: action.slice,
     }
   case 'DATA_CHANGED':
-    return { ...state, data: action.data, invalidate: true, hasCompleteRow: false }
+    return { ...state, previousData: action.data, invalidate: true }
   default:
     return state
   }
@@ -110,13 +104,11 @@ export default function HighTable({
   onError = console.error,
   stringify = stringifyDefault,
 }: TableProps) {
-  const initialState: State = {
-    data,
-    hasCompleteRow: false,
+  const [state, dispatch] = useReducer(reducer, data, (data) => ({
+    previousData: data,
     invalidate: true,
     slice: { offset: 0, orderedBy: {}, rows: [] },
-  }
-  const [state, dispatch] = useReducer(reducer, initialState)
+  }))
   const [rowsRange, setRowsRange] = useState({ start: 0, end: 0 })
 
   const [columnWidths, setColumnWidths] = useState<Array<number | undefined>>([])
@@ -144,7 +136,15 @@ export default function HighTable({
    * - data.rows(dataIndex, dataIndex + 1)
    * - data.rows(tableIndex, tableIndex + 1, orderBy)
    */
-  const { slice, invalidate, hasCompleteRow, data: previousData } = state
+  const { slice, invalidate, previousData } = state
+
+  // true if at least one row is fully resolved (all of its cells)
+  const hasCompleteRow = useMemo(() => slice.rows.some(row => {
+    const { header } = previousData
+    const columns = Object.keys(row.cells)
+    if (header.length !== columns.length) return false
+    return columns.every(column => header.includes(column))
+  }), [slice, previousData])
 
   // Sorting is disabled if the data is not sortable
   const {
@@ -275,7 +275,12 @@ export default function HighTable({
       }
 
       if (start === end) {
-        dispatch({ type: 'SET_ROWS', start, rows: [], hasCompleteRow: false, orderBy: { column: orderBy?.column } })
+        const slice = {
+          offset: start,
+          rows: [],
+          orderedBy: { column: orderBy?.column },
+        }
+        dispatch({ type: 'FETCHED_ROWS_SLICE', slice })
         return
       }
 
@@ -286,26 +291,24 @@ export default function HighTable({
 
         const updateRows = throttle(() => {
           const resolved: PartialRow[] = []
-          let hasCompleteRow = false // true if at least one row is fully resolved
           for (const asyncRow of rowsChunk) {
             const resolvedRow: PartialRow = { cells: {} }
-            let isRowComplete = true
             for (const [key, promise] of Object.entries(asyncRow.cells)) {
               if ('resolved' in promise) {
                 resolvedRow.cells[key] = promise.resolved
-              } else {
-                isRowComplete = false
               }
             }
             if ('resolved' in asyncRow.index) {
               resolvedRow.index = asyncRow.index.resolved
-            } else {
-              isRowComplete = false
             }
-            if (isRowComplete) hasCompleteRow = true
             resolved.push(resolvedRow)
           }
-          dispatch({ type: 'SET_ROWS', start, rows: resolved, hasCompleteRow, orderBy: { column: orderBy?.column } })
+          const slice = {
+            offset: start,
+            rows: resolved,
+            orderedBy: { column: orderBy?.column },
+          }
+          dispatch({ type: 'FETCHED_ROWS_SLICE', slice })
         }, 10)
         updateRows() // initial update
 
