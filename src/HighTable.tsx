@@ -107,18 +107,6 @@ export default function HighTable({
    * - data.rows(tableIndex, tableIndex + 1, orderBy)
    */
 
-  // true if at least one row is fully resolved (all of its cells)
-  if (!hasCompleteRow && slice && slice.rows.length > 0 && slice.data === data) {
-    // the conditions are met to check if at least one row is complete
-    const columnsSet = new Set(slice.data.header)
-    if (slice.rows.some(row => {
-      const keys = Object.keys(row.cells)
-      return keys.length === columnsSet.size && keys.every(key => columnsSet.has(key))
-    })) {
-      setHasCompleteRow(true)
-    }
-  }
-
   // Sorting is disabled if the data is not sortable
   const {
     value: orderBy,
@@ -285,6 +273,16 @@ export default function HighTable({
             data,
           }
           setSlice(slice)
+          if (!hasCompleteRow) {
+            // check if at least one row is complete
+            const columnsSet = new Set(slice.data.header)
+            if (slice.rows.some(row => {
+              const keys = Object.keys(row.cells)
+              return keys.length === columnsSet.size && keys.every(key => columnsSet.has(key))
+            })) {
+              setHasCompleteRow(true)
+            }
+          }
         }, 10)
         updateRows() // initial update
 
