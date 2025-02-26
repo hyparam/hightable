@@ -1,4 +1,4 @@
-import { DataFrame } from './dataframe.js'
+import { DataFrame, getColumnIndex } from './dataframe.js'
 import { OrderBy } from './TableHeader.js'
 
 /**
@@ -196,15 +196,8 @@ export function toggleIndex({ ranges, index }: { ranges: Ranges, index: number }
   return isSelected({ ranges, index }) ? unselectRange({ ranges, range }) : selectRange({ ranges, range })
 }
 
-function copy(selection: Selection): Selection {
-  return {
-    ranges: selection.ranges.map(range => ({ ...range })),
-    anchor: selection.anchor,
-  }
-}
-
 export interface SortIndex {
-  orderBy: OrderBy
+  column: string
   dataIndexes: number[] // TODO(SL) use a typed array?
   tableIndexes: number[] // TODO(SL) use a typed array?
 }
@@ -214,27 +207,21 @@ export interface SortIndex {
  *
  * @param {Object} params
  * @param {DataFrame} params.data - The data frame.
- * @param {OrderBy} params.orderBy - The order of the rows in the table.
+ * @param {string} params.column - The column name.
  *
  * @returns {Promise<SortIndex>} A Promise to the sort index.
  */
-export async function getSortIndex({ data, orderBy }: { data: DataFrame, orderBy: OrderBy }): Promise<SortIndex> {
+export async function getSortIndex({ data, column }: { data: DataFrame, column: string }): Promise<SortIndex> {
   // TODO(SL): rename as fetch/compute instead of get, to make it clear it's async
-  const { header, numRows, rows, sortable } = data
-  const { column } = orderBy
-  if (!column) {
-    const dataIndexes = Array.from({ length: numRows }, (_, i) => i)
-    // unsorted data
-    return { orderBy, dataIndexes, tableIndexes: dataIndexes }
-  }
-  if (column && !sortable) {
-    throw new Error('Data frame is not sortable')
-  }
+  const { header, numRows } = data
   if (!header.includes(column)) {
     throw new Error('orderBy column is not in the data frame')
   }
-  const dataIndexes = await Promise.all(rows({ start: 0, end: numRows, orderBy: column }).map(row => row.index))
-  const tableIndexes = Array.from({ length: numRows }, (_, i) => -1)
+  const dataIndexes = await getColumnIndex({ data, column })
+  if (dataIndexes.length !== numRows) {
+    throw new Error('Invalid sort index length')
+  }
+  const tableIndexes = Array(numRows).fill(-1)
   for (let i = 0; i < numRows; i++) {
     const dataIndex = dataIndexes[i]
     if (dataIndex === undefined) {
@@ -255,7 +242,7 @@ export async function getSortIndex({ data, orderBy }: { data: DataFrame, orderBy
   if (tableIndexes.some(index => index === -1)) {
     throw new Error('Missing indexes in the sort index')
   }
-  return { orderBy, dataIndexes, tableIndexes }
+  return { column, dataIndexes, tableIndexes }
 }
 
 /**
@@ -300,12 +287,13 @@ export function getTableIndex({ sortIndex, dataIndex }: {sortIndex: SortIndex, d
  *
  * @param {Object} params
  * @param {Selection} params.selection - The selection of data indexes.
- * @param {OrderBy | undefined} params.orderBy - The order of the rows in the table.
+ * @param {string} params.column - The column to sort the rows along.
  * @param {DataFrame} params.data - The data frame.
+ * @param {SortIndex} params.sortIndex - The sort index of the data frame for the column.
  *
  * @returns {Promise<Selection>} A Promise to the selection of table indexes.
  */
-export async function toTableSelection({ selection, orderBy, data }: { selection: Selection, orderBy: OrderBy | undefined, data: DataFrame }): Promise<Selection> {
+export function toTableSelection({ selection, column, data, sortIndex }: { selection: Selection, column: string, data: DataFrame, sortIndex: SortIndex }): Selection {
   const { header, numRows, sortable } = data
   const { ranges, anchor } = selection
   if (!areValidRanges(selection.ranges)) {
@@ -314,22 +302,12 @@ export async function toTableSelection({ selection, orderBy, data }: { selection
   if (anchor !== undefined && !isValidIndex(anchor)) {
     throw new Error('Invalid anchor')
   }
-  if (!orderBy || !orderBy.column) {
-    // unsorted data
-    return copy(selection)
-  }
-  const { column } = orderBy
   if (!header.includes(column)) {
     throw new Error('orderBy column is not in the data frame')
   }
   if (column && !sortable) {
     throw new Error('Data frame is not sortable')
   }
-  // naive implementation, should be optimized
-
-  // TODO(SL) enforce at type level that the rows contain the field '__index__'
-  // TODO(SL) allow to fetch only the required columns (no need for all the columns)
-  const sortIndex = await getSortIndex({ data, orderBy })
   let tableRanges: Ranges = []
   if (ranges.length === 0) {
     // empty selection
@@ -338,6 +316,7 @@ export async function toTableSelection({ selection, orderBy, data }: { selection
     // all rows selected
     tableRanges = [{ start: 0, end: numRows }]
   } else {
+    // naive implementation, could be optimized
     for (const range of ranges) {
       const { start, end } = range
       for (let dataIndex = start; dataIndex < end; dataIndex++) {
@@ -357,12 +336,13 @@ export async function toTableSelection({ selection, orderBy, data }: { selection
  *
  * @param {Object} params
  * @param {Selection} params.selection - The selection of table indexes.
- * @param {OrderBy | undefined} params.orderBy - The order of the rows in the table.
+ * @param {string} params.column - The column to sort the rows along.
  * @param {DataFrame} params.data - The data frame.
+ * @param {SortIndex} params.sortIndex - The sort index of the data frame for the column.
  *
  * @returns {Promise<Selection>} A Promise to the selection of data indexes.
  */
-export async function toDataSelection({ selection, orderBy, data }: { selection: Selection, orderBy: OrderBy | undefined, data: DataFrame }): Promise<Selection> {
+export function toDataSelection({ selection, column, data, sortIndex }: { selection: Selection, column: string, data: DataFrame, sortIndex: SortIndex }): Selection {
   const { header, numRows, sortable } = data
   const { ranges, anchor } = selection
   if (!areValidRanges(selection.ranges)) {
@@ -371,11 +351,6 @@ export async function toDataSelection({ selection, orderBy, data }: { selection:
   if (anchor !== undefined && !isValidIndex(anchor)) {
     throw new Error('Invalid anchor')
   }
-  if (!orderBy || !orderBy.column) {
-    // unsorted data
-    return copy(selection)
-  }
-  const { column } = orderBy
   if (column && !header.includes(column)) {
     throw new Error('orderBy column is not in the data frame')
   }
@@ -383,9 +358,7 @@ export async function toDataSelection({ selection, orderBy, data }: { selection:
     throw new Error('Data frame is not sortable')
   }
 
-  // naive implementation, should be optimized
   let dataRanges: Ranges = []
-  const sortIndex = await getSortIndex({ data, orderBy })
   if (ranges.length === 0) {
     // empty selection
     dataRanges = []
@@ -393,6 +366,7 @@ export async function toDataSelection({ selection, orderBy, data }: { selection:
     // all data selected
     dataRanges = [{ start: 0, end: numRows }]
   } else {
+    // naive implementation, could be optimized
     for (const range of ranges) {
       for (let tableIndex = range.start; tableIndex < range.end; tableIndex++) {
         dataRanges = selectIndex({ ranges: dataRanges, index: getDataIndex({ sortIndex, tableIndex }) })
@@ -424,19 +398,25 @@ export async function toDataSelection({ selection, orderBy, data }: { selection:
  *
  * @param {Object} params
  * @param {number} params.tableIndex - The index of the row in the table (table domain, sorted row indexes).
+ * @param {number | undefined} params.dataIndex - The index of the row in the table (data domain, unsorted row indexes).
  * @param {Selection} params.selection - The current selection state (data domain, row indexes).
  * @param {boolean | undefined} params.useAnchor - Whether to use the anchor for shift+click selection.
  * @param {OrderBy | undefined} params.orderBy - The order if the rows are sorted.
  * @param {DataFrame | undefined} params.data - The data frame.
+ * @param {SortIndex | undefined} params.sortIndex - The sort index of the data frame for the column.
+ * @param {function | undefined} params.setSortIndex - A function to set the sort index of the data frame.
  */
 export async function computeNewSelection({
   tableIndex,
+  dataIndex,
   useAnchor,
   selection,
   orderBy,
   data,
-}: { tableIndex: number, selection: Selection, useAnchor?: boolean, orderBy?: OrderBy, data?: DataFrame }): Promise<Selection> {
-  if (!orderBy) {
+  sortIndex,
+  setSortIndex,
+}: { tableIndex: number, dataIndex?: number, selection: Selection, useAnchor?: boolean, orderBy?: OrderBy, data?: DataFrame, sortIndex?: SortIndex, setSortIndex?: (sortIndex: SortIndex) => void }): Promise<Selection> {
+  if (!orderBy?.column) {
     // unsorted data: the table and data indexes are the same
     const dataIndex = tableIndex
     return useAnchor ?
@@ -444,19 +424,39 @@ export async function computeNewSelection({
       { ranges: toggleIndex({ ranges: selection.ranges, index: dataIndex }), anchor: dataIndex }
   }
   // sorted data: we need to convert between table and data indexes
+  const { column } = orderBy
   if (!data) {
     throw new Error('Missing data frame. Cannot compute the new selection.')
   }
+  if (!data.header.includes(column)) {
+    throw new Error('orderBy column is not in the data frame')
+  }
+  if (!data.sortable) {
+    throw new Error('Data frame is not sortable')
+  }
   if (!useAnchor) {
-    // no anchor: toggle the row at the index. Convert the table index to the data index, and work in the data domain.
-    const sortIndex = await getSortIndex({ data, orderBy })
-    const dataIndex = getDataIndex({ sortIndex, tableIndex })// <- TODO(SL) getDataIndex({ tableIndex, data, orderBy }) and hide the sort index
-    return { ranges: toggleIndex({ ranges: selection.ranges, index: dataIndex }), anchor: dataIndex }
+    // no anchor: toggle the row at the index.
+    if (dataIndex !== undefined) {
+      // Use the data index directly.
+      return { ranges: toggleIndex({ ranges: selection.ranges, index: dataIndex }), anchor: dataIndex }
+    } else {
+      // Convert the table index to the data index, and work in the data domain.
+      if (!sortIndex) {
+        sortIndex = await getSortIndex({ data, column })
+        setSortIndex?.(sortIndex)
+      }
+      const dataIndex = getDataIndex({ sortIndex, tableIndex }) // <- TODO(SL) getDataIndex({ tableIndex, data, orderBy }) and hide the sort index
+      return { ranges: toggleIndex({ ranges: selection.ranges, index: dataIndex }), anchor: dataIndex }
+    }
   }
   // extend the selection from the anchor to the index. Convert the selection to table indexes, and work in the table domain
-  const tableSelection = await toTableSelection({ selection, orderBy, data })
+  if (!sortIndex) {
+    sortIndex = await getSortIndex({ data, column })
+    setSortIndex?.(sortIndex)
+  }
+  const tableSelection = toTableSelection({ selection, column, data, sortIndex })
   const { ranges, anchor } = tableSelection
   const newTableSelection = { ranges: extendFromAnchor({ ranges, anchor, index: tableIndex }), anchor }
-  const newDataSelection = await toDataSelection({ selection: newTableSelection, orderBy, data })
+  const newDataSelection = toDataSelection({ selection: newTableSelection, column, data, sortIndex })
   return newDataSelection
 }

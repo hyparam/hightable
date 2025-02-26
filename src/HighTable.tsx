@@ -2,7 +2,7 @@ import { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 're
 import { DataFrame } from './dataframe.js'
 import { useInputState } from './hooks.js'
 import { PartialRow } from './row.js'
-import { Selection, areAllSelected, computeNewSelection, isSelected, toggleAll } from './selection.js'
+import { Selection, SortIndex, areAllSelected, computeNewSelection, isSelected, toggleAll } from './selection.js'
 import TableHeader, { OrderBy, cellStyle } from './TableHeader.js'
 export { DataFrame, arrayDataFrame, sortableDataFrame } from './dataframe.js'
 export { ResolvablePromise, resolvablePromise, wrapPromise } from './promise.js'
@@ -93,6 +93,7 @@ export default function HighTable({
   const [rowsRange, setRowsRange] = useState({ start: 0, end: 0 })
   const [hasCompleteRow, setHasCompleteRow] = useState(false)
   const [columnWidths, setColumnWidths] = useState<Array<number | undefined>>([])
+  const [sortIndexes, setSortIndexes] = useState<Map<string, SortIndex>>(() => new Map())
 
   const setColumnWidth = useCallback((columnIndex: number, columnWidth: number | undefined) => {
     setColumnWidths(columnWidths => {
@@ -140,26 +141,39 @@ export default function HighTable({
     })
   }, [onSelectionChange, data.numRows, selection])
   const pendingSelectionRequest = useRef(0)
-  const getOnSelectRowClick = useCallback((tableIndex: number) => {
-    // note that the function expects the tableIndex, not the dataIndex, because the latter can be undefined
-    // computeNewSelection is responsible to resolve the dataIndex if needed
+  const getOnSelectRowClick = useCallback(({ tableIndex, dataIndex }: {tableIndex: number, dataIndex?: number}) => {
+    // computeNewSelection is responsible to resolve the dataIndex if undefined but needed
     if (!selection || !onSelectionChange) return
     return async (event: React.MouseEvent) => {
       const useAnchor = event.shiftKey && selection.anchor !== undefined
       const requestId = ++pendingSelectionRequest.current
+      // provide a cached column index, if available and needed
+      const column = orderBy?.column
+      const sortIndex = column ? sortIndexes.get(column) : undefined
       const newSelection = await computeNewSelection({
         selection,
         tableIndex,
+        dataIndex,
         useAnchor,
         orderBy,
         data,
+        sortIndex,
+        setSortIndex: (sortIndex: SortIndex) => {
+          if (column) {
+            setSortIndexes(sortIndexes => {
+              const newSortIndexes = new Map(sortIndexes)
+              newSortIndexes.set(column, sortIndex)
+              return newSortIndexes
+            })
+          }
+        },
       })
       if (requestId === pendingSelectionRequest.current) {
         // only update the selection if the request is still the last one
         onSelectionChange(newSelection)
       }
     }
-  }, [onSelectionChange, selection, data, orderBy])
+  }, [onSelectionChange, selection, data, orderBy, sortIndexes])
   const allRowsSelected = useMemo(() => {
     if (!selection) return false
     const { ranges } = selection
@@ -425,7 +439,7 @@ export default function HighTable({
                 className={selected ? 'selected' : ''}
                 aria-selected={selected}
               >
-                <th scope="row" role="rowheader" style={cornerStyle} onClick={getOnSelectRowClick(tableIndex)}>
+                <th scope="row" role="rowheader" style={cornerStyle} onClick={getOnSelectRowClick({ tableIndex, dataIndex })}>
                   <span>{rowLabel(dataIndex)}</span>
                   { showSelection && <input type='checkbox' checked={selected} readOnly /> }
                 </th>
