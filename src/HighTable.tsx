@@ -72,19 +72,6 @@ export default function HighTable({
   onError = console.error,
   stringify = stringifyDefault,
 }: TableProps) {
-  const [slice, setSlice] = useState<Slice | undefined>(undefined)
-  const [rowsRange, setRowsRange] = useState({ start: 0, end: 0 })
-  const [hasCompleteRow, setHasCompleteRow] = useState(false)
-
-  const [columnWidths, setColumnWidths] = useState<Array<number | undefined>>([])
-  const setColumnWidth = useCallback((columnIndex: number, columnWidth: number | undefined) => {
-    setColumnWidths(columnWidths => {
-      const newColumnWidths = [...columnWidths]
-      newColumnWidths[columnIndex] = columnWidth
-      return newColumnWidths
-    })
-  }, [setColumnWidths])
-
   /**
    * The component relies on the model of a virtual table which rows are ordered and only the
    * visible rows are fetched (slice) and rendered as HTML <tr> elements.
@@ -101,6 +88,20 @@ export default function HighTable({
    * - data.rows(dataIndex, dataIndex + 1)
    * - data.rows(tableIndex, tableIndex + 1, orderBy)
    */
+
+  const [slice, setSlice] = useState<Slice | undefined>(undefined)
+  const [rowsRange, setRowsRange] = useState({ start: 0, end: 0 })
+  const [hasCompleteRow, setHasCompleteRow] = useState(false)
+  const [columnWidths, setColumnWidths] = useState<Array<number | undefined>>([])
+
+  const setColumnWidth = useCallback((columnIndex: number, columnWidth: number | undefined) => {
+    setColumnWidths(columnWidths => {
+      const newColumnWidths = [...columnWidths]
+      newColumnWidths[columnIndex] = columnWidth
+      return newColumnWidths
+    })
+  }, [setColumnWidths])
+
 
   // Sorting is disabled if the data is not sortable
   const {
