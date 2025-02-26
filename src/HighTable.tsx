@@ -102,7 +102,6 @@ export default function HighTable({
     })
   }, [setColumnWidths])
 
-
   // Sorting is disabled if the data is not sortable
   const {
     value: orderBy,
