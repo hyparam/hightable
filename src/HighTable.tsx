@@ -33,22 +33,6 @@ const rowHeight = 33 // row height px
 type MouseEventCellHandler = (event: React.MouseEvent, col: number, row: number) => void
 
 
-function rowLabel(rowIndex?: number): string {
-  if (rowIndex === undefined) return ''
-  // rowIndex + 1 because the displayed row numbers are 1-based
-  return (rowIndex + 1).toLocaleString()
-}
-
-/**
- * Validate row length
- */
-function rowError(row: PartialRow, length: number): string | undefined {
-  const numKeys = Object.keys(row.cells).length
-  if (numKeys > 0 && numKeys !== length) {
-    return `Row ${rowLabel(row.index)} length ${numKeys} does not match header length ${length}`
-  }
-}
-
 export interface TableProps {
   data: DataFrame
   cacheKey?: string // used to persist column widths
@@ -516,5 +500,23 @@ export function throttle(fn: () => void, wait: number): () => void {
       // schedule trailing call
       pending = true
     }
+  }
+}
+
+
+
+function rowLabel(rowIndex?: number): string {
+  if (rowIndex === undefined) return ''
+  // rowIndex + 1 because the displayed row numbers are 1-based
+  return (rowIndex + 1).toLocaleString()
+}
+
+/**
+ * Validate row length
+ */
+function rowError(row: PartialRow, length: number): string | undefined {
+  const numKeys = Object.keys(row.cells).length
+  if (numKeys > 0 && numKeys !== length) {
+    return `Row ${rowLabel(row.index)} length ${numKeys} does not match header length ${length}`
   }
 }
