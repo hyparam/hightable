@@ -2,7 +2,7 @@ import { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 're
 import { DataFrame } from './dataframe.js'
 import { useInputState } from './hooks.js'
 import { PartialRow } from './row.js'
-import { Selection, areAllSelected, extendFromAnchor, isSelected, toggleAll, toggleIndex } from './selection.js'
+import { Selection, SortIndex, areAllSelected, computeNewSelection, isSelected, toggleAll } from './selection.js'
 import TableHeader, { OrderBy, cellStyle } from './TableHeader.js'
 export { DataFrame, arrayDataFrame, sortableDataFrame } from './dataframe.js'
 export { ResolvablePromise, resolvablePromise, wrapPromise } from './promise.js'
@@ -43,15 +43,9 @@ export interface TableProps {
   onError?: (error: Error) => void
   orderBy?: OrderBy // order by column. If undefined, the table is unordered, the sort elements are hidden and the interactions are disabled.
   onOrderByChange?: (orderBy: OrderBy) => void // callback to call when a user interaction changes the order. The interactions are disabled if undefined.
-  selection?: Selection // selection and anchor rows. If undefined, the selection is hidden and the interactions are disabled.
-  onSelectionChange?: (selection: Selection) => void // callback to call when a user interaction changes the selection. The interactions are disabled if undefined.
+  selection?: Selection // selection and anchor rows, expressed as data indexes (not as indexes in the table). If undefined, the selection is hidden and the interactions are disabled.
+  onSelectionChange?: (selection: Selection) => void // callback to call when a user interaction changes the selection. The selection is expressed as data indexes (not as indexes in the table). The interactions are disabled if undefined.
   stringify?: (value: any) => string | undefined
-}
-
-function rowLabel(rowIndex?: number): string {
-  if (rowIndex === undefined) return ''
-  // rowIndex + 1 because the displayed row numbers are 1-based
-  return (rowIndex + 1).toLocaleString()
 }
 
 /**
@@ -77,19 +71,6 @@ export default function HighTable({
   onError = console.error,
   stringify = stringifyDefault,
 }: TableProps) {
-  const [slice, setSlice] = useState<Slice | undefined>(undefined)
-  const [rowsRange, setRowsRange] = useState({ start: 0, end: 0 })
-  const [hasCompleteRow, setHasCompleteRow] = useState(false)
-
-  const [columnWidths, setColumnWidths] = useState<Array<number | undefined>>([])
-  const setColumnWidth = useCallback((columnIndex: number, columnWidth: number | undefined) => {
-    setColumnWidths(columnWidths => {
-      const newColumnWidths = [...columnWidths]
-      newColumnWidths[columnIndex] = columnWidth
-      return newColumnWidths
-    })
-  }, [setColumnWidths])
-
   /**
    * The component relies on the model of a virtual table which rows are ordered and only the
    * visible rows are fetched (slice) and rendered as HTML <tr> elements.
@@ -106,6 +87,20 @@ export default function HighTable({
    * - data.rows(dataIndex, dataIndex + 1)
    * - data.rows(tableIndex, tableIndex + 1, orderBy)
    */
+
+  const [slice, setSlice] = useState<Slice | undefined>(undefined)
+  const [rowsRange, setRowsRange] = useState({ start: 0, end: 0 })
+  const [hasCompleteRow, setHasCompleteRow] = useState(false)
+  const [columnWidths, setColumnWidths] = useState<Array<number | undefined>>([])
+  const [sortIndexes, setSortIndexes] = useState<Map<string, SortIndex>>(() => new Map())
+
+  const setColumnWidth = useCallback((columnIndex: number, columnWidth: number | undefined) => {
+    setColumnWidths(columnWidths => {
+      const newColumnWidths = [...columnWidths]
+      newColumnWidths[columnIndex] = columnWidth
+      return newColumnWidths
+    })
+  }, [setColumnWidths])
 
   // Sorting is disabled if the data is not sortable
   const {
@@ -144,27 +139,50 @@ export default function HighTable({
       anchor: undefined,
     })
   }, [onSelectionChange, data.numRows, selection])
-  const getOnSelectRowClick = useCallback((tableIndex: number) => {
+  const pendingSelectionRequest = useRef(0)
+  const getOnSelectRowClick = useCallback(({ tableIndex, dataIndex }: {tableIndex: number, dataIndex?: number}) => {
+    // computeNewSelection is responsible to resolve the dataIndex if undefined but needed
     if (!selection || !onSelectionChange) return
-    const { ranges, anchor } = selection
-    return (event: React.MouseEvent) => {
+    return async (event: React.MouseEvent) => {
       const useAnchor = event.shiftKey && selection.anchor !== undefined
-      if (useAnchor) {
-        onSelectionChange({ ranges: extendFromAnchor({ ranges, anchor, index: tableIndex }), anchor })
-      } else {
-        onSelectionChange({ ranges: toggleIndex({ ranges, index: tableIndex }), anchor: tableIndex })
+      const requestId = ++pendingSelectionRequest.current
+      // provide a cached column index, if available and needed
+      const column = orderBy?.column
+      const sortIndex = column ? sortIndexes.get(column) : undefined
+      const newSelection = await computeNewSelection({
+        selection,
+        tableIndex,
+        dataIndex,
+        useAnchor,
+        orderBy,
+        data,
+        sortIndex,
+        setSortIndex: (sortIndex: SortIndex) => {
+          if (column) {
+            setSortIndexes(sortIndexes => {
+              const newSortIndexes = new Map(sortIndexes)
+              newSortIndexes.set(column, sortIndex)
+              return newSortIndexes
+            })
+          }
+        },
+      })
+      if (requestId === pendingSelectionRequest.current) {
+        // only update the selection if the request is still the last one
+        onSelectionChange(newSelection)
       }
     }
-  }, [onSelectionChange, selection])
+  }, [onSelectionChange, selection, data, orderBy, sortIndexes])
   const allRowsSelected = useMemo(() => {
     if (!selection) return false
     const { ranges } = selection
     return areAllSelected({ ranges, length: data.numRows })
   }, [selection, data.numRows])
-  const isRowSelected = useCallback((tableIndex: number) => {
+  const isRowSelected = useCallback((dataIndex: number | undefined) => {
     if (!selection) return undefined
+    if (dataIndex === undefined) return undefined
     const { ranges } = selection
-    return isSelected({ ranges, index: tableIndex })
+    return isSelected({ ranges, index: dataIndex })
   }, [selection])
 
   // total scrollable height
@@ -179,9 +197,13 @@ export default function HighTable({
 
   // invalidate when data changes so that columns will auto-resize
   if (slice && data !== slice.data) {
+    // delete the slice
     setSlice(undefined)
+    // reset the flag, the column widths will be recalculated
     setHasCompleteRow(false)
-    // if uncontrolled, reset the selection (otherwise, it's the responsibility of the parent to do it if the data changes)
+    // delete the cached sort indexes
+    setSortIndexes(new Map())
+    // if uncontrolled, reset the selection (if controlled, it's the responsibility of the parent to do it)
     if (!isSelectionControlled) {
       onSelectionChange?.({ ranges: [], anchor: undefined })
     }
@@ -305,17 +327,8 @@ export default function HighTable({
     }
     // update
     fetchRows()
-  }, [data, onError, orderBy?.column, slice, rowsRange])
+  }, [data, onError, orderBy?.column, slice, rowsRange, hasCompleteRow])
 
-  /**
-   * Validate row length
-   */
-  function rowError(row: PartialRow): string | undefined {
-    const numKeys = Object.keys(row.cells).length
-    if (numKeys > 0 && numKeys !== data.header.length) {
-      return `Row ${rowLabel(row.index)} length ${numKeys} does not match header length ${data.header.length}`
-    }
-  }
 
   const memoizedStyles = useMemo(() => columnWidths.map(cellStyle), [columnWidths])
   const onDoubleClick = useCallback((e: React.MouseEvent, col: number, row?: number) => {
@@ -418,18 +431,18 @@ export default function HighTable({
             {slice?.rows.map((row, rowIndex) => {
               const tableIndex = slice.offset + rowIndex
               const dataIndex = row?.index
-              const selected = isRowSelected(tableIndex)
+              const selected = isRowSelected(dataIndex) ?? false
               const ariaRowIndex = tableIndex + 2 // 1-based + the header row
               /**
                * use the tableIndex as the key because the dataIndex is not available for pending rows
                * but we want to be able to select them, without the element being recreated.
                */
               const key = tableIndex
-              return <tr role="row" key={key} aria-rowindex={ariaRowIndex} title={rowError(row)}
+              return <tr role="row" key={key} aria-rowindex={ariaRowIndex} title={rowError(row, data.header.length)}
                 className={selected ? 'selected' : ''}
                 aria-selected={selected}
               >
-                <th scope="row" role="rowheader" style={cornerStyle} onClick={getOnSelectRowClick(tableIndex)}>
+                <th scope="row" role="rowheader" style={cornerStyle} onClick={getOnSelectRowClick({ tableIndex, dataIndex })}>
                   <span>{rowLabel(dataIndex)}</span>
                   { showSelection && <input type='checkbox' checked={selected} readOnly /> }
                 </th>
@@ -504,5 +517,23 @@ export function throttle(fn: () => void, wait: number): () => void {
       // schedule trailing call
       pending = true
     }
+  }
+}
+
+
+
+function rowLabel(rowIndex?: number): string {
+  if (rowIndex === undefined) return ''
+  // rowIndex + 1 because the displayed row numbers are 1-based
+  return (rowIndex + 1).toLocaleString()
+}
+
+/**
+ * Validate row length
+ */
+function rowError(row: PartialRow, length: number): string | undefined {
+  const numKeys = Object.keys(row.cells).length
+  if (numKeys > 0 && numKeys !== length) {
+    return `Row ${rowLabel(row.index)} length ${numKeys} does not match header length ${length}`
   }
 }

@@ -10,10 +10,11 @@
 ### Changed
 
 - **Breaking** the `rows` method in a data frame now takes a single object argument with the following properties: `start`, `end` and `orderBy` ([#52](https://github.com/hyparam/hightable/pull/52)).
+- **Breaking** the rows selection now refers to the position in the data source, not in the table. It is therefore independent of the sort ([#34](https://github.com/hyparam/hightable/pull/34)).
 - **Breaking** the minimal supported React version is now 18.3.1 ([ef4a642](https://github.com/hyparam/hightable/commit/ef4a642c0c8dc5478abb675e200e2bab2c274518)).
 - **Breaking** for accessibility, the top-left cell of the table is now a `<td>` element instead of a `<th>` element ([#57](https://github.com/hyparam/hightable/pull/57)).
 - changed colors in CSS.
-- for accessibility, increased the font size of the cell numbers and made it proportional to the default user font size ([#57](https://github.com/hyparam/hightable/pull/57)).
+- for accessibility, increased the font size of the cell numbers and made it proportional to the default user font size ([#57](https://github.com/hyparam/hightable/pull/57) and [#59](https://github.com/hyparam/hightable/pull/59)).
 
 ### Refactored
 

@@ -54,6 +54,19 @@ export function getGetColumn(data: DataFrame): GetColumn {
   }
 }
 
+export async function getColumnIndex({ data, column }: {data: DataFrame, column: string}): Promise<number[]> {
+  if (!data.header.includes(column)) {
+    throw new Error(`Invalid column: ${column}`)
+  }
+  const getColumn = getGetColumn(data)
+  const values = await getColumn({ column })
+  return Array.from(values.keys()).sort((a, b) => {
+    if (values[a] < values[b]) return -1
+    if (values[a] > values[b]) return 1
+    return 0
+  })
+}
+
 /**
  * Wraps a DataFrame to make it sortable.
  *
@@ -71,26 +84,18 @@ export function getGetColumn(data: DataFrame): GetColumn {
  */
 export function sortableDataFrame(data: DataFrame): DataFrame {
   if (data.sortable) return data // already sortable
-  const getColumn = getGetColumn(data)
+
   const indexesByColumn = new Map<string, Promise<number[]>>()
   return {
     ...data,
-    rows({ start, end, orderBy }): AsyncRow[] {
-      if (orderBy) {
-        if (!data.header.includes(orderBy)) {
-          throw new Error(`Invalid orderBy field: ${orderBy}`)
+    rows({ start, end, orderBy: column }): AsyncRow[] {
+      if (column) {
+        if (!data.header.includes(column)) {
+          throw new Error(`Invalid orderBy field: ${column}`)
         }
-        const columnIndexes = indexesByColumn.get(orderBy)
-         ?? getColumn({ column: orderBy }).then(values =>
-           Array.from(values.keys())
-             .sort((a, b) => {
-               if (values[a] < values[b]) return -1
-               if (values[a] > values[b]) return 1
-               return 0
-             })
-         )
-        if (!indexesByColumn.has(orderBy)) {
-          indexesByColumn.set(orderBy, columnIndexes)
+        const columnIndexes = indexesByColumn.get(column) ?? getColumnIndex({ data, column })
+        if (!indexesByColumn.has(column)) {
+          indexesByColumn.set(column, columnIndexes)
         }
         const indexesSlice = columnIndexes.then(indexes => indexes.slice(start, end))
         const rowsSlice = indexesSlice.then(indexes => Promise.all(
