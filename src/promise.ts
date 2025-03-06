@@ -1,6 +1,6 @@
 export type WrappedPromise<T> = Promise<T> & {
   resolved?: T
-  rejected?: Error
+  rejected?: any
 }
 
 /**
@@ -14,7 +14,7 @@ export function wrapPromise<T>(promise: Promise<T> | T): WrappedPromise<T> {
   const wrapped: WrappedPromise<T> = promise.then(resolved => {
     wrapped.resolved = resolved
     return resolved
-  }).catch(rejected => {
+  }).catch((rejected: unknown) => {
     wrapped.rejected = rejected
     throw rejected
   })
@@ -23,7 +23,7 @@ export function wrapPromise<T>(promise: Promise<T> | T): WrappedPromise<T> {
 
 export type ResolvablePromise<T> = Promise<T> & {
   resolve: (value: T) => void
-  reject: (error: Error) => void
+  reject: (reason?: any) => void
 }
 
 /**
@@ -31,12 +31,14 @@ export type ResolvablePromise<T> = Promise<T> & {
  */
 export function resolvablePromise<T>(): ResolvablePromise<T> {
   let resolve: (value: T) => void
-  let reject: (error: Error) => void
+  let reject: (reason?: any) => void
   const promise = wrapPromise(new Promise<T>((res, rej) => {
     resolve = res
     reject = rej
   })) as ResolvablePromise<T>
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   promise.resolve = resolve!
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   promise.reject = reject!
   return promise
 }

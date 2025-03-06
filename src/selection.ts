@@ -9,7 +9,7 @@ interface Range {
   start: number // inclusive lower limit, positive integer
   end: number // exclusive upper limit, positive integer, strictly greater than start (no zero-length ranges).
 }
-export type Ranges = Array<Range>
+export type Ranges = Range[]
 
 // TODO(SL): rename 'ranges' to 'selection' or something else, that does not disclose the implementation.
 // It would make it easier to switch to a Set for example, if needed
@@ -37,7 +37,9 @@ export function areValidRanges(ranges: Ranges): boolean {
     return false
   }
   for (let i = 0; i < ranges.length - 1; i++) {
-    if (ranges[i].end >= ranges[i + 1].start) {
+    const range = ranges[i]
+    const nextRange = ranges[i + 1]
+    if (!range || !nextRange || range.end >= nextRange.start) {
       return false
     }
   }
@@ -61,7 +63,7 @@ export function areAllSelected({ ranges, length }: { ranges: Ranges, length: num
   if (length && !isValidIndex(length)) {
     throw new Error('Invalid length')
   }
-  return ranges.length === 1 && ranges[0].start === 0 && ranges[0].end === length
+  return ranges.length === 1 && 0 in ranges && ranges[0].start === 0 && ranges[0].end === length
 }
 
 export function toggleAll({ ranges, length }: { ranges: Ranges, length: number }): Ranges {
@@ -89,22 +91,40 @@ export function selectRange({ ranges, range }: { ranges: Ranges, range: Range })
   let rangeIndex = 0
 
   // copy the ranges before the new range
-  while (rangeIndex < ranges.length && ranges[rangeIndex].end < start) {
-    newRanges.push({ ...ranges[rangeIndex] })
+  while (rangeIndex < ranges.length) {
+    const currentRange = ranges[rangeIndex]
+    if (!currentRange) {
+      throw new Error('Invalid range')
+    }
+    if (currentRange.end >= start) {
+      break
+    }
+    newRanges.push({ ...currentRange })
     rangeIndex++
   }
 
   // merge with the new range
-  while (rangeIndex < ranges.length && ranges[rangeIndex].start <= end) {
-    range.start = Math.min(range.start, ranges[rangeIndex].start)
-    range.end = Math.max(range.end, ranges[rangeIndex].end)
+  while (rangeIndex < ranges.length) {
+    const currentRange = ranges[rangeIndex]
+    if (!currentRange) {
+      throw new Error('Invalid range')
+    }
+    if (currentRange.start > end) {
+      break
+    }
+    range.start = Math.min(range.start, currentRange.start)
+    range.end = Math.max(range.end, currentRange.end)
     rangeIndex++
   }
   newRanges.push(range)
 
   // copy the remaining ranges
   while (rangeIndex < ranges.length) {
-    newRanges.push({ ...ranges[rangeIndex] })
+    const currentRange = ranges[rangeIndex]
+    if (!currentRange) {
+      throw new Error('Invalid range')
+    }
+    newRanges.push({ ...currentRange })
     rangeIndex++
   }
 
@@ -127,25 +147,43 @@ export function unselectRange({ ranges, range }: { ranges: Ranges, range: Range 
   let rangeIndex = 0
 
   // copy the ranges before the new range
-  while (rangeIndex < ranges.length && ranges[rangeIndex].end < start) {
-    newRanges.push({ ...ranges[rangeIndex] })
+  while (rangeIndex < ranges.length) {
+    const currentRange = ranges[rangeIndex]
+    if (!currentRange) {
+      throw new Error('Invalid range')
+    }
+    if (currentRange.end >= start) {
+      break
+    }
+    newRanges.push({ ...currentRange })
     rangeIndex++
   }
 
   // split the ranges intersecting with the new range
-  while (rangeIndex < ranges.length && ranges[rangeIndex].start < end) {
-    if (ranges[rangeIndex].start < start) {
-      newRanges.push({ start: ranges[rangeIndex].start, end: start })
+  while (rangeIndex < ranges.length) {
+    const currentRange = ranges[rangeIndex]
+    if (!currentRange) {
+      throw new Error('Invalid range')
     }
-    if (ranges[rangeIndex].end > end) {
-      newRanges.push({ start: end, end: ranges[rangeIndex].end })
+    if (currentRange.start >= end) {
+      break
+    }
+    if (currentRange.start < start) {
+      newRanges.push({ start: currentRange.start, end: start })
+    }
+    if (currentRange.end > end) {
+      newRanges.push({ start: end, end: currentRange.end })
     }
     rangeIndex++
   }
 
   // copy the remaining ranges
   while (rangeIndex < ranges.length) {
-    newRanges.push({ ...ranges[rangeIndex] })
+    const currentRange = ranges[rangeIndex]
+    if (!currentRange) {
+      throw new Error('Invalid range')
+    }
+    newRanges.push({ ...currentRange })
     rangeIndex++
   }
 
@@ -221,7 +259,7 @@ export async function getSortIndex({ data, column }: { data: DataFrame, column: 
   if (dataIndexes.length !== numRows) {
     throw new Error('Invalid sort index length')
   }
-  const tableIndexes = Array(numRows).fill(-1)
+  const tableIndexes = Array<number>(numRows).fill(-1)
   for (let i = 0; i < numRows; i++) {
     const dataIndex = dataIndexes[i]
     if (dataIndex === undefined) {
@@ -273,7 +311,7 @@ export function getDataIndex({ sortIndex, tableIndex }: {sortIndex: SortIndex, t
  */
 export function getTableIndex({ sortIndex, dataIndex }: {sortIndex: SortIndex, dataIndex: number}): number {
   const tableIndex = sortIndex.tableIndexes[dataIndex]
-  if (tableIndex === -1) {
+  if (tableIndex === -1 || tableIndex === undefined) {
     throw new Error('Data index not found in the data frame')
   }
   return tableIndex
@@ -312,7 +350,7 @@ export function toTableSelection({ selection, column, data, sortIndex }: { selec
   if (ranges.length === 0) {
     // empty selection
     tableRanges = []
-  } else if (ranges.length === 1 && ranges[0].start === 0 && ranges[0].end === numRows) {
+  } else if (ranges.length === 1 && 0 in ranges && ranges[0].start === 0 && ranges[0].end === numRows) {
     // all rows selected
     tableRanges = [{ start: 0, end: numRows }]
   } else {
@@ -362,7 +400,7 @@ export function toDataSelection({ selection, column, data, sortIndex }: { select
   if (ranges.length === 0) {
     // empty selection
     dataRanges = []
-  } else if (ranges.length === 1 && ranges[0].start === 0 && ranges[0].end === numRows) {
+  } else if (ranges.length === 1 && 0 in ranges && ranges[0].start === 0 && ranges[0].end === numRows) {
     // all data selected
     dataRanges = [{ start: 0, end: numRows }]
   } else {

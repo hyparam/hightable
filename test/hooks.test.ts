@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useInputState } from '../src/hooks.js'
 
 describe('in controlled mode (value is defined), ', () => {
-  const value: string = 'value'
+  const value = 'value'
   const onChange = vi.fn()
   const defaultValue = 'default'
   const newValue = 'new value'
@@ -67,7 +67,7 @@ describe('in controlled mode (value is defined), ', () => {
 })
 
 describe('in uncontrolled mode (value is undefined), ', () => {
-  const onChange = vi.fn((_: string) => {})
+  const onChange = vi.fn()
   const value = 'value'
   const defaultValue = 'default'
   const newValue = 'new value'
@@ -125,4 +125,3 @@ describe('in uncontrolled mode (value is undefined), ', () => {
     expect(result.current.value).toBe(undefined)
   })
 })
-

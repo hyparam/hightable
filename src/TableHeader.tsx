@@ -1,4 +1,4 @@
-import { RefObject, createRef, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React from 'react'
 import { flushSync } from 'react-dom'
 
 export interface OrderBy {
@@ -9,10 +9,10 @@ export interface OrderBy {
 interface TableProps {
   header: string[]
   cacheKey?: string // used to persist column widths
-  columnWidths: Array<number | undefined>
+  columnWidths: (number | undefined)[]
   orderBy?: OrderBy // order by column. If undefined, the table is unordered, the sort elements are hidden and the interactions are disabled.
   setColumnWidth: (columnIndex: number, columnWidth: number | undefined) => void
-  setColumnWidths: (columnWidths: Array<number | undefined>) => void
+  setColumnWidths: (columnWidths: (number | undefined)[]) => void
   onOrderByChange?: (orderBy: OrderBy) => void // callback to call when a user interaction changes the order. The interactions are disabled if undefined.
   dataReady: boolean
 }
@@ -41,10 +41,10 @@ export interface ColumnWidth {
 export default function TableHeader({
   header, cacheKey, columnWidths, orderBy, onOrderByChange, setColumnWidth, setColumnWidths, dataReady,
 }: TableProps) {
-  const [resizing, setResizing] = useState<ResizingState | undefined>()
-  const headerRefs = useRef(header.map(() => createRef<HTMLTableCellElement>()))
+  const [resizing, setResizing] = React.useState<ResizingState | undefined>()
+  const headerRefs = React.useRef(header.map(() => React.createRef<HTMLTableCellElement>()))
 
-  function measureWidth(ref: RefObject<HTMLTableCellElement>): number | undefined {
+  function measureWidth(ref: React.RefObject<HTMLTableCellElement>): number | undefined {
     if (!ref.current) return undefined
     // get computed cell padding
     const style = window.getComputedStyle(ref.current)
@@ -53,8 +53,8 @@ export default function TableHeader({
   }
 
   // Load persisted column widths
-  useEffect(() => {
-    const userWidths: number[] = new Array(header.length)
+  React.useEffect(() => {
+    const userWidths: (number|undefined)[] = new Array<number|undefined>(header.length).fill(undefined)
     if (cacheKey) {
       // load user sized column widths
       loadColumnWidths(cacheKey).forEach(({ columnIndex, columnName, width }) => {
@@ -68,7 +68,7 @@ export default function TableHeader({
   }, [cacheKey, header, setColumnWidths])
 
   // Measure default column widths when data is ready
-  useEffect(() => {
+  React.useEffect(() => {
     if (dataReady) {
       const widths = headerRefs.current.map(measureWidth)
       setColumnWidths(widths)
@@ -76,11 +76,11 @@ export default function TableHeader({
   }, [cacheKey, dataReady, header, setColumnWidths]) // re-measure if header changes
 
   // Modify column width
-  function startResizing(columnIndex: number, e: React.MouseEvent<HTMLSpanElement, MouseEvent>) {
+  function startResizing(columnIndex: number, e: React.MouseEvent<HTMLSpanElement>) {
     e.stopPropagation()
     setResizing({
       columnIndex,
-      clientX: e.clientX - (columnWidths[columnIndex] || 0),
+      clientX: e.clientX - (columnWidths[columnIndex] ?? 0),
     })
   }
 
@@ -103,13 +103,13 @@ export default function TableHeader({
   }
 
   // Attach mouse move and mouse up events for column resizing
-  useEffect(() => {
+  React.useEffect(() => {
     function stopResizing() {
       // save width to local storage
       if (!resizing) return
       const { columnIndex } = resizing
       if (cacheKey && columnWidths[columnIndex]) {
-        const width = columnWidths[columnIndex]!
+        const width = columnWidths[columnIndex]
         saveColumnWidth(cacheKey, {
           columnIndex,
           columnName: header[columnIndex],
@@ -138,7 +138,7 @@ export default function TableHeader({
   }, [cacheKey, header, resizing, setColumnWidths, columnWidths, setColumnWidth])
 
   // Function to handle click for changing orderBy
-  const getOnOrderByClick = useCallback((columnHeader: string) => {
+  const getOnOrderByClick = React.useCallback((columnHeader: string) => {
     if (!onOrderByChange) return undefined
     return (e: React.MouseEvent) => {
       // Ignore clicks on resize handle
@@ -151,7 +151,7 @@ export default function TableHeader({
     }}, [orderBy, onOrderByChange]
   )
 
-  const memoizedStyles = useMemo(() => columnWidths.map(cellStyle), [columnWidths])
+  const memoizedStyles = React.useMemo(() => columnWidths.map(cellStyle), [columnWidths])
 
   return <thead role="rowgroup">
     <tr aria-rowindex={1} role="row">
@@ -169,8 +169,8 @@ export default function TableHeader({
           title={columnHeader}>
           {columnHeader}
           <span
-            onDoubleClick={() => autoResize(columnIndex)}
-            onMouseDown={e => startResizing(columnIndex, e)} />
+            onDoubleClick={() => { autoResize(columnIndex) }}
+            onMouseDown={e => { startResizing(columnIndex, e) }} />
         </th>
       )}
     </tr>
@@ -187,7 +187,7 @@ export function cellStyle(width: number | undefined) {
  */
 export function loadColumnWidths(key: string): ColumnWidth[] {
   const json = localStorage.getItem(`column-widths:${key}`)
-  return json ? JSON.parse(json) : []
+  return json ? JSON.parse(json) as ColumnWidth[] : []
 }
 
 /**

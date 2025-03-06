@@ -8,7 +8,7 @@ import { AsyncRow } from './row.js'
  */
 export function rowCache(df: DataFrame): DataFrame {
   // Row cache is stored as a sorted array of RowGroups, per sort order
-  const caches: {[key: string]: AsyncRow[]} = {}
+  const caches: Record<string, (AsyncRow | undefined)[]> = {}
 
   let hits = 0
   let misses = 0
@@ -17,7 +17,11 @@ export function rowCache(df: DataFrame): DataFrame {
     ...df,
     rows({ start, end, orderBy }): AsyncRow[] {
       // Cache per sort order
-      const cache = caches[orderBy || ''] ||= new Array(df.numRows)
+      const key = orderBy ?? ''
+      const cache = caches[key] ?? new Array<AsyncRow | undefined>(df.numRows)
+      if (!(key in caches)) {
+        caches[key] = cache
+      }
       const n = hits + misses
       if (n && !(n % 10)) {
         console.log(`Cache hits: ${hits} / ${hits + misses} (${(100 * hits / (hits + misses)).toFixed(1)}%)`)
@@ -44,7 +48,13 @@ export function rowCache(df: DataFrame): DataFrame {
       if (hasCacheMiss) misses++
       else hits++
 
-      return cache.slice(start, end)
+      return cache.slice(start, end).map(row => {
+        // Safety check, this should never happen, all the rows should be cached
+        if (!row) {
+          throw new Error('Row not cached')
+        }
+        return row
+      })
     },
   }
 }

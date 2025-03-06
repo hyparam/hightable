@@ -8,7 +8,7 @@ function makeDf() {
   return {
     header: ['id'],
     numRows: 10,
-    rows: vi.fn(({ start, end }): AsyncRow[] =>
+    rows: vi.fn(({ start, end }: {start: number, end: number}): AsyncRow[] =>
       new Array(end - start)
         .fill(null)
         .map((_, index) => ({

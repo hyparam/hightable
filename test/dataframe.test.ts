@@ -190,8 +190,7 @@ describe('arrayDataFrame', () => {
       if (!df.getColumn) {
         throw new Error('getColumn not defined')
       }
-      df.getColumn({ column: 'invalid' })
+      void df.getColumn({ column: 'invalid' })
     }).toThrowError('Invalid column: invalid')
   })
 })
-

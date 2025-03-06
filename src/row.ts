@@ -44,37 +44,45 @@ export function resolvableRow(header: string[]): ResolvableRow {
  */
 export function asyncRows(rows: Promise<Row[] | AsyncRow[]>, numRows: number, header: string[]): AsyncRow[] {
   // Make grid of resolvable promises
-  const wrapped = new Array(numRows).fill(null).map(_ => resolvableRow(header))
+  const wrapped = new Array(numRows).fill(null).map(() => resolvableRow(header))
   rows.then(rows => {
     if (rows.length !== numRows) {
       console.warn(`Expected ${numRows} rows, got ${rows.length}`)
     }
-    for (let i = 0; i < rows.length; i++) {
-      const row = rows[i]
+    rows.forEach((row, i) => {
+      const wrappedRow = wrapped[i]
+      if (wrappedRow === undefined) {
+        throw new Error(`Expected row ${i} to exist`)
+      }
       for (const key of header) {
+        const wrappedCell = wrappedRow.cells[key]
+        if (wrappedCell === undefined) {
+          throw new Error(`Expected cell ${key} to exist in row ${i}`)
+        }
         if (row.cells[key] instanceof Promise) {
           // each cell can reject or resolve
-          row.cells[key].then(cell => wrapped[i].cells[key].resolve(cell)).catch(error => wrapped[i].cells[key].reject(error))
+          row.cells[key].then(cell => { wrappedCell.resolve(cell) }).catch(error => { wrappedCell.reject(error) })
         } else {
-          wrapped[i].cells[key].resolve(row.cells[key])
+          wrappedCell.resolve(row.cells[key])
         }
       }
       if (row.index instanceof Promise) {
         // the index can reject or resolve
-        row.index.then(index => wrapped[i].index.resolve(index)).catch(error => wrapped[i].index.reject(error))
+        row.index.then(index => { wrappedRow.index.resolve(index) }).catch(error => { wrappedRow.index.reject(error) })
       } else {
-        wrapped[i].index.resolve(row.index)
+        wrappedRow.index.resolve(row.index)
       }
     }
-  }).catch(error => {
+    )}).catch(error => {
     // Reject all promises on error
-    for (let i = 0; i < numRows; i++) {
-      for (const key of header) {
-        wrapped[i].cells[key].reject(error)
+    wrapped.forEach((wrappedRow) => {
+      for (const promise of Object.values(wrappedRow.cells)) {
+        promise.reject(error)
       }
-      wrapped[i].index.reject(error)
-    }
+      wrappedRow.index.reject(error)
+    })
   })
+
   return wrapped
 }
 
