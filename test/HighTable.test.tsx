@@ -1,4 +1,5 @@
 import { act, fireEvent, waitFor, within } from '@testing-library/react'
+import React from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { DataFrame, sortableDataFrame } from '../src/dataframe.js'
 import HighTable from '../src/HighTable.js'
@@ -11,7 +12,7 @@ const data: DataFrame = {
   rows: ({ start, end }) => Array.from({ length: end - start }, (_, index) => ({
     index: wrapPromise(index + start),
     cells: {
-      ID: wrapPromise('row ' + (index + start)),
+      ID: wrapPromise(`row ${index + start}`),
       Count: wrapPromise(1000 - start - index),
     },
   })),
@@ -23,7 +24,7 @@ const otherData: DataFrame = {
   rows: ({ start, end }) => Array.from({ length: end - start }, (_, index) => ({
     index: wrapPromise(index + start),
     cells: {
-      ID: wrapPromise('other ' + (index + start)),
+      ID: wrapPromise(`other ${index + start}`),
       Count: wrapPromise(1000 - start - index),
     },
   })),
@@ -33,11 +34,11 @@ describe('HighTable', () => {
   const mockData = {
     header: ['ID', 'Name', 'Age'],
     numRows: 100,
-    rows: vi.fn(({ start, end }) => Array.from({ length: end - start }, (_, index) => ({
+    rows: vi.fn(({ start, end }: { start: number, end: number }) => Array.from({ length: end - start }, (_, index) => ({
       index: wrapPromise(index + start),
       cells: {
         ID: wrapPromise(index + start),
-        Name: wrapPromise('Name ' + (index + start)),
+        Name: wrapPromise(`Name ${index + start}`),
         Age: wrapPromise(20 + index % 50),
       },
     }))
@@ -126,7 +127,6 @@ describe('HighTable', () => {
     expect(container.querySelector('div.pending')).toBeNull()
   })
 })
-
 
 describe('When sorted, HighTable', () => {
   function checkRowContents(row: HTMLElement, rowNumber: string, ID: string, Count: string) {
@@ -385,7 +385,6 @@ describe('in controlled selection state, read-only (selection prop), ', () => {
   })
 
   it('click on a row number cell does nothing', async () => {
-    const start = 2
     const selection = { ranges: [] }
     const { user, findByRole, queryByRole } = render(<HighTable data={data} selection={selection}/>)
     // await because we have to wait for the data to be fetched first
@@ -394,7 +393,10 @@ describe('in controlled selection state, read-only (selection prop), ', () => {
     const rowHeader = cell.closest('[role="row"]')?.querySelector('[role="rowheader"]')
     expect(rowHeader).not.toBeNull()
     await act(async () => {
-      rowHeader && await user.click(rowHeader)
+      if (!rowHeader) {
+        throw new Error('rowHeader should be defined')
+      }
+      await user.click(rowHeader)
     })
     expect(queryByRole('row', { selected: true })).toBeNull()
   })
@@ -406,7 +408,6 @@ describe('in uncontrolled selection state (onSelection prop), ', () => {
   })
 
   it('HighTable shows no selection initially and onSelectionChange is not called', async () => {
-    const start = 2
     const onSelectionChange = vi.fn()
     const { findByRole, queryByRole } = render(<HighTable data={data} onSelectionChange={onSelectionChange}/>)
     // await because we have to wait for the data to be fetched first
@@ -461,7 +462,7 @@ describe('in uncontrolled selection state (onSelection prop), ', () => {
 
     rerender(<HighTable data={otherData} onSelectionChange={onSelectionChange}/>)
     // await again, since we have to wait for the new data to be fetched
-    const other = await findByRole('cell', { name: 'other 2' })
+    await findByRole('cell', { name: 'other 2' })
     expect(queryByRole('cell', { name: 'row 2' })).toBeNull()
     expect(queryByRole('row', { selected: true })).toBeNull()
     expect(onSelectionChange).toHaveBeenCalledWith({ ranges: [] })

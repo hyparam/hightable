@@ -4,7 +4,7 @@ import { loadColumnWidths, saveColumnWidth } from '../src/TableHeader.js'
 vi.stubGlobal('localStorage', (() => {
   let store: Record<string, string> = {}
   return {
-    getItem: (key: string) => store[key] || null,
+    getItem: (key: string) => store[key] ?? null,
     setItem: (key: string, value: string) => { store[key] = value },
     clear: () => { store = {} },
   }

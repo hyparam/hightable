@@ -1,4 +1,5 @@
 import { waitFor } from '@testing-library/react'
+import React from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import TableHeader, { ColumnWidth, cellStyle, saveColumnWidth } from '../src/TableHeader.js'
 import { render } from './userEvent.js'
@@ -6,7 +7,7 @@ import { render } from './userEvent.js'
 vi.stubGlobal('localStorage', (() => {
   let store: Record<string, string> = {}
   return {
-    getItem: vi.fn((key: string) => store[key] || null),
+    getItem: vi.fn((key: string) => store[key] ?? null),
     setItem: vi.fn((key: string, value: string) => { store[key] = value }),
     clear: () => { store = {} },
   }
@@ -19,7 +20,7 @@ function mockColumnWidths() {
     setColumnWidth: vi.fn((columnIndex: number, columnWidth: number | undefined) => {
       obj.columnWidths[columnIndex] = columnWidth
     }),
-    setColumnWidths: vi.fn((columnWidths: Array<number | undefined>) => {
+    setColumnWidths: vi.fn((columnWidths: (number | undefined)[]) => {
       obj.columnWidths = columnWidths
     }),
   }

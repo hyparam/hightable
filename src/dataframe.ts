@@ -100,7 +100,13 @@ export function sortableDataFrame(data: DataFrame): DataFrame {
         const indexesSlice = columnIndexes.then(indexes => indexes.slice(start, end))
         const rowsSlice = indexesSlice.then(indexes => Promise.all(
           // TODO(SL): optimize to fetch groups of rows instead of individual rows?
-          indexes.map(i => data.rows({ start: i, end: i + 1 })[0])
+          indexes.map(i => {
+            const asyncRowInArray = data.rows({ start: i, end: i + 1 })
+            if (!(0 in asyncRowInArray)) {
+              throw new Error('data.rows should have return one async row')
+            }
+            return asyncRowInArray[0]
+          })
         ))
         return asyncRows(rowsSlice, end - start, data.header)
       } else {
@@ -112,7 +118,9 @@ export function sortableDataFrame(data: DataFrame): DataFrame {
 }
 
 export function arrayDataFrame(data: Cells[]): DataFrame {
-  if (!data.length) return { header: [], numRows: 0, rows: () => [], getColumn: () => Promise.resolve([]) }
+  if (!(0 in data)) {
+    return { header: [], numRows: 0, rows: () => [], getColumn: () => Promise.resolve([]) }
+  }
   const header = Object.keys(data[0])
   return {
     header,

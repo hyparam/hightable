@@ -1,15 +1,18 @@
-import { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { MouseEvent, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DataFrame } from './dataframe.js'
 import { useInputState } from './hooks.js'
 import { PartialRow } from './row.js'
 import { Selection, SortIndex, areAllSelected, computeNewSelection, isSelected, toggleAll } from './selection.js'
 import TableHeader, { OrderBy, cellStyle } from './TableHeader.js'
-export { DataFrame, arrayDataFrame, sortableDataFrame } from './dataframe.js'
-export { ResolvablePromise, resolvablePromise, wrapPromise } from './promise.js'
-export { AsyncRow, Cells, PartialRow, ResolvableRow, Row, asyncRows, awaitRow, awaitRows, resolvableRow } from './row.js'
+export { arrayDataFrame, sortableDataFrame } from './dataframe.js'
+export type { DataFrame } from './dataframe.js'
+export { resolvablePromise, wrapPromise } from './promise.js'
+export type { ResolvablePromise } from './promise.js'
+export { asyncRows, awaitRow, awaitRows, resolvableRow } from './row.js'
+export type { AsyncRow, Cells, PartialRow, ResolvableRow, Row } from './row.js'
 export { rowCache } from './rowCache.js'
-export { Selection } from './selection.js'
-export { OrderBy } from './TableHeader.js'
+export type { Selection } from './selection.js'
+export type { OrderBy } from './TableHeader.js'
 export { HighTable }
 
 /**
@@ -30,7 +33,7 @@ const rowHeight = 33 // row height px
  * @param col column index
  * @param row row index in the data frame
  */
-type MouseEventCellHandler = (event: React.MouseEvent, col: number, row: number) => void
+type MouseEventCellHandler = (event: MouseEvent, col: number, row: number) => void
 
 export interface TableProps {
   data: DataFrame
@@ -45,7 +48,7 @@ export interface TableProps {
   onOrderByChange?: (orderBy: OrderBy) => void // callback to call when a user interaction changes the order. The interactions are disabled if undefined.
   selection?: Selection // selection and anchor rows, expressed as data indexes (not as indexes in the table). If undefined, the selection is hidden and the interactions are disabled.
   onSelectionChange?: (selection: Selection) => void // callback to call when a user interaction changes the selection. The selection is expressed as data indexes (not as indexes in the table). The interactions are disabled if undefined.
-  stringify?: (value: any) => string | undefined
+  stringify?: (value: unknown) => string | undefined
 }
 
 /**
@@ -91,7 +94,7 @@ export default function HighTable({
   const [slice, setSlice] = useState<Slice | undefined>(undefined)
   const [rowsRange, setRowsRange] = useState({ start: 0, end: 0 })
   const [hasCompleteRow, setHasCompleteRow] = useState(false)
-  const [columnWidths, setColumnWidths] = useState<Array<number | undefined>>([])
+  const [columnWidths, setColumnWidths] = useState([] as (number | undefined)[])
   const [sortIndexes, setSortIndexes] = useState<Map<string, SortIndex>>(() => new Map())
 
   const setColumnWidth = useCallback((columnIndex: number, columnWidth: number | undefined) => {
@@ -132,18 +135,19 @@ export default function HighTable({
   const showSelectionControls = showSelection && enableSelectionInteractions
   const showCornerSelection = showSelectionControls || showSelection && areAllSelected({ ranges: selection.ranges, length: data.numRows })
   const getOnSelectAllRows = useCallback(() => {
-    if (!selection || !onSelectionChange) return
+    if (!selection) return
     const { ranges } = selection
-    return () => onSelectionChange({
+    return () => { onSelectionChange({
       ranges: toggleAll({ ranges, length: data.numRows }),
       anchor: undefined,
-    })
+    }) }
   }, [onSelectionChange, data.numRows, selection])
   const pendingSelectionRequest = useRef(0)
   const getOnSelectRowClick = useCallback(({ tableIndex, dataIndex }: {tableIndex: number, dataIndex?: number}) => {
     // computeNewSelection is responsible to resolve the dataIndex if undefined but needed
-    if (!selection || !onSelectionChange) return
-    return async (event: React.MouseEvent) => {
+    if (!selection) return
+    async function onSelectRowClick(event: MouseEvent) {
+      if (!selection) return
       const useAnchor = event.shiftKey && selection.anchor !== undefined
       const requestId = ++pendingSelectionRequest.current
       // provide a cached column index, if available and needed
@@ -172,6 +176,9 @@ export default function HighTable({
         onSelectionChange(newSelection)
       }
     }
+    return (event: MouseEvent): void => {
+      void onSelectRowClick(event)
+    }
   }, [onSelectionChange, selection, data, orderBy, sortIndexes])
   const allRowsSelected = useMemo(() => {
     if (!selection) return false
@@ -193,8 +200,6 @@ export default function HighTable({
   const tableRef = useRef<HTMLTableElement>(null)
   const pendingRequest = useRef(0)
 
-  if (!data) throw new Error('HighTable: data is required')
-
   // invalidate when data changes so that columns will auto-resize
   if (slice && data !== slice.data) {
     // delete the slice
@@ -205,7 +210,7 @@ export default function HighTable({
     setSortIndexes(new Map())
     // if uncontrolled, reset the selection (if controlled, it's the responsibility of the parent to do it)
     if (!isSelectionControlled) {
-      onSelectionChange?.({ ranges: [], anchor: undefined })
+      onSelectionChange({ ranges: [], anchor: undefined })
     }
   }
 
@@ -216,8 +221,11 @@ export default function HighTable({
      */
 
     function handleScroll() {
-      const clientHeight = scrollRef.current?.clientHeight || 100 // view window height
-      const scrollTop = scrollRef.current?.scrollTop || 0 // scroll position
+      // view window height (0 is not allowed - the syntax is verbose, but makes it clear)
+      const currentClientHeight = scrollRef.current?.clientHeight
+      const clientHeight = currentClientHeight === undefined || currentClientHeight === 0 ? 100 : currentClientHeight
+      // scroll position
+      const scrollTop = scrollRef.current?.scrollTop ?? 0
 
       // determine rows to fetch based on current scroll position (indexes refer to the virtual table domain)
       const startView = Math.floor(data.numRows * scrollTop / scrollHeight)
@@ -225,9 +233,9 @@ export default function HighTable({
       const start = Math.max(0, startView - overscan)
       const end = Math.min(data.numRows, endView + overscan)
 
-      if (isNaN(start)) throw new Error('invalid start row ' + start)
-      if (isNaN(end)) throw new Error('invalid end row ' + end)
-      if (end - start > 1000) throw new Error('attempted to render too many rows ' + (end - start) + ' table must be contained in a scrollable div')
+      if (isNaN(start)) throw new Error(`invalid start row ${start}`)
+      if (isNaN(end)) throw new Error(`invalid end row ${end}`)
+      if (end - start > 1000) throw new Error(`attempted to render too many rows ${end - start} table must be contained in a scrollable div`)
 
       setRowsRange({ start, end })
     }
@@ -311,11 +319,11 @@ export default function HighTable({
         // Subscribe to data updates
         for (const asyncRow of rowsChunk) {
           for (const promise of [asyncRow.index, ...Object.values(asyncRow.cells)] ) {
-            promise.then(() => {
+            void promise.then(() => {
               if (pendingRequest.current === requestId) {
                 updateRows()
               }
-            }).catch(() => {})
+            })
           }
         }
 
@@ -326,19 +334,18 @@ export default function HighTable({
       }
     }
     // update
-    fetchRows()
+    void fetchRows()
   }, [data, onError, orderBy?.column, slice, rowsRange, hasCompleteRow])
 
-
   const memoizedStyles = useMemo(() => columnWidths.map(cellStyle), [columnWidths])
-  const onDoubleClick = useCallback((e: React.MouseEvent, col: number, row?: number) => {
+  const onDoubleClick = useCallback((e: MouseEvent, col: number, row?: number) => {
     if (row === undefined) {
       console.warn('Cell onDoubleClick is cancelled because row index is undefined')
       return
     }
     onDoubleClickCell?.(e, col, row)
   }, [onDoubleClickCell])
-  const onMouseDown = useCallback((e: React.MouseEvent, col: number, row?: number) => {
+  const onMouseDown = useCallback((e: MouseEvent, col: number, row?: number) => {
     if (row === undefined) {
       console.warn('Cell onMouseDown is cancelled because row index is undefined')
       return
@@ -353,7 +360,7 @@ export default function HighTable({
    * @param col column index
    * @param row row index. If undefined, onDoubleClickCell and onMouseDownCell will not be called.
    */
-  const Cell = useCallback((value: any, col: number, row?: number): ReactNode => {
+  const Cell = useCallback((value: unknown, col: number, row?: number): ReactNode => {
     // render as truncated text
     let str = stringify(value)
     let title: string | undefined
@@ -365,8 +372,8 @@ export default function HighTable({
       role="cell"
       className={str === undefined ? 'pending' : undefined}
       key={col}
-      onDoubleClick={e => onDoubleClick(e, col, row)}
-      onMouseDown={e => onMouseDown(e, col, row)}
+      onDoubleClick={e => { onDoubleClick(e, col, row) }}
+      onMouseDown={e => { onMouseDown(e, col, row) }}
       style={memoizedStyles[col]}
       title={title}>
       {str}
@@ -430,7 +437,7 @@ export default function HighTable({
             })}
             {slice?.rows.map((row, rowIndex) => {
               const tableIndex = slice.offset + rowIndex
-              const dataIndex = row?.index
+              const dataIndex = row.index
               const selected = isRowSelected(dataIndex) ?? false
               const ariaRowIndex = tableIndex + 2 // 1-based + the header row
               /**
@@ -447,7 +454,7 @@ export default function HighTable({
                   { showSelection && <input type='checkbox' checked={selected} readOnly /> }
                 </th>
                 {data.header.map((col, colIndex) =>
-                  Cell(row?.cells[col], colIndex, dataIndex)
+                  Cell(row.cells[col], colIndex, dataIndex)
                 )}
               </tr>
             })}
@@ -470,11 +477,10 @@ export default function HighTable({
   </div>
 }
 
-
 /**
  * Robust stringification of any value, including json and bigints.
  */
-export function stringify(value: any): string | undefined {
+export function stringify(value: unknown): string | undefined {
   if (typeof value === 'string') return value
   if (typeof value === 'number') return value.toLocaleString()
   if (typeof value === 'bigint') return value.toLocaleString()
@@ -484,7 +490,8 @@ export function stringify(value: any): string | undefined {
   if (typeof value === 'object') {
     return `{${Object.entries(value).map(([k, v]) => `${k}: ${stringify(v)}`).join(', ')}}`
   }
-  return value.toString()
+  // fallback
+  return JSON.stringify(value)
 }
 const stringifyDefault = stringify
 
@@ -519,8 +526,6 @@ export function throttle(fn: () => void, wait: number): () => void {
     }
   }
 }
-
-
 
 function rowLabel(rowIndex?: number): string {
   if (rowIndex === undefined) return ''
