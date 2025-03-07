@@ -31,7 +31,6 @@
   "files": [
     "dist"
   ],
-  "types": "./dist/types/HighTable.d.ts",
   "scripts": {
     "build:bundle": "vite build",
     "build:css": "cp src/HighTable.css dist/HighTable.css",
