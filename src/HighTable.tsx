@@ -172,7 +172,7 @@ export default function HighTable({
         },
       })
       if (requestId === pendingSelectionRequest.current) {
-      // only update the selection if the request is still the last one
+        // only update the selection if the request is still the last one
         onSelectionChange(newSelection)
       }
     }
