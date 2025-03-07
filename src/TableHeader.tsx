@@ -44,14 +44,6 @@ export default function TableHeader({
   const [resizing, setResizing] = React.useState<ResizingState | undefined>()
   const headerRefs = React.useRef(header.map(() => React.createRef<HTMLTableCellElement>()))
 
-  function measureWidth(ref: React.RefObject<HTMLTableCellElement>): number | undefined {
-    if (!ref.current) return undefined
-    // get computed cell padding
-    const style = window.getComputedStyle(ref.current)
-    const horizontalPadding = parseInt(style.paddingLeft) + parseInt(style.paddingRight)
-    return ref.current.offsetWidth - horizontalPadding
-  }
-
   // Load persisted column widths
   React.useEffect(() => {
     const userWidths: (number|undefined)[] = new Array<number|undefined>(header.length).fill(undefined)
@@ -76,16 +68,16 @@ export default function TableHeader({
   }, [cacheKey, dataReady, header, setColumnWidths]) // re-measure if header changes
 
   // Modify column width
-  function startResizing(columnIndex: number, e: React.MouseEvent<HTMLSpanElement>) {
+  const startResizing = React.useCallback((columnIndex: number, e: React.MouseEvent<HTMLSpanElement>) => {
     e.stopPropagation()
     setResizing({
       columnIndex,
       clientX: e.clientX - (columnWidths[columnIndex] ?? 0),
     })
-  }
+  }, [columnWidths])
 
   // Function to handle double click for auto-resizing
-  function autoResize(columnIndex: number) {
+  const autoResize = React.useCallback((columnIndex: number) => {
     const columnName = header[columnIndex]
     if (columnName === undefined) {
       return
@@ -110,7 +102,7 @@ export default function TableHeader({
       })
     }
     setColumnWidth(columnIndex, newWidth)
-  }
+  }, [cacheKey, header, setColumnWidth])
 
   // Attach mouse move and mouse up events for column resizing
   React.useEffect(() => {
@@ -206,4 +198,12 @@ export function saveColumnWidth(key: string, columnWidth: ColumnWidth) {
     columnWidth,
   ]
   localStorage.setItem(`column-widths:${key}`, JSON.stringify(widths))
+}
+
+function measureWidth(ref: React.RefObject<HTMLTableCellElement>): number | undefined {
+  if (!ref.current) return undefined
+  // get computed cell padding
+  const style = window.getComputedStyle(ref.current)
+  const horizontalPadding = parseInt(style.paddingLeft) + parseInt(style.paddingRight)
+  return ref.current.offsetWidth - horizontalPadding
 }
