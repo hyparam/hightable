@@ -21,13 +21,11 @@
     "url": "git+https://github.com/hyparam/hightable.git"
   },
   "type": "module",
-  "main": "./dist/HighTable.umd.cjs",
   "module": "./dist/HighTable.js",
   "exports": {
     ".": {
       "types": "./dist/types/HighTable.d.ts",
-      "import": "./dist/HighTable.js",
-      "require": "./dist/HighTable.umd.cjs"
+      "import": "./dist/HighTable.js"
     },
     "./src/HighTable.css": "./dist/HighTable.css"
   },
