@@ -1,6 +1,8 @@
 # CHANGELOG
 
-## [Unreleased](https://github.com/hyparam/hightable/compare/v0.12.0...HEAD)
+## [Unreleased](https://github.com/hyparam/hightable/compare/v0.12.1...HEAD)
+
+## [0.12.1](https://github.com/hyparam/hightable/compare/v0.12.0...v0.12.1) - 2025-03-07
 
 ### Refactored
 
