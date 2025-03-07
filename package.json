@@ -28,14 +28,15 @@
       "types": "./dist/types/HighTable.d.ts",
       "import": "./dist/HighTable.js",
       "require": "./dist/HighTable.umd.cjs"
-    }
+    },
+    "./src/HighTable.css": "./dist/HighTable.css"
   },
   "files": [
     "dist"
   ],
   "types": "./dist/types/HighTable.d.ts",
   "scripts": {
-    "build": "vite build && tsc -b",
+    "build": "vite build && tsc -b && cp src/HighTable.css dist/HighTable.css",
     "coverage": "vitest run --coverage --coverage.include=src",
     "lint": "eslint",
     "prepublishOnly": "npm run build",
