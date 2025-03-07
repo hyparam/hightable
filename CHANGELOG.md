@@ -2,6 +2,10 @@
 
 ## [Unreleased](https://github.com/hyparam/hightable/compare/v0.12.0...HEAD)
 
+### Refactored
+
+- upgraded dependencies.
+
 ## [0.12.0](https://github.com/hyparam/hightable/compare/v0.11.0...v0.12.0) - 2025-03-07
 
 ### Refactored
