@@ -221,8 +221,11 @@ export default function HighTable({
      */
 
     function handleScroll() {
-      const clientHeight = scrollRef.current?.clientHeight ?? 100 // view window height
-      const scrollTop = scrollRef.current?.scrollTop ?? 0 // scroll position
+      // view window height (0 is not allowed - the syntax is verbose, but makes it clear)
+      const currentClientHeight = scrollRef.current?.clientHeight
+      const clientHeight = currentClientHeight === undefined || currentClientHeight === 0 ? 100 : currentClientHeight
+      // scroll position
+      const scrollTop = scrollRef.current?.scrollTop ?? 0
 
       // determine rows to fetch based on current scroll position (indexes refer to the virtual table domain)
       const startView = Math.floor(data.numRows * scrollTop / scrollHeight)
