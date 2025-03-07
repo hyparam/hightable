@@ -2,6 +2,10 @@
 
 ## [Unreleased](https://github.com/hyparam/hightable/compare/v0.11.0...HEAD)
 
+### Refactored
+
+- Build the library with Vite instead of Rollup ([#63](https://github.com/hyparam/hightable/pull/63)).
+
 ## [0.11.0](https://github.com/hyparam/hightable/compare/v0.10.0...v0.11.0) - 2025-02-27
 
 ### Added
