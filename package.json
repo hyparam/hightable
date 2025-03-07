@@ -21,7 +21,6 @@
     "url": "git+https://github.com/hyparam/hightable.git"
   },
   "type": "module",
-  "module": "./dist/HighTable.js",
   "exports": {
     ".": {
       "types": "./dist/types/HighTable.d.ts",
