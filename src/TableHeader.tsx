@@ -86,16 +86,26 @@ export default function TableHeader({
 
   // Function to handle double click for auto-resizing
   function autoResize(columnIndex: number) {
+    const columnName = header[columnIndex]
+    if (columnName === undefined) {
+      return
+    }
     // Remove the width, let it size naturally, and then measure it
     flushSync(() => {
       setColumnWidth(columnIndex, undefined)
     })
-    const newWidth = measureWidth(headerRefs.current[columnIndex])
+    const headerRef = headerRefs.current[columnIndex]
+    if (!headerRef) {
+      // TODO: should we reset the previous width?
+      // Note that it should not happen, since all the column headers should exist
+      return
+    }
+    const newWidth = measureWidth(headerRef)
 
     if (cacheKey && newWidth) {
       saveColumnWidth(cacheKey, {
         columnIndex,
-        columnName: header[columnIndex],
+        columnName,
         width: newWidth,
       })
     }
@@ -108,13 +118,10 @@ export default function TableHeader({
       // save width to local storage
       if (!resizing) return
       const { columnIndex } = resizing
-      if (cacheKey && columnWidths[columnIndex]) {
-        const width = columnWidths[columnIndex]
-        saveColumnWidth(cacheKey, {
-          columnIndex,
-          columnName: header[columnIndex],
-          width,
-        })
+      const columnName = header[columnIndex]
+      const width = columnWidths[columnIndex]
+      if (cacheKey && columnName !== undefined && width !== undefined) {
+        saveColumnWidth(cacheKey, { columnIndex, columnName, width })
       }
       setResizing(undefined)
     }
