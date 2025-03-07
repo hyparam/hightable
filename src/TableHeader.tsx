@@ -1,4 +1,4 @@
-import React from 'react'
+import { MouseEvent, RefObject, createRef, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 
 export interface OrderBy {
@@ -41,11 +41,11 @@ export interface ColumnWidth {
 export default function TableHeader({
   header, cacheKey, columnWidths, orderBy, onOrderByChange, setColumnWidth, setColumnWidths, dataReady,
 }: TableProps) {
-  const [resizing, setResizing] = React.useState<ResizingState | undefined>()
-  const headerRefs = React.useRef(header.map(() => React.createRef<HTMLTableCellElement>()))
+  const [resizing, setResizing] = useState<ResizingState | undefined>()
+  const headerRefs = useRef(header.map(() => createRef<HTMLTableCellElement>()))
 
   // Load persisted column widths
-  React.useEffect(() => {
+  useEffect(() => {
     const userWidths: (number|undefined)[] = new Array<number|undefined>(header.length).fill(undefined)
     if (cacheKey) {
       // load user sized column widths
@@ -60,7 +60,7 @@ export default function TableHeader({
   }, [cacheKey, header, setColumnWidths])
 
   // Measure default column widths when data is ready
-  React.useEffect(() => {
+  useEffect(() => {
     if (dataReady) {
       const widths = headerRefs.current.map(measureWidth)
       setColumnWidths(widths)
@@ -68,7 +68,7 @@ export default function TableHeader({
   }, [cacheKey, dataReady, header, setColumnWidths]) // re-measure if header changes
 
   // Modify column width
-  const startResizing = React.useCallback((columnIndex: number, e: React.MouseEvent<HTMLSpanElement>) => {
+  const startResizing = useCallback((columnIndex: number, e: MouseEvent) => {
     e.stopPropagation()
     setResizing({
       columnIndex,
@@ -77,7 +77,7 @@ export default function TableHeader({
   }, [columnWidths])
 
   // Function to handle double click for auto-resizing
-  const autoResize = React.useCallback((columnIndex: number) => {
+  const autoResize = useCallback((columnIndex: number) => {
     const columnName = header[columnIndex]
     if (columnName === undefined) {
       return
@@ -105,7 +105,7 @@ export default function TableHeader({
   }, [cacheKey, header, setColumnWidth])
 
   // Attach mouse move and mouse up events for column resizing
-  React.useEffect(() => {
+  useEffect(() => {
     function stopResizing() {
       // save width to local storage
       if (!resizing) return
@@ -119,7 +119,7 @@ export default function TableHeader({
     }
 
     // Handle mouse move event during resizing
-    function handleMouseMove({ clientX }: MouseEvent) {
+    function handleMouseMove({ clientX }: globalThis.MouseEvent) {
       if (resizing) {
         setColumnWidth(resizing.columnIndex, Math.max(1, clientX - resizing.clientX))
       }
@@ -137,9 +137,9 @@ export default function TableHeader({
   }, [cacheKey, header, resizing, setColumnWidths, columnWidths, setColumnWidth])
 
   // Function to handle click for changing orderBy
-  const getOnOrderByClick = React.useCallback((columnHeader: string) => {
+  const getOnOrderByClick = useCallback((columnHeader: string) => {
     if (!onOrderByChange) return undefined
-    return (e: React.MouseEvent) => {
+    return (e: MouseEvent) => {
       // Ignore clicks on resize handle
       if ((e.target as HTMLElement).tagName === 'SPAN') return
       if (orderBy?.column === columnHeader) {
@@ -150,7 +150,7 @@ export default function TableHeader({
     }}, [orderBy, onOrderByChange]
   )
 
-  const memoizedStyles = React.useMemo(() => columnWidths.map(cellStyle), [columnWidths])
+  const memoizedStyles = useMemo(() => columnWidths.map(cellStyle), [columnWidths])
 
   return <thead role="rowgroup">
     <tr aria-rowindex={1} role="row">
@@ -200,7 +200,7 @@ export function saveColumnWidth(key: string, columnWidth: ColumnWidth) {
   localStorage.setItem(`column-widths:${key}`, JSON.stringify(widths))
 }
 
-function measureWidth(ref: React.RefObject<HTMLTableCellElement>): number | undefined {
+function measureWidth(ref: RefObject<HTMLTableCellElement>): number | undefined {
   if (!ref.current) return undefined
   // get computed cell padding
   const style = window.getComputedStyle(ref.current)

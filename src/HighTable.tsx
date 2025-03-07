@@ -1,4 +1,4 @@
-import React from 'react'
+import { MouseEvent, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DataFrame } from './dataframe.js'
 import { useInputState } from './hooks.js'
 import { PartialRow } from './row.js'
@@ -33,7 +33,7 @@ const rowHeight = 33 // row height px
  * @param col column index
  * @param row row index in the data frame
  */
-type MouseEventCellHandler = (event: React.MouseEvent, col: number, row: number) => void
+type MouseEventCellHandler = (event: MouseEvent, col: number, row: number) => void
 
 export interface TableProps {
   data: DataFrame
@@ -91,13 +91,13 @@ export default function HighTable({
    * - data.rows(tableIndex, tableIndex + 1, orderBy)
    */
 
-  const [slice, setSlice] = React.useState<Slice | undefined>(undefined)
-  const [rowsRange, setRowsRange] = React.useState({ start: 0, end: 0 })
-  const [hasCompleteRow, setHasCompleteRow] = React.useState(false)
-  const [columnWidths, setColumnWidths] = React.useState([] as (number | undefined)[])
-  const [sortIndexes, setSortIndexes] = React.useState<Map<string, SortIndex>>(() => new Map())
+  const [slice, setSlice] = useState<Slice | undefined>(undefined)
+  const [rowsRange, setRowsRange] = useState({ start: 0, end: 0 })
+  const [hasCompleteRow, setHasCompleteRow] = useState(false)
+  const [columnWidths, setColumnWidths] = useState([] as (number | undefined)[])
+  const [sortIndexes, setSortIndexes] = useState<Map<string, SortIndex>>(() => new Map())
 
-  const setColumnWidth = React.useCallback((columnIndex: number, columnWidth: number | undefined) => {
+  const setColumnWidth = useCallback((columnIndex: number, columnWidth: number | undefined) => {
     setColumnWidths(columnWidths => {
       const newColumnWidths = [...columnWidths]
       newColumnWidths[columnIndex] = columnWidth
@@ -134,7 +134,7 @@ export default function HighTable({
   const showSelection = selection !== undefined
   const showSelectionControls = showSelection && enableSelectionInteractions
   const showCornerSelection = showSelectionControls || showSelection && areAllSelected({ ranges: selection.ranges, length: data.numRows })
-  const getOnSelectAllRows = React.useCallback(() => {
+  const getOnSelectAllRows = useCallback(() => {
     if (!selection) return
     const { ranges } = selection
     return () => { onSelectionChange({
@@ -142,11 +142,11 @@ export default function HighTable({
       anchor: undefined,
     }) }
   }, [onSelectionChange, data.numRows, selection])
-  const pendingSelectionRequest = React.useRef(0)
-  const getOnSelectRowClick = React.useCallback(({ tableIndex, dataIndex }: {tableIndex: number, dataIndex?: number}) => {
+  const pendingSelectionRequest = useRef(0)
+  const getOnSelectRowClick = useCallback(({ tableIndex, dataIndex }: {tableIndex: number, dataIndex?: number}) => {
     // computeNewSelection is responsible to resolve the dataIndex if undefined but needed
     if (!selection) return
-    async function onSelectRowClick(event: React.MouseEvent): Promise<void> {
+    async function onSelectRowClick(event: MouseEvent) {
       if (!selection) return
       const useAnchor = event.shiftKey && selection.anchor !== undefined
       const requestId = ++pendingSelectionRequest.current
@@ -176,16 +176,16 @@ export default function HighTable({
         onSelectionChange(newSelection)
       }
     }
-    return (event: React.MouseEvent): void => {
+    return (event: MouseEvent): void => {
       void onSelectRowClick(event)
     }
   }, [onSelectionChange, selection, data, orderBy, sortIndexes])
-  const allRowsSelected = React.useMemo(() => {
+  const allRowsSelected = useMemo(() => {
     if (!selection) return false
     const { ranges } = selection
     return areAllSelected({ ranges, length: data.numRows })
   }, [selection, data.numRows])
-  const isRowSelected = React.useCallback((dataIndex: number | undefined) => {
+  const isRowSelected = useCallback((dataIndex: number | undefined) => {
     if (!selection) return undefined
     if (dataIndex === undefined) return undefined
     const { ranges } = selection
@@ -196,9 +196,9 @@ export default function HighTable({
   const scrollHeight = (data.numRows + 1) * rowHeight
   const offsetTop = Math.max(0, rowsRange.start - padding) * rowHeight
 
-  const scrollRef = React.useRef<HTMLDivElement>(null)
-  const tableRef = React.useRef<HTMLTableElement>(null)
-  const pendingRequest = React.useRef(0)
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const tableRef = useRef<HTMLTableElement>(null)
+  const pendingRequest = useRef(0)
 
   // invalidate when data changes so that columns will auto-resize
   if (slice && data !== slice.data) {
@@ -215,7 +215,7 @@ export default function HighTable({
   }
 
   // handle scrolling and window resizing
-  React.useEffect(() => {
+  useEffect(() => {
     /**
      * Compute the dimensions based on the current scroll position.
      */
@@ -254,7 +254,7 @@ export default function HighTable({
   }, [data.numRows, overscan, padding, scrollHeight])
 
   // fetch rows
-  React.useEffect(() => {
+  useEffect(() => {
     /**
      * Fetch the rows in the range [start, end) and update the state.
     */
@@ -337,15 +337,15 @@ export default function HighTable({
     void fetchRows()
   }, [data, onError, orderBy?.column, slice, rowsRange, hasCompleteRow])
 
-  const memoizedStyles = React.useMemo(() => columnWidths.map(cellStyle), [columnWidths])
-  const onDoubleClick = React.useCallback((e: React.MouseEvent, col: number, row?: number) => {
+  const memoizedStyles = useMemo(() => columnWidths.map(cellStyle), [columnWidths])
+  const onDoubleClick = useCallback((e: MouseEvent, col: number, row?: number) => {
     if (row === undefined) {
       console.warn('Cell onDoubleClick is cancelled because row index is undefined')
       return
     }
     onDoubleClickCell?.(e, col, row)
   }, [onDoubleClickCell])
-  const onMouseDown = React.useCallback((e: React.MouseEvent, col: number, row?: number) => {
+  const onMouseDown = useCallback((e: MouseEvent, col: number, row?: number) => {
     if (row === undefined) {
       console.warn('Cell onMouseDown is cancelled because row index is undefined')
       return
@@ -360,7 +360,7 @@ export default function HighTable({
    * @param col column index
    * @param row row index. If undefined, onDoubleClickCell and onMouseDownCell will not be called.
    */
-  const Cell = React.useCallback((value: unknown, col: number, row?: number): React.ReactNode => {
+  const Cell = useCallback((value: unknown, col: number, row?: number): ReactNode => {
     // render as truncated text
     let str = stringify(value)
     let title: string | undefined
@@ -381,7 +381,7 @@ export default function HighTable({
   }, [memoizedStyles, onDoubleClick, onMouseDown, stringify])
 
   // focus table on mount so arrow keys work
-  React.useEffect(() => {
+  useEffect(() => {
     if (focus) {
       tableRef.current?.focus()
     }
@@ -397,7 +397,7 @@ export default function HighTable({
 
   // fixed corner width based on number of rows
   const cornerWidth = Math.ceil(Math.log10(data.numRows + 1)) * 4 + 22
-  const cornerStyle = React.useMemo(() => cellStyle(cornerWidth), [cornerWidth])
+  const cornerStyle = useMemo(() => cellStyle(cornerWidth), [cornerWidth])
 
   // don't render table if header is empty
   if (!data.header.length) return
