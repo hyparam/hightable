@@ -1,18 +1,14 @@
 import { MouseEvent, RefObject, createRef, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
-
-export interface OrderBy {
-  column?: string // column name to sort by. If undefined, the table is unsorted.
-  direction?: 'ascending' // sort direction. Default: 'ascending'
-}
+import { OrderBy, normalizeDirection, toggleColumn } from './sort'
 
 interface TableProps {
   header: string[]
   cacheKey?: string // used to persist column widths
   columnWidths: (number | undefined)[]
-  orderBy?: OrderBy // order by column. If undefined, the table is unordered, the sort elements are hidden and the interactions are disabled.
   setColumnWidth: (columnIndex: number, columnWidth: number | undefined) => void
   setColumnWidths: (columnWidths: (number | undefined)[]) => void
+  orderBy?: OrderBy // array of column order by clauses. If undefined, the table is unordered, the sort elements are hidden and the interactions are disabled.
   onOrderByChange?: (orderBy: OrderBy) => void // callback to call when a user interaction changes the order. The interactions are disabled if undefined.
   dataReady: boolean
 }
@@ -138,40 +134,47 @@ export default function TableHeader({
 
   // Function to handle click for changing orderBy
   const getOnOrderByClick = useCallback((columnHeader: string) => {
-    if (!onOrderByChange) return undefined
+    if (!onOrderByChange || !orderBy) return undefined
     return (e: MouseEvent) => {
       // Ignore clicks on resize handle
       if ((e.target as HTMLElement).tagName === 'SPAN') return
-      if (orderBy?.column === columnHeader) {
-        onOrderByChange({})
-      } else {
-        onOrderByChange({ column: columnHeader })
-      }
+      const nextOrderBy = toggleColumn(columnHeader, orderBy)
+      onOrderByChange(nextOrderBy)
     }}, [orderBy, onOrderByChange]
   )
+
+  const directionByColumn = useMemo(() => {
+    const directionByColumn = new Map<string, 'ascending' | 'descending'>()
+    orderBy?.forEach(({ column, direction }) => {
+      directionByColumn.set(column, normalizeDirection(direction))
+    })
+    return directionByColumn
+  }, [orderBy])
 
   const memoizedStyles = useMemo(() => columnWidths.map(cellStyle), [columnWidths])
 
   return <thead role="rowgroup">
     <tr aria-rowindex={1} role="row">
       <td><span /></td>
-      {header.map((columnHeader, columnIndex) =>
-        <th
-          scope="col"
-          role="columnheader"
-          aria-sort={orderBy?.column === columnHeader ? 'ascending' : undefined}
-          className={orderBy?.column === columnHeader ? 'orderby' : undefined}
-          key={columnIndex}
-          onClick={getOnOrderByClick(columnHeader)}
-          ref={headerRefs.current[columnIndex]}
-          style={memoizedStyles[columnIndex]}
-          title={columnHeader}>
-          {columnHeader}
-          <span
-            onDoubleClick={() => { autoResize(columnIndex) }}
-            onMouseDown={e => { startResizing(columnIndex, e) }} />
-        </th>
-      )}
+      {header.map((columnHeader, columnIndex) => {
+        const direction = directionByColumn.get(columnHeader)
+        return (
+          <th
+            scope="col"
+            role="columnheader"
+            aria-sort={direction ?? 'none'}
+            className={direction ? `orderby ${direction}` : undefined}
+            key={columnIndex}
+            onClick={getOnOrderByClick(columnHeader)}
+            ref={headerRefs.current[columnIndex]}
+            style={memoizedStyles[columnIndex]}
+            title={columnHeader}>
+            {columnHeader}
+            <span
+              onDoubleClick={() => { autoResize(columnIndex) }}
+              onMouseDown={e => { startResizing(columnIndex, e) }} />
+          </th>
+        )})}
     </tr>
   </thead>
 }
