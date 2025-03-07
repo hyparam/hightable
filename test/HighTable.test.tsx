@@ -2,7 +2,7 @@ import { act, fireEvent, waitFor, within } from '@testing-library/react'
 import React from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { DataFrame, sortableDataFrame } from '../src/dataframe.js'
-import HighTable from '../src/HighTable.tsx'
+import HighTable from '../src/HighTable.js'
 import { wrapPromise } from '../src/promise.js'
 import { render } from './userEvent.js'
 
