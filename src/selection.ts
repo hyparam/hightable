@@ -1,5 +1,5 @@
 import { DataFrame, getColumnIndex } from './dataframe.js'
-import { OrderBy } from './TableHeader.js'
+import { OrderBy } from './sort.js'
 
 /**
  * A selection is modelled as an array of ordered and non-overlapping ranges.
@@ -440,8 +440,8 @@ export function toDataSelection({ selection, column, data, sortIndex }: { select
  * @param {boolean | undefined} params.useAnchor - Whether to use the anchor for shift+click selection.
  * @param {OrderBy | undefined} params.orderBy - The order if the rows are sorted.
  * @param {DataFrame | undefined} params.data - The data frame.
- * @param {SortIndex | undefined} params.sortIndex - The sort index of the data frame for the column.
- * @param {function | undefined} params.setSortIndex - A function to set the sort index of the data frame.
+ * @param {Map<string,SortIndex> | undefined} params.sortIndexes - The map of sort indexes for each column of the data frame for the column (they can be missing, if so thay will be populated in this function).
+ * @param {function | undefined} params.setSortIndexes - A function to update the map of sort indexes.
  */
 export async function computeNewSelection({
   tableIndex,
@@ -450,10 +450,10 @@ export async function computeNewSelection({
   selection,
   orderBy,
   data,
-  sortIndex,
-  setSortIndex,
-}: { tableIndex: number, dataIndex?: number, selection: Selection, useAnchor?: boolean, orderBy?: OrderBy, data?: DataFrame, sortIndex?: SortIndex, setSortIndex?: (sortIndex: SortIndex) => void }): Promise<Selection> {
-  if (!orderBy?.column) {
+  sortIndexes: cachedSortIndexes,
+  setSortIndexes,
+}: { tableIndex: number, dataIndex?: number, selection: Selection, useAnchor?: boolean, orderBy?: OrderBy, data?: DataFrame, sortIndexes?: Map<string, SortIndex>, setSortIndexes?: (sortIndexes: Map<string, SortIndex>) => void }): Promise<Selection> {
+  if (!orderBy || orderBy.length === 0) {
     // unsorted data: the table and data indexes are the same
     const dataIndex = tableIndex
     return useAnchor ?
@@ -461,39 +461,40 @@ export async function computeNewSelection({
       { ranges: toggleIndex({ ranges: selection.ranges, index: dataIndex }), anchor: dataIndex }
   }
   // sorted data: we need to convert between table and data indexes
-  const { column } = orderBy
   if (!data) {
     throw new Error('Missing data frame. Cannot compute the new selection.')
-  }
-  if (!data.header.includes(column)) {
-    throw new Error('orderBy column is not in the data frame')
   }
   if (!data.sortable) {
     throw new Error('Data frame is not sortable')
   }
+  if (!(0 in orderBy)) {
+    throw new Error('orderBy should have at least one element')
+  }
+  // TODO(SL): support multiple columns and descending order
+  const { column } = orderBy[0]
+  if (!useAnchor && dataIndex !== undefined) {
+    // no anchor: toggle the row at the index.
+    // Use the data index directly.
+    return { ranges: toggleIndex({ ranges: selection.ranges, index: dataIndex }), anchor: dataIndex }
+  }
+
+  // Convert the table index to the data index, and work in the data domain.
+  const sortIndex = cachedSortIndexes?.get(column) ?? await getSortIndex({ data, column })
+  if (setSortIndexes && !cachedSortIndexes?.has(column)) {
+    setSortIndexes(new Map(cachedSortIndexes).set(column, sortIndex))
+  }
+
   if (!useAnchor) {
     // no anchor: toggle the row at the index.
-    if (dataIndex !== undefined) {
-      // Use the data index directly.
-      return { ranges: toggleIndex({ ranges: selection.ranges, index: dataIndex }), anchor: dataIndex }
-    } else {
-      // Convert the table index to the data index, and work in the data domain.
-      if (!sortIndex) {
-        sortIndex = await getSortIndex({ data, column })
-        setSortIndex?.(sortIndex)
-      }
-      const dataIndex = getDataIndex({ sortIndex, tableIndex }) // <- TODO(SL) getDataIndex({ tableIndex, data, orderBy }) and hide the sort index
-      return { ranges: toggleIndex({ ranges: selection.ranges, index: dataIndex }), anchor: dataIndex }
-    }
+    const dataIndex = getDataIndex({ sortIndex, tableIndex })
+    return { ranges: toggleIndex({ ranges: selection.ranges, index: dataIndex }), anchor: dataIndex }
   }
+
   // extend the selection from the anchor to the index. Convert the selection to table indexes, and work in the table domain
-  if (!sortIndex) {
-    sortIndex = await getSortIndex({ data, column })
-    setSortIndex?.(sortIndex)
-  }
   const tableSelection = toTableSelection({ selection, column, data, sortIndex })
   const { ranges, anchor } = tableSelection
   const newTableSelection = { ranges: extendFromAnchor({ ranges, anchor, index: tableIndex }), anchor }
   const newDataSelection = toDataSelection({ selection: newTableSelection, column, data, sortIndex })
   return newDataSelection
+
 }

@@ -54,7 +54,7 @@ describe('HighTable', () => {
     await waitFor(() => {
       expect(getByText('ID')).toBeDefined()
       expect(mockData.rows).toHaveBeenCalledOnce()
-      expect(mockData.rows).toHaveBeenCalledWith({ start: 0, end: 24 })
+      expect(mockData.rows).toHaveBeenCalledWith({ start: 0, end: 24, orderBy: [] })
     })
   })
 
@@ -63,7 +63,7 @@ describe('HighTable', () => {
     await waitFor(() => {
       expect(getByText('ID')).toBeDefined()
       expect(mockData.rows).toHaveBeenCalledOnce()
-      expect(mockData.rows).toHaveBeenCalledWith({ start:0, end:14, orderBy:undefined })
+      expect(mockData.rows).toHaveBeenCalledWith({ start:0, end:14, orderBy: [] })
     })
   })
 
@@ -80,7 +80,7 @@ describe('HighTable', () => {
     if (!scrollDiv) throw new Error('Scroll container not found')
     await waitFor(() => {
       expect(mockData.rows).toHaveBeenCalledTimes(1)
-      expect(mockData.rows).toHaveBeenCalledWith({ start:0, end: 24 })
+      expect(mockData.rows).toHaveBeenCalledWith({ start:0, end: 24, orderBy: [] })
     })
 
     act(() => {
@@ -90,7 +90,7 @@ describe('HighTable', () => {
     })
 
     await waitFor(() => {
-      expect(mockData.rows).toHaveBeenCalledWith({ start:0, end: 39 })
+      expect(mockData.rows).toHaveBeenCalledWith({ start:0, end: 39, orderBy: [] })
     })
   })
 

@@ -1,86 +1,58 @@
-type Direction = 'ascending' | 'descending'
-type DirectionAlias = 'asc' | 'desc' | undefined // alias for Direction. asc = ascending, desc = descending, undefined = ascending.
-
-export interface NormalizedColumnOrderBy {
+export interface ColumnOrderBy {
     column: string // column name to sort by.
-    direction: Direction // sort direction.
-}
-
-export interface ColumnOrderBy extends Omit<NormalizedColumnOrderBy, 'direction'> {
-  direction: Direction | DirectionAlias // sort direction.
 }
 
 export type OrderBy = ColumnOrderBy[]
-
-export function normalizeDirection(direction: Direction | DirectionAlias): Direction {
-  return direction === 'desc' || direction === 'descending' ? 'descending' : 'ascending'
-}
-
-export function areEqualColumnOrderBy(a: ColumnOrderBy, b: ColumnOrderBy): boolean {
-  return a.column === b.column && normalizeDirection(a.direction) === normalizeDirection(b.direction)
-}
 
 export function areEqualOrderBy(a: OrderBy, b: OrderBy): boolean {
   if (a.length !== b.length) return false
   return a.every((itemA, i) => {
     const itemB = b[i]
     if (!itemB) return false
-    return areEqualColumnOrderBy(itemA, itemB)
+    return itemA.column === itemB.column
+    // TODO(SL): compare direction when descending is supported
   })
 }
 
-export function hasDuplicateColumns(orderBy: OrderBy): boolean {
-  const seen = new Set<string>()
-  return orderBy.some(item => {
-    if (seen.has(item.column)) return true
-    seen.add(item.column)
-    return false
-  })
-}
-
-export function isValidOrderBy(orderBy: OrderBy): boolean {
-  return !hasDuplicateColumns(orderBy)
-}
-
-export function partitionOrderBy(orderBy: OrderBy, column: string): [OrderBy, ColumnOrderBy, OrderBy] | undefined {
-  if (!isValidOrderBy(orderBy)) {
-    throw new Error('invalid orderBy')
-  }
+export function partitionOrderBy(orderBy: OrderBy, column: string): {prefix: OrderBy, item?: ColumnOrderBy, suffix: OrderBy} {
   const prefix: OrderBy = []
   let item: ColumnOrderBy | undefined = undefined
   const suffix: OrderBy = []
   for (const current of orderBy) {
-    if (current.column === column) {
-      if (item) {
-        // should never happen
-        throw new Error(`duplicate column ${column}`)
-      }
-      item = current
-    } else if (item) {
+    if (item) {
       suffix.push(current)
+    } else if (current.column === column) {
+      item = current
     } else {
       prefix.push(current)
     }
   }
-  return item ? [prefix, item, suffix] : undefined
+  return { prefix, item, suffix }
 }
 
 export function toggleColumn(column: string, orderBy: OrderBy): OrderBy {
-  if (!isValidOrderBy(orderBy)) {
-    throw new Error('invalid orderBy')
-  }
-  const partition = partitionOrderBy(orderBy, column)
-  if (!partition) {
+  const { item } = partitionOrderBy(orderBy, column)
+  if (!item) {
+    // TODO(SL): when multiple columns are not supported yet, append the new column with ascending to the current orderBy
+    //   return [...orderBy, { column, direction: 'ascending' }]
+    // for now: remove the existing columns and only sort by the new column
     // none -> ascending
-    return [...orderBy, { column, direction: 'ascending' }]
+    return [{ column }]
   }
-  const [prefix, item, suffix] = partition
-  const direction = normalizeDirection(item.direction)
-  if (direction === 'ascending') {
-    // ascending -> descending
-    return [...prefix, { column, direction: 'descending' }, ...suffix]
-  } else {
-    // descending -> none
-    return [...prefix, ...suffix]
-  }
+  // else:
+  // ascending -> none
+  return []
+
+  // TODO(SL): when descending is supported, add:
+  //
+  // if (item.direction === 'ascending') {
+  //   // ascending -> descending
+  //   return [...prefix, { column, direction: 'descending' }, ...suffix]
+
+  // and
+  //
+  // } else {
+  //   // descending -> none
+  //   return [...prefix, ...suffix]
+  // }
 }

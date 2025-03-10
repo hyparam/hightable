@@ -1,6 +1,6 @@
 import { MouseEvent, RefObject, createRef, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
-import { OrderBy, normalizeDirection, toggleColumn } from './sort'
+import { OrderBy, toggleColumn } from './sort'
 
 interface TableProps {
   header: string[]
@@ -144,11 +144,8 @@ export default function TableHeader({
   )
 
   const directionByColumn = useMemo(() => {
-    const directionByColumn = new Map<string, 'ascending' | 'descending'>()
-    orderBy?.forEach(({ column, direction }) => {
-      directionByColumn.set(column, normalizeDirection(direction))
-    })
-    return directionByColumn
+    // TODO(SL): support descending order
+    return new Map((orderBy ?? []).map(({ column }) => [column, 'ascending'] as const))
   }, [orderBy])
 
   const memoizedStyles = useMemo(() => columnWidths.map(cellStyle), [columnWidths])

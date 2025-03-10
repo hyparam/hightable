@@ -3,7 +3,8 @@ import { DataFrame } from './dataframe.js'
 import { useInputState } from './hooks.js'
 import { PartialRow } from './row.js'
 import { Selection, SortIndex, areAllSelected, computeNewSelection, isSelected, toggleAll } from './selection.js'
-import TableHeader, { OrderBy, cellStyle } from './TableHeader.js'
+import { OrderBy, areEqualOrderBy } from './sort.js'
+import TableHeader, { cellStyle } from './TableHeader.js'
 export { arrayDataFrame, sortableDataFrame } from './dataframe.js'
 export type { DataFrame } from './dataframe.js'
 export { resolvablePromise, wrapPromise } from './promise.js'
@@ -12,7 +13,7 @@ export { asyncRows, awaitRow, awaitRows, resolvableRow } from './row.js'
 export type { AsyncRow, Cells, PartialRow, ResolvableRow, Row } from './row.js'
 export { rowCache } from './rowCache.js'
 export type { Selection } from './selection.js'
-export type { OrderBy } from './TableHeader.js'
+export type { OrderBy } from './sort.js'
 export { HighTable }
 
 /**
@@ -44,7 +45,7 @@ export interface TableProps {
   onDoubleClickCell?: MouseEventCellHandler
   onMouseDownCell?: MouseEventCellHandler
   onError?: (error: Error) => void
-  orderBy?: OrderBy // order by column. If undefined, the table is unordered, the sort elements are hidden and the interactions are disabled.
+  orderBy?: OrderBy // order to fetch the rows. If undefined, the table is unordered, the sort controls are hidden and the interactions are disabled. Pass [] to fetch the rows in the original order.
   onOrderByChange?: (orderBy: OrderBy) => void // callback to call when a user interaction changes the order. The interactions are disabled if undefined.
   selection?: Selection // selection and anchor rows, expressed as data indexes (not as indexes in the table). If undefined, the selection is hidden and the interactions are disabled.
   onSelectionChange?: (selection: Selection) => void // callback to call when a user interaction changes the selection. The selection is expressed as data indexes (not as indexes in the table). The interactions are disabled if undefined.
@@ -54,7 +55,7 @@ export interface TableProps {
 /**
  * Render a table with streaming rows on demand from a DataFrame.
  *
- * orderBy: the column to order by. If set, the component is controlled, and the property cannot be unset (undefined) later. If undefined, the component is uncontrolled (internal state). If the data cannot be sorted, it's ignored.
+ * orderBy: the order to fetch the rows. If set, the component is controlled, and the property cannot be unset (undefined) later. If undefined, the component is uncontrolled (internal state). If the data cannot be sorted, it's ignored.
  * onOrderByChange: the callback to call when the order changes. If undefined, the component order is read-only if controlled (orderBy is set), or disabled if not (or if the data cannot be sorted).
  * selection: the selected rows and the anchor row. If set, the component is controlled, and the property cannot be unset (undefined) later. If undefined, the component is uncontrolled (internal state).
  * onSelectionChange: the callback to call when the selection changes. If undefined, the component selection is read-only if controlled (selection is set), or disabled if not.
@@ -95,6 +96,9 @@ export default function HighTable({
   const [rowsRange, setRowsRange] = useState({ start: 0, end: 0 })
   const [hasCompleteRow, setHasCompleteRow] = useState(false)
   const [columnWidths, setColumnWidths] = useState([] as (number | undefined)[])
+
+  // TODO(SL): remove this state and only rely on the data frame for these operations?
+  // ie. cache the previous sort indexes in the data frame itself
   const [sortIndexes, setSortIndexes] = useState<Map<string, SortIndex>>(() => new Map())
 
   const setColumnWidth = useCallback((columnIndex: number, columnWidth: number | undefined) => {
@@ -113,7 +117,7 @@ export default function HighTable({
   } = useInputState<OrderBy>({
     value: propOrderBy,
     onChange: propOnOrderByChange,
-    defaultValue: {},
+    defaultValue: [],
     disabled: !data.sortable,
   })
 
@@ -150,9 +154,6 @@ export default function HighTable({
       if (!selection) return
       const useAnchor = event.shiftKey && selection.anchor !== undefined
       const requestId = ++pendingSelectionRequest.current
-      // provide a cached column index, if available and needed
-      const column = orderBy?.column
-      const sortIndex = column ? sortIndexes.get(column) : undefined
       const newSelection = await computeNewSelection({
         selection,
         tableIndex,
@@ -160,16 +161,8 @@ export default function HighTable({
         useAnchor,
         orderBy,
         data,
-        sortIndex,
-        setSortIndex: (sortIndex: SortIndex) => {
-          if (column) {
-            setSortIndexes(sortIndexes => {
-              const newSortIndexes = new Map(sortIndexes)
-              newSortIndexes.set(column, sortIndex)
-              return newSortIndexes
-            })
-          }
-        },
+        sortIndexes,
+        setSortIndexes,
       })
       if (requestId === pendingSelectionRequest.current) {
         // only update the selection if the request is still the last one
@@ -260,9 +253,10 @@ export default function HighTable({
     */
     async function fetchRows() {
       const { start, end } = rowsRange
+      const currentOrderBy = orderBy ?? []
 
       // Don't update if the view, or slice, is unchanged
-      if (slice && slice.data === data && start === slice.offset && end === slice.offset + slice.rows.length && slice.orderedBy.column === orderBy?.column ) {
+      if (slice && slice.data === data && start === slice.offset && end === slice.offset + slice.rows.length && areEqualOrderBy(slice.orderedBy, currentOrderBy) ) {
         return
       }
 
@@ -270,7 +264,7 @@ export default function HighTable({
         const slice = {
           offset: start,
           rows: [],
-          orderedBy: { column: orderBy?.column },
+          orderedBy: currentOrderBy,
           data,
         }
         setSlice(slice)
@@ -280,7 +274,7 @@ export default function HighTable({
       // Fetch a chunk of rows from the data frame
       try {
         const requestId = ++pendingRequest.current
-        const rowsChunk = data.rows({ start, end, orderBy: orderBy?.column })
+        const rowsChunk = data.rows({ start, end, orderBy: currentOrderBy })
 
         const updateRows = throttle(() => {
           const resolved: PartialRow[] = []
@@ -299,7 +293,7 @@ export default function HighTable({
           const slice = {
             offset: start,
             rows: resolved,
-            orderedBy: { column: orderBy?.column },
+            orderedBy: currentOrderBy,
             data,
           }
           setSlice(slice)
@@ -335,7 +329,7 @@ export default function HighTable({
     }
     // update
     void fetchRows()
-  }, [data, onError, orderBy?.column, slice, rowsRange, hasCompleteRow])
+  }, [data, onError, orderBy, slice, rowsRange, hasCompleteRow])
 
   const memoizedStyles = useMemo(() => columnWidths.map(cellStyle), [columnWidths])
   const onDoubleClick = useCallback((e: MouseEvent, col: number, row?: number) => {

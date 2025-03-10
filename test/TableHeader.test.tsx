@@ -145,6 +145,7 @@ describe('TableHeader', () => {
         columnWidths={columnWidths}
         setColumnWidth={setColumnWidth}
         setColumnWidths={setColumnWidths}
+        orderBy={[]}
         onOrderByChange={onOrderByChange}
         dataReady={dataReady} />
     </table>)
@@ -152,7 +153,7 @@ describe('TableHeader', () => {
     const ageHeader = getByText('Age')
     await user.click(ageHeader)
 
-    expect(onOrderByChange).toHaveBeenCalledWith({ column: 'Age' })
+    expect(onOrderByChange).toHaveBeenCalledWith([{ column: 'Age' }])
   })
 
   it('toggles orderBy to undefined when the same header is clicked again', async () => {
@@ -165,14 +166,14 @@ describe('TableHeader', () => {
         setColumnWidth={setColumnWidth}
         setColumnWidths={setColumnWidths}
         onOrderByChange={onOrderByChange}
-        orderBy={{ column: 'Age' }}
+        orderBy={[{ column: 'Age' }]}
         dataReady={dataReady} />
     </table>)
 
     const ageHeader = getByText('Age')
     await user.click(ageHeader)
 
-    expect(onOrderByChange).toHaveBeenCalledWith({})
+    expect(onOrderByChange).toHaveBeenCalledWith([])
   })
 
   it('changes orderBy to a new column when a different header is clicked', async () => {
@@ -185,14 +186,14 @@ describe('TableHeader', () => {
         setColumnWidth={setColumnWidth}
         setColumnWidths={setColumnWidths}
         onOrderByChange={onOrderByChange}
-        orderBy={{ column: 'Age' }}
+        orderBy={[{ column: 'Age' }]}
         dataReady={dataReady} />
     </table>)
 
     const addressHeader = getByText('Address')
     await user.click(addressHeader)
 
-    expect(onOrderByChange).toHaveBeenCalledWith({ column: 'Address' })
+    expect(onOrderByChange).toHaveBeenCalledWith([{ column: 'Address' }])
   })
 
   it('does not change orderBy when clicking on the resize handle', async () => {
