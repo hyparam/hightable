@@ -2,11 +2,15 @@
 
 ## [Unreleased](https://github.com/hyparam/hightable/compare/v0.12.1...HEAD)
 
+### Changed
+
+- **Breaking** the `OrderBy` type is now an array of column sorts: `{ column: string; direction: 'ascending' | 'descending' }[]`. If empty, the data is not sorted. If it contains one element, the data is sorted along the column, in the specified direction. If it contains multiple elements, the first column is used to sort, then the second one is used for the rows with the same value, and so on ([#67](https://github.com/hyparam/hightable/pull/67), [#68](https://github.com/hyparam/hightable/pull/68)).
+- **Breaking** the `orderBy` property in `rows` method uses the new `OrderBy` type. If `data.sortable` is `true`, the data frame is able to sort along the columns as described above.
+- **Breaking** the `orderBy` property in `HighTable` and `TableHeader` uses the new `OrderBy` type.
+- **Breaking** the `onOrderByChange` property in `HighTable` and `TableHeader` that takes the new `OrderBy` argument.
+- **Breaking** successive clicks on a column header follow a new behavior: instead of toggling between ascending sort and no sort, it now cycles through ascending, descending, and no sort ([#68](https://github.com/hyparam/hightable/pull/68)).
+
 ## [0.12.1](https://github.com/hyparam/hightable/compare/v0.12.0...v0.12.1) - 2025-03-07
-
-### Refactored
-
-- upgraded dependencies.
 
 ### Refactored
 

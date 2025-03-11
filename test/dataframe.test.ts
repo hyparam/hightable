@@ -108,8 +108,8 @@ describe('sortableDataFrame', () => {
     ].map((cells, index) => ({ cells, index })))
   })
 
-  it('should return data sorted by column "age"', async () => {
-    const rows = await awaitRows(sortableDf.rows({ start: 0, end: 4, orderBy: [{ column: 'age' }] }))
+  it('should return data sorted by column "age" in ascending order', async () => {
+    const rows = await awaitRows(sortableDf.rows({ start: 0, end: 4, orderBy: [{ column: 'age', direction: 'ascending' as const }] }))
     expect(rows).toEqual([
       { index: 2, cells:{ id: 2, name: 'Bob', age: 20 } },
       { index: 3, cells:{ id: 4, name: 'Dani', age: 20 } },
@@ -118,11 +118,29 @@ describe('sortableDataFrame', () => {
     ])
   })
 
-  it('should slice the sorted data correctly', async () => {
-    const rows = await awaitRows(sortableDf.rows({ start: 1, end: 3, orderBy: [{ column: 'id' }] }))
+  it('should return data sorted by column "age" in descending order', async () => {
+    const rows = await awaitRows(sortableDf.rows({ start: 0, end: 4, orderBy: [{ column: 'age', direction: 'descending' as const }] }))
+    expect(rows).toEqual([
+      { index: 1, cells:{ id: 1, name: 'Alice', age: 30 } },
+      { index: 0, cells:{ id: 3, name: 'Charlie', age: 25 } },
+      { index: 3, cells:{ id: 4, name: 'Dani', age: 20 } },
+      { index: 2, cells:{ id: 2, name: 'Bob', age: 20 } },
+    ])
+  })
+
+  it('should slice the sorted data correctly in ascending order', async () => {
+    const rows = await awaitRows(sortableDf.rows({ start: 1, end: 3, orderBy: [{ column: 'id', direction: 'ascending' as const }] }))
     expect(rows).toEqual([
       { index: 2, cells:{ id: 2, name: 'Bob', age: 20 } },
       { index: 0, cells:{ id: 3, name: 'Charlie', age: 25 } },
+    ])
+  })
+
+  it('should slice the sorted data correctly in descending order', async () => {
+    const rows = await awaitRows(sortableDf.rows({ start: 1, end: 3, orderBy: [{ column: 'id', direction: 'descending' as const }] }))
+    expect(rows).toEqual([
+      { index: 0, cells:{ id: 3, name: 'Charlie', age: 25 } },
+      { index: 2, cells:{ id: 2, name: 'Bob', age: 20 } },
     ])
   })
 
@@ -132,7 +150,7 @@ describe('sortableDataFrame', () => {
   })
 
   it('should throw for invalid orderBy field', () => {
-    expect(() => sortableDf.rows({ start: 0, end: 3, orderBy: [{ column: 'invalid' }] }))
+    expect(() => sortableDf.rows({ start: 0, end: 3, orderBy: [{ column: 'invalid', direction: 'ascending' as const }] }))
       .toThrowError('Invalid orderBy field: invalid')
   })
 })

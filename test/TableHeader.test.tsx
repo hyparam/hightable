@@ -136,7 +136,7 @@ describe('TableHeader', () => {
     })
   })
 
-  it('sets orderBy to the column name when a header is clicked', async () => {
+  it('sets orderBy to the column name (ascending order) when a header is clicked', async () => {
     const { columnWidths, setColumnWidth, setColumnWidths } = mockColumnWidths()
     const onOrderByChange = vi.fn()
     const { user, getByText } = render(<table>
@@ -153,10 +153,10 @@ describe('TableHeader', () => {
     const ageHeader = getByText('Age')
     await user.click(ageHeader)
 
-    expect(onOrderByChange).toHaveBeenCalledWith([{ column: 'Age' }])
+    expect(onOrderByChange).toHaveBeenCalledWith([{ column: 'Age', direction: 'ascending' }])
   })
 
-  it('toggles orderBy to undefined when the same header is clicked again', async () => {
+  it('sets orderBy to the column name (descending order) when a header is clicked if it was already sorted by ascending order', async () => {
     const { columnWidths, setColumnWidth, setColumnWidths } = mockColumnWidths()
     const onOrderByChange = vi.fn()
     const { user, getByText } = render(<table>
@@ -166,7 +166,27 @@ describe('TableHeader', () => {
         setColumnWidth={setColumnWidth}
         setColumnWidths={setColumnWidths}
         onOrderByChange={onOrderByChange}
-        orderBy={[{ column: 'Age' }]}
+        orderBy={[{ column: 'Age', direction: 'ascending' }]}
+        dataReady={dataReady} />
+    </table>)
+
+    const ageHeader = getByText('Age')
+    await user.click(ageHeader)
+
+    expect(onOrderByChange).toHaveBeenCalledWith([{ column: 'Age', direction: 'descending' }])
+  })
+
+  it('sets orderBy to undefined when a header is clicked if it was already sorted by descending order', async () => {
+    const { columnWidths, setColumnWidth, setColumnWidths } = mockColumnWidths()
+    const onOrderByChange = vi.fn()
+    const { user, getByText } = render(<table>
+      <TableHeader
+        header={header}
+        columnWidths={columnWidths}
+        setColumnWidth={setColumnWidth}
+        setColumnWidths={setColumnWidths}
+        onOrderByChange={onOrderByChange}
+        orderBy={[{ column: 'Age', direction: 'descending' }]}
         dataReady={dataReady} />
     </table>)
 
@@ -186,14 +206,14 @@ describe('TableHeader', () => {
         setColumnWidth={setColumnWidth}
         setColumnWidths={setColumnWidths}
         onOrderByChange={onOrderByChange}
-        orderBy={[{ column: 'Age' }]}
+        orderBy={[{ column: 'Age', direction: 'ascending' }]}
         dataReady={dataReady} />
     </table>)
 
     const addressHeader = getByText('Address')
     await user.click(addressHeader)
 
-    expect(onOrderByChange).toHaveBeenCalledWith([{ column: 'Address' }])
+    expect(onOrderByChange).toHaveBeenCalledWith([{ column: 'Address', direction: 'ascending' }])
   })
 
   it('does not change orderBy when clicking on the resize handle', async () => {

@@ -219,10 +219,11 @@ const data = [
   { id: 4, name: 'Dani', age: 20 },
 ].map((cells, index) => ({ cells, index }))
 
-const sortIndex: SortIndex = { column: 'name', tableIndexes: [2, 0, 1, 3], dataIndexes: [1, 2, 0, 3] }
+const nameSortIndex: SortIndex = { column: 'name', tableIndexes: [2, 0, 1, 3], dataIndexes: [1, 2, 0, 3] }
+const ageSortIndex: SortIndex = { column: 'age', tableIndexes: [2, 3, 0, 1], dataIndexes: [2, 3, 0, 1] }
 
 const sortIndexes = new Map<string, SortIndex>([
-  ['name', sortIndex],
+  ['name', nameSortIndex],
 ])
 
 export function wrapObject({ index, cells }: Row): AsyncRow {
@@ -249,72 +250,115 @@ const sortableDf = sortableDataFrame(dataFrame)
 describe('toTableSelection', () => {
   it('should throw an error if the ranges are invalid', () => {
     expect(
-      () => toTableSelection({ selection: { ranges: [{ start: 1, end: 0 }], anchor: 0 }, column: 'name', data: sortableDf, sortIndex })
+      () => toTableSelection({ selection: { ranges: [{ start: 1, end: 0 }], anchor: 0 }, column: 'name', data: sortableDf, sortIndex: nameSortIndex, direction: 'ascending' })
     ).toThrow('Invalid ranges')
   })
   it('should throw an error if the anchor is invalid', () => {
     expect(
-      () => toTableSelection({ selection: { ranges: [{ start: 0, end: 1 }], anchor: -3 }, column: 'name', data: sortableDf, sortIndex })
+      () => toTableSelection({ selection: { ranges: [{ start: 0, end: 1 }], anchor: -3 }, column: 'name', data: sortableDf, sortIndex: nameSortIndex, direction: 'ascending' })
     ).toThrow('Invalid anchor')
   })
   it('should throw an error if the column is not in the data headers', () => {
     expect(
-      () => toTableSelection({ selection: { ranges: [{ start: 0, end: 1 }] }, column: 'doesnotexist', data: sortableDf, sortIndex })
+      () => toTableSelection({ selection: { ranges: [{ start: 0, end: 1 }] }, column: 'doesnotexist', data: sortableDf, sortIndex: nameSortIndex, direction: 'ascending' })
     ).toThrow('column is not in the data frame')
   })
   it('should throw an error if the column is set but the data is not sortable', () => {
     expect(
-      () => toTableSelection({ selection: { ranges: [{ start: 0, end: 1 }] }, column: 'name', data: { ...sortableDf, sortable: false }, sortIndex })
+      () => toTableSelection({ selection: { ranges: [{ start: 0, end: 1 }] }, column: 'name', data: { ...sortableDf, sortable: false }, sortIndex: nameSortIndex, direction: 'ascending' })
     ).toThrow('Data frame is not sortable')
   })
   it('should return the same ranges, but not the same anchor, if no row is selected', () => {
-    // the anchor data index is 2, ie: the third row (name=Bob) - its table index when sorted by id is 1
+    // the anchor data index is 2, ie: the third row (name=Bob) - its table index when sorted by name is 1
     expect(
-      toTableSelection({ selection: { ranges: [], anchor: 2 }, column: 'name', data: sortableDf, sortIndex })
+      toTableSelection({ selection: { ranges: [], anchor: 2 }, column: 'name', data: sortableDf, sortIndex: nameSortIndex, direction: 'ascending' })
     ).toEqual({ ranges: [], anchor: 1 })
+  })
+  it('should return the same ranges, but not the same anchor, if no row is selected, in descending order', () => {
+    // the anchor data index is 2, ie: the third row (name=Bob) - its table index when sorted by descending name is 2
+    expect(
+      toTableSelection({ selection: { ranges: [], anchor: 2 }, column: 'name', data: sortableDf, sortIndex: nameSortIndex, direction: 'descending' })
+    ).toEqual({ ranges: [], anchor: 2 })
   })
   it('should return the same ranges, but not the same anchor, if all the rows are selected', () => {
     expect(
-      toTableSelection({ selection: { ranges: [{ start: 0, end: sortableDf.numRows }], anchor: 2 }, column: 'name', data: sortableDf, sortIndex })
+      toTableSelection({ selection: { ranges: [{ start: 0, end: sortableDf.numRows }], anchor: 2 }, column: 'name', data: sortableDf, sortIndex: nameSortIndex, direction: 'ascending' })
     ).toEqual({ ranges: [{ start: 0, end: sortableDf.numRows }], anchor: 1 })
   })
-  // add more tests here
-
+  it('should return the same ranges, but not the same anchor, if all the rows are selected, in descending order', () => {
+    expect(
+      toTableSelection({ selection: { ranges: [{ start: 0, end: sortableDf.numRows }], anchor: 2 }, column: 'name', data: sortableDf, sortIndex: nameSortIndex, direction: 'descending' })
+    ).toEqual({ ranges: [{ start: 0, end: sortableDf.numRows }], anchor: 2 })
+  })
+  it('should translate the ranges and the anchor, if some rows are selected', () => {
+    // Bob and Dani are selected. Their data indexes are 2 and 3, and their table indexes when sorted by name are 1 and 3. The anchor is Bob: data: 2 -> table: 1.
+    expect(
+      toTableSelection({ selection: { ranges: [{ start: 2, end: 4 }], anchor: 2 }, column: 'name', data: sortableDf, sortIndex: nameSortIndex, direction: 'ascending' })
+    ).toEqual({ ranges: [{ start: 1, end: 2 }, { start: 3, end: 4 }], anchor: 1 })
+  })
+  it('should translate the ranges and the anchor, respecting the descending order, if some rows are selected', () => {
+    // Bob and Dani are selected. Their data indexes are 2 and 3, and their table indexes when sorted by descending order of name are 2 and 0. The anchor is Bob: data: 2 -> table: 2.
+    expect(
+      toTableSelection({ selection: { ranges: [{ start: 2, end: 4 }], anchor: 2 }, column: 'name', data: sortableDf, sortIndex: nameSortIndex, direction: 'descending' })
+    ).toEqual({ ranges: [{ start: 0, end: 1 }, { start: 2, end: 3 }], anchor: 2 })
+  })
 })
 
 describe('toDataSelection', () => {
   it('should throw an error if the ranges are invalid', () => {
     expect(
-      () => toDataSelection({ selection: { ranges: [{ start: 1, end: 0 }], anchor: 0 }, column: 'name', data: sortableDf, sortIndex })
+      () => toDataSelection({ selection: { ranges: [{ start: 1, end: 0 }], anchor: 0 }, column: 'name', data: sortableDf, sortIndex: nameSortIndex, direction: 'ascending' })
     ).toThrow('Invalid ranges')
   })
   it('should throw an error if the anchor is invalid', () => {
     expect(
-      () => toDataSelection({ selection: { ranges: [{ start: 0, end: 1 }], anchor: -3 }, column: 'name', data: sortableDf, sortIndex })
+      () => toDataSelection({ selection: { ranges: [{ start: 0, end: 1 }], anchor: -3 }, column: 'name', data: sortableDf, sortIndex: nameSortIndex, direction: 'ascending' })
     ).toThrow('Invalid anchor')
   })
   it('should throw an error if the column is not in the data headers', () => {
     expect(
-      () => toDataSelection({ selection: { ranges: [{ start: 0, end: 1 }] }, column: 'doesnotexist', data: sortableDf, sortIndex })
+      () => toDataSelection({ selection: { ranges: [{ start: 0, end: 1 }] }, column: 'doesnotexist', data: sortableDf, sortIndex: nameSortIndex, direction: 'ascending' })
     ).toThrow('column is not in the data frame')
   })
   it('should throw an error if the orderBy column is set but the data is not sortable', () => {
     expect(
-      () => toDataSelection({ selection: { ranges: [{ start: 0, end: 1 }] }, column: 'name', data: { ...sortableDf, sortable: false }, sortIndex })
+      () => toDataSelection({ selection: { ranges: [{ start: 0, end: 1 }] }, column: 'name', data: { ...sortableDf, sortable: false }, sortIndex: nameSortIndex, direction: 'ascending' })
     ).toThrow('Data frame is not sortable')
   })
   it('should return the same ranges, but not the same anchor, if no row is selected', () => {
-    // the anchor data index is 2, ie: the third row (name=Bob) - its table index when sorted by id is 1
+    // the anchor table index is 1, ie: the second row in the table sorted by name (name=Bob) - its data index is 2
     expect(
-      toDataSelection({ selection: { ranges: [], anchor: 1 }, column: 'name', data: sortableDf, sortIndex })
+      toDataSelection({ selection: { ranges: [], anchor: 1 }, column: 'name', data: sortableDf, sortIndex: nameSortIndex, direction: 'ascending' })
     ).toEqual({ ranges: [], anchor: 2 })
+  })
+  it('should return the same ranges, but not the same anchor, if no row is selected in descending order', () => {
+    // the anchor table index is 1, ie: the second row in the table sorted by descending name (name=Charlie) - its data index is 0
+    expect(
+      toDataSelection({ selection: { ranges: [], anchor: 1 }, column: 'name', data: sortableDf, sortIndex: nameSortIndex, direction: 'descending' })
+    ).toEqual({ ranges: [], anchor: 0 })
   })
   it('should return the same ranges, but not the same anchor, if all the rows are selected', () => {
     expect(
-      toDataSelection({ selection: { ranges: [{ start: 0, end: sortableDf.numRows }], anchor: 1 }, column: 'name', data: sortableDf, sortIndex })
+      toDataSelection({ selection: { ranges: [{ start: 0, end: sortableDf.numRows }], anchor: 1 }, column: 'name', data: sortableDf, sortIndex: nameSortIndex, direction: 'ascending' })
     ).toEqual({ ranges: [{ start: 0, end: sortableDf.numRows }], anchor: 2 })
   })
-  // add more tests here
+  it('should return the same ranges, but not the same anchor, if all the rows are selected, in descending order', () => {
+    expect(
+      toDataSelection({ selection: { ranges: [{ start: 0, end: sortableDf.numRows }], anchor: 1 }, column: 'name', data: sortableDf, sortIndex: nameSortIndex, direction: 'descending' })
+    ).toEqual({ ranges: [{ start: 0, end: sortableDf.numRows }], anchor: 0 })
+  })
+  it('should translate the ranges and the anchor, if some rows are selected', () => {
+    // Rows 2 and 3 of the table sorted by name are Charlie and Dani, and the anchor is Bob. Their data indexes are 0, 3 and 2.
+    expect(
+      toDataSelection({ selection: { ranges: [{ start: 2, end: 4 }], anchor: 1 }, column: 'name', data: sortableDf, sortIndex: nameSortIndex, direction: 'ascending' })
+    ).toEqual({ ranges: [{ start: 0, end: 1 }, { start: 3, end: 4 }], anchor: 2 })
+  })
+  it('should translate the ranges and the anchor, respecting the descending order, if some rows are selected', () => {
+    // Rows 2 and 3 of the table sorted by descending name are Bob and Alice, and the anchor is Charlie. Their data indexes are 2, 1, and 0.
+    expect(
+      toDataSelection({ selection: { ranges: [{ start: 2, end: 4 }], anchor: 1 }, column: 'name', data: sortableDf, sortIndex: nameSortIndex, direction: 'descending' })
+    ).toEqual({ ranges: [{ start: 1, end: 3 }], anchor: 0 })
+  })
 })
 
 describe('computeNewSelection', () => {
@@ -349,29 +393,66 @@ describe('computeNewSelection', () => {
      *
      * current selection: index=0 (Charlie)
      *
-     * toggle the 2nd row (Bob), index 2 using tableIndex: 1
+     * toggle the 2nd row (Bob), index 2 using tableIndex=1
      *
      * new selection: indexes=0,2 (Charlie, Bob), the anchor is Bob's index: 2
      */
     await expect(
-      computeNewSelection({ tableIndex: 1, selection: { ranges: [{ start: 0, end: 1 }], anchor: -3 }, orderBy: [{ column: 'name' }], data: sortableDf })
+      computeNewSelection({ tableIndex: 1, selection: { ranges: [{ start: 0, end: 1 }], anchor: -3 }, orderBy: [{ column: 'name', direction: 'ascending' }], data: sortableDf })
     ).resolves.toEqual({ ranges: [{ start: 0, end: 1 }, { start: 2, end: 3 }], anchor: 2 })
+  })
+  it('should toggle the index on sorted rows (descending order) if the anchor is not used', async () => {
+    /**
+     * sorted rows:
+     * { name: 'Dani' }, index: 3
+     * { name: 'Charlie' }, index: 0
+     * { name: 'Bob' }, index: 2
+     * { name: 'Alice' }, index: 1
+     *
+     * current selection: index=0 (Charlie)
+     *
+     * toggle the 2nd row (Charlie), index 0 using tableIndex=1
+     *
+     * new selection: indexes=[] (none), the anchor is Charlie's index: 0
+     */
+    await expect(
+      computeNewSelection({ tableIndex: 1, selection: { ranges: [{ start: 0, end: 1 }], anchor: -3 }, orderBy: [{ column: 'name', direction: 'descending' }], data: sortableDf })
+    ).resolves.toEqual({ ranges: [], anchor: 0 })
   })
   it('should toggle the index on sorted rows if the anchor is not used, using the dataIndex if provided (ignoring tableIndex, that can be wrong).', async () => {
     const wrongAndUnused = 123
     await expect(
-      computeNewSelection({ tableIndex: wrongAndUnused, dataIndex: 2, selection: { ranges: [{ start: 0, end: 1 }], anchor: -3 }, orderBy: [{ column: 'name' }], data: sortableDf })
+      computeNewSelection({ tableIndex: wrongAndUnused, dataIndex: 2, selection: { ranges: [{ start: 0, end: 1 }], anchor: -3 }, orderBy: [{ column: 'name', direction: 'ascending' }], data: sortableDf })
     ).resolves.toEqual({ ranges: [{ start: 0, end: 1 }, { start: 2, end: 3 }], anchor: 2 })
   })
-  it('should toggle the index on sorted rows if the anchor is not used, using the sortIndex if provided.', async () => {
-    const wrongButTrusted = 123
+  it('should toggle the index on sorted rows (descending order) if the anchor is not used, using the dataIndex if provided (ignoring tableIndex, that can be wrong).', async () => {
+    const wrongAndUnused = 123
     await expect(
-      computeNewSelection({ tableIndex: 1, sortIndexes: new Map([['name', { column: 'name', tableIndexes: [], dataIndexes: [1, wrongButTrusted, 0, 3] }]]), selection: { ranges: [{ start: 0, end: 1 }], anchor: -3 }, orderBy: [{ column: 'name' }], data: sortableDf })
-    ).resolves.toEqual({ ranges: [{ start: 0, end: 1 }, { start: wrongButTrusted, end: wrongButTrusted + 1 }], anchor: wrongButTrusted })
+      computeNewSelection({ tableIndex: wrongAndUnused, dataIndex: 2, selection: { ranges: [{ start: 0, end: 1 }], anchor: -3 }, orderBy: [{ column: 'name', direction: 'descending' }], data: sortableDf })
+    ).resolves.toEqual({ ranges: [{ start: 0, end: 1 }, { start: 2, end: 3 }], anchor: 2 })
+  })
+  it('should toggle the index on sorted rows if the anchor is not used, using the nameSortIndex if provided.', async () => {
+    // table index 1 if the table was sorted by age, would give data index 3 (Dani)
+    const wrongSortIndex = ageSortIndex
+    await expect(
+      computeNewSelection({ tableIndex: 1, sortIndexes: new Map([['name', wrongSortIndex]]), selection: { ranges: [{ start: 0, end: 1 }], anchor: -3 }, orderBy: [{ column: 'name', direction: 'ascending' }], data: sortableDf })
+    ).resolves.toEqual({ ranges: [{ start: 0, end: 1 }, { start: 3, end: 4 }], anchor: 3 })
+  })
+  it('should toggle the index on sorted rows (descending order) if the anchor is not used, using the nameSortIndex if provided.', async () => {
+    // table index 1 if the table was sorted by descending age, would give data index 0 (Charlie)
+    const wrongSortIndex = ageSortIndex
+    await expect(
+      computeNewSelection({ tableIndex: 1, sortIndexes: new Map([['name', wrongSortIndex]]), selection: { ranges: [{ start: 0, end: 1 }], anchor: -3 }, orderBy: [{ column: 'name', direction: 'descending' }], data: sortableDf })
+    ).resolves.toEqual({ ranges: [], anchor: 0 })
   })
   it('should create a sort index and call setSortIndex, after toggling the index on sorted rows if the anchor is not used, when only tableIndex is provided.', async () => {
     const setSortIndexes = vi.fn()
-    await computeNewSelection({ tableIndex: 1, setSortIndexes, selection: { ranges: [{ start: 0, end: 1 }], anchor: -3 }, orderBy: [{ column: 'name' }], data: sortableDf })
+    await computeNewSelection({ tableIndex: 1, setSortIndexes, selection: { ranges: [{ start: 0, end: 1 }], anchor: -3 }, orderBy: [{ column: 'name', direction: 'ascending' }], data: sortableDf })
+    expect(setSortIndexes).toHaveBeenCalledWith(sortIndexes)
+  })
+  it('should create a sort index and call setSortIndex, after toggling the index on sorted (by descending order) rows if the anchor is not used, when only tableIndex is provided.', async () => {
+    const setSortIndexes = vi.fn()
+    await computeNewSelection({ tableIndex: 1, setSortIndexes, selection: { ranges: [{ start: 0, end: 1 }], anchor: -3 }, orderBy: [{ column: 'name', direction: 'descending' }], data: sortableDf })
     expect(setSortIndexes).toHaveBeenCalledWith(sortIndexes)
   })
   it('should extend the selection if the anchor is used on unsorted rows', async () => {
@@ -381,32 +462,32 @@ describe('computeNewSelection', () => {
   })
   it('should throw an error if the orderBy column is not in the data headers while toggling a row on sorted rows', async () => {
     await expect(
-      computeNewSelection({ tableIndex: 1, selection: { ranges: [{ start: 0, end: 1 }], anchor: -3 }, orderBy: [{ column: 'doesnotexist' }], data: sortableDf })
+      computeNewSelection({ tableIndex: 1, selection: { ranges: [{ start: 0, end: 1 }], anchor: -3 }, orderBy: [{ column: 'doesnotexist', direction: 'ascending' }], data: sortableDf })
     ).rejects.toThrow('orderBy column is not in the data frame')
   })
   it('should throw an error if the orderBy column is not in the data headers while extending a selection on sorted rows', async () => {
     await expect(
-      computeNewSelection({ tableIndex: 0, selection: { ranges: [{ start: 2, end: 5 }], anchor: 4 }, useAnchor: true, orderBy: [{ column: 'doesnotexist' }], data: sortableDf })
+      computeNewSelection({ tableIndex: 0, selection: { ranges: [{ start: 2, end: 5 }], anchor: 4 }, useAnchor: true, orderBy: [{ column: 'doesnotexist', direction: 'ascending' }], data: sortableDf })
     ).rejects.toThrow('orderBy column is not in the data frame')
   })
   it('should throw an error if the data is undefined while toggling a row on sorted rows', async () => {
     await expect(
-      computeNewSelection({ tableIndex: 0, selection: { ranges: [{ start: 0, end: 1 }], anchor: -3 }, orderBy: [{ column: 'id' }] })
+      computeNewSelection({ tableIndex: 0, selection: { ranges: [{ start: 0, end: 1 }], anchor: -3 }, orderBy: [{ column: 'id', direction: 'ascending' }] })
     ).rejects.toThrow('Missing data frame. Cannot compute the new selection.')
   })
   it('should throw an error if the data is undefined while extending a selection on sorted rows', async () => {
     await expect(
-      computeNewSelection({ tableIndex: 0, selection: { ranges: [{ start: 2, end: 5 }], anchor: 4 }, useAnchor: true, orderBy: [{ column: 'id' }] })
+      computeNewSelection({ tableIndex: 0, selection: { ranges: [{ start: 2, end: 5 }], anchor: 4 }, useAnchor: true, orderBy: [{ column: 'id', direction: 'ascending' }] })
     ).rejects.toThrow('Missing data frame. Cannot compute the new selection.')
   })
   it('should throw and error if the data is not sortable while toggling a row on sorted rows', async () => {
     await expect(
-      computeNewSelection({ tableIndex: 0, selection: { ranges: [{ start: 0, end: 1 }], anchor: -3 }, orderBy: [{ column: 'id' }], data: { ...sortableDf, sortable: false } })
+      computeNewSelection({ tableIndex: 0, selection: { ranges: [{ start: 0, end: 1 }], anchor: -3 }, orderBy: [{ column: 'id', direction: 'ascending' }], data: { ...sortableDf, sortable: false } })
     ).rejects.toThrow('Data frame is not sortable')
   })
   it('should throw and error if the data is not sortable while extending a selection on sorted rows', async () => {
     await expect(
-      computeNewSelection({ tableIndex: 0, selection: { ranges: [{ start: 2, end: 5 }], anchor: 4 }, useAnchor: true, orderBy: [{ column: 'id' }], data: { ...sortableDf, sortable: false } })
+      computeNewSelection({ tableIndex: 0, selection: { ranges: [{ start: 2, end: 5 }], anchor: 4 }, useAnchor: true, orderBy: [{ column: 'id', direction: 'ascending' }], data: { ...sortableDf, sortable: false } })
     ).rejects.toThrow('Data frame is not sortable')
   })
   it('should extend the selection if the anchor is used on sorted rows', async () => {
@@ -424,18 +505,73 @@ describe('computeNewSelection', () => {
      * new selection: indexes=1,2,0 (Alice, Bob, Charlie)
      */
     await expect(
-      computeNewSelection({ tableIndex: 2, selection: { ranges: [{ start: 1, end: 2 }], anchor: 1 }, useAnchor: true, orderBy: [{ column: 'name' }], data: sortableDf })
+      computeNewSelection({ tableIndex: 2, selection: { ranges: [{ start: 1, end: 2 }], anchor: 1 }, useAnchor: true, orderBy: [{ column: 'name', direction: 'ascending' }], data: sortableDf })
     ).resolves.toEqual({ ranges: [{ start: 0, end: 3 }], anchor: 1 })
   })
-  it('should extend the selection if the anchor is used on sorted rows, using sortIndex if provided', async () => {
-    const wrongButTrustedSortIndexes = new Map([['name', { column: 'name', tableIndexes: [3, 0, 1, 2], dataIndexes: [1, 2, 3, 0] }]])
+  it('should extend the selection if the anchor is used on sorted rows (by descending order)', async () => {
+    /**
+     * sorted rows:
+     * { name: 'Dani' }, index: 3
+     * { name: 'Charlie' }, index: 0
+     * { name: 'Bob' }, index: 2
+     * { name: 'Alice' }, index: 1
+     *
+     * current selection: index=1 (Alice)
+     *
+     * extend to Bob (index 2) using tableIndex=2
+     *
+     * new selection: indexes=1,2 (Alice, Bob)
+     */
     await expect(
-      computeNewSelection({ tableIndex: 2, sortIndexes: wrongButTrustedSortIndexes, selection: { ranges: [{ start: 1, end: 2 }], anchor: 1 }, useAnchor: true, orderBy: [{ column: 'name' }], data: sortableDf })
-    ).resolves.toEqual({ ranges: [{ start: 1, end: 4 }], anchor: 1 })
+      computeNewSelection({ tableIndex: 2, selection: { ranges: [{ start: 1, end: 2 }], anchor: 1 }, useAnchor: true, orderBy: [{ column: 'name', direction: 'descending' }], data: sortableDf })
+    ).resolves.toEqual({ ranges: [{ start: 1, end: 3 }], anchor: 1 })
+  })
+  it('should extend the selection if the anchor is used on sorted rows, using nameSortIndex if provided', async () => {
+    /**
+     * sorted rows (by age, since it's what the wrong sort index provides):
+     * { name: 'Bob' }, index: 2
+     * { name: 'Dani' }, index: 3
+     * { name: 'Charlie' }, index: 0
+     * { name: 'Alice' }, index: 1
+     *
+     * current selection: index=1 (Alice)
+     *
+     * extend to Charlie (index 0) using tableIndex=2
+     *
+     * new selection: indexes=0,1 (Charlie, Alice)
+     */
+    const wrongButTrustedSortIndexes = new Map([['name', ageSortIndex]])
+    await expect(
+      computeNewSelection({ tableIndex: 2, sortIndexes: wrongButTrustedSortIndexes, selection: { ranges: [{ start: 1, end: 2 }], anchor: 1 }, useAnchor: true, orderBy: [{ column: 'name', direction: 'ascending' }], data: sortableDf })
+    ).resolves.toEqual({ ranges: [{ start: 0, end: 2 }], anchor: 1 })
+  })
+  it('should extend the selection if the anchor is used on sorted rows (by descending order), using nameSortIndex if provided', async () => {
+    /**
+     * sorted rows (by descending age, since it's what the wrong sort index provides):
+     * { name: 'Alice' }, index: 1
+     * { name: 'Charlie' }, index: 0
+     * { name: 'Dani' }, index: 3
+     * { name: 'Bob' }, index: 2
+     *
+     * current selection: index=1 (Alice)
+     *
+     * extend to Dani (index 3) using tableIndex=2
+     *
+     * new selection: indexes=1,0,3 (Alice, Charlie, Dani)
+     */
+    const wrongButTrustedSortIndexes = new Map([['name', ageSortIndex]])
+    await expect(
+      computeNewSelection({ tableIndex: 2, sortIndexes: wrongButTrustedSortIndexes, selection: { ranges: [{ start: 1, end: 2 }], anchor: 1 }, useAnchor: true, orderBy: [{ column: 'name', direction: 'descending' }], data: sortableDf })
+    ).resolves.toEqual({ ranges: [{ start: 0, end: 2 }, { start: 3, end: 4 }], anchor: 1 })
   })
   it('should call setSortIndex if provided, when the anchor is used on sorted rows', async () => {
     const setSortIndexes = vi.fn()
-    await computeNewSelection({ tableIndex: 2, setSortIndexes, selection: { ranges: [{ start: 1, end: 2 }], anchor: 1 }, useAnchor: true, orderBy: [{ column: 'name' }], data: sortableDf })
+    await computeNewSelection({ tableIndex: 2, setSortIndexes, selection: { ranges: [{ start: 1, end: 2 }], anchor: 1 }, useAnchor: true, orderBy: [{ column: 'name', direction: 'ascending' }], data: sortableDf })
+    expect(setSortIndexes).toHaveBeenCalledWith(sortIndexes)
+  })
+  it('should call setSortIndex if provided, when the anchor is used on sorted rows (descending order)', async () => {
+    const setSortIndexes = vi.fn()
+    await computeNewSelection({ tableIndex: 2, setSortIndexes, selection: { ranges: [{ start: 1, end: 2 }], anchor: 1 }, useAnchor: true, orderBy: [{ column: 'name', direction: 'descending' }], data: sortableDf })
     expect(setSortIndexes).toHaveBeenCalledWith(sortIndexes)
   })
 })

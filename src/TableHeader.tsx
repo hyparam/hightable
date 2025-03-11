@@ -144,8 +144,7 @@ export default function TableHeader({
   )
 
   const directionByColumn = useMemo(() => {
-    // TODO(SL): support descending order
-    return new Map((orderBy ?? []).map(({ column }) => [column, 'ascending'] as const))
+    return new Map((orderBy ?? []).map(({ column, direction }) => [column, direction]))
   }, [orderBy])
 
   const memoizedStyles = useMemo(() => columnWidths.map(cellStyle), [columnWidths])

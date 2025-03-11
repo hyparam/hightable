@@ -1,5 +1,8 @@
+export type Direction = 'ascending' | 'descending'
+
 export interface ColumnOrderBy {
     column: string // column name to sort by.
+    direction: Direction // sort direction.
 }
 
 export type OrderBy = ColumnOrderBy[]
@@ -9,8 +12,7 @@ export function areEqualOrderBy(a: OrderBy, b: OrderBy): boolean {
   return a.every((itemA, i) => {
     const itemB = b[i]
     if (!itemB) return false
-    return itemA.column === itemB.column
-    // TODO(SL): compare direction when descending is supported
+    return itemA.column === itemB.column && itemA.direction === itemB.direction
   })
 }
 
@@ -37,22 +39,18 @@ export function toggleColumn(column: string, orderBy: OrderBy): OrderBy {
     //   return [...orderBy, { column, direction: 'ascending' }]
     // for now: remove the existing columns and only sort by the new column
     // none -> ascending
-    return [{ column }]
+    return [{ column, direction: 'ascending' }]
+  } else if (item.direction === 'ascending') {
+    // TODO(SL): when multiple columns are not supported yet, replace the column with descending
+    //   return [...prefix, { column, direction: 'descending' }, ...suffix]
+    // for now: remove the existing columns and only sort by the new column
+    // ascending -> descending
+    return [{ column, direction: 'descending' }]
+  } else {
+    // TODO(SL): when multiple columns are not supported yet, remove the column
+    //   return [...prefix, ...suffix]
+    // for now: return an empty array
+    // descending -> none
+    return []
   }
-  // else:
-  // ascending -> none
-  return []
-
-  // TODO(SL): when descending is supported, add:
-  //
-  // if (item.direction === 'ascending') {
-  //   // ascending -> descending
-  //   return [...prefix, { column, direction: 'descending' }, ...suffix]
-
-  // and
-  //
-  // } else {
-  //   // descending -> none
-  //   return [...prefix, ...suffix]
-  // }
 }

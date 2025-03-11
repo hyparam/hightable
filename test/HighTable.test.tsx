@@ -152,8 +152,29 @@ describe('When sorted, HighTable', () => {
     let rows = within(tbody).getAllByRole('row')
     checkRowContents(rows[0], '1', 'row 0', '1,000')
 
-    // Click on the Count header to sort by Count
+    // Click on the Count header to sort by Count (none -> ascending)
     const countHeader = getByRole('columnheader', { name: 'Count' })
+    await user.click(countHeader)
+    await findAllByRole('cell', { name: 'row 999' })
+
+    rows = within(within(getByRole('grid')).getAllByRole('rowgroup')[1]).getAllByRole('row')
+    checkRowContents(rows[0], '1,000', 'row 999', '1')
+
+    // Click again on the Count header to sort by descending Count (ascending -> descending)
+    await user.click(countHeader)
+    await findAllByRole('cell', { name: 'row 0' })
+
+    rows = within(within(getByRole('grid')).getAllByRole('rowgroup')[1]).getAllByRole('row')
+    checkRowContents(rows[0], '1', 'row 0', '1,000')
+
+    // Click again on the Count header to remove the sort (descending -> none)
+    await user.click(countHeader)
+    await findAllByRole('cell', { name: 'row 0' })
+
+    rows = within(within(getByRole('grid')).getAllByRole('rowgroup')[1]).getAllByRole('row')
+    checkRowContents(rows[0], '1', 'row 0', '1,000')
+
+    // Click on the Count header to sort by Count (none -> ascending)
     await user.click(countHeader)
     await findAllByRole('cell', { name: 'row 999' })
 
@@ -180,6 +201,15 @@ describe('When sorted, HighTable', () => {
     await user.dblClick(cell999)
 
     expect(mockDoubleClick).toHaveBeenCalledWith(expect.anything(), 0, 999)
+
+    // Click on the Count header to sort by descending Count
+    await user.click(countHeader)
+
+    const cell00 = await findByRole('cell', { name: 'row 0' })
+
+    await user.dblClick(cell00)
+
+    expect(mockDoubleClick).toHaveBeenCalledWith(expect.anything(), 0, 0)
   })
 })
 

@@ -94,8 +94,8 @@ export function sortableDataFrame(data: DataFrame): DataFrame {
         if (!(0 in orderBy)) {
           throw new Error('orderBy should have at least one element')
         }
-        // TODO(SL): support multiple columns and descending order
-        const { column } = orderBy[0]
+        // TODO(SL): support multiple columns
+        const { column, direction } = orderBy[0]
         if (!data.header.includes(column)) {
           throw new Error(`Invalid orderBy field: ${column}`)
         }
@@ -103,9 +103,19 @@ export function sortableDataFrame(data: DataFrame): DataFrame {
         if (!indexesByColumn.has(column)) {
           indexesByColumn.set(column, columnIndexes)
         }
-        const indexesSlice = columnIndexes.then(indexes => indexes.slice(start, end))
+        const indexesSlice = columnIndexes.then(indexes => {
+          if (direction === 'ascending') {
+            return indexes.slice(start, end)
+          } else {
+            // descending order
+            const newStart = data.numRows - end
+            const newEnd = data.numRows - start
+            return indexes.slice(newStart, newEnd).reverse()
+          }
+        })
         const rowsSlice = indexesSlice.then(indexes => Promise.all(
           // TODO(SL): optimize to fetch groups of rows instead of individual rows?
+          // if so: maybe the 'reverse' above should be done after fetching the rows
           indexes.map(i => {
             const asyncRowInArray = data.rows({ start: i, end: i + 1 })
             if (!(0 in asyncRowInArray)) {
