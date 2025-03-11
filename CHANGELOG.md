@@ -4,12 +4,11 @@
 
 ### Changed
 
-- **Breaking** the `OrderBy` type is now an array of column sorts: `{ column: string; direction: 'ascending' | 'descending' }[]`. If empty, the data is not sorted. If it contains one element, the data is sorted along the column, in the specified direction. If it contains multiple elements, the first column is used to sort, then the second one is used for the rows with the same value, and so on ([#67](https://github.com/hyparam/hightable/pull/67), [#68](https://github.com/hyparam/hightable/pull/68)).
+- **Breaking** the `OrderBy` type is now an array of column sorts: `{ column: string; direction: 'ascending' | 'descending' }[]`. If empty, the data is not sorted. If it contains one element, the data is sorted along the column, in the specified direction. If it contains multiple elements, the first column is used to sort, then the second one is used to handle the ties, and so on ([#67](https://github.com/hyparam/hightable/pull/67), [#68](https://github.com/hyparam/hightable/pull/68), [#69](https://github.com/hyparam/hightable/pull/69)).
 - **Breaking** the `orderBy` property in `rows` method uses the new `OrderBy` type. If `data.sortable` is `true`, the data frame is able to sort along the columns as described above.
 - **Breaking** the `orderBy` property in `HighTable` and `TableHeader` uses the new `OrderBy` type.
 - **Breaking** the `onOrderByChange` property in `HighTable` and `TableHeader` that takes the new `OrderBy` argument.
-- **Breaking** successive clicks on a column header follow a new behavior: instead of toggling between ascending sort and no sort, it now cycles through ascending, descending, and no sort ([#68](https://github.com/hyparam/hightable/pull/68)).
-- **Breaking** click on a new column header has a new behavior: it sorts also that column first, and uses the previously sorted columns as secondary sorts. If the column was already sorted, it follows the cycle described above ([#69](https://github.com/hyparam/hightable/pull/69)).
+- **Breaking** click on a column header has a new behavior: it sorts along that column first, and uses the other columns of `orderBy` as secondary sorts. If the column was already the first column, it follows the cycle ascending -> descending -> no sort ([#69](https://github.com/hyparam/hightable/pull/69)).
 
 ## [0.12.1](https://github.com/hyparam/hightable/compare/v0.12.0...v0.12.1) - 2025-03-07
 
