@@ -33,17 +33,24 @@ describe('partitionOrderBy', () => {
 })
 
 describe('toggleColumn', () => {
-  it('should return an array with the column if the column is not in the orderBy', () => {
+  it('should return an array with the column as first element if the column is not in the orderBy', () => {
     expect(toggleColumn('name', [])).toEqual([nameAsc])
-    expect(toggleColumn('name', [ageAsc])).toEqual([nameAsc])
-    expect(toggleColumn('name', [ageAsc, idAsc])).toEqual([nameAsc])
+    expect(toggleColumn('name', [ageAsc])).toEqual([nameAsc, ageAsc])
+    expect(toggleColumn('name', [ageAsc, idAsc])).toEqual([nameAsc, ageAsc, idAsc])
   })
-  it('should return an array with the column in descending direction, if the column is in the orderBy with ascending direction', () => {
+  it('should return an array with the column as first element if the column is not the first element in the orderBy', () => {
+    expect(toggleColumn('name', [ageAsc, nameAsc])).toEqual([nameAsc, ageAsc])
+    expect(toggleColumn('name', [ageAsc, nameDesc])).toEqual([nameAsc, ageAsc])
+    expect(toggleColumn('name', [ageAsc, nameDesc, nameDesc])).toEqual([nameAsc, ageAsc, nameDesc])
+  })
+  it('should return an array with the column in descending direction, if the column is the first element in the orderBy with ascending direction', () => {
     expect(toggleColumn('name', [nameAsc])).toEqual([nameDesc])
-    expect(toggleColumn('name', [ageAsc, nameAsc])).toEqual([nameDesc])
+    expect(toggleColumn('name', [nameAsc, ageAsc])).toEqual([nameDesc, ageAsc])
+    expect(toggleColumn('name', [nameAsc, nameDesc])).toEqual([nameDesc, nameDesc])
   })
-  it('should return an empty array if the column is in the orderBy with descending direction', () => {
+  it('should remove the first element if the column is the first element in the orderBy with descending direction', () => {
     expect(toggleColumn('name', [nameDesc])).toEqual([])
-    expect(toggleColumn('name', [ageAsc, nameDesc])).toEqual([])
+    expect(toggleColumn('name', [nameDesc, ageAsc])).toEqual([ageAsc])
+    expect(toggleColumn('name', [nameDesc, nameAsc])).toEqual([nameAsc])
   })
 })
