@@ -47,6 +47,45 @@ describe('rowCache', () => {
     expect(df.rows).toHaveBeenCalledTimes(1)
   })
 
+  it('should cache rows for each orderBy combination', async () => {
+    const df = makeDf()
+    const dfCached = rowCache(df)
+
+    const orderBy1 = [{ column: 'id', direction: 'ascending' as const }]
+    const orderBy2 = [{ column: 'id', direction: 'descending' as const }]
+    const orderBy3 = [{ column: 'id', direction: 'ascending' as const }, { column: 'id', direction: 'descending' as const }]
+
+    // Initial fetch to cache rows
+    const rowsPre1 = await awaitRows(dfCached.rows({ start: 3, end: 6, orderBy: orderBy1 }))
+    expect(rowsPre1).toEqual([{ id: 3 }, { id: 4 }, { id: 5 }].map((cells, index) => ({ cells, index: index + 3 })))
+    expect(df.rows).toHaveBeenCalledTimes(1)
+
+    // Subsequent fetch should use cache
+    const rowsPost1 = await awaitRows(dfCached.rows({ start: 3, end: 6, orderBy: orderBy1 }))
+    expect(rowsPost1).toEqual([{ id: 3 }, { id: 4 }, { id: 5 }].map((cells, index) => ({ cells, index: index + 3 })))
+    expect(df.rows).toHaveBeenCalledTimes(1)
+
+    // Subsequent fetch with another orderBy should not use cache
+    const rowsPre2 = await awaitRows(dfCached.rows({ start: 3, end: 6, orderBy: orderBy2 }))
+    expect(rowsPre2).toEqual([{ id: 3 }, { id: 4 }, { id: 5 }].map((cells, index) => ({ cells, index: index + 3 })))
+    expect(df.rows).toHaveBeenCalledTimes(2)
+
+    // Subsequent fetch with a third orderBy should not use cache
+    const rowsPre3 = await awaitRows(dfCached.rows({ start: 3, end: 6, orderBy: orderBy3 }))
+    expect(rowsPre3).toEqual([{ id: 3 }, { id: 4 }, { id: 5 }].map((cells, index) => ({ cells, index: index + 3 })))
+    expect(df.rows).toHaveBeenCalledTimes(3)
+
+    // Subsequent fetch with the second orderBy should use cache
+    const rowsPost2 = await awaitRows(dfCached.rows({ start: 3, end: 6, orderBy: orderBy2 }))
+    expect(rowsPost2).toEqual([{ id: 3 }, { id: 4 }, { id: 5 }].map((cells, index) => ({ cells, index: index + 3 })))
+    expect(df.rows).toHaveBeenCalledTimes(3)
+
+    // Subsequent fetch with the third orderBy should not cache
+    const rowsPost3 = await awaitRows(dfCached.rows({ start: 3, end: 6, orderBy: orderBy3 }))
+    expect(rowsPost3).toEqual([{ id: 3 }, { id: 4 }, { id: 5 }].map((cells, index) => ({ cells, index: index + 3 })))
+    expect(df.rows).toHaveBeenCalledTimes(3)
+  })
+
   it('should handle adjacent cached blocks', async () => {
     const df = makeDf()
     const dfCached = rowCache(df)
