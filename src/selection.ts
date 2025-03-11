@@ -1,5 +1,5 @@
 import { DataFrame, getColumnIndex } from './dataframe.js'
-import { OrderBy } from './sort.js'
+import { Direction, OrderBy } from './sort.js'
 
 /**
  * A selection is modelled as an array of ordered and non-overlapping ranges.
@@ -289,11 +289,13 @@ export async function getSortIndex({ data, column }: { data: DataFrame, column: 
  * @param {Object} params
  * @param {SortIndex} params.sortIndex - The sort index.
  * @param {number} params.tableIndex - The index of the row in the sorted table.
+ * @param {Direction} params.direction - The direction of the sort.
  *
  * @returns {number} The index of the row in the data frame.
  */
-export function getDataIndex({ sortIndex, tableIndex }: {sortIndex: SortIndex, tableIndex: number}): number {
-  const dataIndex = sortIndex.dataIndexes[tableIndex]
+export function getDataIndex({ sortIndex, tableIndex, direction }: {sortIndex: SortIndex, tableIndex: number, direction: Direction}): number {
+  const index = direction === 'ascending' ? tableIndex : sortIndex.tableIndexes.length - tableIndex - 1
+  const dataIndex = sortIndex.dataIndexes[index]
   if (dataIndex === undefined) {
     throw new Error('Table index not found in the data frame')
   }
@@ -306,15 +308,16 @@ export function getDataIndex({ sortIndex, tableIndex }: {sortIndex: SortIndex, t
  * @param {Object} params
  * @param {SortIndex} params.sortIndex - The sort index.
  * @param {number} params.dataIndex - The index of the row in the data frame.
+ * @param {Direction} params.direction - The direction of the sort.
  *
  * @returns {number} The index of the row in the sorted table.
  */
-export function getTableIndex({ sortIndex, dataIndex }: {sortIndex: SortIndex, dataIndex: number}): number {
+export function getTableIndex({ sortIndex, dataIndex, direction }: {sortIndex: SortIndex, dataIndex: number, direction: Direction}): number {
   const tableIndex = sortIndex.tableIndexes[dataIndex]
   if (tableIndex === -1 || tableIndex === undefined) {
     throw new Error('Data index not found in the data frame')
   }
-  return tableIndex
+  return direction === 'ascending' ? tableIndex : sortIndex.tableIndexes.length - tableIndex - 1
 }
 
 /**
@@ -328,10 +331,11 @@ export function getTableIndex({ sortIndex, dataIndex }: {sortIndex: SortIndex, d
  * @param {string} params.column - The column to sort the rows along.
  * @param {DataFrame} params.data - The data frame.
  * @param {SortIndex} params.sortIndex - The sort index of the data frame for the column.
+ * @param {Direction} params.direction - The direction of the sort.
  *
  * @returns {Promise<Selection>} A Promise to the selection of table indexes.
  */
-export function toTableSelection({ selection, column, data, sortIndex }: { selection: Selection, column: string, data: DataFrame, sortIndex: SortIndex }): Selection {
+export function toTableSelection({ selection, column, data, sortIndex, direction }: { selection: Selection, column: string, data: DataFrame, sortIndex: SortIndex, direction: Direction }): Selection {
   const { header, numRows, sortable } = data
   const { ranges, anchor } = selection
   if (!areValidRanges(selection.ranges)) {
@@ -358,11 +362,11 @@ export function toTableSelection({ selection, column, data, sortIndex }: { selec
     for (const range of ranges) {
       const { start, end } = range
       for (let dataIndex = start; dataIndex < end; dataIndex++) {
-        tableRanges = selectIndex({ ranges: tableRanges, index: getTableIndex({ sortIndex, dataIndex }) })
+        tableRanges = selectIndex({ ranges: tableRanges, index: getTableIndex({ sortIndex, dataIndex, direction }) })
       }
     }
   }
-  const anchorTableIndex = anchor !== undefined ? getTableIndex({ sortIndex, dataIndex: anchor }) : undefined
+  const anchorTableIndex = anchor !== undefined ? getTableIndex({ sortIndex, dataIndex: anchor, direction }) : undefined
   return { ranges: tableRanges, anchor: anchorTableIndex }
 }
 
@@ -377,10 +381,11 @@ export function toTableSelection({ selection, column, data, sortIndex }: { selec
  * @param {string} params.column - The column to sort the rows along.
  * @param {DataFrame} params.data - The data frame.
  * @param {SortIndex} params.sortIndex - The sort index of the data frame for the column.
+ * @param {Direction} params.direction - The direction of the sort.
  *
  * @returns {Promise<Selection>} A Promise to the selection of data indexes.
  */
-export function toDataSelection({ selection, column, data, sortIndex }: { selection: Selection, column: string, data: DataFrame, sortIndex: SortIndex }): Selection {
+export function toDataSelection({ selection, column, data, sortIndex, direction }: { selection: Selection, column: string, data: DataFrame, sortIndex: SortIndex, direction: Direction }): Selection {
   const { header, numRows, sortable } = data
   const { ranges, anchor } = selection
   if (!areValidRanges(selection.ranges)) {
@@ -407,11 +412,11 @@ export function toDataSelection({ selection, column, data, sortIndex }: { select
     // naive implementation, could be optimized
     for (const range of ranges) {
       for (let tableIndex = range.start; tableIndex < range.end; tableIndex++) {
-        dataRanges = selectIndex({ ranges: dataRanges, index: getDataIndex({ sortIndex, tableIndex }) })
+        dataRanges = selectIndex({ ranges: dataRanges, index: getDataIndex({ sortIndex, tableIndex, direction }) })
       }
     }
   }
-  const anchorIndex = anchor !== undefined ? getDataIndex({ sortIndex, tableIndex: anchor }) : undefined
+  const anchorIndex = anchor !== undefined ? getDataIndex({ sortIndex, tableIndex: anchor, direction }) : undefined
   return { ranges: dataRanges, anchor: anchorIndex }
 }
 
@@ -470,8 +475,8 @@ export async function computeNewSelection({
   if (!(0 in orderBy)) {
     throw new Error('orderBy should have at least one element')
   }
-  // TODO(SL): support multiple columns and descending order
-  const { column } = orderBy[0]
+  // TODO(SL): support multiple columns
+  const { column, direction } = orderBy[0]
   if (!useAnchor && dataIndex !== undefined) {
     // no anchor: toggle the row at the index.
     // Use the data index directly.
@@ -486,14 +491,14 @@ export async function computeNewSelection({
 
   if (!useAnchor) {
     // no anchor: toggle the row at the index.
-    const dataIndex = getDataIndex({ sortIndex, tableIndex })
+    const dataIndex = getDataIndex({ sortIndex, tableIndex, direction })
     return { ranges: toggleIndex({ ranges: selection.ranges, index: dataIndex }), anchor: dataIndex }
   }
 
   // extend the selection from the anchor to the index. Convert the selection to table indexes, and work in the table domain
-  const tableSelection = toTableSelection({ selection, column, data, sortIndex })
+  const tableSelection = toTableSelection({ selection, column, data, sortIndex, direction })
   const { ranges, anchor } = tableSelection
   const newTableSelection = { ranges: extendFromAnchor({ ranges, anchor, index: tableIndex }), anchor }
-  const newDataSelection = toDataSelection({ selection: newTableSelection, column, data, sortIndex })
+  const newDataSelection = toDataSelection({ selection: newTableSelection, column, data, sortIndex, direction })
   return newDataSelection
 }

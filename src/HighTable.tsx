@@ -148,12 +148,12 @@ export default function HighTable({
   }, [onSelectionChange, data.numRows, selection])
   const pendingSelectionRequest = useRef(0)
   const getOnSelectRowClick = useCallback(({ tableIndex, dataIndex }: {tableIndex: number, dataIndex?: number}) => {
-    // computeNewSelection is responsible to resolve the dataIndex if undefined but needed
     if (!selection) return
     async function onSelectRowClick(event: MouseEvent) {
       if (!selection) return
       const useAnchor = event.shiftKey && selection.anchor !== undefined
       const requestId = ++pendingSelectionRequest.current
+      // computeNewSelection is responsible to resolve the dataIndex if undefined but needed
       const newSelection = await computeNewSelection({
         selection,
         tableIndex,
