@@ -1,5 +1,6 @@
 import { wrapPromise } from './promise.js'
 import { AsyncRow, Cells, asyncRows } from './row.js'
+import { OrderBy } from './sort.js'
 
 /**
  * Function that gets values in a column.
@@ -24,7 +25,7 @@ export interface DataFrame {
   // Rows are 0-indexed, excludes the header, end is exclusive
   // if orderBy is provided, start and end are applied to the sorted rows
   // negative start and end are allowed
-  rows({ start, end, orderBy }: { start: number, end: number, orderBy?: string }): AsyncRow[]
+  rows({ start, end, orderBy }: { start: number, end: number, orderBy?: OrderBy }): AsyncRow[]
   // Get all values in a column. If start and end are provided, only get values in that range.
   getColumn?: GetColumn
   sortable?: boolean
@@ -88,8 +89,13 @@ export function sortableDataFrame(data: DataFrame): DataFrame {
   const indexesByColumn = new Map<string, Promise<number[]>>()
   return {
     ...data,
-    rows({ start, end, orderBy: column }): AsyncRow[] {
-      if (column) {
+    rows({ start, end, orderBy }): AsyncRow[] {
+      if (orderBy && orderBy.length > 0) {
+        if (!(0 in orderBy)) {
+          throw new Error('orderBy should have at least one element')
+        }
+        // TODO(SL): support multiple columns and descending order
+        const { column } = orderBy[0]
         if (!data.header.includes(column)) {
           throw new Error(`Invalid orderBy field: ${column}`)
         }

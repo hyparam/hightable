@@ -1,5 +1,6 @@
 import { DataFrame } from './dataframe.js'
 import { AsyncRow } from './row.js'
+import { OrderBy } from './sort.js'
 
 /**
  * Wrap a dataframe with cached rows.
@@ -17,7 +18,7 @@ export function rowCache(df: DataFrame): DataFrame {
     ...df,
     rows({ start, end, orderBy }): AsyncRow[] {
       // Cache per sort order
-      const key = orderBy ?? ''
+      const key = getKey(orderBy)
       const cache = caches[key] ?? new Array<AsyncRow | undefined>(df.numRows)
       if (!(key in caches)) {
         caches[key] = cache
@@ -57,4 +58,14 @@ export function rowCache(df: DataFrame): DataFrame {
       })
     },
   }
+}
+
+function getKey(orderBy?: OrderBy): string {
+  if (!orderBy || orderBy.length === 0) {
+    return ''
+  }
+  if (!(0 in orderBy)) {
+    throw new Error('orderBy should have at least one element')
+  }
+  return orderBy[0].column
 }
