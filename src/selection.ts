@@ -496,5 +496,4 @@ export async function computeNewSelection({
   const newTableSelection = { ranges: extendFromAnchor({ ranges, anchor, index: tableIndex }), anchor }
   const newDataSelection = toDataSelection({ selection: newTableSelection, column, data, sortIndex })
   return newDataSelection
-
 }
