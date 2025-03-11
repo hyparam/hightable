@@ -13,7 +13,7 @@
 - **Breaking** the `orderBy` property in `rows` method uses the new `OrderBy` type. If `data.sortable` is `true`, the data frame is able to sort along the columns as described above.
 - **Breaking** the `orderBy` property in `HighTable` and `TableHeader` uses the new `OrderBy` type.
 - **Breaking** the `onOrderByChange` property in `HighTable` and `TableHeader` that takes the new `OrderBy` argument.
-- **Breaking** successive clicks on a column header follow a new behavior: instead of toggling between ascending sort and no sort, it now cycles through ascending, descending, and no sort ([#68](https://github.com/hyparam/hightable/pull/68)).
+- **Breaking** click on a new column header has a new behavior: it sorts also that column first, and uses the previously sorted columns as secondary sorts. If the column was already sorted, it follows the cycle described above ([#69](https://github.com/hyparam/hightable/pull/69)).
 - **Breaking** the top left cell of the table now handles the checkbox to select all the rows (and the absolutely positioned div is removed). It can affect overriden CSS ([#70](https://github.com/hyparam/hightable/pull/70)).
 - **Breaking** all CSS classes have been removed. Use the `className` prop to apply custom styles ([#75](https://github.com/hyparam/hightable/pull/75)).
 - changed the format of the keys in local storage when storing the column widths. Each column now has its own key ([#71](https://github.com/hyparam/hightable/pull/71)).
