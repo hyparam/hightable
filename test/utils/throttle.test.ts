@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { throttle } from '../src/HighTable.js'
+import { throttle } from '../../src/utils/throttle.js'
 
 describe('throttle', () => {
   beforeEach(() => {

@@ -1,12 +1,13 @@
 import React, { MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Row from './components/Row.js'
 import { DataFrame } from './dataframe.js'
-import { stringify as stringifyDefault } from './helpers/stringify.js'
 import { useInputState } from './hooks.js'
 import { PartialRow } from './row.js'
 import { Selection, SortIndex, areAllSelected, computeNewSelection, isSelected, toggleAll } from './selection.js'
 import { OrderBy, areEqualOrderBy } from './sort.js'
 import TableHeader, { cellStyle } from './TableHeader.js'
+import { stringify as stringifyDefault } from './utils/stringify.js'
+import { throttle } from './utils/throttle.js'
 export { arrayDataFrame, sortableDataFrame } from './dataframe.js'
 export type { DataFrame } from './dataframe.js'
 export { resolvablePromise, wrapPromise } from './promise.js'
@@ -446,36 +447,4 @@ export default function HighTable({
     </div>
     <div className='mock-row-label' style={cornerStyle}>&nbsp;</div>
   </div>
-}
-
-/**
- * Throttle a function to run at most once every `wait` milliseconds.
- */
-export function throttle(fn: () => void, wait: number): () => void {
-  let inCooldown = false
-  let pending = false
-
-  function invoke() {
-    fn()
-    pending = false
-    inCooldown = true
-    // check if there are pending calls after cooldown
-    setTimeout(() => {
-      inCooldown = false
-      if (pending) {
-        // trailing call
-        invoke()
-      }
-    }, wait)
-  }
-
-  return () => {
-    if (!inCooldown) {
-      // leading call
-      invoke()
-    } else {
-      // schedule trailing call
-      pending = true
-    }
-  }
 }
