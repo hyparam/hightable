@@ -151,7 +151,6 @@ export default function TableHeader({
 
   return (
     <>
-      <td><span /></td>
       {header.map((columnHeader, columnIndex) => {
         const direction = directionByColumn.get(columnHeader)
         return (

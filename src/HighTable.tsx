@@ -3,6 +3,7 @@ import Cell from './components/Cell/Cell.js'
 import Row from './components/Row/Row.js'
 import RowHeader from './components/RowHeader/RowHeader.js'
 import TableHeader, { cellStyle } from './components/TableHeader/TableHeader.js'
+import TopLeftCell from './components/TopLeftCell/TopLeftCell.js'
 import { DataFrame } from './helpers/dataframe.js'
 import { PartialRow } from './helpers/row.js'
 import { Selection, SortIndex, areAllSelected, computeNewSelection, isSelected, toggleAll } from './helpers/selection.js'
@@ -398,6 +399,7 @@ export default function HighTable({
           tabIndex={0}>
           <thead role="rowgroup">
             <Row ariaRowIndex={1} >
+              <TopLeftCell />
               <TableHeader
                 cacheKey={cacheKey}
                 columnWidths={columnWidths}
