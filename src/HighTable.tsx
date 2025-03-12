@@ -419,10 +419,6 @@ export default function HighTable({
               const tableIndex = slice.offset + rowIndex
               const dataIndex = row.index
               const selected = isRowSelected(row.index) ?? false
-              /**
-               * use the tableIndex as the key because the dataIndex is not available for pending rows
-               * but we want to be able to select them, without the element being recreated. (TODO(SL): check this)
-               */
               return (
                 <Row
                   key={tableIndex}
