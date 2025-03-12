@@ -38,14 +38,14 @@ describe('TableHeader', () => {
 
   it('renders table headers correctly', () => {
     const { columnWidths, setColumnWidth, setColumnWidths } = mockColumnWidths()
-    const { getByText } = render(<table>
+    const { getByText } = render(<table><thead><tr>
       <TableHeader
         columnWidths={columnWidths}
         dataReady={dataReady}
         header={header}
         setColumnWidth={setColumnWidth}
         setColumnWidths={setColumnWidths} />
-    </table>)
+    </tr></thead></table>)
     header.forEach(columnHeader => {
       expect(getByText(columnHeader)).toBeDefined()
     })
@@ -64,7 +64,7 @@ describe('TableHeader', () => {
     vi.mocked(localStorage.getItem).mockReturnValueOnce(JSON.stringify(savedWidths))
 
     const { columnWidths, setColumnWidth, setColumnWidths } = mockColumnWidths()
-    render(<table>
+    render(<table><thead><tr>
       <TableHeader
         header={header}
         cacheKey={cacheKey}
@@ -72,7 +72,7 @@ describe('TableHeader', () => {
         setColumnWidth={setColumnWidth}
         setColumnWidths={setColumnWidths}
         dataReady={dataReady} />
-    </table>)
+    </tr></thead></table>)
 
     expect(localStorage.getItem).toHaveBeenCalledWith(`column-widths:${cacheKey}`)
     expect(setColumnWidths).toHaveBeenCalledWith([150, 250, undefined])
@@ -80,7 +80,7 @@ describe('TableHeader', () => {
 
   it('handles double click to auto resize', async () => {
     const { columnWidths, setColumnWidth, setColumnWidths } = mockColumnWidths()
-    const { user, getByText } = render(<table>
+    const { user, getByText } = render(<table><thead><tr>
       <TableHeader
         cacheKey={cacheKey}
         columnWidths={columnWidths}
@@ -88,7 +88,7 @@ describe('TableHeader', () => {
         header={header}
         setColumnWidth={setColumnWidth}
         setColumnWidths={setColumnWidths} />
-    </table>)
+    </tr></thead></table>)
 
     const firstHeader = getByText(header[0])
     const resizeHandle = firstHeader.querySelector('span')
@@ -102,7 +102,7 @@ describe('TableHeader', () => {
 
   it('handles mouse click and drag to resize', async () => {
     const { columnWidths, setColumnWidth, setColumnWidths } = mockColumnWidths()
-    const { user, getByText } = render(<table>
+    const { user, getByText } = render(<table><thead><tr>
       <TableHeader
         cacheKey={cacheKey}
         columnWidths={columnWidths}
@@ -110,7 +110,7 @@ describe('TableHeader', () => {
         header={header}
         setColumnWidth={setColumnWidth}
         setColumnWidths={setColumnWidths} />
-    </table>)
+    </tr></thead></table>)
 
     // Simulate resizing the first column
     const firstHeader = getByText(header[0])
@@ -139,7 +139,7 @@ describe('TableHeader', () => {
   it('sets orderBy to the column name (ascending order) when a header is clicked', async () => {
     const { columnWidths, setColumnWidth, setColumnWidths } = mockColumnWidths()
     const onOrderByChange = vi.fn()
-    const { user, getByText } = render(<table>
+    const { user, getByText } = render(<table><thead><tr>
       <TableHeader
         header={header}
         columnWidths={columnWidths}
@@ -148,7 +148,7 @@ describe('TableHeader', () => {
         orderBy={[]}
         onOrderByChange={onOrderByChange}
         dataReady={dataReady} />
-    </table>)
+    </tr></thead></table>)
 
     const ageHeader = getByText('Age')
     await user.click(ageHeader)
@@ -159,7 +159,7 @@ describe('TableHeader', () => {
   it('sets orderBy to the column name (descending order) when a header is clicked if it was already sorted by ascending order', async () => {
     const { columnWidths, setColumnWidth, setColumnWidths } = mockColumnWidths()
     const onOrderByChange = vi.fn()
-    const { user, getByText } = render(<table>
+    const { user, getByText } = render(<table><thead><tr>
       <TableHeader
         header={header}
         columnWidths={columnWidths}
@@ -168,7 +168,7 @@ describe('TableHeader', () => {
         onOrderByChange={onOrderByChange}
         orderBy={[{ column: 'Age', direction: 'ascending' }]}
         dataReady={dataReady} />
-    </table>)
+    </tr></thead></table>)
 
     const ageHeader = getByText('Age')
     await user.click(ageHeader)
@@ -179,7 +179,7 @@ describe('TableHeader', () => {
   it('sets orderBy to undefined when a header is clicked if it was already sorted by descending order', async () => {
     const { columnWidths, setColumnWidth, setColumnWidths } = mockColumnWidths()
     const onOrderByChange = vi.fn()
-    const { user, getByText } = render(<table>
+    const { user, getByText } = render(<table><thead><tr>
       <TableHeader
         header={header}
         columnWidths={columnWidths}
@@ -188,7 +188,7 @@ describe('TableHeader', () => {
         onOrderByChange={onOrderByChange}
         orderBy={[{ column: 'Age', direction: 'descending' }]}
         dataReady={dataReady} />
-    </table>)
+    </tr></thead></table>)
 
     const ageHeader = getByText('Age')
     await user.click(ageHeader)
@@ -199,7 +199,7 @@ describe('TableHeader', () => {
   it('changes orderBy to a new column when a different header is clicked', async () => {
     const { columnWidths, setColumnWidth, setColumnWidths } = mockColumnWidths()
     const onOrderByChange = vi.fn()
-    const { user, getByText } = render(<table>
+    const { user, getByText } = render(<table><thead><tr>
       <TableHeader
         header={header}
         columnWidths={columnWidths}
@@ -208,7 +208,7 @@ describe('TableHeader', () => {
         onOrderByChange={onOrderByChange}
         orderBy={[{ column: 'Age', direction: 'ascending' }]}
         dataReady={dataReady} />
-    </table>)
+    </tr></thead></table>)
 
     const addressHeader = getByText('Address')
     await user.click(addressHeader)
@@ -219,7 +219,7 @@ describe('TableHeader', () => {
   it('does not change orderBy when clicking on the resize handle', async () => {
     const { columnWidths, setColumnWidth, setColumnWidths } = mockColumnWidths()
     const onOrderByChange = vi.fn()
-    const { user, getByText } = render(<table>
+    const { user, getByText } = render(<table><thead><tr>
       <TableHeader
         header={header}
         columnWidths={columnWidths}
@@ -227,7 +227,7 @@ describe('TableHeader', () => {
         setColumnWidths={setColumnWidths}
         onOrderByChange={onOrderByChange}
         dataReady={dataReady} />
-    </table>)
+    </tr></thead></table>)
 
     const nameHeader = getByText('Name')
     const resizeHandle = nameHeader.querySelector('span')
@@ -247,7 +247,7 @@ describe('TableHeader', () => {
     saveColumnWidth(cacheKey2, { columnIndex: 0, columnName: 'Name', width: 300 })
     saveColumnWidth(cacheKey2, { columnIndex: 1, columnName: 'Age', width: 250 })
 
-    const { rerender } = render(<table>
+    const { rerender } = render(<table><thead><tr>
       <TableHeader
         header={header}
         cacheKey={cacheKey}
@@ -255,12 +255,12 @@ describe('TableHeader', () => {
         setColumnWidth={vi.fn()}
         setColumnWidths={setColumnWidths}
         dataReady={dataReady} />
-    </table>)
+    </tr></thead></table>)
 
     expect(localStorage.getItem).toHaveBeenCalledWith(`column-widths:${cacheKey}`)
     expect(setColumnWidths).toHaveBeenCalledWith([150, 200, undefined])
 
-    rerender(<table>
+    rerender(<table><thead><tr>
       <TableHeader
         header={header}
         cacheKey={cacheKey2}
@@ -268,7 +268,7 @@ describe('TableHeader', () => {
         setColumnWidth={vi.fn()}
         setColumnWidths={setColumnWidths}
         dataReady={dataReady} />
-    </table>)
+    </tr></thead></table>)
 
     expect(localStorage.getItem).toHaveBeenCalledWith(`column-widths:${cacheKey2}`)
     expect(setColumnWidths).toHaveBeenCalledWith([300, 250, undefined])

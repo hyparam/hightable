@@ -149,8 +149,8 @@ export default function TableHeader({
 
   const memoizedStyles = useMemo(() => columnWidths.map(cellStyle), [columnWidths])
 
-  return <thead role="rowgroup">
-    <tr aria-rowindex={1} role="row">
+  return (
+    <>
       <td><span /></td>
       {header.map((columnHeader, columnIndex) => {
         const direction = directionByColumn.get(columnHeader)
@@ -171,8 +171,8 @@ export default function TableHeader({
               onMouseDown={e => { startResizing(columnIndex, e) }} />
           </th>
         )})}
-    </tr>
-  </thead>
+    </>
+  )
 }
 
 export function cellStyle(width: number | undefined) {

@@ -3,17 +3,16 @@ import React from 'react'
 interface Props {
   children: React.ReactNode
   selected?: boolean
-  tableIndex: number
+  ariaRowIndex: number
   title?: string
 }
 
 function Row({
   children,
   selected,
-  tableIndex,
+  ariaRowIndex,
   title,
 }: Props) {
-  const ariaRowIndex = tableIndex + 2 // 1-based + the header row (TODO(SL): maybe pass it in as a prop, since the row component has no reason to know about the table)
   return (
     <tr
       role="row"

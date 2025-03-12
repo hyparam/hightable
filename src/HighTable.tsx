@@ -341,7 +341,7 @@ export default function HighTable({
   const getOnDoubleClickCell = useCallback((col: number, row?: number) => {
     if (!onDoubleClickCell) return
     if (row === undefined) {
-      console.warn('Cell onDoubleClick is cancelled because row index is undefined')
+      // console.warn('Cell onDoubleClick is cancelled because row index is undefined')
       return
     }
     return (e: React.MouseEvent) => {
@@ -351,7 +351,7 @@ export default function HighTable({
   const getOnMouseDownCell = useCallback((col: number, row?: number) => {
     if (!onMouseDownCell) return
     if (row === undefined) {
-      console.warn('Cell onMouseDown is cancelled because row index is undefined')
+      // console.warn('Cell onMouseDown is cancelled because row index is undefined')
       return
     }
     return (e: React.MouseEvent) => {
@@ -396,21 +396,25 @@ export default function HighTable({
           role='grid'
           style={{ top: `${offsetTop}px` }}
           tabIndex={0}>
-          <TableHeader
-            cacheKey={cacheKey}
-            columnWidths={columnWidths}
-            dataReady={hasCompleteRow}
-            header={data.header}
-            orderBy={orderBy}
-            setColumnWidth={setColumnWidth}
-            setColumnWidths={setColumnWidths}
-            onOrderByChange={onOrderByChange}
-          />
+          <thead role="rowgroup">
+            <Row ariaRowIndex={1} >
+              <TableHeader
+                cacheKey={cacheKey}
+                columnWidths={columnWidths}
+                dataReady={hasCompleteRow}
+                header={data.header}
+                orderBy={orderBy}
+                setColumnWidth={setColumnWidth}
+                setColumnWidths={setColumnWidths}
+                onOrderByChange={onOrderByChange}
+              />
+            </Row>
+          </thead>
           <tbody role="rowgroup">
             {prePadding.map((_, prePaddingIndex) => {
               const tableIndex = offset - prePadding.length + prePaddingIndex
               return (
-                <Row key={tableIndex} tableIndex={tableIndex} >
+                <Row key={tableIndex} ariaRowIndex={tableIndex + 2} >
                   <RowHeader cornerStyle={cornerStyle} />
                 </Row>
               )
@@ -423,7 +427,7 @@ export default function HighTable({
                 <Row
                   key={tableIndex}
                   selected={selected}
-                  tableIndex={tableIndex}
+                  ariaRowIndex={tableIndex + 2}
                   title={rowError(row, data.header.length)}
                 >
                   <RowHeader
@@ -449,7 +453,7 @@ export default function HighTable({
             {postPadding.map((_, postPaddingIndex) => {
               const tableIndex = offset + rowsLength + postPaddingIndex
               return (
-                <Row key={tableIndex} tableIndex={tableIndex} >
+                <Row key={tableIndex} ariaRowIndex={tableIndex + 2}>
                   <RowHeader cornerStyle={cornerStyle} />
                 </Row>
               )
