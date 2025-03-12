@@ -468,6 +468,5 @@ export default function HighTable({
       <span>&nbsp;</span>
       { showCornerSelection && <input type='checkbox' checked={allRowsSelected} readOnly /> }
     </div>
-    <div className='mock-row-label' style={cornerStyle}>&nbsp;</div>
   </div>
 }
