@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { DataFrame, arrayDataFrame, getGetColumn, sortableDataFrame } from '../src/dataframe.js'
-import { AsyncRow, Row, awaitRows } from '../src/row.js'
-import { wrapPromise } from '../src/utils/promise.js'
+import { DataFrame, arrayDataFrame, getGetColumn, sortableDataFrame } from '../../src/helpers/dataframe.js'
+import { AsyncRow, Row, awaitRows } from '../../src/helpers/row.js'
+import { wrapPromise } from '../../src/utils/promise.js'
 
 export function wrapObject({ index, cells }: Row): AsyncRow {
   return {

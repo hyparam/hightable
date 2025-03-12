@@ -1,4 +1,4 @@
-import { ResolvablePromise, WrappedPromise, resolvablePromise } from './utils/promise.js'
+import { ResolvablePromise, WrappedPromise, resolvablePromise } from '../utils/promise.js'
 
 /**
  * A row where each cell is a promise.

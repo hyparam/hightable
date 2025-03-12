@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { areEqualOrderBy, partitionOrderBy, toggleColumn } from '../src/sort'
+import { areEqualOrderBy, partitionOrderBy, toggleColumn } from '../../src/helpers/sort.js'
 
 const nameAsc = { column: 'name', direction: 'ascending' as const }
 const nameDesc = { column: 'name', direction: 'descending' as const }
