@@ -338,21 +338,25 @@ export default function HighTable({
   }, [data, onError, orderBy, slice, rowsRange, hasCompleteRow])
 
   const memoizedStyles = useMemo(() => columnWidths.map(cellStyle), [columnWidths])
-  const onDoubleClick = useCallback((e: MouseEvent, col: number, row?: number) => {
+  const getOnDoubleClickCell = useCallback((col: number, row?: number) => {
     if (!onDoubleClickCell) return
     if (row === undefined) {
       console.warn('Cell onDoubleClick is cancelled because row index is undefined')
       return
     }
-    onDoubleClickCell(e, col, row)
+    return (e: React.MouseEvent) => {
+      onDoubleClickCell(e, col, row)
+    }
   }, [onDoubleClickCell])
-  const onMouseDown = useCallback((e: MouseEvent, col: number, row?: number) => {
+  const getOnMouseDownCell = useCallback((col: number, row?: number) => {
     if (!onMouseDownCell) return
     if (row === undefined) {
       console.warn('Cell onMouseDown is cancelled because row index is undefined')
       return
     }
-    onMouseDownCell(e, col, row)
+    return (e: React.MouseEvent) => {
+      onMouseDownCell(e, col, row)
+    }
   }, [onMouseDownCell])
 
   // focus table on mount so arrow keys work
@@ -437,8 +441,8 @@ export default function HighTable({
                     <Cell
                       key={columnIndex}
                       columnStyle={memoizedStyles[columnIndex]}
-                      onDoubleClick={e => { onDoubleClick(e, columnIndex, dataIndex) }} // TODO(SL) avoid creating a new function on every render
-                      onMouseDown={e => { onMouseDown(e, columnIndex, dataIndex) }} // TODO(SL) avoid creating a new function on every render
+                      onDoubleClick={getOnDoubleClickCell(columnIndex, dataIndex)}
+                      onMouseDown={getOnMouseDownCell(columnIndex, dataIndex)}
                       stringify={stringify}
                       value={row.cells[column]}
                     />
