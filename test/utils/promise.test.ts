@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { resolvablePromise } from '../src/promise.js'
+import { resolvablePromise } from '../../src/utils/promise.js'
 
 describe('resolvablePromise', () => {
   it('should resolve with a value', async () => {

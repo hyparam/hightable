@@ -13,13 +13,13 @@ import { stringify as stringifyDefault } from './utils/stringify.js'
 import { throttle } from './utils/throttle.js'
 export { arrayDataFrame, sortableDataFrame } from './dataframe.js'
 export type { DataFrame } from './dataframe.js'
-export { resolvablePromise, wrapPromise } from './promise.js'
-export type { ResolvablePromise } from './promise.js'
 export { asyncRows, awaitRow, awaitRows, resolvableRow } from './row.js'
 export type { AsyncRow, Cells, PartialRow, ResolvableRow, Row } from './row.js'
 export { rowCache } from './rowCache.js'
 export type { Selection } from './selection.js'
 export type { OrderBy } from './sort.js'
+export { resolvablePromise, wrapPromise } from './utils/promise.js'
+export type { ResolvablePromise } from './utils/promise.js'
 export { HighTable }
 
 /**
