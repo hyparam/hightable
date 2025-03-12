@@ -1,8 +1,8 @@
 import { waitFor } from '@testing-library/react'
 import React from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import TableHeader, { ColumnWidth, cellStyle, saveColumnWidth } from '../src/TableHeader.js'
-import { render } from './userEvent.js'
+import TableHeader, { ColumnWidth, cellStyle, saveColumnWidth } from '../../../src/components/TableHeader/TableHeader.js'
+import { render } from '../../userEvent.js'
 
 vi.stubGlobal('localStorage', (() => {
   let store: Record<string, string> = {}

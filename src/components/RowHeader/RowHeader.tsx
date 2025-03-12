@@ -1,5 +1,5 @@
 import React from 'react'
-import { formatRowNumber } from '../helpers/text.js'
+import { formatRowNumber } from '../../helpers/text.js'
 
 interface Props {
   cornerStyle?: React.CSSProperties

@@ -1,6 +1,6 @@
 import { MouseEvent, RefObject, createRef, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
-import { OrderBy, toggleColumn } from './helpers/sort.js'
+import { OrderBy, toggleColumn } from '../../helpers/sort.js'
 
 interface TableProps {
   header: string[]
