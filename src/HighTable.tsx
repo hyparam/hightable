@@ -1,5 +1,7 @@
-import { MouseEvent, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import Row from './components/Row.js'
 import { DataFrame } from './dataframe.js'
+import { stringify as stringifyDefault } from './helpers/stringify.js'
 import { useInputState } from './hooks.js'
 import { PartialRow } from './row.js'
 import { Selection, SortIndex, areAllSelected, computeNewSelection, isSelected, toggleAll } from './selection.js'
@@ -149,7 +151,7 @@ export default function HighTable({
   const pendingSelectionRequest = useRef(0)
   const getOnSelectRowClick = useCallback(({ tableIndex, dataIndex }: {tableIndex: number, dataIndex?: number}) => {
     if (!selection) return
-    async function onSelectRowClick(event: MouseEvent) {
+    async function onSelectRowClick(event: React.MouseEvent) {
       if (!selection) return
       const useAnchor = event.shiftKey && selection.anchor !== undefined
       const requestId = ++pendingSelectionRequest.current
@@ -169,7 +171,7 @@ export default function HighTable({
         onSelectionChange(newSelection)
       }
     }
-    return (event: MouseEvent): void => {
+    return (event: React.MouseEvent): void => {
       void onSelectRowClick(event)
     }
   }, [onSelectionChange, selection, data, orderBy, sortIndexes])
@@ -333,46 +335,21 @@ export default function HighTable({
 
   const memoizedStyles = useMemo(() => columnWidths.map(cellStyle), [columnWidths])
   const onDoubleClick = useCallback((e: MouseEvent, col: number, row?: number) => {
+    if (!onDoubleClickCell) return
     if (row === undefined) {
       console.warn('Cell onDoubleClick is cancelled because row index is undefined')
       return
     }
-    onDoubleClickCell?.(e, col, row)
+    onDoubleClickCell(e, col, row)
   }, [onDoubleClickCell])
   const onMouseDown = useCallback((e: MouseEvent, col: number, row?: number) => {
+    if (!onMouseDownCell) return
     if (row === undefined) {
       console.warn('Cell onMouseDown is cancelled because row index is undefined')
       return
     }
-    onMouseDownCell?.(e, col, row)
+    onMouseDownCell(e, col, row)
   }, [onMouseDownCell])
-
-  /**
-   * Render a table cell <td> with title and optional custom rendering
-   *
-   * @param value cell value
-   * @param col column index
-   * @param row row index. If undefined, onDoubleClickCell and onMouseDownCell will not be called.
-   */
-  const Cell = useCallback((value: unknown, col: number, row?: number): ReactNode => {
-    // render as truncated text
-    let str = stringify(value)
-    let title: string | undefined
-    if (typeof str === 'string') {
-      if (str.length > 400) str = `${str.slice(0, 397)}\u2026` // ...
-      if (str.length > 100) title = str
-    }
-    return <td
-      role="cell"
-      className={str === undefined ? 'pending' : undefined}
-      key={col}
-      onDoubleClick={e => { onDoubleClick(e, col, row) }}
-      onMouseDown={e => { onMouseDown(e, col, row) }}
-      style={memoizedStyles[col]}
-      title={title}>
-      {str}
-    </td>
-  }, [memoizedStyles, onDoubleClick, onMouseDown, stringify])
 
   // focus table on mount so arrow keys work
   useEffect(() => {
@@ -433,24 +410,24 @@ export default function HighTable({
               const tableIndex = slice.offset + rowIndex
               const dataIndex = row.index
               const selected = isRowSelected(dataIndex) ?? false
-              const ariaRowIndex = tableIndex + 2 // 1-based + the header row
               /**
                * use the tableIndex as the key because the dataIndex is not available for pending rows
                * but we want to be able to select them, without the element being recreated.
                */
-              const key = tableIndex
-              return <tr role="row" key={key} aria-rowindex={ariaRowIndex} title={rowError(row, data.header.length)}
-                className={selected ? 'selected' : ''}
-                aria-selected={selected}
-              >
-                <th scope="row" role="rowheader" style={cornerStyle} onClick={getOnSelectRowClick({ tableIndex, dataIndex })}>
-                  <span>{rowLabel(dataIndex)}</span>
-                  { showSelection && <input type='checkbox' checked={selected} readOnly /> }
-                </th>
-                {data.header.map((col, colIndex) =>
-                  Cell(row.cells[col], colIndex, dataIndex)
-                )}
-              </tr>
+              return <Row
+                key={tableIndex}
+                columns={data.header}
+                columnStyles={memoizedStyles}
+                cornerStyle={cornerStyle}
+                data={row}
+                onSelectRowClick={getOnSelectRowClick({ tableIndex, dataIndex: row.index })}
+                onDoubleClickCell={onDoubleClick}
+                onMouseDownCell={onMouseDown}
+                selected={selected}
+                showSelection={showSelection}
+                stringify={stringify}
+                tableIndex={tableIndex}
+              />
             })}
             {postPadding.map((_, postPaddingIndex) => {
               const tableIndex = offset + rowsLength + postPaddingIndex
@@ -470,24 +447,6 @@ export default function HighTable({
     <div className='mock-row-label' style={cornerStyle}>&nbsp;</div>
   </div>
 }
-
-/**
- * Robust stringification of any value, including json and bigints.
- */
-export function stringify(value: unknown): string | undefined {
-  if (typeof value === 'string') return value
-  if (typeof value === 'number') return value.toLocaleString()
-  if (typeof value === 'bigint') return value.toLocaleString()
-  if (Array.isArray(value)) return `[${value.map(stringify).join(', ')}]`
-  if (value === null || value === undefined) return JSON.stringify(value)
-  if (value instanceof Date) return value.toISOString()
-  if (typeof value === 'object') {
-    return `{${Object.entries(value).map(([k, v]) => `${k}: ${stringify(v)}`).join(', ')}}`
-  }
-  // fallback
-  return JSON.stringify(value)
-}
-const stringifyDefault = stringify
 
 /**
  * Throttle a function to run at most once every `wait` milliseconds.
@@ -518,21 +477,5 @@ export function throttle(fn: () => void, wait: number): () => void {
       // schedule trailing call
       pending = true
     }
-  }
-}
-
-function rowLabel(rowIndex?: number): string {
-  if (rowIndex === undefined) return ''
-  // rowIndex + 1 because the displayed row numbers are 1-based
-  return (rowIndex + 1).toLocaleString()
-}
-
-/**
- * Validate row length
- */
-function rowError(row: PartialRow, length: number): string | undefined {
-  const numKeys = Object.keys(row.cells).length
-  if (numKeys > 0 && numKeys !== length) {
-    return `Row ${rowLabel(row.index)} length ${numKeys} does not match header length ${length}`
   }
 }
