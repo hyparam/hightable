@@ -1,10 +1,10 @@
 import React from 'react'
 
 interface Props {
-  style?: React.CSSProperties
   onDoubleClick?: (event: React.MouseEvent) => void
   onMouseDown?: (event: React.MouseEvent) => void
   stringify: (value: unknown) => string | undefined
+  style?: React.CSSProperties
   value: any
 }
 
@@ -17,7 +17,7 @@ interface Props {
  * @param props.onDoubleClick double click callback
  * @param props.onMouseDown mouse down callback
  */
-function Cell({ style, onDoubleClick, onMouseDown, stringify, value }: Props) {
+function Cell({ onDoubleClick, onMouseDown, stringify, style, value }: Props) {
   // render as truncated text
   const str = React.useMemo(() => {
     return stringify(value)

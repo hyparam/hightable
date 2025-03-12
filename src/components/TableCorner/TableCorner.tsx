@@ -8,13 +8,13 @@ interface Props {
   style?: React.CSSProperties
 }
 
-function RowHeader({ children, checked, onClick, showCheckBox, style }: Props) {
+function TableCorner({ children, checked, onClick, showCheckBox, style }: Props) {
   return (
-    <th scope="row" role="rowheader" style={style} onClick={onClick}>
+    <td className={`table-corner${showCheckBox ? ' show-checkbox' : ''}`} style={style} onClick={onClick}>
       <span>{children}</span>
       { showCheckBox && <input type='checkbox' checked={checked} readOnly /> }
-    </th>
+    </td>
   )
 }
 
-export default RowHeader
+export default TableCorner

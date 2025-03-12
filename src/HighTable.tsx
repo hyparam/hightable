@@ -2,13 +2,13 @@ import React, { MouseEvent, useCallback, useEffect, useMemo, useRef, useState } 
 import Cell from './components/Cell/Cell.js'
 import Row from './components/Row/Row.js'
 import RowHeader from './components/RowHeader/RowHeader.js'
+import TableCorner from './components/TableCorner/TableCorner.js'
 import TableHeader, { cellStyle } from './components/TableHeader/TableHeader.js'
-import TopLeftCell from './components/TopLeftCell/TopLeftCell.js'
 import { DataFrame } from './helpers/dataframe.js'
 import { PartialRow } from './helpers/row.js'
 import { Selection, SortIndex, areAllSelected, computeNewSelection, isSelected, toggleAll } from './helpers/selection.js'
 import { OrderBy, areEqualOrderBy } from './helpers/sort.js'
-import { rowError } from './helpers/text.js'
+import { formatRowNumber, rowError } from './helpers/text.js'
 import { useInputState } from './hooks/useInputState.js'
 import { stringify as stringifyDefault } from './utils/stringify.js'
 import { throttle } from './utils/throttle.js'
@@ -399,7 +399,12 @@ export default function HighTable({
           tabIndex={0}>
           <thead role="rowgroup">
             <Row ariaRowIndex={1} >
-              <TopLeftCell />
+              <TableCorner
+                onClick={getOnSelectAllRows()}
+                checked={allRowsSelected}
+                showCheckBox={showCornerSelection}
+                style={cornerStyle}
+              >&nbsp;</TableCorner>
               <TableHeader
                 cacheKey={cacheKey}
                 columnWidths={columnWidths}
@@ -434,11 +439,10 @@ export default function HighTable({
                 >
                   <RowHeader
                     style={cornerStyle}
-                    dataIndex={dataIndex}
                     onClick={getOnSelectRowClick({ tableIndex, dataIndex })}
-                    selected={selected}
-                    showSelection={showSelection}
-                  />
+                    checked={selected}
+                    showCheckBox={showSelection}
+                  >{formatRowNumber(dataIndex)}</RowHeader>
                   {data.header.map((column, columnIndex) =>
                     <Cell
                       key={columnIndex}
@@ -463,10 +467,6 @@ export default function HighTable({
           </tbody>
         </table>
       </div>
-    </div>
-    <div className={`table-corner${showCornerSelection ? ' show-corner-selection' : ''}`} style={cornerStyle} onClick={getOnSelectAllRows()}>
-      <span>&nbsp;</span>
-      { showCornerSelection && <input type='checkbox' checked={allRowsSelected} readOnly /> }
     </div>
   </div>
 }
