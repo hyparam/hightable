@@ -1,7 +1,7 @@
 import React from 'react'
 
 interface Props {
-  columnStyle?: React.CSSProperties
+  style?: React.CSSProperties
   onDoubleClick?: (event: React.MouseEvent) => void
   onMouseDown?: (event: React.MouseEvent) => void
   stringify: (value: unknown) => string | undefined
@@ -13,11 +13,11 @@ interface Props {
  *
  * @param props
  * @param props.value cell value
- * @param props.columnStyle CSS properties
+ * @param props.style CSS properties
  * @param props.onDoubleClick double click callback
  * @param props.onMouseDown mouse down callback
  */
-function Cell({ columnStyle, onDoubleClick, onMouseDown, stringify, value }: Props) {
+function Cell({ style, onDoubleClick, onMouseDown, stringify, value }: Props) {
   // render as truncated text
   const str = React.useMemo(() => {
     return stringify(value)
@@ -39,7 +39,7 @@ function Cell({ columnStyle, onDoubleClick, onMouseDown, stringify, value }: Pro
       className={str === undefined ? 'pending' : undefined}
       onDoubleClick={onDoubleClick}
       onMouseDown={onMouseDown}
-      style={columnStyle}
+      style={style}
       title={title}>
       {str}
     </td>

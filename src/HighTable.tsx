@@ -417,7 +417,7 @@ export default function HighTable({
               const tableIndex = offset - prePadding.length + prePaddingIndex
               return (
                 <Row key={tableIndex} ariaRowIndex={tableIndex + 2} >
-                  <RowHeader cornerStyle={cornerStyle} />
+                  <RowHeader style={cornerStyle} />
                 </Row>
               )
             })}
@@ -433,7 +433,7 @@ export default function HighTable({
                   title={rowError(row, data.header.length)}
                 >
                   <RowHeader
-                    cornerStyle={cornerStyle}
+                    style={cornerStyle}
                     dataIndex={dataIndex}
                     onClick={getOnSelectRowClick({ tableIndex, dataIndex })}
                     selected={selected}
@@ -442,7 +442,7 @@ export default function HighTable({
                   {data.header.map((column, columnIndex) =>
                     <Cell
                       key={columnIndex}
-                      columnStyle={memoizedStyles[columnIndex]}
+                      style={memoizedStyles[columnIndex]}
                       onDoubleClick={getOnDoubleClickCell(columnIndex, dataIndex)}
                       onMouseDown={getOnMouseDownCell(columnIndex, dataIndex)}
                       stringify={stringify}
@@ -456,7 +456,7 @@ export default function HighTable({
               const tableIndex = offset + rowsLength + postPaddingIndex
               return (
                 <Row key={tableIndex} ariaRowIndex={tableIndex + 2}>
-                  <RowHeader cornerStyle={cornerStyle} />
+                  <RowHeader style={cornerStyle} />
                 </Row>
               )
             })}
