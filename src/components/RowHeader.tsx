@@ -6,7 +6,7 @@ interface Props {
   dataIndex?: number
   onClick?: (event: React.MouseEvent) => void
   selected?: boolean
-  showSelection: boolean
+  showSelection?: boolean
 }
 
 function RowHeader({ cornerStyle, dataIndex, onClick, selected, showSelection }: Props) {

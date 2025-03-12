@@ -1,6 +1,9 @@
 import React, { MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import Cell from './components/Cell.js'
 import Row from './components/Row.js'
+import RowHeader from './components/RowHeader.js'
 import { DataFrame } from './dataframe.js'
+import { rowError } from './helpers/text.js'
 import { useInputState } from './hooks.js'
 import { PartialRow } from './row.js'
 import { Selection, SortIndex, areAllSelected, computeNewSelection, isSelected, toggleAll } from './selection.js'
@@ -402,40 +405,54 @@ export default function HighTable({
           <tbody role="rowgroup">
             {prePadding.map((_, prePaddingIndex) => {
               const tableIndex = offset - prePadding.length + prePaddingIndex
-              const ariaRowIndex = tableIndex + 2 // 1-based + the header row
-              return <tr role="row" key={tableIndex} aria-rowindex={ariaRowIndex} >
-                <th scope="row" role="rowheader" style={cornerStyle}></th>
-              </tr>
+              return (
+                <Row key={tableIndex} tableIndex={tableIndex} >
+                  <RowHeader cornerStyle={cornerStyle} />
+                </Row>
+              )
             })}
             {slice?.rows.map((row, rowIndex) => {
               const tableIndex = slice.offset + rowIndex
               const dataIndex = row.index
-              const selected = isRowSelected(dataIndex) ?? false
+              const selected = isRowSelected(row.index) ?? false
               /**
                * use the tableIndex as the key because the dataIndex is not available for pending rows
-               * but we want to be able to select them, without the element being recreated.
+               * but we want to be able to select them, without the element being recreated. (TODO(SL): check this)
                */
-              return <Row
-                key={tableIndex}
-                columns={data.header}
-                columnStyles={memoizedStyles}
-                cornerStyle={cornerStyle}
-                data={row}
-                onSelectRowClick={getOnSelectRowClick({ tableIndex, dataIndex: row.index })}
-                onDoubleClickCell={onDoubleClick}
-                onMouseDownCell={onMouseDown}
-                selected={selected}
-                showSelection={showSelection}
-                stringify={stringify}
-                tableIndex={tableIndex}
-              />
+              return (
+                <Row
+                  key={tableIndex}
+                  selected={selected}
+                  tableIndex={tableIndex}
+                  title={rowError(row, data.header.length)}
+                >
+                  <RowHeader
+                    cornerStyle={cornerStyle}
+                    dataIndex={dataIndex}
+                    onClick={getOnSelectRowClick({ tableIndex, dataIndex })}
+                    selected={selected}
+                    showSelection={showSelection}
+                  />
+                  {data.header.map((column, columnIndex) =>
+                    <Cell
+                      key={columnIndex}
+                      columnStyle={memoizedStyles[columnIndex]}
+                      onDoubleClick={e => { onDoubleClick(e, columnIndex, dataIndex) }} // TODO(SL) avoid creating a new function on every render
+                      onMouseDown={e => { onMouseDown(e, columnIndex, dataIndex) }} // TODO(SL) avoid creating a new function on every render
+                      stringify={stringify}
+                      value={row.cells[column]}
+                    />
+                  )}
+                </Row>
+              )
             })}
             {postPadding.map((_, postPaddingIndex) => {
               const tableIndex = offset + rowsLength + postPaddingIndex
-              const ariaRowIndex = tableIndex + 2 // 1-based + the header row
-              return <tr role="row" key={tableIndex} aria-rowindex={ariaRowIndex} >
-                <th scope="row" role="rowheader" style={cornerStyle} ></th>
-              </tr>
+              return (
+                <Row key={tableIndex} tableIndex={tableIndex} >
+                  <RowHeader cornerStyle={cornerStyle} />
+                </Row>
+              )
             })}
           </tbody>
         </table>
