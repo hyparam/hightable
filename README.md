@@ -173,27 +173,23 @@ const dataframe = {
 Low-level example:
 
 ```javascript
-import { resolvableRow } from "hightable";
+import { resolvableRow } from 'hightable'
 const dataframe = {
-  header: ["a", "b"],
+  header: ['a', 'b'],
   numRows: 10,
   rows(start, end) {
     // resolvableRow makes a row where each column value is a wrapped promise with .resolve() and .reject() methods;
     // the row also contains a wrapped promise for the row index
-    const futureRows = Array.from({ length: end - start }, () =>
-      resolvableRow(this.header)
-    );
+    const futureRows = Array.from({ length: end - start }, () => resolvableRow(this.header))
     for (let row = start; row < end; row++) {
       for (const col of this.header) {
-        fetchCell(row, col).then((value) =>
-          futureRows[row - start].cells[col].resolve(value)
-        );
+        fetchCell(row, col).then((value) => futureRows[row - start].cells[col].resolve(value))
       }
-      futureRows[row - start].index.resolve(row);
+      futureRows[row - start].index.resolve(row)
     }
-    return futureRows;
+    return futureRows
   },
-};
+}
 ```
 
 ## Styling
