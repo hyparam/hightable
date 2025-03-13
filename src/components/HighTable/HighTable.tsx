@@ -1,4 +1,4 @@
-import React, { MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DataFrame } from '../../helpers/dataframe.js'
 import { PartialRow } from '../../helpers/row.js'
 import { Selection, SortIndex, areAllSelected, computeNewSelection, isSelected, toggleAll } from '../../helpers/selection.js'
@@ -25,22 +25,14 @@ interface Slice {
 
 const rowHeight = 33 // row height px
 
-/**
- * Mouse event handler for a cell in the table.
- * @param event mouse event
- * @param col column index
- * @param row row index in the data frame
- */
-type MouseEventCellHandler = (event: MouseEvent, col: number, row: number) => void
-
 interface Props {
   data: DataFrame
   cacheKey?: string // used to persist column widths
   overscan?: number // number of rows to fetch outside of the viewport
   padding?: number // number of padding rows to render outside of the viewport
   focus?: boolean // focus table on mount? (default true)
-  onDoubleClickCell?: MouseEventCellHandler
-  onMouseDownCell?: MouseEventCellHandler
+  onDoubleClickCell?: (event: React.MouseEvent, col: number, row: number) => void
+  onMouseDownCell?: (event: React.MouseEvent, col: number, row: number) => void
   onError?: (error: Error) => void
   orderBy?: OrderBy // order used to fetch the rows. If undefined, the table is unordered, the sort controls are hidden and the interactions are disabled. Pass [] to fetch the rows in the original order.
   onOrderByChange?: (orderBy: OrderBy) => void // callback to call when a user interaction changes the order. The interactions are disabled if undefined.
