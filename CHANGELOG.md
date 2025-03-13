@@ -13,6 +13,7 @@
 
 ### Refactored
 
+- Use small components instead of defining all the elements in HighTable and TableHeader ([#70](https://github.com/hyparam/hightable/pull/70)).
 - Structure the code files in directories: components/, hooks/, utils/ and helpers/ ([#70](https://github.com/hyparam/hightable/pull/70)).
 - The div with the `mock-row-label` class has been removed from the component ([#70](https://github.com/hyparam/hightable/pull/70)).
 
