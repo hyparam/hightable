@@ -1,20 +1,17 @@
-import { MouseEvent, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { DataFrame } from './dataframe.js'
-import { useInputState } from './hooks.js'
-import { PartialRow } from './row.js'
-import { Selection, SortIndex, areAllSelected, computeNewSelection, isSelected, toggleAll } from './selection.js'
-import { OrderBy, areEqualOrderBy } from './sort.js'
-import TableHeader, { cellStyle } from './TableHeader.js'
-export { arrayDataFrame, sortableDataFrame } from './dataframe.js'
-export type { DataFrame } from './dataframe.js'
-export { resolvablePromise, wrapPromise } from './promise.js'
-export type { ResolvablePromise } from './promise.js'
-export { asyncRows, awaitRow, awaitRows, resolvableRow } from './row.js'
-export type { AsyncRow, Cells, PartialRow, ResolvableRow, Row } from './row.js'
-export { rowCache } from './rowCache.js'
-export type { Selection } from './selection.js'
-export type { OrderBy } from './sort.js'
-export { HighTable }
+import React, { MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { DataFrame } from '../../helpers/dataframe.js'
+import { PartialRow } from '../../helpers/row.js'
+import { Selection, SortIndex, areAllSelected, computeNewSelection, isSelected, toggleAll } from '../../helpers/selection.js'
+import { OrderBy, areEqualOrderBy } from '../../helpers/sort.js'
+import { useInputState } from '../../hooks/useInputState.js'
+import { stringify as stringifyDefault } from '../../utils/stringify.js'
+import { throttle } from '../../utils/throttle.js'
+import Cell from '../Cell/Cell.js'
+import Row from '../Row/Row.js'
+import RowHeader from '../RowHeader/RowHeader.js'
+import TableCorner from '../TableCorner/TableCorner.js'
+import TableHeader, { cellStyle } from '../TableHeader/TableHeader.js'
+import { formatRowNumber, rowError } from './HighTable.helpers.js'
 
 /**
  * A slice of the (optionally sorted) rows to render as HTML.
@@ -149,7 +146,7 @@ export default function HighTable({
   const pendingSelectionRequest = useRef(0)
   const getOnSelectRowClick = useCallback(({ tableIndex, dataIndex }: {tableIndex: number, dataIndex?: number}) => {
     if (!selection) return
-    async function onSelectRowClick(event: MouseEvent) {
+    async function onSelectRowClick(event: React.MouseEvent) {
       if (!selection) return
       const useAnchor = event.shiftKey && selection.anchor !== undefined
       const requestId = ++pendingSelectionRequest.current
@@ -169,7 +166,7 @@ export default function HighTable({
         onSelectionChange(newSelection)
       }
     }
-    return (event: MouseEvent): void => {
+    return (event: React.MouseEvent): void => {
       void onSelectRowClick(event)
     }
   }, [onSelectionChange, selection, data, orderBy, sortIndexes])
@@ -332,47 +329,20 @@ export default function HighTable({
   }, [data, onError, orderBy, slice, rowsRange, hasCompleteRow])
 
   const memoizedStyles = useMemo(() => columnWidths.map(cellStyle), [columnWidths])
-  const onDoubleClick = useCallback((e: MouseEvent, col: number, row?: number) => {
-    if (row === undefined) {
-      console.warn('Cell onDoubleClick is cancelled because row index is undefined')
-      return
+  const getOnDoubleClickCell = useCallback((col: number, row?: number) => {
+    // TODO(SL): give feedback (a specific class on the cell element?) about why the double click is disabled?
+    if (!onDoubleClickCell || row === undefined) return
+    return (e: React.MouseEvent) => {
+      onDoubleClickCell(e, col, row)
     }
-    onDoubleClickCell?.(e, col, row)
   }, [onDoubleClickCell])
-  const onMouseDown = useCallback((e: MouseEvent, col: number, row?: number) => {
-    if (row === undefined) {
-      console.warn('Cell onMouseDown is cancelled because row index is undefined')
-      return
+  const getOnMouseDownCell = useCallback((col: number, row?: number) => {
+    // TODO(SL): give feedback (a specific class on the cell element?) about why the double click is disabled?
+    if (!onMouseDownCell || row === undefined) return
+    return (e: React.MouseEvent) => {
+      onMouseDownCell(e, col, row)
     }
-    onMouseDownCell?.(e, col, row)
   }, [onMouseDownCell])
-
-  /**
-   * Render a table cell <td> with title and optional custom rendering
-   *
-   * @param value cell value
-   * @param col column index
-   * @param row row index. If undefined, onDoubleClickCell and onMouseDownCell will not be called.
-   */
-  const Cell = useCallback((value: unknown, col: number, row?: number): ReactNode => {
-    // render as truncated text
-    let str = stringify(value)
-    let title: string | undefined
-    if (typeof str === 'string') {
-      if (str.length > 400) str = `${str.slice(0, 397)}\u2026` // ...
-      if (str.length > 100) title = str
-    }
-    return <td
-      role="cell"
-      className={str === undefined ? 'pending' : undefined}
-      key={col}
-      onDoubleClick={e => { onDoubleClick(e, col, row) }}
-      onMouseDown={e => { onMouseDown(e, col, row) }}
-      style={memoizedStyles[col]}
-      title={title}>
-      {str}
-    </td>
-  }, [memoizedStyles, onDoubleClick, onMouseDown, stringify])
 
   // focus table on mount so arrow keys work
   useEffect(() => {
@@ -411,128 +381,76 @@ export default function HighTable({
           role='grid'
           style={{ top: `${offsetTop}px` }}
           tabIndex={0}>
-          <TableHeader
-            cacheKey={cacheKey}
-            columnWidths={columnWidths}
-            dataReady={hasCompleteRow}
-            header={data.header}
-            orderBy={orderBy}
-            setColumnWidth={setColumnWidth}
-            setColumnWidths={setColumnWidths}
-            onOrderByChange={onOrderByChange}
-          />
+          <thead role="rowgroup">
+            <Row ariaRowIndex={1} >
+              <TableCorner
+                onClick={getOnSelectAllRows()}
+                checked={allRowsSelected}
+                showCheckBox={showCornerSelection}
+                style={cornerStyle}
+              >&nbsp;</TableCorner>
+              <TableHeader
+                cacheKey={cacheKey}
+                columnWidths={columnWidths}
+                dataReady={hasCompleteRow}
+                header={data.header}
+                orderBy={orderBy}
+                setColumnWidth={setColumnWidth}
+                setColumnWidths={setColumnWidths}
+                onOrderByChange={onOrderByChange}
+              />
+            </Row>
+          </thead>
           <tbody role="rowgroup">
             {prePadding.map((_, prePaddingIndex) => {
               const tableIndex = offset - prePadding.length + prePaddingIndex
-              const ariaRowIndex = tableIndex + 2 // 1-based + the header row
-              return <tr role="row" key={tableIndex} aria-rowindex={ariaRowIndex} >
-                <th scope="row" role="rowheader" style={cornerStyle}></th>
-              </tr>
+              return (
+                <Row key={tableIndex} ariaRowIndex={tableIndex + 2} >
+                  <RowHeader style={cornerStyle} />
+                </Row>
+              )
             })}
             {slice?.rows.map((row, rowIndex) => {
               const tableIndex = slice.offset + rowIndex
               const dataIndex = row.index
-              const selected = isRowSelected(dataIndex) ?? false
-              const ariaRowIndex = tableIndex + 2 // 1-based + the header row
-              /**
-               * use the tableIndex as the key because the dataIndex is not available for pending rows
-               * but we want to be able to select them, without the element being recreated.
-               */
-              const key = tableIndex
-              return <tr role="row" key={key} aria-rowindex={ariaRowIndex} title={rowError(row, data.header.length)}
-                className={selected ? 'selected' : ''}
-                aria-selected={selected}
-              >
-                <th scope="row" role="rowheader" style={cornerStyle} onClick={getOnSelectRowClick({ tableIndex, dataIndex })}>
-                  <span>{rowLabel(dataIndex)}</span>
-                  { showSelection && <input type='checkbox' checked={selected} readOnly /> }
-                </th>
-                {data.header.map((col, colIndex) =>
-                  Cell(row.cells[col], colIndex, dataIndex)
-                )}
-              </tr>
+              const selected = isRowSelected(row.index) ?? false
+              return (
+                <Row
+                  key={tableIndex}
+                  selected={selected}
+                  ariaRowIndex={tableIndex + 2}
+                  title={rowError(row, data.header.length)}
+                >
+                  <RowHeader
+                    style={cornerStyle}
+                    onClick={getOnSelectRowClick({ tableIndex, dataIndex })}
+                    checked={selected}
+                    showCheckBox={showSelection}
+                  >{formatRowNumber(dataIndex)}</RowHeader>
+                  {data.header.map((column, columnIndex) =>
+                    <Cell
+                      key={columnIndex}
+                      style={memoizedStyles[columnIndex]}
+                      onDoubleClick={getOnDoubleClickCell(columnIndex, dataIndex)}
+                      onMouseDown={getOnMouseDownCell(columnIndex, dataIndex)}
+                      stringify={stringify}
+                      value={row.cells[column]}
+                    />
+                  )}
+                </Row>
+              )
             })}
             {postPadding.map((_, postPaddingIndex) => {
               const tableIndex = offset + rowsLength + postPaddingIndex
-              const ariaRowIndex = tableIndex + 2 // 1-based + the header row
-              return <tr role="row" key={tableIndex} aria-rowindex={ariaRowIndex} >
-                <th scope="row" role="rowheader" style={cornerStyle} ></th>
-              </tr>
+              return (
+                <Row key={tableIndex} ariaRowIndex={tableIndex + 2}>
+                  <RowHeader style={cornerStyle} />
+                </Row>
+              )
             })}
           </tbody>
         </table>
       </div>
     </div>
-    <div className={`table-corner${showCornerSelection ? ' show-corner-selection' : ''}`} style={cornerStyle} onClick={getOnSelectAllRows()}>
-      <span>&nbsp;</span>
-      { showCornerSelection && <input type='checkbox' checked={allRowsSelected} readOnly /> }
-    </div>
-    <div className='mock-row-label' style={cornerStyle}>&nbsp;</div>
   </div>
-}
-
-/**
- * Robust stringification of any value, including json and bigints.
- */
-export function stringify(value: unknown): string | undefined {
-  if (typeof value === 'string') return value
-  if (typeof value === 'number') return value.toLocaleString()
-  if (typeof value === 'bigint') return value.toLocaleString()
-  if (Array.isArray(value)) return `[${value.map(stringify).join(', ')}]`
-  if (value === null || value === undefined) return JSON.stringify(value)
-  if (value instanceof Date) return value.toISOString()
-  if (typeof value === 'object') {
-    return `{${Object.entries(value).map(([k, v]) => `${k}: ${stringify(v)}`).join(', ')}}`
-  }
-  // fallback
-  return JSON.stringify(value)
-}
-const stringifyDefault = stringify
-
-/**
- * Throttle a function to run at most once every `wait` milliseconds.
- */
-export function throttle(fn: () => void, wait: number): () => void {
-  let inCooldown = false
-  let pending = false
-
-  function invoke() {
-    fn()
-    pending = false
-    inCooldown = true
-    // check if there are pending calls after cooldown
-    setTimeout(() => {
-      inCooldown = false
-      if (pending) {
-        // trailing call
-        invoke()
-      }
-    }, wait)
-  }
-
-  return () => {
-    if (!inCooldown) {
-      // leading call
-      invoke()
-    } else {
-      // schedule trailing call
-      pending = true
-    }
-  }
-}
-
-function rowLabel(rowIndex?: number): string {
-  if (rowIndex === undefined) return ''
-  // rowIndex + 1 because the displayed row numbers are 1-based
-  return (rowIndex + 1).toLocaleString()
-}
-
-/**
- * Validate row length
- */
-function rowError(row: PartialRow, length: number): string | undefined {
-  const numKeys = Object.keys(row.cells).length
-  if (numKeys > 0 && numKeys !== length) {
-    return `Row ${rowLabel(row.index)} length ${numKeys} does not match header length ${length}`
-  }
 }

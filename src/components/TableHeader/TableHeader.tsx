@@ -1,6 +1,6 @@
 import { MouseEvent, RefObject, createRef, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
-import { OrderBy, toggleColumn } from './sort'
+import { OrderBy, toggleColumn } from '../../helpers/sort.js'
 
 interface TableProps {
   header: string[]
@@ -149,9 +149,8 @@ export default function TableHeader({
 
   const memoizedStyles = useMemo(() => columnWidths.map(cellStyle), [columnWidths])
 
-  return <thead role="rowgroup">
-    <tr aria-rowindex={1} role="row">
-      <td><span /></td>
+  return (
+    <>
       {header.map((columnHeader, columnIndex) => {
         const direction = directionByColumn.get(columnHeader)
         return (
@@ -171,8 +170,8 @@ export default function TableHeader({
               onMouseDown={e => { startResizing(columnIndex, e) }} />
           </th>
         )})}
-    </tr>
-  </thead>
+    </>
+  )
 }
 
 export function cellStyle(width: number | undefined) {

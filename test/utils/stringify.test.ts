@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { stringify } from '../src/HighTable.js'
+import { stringify } from '../../src/utils/stringify.js'
 
 describe('stringify', () => {
   test('returns the same string if input is a string', () => {

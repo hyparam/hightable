@@ -1,8 +1,8 @@
 import { describe, expect, it, test, vi } from 'vitest'
-import { DataFrame, sortableDataFrame } from '../src/dataframe.js'
-import { wrapPromise } from '../src/promise.js'
-import { AsyncRow, Row } from '../src/row.js'
-import { SortIndex, areAllSelected, areValidRanges, computeNewSelection, extendFromAnchor, isSelected, isValidIndex, isValidRange, selectRange, toDataSelection, toTableSelection, toggleAll, toggleIndex, unselectRange } from '../src/selection.js'
+import { DataFrame, sortableDataFrame } from '../../src/helpers/dataframe.js'
+import { AsyncRow, Row } from '../../src/helpers/row.js'
+import { SortIndex, areAllSelected, areValidRanges, computeNewSelection, extendFromAnchor, isSelected, isValidIndex, isValidRange, selectRange, toDataSelection, toTableSelection, toggleAll, toggleIndex, unselectRange } from '../../src/helpers/selection.js'
+import { wrapPromise } from '../../src/utils/promise.js'
 
 describe('an index', () => {
   test('is a positive integer', () => {

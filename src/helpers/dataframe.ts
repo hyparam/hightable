@@ -1,4 +1,4 @@
-import { wrapPromise } from './promise.js'
+import { wrapPromise } from '../utils/promise.js'
 import { AsyncRow, Cells, asyncRows } from './row.js'
 import { OrderBy } from './sort.js'
 

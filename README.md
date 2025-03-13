@@ -195,3 +195,14 @@ const dataframe = {
 ## Styling
 
 HighTable includes basic CSS styling to make the table functional. You can customize the appearance of the table using CSS.
+
+## Structure of the code
+
+The code is structured as follows:
+
+- `src/`: Source code
+  - `components/`: React components
+  - `helpers/`: Helper functions, specific for HighTable
+  - `hooks/`: Custom hooks
+  - `utils/`: Generic utility functions
+- `test/`: Unit tests (follows the same structure as `src/`)

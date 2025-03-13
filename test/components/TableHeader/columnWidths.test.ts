@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { loadColumnWidths, saveColumnWidth } from '../src/TableHeader.js'
+import { loadColumnWidths, saveColumnWidth } from '../../../src/components/TableHeader/TableHeader.js'
 
 vi.stubGlobal('localStorage', (() => {
   let store: Record<string, string> = {}
