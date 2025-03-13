@@ -33,7 +33,7 @@ const rowHeight = 33 // row height px
  */
 type MouseEventCellHandler = (event: MouseEvent, col: number, row: number) => void
 
-export interface TableProps {
+interface Props {
   data: DataFrame
   cacheKey?: string // used to persist column widths
   overscan?: number // number of rows to fetch outside of the viewport
@@ -71,7 +71,7 @@ export default function HighTable({
   onMouseDownCell,
   onError = console.error,
   stringify = stringifyDefault,
-}: TableProps) {
+}: Props) {
   /**
    * The component relies on the model of a virtual table which rows are ordered and only the
    * visible rows are fetched (slice) and rendered as HTML <tr> elements.
