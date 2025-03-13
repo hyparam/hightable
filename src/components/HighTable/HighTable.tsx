@@ -96,7 +96,7 @@ export default function HighTable({
       newColumnWidths[columnIndex] = columnWidth
       return newColumnWidths
     })
-  }, [setColumnWidths])
+  }, [])
 
   // Sorting is disabled if the data is not sortable
   const {
