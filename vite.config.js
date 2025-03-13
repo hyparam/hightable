@@ -10,7 +10,7 @@ export default defineConfig({
   plugins: [react()],
   build: {
     lib: {
-      entry: resolve (__dirname, 'src/HighTable.js'),
+      entry: resolve (__dirname, 'src/index.js'),
       formats: ['es'],
       name: 'HighTable',
       // the proper extensions will be added

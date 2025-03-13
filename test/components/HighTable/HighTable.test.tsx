@@ -1,10 +1,10 @@
 import { act, fireEvent, waitFor, within } from '@testing-library/react'
 import React from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { DataFrame, sortableDataFrame } from '../src/helpers/dataframe.js'
-import HighTable from '../src/HighTable.js'
-import { wrapPromise } from '../src/utils/promise.js'
-import { render } from './userEvent.js'
+import HighTable from '../../../src/components/HighTable/HighTable.js'
+import { DataFrame, sortableDataFrame } from '../../../src/helpers/dataframe.js'
+import { wrapPromise } from '../../../src/utils/promise.js'
+import { render } from '../../userEvent.js'
 
 const data: DataFrame = {
   header: ['ID', 'Count'],

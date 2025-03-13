@@ -1,4 +1,4 @@
-import type { PartialRow } from './row.js'
+import type { PartialRow } from '../../helpers/row.js'
 
 export function formatRowNumber(rowIndex?: number): string {
   if (rowIndex === undefined) return ''
