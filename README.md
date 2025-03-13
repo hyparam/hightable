@@ -183,7 +183,7 @@ const dataframe = {
     const futureRows = Array.from({ length: end - start }, () => resolvableRow(this.header))
     for (let row = start; row < end; row++) {
       for (const col of this.header) {
-        fetchCell(row, col).then((value) => futureRows[row - start].cells[col].resolve(value))
+        fetchCell(row, col).then(value => futureRows[row - start].cells[col].resolve(value))
       }
       futureRows[row - start].index.resolve(row)
     }
