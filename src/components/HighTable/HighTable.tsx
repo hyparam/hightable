@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { cellStyle } from '../../helpers/cellStyle.js'
 import { DataFrame } from '../../helpers/dataframe.js'
 import { PartialRow } from '../../helpers/row.js'
 import { Selection, SortIndex, areAllSelected, computeNewSelection, isSelected, toggleAll } from '../../helpers/selection.js'
@@ -10,7 +11,7 @@ import Cell from '../Cell/Cell.js'
 import Row from '../Row/Row.js'
 import RowHeader from '../RowHeader/RowHeader.js'
 import TableCorner from '../TableCorner/TableCorner.js'
-import TableHeader, { cellStyle } from '../TableHeader/TableHeader.js'
+import TableHeader from '../TableHeader/TableHeader.js'
 import { formatRowNumber, rowError } from './HighTable.helpers.js'
 
 /**
@@ -84,19 +85,10 @@ export default function HighTable({
   const [slice, setSlice] = useState<Slice | undefined>(undefined)
   const [rowsRange, setRowsRange] = useState({ start: 0, end: 0 })
   const [hasCompleteRow, setHasCompleteRow] = useState(false)
-  const [columnWidths, setColumnWidths] = useState([] as (number | undefined)[])
 
   // TODO(SL): remove this state and only rely on the data frame for these operations?
   // ie. cache the previous sort indexes in the data frame itself
   const [sortIndexes, setSortIndexes] = useState<Map<string, SortIndex>>(() => new Map())
-
-  const setColumnWidth = useCallback((columnIndex: number, columnWidth: number | undefined) => {
-    setColumnWidths(columnWidths => {
-      const newColumnWidths = [...columnWidths]
-      newColumnWidths[columnIndex] = columnWidth
-      return newColumnWidths
-    })
-  }, [])
 
   // Sorting is disabled if the data is not sortable
   const {
@@ -320,7 +312,6 @@ export default function HighTable({
     void fetchRows()
   }, [data, onError, orderBy, slice, rowsRange, hasCompleteRow])
 
-  const memoizedStyles = useMemo(() => columnWidths.map(cellStyle), [columnWidths])
   const getOnDoubleClickCell = useCallback((col: number, row?: number) => {
     // TODO(SL): give feedback (a specific class on the cell element?) about why the double click is disabled?
     if (!onDoubleClickCell || row === undefined) return
@@ -383,12 +374,9 @@ export default function HighTable({
               >&nbsp;</TableCorner>
               <TableHeader
                 cacheKey={cacheKey}
-                columnWidths={columnWidths}
                 dataReady={hasCompleteRow}
                 header={data.header}
                 orderBy={orderBy}
-                setColumnWidth={setColumnWidth}
-                setColumnWidths={setColumnWidths}
                 onOrderByChange={onOrderByChange}
               />
             </Row>
@@ -422,7 +410,6 @@ export default function HighTable({
                   {data.header.map((column, columnIndex) =>
                     <Cell
                       key={columnIndex}
-                      style={memoizedStyles[columnIndex]}
                       onDoubleClick={getOnDoubleClickCell(columnIndex, dataIndex)}
                       onMouseDown={getOnMouseDownCell(columnIndex, dataIndex)}
                       stringify={stringify}

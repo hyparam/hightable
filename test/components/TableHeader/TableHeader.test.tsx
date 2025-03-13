@@ -1,7 +1,8 @@
 import { waitFor } from '@testing-library/react'
 import React from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import TableHeader, { ColumnWidth, cellStyle, saveColumnWidth } from '../../../src/components/TableHeader/TableHeader.js'
+import { ColumnWidth, saveColumnWidth } from '../../../src/components/TableHeader/TableHeader.helpers.js'
+import TableHeader from '../../../src/components/TableHeader/TableHeader.js'
 import { render } from '../../userEvent.js'
 
 vi.stubGlobal('localStorage', (() => {
@@ -137,14 +138,10 @@ describe('TableHeader', () => {
   })
 
   it('sets orderBy to the column name (ascending order) when a header is clicked', async () => {
-    const { columnWidths, setColumnWidth, setColumnWidths } = mockColumnWidths()
     const onOrderByChange = vi.fn()
     const { user, getByText } = render(<table><thead><tr>
       <TableHeader
         header={header}
-        columnWidths={columnWidths}
-        setColumnWidth={setColumnWidth}
-        setColumnWidths={setColumnWidths}
         orderBy={[]}
         onOrderByChange={onOrderByChange}
         dataReady={dataReady} />
@@ -157,14 +154,10 @@ describe('TableHeader', () => {
   })
 
   it('sets orderBy to the column name (descending order) when a header is clicked if it was already sorted by ascending order', async () => {
-    const { columnWidths, setColumnWidth, setColumnWidths } = mockColumnWidths()
     const onOrderByChange = vi.fn()
     const { user, getByText } = render(<table><thead><tr>
       <TableHeader
         header={header}
-        columnWidths={columnWidths}
-        setColumnWidth={setColumnWidth}
-        setColumnWidths={setColumnWidths}
         onOrderByChange={onOrderByChange}
         orderBy={[{ column: 'Age', direction: 'ascending' }]}
         dataReady={dataReady} />
@@ -177,14 +170,10 @@ describe('TableHeader', () => {
   })
 
   it('sets orderBy to undefined when a header is clicked if it was already sorted by descending order', async () => {
-    const { columnWidths, setColumnWidth, setColumnWidths } = mockColumnWidths()
     const onOrderByChange = vi.fn()
     const { user, getByText } = render(<table><thead><tr>
       <TableHeader
         header={header}
-        columnWidths={columnWidths}
-        setColumnWidth={setColumnWidth}
-        setColumnWidths={setColumnWidths}
         onOrderByChange={onOrderByChange}
         orderBy={[{ column: 'Age', direction: 'descending' }]}
         dataReady={dataReady} />
@@ -197,14 +186,10 @@ describe('TableHeader', () => {
   })
 
   it('changes orderBy to a new column when a different header is clicked', async () => {
-    const { columnWidths, setColumnWidth, setColumnWidths } = mockColumnWidths()
     const onOrderByChange = vi.fn()
     const { user, getByText } = render(<table><thead><tr>
       <TableHeader
         header={header}
-        columnWidths={columnWidths}
-        setColumnWidth={setColumnWidth}
-        setColumnWidths={setColumnWidths}
         onOrderByChange={onOrderByChange}
         orderBy={[{ column: 'Age', direction: 'ascending' }]}
         dataReady={dataReady} />
@@ -217,14 +202,10 @@ describe('TableHeader', () => {
   })
 
   it('does not change orderBy when clicking on the resize handle', async () => {
-    const { columnWidths, setColumnWidth, setColumnWidths } = mockColumnWidths()
     const onOrderByChange = vi.fn()
     const { user, getByText } = render(<table><thead><tr>
       <TableHeader
         header={header}
-        columnWidths={columnWidths}
-        setColumnWidth={setColumnWidth}
-        setColumnWidths={setColumnWidths}
         onOrderByChange={onOrderByChange}
         dataReady={dataReady} />
     </tr></thead></table>)
@@ -272,17 +253,5 @@ describe('TableHeader', () => {
 
     expect(localStorage.getItem).toHaveBeenCalledWith(`column-widths:${cacheKey2}`)
     expect(setColumnWidths).toHaveBeenCalledWith([300, 250, undefined])
-  })
-})
-
-describe('cellStyle', () => {
-  it('returns correct style for defined width', () => {
-    const style = cellStyle(100)
-    expect(style).toEqual({ minWidth: '100px', maxWidth: '100px' })
-  })
-
-  it('returns correct style for undefined width', () => {
-    const style = cellStyle(undefined)
-    expect(style).toEqual({ minWidth: undefined, maxWidth: undefined })
   })
 })
