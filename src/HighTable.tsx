@@ -340,21 +340,15 @@ export default function HighTable({
 
   const memoizedStyles = useMemo(() => columnWidths.map(cellStyle), [columnWidths])
   const getOnDoubleClickCell = useCallback((col: number, row?: number) => {
-    if (!onDoubleClickCell) return
-    if (row === undefined) {
-      // console.warn('Cell onDoubleClick is cancelled because row index is undefined')
-      return
-    }
+    // TODO(SL): give feedback (a specific class on the cell element?) about why the double click is disabled?
+    if (!onDoubleClickCell || row === undefined) return
     return (e: React.MouseEvent) => {
       onDoubleClickCell(e, col, row)
     }
   }, [onDoubleClickCell])
   const getOnMouseDownCell = useCallback((col: number, row?: number) => {
-    if (!onMouseDownCell) return
-    if (row === undefined) {
-      // console.warn('Cell onMouseDown is cancelled because row index is undefined')
-      return
-    }
+    // TODO(SL): give feedback (a specific class on the cell element?) about why the double click is disabled?
+    if (!onMouseDownCell || row === undefined) return
     return (e: React.MouseEvent) => {
       onMouseDownCell(e, col, row)
     }
