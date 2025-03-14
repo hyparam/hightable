@@ -19,11 +19,8 @@ export default function TableHeader({
   // Function to handle click for changing orderBy
   const getOnOrderByClick = React.useCallback((columnHeader: string) => {
     if (!onOrderByChange || !orderBy) return undefined
-    return (e: React.MouseEvent) => {
-      // Ignore clicks on resize handle
-      if ((e.target as HTMLElement).tagName === 'SPAN') return
-      const nextOrderBy = toggleColumn(columnHeader, orderBy)
-      onOrderByChange(nextOrderBy)
+    return () => {
+      onOrderByChange(toggleColumn(columnHeader, orderBy))
     }}, [orderBy, onOrderByChange]
   )
 
