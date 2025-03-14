@@ -41,21 +41,21 @@ function saveToOrDeleteFromLocalStorage(key: string, value: unknown) {
  */
 export function useLocalStorageState<T>({ key, initialValue }: {key?: string, initialValue?: T}): [T | undefined, React.Dispatch<T | undefined>] {
   const [value, setValue] = React.useState<T | undefined>(() => {
-    // TODO(SL): check the loaded value?
+    // TODO(SL): check if the type of loaded value is T | undefined, accepting a check function as an argument?
     return key !== undefined ? loadFromLocalStorage(key) as T | undefined : initialValue
   })
   const [lastCacheKey, setLastCacheKey] = React.useState<string | undefined>(key)
   if (key !== lastCacheKey) {
     if (key !== undefined) {
-      // TODO(SL): check the loaded value?
+      // TODO(SL): check if the type of loaded value is T | undefined, accepting a check function as an argument?
       setValue(loadFromLocalStorage(key) as T | undefined)
     } // else: do not change the value
     setLastCacheKey(key)
   }
-  const memoizedSetValue = React.useCallback((value: T | undefined) => {
-    setValue(value)
+  const memoizedSetValue = React.useCallback((nextValue: T | undefined) => {
+    setValue(nextValue)
     if (key !== undefined) {
-      saveToOrDeleteFromLocalStorage(key, value)
+      saveToOrDeleteFromLocalStorage(key, nextValue)
     }
   }, [key])
 
