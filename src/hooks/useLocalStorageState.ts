@@ -32,13 +32,14 @@ function saveToOrDeleteFromLocalStorage(key: string, value: unknown) {
  * Note that the values stored with a previous key are maintained.
  * TODO(SL): add a way to delete them?
  *
+ * Contrarily to React.useState, the initial value and the setter argument cannot be a function.
+ *
  * @param [string | undefined] key The key to use in local storage. If undefined, the value is not persisted.
  * @param [T | undefined] initialValue The initial value if the key is undefined.
- * TODO(SL): allow passing a function to initialize the value?
  *
- * @returns [T | undefined, React.Dispatch<React.SetStateAction<T | undefined>>] The value and the setter.
+ * @returns [T | undefined, React.Dispatch<T | undefined>] The value and the setter.
  */
-export function useLocalStorageState<T>({ key, initialValue }: {key?: string, initialValue?: T}): [T | undefined, React.Dispatch<React.SetStateAction<T | undefined>>] {
+export function useLocalStorageState<T>({ key, initialValue }: {key?: string, initialValue?: T}): [T | undefined, React.Dispatch<T | undefined>] {
   const [value, setValue] = React.useState<T | undefined>(() => {
     // TODO(SL): check the loaded value?
     return key !== undefined ? loadFromLocalStorage(key) as T | undefined : initialValue
@@ -51,7 +52,7 @@ export function useLocalStorageState<T>({ key, initialValue }: {key?: string, in
     } // else: do not change the value
     setLastCacheKey(key)
   }
-  const memoizedSetValue = React.useCallback((value: React.SetStateAction<T | undefined>) => {
+  const memoizedSetValue = React.useCallback((value: T | undefined) => {
     setValue(value)
     if (key !== undefined) {
       saveToOrDeleteFromLocalStorage(key, value)
