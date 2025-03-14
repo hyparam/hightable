@@ -29,7 +29,11 @@ export default function ColumnHeader({ children, dataReady, direction, localStor
   React.useEffect(() => {
     const element = ref.current
     if (dataReady && element) {
-      setWidth(measureWidth(element))
+      const nextWidth = measureWidth(element)
+      if (!isNaN(nextWidth)) {
+        // should not happen in the browser (but fails in unit tests)
+        setWidth(nextWidth)
+      }
     }
   }, [dataReady, setWidth])
 
@@ -40,7 +44,11 @@ export default function ColumnHeader({ children, dataReady, direction, localStor
       ReactDOM.flushSync(() => {
         setWidth(undefined)
       })
-      setWidth(measureWidth(element))
+      const nextWidth = measureWidth(element)
+      if (!isNaN(nextWidth)) {
+        // should not happen in the browser (but fails in unit tests)
+        setWidth(nextWidth)
+      }
     }
   }, [setWidth])
 
