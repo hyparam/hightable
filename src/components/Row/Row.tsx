@@ -7,7 +7,7 @@ interface Props {
   title?: string
 }
 
-function Row({
+export default function Row({
   children,
   selected,
   ariaRowIndex,
@@ -25,5 +25,3 @@ function Row({
     </tr>
   )
 }
-
-export default Row

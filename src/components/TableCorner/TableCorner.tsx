@@ -8,7 +8,7 @@ interface Props {
   style?: React.CSSProperties
 }
 
-function TableCorner({ children, checked, onClick, showCheckBox, style }: Props) {
+export default function TableCorner({ children, checked, onClick, showCheckBox, style }: Props) {
   return (
     <td className={`table-corner${showCheckBox ? ' show-checkbox' : ''}`} style={style} onClick={onClick}>
       <span>{children}</span>
@@ -16,5 +16,3 @@ function TableCorner({ children, checked, onClick, showCheckBox, style }: Props)
     </td>
   )
 }
-
-export default TableCorner

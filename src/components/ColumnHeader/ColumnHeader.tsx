@@ -15,7 +15,7 @@ interface Props {
   title?: string
 }
 
-function ColumnHeader({ children, dataReady, direction, localStorageKey, onClick, title }: Props) {
+export default function ColumnHeader({ children, dataReady, direction, localStorageKey, onClick, title }: Props) {
   const ref = React.useRef<HTMLTableCellElement>(null)
   const [width, setWidth] = useLocalStorageState<number>({ key: localStorageKey ? `${localStorageKey}:width` : undefined })
   const [resizeWidth, setResizeWidth] = React.useState<number | undefined>(undefined)
@@ -65,5 +65,3 @@ function ColumnHeader({ children, dataReady, direction, localStorageKey, onClick
     </th>
   )
 }
-
-export default ColumnHeader

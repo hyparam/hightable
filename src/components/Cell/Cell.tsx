@@ -17,7 +17,7 @@ interface Props {
  * @param props.onDoubleClick double click callback
  * @param props.onMouseDown mouse down callback
  */
-function Cell({ onDoubleClick, onMouseDown, stringify, style, value }: Props) {
+export default function Cell({ onDoubleClick, onMouseDown, stringify, style, value }: Props) {
   // render as truncated text
   const str = React.useMemo(() => {
     return stringify(value)
@@ -45,5 +45,3 @@ function Cell({ onDoubleClick, onMouseDown, stringify, style, value }: Props) {
     </td>
   )
 }
-
-export default Cell

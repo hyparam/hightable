@@ -7,7 +7,7 @@ interface Props {
   width?: number
 }
 
-function ColumnResizer({ onDoubleClick, setFinalWidth, setResizeWidth, width }: Props) {
+export default function ColumnResizer({ onDoubleClick, setFinalWidth, setResizeWidth, width }: Props) {
   const [resizeClientX, setResizeClientX] = React.useState<number | undefined>(undefined)
 
   // Handle mouse down to start resizing
@@ -59,5 +59,3 @@ function ColumnResizer({ onDoubleClick, setFinalWidth, setResizeWidth, width }: 
     />
   )
 }
-
-export default ColumnResizer
