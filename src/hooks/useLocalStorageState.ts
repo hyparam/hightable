@@ -39,7 +39,7 @@ function saveToOrDeleteFromLocalStorage(key: string, value: unknown) {
  *
  * @returns [T | undefined, React.Dispatch<T | undefined>] The value and the setter.
  */
-export function useLocalStorageState<T>({ key, initialValue }: {key?: string, initialValue?: T}): [T | undefined, React.Dispatch<T | undefined>] {
+export function useLocalStorageState<T>({ key, initialValue }: {key?: string, initialValue?: T} = {}): [T | undefined, React.Dispatch<T | undefined>] {
   const [value, setValue] = React.useState<T | undefined>(() => {
     // TODO(SL): check if the type of loaded value is T | undefined, accepting a check function as an argument?
     return key !== undefined ? loadFromLocalStorage(key) as T | undefined : initialValue
