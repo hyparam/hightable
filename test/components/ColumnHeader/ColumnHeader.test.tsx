@@ -69,8 +69,7 @@ describe('ColumnHeader', () => {
 
     const { user, getByRole } = render(<table><thead><tr><ColumnHeader localStorageKey={cacheKey} /></tr></thead></table>)
     const header = getByRole('columnheader')
-    const resizeHandle = header.querySelector('span') // TODO(SL): have a role for the resize handle
-    if (!resizeHandle) throw new Error('Resize handle not found')
+    const resizeHandle = getByRole('separator')
 
     expect(header.style.maxWidth).toEqual(`${savedWidth}px`)
     expect(measureWidth).toHaveBeenCalledTimes(0)
@@ -89,8 +88,7 @@ describe('ColumnHeader', () => {
 
     // Simulate resizing the column
     const header = getByRole('columnheader')
-    const resizeHandle = header.querySelector('span')
-    if (!resizeHandle) throw new Error('Resize handle not found')
+    const resizeHandle = getByRole('separator')
 
     const x = 150
     const delta = 10
@@ -106,24 +104,6 @@ describe('ColumnHeader', () => {
     expect(header.style.maxWidth).toEqual(`${savedWidth + delta}px`)
   })
 
-  // it('does not change orderBy when clicking on the resize handle', async () => {
-  //   const onOrderByChange = vi.fn()
-  //   const { user, getByText } = render(<table><thead><tr>
-  //     <ColumnHeader
-
-  //       onOrderByChange={onOrderByChange}
-  //       dataReady={dataReady} />
-  //   </tr></thead></table>)
-
-  //   const nameHeader = getByText('Name')
-  //   const resizeHandle = nameHeader.querySelector('span')
-  //   if (!resizeHandle) throw new Error('Resize handle not found')
-
-  //   await user.click(resizeHandle)
-
-  //   expect(onOrderByChange).not.toHaveBeenCalled()
-  // })
-
   it('reloads column width when localStorageKey changes', () => {
     const cacheKey2 = 'key-2'
     const width1 = 150
@@ -136,5 +116,16 @@ describe('ColumnHeader', () => {
     expect(header.style.maxWidth).toEqual(`${width1}px`)
     rerender(<table><thead><tr><ColumnHeader localStorageKey={cacheKey2}/></tr></thead></table>)
     expect(header.style.maxWidth).toEqual(`${width2}px`)
+  })
+
+  it('call onClick (eg. to change orderBy) when clicking on the header, but not when clicking on the resize handle', async () => {
+    const onClick = vi.fn()
+    const { user, getByRole } = render(<table><thead><tr><ColumnHeader onClick={onClick} /></tr></thead></table>)
+    const header = getByRole('columnheader')
+    const resizeHandle = getByRole('separator')
+    await user.click(resizeHandle)
+    expect(onClick).not.toHaveBeenCalled()
+    await user.click(header)
+    expect(onClick).toHaveBeenCalled()
   })
 })

@@ -10,6 +10,11 @@ interface Props {
 export default function ColumnResizer({ onDoubleClick, setFinalWidth, setResizeWidth, width }: Props) {
   const [resizeClientX, setResizeClientX] = React.useState<number | undefined>(undefined)
 
+  // Disable click event propagation
+  const disableOnClick = React.useCallback((e: React.MouseEvent) => {
+    e.stopPropagation()
+  }, [])
+
   // Handle mouse down to start resizing
   const onMouseDown = React.useCallback((e: React.MouseEvent) => {
     e.stopPropagation()
@@ -54,8 +59,13 @@ export default function ColumnResizer({ onDoubleClick, setFinalWidth, setResizeW
 
   return (
     <span
+      role="separator"
+      aria-orientation="vertical"
+      // TODO: make it focusable + keyboard accessible and add aria properties (https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Reference/Roles/separator_role)
+      // Note that aria-valuenow would be helpful for tests.
       onDoubleClick={onDoubleClick}
       onMouseDown={onMouseDown}
+      onClick={disableOnClick}
     />
   )
 }
