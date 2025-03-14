@@ -8,7 +8,7 @@ interface Props {
   style?: React.CSSProperties
 }
 
-function RowHeader({ children, checked, onClick, showCheckBox, style }: Props) {
+export default function RowHeader({ children, checked, onClick, showCheckBox, style }: Props) {
   return (
     <th scope="row" role="rowheader" style={style} onClick={onClick}>
       <span>{children}</span>
@@ -16,5 +16,3 @@ function RowHeader({ children, checked, onClick, showCheckBox, style }: Props) {
     </th>
   )
 }
-
-export default RowHeader
