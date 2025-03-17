@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { cellStyle } from '../../helpers/cellStyle.js'
 import { DataFrame } from '../../helpers/dataframe.js'
 import { PartialRow } from '../../helpers/row.js'
@@ -32,8 +32,8 @@ interface Props {
   overscan?: number // number of rows to fetch outside of the viewport
   padding?: number // number of padding rows to render outside of the viewport
   focus?: boolean // focus table on mount? (default true)
-  onDoubleClickCell?: (event: React.MouseEvent, col: number, row: number) => void
-  onMouseDownCell?: (event: React.MouseEvent, col: number, row: number) => void
+  onDoubleClickCell?: (event: MouseEvent, col: number, row: number) => void
+  onMouseDownCell?: (event: MouseEvent, col: number, row: number) => void
   onError?: (error: Error) => void
   orderBy?: OrderBy // order used to fetch the rows. If undefined, the table is unordered, the sort controls are hidden and the interactions are disabled. Pass [] to fetch the rows in the original order.
   onOrderByChange?: (orderBy: OrderBy) => void // callback to call when a user interaction changes the order. The interactions are disabled if undefined.
@@ -130,7 +130,7 @@ export default function HighTable({
   const pendingSelectionRequest = useRef(0)
   const getOnSelectRowClick = useCallback(({ tableIndex, dataIndex }: {tableIndex: number, dataIndex?: number}) => {
     if (!selection) return
-    async function onSelectRowClick(event: React.MouseEvent) {
+    async function onSelectRowClick(event: MouseEvent) {
       if (!selection) return
       const useAnchor = event.shiftKey && selection.anchor !== undefined
       const requestId = ++pendingSelectionRequest.current
@@ -150,7 +150,7 @@ export default function HighTable({
         onSelectionChange(newSelection)
       }
     }
-    return (event: React.MouseEvent): void => {
+    return (event: MouseEvent): void => {
       void onSelectRowClick(event)
     }
   }, [onSelectionChange, selection, data, orderBy, sortIndexes])
@@ -315,14 +315,14 @@ export default function HighTable({
   const getOnDoubleClickCell = useCallback((col: number, row?: number) => {
     // TODO(SL): give feedback (a specific class on the cell element?) about why the double click is disabled?
     if (!onDoubleClickCell || row === undefined) return
-    return (e: React.MouseEvent) => {
+    return (e: MouseEvent) => {
       onDoubleClickCell(e, col, row)
     }
   }, [onDoubleClickCell])
   const getOnMouseDownCell = useCallback((col: number, row?: number) => {
     // TODO(SL): give feedback (a specific class on the cell element?) about why the double click is disabled?
     if (!onMouseDownCell || row === undefined) return
-    return (e: React.MouseEvent) => {
+    return (e: MouseEvent) => {
       onMouseDownCell(e, col, row)
     }
   }, [onMouseDownCell])

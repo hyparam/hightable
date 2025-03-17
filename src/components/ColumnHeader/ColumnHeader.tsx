@@ -1,5 +1,5 @@
-import React from 'react'
-import ReactDOM from 'react-dom'
+import { MouseEvent, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { flushSync } from 'react-dom'
 import { cellStyle } from '../../helpers/cellStyle.js'
 import { Direction } from '../../helpers/sort.js'
 import { useLocalStorageState } from '../../hooks/useLocalStorageState.js'
@@ -7,26 +7,26 @@ import ColumnResizer from '../ColumnResizer/ColumnResizer.js'
 import { measureWidth } from './ColumnHeader.helpers.js'
 
 interface Props {
-  children?: React.ReactNode
+  children?: ReactNode
   dataReady?: boolean
   direction?: Direction
   localStorageKey?: string
-  onClick?: (e: React.MouseEvent) => void
+  onClick?: (e: MouseEvent) => void
   title?: string
 }
 
 export default function ColumnHeader({ children, dataReady, direction, localStorageKey, onClick, title }: Props) {
-  const ref = React.useRef<HTMLTableCellElement>(null)
+  const ref = useRef<HTMLTableCellElement>(null)
   const [width, setWidth] = useLocalStorageState<number>({ key: localStorageKey ? `${localStorageKey}:width` : undefined })
-  const [resizeWidth, setResizeWidth] = React.useState<number | undefined>(undefined)
+  const [resizeWidth, setResizeWidth] = useState<number | undefined>(undefined)
   const currentWidth = resizeWidth ?? width
 
-  const style = React.useMemo(() => {
+  const style = useMemo(() => {
     return cellStyle(currentWidth)
   }, [currentWidth])
 
   // Measure default column width when data is ready
-  React.useEffect(() => {
+  useEffect(() => {
     const element = ref.current
     if (dataReady && element) {
       const nextWidth = measureWidth(element)
@@ -37,11 +37,11 @@ export default function ColumnHeader({ children, dataReady, direction, localStor
     }
   }, [dataReady, setWidth])
 
-  const autoResize = React.useCallback(() => {
+  const autoResize = useCallback(() => {
     const element = ref.current
     if (element) {
       // Remove the width, let it size naturally, and then measure it
-      ReactDOM.flushSync(() => {
+      flushSync(() => {
         setWidth(undefined)
       })
       const nextWidth = measureWidth(element)

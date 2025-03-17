@@ -1,11 +1,11 @@
-import React from 'react'
+import { CSSProperties, MouseEvent, ReactNode } from 'react'
 
 interface Props {
   checked?: boolean
-  children?: React.ReactNode
-  onClick?: (event: React.MouseEvent) => void
+  children?: ReactNode
+  onClick?: (event: MouseEvent) => void
   showCheckBox?: boolean
-  style?: React.CSSProperties
+  style?: CSSProperties
 }
 
 export default function RowHeader({ children, checked, onClick, showCheckBox, style }: Props) {

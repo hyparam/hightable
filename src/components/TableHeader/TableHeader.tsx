@@ -1,4 +1,4 @@
-import React from 'react'
+import { useCallback, useMemo } from 'react'
 import { OrderBy, toggleColumn } from '../../helpers/sort.js'
 import ColumnHeader from '../ColumnHeader/ColumnHeader.js'
 
@@ -17,14 +17,14 @@ export default function TableHeader({
   header, cacheKey, orderBy, onOrderByChange, dataReady,
 }: TableProps) {
   // Function to handle click for changing orderBy
-  const getOnOrderByClick = React.useCallback((columnHeader: string) => {
+  const getOnOrderByClick = useCallback((columnHeader: string) => {
     if (!onOrderByChange || !orderBy) return undefined
     return () => {
       onOrderByChange(toggleColumn(columnHeader, orderBy))
     }}, [orderBy, onOrderByChange]
   )
 
-  const directionByColumn = React.useMemo(() => {
+  const directionByColumn = useMemo(() => {
     return new Map((orderBy ?? []).map(({ column, direction }) => [column, direction]))
   }, [orderBy])
 

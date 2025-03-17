@@ -1,7 +1,7 @@
-import React from 'react'
+import { ReactNode } from 'react'
 
 interface Props {
-  children: React.ReactNode
+  children: ReactNode
   selected?: boolean
   ariaRowIndex: number
   title?: string

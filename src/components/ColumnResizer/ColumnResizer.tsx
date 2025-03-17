@@ -1,4 +1,4 @@
-import React from 'react'
+import { MouseEvent, useCallback, useEffect, useState } from 'react'
 
 interface Props {
   onDoubleClick?: () => void
@@ -8,15 +8,15 @@ interface Props {
 }
 
 export default function ColumnResizer({ onDoubleClick, setFinalWidth, setResizeWidth, width }: Props) {
-  const [resizeClientX, setResizeClientX] = React.useState<number | undefined>(undefined)
+  const [resizeClientX, setResizeClientX] = useState<number | undefined>(undefined)
 
   // Disable click event propagation
-  const disableOnClick = React.useCallback((e: React.MouseEvent) => {
+  const disableOnClick = useCallback((e: MouseEvent) => {
     e.stopPropagation()
   }, [])
 
   // Handle mouse down to start resizing
-  const onMouseDown = React.useCallback((e: React.MouseEvent) => {
+  const onMouseDown = useCallback((e: MouseEvent) => {
     e.stopPropagation()
     const nextResizeWidth = width ?? 0
     setResizeClientX(e.clientX - nextResizeWidth)
@@ -24,7 +24,7 @@ export default function ColumnResizer({ onDoubleClick, setFinalWidth, setResizeW
   }, [setResizeWidth, width])
 
   // Handle mouse move event during resizing
-  React.useEffect(() => {
+  useEffect(() => {
     if (resizeClientX !== undefined) {
       function updateResizeWidth(clientX: number) {
         return function(event: globalThis.MouseEvent) {
@@ -40,7 +40,7 @@ export default function ColumnResizer({ onDoubleClick, setFinalWidth, setResizeW
   }, [resizeClientX, setResizeWidth])
 
   // Handle mouse up to end resizing
-  React.useEffect(() => {
+  useEffect(() => {
     if (resizeClientX !== undefined) {
       function stopResizing(clientX: number) {
         return function(event: globalThis.MouseEvent) {
