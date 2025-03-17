@@ -10,6 +10,7 @@
 - **Breaking** the `onOrderByChange` property in `HighTable` and `TableHeader` that takes the new `OrderBy` argument.
 - **Breaking** successive clicks on a column header follow a new behavior: instead of toggling between ascending sort and no sort, it now cycles through ascending, descending, and no sort ([#68](https://github.com/hyparam/hightable/pull/68)).
 - **Breaking** the top left cell of the table now handles the checkbox to select all the rows (and the absolutely positioned div is removed). It can affect overriden CSS ([#70](https://github.com/hyparam/hightable/pull/70)).
+- changed the format of the keys in local storage when storing the column widths. Each column now has its own key ([#71](https://github.com/hyparam/hightable/pull/71)).
 
 ### Refactored
 
