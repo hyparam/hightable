@@ -1,4 +1,5 @@
 import { MouseEvent, useCallback, useEffect, useState } from 'react'
+import classes from './ColumnResizer.module.css'
 
 interface Props {
   onDoubleClick?: () => void
@@ -59,6 +60,7 @@ export default function ColumnResizer({ onDoubleClick, setFinalWidth, setResizeW
 
   return (
     <span
+      className={classes.columnResizer}
       role="separator"
       aria-orientation="vertical"
       // TODO: make it focusable + keyboard accessible and add aria properties (https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Reference/Roles/separator_role)

@@ -1,4 +1,5 @@
 import { ReactNode } from 'react'
+import classes from './Row.module.css'
 
 interface Props {
   children: ReactNode
@@ -18,7 +19,7 @@ export default function Row({
       role="row"
       aria-rowindex={ariaRowIndex}
       title={title}
-      className={selected ? 'selected' : undefined} // TODO: use [aria-selected] instead in CSS
+      className={selected ? classes.selected : undefined} // TODO: use [aria-selected] instead in CSS
       aria-selected={selected}
     >
       {children}

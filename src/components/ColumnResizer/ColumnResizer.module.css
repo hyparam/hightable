@@ -1,0 +1,14 @@
+/* column resize */
+.column-resizer {
+    position: absolute;
+    border-right: 1px solid #ddd;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 8px;
+    cursor: col-resize;
+    transition: background-color 0.2s ease;
+  }
+  .column-resizer:hover {
+    background-color: #aab;
+  }

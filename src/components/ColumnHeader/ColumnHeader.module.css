@@ -1,0 +1,34 @@
+.column-header {
+  background-color: #f1f1f3;
+  border: none;
+  border-bottom: 2px solid #c9c9c9;
+  box-sizing: content-box;
+  color: #444;
+  height: 20px;
+  padding-top: 8px;
+  position: sticky;
+  top: -1px; /* fix 1px gap above thead */
+  user-select: none;
+  z-index: 10;
+}
+
+.sortable {
+  cursor: pointer;
+}
+  
+.order-by ::after {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  padding-left: 2px;
+  background-color: #f1f1f3;
+}
+
+.ascending ::after {
+  content: "▾";
+}
+
+.descending ::after {
+  content: "▴";
+}
+  

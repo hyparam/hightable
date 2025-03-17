@@ -4,6 +4,7 @@ import { Direction } from '../../helpers/sort.js'
 import { cellStyle, measureWidth } from '../../helpers/width.js'
 import { useLocalStorageState } from '../../hooks/useLocalStorageState.js'
 import ColumnResizer from '../ColumnResizer/ColumnResizer.js'
+import classes from './ColumnHeader.module.css'
 
 interface Props {
   children?: ReactNode
@@ -19,6 +20,7 @@ export default function ColumnHeader({ children, dataReady, direction, localStor
   const [width, setWidth] = useLocalStorageState<number>({ key: localStorageKey ? `${localStorageKey}:width` : undefined })
   const [resizeWidth, setResizeWidth] = useState<number | undefined>(undefined)
   const currentWidth = resizeWidth ?? width
+  const sortable = !!onClick
 
   const style = useMemo(() => {
     return cellStyle(currentWidth)
@@ -57,7 +59,7 @@ export default function ColumnHeader({ children, dataReady, direction, localStor
       scope="col"
       role="columnheader"
       aria-sort={direction ?? 'none'}
-      className={direction ? `orderby ${direction}` : undefined}
+      className={`${classes.columnHeader} ${sortable ? classes.sortable : ''} ${direction ? `${classes.orderBy} ${classes[direction]}` : ''}`}
       onClick={onClick}
       style={style}
       title={title}

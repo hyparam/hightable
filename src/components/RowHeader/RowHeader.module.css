@@ -1,0 +1,41 @@
+.row-header {
+  background-color: #f1f1f3;
+  border-right: 1px solid #ddd;
+  color: #888;
+  font-size: 0.68rem;
+  padding: 0 2px;
+  position: sticky;
+  left: 0;
+  text-align: center;
+  user-select: none;
+  min-width: 32px;
+  max-width: none;
+  width: 32px;
+  cursor: pointer;
+}
+.row-header span {
+  display: inline;
+}
+.row-header input {
+  display: none;
+}
+
+.checked {
+  background-color: #f1edbb;
+}
+/* for selected rows, replace row numbers with checkboxes and highlight the rows */
+.checked span {
+  display: none;
+}
+.checked input {
+  display: inline;
+}
+
+/* if selectable, show checkboxes on hover (and focus) */
+.selectable:hover span, .selectable:focus span {
+  display: none;
+}
+.selectable:hover input, .selectable:focus input {
+  display: inline;
+  cursor: pointer;
+}

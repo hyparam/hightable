@@ -1,4 +1,5 @@
 import { CSSProperties, MouseEvent, ReactNode } from 'react'
+import classes from './TableCorner.module.css'
 
 interface Props {
   checked?: boolean
@@ -9,8 +10,9 @@ interface Props {
 }
 
 export default function TableCorner({ children, checked, onClick, showCheckBox, style }: Props) {
+  const selectable = !!onClick
   return (
-    <td className={`table-corner${showCheckBox ? ' show-checkbox' : ''}`} style={style} onClick={onClick}>
+    <td className={`${classes.tableCorner} ${selectable ? classes.selectable : ''} ${showCheckBox ? classes.showCheckBox : ''}`} style={style} onClick={onClick}>
       <span>{children}</span>
       { showCheckBox && <input type='checkbox' checked={checked} readOnly /> }
     </td>

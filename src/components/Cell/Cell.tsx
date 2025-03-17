@@ -1,4 +1,5 @@
 import { CSSProperties, MouseEvent, useMemo } from 'react'
+import classes from './Cell.module.css'
 
 interface Props {
   onDoubleClick?: (event: MouseEvent) => void
@@ -36,7 +37,7 @@ export default function Cell({ onDoubleClick, onMouseDown, stringify, style, val
   return (
     <td
       role="cell"
-      className={str === undefined ? 'pending' : undefined}
+      className={str === undefined ? classes.pending : undefined}
       onDoubleClick={onDoubleClick}
       onMouseDown={onMouseDown}
       style={style}

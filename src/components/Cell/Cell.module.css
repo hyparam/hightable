@@ -1,0 +1,22 @@
+
+/* pending cell state */
+.pending {
+  position: relative;
+}
+.pending::after {
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  border-radius: 4px;
+  background: linear-gradient(
+    60deg,
+    rgba(0, 0, 0, 0.05) 25%,
+    rgba(0, 0, 0, 0.08) 50%,
+    rgba(0, 0, 0, 0.05) 75%
+  );
+  background-size: 120px 100%;
+  animation: textshimmer 3s infinite linear;
+}

@@ -13,6 +13,7 @@ import RowHeader from '../RowHeader/RowHeader.js'
 import TableCorner from '../TableCorner/TableCorner.js'
 import TableHeader from '../TableHeader/TableHeader.js'
 import { formatRowNumber, rowError } from './HighTable.helpers.js'
+import classes from './HighTable.module.css'
 
 /**
  * A slice of the (optionally sorted) rows to render as HTML.
@@ -351,15 +352,15 @@ export default function HighTable({
 
   const ariaColCount = data.header.length + 1 // don't forget the selection column
   const ariaRowCount = data.numRows + 1 // don't forget the header row
-  return <div className={`table-container${showSelectionControls ? ' selectable' : ''}`}>
-    <div className='table-scroll' ref={scrollRef}>
+  return <div className={`${classes.tableContainer}${showSelectionControls ? ' selectable' : ''}`}>
+    <div className={classes.tableScroll} ref={scrollRef}>
       <div style={{ height: `${scrollHeight}px` }}>
         <table
           aria-readonly={true}
           aria-colcount={ariaColCount}
           aria-rowcount={ariaRowCount}
           aria-multiselectable={showSelectionControls}
-          className={`table${enableOrderByInteractions ? ' sortable' : ''}`}
+          className={`${classes.table}${enableOrderByInteractions ? ' sortable' : ''}`}
           ref={tableRef}
           role='grid'
           style={{ top: `${offsetTop}px` }}
@@ -432,6 +433,6 @@ export default function HighTable({
       </div>
     </div>
     {/* puts a background behind the row labels column */}
-    <div className='mock-row-label' style={cornerStyle}>&nbsp;</div>
+    <div className={classes.mockRowLabel} style={cornerStyle}>&nbsp;</div>
   </div>
 }
