@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { cellStyle } from '../../src/helpers/cellStyle.js'
+import { cellStyle } from '../../src/helpers/width.js'
 
 describe('cellStyle', () => {
   it('returns correct style for defined width', () => {

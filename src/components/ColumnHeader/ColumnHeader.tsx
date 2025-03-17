@@ -1,10 +1,9 @@
 import { MouseEvent, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
-import { cellStyle } from '../../helpers/cellStyle.js'
 import { Direction } from '../../helpers/sort.js'
+import { cellStyle, measureWidth } from '../../helpers/width.js'
 import { useLocalStorageState } from '../../hooks/useLocalStorageState.js'
 import ColumnResizer from '../ColumnResizer/ColumnResizer.js'
-import { measureWidth } from './ColumnHeader.helpers.js'
 
 interface Props {
   children?: ReactNode

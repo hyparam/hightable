@@ -3,8 +3,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import ColumnHeader from '../../../src/components/ColumnHeader/ColumnHeader.js'
 import { render } from '../../userEvent.js'
 
-import { measureWidth } from '../../../src/components/ColumnHeader/ColumnHeader.helpers.js'
-vi.mock('../../../src/components/ColumnHeader/ColumnHeader.helpers.js', { spy: true })
+import { measureWidth } from '../../../src/helpers/width.js'
+vi.mock('../../../src/helpers/width.js', { spy: true })
 
 vi.stubGlobal('localStorage', (() => {
   const store = new Map<string, string>()
