@@ -31,18 +31,6 @@ describe('useLocalStorageState hook', () => {
     expect(value).toEqual(undefined)
   })
 
-  it('should use the initial value, if no key is provided', () => {
-    const { result } = renderHook(() => useLocalStorageState({ initialValue: 42 }))
-    const [ value ] = result.current
-    expect(value).toEqual(42)
-  })
-
-  it('should not use the initial value, if provided, if a key is provided', () => {
-    const { result } = renderHook(() => useLocalStorageState({ key: 'key', initialValue: 42 }))
-    const [ value ] = result.current
-    expect(value).toEqual(undefined)
-  })
-
   it('should return empty value for a non-existing key', () => {
     const { result } = renderHook(() => useLocalStorageState({ key: 'key' }))
     const [ value ] = result.current

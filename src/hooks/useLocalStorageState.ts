@@ -25,24 +25,23 @@ function saveToOrDeleteFromLocalStorage(key: string, value: unknown) {
  * Hook to use a state that is persisted in local storage.
  *
  * The initial value is loaded from local storage if the key is defined.
- * If the key is undefined, the local storage is not used, and the initial value is initialValue.
+ * If the key is undefined, the local storage is not used, and the initial value is undefined.
  *
  * If the key changes, the value is updated from local storage. If the new key is undefined, the value does not change.
  *
  * Note that the values stored with a previous key are maintained.
  * TODO(SL): add a way to delete them?
  *
- * Contrarily to useState, the initial value and the setter argument cannot be a function.
+ * Contrarily to useState, the initial value is always undefined, and the setter argument cannot be a function.
  *
  * @param [string | undefined] key The key to use in local storage. If undefined, the value is not persisted.
- * @param [T | undefined] initialValue The initial value if the key is undefined.
  *
  * @returns [T | undefined, Dispatch<T | undefined>] The value and the setter.
  */
-export function useLocalStorageState<T>({ key, initialValue }: {key?: string, initialValue?: T} = {}): [T | undefined, Dispatch<T | undefined>] {
+export function useLocalStorageState<T>({ key }: {key?: string} = {}): [T | undefined, Dispatch<T | undefined>] {
   const [value, setValue] = useState<T | undefined>(() => {
     // TODO(SL): check if the type of loaded value is T | undefined, accepting a check function as an argument?
-    return key !== undefined ? loadFromLocalStorage(key) as T | undefined : initialValue
+    return key === undefined ? undefined : loadFromLocalStorage(key) as T | undefined
   })
   const [lastCacheKey, setLastCacheKey] = useState<string | undefined>(key)
   if (key !== lastCacheKey) {
