@@ -250,3 +250,13 @@ tr.selected th:first-child {
 .selectable .table thead .table-corner, .selectable .table thead .table-corner input {
   cursor: pointer;
 }
+
+/* mock row numbers */
+.mock-row-label {  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  background: #f1f1f3;
+  z-index: -10;
+}

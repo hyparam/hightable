@@ -1,13 +1,13 @@
-import React from 'react'
+import { ReactNode } from 'react'
 
 interface Props {
-  children: React.ReactNode
+  children: ReactNode
   selected?: boolean
   ariaRowIndex: number
   title?: string
 }
 
-function Row({
+export default function Row({
   children,
   selected,
   ariaRowIndex,
@@ -25,5 +25,3 @@ function Row({
     </tr>
   )
 }
-
-export default Row

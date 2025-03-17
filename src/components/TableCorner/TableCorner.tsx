@@ -1,14 +1,14 @@
-import React from 'react'
+import { CSSProperties, MouseEvent, ReactNode } from 'react'
 
 interface Props {
   checked?: boolean
-  children?: React.ReactNode
-  onClick?: (event: React.MouseEvent) => void
+  children?: ReactNode
+  onClick?: (event: MouseEvent) => void
   showCheckBox?: boolean
-  style?: React.CSSProperties
+  style?: CSSProperties
 }
 
-function TableCorner({ children, checked, onClick, showCheckBox, style }: Props) {
+export default function TableCorner({ children, checked, onClick, showCheckBox, style }: Props) {
   return (
     <td className={`table-corner${showCheckBox ? ' show-checkbox' : ''}`} style={style} onClick={onClick}>
       <span>{children}</span>
@@ -16,5 +16,3 @@ function TableCorner({ children, checked, onClick, showCheckBox, style }: Props)
     </td>
   )
 }
-
-export default TableCorner

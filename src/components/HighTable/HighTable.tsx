@@ -1,8 +1,9 @@
-import React, { MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DataFrame } from '../../helpers/dataframe.js'
 import { PartialRow } from '../../helpers/row.js'
 import { Selection, SortIndex, areAllSelected, computeNewSelection, isSelected, toggleAll } from '../../helpers/selection.js'
 import { OrderBy, areEqualOrderBy } from '../../helpers/sort.js'
+import { cellStyle } from '../../helpers/width.js'
 import { useInputState } from '../../hooks/useInputState.js'
 import { stringify as stringifyDefault } from '../../utils/stringify.js'
 import { throttle } from '../../utils/throttle.js'
@@ -10,7 +11,7 @@ import Cell from '../Cell/Cell.js'
 import Row from '../Row/Row.js'
 import RowHeader from '../RowHeader/RowHeader.js'
 import TableCorner from '../TableCorner/TableCorner.js'
-import TableHeader, { cellStyle } from '../TableHeader/TableHeader.js'
+import TableHeader from '../TableHeader/TableHeader.js'
 import { formatRowNumber, rowError } from './HighTable.helpers.js'
 
 /**
@@ -25,22 +26,14 @@ interface Slice {
 
 const rowHeight = 33 // row height px
 
-/**
- * Mouse event handler for a cell in the table.
- * @param event mouse event
- * @param col column index
- * @param row row index in the data frame
- */
-type MouseEventCellHandler = (event: MouseEvent, col: number, row: number) => void
-
-export interface TableProps {
+interface Props {
   data: DataFrame
   cacheKey?: string // used to persist column widths
   overscan?: number // number of rows to fetch outside of the viewport
   padding?: number // number of padding rows to render outside of the viewport
   focus?: boolean // focus table on mount? (default true)
-  onDoubleClickCell?: MouseEventCellHandler
-  onMouseDownCell?: MouseEventCellHandler
+  onDoubleClickCell?: (event: MouseEvent, col: number, row: number) => void
+  onMouseDownCell?: (event: MouseEvent, col: number, row: number) => void
   onError?: (error: Error) => void
   orderBy?: OrderBy // order used to fetch the rows. If undefined, the table is unordered, the sort controls are hidden and the interactions are disabled. Pass [] to fetch the rows in the original order.
   onOrderByChange?: (orderBy: OrderBy) => void // callback to call when a user interaction changes the order. The interactions are disabled if undefined.
@@ -71,7 +64,7 @@ export default function HighTable({
   onMouseDownCell,
   onError = console.error,
   stringify = stringifyDefault,
-}: TableProps) {
+}: Props) {
   /**
    * The component relies on the model of a virtual table which rows are ordered and only the
    * visible rows are fetched (slice) and rendered as HTML <tr> elements.
@@ -92,19 +85,10 @@ export default function HighTable({
   const [slice, setSlice] = useState<Slice | undefined>(undefined)
   const [rowsRange, setRowsRange] = useState({ start: 0, end: 0 })
   const [hasCompleteRow, setHasCompleteRow] = useState(false)
-  const [columnWidths, setColumnWidths] = useState([] as (number | undefined)[])
 
   // TODO(SL): remove this state and only rely on the data frame for these operations?
   // ie. cache the previous sort indexes in the data frame itself
   const [sortIndexes, setSortIndexes] = useState<Map<string, SortIndex>>(() => new Map())
-
-  const setColumnWidth = useCallback((columnIndex: number, columnWidth: number | undefined) => {
-    setColumnWidths(columnWidths => {
-      const newColumnWidths = [...columnWidths]
-      newColumnWidths[columnIndex] = columnWidth
-      return newColumnWidths
-    })
-  }, [setColumnWidths])
 
   // Sorting is disabled if the data is not sortable
   const {
@@ -146,7 +130,7 @@ export default function HighTable({
   const pendingSelectionRequest = useRef(0)
   const getOnSelectRowClick = useCallback(({ tableIndex, dataIndex }: {tableIndex: number, dataIndex?: number}) => {
     if (!selection) return
-    async function onSelectRowClick(event: React.MouseEvent) {
+    async function onSelectRowClick(event: MouseEvent) {
       if (!selection) return
       const useAnchor = event.shiftKey && selection.anchor !== undefined
       const requestId = ++pendingSelectionRequest.current
@@ -166,7 +150,7 @@ export default function HighTable({
         onSelectionChange(newSelection)
       }
     }
-    return (event: React.MouseEvent): void => {
+    return (event: MouseEvent): void => {
       void onSelectRowClick(event)
     }
   }, [onSelectionChange, selection, data, orderBy, sortIndexes])
@@ -328,18 +312,17 @@ export default function HighTable({
     void fetchRows()
   }, [data, onError, orderBy, slice, rowsRange, hasCompleteRow])
 
-  const memoizedStyles = useMemo(() => columnWidths.map(cellStyle), [columnWidths])
   const getOnDoubleClickCell = useCallback((col: number, row?: number) => {
     // TODO(SL): give feedback (a specific class on the cell element?) about why the double click is disabled?
     if (!onDoubleClickCell || row === undefined) return
-    return (e: React.MouseEvent) => {
+    return (e: MouseEvent) => {
       onDoubleClickCell(e, col, row)
     }
   }, [onDoubleClickCell])
   const getOnMouseDownCell = useCallback((col: number, row?: number) => {
     // TODO(SL): give feedback (a specific class on the cell element?) about why the double click is disabled?
     if (!onMouseDownCell || row === undefined) return
-    return (e: React.MouseEvent) => {
+    return (e: MouseEvent) => {
       onMouseDownCell(e, col, row)
     }
   }, [onMouseDownCell])
@@ -391,12 +374,9 @@ export default function HighTable({
               >&nbsp;</TableCorner>
               <TableHeader
                 cacheKey={cacheKey}
-                columnWidths={columnWidths}
                 dataReady={hasCompleteRow}
                 header={data.header}
                 orderBy={orderBy}
-                setColumnWidth={setColumnWidth}
-                setColumnWidths={setColumnWidths}
                 onOrderByChange={onOrderByChange}
               />
             </Row>
@@ -430,7 +410,6 @@ export default function HighTable({
                   {data.header.map((column, columnIndex) =>
                     <Cell
                       key={columnIndex}
-                      style={memoizedStyles[columnIndex]}
                       onDoubleClick={getOnDoubleClickCell(columnIndex, dataIndex)}
                       onMouseDown={getOnMouseDownCell(columnIndex, dataIndex)}
                       stringify={stringify}
@@ -452,5 +431,7 @@ export default function HighTable({
         </table>
       </div>
     </div>
+    {/* puts a background behind the row labels column */}
+    <div className='mock-row-label' style={cornerStyle}>&nbsp;</div>
   </div>
 }
