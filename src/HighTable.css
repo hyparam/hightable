@@ -74,7 +74,7 @@
 }
 
 /* column resize */
-.table thead span {
+.table thead [role="separator"] {
   position: absolute;
   border-right: 1px solid #ddd;
   top: 0;
@@ -84,7 +84,7 @@
   cursor: col-resize;
   transition: background-color 0.2s ease;
 }
-.table thead span:hover {
+.table thead [role="separator"]:hover {
   background-color: #aab;
 }
 
