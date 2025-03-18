@@ -110,16 +110,16 @@
   display: none;
 }
 /* for selected rows, replace row numbers with checkboxes and highlight the rows */
-tr.selected th:first-child span {
+tr[aria-selected="true"] th:first-child span {
   display: none;
 }
-tr.selected th:first-child input {
+tr[aria-selected="true"] th:first-child input {
   display: inline;
 }
-tr.selected {
+tr[aria-selected="true"] {
   background-color: #fbf7bf;
 }
-tr.selected th:first-child {
+tr[aria-selected="true"] th:first-child {
   background-color: #f1edbb;
 }
 /* if selectable, show checkboxes on hover (and focus) */
