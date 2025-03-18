@@ -11,6 +11,7 @@
     padding: 0;
   }
 
+  /* Note that this class cannot be easily overriden by custom CSS. It's not really an issue as its role is functional. */
   .table-scroll {
     flex: 1;
     overflow: auto;
@@ -143,7 +144,7 @@
     top: 0;
     left: 0;
     bottom: 0;
-    background-color: #fff;
+    background: var(--mock-row-label-background, #fff);
     z-index: -10;
   }
 }
@@ -337,7 +338,6 @@
   }
 
   /* mock row numbers */
-  .mock-row-label {
-    background: #f1f1f3;
-  }
+  /* Note that this class cannot be easily overriden by custom CSS. Use the variable to change the background. */
+  --mock-row-label-background: #f1f1f3;
 }
