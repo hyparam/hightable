@@ -16,28 +16,48 @@
     overflow: auto;
     & > div {
       position: relative;
-
-      table {
-        position: absolute;
-        max-width: 100%;
-        overflow-x: auto;
-
-        /* header */
-        thead th {
-          background-color: #fff;
-          position: sticky;
-          user-select: none;
-          z-index: 10;
-          top: 0;
-        }
-
-        /* cells */
-        th,
-        td {
-          overflow: hidden;
-        }
-      }
     }
+  }
+
+  table {
+    position: absolute;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  /* header */
+  thead {
+    th {
+      background-color: #fff;
+      position: sticky;
+      user-select: none;
+      z-index: 10;
+      top: 0;
+    }
+  }
+
+  /* sortable */
+  .sortable thead th {
+    cursor: pointer;
+  }
+
+  th[aria-sort="ascending"]::after,
+  th[aria-sort="descending"]::after {
+    position: absolute;
+    right: 0;
+    top: 0;
+  }
+  th[aria-sort="ascending"]::after {
+    content: "▾";
+  }
+  th[aria-sort="descending"]::after {
+    content: "▴";
+  }
+
+  /* cells */
+  th,
+  td {
+    overflow: hidden;
   }
 
   /* mock row numbers */
@@ -64,7 +84,10 @@
     &:focus-visible {
       outline: none;
     }
-    thead th {
+  }
+
+  thead {
+    th {
       background-color: #f1f1f3;
       border: none;
       border-bottom: 2px solid #c9c9c9;
@@ -74,30 +97,39 @@
       padding-top: 8px;
       top: -1px; /* fix 1px gap above thead */
     }
-    tbody tr:first-child {
-      td,
-      th {
-        border-top: 1px solid transparent;
-      }
-    }
+  }
 
-    /* cells */
-    th,
-    td {
-      border-bottom: 1px solid #ddd;
-      border-right: 1px solid #ddd;
-      height: 32px;
-      max-width: 2000px; /* prevent columns expanding */
-      padding: 4px 12px;
-      text-align: left;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
+  th[aria-sort="ascending"]::after,
+  th[aria-sort="descending"]::after {
+    right: 8px;
+    top: 8px;
+    padding-left: 2px;
+    background-color: #f1f1f3;
+  }
 
-    /* row error */
-    tr[title] {
-      color: #a11;
+  tbody tr:first-child {
+    td,
+    th {
+      border-top: 1px solid transparent;
     }
+  }
+
+  /* cells */
+  th,
+  td {
+    border-bottom: 1px solid #ddd;
+    border-right: 1px solid #ddd;
+    height: 32px;
+    max-width: 2000px; /* prevent columns expanding */
+    padding: 4px 12px;
+    text-align: left;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* row error */
+  tr[title] {
+    color: #a11;
   }
 
   /* mock row numbers */
