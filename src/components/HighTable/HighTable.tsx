@@ -355,7 +355,7 @@ export default function HighTable({
   const ariaColCount = data.header.length + 1 // don't forget the selection column
   const ariaRowCount = data.numRows + 1 // don't forget the header row
   return <div className={`${classes.hightable} ${className} ${showSelectionControls ? ' selectable' : ''}`}>
-    <div className='table-scroll' ref={scrollRef}>
+    <div className={classes.tableScroll} ref={scrollRef}>
       <div style={{ height: `${scrollHeight}px` }}>
         <table
           aria-readonly={true}

@@ -1,14 +1,3 @@
-.table-scroll {
-  flex: 1;
-  overflow: auto;
-}
-.table-scroll > div {
-  position: relative;
-}
-.table-scroll .table {
-  position: absolute;
-}
-
 .table {
   border-collapse: separate;
   border-spacing: 0;

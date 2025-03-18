@@ -32,5 +32,12 @@ export default defineConfig({
     },
     sourcemap: true,
   },
+  css:{
+    modules:{
+      // in the tsx file, the class name will be camelCase, eg: .table-scroll => classes.tableScroll
+      localsConvention:'camelCase',
+    },
+  }
+  ,
   test: { environment: 'jsdom', globals: true },
 })

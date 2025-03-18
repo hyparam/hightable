@@ -5,10 +5,20 @@
     min-height: 0;
     position: relative;
   }
-
   & * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
+  }
+
+  .table-scroll {
+    flex: 1;
+    overflow: auto;
+    & > div {
+      position: relative;
+    }
+    table {
+      position: absolute;
+    }
   }
 }
