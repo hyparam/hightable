@@ -33,7 +33,7 @@
   ],
   "scripts": {
     "build:bundle": "vite build",
-    "build:css": "cp src/HighTable.css dist/HighTable.css",
+    "build:css": "cat src/HighTable.css >> dist/HighTable.css",
     "build:types": "tsc -b",
     "build": "npm run build:bundle && npm run build:types && npm run build:css",
     "coverage": "vitest run --coverage --coverage.include=src",
