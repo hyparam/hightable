@@ -309,6 +309,7 @@
     background-color: #706fb1;
     z-index: 100;
   }
+  /* TODO(SL): add a global pending state? */
   /* .pending thead th::before {
     animation: shimmer 2s infinite linear;
   } */
@@ -319,6 +320,19 @@
     }
     50% {
       background-color: #adc6b0;
+    }
+  }
+
+  /* don't hover on mobile */
+  @media (hover: hover) {
+    tbody tr:hover {
+      background-color: #dbdbe5;
+    }
+    tbody tr:hover td {
+      border-right-color: #bbb;
+    }
+    tbody tr:hover td:first-child {
+      background-color: #ccd;
     }
   }
 
