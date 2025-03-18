@@ -437,6 +437,6 @@ export default function HighTable({
       </div>
     </div>
     {/* puts a background behind the row labels column */}
-    <div className='mock-row-label' style={cornerStyle}>&nbsp;</div>
+    <div className={classes.mockRowLabel} style={cornerStyle}>&nbsp;</div>
   </div>
 }
