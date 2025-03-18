@@ -94,12 +94,12 @@
     display: inline;
   }
   /* if selectable, show checkboxes on hover (and focus) */
-  .selectable tbody [role="rowheader"]:hover span,
-  .selectable tbody [role="rowheader"]:focus span {
+  table[aria-multiselectable="true"] tbody [role="rowheader"]:hover span,
+  table[aria-multiselectable="true"] tbody [role="rowheader"]:focus span {
     display: none;
   }
-  .selectable tbody [role="rowheader"]:hover input,
-  .selectable tbody [role="rowheader"]:focus input {
+  table[aria-multiselectable="true"] tbody [role="rowheader"]:hover input,
+  table[aria-multiselectable="true"] tbody [role="rowheader"]:focus input {
     display: inline;
     cursor: pointer;
   }
@@ -131,8 +131,8 @@
     display: block;
   }
   /* if selectable, show pointer cursor on checkbox */
-  .selectable thead td:first-child,
-  .selectable thead td:first-child input {
+  table[aria-multiselectable="true"] thead td:first-child,
+  table[aria-multiselectable="true"] thead td:first-child input {
     cursor: pointer;
   }
 

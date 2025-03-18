@@ -364,7 +364,7 @@ export default function HighTable({
           aria-colcount={ariaColCount}
           aria-rowcount={ariaRowCount}
           aria-multiselectable={showSelectionControls}
-          className={`${enableOrderByInteractions ? classes.sortable : ''} ${showSelectionControls ? classes.selectable : ''}`}
+          className={`${enableOrderByInteractions ? classes.sortable : ''}`}
           ref={tableRef}
           role='grid'
           style={{ top: `${offsetTop}px` }}
