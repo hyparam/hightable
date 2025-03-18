@@ -161,11 +161,6 @@ tr[aria-selected="true"] [role="rowheader"] {
   }
 }
 
-/* row error */
-.table tr[title] {
-  color: #a11;
-}
-
 /* table corner */
 .table thead .table-corner {
   background-color: #f9f4ff;
