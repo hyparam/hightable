@@ -18,11 +18,11 @@
 .table-scroll > div {
   position: relative;
 }
-.table-scroll [role="grid"] {
+.table-scroll table {
   position: absolute;
 }
 
-[role="grid"] {
+table {
   border-collapse: separate;
   border-spacing: 0;
   border-top-right-radius: 4px;
@@ -31,12 +31,12 @@
   max-width: 100%;
   overflow-x: auto;
 }
-[role="grid"]:focus-visible {
+table:focus-visible {
   outline: none;
 }
 
 /* header */
-[role="grid"] thead th {
+table thead th {
   background-color: #f1f1f3;
   border: none;
   border-bottom: 2px solid #c9c9c9;
@@ -49,15 +49,15 @@
   user-select: none;
   z-index: 10;
 }
-[role="grid"] tbody tr:first-child td, [role="grid"] tbody tr:first-child th {
+table tbody tr:first-child td, table tbody tr:first-child th {
   border-top: 1px solid transparent;
 }
 
 /* sortable */
-[role="grid"].sortable thead th {
+table.sortable thead th {
   cursor: pointer;
 }
-[role="grid"] [role="columnheader"][aria-sort="ascending"]::after {
+table [role="columnheader"][aria-sort="ascending"]::after {
   content: "▾";
   position: absolute;
   right: 8px;
@@ -65,7 +65,7 @@
   padding-left: 2px;
   background-color: #f1f1f3;
 }
-[role="grid"] [role="columnheader"][aria-sort="descending"]::after {
+table [role="columnheader"][aria-sort="descending"]::after {
   content: "▴";
   position: absolute;
   right: 8px;
@@ -75,7 +75,7 @@
 }
 
 /* column resize */
-[role="grid"] thead span {
+table thead [role="separator"] {
   position: absolute;
   border-right: 1px solid #ddd;
   top: 0;
@@ -85,12 +85,12 @@
   cursor: col-resize;
   transition: background-color 0.2s ease;
 }
-[role="grid"] thead span:hover {
+table thead [role="separator"]:hover {
   background-color: #aab;
 }
 
 /* row numbers */
-[role="grid"] tbody th:first-child {
+table tbody th:first-child {
   background-color: #f1f1f3;
   border-right: 1px solid #ddd;
   color: #888;
@@ -105,10 +105,10 @@
   width: 32px;
   cursor: pointer;
 }
-[role="grid"] tbody th:first-child span {
+table tbody th:first-child span {
   display: inline;
 }
-[role="grid"] tbody th:first-child input {
+table tbody th:first-child input {
   display: none;
 }
 /* for selected rows, replace row numbers with checkboxes and highlight the rows */
@@ -134,8 +134,8 @@ tr.selected th:first-child {
 }
 
 /* cells */
-[role="grid"] th,
-[role="grid"] td {
+table th,
+table td {
   border-bottom: 1px solid #ddd;
   border-right: 1px solid #ddd;
   height: 32px;
@@ -148,10 +148,10 @@ tr.selected th:first-child {
 }
 
 /* pending cell state */
-[role="grid"] td.pending {
+table td.pending {
   position: relative;
 }
-[role="grid"] td.pending::after {
+table td.pending::after {
   content: '';
   position: absolute;
   top: 8px;
@@ -169,11 +169,11 @@ tr.selected th:first-child {
   animation: textshimmer 3s infinite linear;
 }
 /* stagger row shimmering */
-[role="grid"] tr:nth-child(2n) td.pending::after { animation-delay: -1s; }
-[role="grid"] tr:nth-child(2n+1) td.pending::after { animation-delay: -3s; }
-[role="grid"] tr:nth-child(3n) td.pending::after { animation-delay: -2s; }
-[role="grid"] tr:nth-child(5n) td.pending::after { animation-delay: -4s; }
-[role="grid"] tr:nth-child(7n) td.pending::after { animation-delay: -1.5s; }
+table tr:nth-child(2n) td.pending::after { animation-delay: -1s; }
+table tr:nth-child(2n+1) td.pending::after { animation-delay: -3s; }
+table tr:nth-child(3n) td.pending::after { animation-delay: -2s; }
+table tr:nth-child(5n) td.pending::after { animation-delay: -4s; }
+table tr:nth-child(7n) td.pending::after { animation-delay: -1.5s; }
 @keyframes textshimmer {
   0% {
     background-position: -120px 0;
@@ -184,7 +184,7 @@ tr.selected th:first-child {
 }
 
 /* pending table state */
-[role="grid"] thead th::before {
+table thead th::before {
   content: '';
   position: absolute;
   top: 0;
@@ -194,7 +194,7 @@ tr.selected th:first-child {
   background-color: #706fb1;
   z-index: 100;
 }
-.pending [role="grid"] thead th::before {
+.pending table thead th::before {
   animation: shimmer 2s infinite linear;
 }
 @keyframes shimmer {
@@ -204,24 +204,24 @@ tr.selected th:first-child {
 
 /* don't hover on mobile */
 @media (hover: hover) {
-  [role="grid"] tbody tr:hover {
+  table tbody tr:hover {
     background-color: #dbdbe5;
   }
-  [role="grid"] tbody tr:hover td {
+  table tbody tr:hover td {
     border-right-color: #bbb;
   }
-  [role="grid"] tbody tr:hover td:first-child {
+  table tbody tr:hover td:first-child {
     background-color: #ccd;
   }
 }
 
 /* row error */
-[role="grid"] tr[title] {
+table tr[title] {
   color: #a11;
 }
 
 /* table corner */
-[role="grid"] thead .table-corner {
+table thead .table-corner {
   background-color: #f9f4ff;
   border-right: 1px solid #ccc;
   position: sticky;
@@ -236,21 +236,21 @@ tr.selected th:first-child {
   height: 34px;
 }
 /* replace corner with checkbox if selection is enabled (read-only or not) */
-[role="grid"] thead .table-corner input {
+table thead .table-corner input {
   display: none;
   margin: 0 auto;
 }
-[role="grid"] thead .table-corner.show-checkbox {
+table thead .table-corner.show-checkbox {
   background: #f9f4ff; /* redundant with td.table-corner, but allows to force the background if it has been overridden with a logo */
 }
-[role="grid"] thead .table-corner.show-checkbox span {
+table thead .table-corner.show-checkbox span {
   display: none;
 }
-[role="grid"] thead .table-corner.show-checkbox input {
+table thead .table-corner.show-checkbox input {
   display: block;
 }
 /* if selectable, show pointer cursor on checkbox */
-.selectable [role="grid"] thead .table-corner, .selectable [role="grid"] thead .table-corner input {
+.selectable table thead .table-corner, .selectable table thead .table-corner input {
   cursor: pointer;
 }
 
