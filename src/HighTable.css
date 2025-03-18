@@ -18,11 +18,11 @@
 .table-scroll > div {
   position: relative;
 }
-.table-scroll .table {
+.table-scroll [role="grid"] {
   position: absolute;
 }
 
-.table {
+[role="grid"] {
   border-collapse: separate;
   border-spacing: 0;
   border-top-right-radius: 4px;
@@ -31,12 +31,12 @@
   max-width: 100%;
   overflow-x: auto;
 }
-.table:focus-visible {
+[role="grid"]:focus-visible {
   outline: none;
 }
 
 /* header */
-.table thead th {
+[role="grid"] thead th {
   background-color: #f1f1f3;
   border: none;
   border-bottom: 2px solid #c9c9c9;
@@ -49,30 +49,33 @@
   user-select: none;
   z-index: 10;
 }
-.table tbody tr:first-child td, .table tbody tr:first-child th {
+[role="grid"] tbody tr:first-child td, [role="grid"] tbody tr:first-child th {
   border-top: 1px solid transparent;
 }
 
 /* sortable */
-.table.sortable thead th {
+[role="grid"].sortable thead th {
   cursor: pointer;
 }
-.table thead th.orderby ::after {
+[role="grid"] [role="columnheader"][aria-sort="ascending"]::after {
+  content: "▾";
   position: absolute;
   right: 8px;
   top: 8px;
   padding-left: 2px;
   background-color: #f1f1f3;
 }
-.table thead th.orderby.ascending ::after {
-  content: "▾";
-}
-.table thead th.orderby.descending ::after {
+[role="grid"] [role="columnheader"][aria-sort="descending"]::after {
   content: "▴";
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  padding-left: 2px;
+  background-color: #f1f1f3;
 }
 
 /* column resize */
-.table thead span {
+[role="grid"] thead span {
   position: absolute;
   border-right: 1px solid #ddd;
   top: 0;
@@ -82,12 +85,12 @@
   cursor: col-resize;
   transition: background-color 0.2s ease;
 }
-.table thead span:hover {
+[role="grid"] thead span:hover {
   background-color: #aab;
 }
 
 /* row numbers */
-.table tbody th:first-child {
+[role="grid"] tbody th:first-child {
   background-color: #f1f1f3;
   border-right: 1px solid #ddd;
   color: #888;
@@ -102,10 +105,10 @@
   width: 32px;
   cursor: pointer;
 }
-.table tbody th:first-child span {
+[role="grid"] tbody th:first-child span {
   display: inline;
 }
-.table tbody th:first-child input {
+[role="grid"] tbody th:first-child input {
   display: none;
 }
 /* for selected rows, replace row numbers with checkboxes and highlight the rows */
@@ -131,8 +134,8 @@ tr.selected th:first-child {
 }
 
 /* cells */
-.table th,
-.table td {
+[role="grid"] th,
+[role="grid"] td {
   border-bottom: 1px solid #ddd;
   border-right: 1px solid #ddd;
   height: 32px;
@@ -145,10 +148,10 @@ tr.selected th:first-child {
 }
 
 /* pending cell state */
-.table td.pending {
+[role="grid"] td.pending {
   position: relative;
 }
-.table td.pending::after {
+[role="grid"] td.pending::after {
   content: '';
   position: absolute;
   top: 8px;
@@ -166,11 +169,11 @@ tr.selected th:first-child {
   animation: textshimmer 3s infinite linear;
 }
 /* stagger row shimmering */
-.table tr:nth-child(2n) td.pending::after { animation-delay: -1s; }
-.table tr:nth-child(2n+1) td.pending::after { animation-delay: -3s; }
-.table tr:nth-child(3n) td.pending::after { animation-delay: -2s; }
-.table tr:nth-child(5n) td.pending::after { animation-delay: -4s; }
-.table tr:nth-child(7n) td.pending::after { animation-delay: -1.5s; }
+[role="grid"] tr:nth-child(2n) td.pending::after { animation-delay: -1s; }
+[role="grid"] tr:nth-child(2n+1) td.pending::after { animation-delay: -3s; }
+[role="grid"] tr:nth-child(3n) td.pending::after { animation-delay: -2s; }
+[role="grid"] tr:nth-child(5n) td.pending::after { animation-delay: -4s; }
+[role="grid"] tr:nth-child(7n) td.pending::after { animation-delay: -1.5s; }
 @keyframes textshimmer {
   0% {
     background-position: -120px 0;
@@ -181,7 +184,7 @@ tr.selected th:first-child {
 }
 
 /* pending table state */
-.table thead th::before {
+[role="grid"] thead th::before {
   content: '';
   position: absolute;
   top: 0;
@@ -191,7 +194,7 @@ tr.selected th:first-child {
   background-color: #706fb1;
   z-index: 100;
 }
-.pending .table thead th::before {
+.pending [role="grid"] thead th::before {
   animation: shimmer 2s infinite linear;
 }
 @keyframes shimmer {
@@ -201,24 +204,24 @@ tr.selected th:first-child {
 
 /* don't hover on mobile */
 @media (hover: hover) {
-  .table tbody tr:hover {
+  [role="grid"] tbody tr:hover {
     background-color: #dbdbe5;
   }
-  .table tbody tr:hover td {
+  [role="grid"] tbody tr:hover td {
     border-right-color: #bbb;
   }
-  .table tbody tr:hover td:first-child {
+  [role="grid"] tbody tr:hover td:first-child {
     background-color: #ccd;
   }
 }
 
 /* row error */
-.table tr[title] {
+[role="grid"] tr[title] {
   color: #a11;
 }
 
 /* table corner */
-.table thead .table-corner {
+[role="grid"] thead .table-corner {
   background-color: #f9f4ff;
   border-right: 1px solid #ccc;
   position: sticky;
@@ -233,21 +236,21 @@ tr.selected th:first-child {
   height: 34px;
 }
 /* replace corner with checkbox if selection is enabled (read-only or not) */
-.table thead .table-corner input {
+[role="grid"] thead .table-corner input {
   display: none;
   margin: 0 auto;
 }
-.table thead .table-corner.show-checkbox {
+[role="grid"] thead .table-corner.show-checkbox {
   background: #f9f4ff; /* redundant with td.table-corner, but allows to force the background if it has been overridden with a logo */
 }
-.table thead .table-corner.show-checkbox span {
+[role="grid"] thead .table-corner.show-checkbox span {
   display: none;
 }
-.table thead .table-corner.show-checkbox input {
+[role="grid"] thead .table-corner.show-checkbox input {
   display: block;
 }
 /* if selectable, show pointer cursor on checkbox */
-.selectable .table thead .table-corner, .selectable .table thead .table-corner input {
+.selectable [role="grid"] thead .table-corner, .selectable [role="grid"] thead .table-corner input {
   cursor: pointer;
 }
 

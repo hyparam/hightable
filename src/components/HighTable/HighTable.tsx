@@ -359,7 +359,7 @@ export default function HighTable({
           aria-colcount={ariaColCount}
           aria-rowcount={ariaRowCount}
           aria-multiselectable={showSelectionControls}
-          className={`table${enableOrderByInteractions ? ' sortable' : ''}`}
+          className={enableOrderByInteractions ? ' sortable' : ''}
           ref={tableRef}
           role='grid'
           style={{ top: `${offsetTop}px` }}

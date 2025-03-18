@@ -57,7 +57,6 @@ export default function ColumnHeader({ children, dataReady, direction, localStor
       scope="col"
       role="columnheader"
       aria-sort={direction ?? 'none'}
-      className={direction ? `orderby ${direction}` : undefined}
       onClick={onClick}
       style={style}
       title={title}
