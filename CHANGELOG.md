@@ -5,6 +5,7 @@
 ### Added
 
 - add a `className` prop to the `HighTable` component ([#74](https://github.com/hyparam/hightable/pull/74)).
+- add a `styled` prop to the `HighTable` component to apply or disable the default theme ([#75](https://github.com/hyparam/hightable/pull/75)).
 
 ### Changed
 
@@ -14,13 +15,15 @@
 - **Breaking** the `onOrderByChange` property in `HighTable` and `TableHeader` that takes the new `OrderBy` argument.
 - **Breaking** successive clicks on a column header follow a new behavior: instead of toggling between ascending sort and no sort, it now cycles through ascending, descending, and no sort ([#68](https://github.com/hyparam/hightable/pull/68)).
 - **Breaking** the top left cell of the table now handles the checkbox to select all the rows (and the absolutely positioned div is removed). It can affect overriden CSS ([#70](https://github.com/hyparam/hightable/pull/70)).
+- **Breaking** all CSS classes have been removed. Use the `className` prop to apply custom styles ([#75](https://github.com/hyparam/hightable/pull/75)).
 - changed the format of the keys in local storage when storing the column widths. Each column now has its own key ([#71](https://github.com/hyparam/hightable/pull/71)).
+- split the CSS styles into mandatory functional styles and optional theme styles ([#75](https://github.com/hyparam/hightable/pull/75)).
 
 ### Refactored
 
 - Use small components instead of defining all the elements in HighTable and TableHeader ([#70](https://github.com/hyparam/hightable/pull/70)).
 - Structure the code files in directories: components/, hooks/, utils/ and helpers/ ([#70](https://github.com/hyparam/hightable/pull/70)).
-- Specify CSS both as a global CSS file and as a CSS module ([#74](https://github.com/hyparam/hightable/pull/74)).
+- Specify CSS as a CSS module ([#74](https://github.com/hyparam/hightable/pull/74), [#75](https://github.com/hyparam/hightable/pull/75)).
 
 ## [0.12.1](https://github.com/hyparam/hightable/compare/v0.12.0...v0.12.1) - 2025-03-07
 

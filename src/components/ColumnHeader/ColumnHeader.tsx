@@ -12,9 +12,10 @@ interface Props {
   localStorageKey?: string
   onClick?: (e: MouseEvent) => void
   title?: string
+  sortable?: boolean
 }
 
-export default function ColumnHeader({ children, dataReady, direction, localStorageKey, onClick, title }: Props) {
+export default function ColumnHeader({ children, dataReady, direction, localStorageKey, onClick, title, sortable }: Props) {
   const ref = useRef<HTMLTableCellElement>(null)
   const [width, setWidth] = useLocalStorageState<number>({ key: localStorageKey ? `${localStorageKey}:width` : undefined })
   const [resizeWidth, setResizeWidth] = useState<number | undefined>(undefined)
@@ -57,7 +58,7 @@ export default function ColumnHeader({ children, dataReady, direction, localStor
       scope="col"
       role="columnheader"
       aria-sort={direction ?? 'none'}
-      className={direction ? `orderby ${direction}` : undefined}
+      aria-disabled={!sortable}
       onClick={onClick}
       style={style}
       title={title}

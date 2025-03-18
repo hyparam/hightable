@@ -1,2 +1,343 @@
 .hightable {
+  & {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    position: relative;
+  }
+  & * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Note that this class cannot be easily overriden by custom CSS. It's not really an issue as its role is functional. */
+  .table-scroll {
+    flex: 1;
+    overflow: auto;
+    & > div {
+      position: relative;
+    }
+  }
+
+  table {
+    position: absolute;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  /* cells */
+  th,
+  td {
+    overflow: hidden;
+  }
+
+  /* header */
+  thead {
+    th {
+      background-color: transparent;
+      position: sticky;
+      user-select: none;
+      z-index: 10;
+      top: 0;
+    }
+  }
+
+  /* sortable */
+  thead th[aria-disabled="false"] {
+    cursor: pointer;
+  }
+  th[aria-sort="ascending"]::after,
+  th[aria-sort="descending"]::after {
+    position: absolute;
+    right: 0;
+    top: 0;
+  }
+  th[aria-sort="ascending"]::after {
+    content: "▾";
+  }
+  th[aria-sort="descending"]::after {
+    content: "▴";
+  }
+
+  /* column resize */
+  thead [role="separator"] {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 12px;
+    cursor: col-resize;
+    background-color: #888;
+  }
+
+  /* row numbers */
+  tbody [role="rowheader"] {
+    position: sticky;
+    left: 0;
+    user-select: none;
+    min-width: 48px;
+    max-width: none;
+    width: 48px;
+    cursor: pointer;
+  }
+  tbody [role="rowheader"] span {
+    display: inline;
+  }
+  tbody [role="rowheader"] input {
+    display: none;
+  }
+  /* for selected rows, replace row numbers with checkboxes */
+  tr[aria-selected="true"] [role="rowheader"] span {
+    display: none;
+  }
+  tr[aria-selected="true"] [role="rowheader"] input {
+    display: inline;
+  }
+  /* if selectable, show checkboxes on hover (and focus) */
+  table[aria-multiselectable="true"] tbody [role="rowheader"]:hover span,
+  table[aria-multiselectable="true"] tbody [role="rowheader"]:focus span {
+    display: none;
+  }
+  table[aria-multiselectable="true"] tbody [role="rowheader"]:hover input,
+  table[aria-multiselectable="true"] tbody [role="rowheader"]:focus input {
+    display: inline;
+    cursor: pointer;
+  }
+
+  /* table corner */
+  /* TODO: find a better selector for the table corner */
+  thead td:first-child {
+    position: sticky;
+    cursor: default;
+    min-width: 48px;
+    max-width: none;
+    width: 48px;
+    z-index: 15;
+    top: 0;
+    left: 0;
+  }
+  /* replace corner with checkbox if selection is enabled (read-only or not) */
+  thead td:first-child input {
+    display: none;
+    margin: 0 auto;
+  }
+  thead td:first-child[aria-disabled="false"] {
+    background: transparent; /* redundant with td:first-child, but allows to force the background if it has been overridden with a logo */
+  }
+  thead td:first-child[aria-disabled="false"] span {
+    display: none;
+  }
+  thead td:first-child[aria-disabled="false"] input {
+    display: block;
+  }
+  /* if selectable, show pointer cursor on checkbox */
+  table[aria-multiselectable="true"] thead td:first-child,
+  table[aria-multiselectable="true"] thead td:first-child input {
+    cursor: pointer;
+  }
+
+  /* mock row numbers */
+  .mock-row-label {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    background: var(--mock-row-label-background, transparent);
+    z-index: -10;
+  }
+}
+
+/* styling */
+.styled {
+  table {
+    border-collapse: separate;
+    border-spacing: 0;
+    border-top-right-radius: 4px;
+    border-bottom-right-radius: 4px;
+    border-bottom-left-radius: 4px;
+
+    &:focus-visible {
+      outline: none;
+    }
+  }
+
+  thead {
+    th {
+      background-color: #f1f1f3;
+      border: none;
+      border-bottom: 2px solid #c9c9c9;
+      box-sizing: content-box;
+      color: #444;
+      height: 20px;
+      padding-top: 8px;
+      top: -1px; /* fix 1px gap above thead */
+    }
+  }
+
+  th[aria-sort="ascending"]::after,
+  th[aria-sort="descending"]::after {
+    right: 8px;
+    top: 8px;
+    padding-left: 2px;
+    background-color: #f1f1f3;
+  }
+
+  tbody tr:first-child {
+    td,
+    th {
+      border-top: 1px solid transparent;
+    }
+  }
+
+  /* cells */
+  th,
+  td {
+    border-bottom: 1px solid #ddd;
+    border-right: 1px solid #ddd;
+    height: 32px;
+    max-width: 2000px; /* prevent columns expanding */
+    padding: 4px 12px;
+    text-align: left;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* row error */
+  tr[title] {
+    color: #a11;
+  }
+
+  /* column resize */
+  thead [role="separator"] {
+    background-color: inherit;
+    border-right: 1px solid #ddd;
+    width: 8px;
+    transition: background-color 0.2s ease;
+  }
+  thead [role="separator"]:hover {
+    background-color: #aab;
+  }
+
+  /* row numbers */
+  tbody [role="rowheader"] {
+    background-color: #f1f1f3;
+    border-right: 1px solid #ddd;
+    color: #888;
+    font-size: 0.68rem;
+    padding: 0 2px;
+    text-align: center;
+    min-width: 32px;
+    width: 32px;
+  }
+  /* highlight the selected rows */
+  tr[aria-selected="true"] {
+    background-color: #fbf7bf;
+  }
+  tr[aria-selected="true"] [role="rowheader"] {
+    background-color: #f1edbb;
+  }
+
+  /* table corner */
+  /* TODO: find a better selector for the table corner */
+  thead td:first-child {
+    background-color: #f9f4ff;
+    border-right: 1px solid #ccc;
+    box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.2);
+    min-width: 32px;
+    width: 32px;
+    top: -1px; /* fix 1px gap above thead */
+  }
+  thead td:first-child[aria-disabled="false"] {
+    background: #f9f4ff; /* redundant with td:first-child, but allows to force the background if it has been overridden with a logo */
+  }
+
+  /* pending cell state */
+  tbody td[aria-busy="true"] {
+    position: relative;
+  }
+  tbody td[aria-busy="true"]::after {
+    content: "";
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    border-radius: 4px;
+    background: linear-gradient(
+      60deg,
+      rgba(0, 0, 0, 0.05) 25%,
+      rgba(0, 0, 0, 0.08) 50%,
+      rgba(0, 0, 0, 0.05) 75%
+    );
+    background-size: 120px 100%;
+    animation: textshimmer 3s infinite linear;
+  }
+  /* stagger row shimmering */
+  tbody tr:nth-child(2n) td[aria-busy="true"]::after {
+    animation-delay: -1s;
+  }
+  tbody tr:nth-child(2n + 1) td[aria-busy="true"]::after {
+    animation-delay: -3s;
+  }
+  tbody tr:nth-child(3n) td[aria-busy="true"]::after {
+    animation-delay: -2s;
+  }
+  tbody tr:nth-child(5n) td[aria-busy="true"]::after {
+    animation-delay: -4s;
+  }
+  tbody tr:nth-child(7n) td[aria-busy="true"]::after {
+    animation-delay: -1.5s;
+  }
+  @keyframes textshimmer {
+    0% {
+      background-position: -120px 0;
+    }
+    100% {
+      background-position: 120px 0;
+    }
+  }
+
+  /* pending table state */
+  thead th::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background-color: #706fb1;
+    z-index: 100;
+  }
+  /* TODO(SL): add a global pending state? */
+  /* .pending thead th::before {
+    animation: shimmer 2s infinite linear;
+  } */
+  @keyframes shimmer {
+    0%,
+    100% {
+      background-color: #6fb176;
+    }
+    50% {
+      background-color: #adc6b0;
+    }
+  }
+
+  /* don't hover on mobile */
+  @media (hover: hover) {
+    tbody tr:hover {
+      background-color: #dbdbe5;
+    }
+    tbody tr:hover td {
+      border-right-color: #bbb;
+    }
+    tbody tr:hover td:first-child {
+      background-color: #ccd;
+    }
+  }
+
+  /* mock row numbers */
+  /* Note that this class cannot be easily overriden by custom CSS. Use the variable to change the background. */
+  --mock-row-label-background: #f1f1f3;
 }

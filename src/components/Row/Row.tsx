@@ -18,7 +18,6 @@ export default function Row({
       role="row"
       aria-rowindex={ariaRowIndex}
       title={title}
-      className={selected ? 'selected' : undefined} // TODO: use [aria-selected] instead in CSS
       aria-selected={selected}
     >
       {children}

@@ -36,7 +36,7 @@ export default function Cell({ onDoubleClick, onMouseDown, stringify, style, val
   return (
     <td
       role="cell"
-      className={str === undefined ? 'pending' : undefined}
+      aria-busy={str === undefined}
       onDoubleClick={onDoubleClick}
       onMouseDown={onMouseDown}
       style={style}

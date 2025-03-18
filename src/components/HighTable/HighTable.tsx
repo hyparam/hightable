@@ -42,6 +42,7 @@ interface Props {
   onSelectionChange?: (selection: Selection) => void // callback to call when a user interaction changes the selection. The selection is expressed as data indexes (not as indexes in the table). The interactions are disabled if undefined.
   stringify?: (value: unknown) => string | undefined
   className?: string // additional class names
+  styled?: boolean // use styled component? (default true)
 }
 
 /**
@@ -67,6 +68,7 @@ export default function HighTable({
   onError = console.error,
   stringify = stringifyDefault,
   className = '',
+  styled = true,
 }: Props) {
   /**
    * The component relies on the model of a virtual table which rows are ordered and only the
@@ -354,15 +356,14 @@ export default function HighTable({
 
   const ariaColCount = data.header.length + 1 // don't forget the selection column
   const ariaRowCount = data.numRows + 1 // don't forget the header row
-  return <div className={`${classes.hightable} ${className} table-container${showSelectionControls ? ' selectable' : ''}`}>
-    <div className='table-scroll' ref={scrollRef}>
+  return <div className={`${classes.hightable} ${styled ? classes.styled : ''} ${className}`}>
+    <div className={classes.tableScroll} ref={scrollRef}>
       <div style={{ height: `${scrollHeight}px` }}>
         <table
           aria-readonly={true}
           aria-colcount={ariaColCount}
           aria-rowcount={ariaRowCount}
           aria-multiselectable={showSelectionControls}
-          className={`table${enableOrderByInteractions ? ' sortable' : ''}`}
           ref={tableRef}
           role='grid'
           style={{ top: `${offsetTop}px` }}
@@ -381,6 +382,7 @@ export default function HighTable({
                 header={data.header}
                 orderBy={orderBy}
                 onOrderByChange={onOrderByChange}
+                sortable={enableOrderByInteractions}
               />
             </Row>
           </thead>
@@ -435,6 +437,6 @@ export default function HighTable({
       </div>
     </div>
     {/* puts a background behind the row labels column */}
-    <div className='mock-row-label' style={cornerStyle}>&nbsp;</div>
+    <div className={classes.mockRowLabel} style={cornerStyle}>&nbsp;</div>
   </div>
 }
