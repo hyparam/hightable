@@ -23,7 +23,7 @@
   "type": "module",
   "exports": {
     ".": {
-      "types": "./dist/types/HighTable.d.ts",
+      "types": "./dist/types/index.d.ts",
       "import": "./dist/HighTable.js"
     },
     "./src/HighTable.css": "./dist/HighTable.css"
