@@ -112,16 +112,16 @@ table thead [role="separator"]:hover {
   display: none;
 }
 /* for selected rows, replace row numbers with checkboxes and highlight the rows */
-.selected [role="rowheader"] span {
+tr[aria-selected=true] [role="rowheader"] span {
   display: none;
 }
-.selected [role="rowheader"] input {
+tr[aria-selected=true] [role="rowheader"] input {
   display: inline;
 }
-.selected {
+tr[aria-selected=true] {
   background-color: #fbf7bf;
 }
-.selected [role="rowheader"] {
+tr[aria-selected=true] [role="rowheader"] {
   background-color: #f1edbb;
 }
 /* if selectable, show checkboxes on hover (and focus) */
