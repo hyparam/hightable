@@ -1,18 +1,3 @@
-/* column resize */
-.table thead [role="separator"] {
-  position: absolute;
-  border-right: 1px solid #ddd;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: 8px;
-  cursor: col-resize;
-  transition: background-color 0.2s ease;
-}
-.table thead [role="separator"]:hover {
-  background-color: #aab;
-}
-
 /* row numbers */
 .table tbody [role="rowheader"] {
   background-color: #f1f1f3;

@@ -25,6 +25,12 @@
     overflow-x: auto;
   }
 
+  /* cells */
+  th,
+  td {
+    overflow: hidden;
+  }
+
   /* header */
   thead {
     th {
@@ -40,7 +46,6 @@
   .sortable thead th {
     cursor: pointer;
   }
-
   th[aria-sort="ascending"]::after,
   th[aria-sort="descending"]::after {
     position: absolute;
@@ -54,10 +59,15 @@
     content: "▴";
   }
 
-  /* cells */
-  th,
-  td {
-    overflow: hidden;
+  /* column resize */
+  thead [role="separator"] {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 12px;
+    cursor: col-resize;
+    background-color: #000;
   }
 
   /* mock row numbers */
@@ -130,6 +140,17 @@
   /* row error */
   tr[title] {
     color: #a11;
+  }
+
+  /* column resize */
+  thead [role="separator"] {
+    background-color: inherit;
+    border-right: 1px solid #ddd;
+    width: 8px;
+    transition: background-color 0.2s ease;
+  }
+  thead [role="separator"]:hover {
+    background-color: #aab;
   }
 
   /* mock row numbers */
