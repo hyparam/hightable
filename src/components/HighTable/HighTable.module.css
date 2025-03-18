@@ -21,15 +21,42 @@
       position: absolute;
       border-collapse: separate;
       border-spacing: 0;
-      border-top-right-radius: 4px;
-      border-bottom-right-radius: 4px;
-      border-bottom-left-radius: 4px;
       max-width: 100%;
       overflow-x: auto;
 
-      &:focus-visible {
-        outline: none;
+      /* header */
+      thead th {
+        background-color: #fff;
+        position: sticky;
+        user-select: none;
+        z-index: 10;
       }
     }
+  }
+}
+
+/* styling */
+.styled {
+  table {
+    border-top-right-radius: 4px;
+    border-bottom-right-radius: 4px;
+    border-bottom-left-radius: 4px;
+  }
+  table:focus-visible {
+    outline: none;
+  }
+  table thead th {
+    background-color: #f1f1f3;
+    border: none;
+    border-bottom: 2px solid #c9c9c9;
+    box-sizing: content-box;
+    color: #444;
+    height: 20px;
+    padding-top: 8px;
+    top: -1px; /* fix 1px gap above thead */
+  }
+  table tbody tr:first-child td,
+  table tbody tr:first-child th {
+    border-top: 1px solid transparent;
   }
 }
