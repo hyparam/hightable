@@ -89,7 +89,7 @@
 }
 
 /* row numbers */
-.table tbody th:first-child {
+.table tbody [role="rowheader"] {
   background-color: #f1f1f3;
   border-right: 1px solid #ddd;
   color: #888;
@@ -104,32 +104,32 @@
   width: 32px;
   cursor: pointer;
 }
-.table tbody th:first-child span {
+.table tbody [role="rowheader"] span {
   display: inline;
 }
-.table tbody th:first-child input {
+.table tbody [role="rowheader"] input {
   display: none;
 }
 /* for selected rows, replace row numbers with checkboxes and highlight the rows */
-tr[aria-selected="true"] th:first-child span {
+tr[aria-selected="true"] [role="rowheader"] span {
   display: none;
 }
-tr[aria-selected="true"] th:first-child input {
+tr[aria-selected="true"] [role="rowheader"] input {
   display: inline;
 }
 tr[aria-selected="true"] {
   background-color: #fbf7bf;
 }
-tr[aria-selected="true"] th:first-child {
+tr[aria-selected="true"] [role="rowheader"] {
   background-color: #f1edbb;
 }
 /* if selectable, show checkboxes on hover (and focus) */
-.selectable tbody th:first-child:hover span,
-.selectable tbody th:first-child:focus span {
+.selectable tbody [role="rowheader"]:hover span,
+.selectable tbody [role="rowheader"]:focus span {
   display: none;
 }
-.selectable tbody th:first-child:hover input,
-.selectable tbody th:first-child:focus input {
+.selectable tbody [role="rowheader"]:hover input,
+.selectable tbody [role="rowheader"]:focus input {
   display: inline;
   cursor: pointer;
 }
