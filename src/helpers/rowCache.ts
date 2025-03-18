@@ -67,5 +67,5 @@ function getKey(orderBy?: OrderBy): string {
   if (!(0 in orderBy)) {
     throw new Error('orderBy should have at least one element')
   }
-  return orderBy[0].column
+  return JSON.stringify(orderBy)
 }
