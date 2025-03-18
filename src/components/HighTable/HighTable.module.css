@@ -39,6 +39,17 @@
       }
     }
   }
+
+  /* mock row numbers */
+  .mock-row-label {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    background-color: #fff;
+    z-index: -10;
+  }
 }
 
 /* styling */
@@ -82,5 +93,10 @@
       text-overflow: ellipsis;
       white-space: nowrap;
     }
+  }
+
+  /* mock row numbers */
+  .mock-row-label {
+    background: #f1f1f3;
   }
 }
