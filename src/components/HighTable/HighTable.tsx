@@ -13,6 +13,7 @@ import RowHeader from '../RowHeader/RowHeader.js'
 import TableCorner from '../TableCorner/TableCorner.js'
 import TableHeader from '../TableHeader/TableHeader.js'
 import { formatRowNumber, rowError } from './HighTable.helpers.js'
+import classes from './HighTable.module.css'
 
 /**
  * A slice of the (optionally sorted) rows to render as HTML.
@@ -40,6 +41,7 @@ interface Props {
   selection?: Selection // selection and anchor rows, expressed as data indexes (not as indexes in the table). If undefined, the selection is hidden and the interactions are disabled.
   onSelectionChange?: (selection: Selection) => void // callback to call when a user interaction changes the selection. The selection is expressed as data indexes (not as indexes in the table). The interactions are disabled if undefined.
   stringify?: (value: unknown) => string | undefined
+  className?: string // additional class names
 }
 
 /**
@@ -64,6 +66,7 @@ export default function HighTable({
   onMouseDownCell,
   onError = console.error,
   stringify = stringifyDefault,
+  className = '',
 }: Props) {
   /**
    * The component relies on the model of a virtual table which rows are ordered and only the
@@ -351,7 +354,7 @@ export default function HighTable({
 
   const ariaColCount = data.header.length + 1 // don't forget the selection column
   const ariaRowCount = data.numRows + 1 // don't forget the header row
-  return <div className={`table-container${showSelectionControls ? ' selectable' : ''}`}>
+  return <div className={`${classes.hightable} ${className} table-container${showSelectionControls ? ' selectable' : ''}`}>
     <div className='table-scroll' ref={scrollRef}>
       <div style={{ height: `${scrollHeight}px` }}>
         <table
