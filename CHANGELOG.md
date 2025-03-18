@@ -2,6 +2,10 @@
 
 ## [Unreleased](https://github.com/hyparam/hightable/compare/v0.12.1...HEAD)
 
+### Added
+
+- add a `className` prop to the `HighTable` component ([#74](https://github.com/hyparam/hightable/pull/74)).
+
 ### Changed
 
 - **Breaking** the `OrderBy` type is now an array of column sorts: `{ column: string; direction: 'ascending' | 'descending' }[]`. If empty, the data is not sorted. If it contains one element, the data is sorted along the column, in the specified direction. If it contains multiple elements, the first column is used to sort, then the second one is used for the rows with the same value, and so on ([#67](https://github.com/hyparam/hightable/pull/67), [#68](https://github.com/hyparam/hightable/pull/68)).
@@ -16,6 +20,7 @@
 
 - Use small components instead of defining all the elements in HighTable and TableHeader ([#70](https://github.com/hyparam/hightable/pull/70)).
 - Structure the code files in directories: components/, hooks/, utils/ and helpers/ ([#70](https://github.com/hyparam/hightable/pull/70)).
+- Specify CSS both as a global CSS file and as a CSS module ([#74](https://github.com/hyparam/hightable/pull/74)).
 
 ## [0.12.1](https://github.com/hyparam/hightable/compare/v0.12.0...v0.12.1) - 2025-03-07
 
