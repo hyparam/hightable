@@ -1,49 +1,3 @@
-/* row numbers */
-.table tbody [role="rowheader"] {
-  background-color: #f1f1f3;
-  border-right: 1px solid #ddd;
-  color: #888;
-  font-size: 0.68rem;
-  padding: 0 2px;
-  position: sticky;
-  left: 0;
-  text-align: center;
-  user-select: none;
-  min-width: 32px;
-  max-width: none;
-  width: 32px;
-  cursor: pointer;
-}
-.table tbody [role="rowheader"] span {
-  display: inline;
-}
-.table tbody [role="rowheader"] input {
-  display: none;
-}
-/* for selected rows, replace row numbers with checkboxes and highlight the rows */
-tr[aria-selected="true"] [role="rowheader"] span {
-  display: none;
-}
-tr[aria-selected="true"] [role="rowheader"] input {
-  display: inline;
-}
-tr[aria-selected="true"] {
-  background-color: #fbf7bf;
-}
-tr[aria-selected="true"] [role="rowheader"] {
-  background-color: #f1edbb;
-}
-/* if selectable, show checkboxes on hover (and focus) */
-.selectable tbody [role="rowheader"]:hover span,
-.selectable tbody [role="rowheader"]:focus span {
-  display: none;
-}
-.selectable tbody [role="rowheader"]:hover input,
-.selectable tbody [role="rowheader"]:focus input {
-  display: inline;
-  cursor: pointer;
-}
-
 /* pending cell state */
 .table td.pending {
   position: relative;
@@ -157,7 +111,7 @@ tr[aria-selected="true"] [role="rowheader"] {
   display: block;
 }
 /* if selectable, show pointer cursor on checkbox */
-.selectable .table thead .table-corner,
-.selectable .table thead .table-corner input {
+.selectable thead .table-corner,
+.selectable thead .table-corner input {
   cursor: pointer;
 }

@@ -356,7 +356,7 @@ export default function HighTable({
 
   const ariaColCount = data.header.length + 1 // don't forget the selection column
   const ariaRowCount = data.numRows + 1 // don't forget the header row
-  return <div className={`${classes.hightable} ${styled ? classes.styled : ''} ${className} ${showSelectionControls ? ' selectable' : ''}`}>
+  return <div className={`${classes.hightable} ${styled ? classes.styled : ''} ${className}`}>
     <div className={classes.tableScroll} ref={scrollRef}>
       <div style={{ height: `${scrollHeight}px` }}>
         <table
@@ -364,7 +364,7 @@ export default function HighTable({
           aria-colcount={ariaColCount}
           aria-rowcount={ariaRowCount}
           aria-multiselectable={showSelectionControls}
-          className={`table ${enableOrderByInteractions ? classes.sortable : ''}`}
+          className={`table ${enableOrderByInteractions ? classes.sortable : ''} ${showSelectionControls ? classes.selectable : ''}`}
           ref={tableRef}
           role='grid'
           style={{ top: `${offsetTop}px` }}

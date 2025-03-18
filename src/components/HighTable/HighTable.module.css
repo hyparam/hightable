@@ -70,6 +70,40 @@
     background-color: #000;
   }
 
+  /* row numbers */
+  tbody [role="rowheader"] {
+    position: sticky;
+    left: 0;
+    user-select: none;
+    min-width: 48px;
+    max-width: none;
+    width: 48px;
+    cursor: pointer;
+  }
+  tbody [role="rowheader"] span {
+    display: inline;
+  }
+  tbody [role="rowheader"] input {
+    display: none;
+  }
+  /* for selected rows, replace row numbers with checkboxes */
+  tr[aria-selected="true"] [role="rowheader"] span {
+    display: none;
+  }
+  tr[aria-selected="true"] [role="rowheader"] input {
+    display: inline;
+  }
+  /* if selectable, show checkboxes on hover (and focus) */
+  .selectable tbody [role="rowheader"]:hover span,
+  .selectable tbody [role="rowheader"]:focus span {
+    display: none;
+  }
+  .selectable tbody [role="rowheader"]:hover input,
+  .selectable tbody [role="rowheader"]:focus input {
+    display: inline;
+    cursor: pointer;
+  }
+
   /* mock row numbers */
   .mock-row-label {
     content: "";
@@ -151,6 +185,25 @@
   }
   thead [role="separator"]:hover {
     background-color: #aab;
+  }
+
+  /* row numbers */
+  tbody [role="rowheader"] {
+    background-color: #f1f1f3;
+    border-right: 1px solid #ddd;
+    color: #888;
+    font-size: 0.68rem;
+    padding: 0 2px;
+    text-align: center;
+    min-width: 32px;
+    width: 32px;
+  }
+  /* highlight the selected rows */
+  tr[aria-selected="true"] {
+    background-color: #fbf7bf;
+  }
+  tr[aria-selected="true"] [role="rowheader"] {
+    background-color: #f1edbb;
   }
 
   /* mock row numbers */
