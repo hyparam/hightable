@@ -35,7 +35,7 @@
   /* header */
   thead {
     th {
-      background-color: #fff;
+      background-color: transparent;
       position: sticky;
       user-select: none;
       z-index: 10;
@@ -123,7 +123,7 @@
     margin: 0 auto;
   }
   thead td:first-child[aria-disabled="false"] {
-    background: #fff; /* redundant with td:first-child, but allows to force the background if it has been overridden with a logo */
+    background: transparent; /* redundant with td:first-child, but allows to force the background if it has been overridden with a logo */
   }
   thead td:first-child[aria-disabled="false"] span {
     display: none;
@@ -144,7 +144,7 @@
     top: 0;
     left: 0;
     bottom: 0;
-    background: var(--mock-row-label-background, #fff);
+    background: var(--mock-row-label-background, transparent);
     z-index: -10;
   }
 }
