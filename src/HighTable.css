@@ -49,7 +49,8 @@
   user-select: none;
   z-index: 10;
 }
-.table tbody tr:first-child td, .table tbody tr:first-child th {
+.table tbody tr:first-child td,
+.table tbody tr:first-child th {
   border-top: 1px solid transparent;
 }
 
@@ -122,10 +123,12 @@ tr.selected th:first-child {
   background-color: #f1edbb;
 }
 /* if selectable, show checkboxes on hover (and focus) */
-.selectable tbody th:first-child:hover span, .selectable tbody th:first-child:focus span {
+.selectable tbody th:first-child:hover span,
+.selectable tbody th:first-child:focus span {
   display: none;
 }
-.selectable tbody th:first-child:hover input, .selectable tbody th:first-child:focus input {
+.selectable tbody th:first-child:hover input,
+.selectable tbody th:first-child:focus input {
   display: inline;
   cursor: pointer;
 }
@@ -149,7 +152,7 @@ tr.selected th:first-child {
   position: relative;
 }
 .table td.pending::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 8px;
   left: 8px;
@@ -166,11 +169,21 @@ tr.selected th:first-child {
   animation: textshimmer 3s infinite linear;
 }
 /* stagger row shimmering */
-.table tr:nth-child(2n) td.pending::after { animation-delay: -1s; }
-.table tr:nth-child(2n+1) td.pending::after { animation-delay: -3s; }
-.table tr:nth-child(3n) td.pending::after { animation-delay: -2s; }
-.table tr:nth-child(5n) td.pending::after { animation-delay: -4s; }
-.table tr:nth-child(7n) td.pending::after { animation-delay: -1.5s; }
+.table tr:nth-child(2n) td.pending::after {
+  animation-delay: -1s;
+}
+.table tr:nth-child(2n + 1) td.pending::after {
+  animation-delay: -3s;
+}
+.table tr:nth-child(3n) td.pending::after {
+  animation-delay: -2s;
+}
+.table tr:nth-child(5n) td.pending::after {
+  animation-delay: -4s;
+}
+.table tr:nth-child(7n) td.pending::after {
+  animation-delay: -1.5s;
+}
 @keyframes textshimmer {
   0% {
     background-position: -120px 0;
@@ -182,7 +195,7 @@ tr.selected th:first-child {
 
 /* pending table state */
 .table thead th::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
@@ -195,8 +208,13 @@ tr.selected th:first-child {
   animation: shimmer 2s infinite linear;
 }
 @keyframes shimmer {
-  0%, 100% { background-color: #6fb176; }
-  50% { background-color: #adc6b0; }
+  0%,
+  100% {
+    background-color: #6fb176;
+  }
+  50% {
+    background-color: #adc6b0;
+  }
 }
 
 /* don't hover on mobile */
@@ -247,12 +265,14 @@ tr.selected th:first-child {
   display: block;
 }
 /* if selectable, show pointer cursor on checkbox */
-.selectable .table thead .table-corner, .selectable .table thead .table-corner input {
+.selectable .table thead .table-corner,
+.selectable .table thead .table-corner input {
   cursor: pointer;
 }
 
 /* mock row numbers */
-.mock-row-label {  content: "";
+.mock-row-label {
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
