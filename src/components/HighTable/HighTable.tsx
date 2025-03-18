@@ -364,7 +364,6 @@ export default function HighTable({
           aria-colcount={ariaColCount}
           aria-rowcount={ariaRowCount}
           aria-multiselectable={showSelectionControls}
-          className={`${enableOrderByInteractions ? classes.sortable : ''}`}
           ref={tableRef}
           role='grid'
           style={{ top: `${offsetTop}px` }}
@@ -383,6 +382,7 @@ export default function HighTable({
                 header={data.header}
                 orderBy={orderBy}
                 onOrderByChange={onOrderByChange}
+                sortable={enableOrderByInteractions}
               />
             </Row>
           </thead>

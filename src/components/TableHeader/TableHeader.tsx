@@ -8,13 +8,14 @@ interface TableProps {
   orderBy?: OrderBy // array of column order by clauses. If undefined, the table is unordered, the sort elements are hidden and the interactions are disabled.
   onOrderByChange?: (orderBy: OrderBy) => void // callback to call when a user interaction changes the order. The interactions are disabled if undefined.
   dataReady: boolean
+  sortable?: boolean
 }
 
 /**
  * Render a header for a table.
  */
 export default function TableHeader({
-  header, cacheKey, orderBy, onOrderByChange, dataReady,
+  header, cacheKey, orderBy, onOrderByChange, dataReady, sortable = true,
 }: TableProps) {
   // Function to handle click for changing orderBy
   const getOnOrderByClick = useCallback((columnHeader: string) => {
@@ -46,6 +47,7 @@ export default function TableHeader({
         dataReady={dataReady}
         direction={directionByColumn.get(name)}
         onClick={getOnOrderByClick(name)}
+        sortable={sortable}
         title={name}
       >
         {name}

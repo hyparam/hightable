@@ -43,7 +43,7 @@
   }
 
   /* sortable */
-  .sortable thead th {
+  thead th[aria-disabled="false"] {
     cursor: pointer;
   }
   th[aria-sort="ascending"]::after,
