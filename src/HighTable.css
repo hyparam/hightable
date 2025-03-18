@@ -78,20 +78,6 @@ tr[aria-selected="true"] [role="rowheader"] {
   cursor: pointer;
 }
 
-/* cells */
-.table th,
-.table td {
-  border-bottom: 1px solid #ddd;
-  border-right: 1px solid #ddd;
-  height: 32px;
-  max-width: 2000px; /* prevent columns expanding */
-  padding: 4px 12px;
-  text-align: left;
-  text-overflow: ellipsis;
-  overflow: hidden;
-  white-space: nowrap;
-}
-
 /* pending cell state */
 .table td.pending {
   position: relative;
