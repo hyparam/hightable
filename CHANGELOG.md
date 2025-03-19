@@ -19,6 +19,7 @@
 - changed the format of the keys in local storage when storing the column widths. Each column now has its own key ([#71](https://github.com/hyparam/hightable/pull/71)).
 - split the CSS styles into mandatory functional styles and optional theme styles ([#75](https://github.com/hyparam/hightable/pull/75)).
 - the selection checkboxes are now disabled while the data is being loaded ([#77](https://github.com/hyparam/hightable/pull/77)).
+- sortableDataFrame now supports sorting along multiple columns ([#69](https://github.com/hyparam/hightable/pull/69)).
 
 ### Refactored
 

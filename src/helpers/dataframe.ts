@@ -68,12 +68,11 @@ export async function getColumnIndex({ data, column }: {data: DataFrame, column:
   })
 }
 
-interface ColumnRanks {
-  ascending: number[]
-  descending: number[]
-}
-
-export async function getColumnRanks({ data, column }: {data: DataFrame, column: string}): Promise<ColumnRanks> {
+// return the column ranks in ascending order
+// we can get the descending order replacing the rank with numRows - rank - 1. It's not exactly the rank of
+// the descending order, because the rank is the first, not the last, of the ties. But it's enough for the
+// purpose of sorting.
+export async function getColumnRanks({ data, column }: {data: DataFrame, column: string}): Promise<number[]> {
   if (!data.header.includes(column)) {
     throw new Error(`Invalid column: ${column}`)
   }
@@ -94,50 +93,35 @@ export async function getColumnRanks({ data, column }: {data: DataFrame, column:
       return { ranks, lastValue: value, lastRank: rank }
     }
   }, { ranks: Array(numRows).fill(-1), lastValue: undefined, lastRank: 0 }).ranks
-
-  // not exactly the following:
-  //const descendingRanks = Array.from(ascendingRanks).map(rank => numRows - rank - 1)
-  // because the rank is the first, not the last, of the ties
-  // so: let's do the same process in reverse
-  const descendingRanks = sortedValuesWithIndex.reduceRight(({ lastValue, lastRank, ranks }, { value, index }, rank) => {
-    if (value === lastValue) {
-      ranks[index] = numRows - 1 - lastRank
-      return { ranks, lastValue, lastRank }
-    } else {
-      ranks[index] = numRows - 1 - rank
-      return { ranks, lastValue: value, lastRank: rank }
-    }
-  }, { ranks: Array(numRows).fill(-1), lastValue: undefined, lastRank: 0 }).ranks
-
-  return { ascending: ascendingRanks, descending: descendingRanks }
+  return ascendingRanks
 }
 
-function computeOrderByIndexes(orderBy: { direction: 'ascending' | 'descending', columnRanks: ColumnRanks }[]): number[] {
+function computeOrderByIndexes(orderBy: { direction: 'ascending' | 'descending', columnRanks: number[] }[]): number[] {
   if (!(0 in orderBy)) {
     throw new Error('orderBy should have at least one element')
   }
-  const numRows = orderBy[0].columnRanks.ascending.length
+  const numRows = orderBy[0].columnRanks.length
   const indexes = Array.from({ length: numRows }, (_, i) => i)
   const sortedIndexes = indexes.sort((a, b) => {
     for (const { direction, columnRanks } of orderBy) {
-      const ranks = columnRanks[direction]
-      const rankA = ranks[a]
-      const rankB = ranks[b]
+      const rankA = columnRanks[a]
+      const rankB = columnRanks[b]
       if (rankA === undefined || rankB === undefined) {
         throw new Error('Invalid ranks')
       }
-      if (rankA < rankB) return -1
-      if (rankA > rankB) return 1
+      const value = direction === 'ascending' ? 1 : -1
+      if (rankA < rankB) return -value
+      if (rankA > rankB) return value
     }
     return 0
   })
   return sortedIndexes
 }
 
-function getUnsortedRanks({ data }: { data: DataFrame }): Promise<ColumnRanks> {
+function getUnsortedRanks({ data }: { data: DataFrame }): Promise<number[]> {
   const { numRows } = data
   const ranks = Array.from({ length: numRows }, (_, i) => i)
-  return Promise.resolve({ ascending: ranks, descending: ranks.slice().reverse() })
+  return Promise.resolve(ranks)
 }
 
 /**
@@ -158,7 +142,7 @@ function getUnsortedRanks({ data }: { data: DataFrame }): Promise<ColumnRanks> {
 export function sortableDataFrame(data: DataFrame): DataFrame {
   if (data.sortable) return data // already sortable
 
-  const ranksByColumn = new Map<string, Promise<ColumnRanks>>()
+  const ranksByColumn = new Map<string, Promise<number[]>>()
   return {
     ...data,
     rows({ start, end, orderBy }): AsyncRow[] {

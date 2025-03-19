@@ -80,15 +80,13 @@ describe('getColumnRanks', () => {
   }
 
   it('should return different indexes when all the values are different', async () => {
-    const { ascending, descending } = await getColumnRanks({ data: dataFrame, column: 'id' })
-    expect(ascending).toEqual([2, 0, 1, 3])
-    expect(descending).toEqual([1, 3, 2, 0])
+    const ranks = await getColumnRanks({ data: dataFrame, column: 'id' })
+    expect(ranks).toEqual([2, 0, 1, 3])
   })
 
   it('should return equal indexes when the values are the same', async () => {
-    const { ascending, descending } = await getColumnRanks({ data: dataFrame, column: 'age' })
-    expect(ascending).toEqual([2, 3, 0, 0])
-    expect(descending).toEqual([1, 0, 2, 2])
+    const ranks = await getColumnRanks({ data: dataFrame, column: 'age' })
+    expect(ranks).toEqual([2, 3, 0, 0])
   })
 })
 
