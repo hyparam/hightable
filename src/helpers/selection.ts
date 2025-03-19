@@ -234,6 +234,14 @@ export function toggleIndex({ ranges, index }: { ranges: Ranges, index: number }
   return isSelected({ ranges, index }) ? unselectRange({ ranges, range }) : selectRange({ ranges, range })
 }
 
+export function toggleIndexInSelection({ selection, index }: { selection: Selection, index: number }): Selection {
+  return { ranges: toggleIndex({ ranges: selection.ranges, index }), anchor: index }
+}
+
+export function toggleRangeInSelection({ selection, index }: { selection: Selection, index: number }): Selection {
+  return { ranges: extendFromAnchor({ ranges: selection.ranges, anchor: selection.anchor, index }), anchor: selection.anchor }
+}
+
 export interface SortIndex {
   column: string
   dataIndexes: number[] // TODO(SL) use a typed array?
@@ -421,54 +429,35 @@ export function toDataSelection({ selection, column, data, sortIndex, direction 
 }
 
 /**
- * Compute the new selection state after a click (or shift-click) on the row with the given table index.
+ * Compute the new selection state after a shift-click (range toggle) on the row with the given table index
+ * when the rows are sorted.
  *
- * If useAnchor is false or undefined, the row at the index is toggled.
- *
- * If useAnchor is true, the selection is extended from the anchor to the index. Importantly, this
+ * The selection is extended from the anchor to the index. This
  * range is done in the visual space of the user, ie: between the rows as they appear in the table.
- * If the rows are sorted, the indexes are converted from data domain to table domain and vice versa,
+ * As the rows are sorted, the indexes are converted from data domain to table domain and vice versa,
  * which requires the sort index of the data frame. If not available, it must be computed, which is
  * an async operation that can be expensive.
- *
- * Also, the selection is in the data domain, but the index is passed in the table domain (so that
- * the use can click on the row even if it did not resolve yet). The table index is converted to
- * the data index using the sort index, which, again, might not be available, and require an expensive
- * async operation.
  *
  * TODO(SL): add typescript overloads for the function to make it clear which parameters work together?
  *
  * @param {Object} params
  * @param {number} params.tableIndex - The index of the row in the table (table domain, sorted row indexes).
- * @param {number | undefined} params.dataIndex - The index of the row in the table (data domain, unsorted row indexes).
  * @param {Selection} params.selection - The current selection state (data domain, row indexes).
- * @param {boolean | undefined} params.useAnchor - Whether to use the anchor for shift+click selection.
- * @param {OrderBy | undefined} params.orderBy - The order if the rows are sorted.
- * @param {DataFrame | undefined} params.data - The data frame.
+ * @param {OrderBy} params.orderBy - The order if the rows are sorted.
+ * @param {DataFrame} params.data - The data frame.
  * @param {Map<string,SortIndex> | undefined} params.sortIndexes - The map of sort indexes for each column of the data frame for the column (they can be missing, if so thay will be populated in this function).
  * @param {function | undefined} params.setSortIndexes - A function to update the map of sort indexes.
  */
-export async function computeNewSelection({
+export async function toggleRangeInTable({
   tableIndex,
-  dataIndex,
-  useAnchor,
   selection,
   orderBy,
   data,
   sortIndexes: cachedSortIndexes,
   setSortIndexes,
-}: { tableIndex: number, dataIndex?: number, selection: Selection, useAnchor?: boolean, orderBy?: OrderBy, data?: DataFrame, sortIndexes?: Map<string, SortIndex>, setSortIndexes?: (sortIndexes: Map<string, SortIndex>) => void }): Promise<Selection> {
-  if (!orderBy || orderBy.length === 0) {
-    // unsorted data: the table and data indexes are the same
-    const dataIndex = tableIndex
-    return useAnchor ?
-      { ranges: extendFromAnchor({ ranges: selection.ranges, anchor: selection.anchor, index: dataIndex }), anchor: selection.anchor } :
-      { ranges: toggleIndex({ ranges: selection.ranges, index: dataIndex }), anchor: dataIndex }
-  }
-  // sorted data: we need to convert between table and data indexes
-  if (!data) {
-    throw new Error('Missing data frame. Cannot compute the new selection.')
-  }
+}: { tableIndex: number, selection: Selection, orderBy: OrderBy, data: DataFrame, sortIndexes?: Map<string, SortIndex>, setSortIndexes?: (sortIndexes: Map<string, SortIndex>) => void }): Promise<Selection> {
+  // Extend the selection from the anchor to the index with sorted data
+  // Convert the indexes to work in the data domain before converting back.
   if (!data.sortable) {
     throw new Error('Data frame is not sortable')
   }
@@ -477,25 +466,10 @@ export async function computeNewSelection({
   }
   // TODO(SL): support multiple columns
   const { column, direction } = orderBy[0]
-  if (!useAnchor && dataIndex !== undefined) {
-    // no anchor: toggle the row at the index.
-    // Use the data index directly.
-    return { ranges: toggleIndex({ ranges: selection.ranges, index: dataIndex }), anchor: dataIndex }
-  }
-
-  // Convert the table index to the data index, and work in the data domain.
   const sortIndex = cachedSortIndexes?.get(column) ?? await getSortIndex({ data, column })
   if (setSortIndexes && !cachedSortIndexes?.has(column)) {
     setSortIndexes(new Map(cachedSortIndexes).set(column, sortIndex))
   }
-
-  if (!useAnchor) {
-    // no anchor: toggle the row at the index.
-    const dataIndex = getDataIndex({ sortIndex, tableIndex, direction })
-    return { ranges: toggleIndex({ ranges: selection.ranges, index: dataIndex }), anchor: dataIndex }
-  }
-
-  // extend the selection from the anchor to the index. Convert the selection to table indexes, and work in the table domain
   const tableSelection = toTableSelection({ selection, column, data, sortIndex, direction })
   const { ranges, anchor } = tableSelection
   const newTableSelection = { ranges: extendFromAnchor({ ranges, anchor, index: tableIndex }), anchor }
