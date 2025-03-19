@@ -71,7 +71,7 @@ describe('TableHeader', () => {
     expect(onOrderByChange).toHaveBeenCalledWith([])
   })
 
-  it('changes orderBy to a new column when a different header is clicked', async () => {
+  it('prepends a new column with ascending order to orderBy when a different header is clicked', async () => {
     const onOrderByChange = vi.fn()
     const { user, getByText } = render(<table><thead><tr>
       <TableHeader
@@ -84,7 +84,7 @@ describe('TableHeader', () => {
     const addressHeader = getByText('Address')
     await user.click(addressHeader)
 
-    expect(onOrderByChange).toHaveBeenCalledWith([{ column: 'Address', direction: 'ascending' }])
+    expect(onOrderByChange).toHaveBeenCalledWith([{ column: 'Address', direction: 'ascending' }, { column: 'Age', direction: 'ascending' }])
   })
 
 })
