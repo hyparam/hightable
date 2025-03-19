@@ -18,6 +18,7 @@
 - **Breaking** all CSS classes have been removed. Use the `className` prop to apply custom styles ([#75](https://github.com/hyparam/hightable/pull/75)).
 - changed the format of the keys in local storage when storing the column widths. Each column now has its own key ([#71](https://github.com/hyparam/hightable/pull/71)).
 - split the CSS styles into mandatory functional styles and optional theme styles ([#75](https://github.com/hyparam/hightable/pull/75)).
+- the selection checkboxes are now disabled while the data is being loaded ([#77](https://github.com/hyparam/hightable/pull/77)).
 
 ### Refactored
 
