@@ -1,7 +1,7 @@
 import { MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DataFrame } from '../../helpers/dataframe.js'
 import { PartialRow } from '../../helpers/row.js'
-import { Selection, SortIndex, areAllSelected, computeNewSelection, isSelected, toggleAll } from '../../helpers/selection.js'
+import { Selection, SortIndex, areAllSelected, isSelected, toggleAll, toggleIndexInSelection, toggleRangeInSelection, toggleRangeInTable } from '../../helpers/selection.js'
 import { OrderBy, areEqualOrderBy } from '../../helpers/sort.js'
 import { cellStyle } from '../../helpers/width.js'
 import { useInputState } from '../../hooks/useInputState.js'
@@ -132,19 +132,31 @@ export default function HighTable({
       anchor: undefined,
     }) }
   }, [onSelectionChange, data.numRows, selection])
+
   const pendingSelectionRequest = useRef(0)
-  const getOnSelectRowClick = useCallback(({ tableIndex, dataIndex }: {tableIndex: number, dataIndex?: number}) => {
+  const getOnSelectRowClick = useCallback(({ tableIndex, dataIndex }: {tableIndex: number, dataIndex: number}) => {
     if (!selection) return
     async function onSelectRowClick(event: MouseEvent) {
       if (!selection) return
       const useAnchor = event.shiftKey && selection.anchor !== undefined
+
+      if (!useAnchor) {
+        // single row toggle
+        onSelectionChange(toggleIndexInSelection({ selection, index: dataIndex }))
+        return
+      }
+
+      if (!orderBy || orderBy.length === 0) {
+        // no sorting, toggle the range
+        onSelectionChange(toggleRangeInSelection({ selection, index: dataIndex }))
+        return
+      }
+
+      // sorting, toggle the range in the sorted order
       const requestId = ++pendingSelectionRequest.current
-      // computeNewSelection is responsible to resolve the dataIndex if undefined but needed
-      const newSelection = await computeNewSelection({
+      const newSelection = await toggleRangeInTable({
         selection,
         tableIndex,
-        dataIndex,
-        useAnchor,
         orderBy,
         data,
         sortIndexes,
@@ -408,7 +420,7 @@ export default function HighTable({
                 >
                   <RowHeader
                     style={cornerStyle}
-                    onClick={getOnSelectRowClick({ tableIndex, dataIndex })}
+                    onClick={dataIndex === undefined ? undefined : getOnSelectRowClick({ tableIndex, dataIndex })}
                     checked={selected}
                     showCheckBox={showSelection}
                   >{formatRowNumber(dataIndex)}</RowHeader>
