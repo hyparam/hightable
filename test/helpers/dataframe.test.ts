@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DataFrame, arrayDataFrame, getColumnRanks, getGetColumn, sortableDataFrame } from '../../src/helpers/dataframe.js'
+import { DataFrame, arrayDataFrame, getGetColumn, getRanks, sortableDataFrame } from '../../src/helpers/dataframe.js'
 import { AsyncRow, Row, awaitRows } from '../../src/helpers/row.js'
 import { wrapPromise } from '../../src/utils/promise.js'
 
@@ -61,7 +61,7 @@ describe('getGetColumn', () => {
 
 })
 
-describe('getColumnRanks', () => {
+describe('getRanks', () => {
   const data = [
     { id: 3, name: 'Charlie', age: 25 },
     { id: 1, name: 'Alice', age: 30 },
@@ -80,12 +80,12 @@ describe('getColumnRanks', () => {
   }
 
   it('should return different indexes when all the values are different', async () => {
-    const ranks = await getColumnRanks({ data: dataFrame, column: 'id' })
+    const ranks = await getRanks({ data: dataFrame, column: 'id' })
     expect(ranks).toEqual([2, 0, 1, 3])
   })
 
   it('should return equal indexes when the values are the same', async () => {
-    const ranks = await getColumnRanks({ data: dataFrame, column: 'age' })
+    const ranks = await getRanks({ data: dataFrame, column: 'age' })
     expect(ranks).toEqual([2, 3, 0, 0])
   })
 })

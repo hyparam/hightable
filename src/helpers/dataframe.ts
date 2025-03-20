@@ -72,7 +72,7 @@ export async function getColumnIndex({ data, column }: {data: DataFrame, column:
 // we can get the descending order replacing the rank with numRows - rank - 1. It's not exactly the rank of
 // the descending order, because the rank is the first, not the last, of the ties. But it's enough for the
 // purpose of sorting.
-export async function getColumnRanks({ data, column }: {data: DataFrame, column: string}): Promise<number[]> {
+export async function getRanks({ data, column }: {data: DataFrame, column: string}): Promise<number[]> {
   if (!data.header.includes(column)) {
     throw new Error(`Invalid column: ${column}`)
   }
@@ -96,16 +96,16 @@ export async function getColumnRanks({ data, column }: {data: DataFrame, column:
   return ascendingRanks
 }
 
-function computeOrderByIndexes(orderBy: { direction: 'ascending' | 'descending', columnRanks: number[] }[]): number[] {
+export function computeDataIndexes(orderBy: { direction: 'ascending' | 'descending', ranks: number[] }[]): number[] {
   if (!(0 in orderBy)) {
     throw new Error('orderBy should have at least one element')
   }
-  const numRows = orderBy[0].columnRanks.length
+  const numRows = orderBy[0].ranks.length
   const indexes = Array.from({ length: numRows }, (_, i) => i)
-  const sortedIndexes = indexes.sort((a, b) => {
-    for (const { direction, columnRanks } of orderBy) {
-      const rankA = columnRanks[a]
-      const rankB = columnRanks[b]
+  const dataIndexes = indexes.sort((a, b) => {
+    for (const { direction, ranks } of orderBy) {
+      const rankA = ranks[a]
+      const rankB = ranks[b]
       if (rankA === undefined || rankB === undefined) {
         throw new Error('Invalid ranks')
       }
@@ -115,10 +115,11 @@ function computeOrderByIndexes(orderBy: { direction: 'ascending' | 'descending',
     }
     return 0
   })
-  return sortedIndexes
+  // dataIndexes[0] gives the index of the first row in the sorted table
+  return dataIndexes
 }
 
-function getUnsortedRanks({ data }: { data: DataFrame }): Promise<number[]> {
+export function getUnsortedRanks({ data }: { data: DataFrame }): Promise<number[]> {
   const { numRows } = data
   const ranks = Array.from({ length: numRows }, (_, i) => i)
   return Promise.resolve(ranks)
@@ -154,16 +155,16 @@ export function sortableDataFrame(data: DataFrame): DataFrame {
         // To get a consistent order in case of ties, we append a fake column orderby, to sort by the ascending indexes of the rows in the last case
         const orderByWithDefaultSort = [...orderBy, { column: '', direction: 'ascending' as const }]
         const orderByWithRanks = orderByWithDefaultSort.map(async ({ column, direction }) => {
-          const columnRanksPromise = ranksByColumn.get(column) ?? (column === '' ? getUnsortedRanks({ data }) : getColumnRanks({ data, column }))
+          const ranksPromise = ranksByColumn.get(column) ?? (column === '' ? getUnsortedRanks({ data }) : getRanks({ data, column }))
           if (!ranksByColumn.has(column)) {
-            ranksByColumn.set(column, columnRanksPromise)
+            ranksByColumn.set(column, ranksPromise)
           }
-          const columnRanks = await columnRanksPromise
-          return { column, direction, columnRanks }
+          const ranks = await ranksPromise
+          return { column, direction, ranks }
         })
         // We cannot slice directly, because columns can have ties in the borders of the slice
         // TODO(SL): avoid sorting along the whole columns, maybe sort only the slice, and expand if needed
-        const indexes = Promise.all(orderByWithRanks).then(computeOrderByIndexes)
+        const indexes = Promise.all(orderByWithRanks).then(computeDataIndexes)
         const indexesSlice = indexes.then(indexes => indexes.slice(start, end))
         const rowsSlice = indexesSlice.then(indexes => Promise.all(
           // TODO(SL): optimize to fetch groups of rows instead of individual rows?
