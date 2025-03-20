@@ -332,8 +332,6 @@ export function convertSelection({ selection, permutationIndexes }: { selection:
  * which requires the sort index of the data frame. If not available, it must be computed, which is
  * an async operation that can be expensive.
  *
- * TODO(SL): add typescript overloads for the function to make it clear which parameters work together?
- *
  * @param {Object} params
  * @param {number} params.tableIndex - The index of the row in the table (table domain, sorted row indexes).
  * @param {Selection} params.selection - The current selection state (data domain, row indexes).
