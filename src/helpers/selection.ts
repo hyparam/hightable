@@ -349,7 +349,7 @@ export async function toggleRangeInTable({
   data,
   ranksMap,
   setRanksMap,
-}: { tableIndex: number, selection: Selection, orderBy: OrderBy, data: DataFrame, ranksMap: Map<string, Promise<number[]>>, setRanksMap: (ranksMap: Map<string, Promise<number[]>>) => void }): Promise<Selection> {
+}: { tableIndex: number, selection: Selection, orderBy: OrderBy, data: DataFrame, ranksMap: Map<string, Promise<number[]>>, setRanksMap: (setter: (ranksMap: Map<string, Promise<number[]>>) => Map<string, Promise<number[]>>) => void }): Promise<Selection> {
   // Extend the selection from the anchor to the index with sorted data
   // Convert the indexes to work in the data domain before converting back.
   if (!data.sortable) {
@@ -364,9 +364,11 @@ export async function toggleRangeInTable({
     }
   })
   if (orderByWithRanksPromises.some(({ column }) => !ranksMap.has(column))) {
-    const nextRanksMap = new Map(ranksMap)
-    orderByWithRanksPromises.forEach(({ column, ranks }) => nextRanksMap.set(column, ranks))
-    setRanksMap(nextRanksMap)
+    setRanksMap(ranksMap => {
+      const nextRanksMap = new Map(ranksMap)
+      orderByWithRanksPromises.forEach(({ column, ranks }) => nextRanksMap.set(column, ranks))
+      return nextRanksMap
+    })
   }
   const orderByWithRanks = await Promise.all(orderByWithRanksPromises.map(async ({ column, direction, ranks }) => ({ column, direction, ranks: await ranks })))
 

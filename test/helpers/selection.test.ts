@@ -420,9 +420,13 @@ describe('toggleRangeInTable', () => {
     ).resolves.toEqual({ ranges: [{ start: 1, end: 3 }], anchor: 1 })
   })
   it('should call setRanksMap if new ranks are computed', async () => {
-    const setRanksMap = vi.fn()
+    let cachedRanksMap = new Map<string, Promise<number[]>>()
+    const setRanksMap = vi.fn(function (setter: (ranksMap: Map<string, Promise<number[]>>) => Map<string, Promise<number[]>>) {
+      cachedRanksMap = setter(cachedRanksMap)
+    })
     await toggleRangeInTable({ ...props, setRanksMap })
-    expect(setRanksMap).toHaveBeenCalledWith(new Map([['name', Promise.resolve(nameRanks)], ['', Promise.resolve(indexRanks)]]))
+    expect(setRanksMap).toHaveBeenCalledOnce()
+    expect(cachedRanksMap).toEqual(new Map([['name', Promise.resolve(nameRanks)], ['', Promise.resolve(indexRanks)]]))
   })
   it('should extend the selection using ranksMap if provided', async () => {
     /**
