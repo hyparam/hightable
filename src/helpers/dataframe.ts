@@ -55,19 +55,6 @@ export function getGetColumn(data: DataFrame): GetColumn {
   }
 }
 
-export async function getColumnIndex({ data, column }: {data: DataFrame, column: string}): Promise<number[]> {
-  if (!data.header.includes(column)) {
-    throw new Error(`Invalid column: ${column}`)
-  }
-  const getColumn = getGetColumn(data)
-  const values = await getColumn({ column })
-  return Array.from(values.keys()).sort((a, b) => {
-    if (values[a] < values[b]) return -1
-    if (values[a] > values[b]) return 1
-    return 0
-  })
-}
-
 // return the column ranks in ascending order
 // we can get the descending order replacing the rank with numRows - rank - 1. It's not exactly the rank of
 // the descending order, because the rank is the first, not the last, of the ties. But it's enough for the
