@@ -130,6 +130,9 @@ export function getUnsortedRanks({ data }: { data: DataFrame }): Promise<number[
 export function sortableDataFrame(data: DataFrame): DataFrame {
   if (data.sortable) return data // already sortable
 
+  // TODO(SL): call addGetColumn() to cache the rows if needed
+  // TODO(SL): create another type (DataFrameWithRanks?) that provides the cached ranks (and/or the cached data indexes for a given orderBy)
+
   const ranksByColumn = new Map<string, Promise<number[]>>()
   return {
     ...data,
