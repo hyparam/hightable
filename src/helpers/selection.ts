@@ -1,5 +1,5 @@
-import { DataFrame, getColumnIndex } from './dataframe.js'
-import { Direction, OrderBy } from './sort.js'
+import { DataFrame, computeDataIndexes, getRanks, getUnsortedRanks } from './dataframe.js'
+import { OrderBy } from './sort.js'
 
 /**
  * A selection is modelled as an array of ordered and non-overlapping ranges.
@@ -242,109 +242,59 @@ export function toggleRangeInSelection({ selection, index }: { selection: Select
   return { ranges: extendFromAnchor({ ranges: selection.ranges, anchor: selection.anchor, index }), anchor: selection.anchor }
 }
 
-export interface SortIndex {
-  column: string
-  dataIndexes: number[] // TODO(SL) use a typed array?
-  tableIndexes: number[] // TODO(SL) use a typed array?
+/**
+ * Compute the table indexes from the data indexes.
+ *
+ * @param {number[]} permutationIndexes - The data frame index of each row of the sorted table (dataIndexes[tableIndex] = dataIndex).
+ *
+ * @returns {number[]} The index of each row in the sorted table (tableIndexes[dataIndex] = tableIndex).
+ */
+export function invertPermutationIndexes(permutationIndexes: number[]): number[] {
+  const numIndexes = permutationIndexes.length
+  const invertedIndexes = Array<number>(numIndexes).fill(-1)
+  permutationIndexes.forEach((index, invertedIndex) => {
+    if (index < 0 || index >= numIndexes) {
+      throw new Error('Invalid index: out of bounds')
+    }
+    if (!Number.isInteger(index)) {
+      throw new Error('Invalid index: not an integer')
+    }
+    if (invertedIndexes[index] !== -1) {
+      throw new Error('Duplicate index')
+    }
+    invertedIndexes[index] = invertedIndex
+  })
+  return invertedIndexes
 }
 
 /**
- * Get the sort index of the data frame, for a given order.
+ * Get an element from an array, or raise if it's outside of the range.
  *
  * @param {Object} params
- * @param {DataFrame} params.data - The data frame.
- * @param {string} params.column - The column name.
+ * @param {number} params.index - The index of the element.
+ * @param {T[]} params.array - The array of elements (array[index] = element).
  *
- * @returns {Promise<SortIndex>} A Promise to the sort index.
+ * @returns {T} The element.
  */
-export async function getSortIndex({ data, column }: { data: DataFrame, column: string }): Promise<SortIndex> {
-  // TODO(SL): rename as fetch/compute instead of get, to make it clear it's async
-  const { header, numRows } = data
-  if (!header.includes(column)) {
-    throw new Error('orderBy column is not in the data frame')
-  }
-  const dataIndexes = await getColumnIndex({ data, column })
-  if (dataIndexes.length !== numRows) {
-    throw new Error('Invalid sort index length')
-  }
-  const tableIndexes = Array<number>(numRows).fill(-1)
-  for (let i = 0; i < numRows; i++) {
-    const dataIndex = dataIndexes[i]
-    if (dataIndex === undefined) {
-      throw new Error('Data index not found in the data frame')
-    }
-    if (typeof dataIndex !== 'number') {
-      throw new Error('Invalid data index: not a number')
-    }
-    if (dataIndex < 0 || dataIndex >= numRows) {
-      throw new Error('Invalid data index: out of bounds')
-    }
-    if (tableIndexes[dataIndex] !== -1) {
-      throw new Error('Duplicate data index')
-    }
-    tableIndexes[dataIndex] = i
-  }
-  // check if there are missing indexes
-  if (tableIndexes.some(index => index === -1)) {
-    throw new Error('Missing indexes in the sort index')
-  }
-  return { column, dataIndexes, tableIndexes }
-}
-
-/**
- * Convert a table index to a data index, using the sort index.
- *
- * @param {Object} params
- * @param {SortIndex} params.sortIndex - The sort index.
- * @param {number} params.tableIndex - The index of the row in the sorted table.
- * @param {Direction} params.direction - The direction of the sort.
- *
- * @returns {number} The index of the row in the data frame.
- */
-export function getDataIndex({ sortIndex, tableIndex, direction }: {sortIndex: SortIndex, tableIndex: number, direction: Direction}): number {
-  const index = direction === 'ascending' ? tableIndex : sortIndex.tableIndexes.length - tableIndex - 1
-  const dataIndex = sortIndex.dataIndexes[index]
-  if (dataIndex === undefined) {
-    throw new Error('Table index not found in the data frame')
-  }
-  return dataIndex
-}
-
-/**
- * Convert a data index to a table index, using the sort index.
- *
- * @param {Object} params
- * @param {SortIndex} params.sortIndex - The sort index.
- * @param {number} params.dataIndex - The index of the row in the data frame.
- * @param {Direction} params.direction - The direction of the sort.
- *
- * @returns {number} The index of the row in the sorted table.
- */
-export function getTableIndex({ sortIndex, dataIndex, direction }: {sortIndex: SortIndex, dataIndex: number, direction: Direction}): number {
-  const tableIndex = sortIndex.tableIndexes[dataIndex]
-  if (tableIndex === -1 || tableIndex === undefined) {
+export function getElement<T>({ index, array }: {index: number, array: T[]}): T {
+  const element = array[index]
+  if (element === undefined) {
     throw new Error('Data index not found in the data frame')
   }
-  return direction === 'ascending' ? tableIndex : sortIndex.tableIndexes.length - tableIndex - 1
+  return element
 }
 
 /**
- * Convert from a selection of data indexes to a selection of table indexes.
- *
- * Data indexes: the indexes of the selected rows in the data frame.
- * Table indexes: the indexes of the selected rows in the sorted table.
+ * Convert a selection between two domains, using a permutation array.
  *
  * @param {Object} params
- * @param {Selection} params.selection - The selection of data indexes.
- * @param {string} params.column - The column to sort the rows along.
- * @param {DataFrame} params.data - The data frame.
- * @param {SortIndex} params.sortIndex - The sort index of the data frame for the column.
- * @param {Direction} params.direction - The direction of the sort.
+ * @param {Selection} params.selection - A selection of indexes.
+ * @param {number[]} params.permutationIndexes - An array that maps every index to another index (permutationIndexes[index] = permutedIndex).
  *
- * @returns {Promise<Selection>} A Promise to the selection of table indexes.
+ * @returns {Selection} A selection of permuted indexes.
  */
-export function toTableSelection({ selection, column, data, sortIndex, direction }: { selection: Selection, column: string, data: DataFrame, sortIndex: SortIndex, direction: Direction }): Selection {
-  const { header, numRows, sortable } = data
+export function convertSelection({ selection, permutationIndexes }: { selection: Selection, permutationIndexes: number[] }): Selection {
+  const numElements = permutationIndexes.length
   const { ranges, anchor } = selection
   if (!areValidRanges(selection.ranges)) {
     throw new Error('Invalid ranges')
@@ -352,80 +302,24 @@ export function toTableSelection({ selection, column, data, sortIndex, direction
   if (anchor !== undefined && !isValidIndex(anchor)) {
     throw new Error('Invalid anchor')
   }
-  if (!header.includes(column)) {
-    throw new Error('orderBy column is not in the data frame')
-  }
-  if (column && !sortable) {
-    throw new Error('Data frame is not sortable')
-  }
-  let tableRanges: Ranges = []
+  let nextRanges: Ranges = []
   if (ranges.length === 0) {
     // empty selection
-    tableRanges = []
-  } else if (ranges.length === 1 && 0 in ranges && ranges[0].start === 0 && ranges[0].end === numRows) {
+    nextRanges = []
+  } else if (ranges.length === 1 && 0 in ranges && ranges[0].start === 0 && ranges[0].end === numElements) {
     // all rows selected
-    tableRanges = [{ start: 0, end: numRows }]
+    nextRanges = [{ start: 0, end: numElements }]
   } else {
     // naive implementation, could be optimized
     for (const range of ranges) {
       const { start, end } = range
-      for (let dataIndex = start; dataIndex < end; dataIndex++) {
-        tableRanges = selectIndex({ ranges: tableRanges, index: getTableIndex({ sortIndex, dataIndex, direction }) })
+      for (let index = start; index < end; index++) {
+        nextRanges = selectIndex({ ranges: nextRanges, index: getElement({ index, array: permutationIndexes }) })
       }
     }
   }
-  const anchorTableIndex = anchor !== undefined ? getTableIndex({ sortIndex, dataIndex: anchor, direction }) : undefined
-  return { ranges: tableRanges, anchor: anchorTableIndex }
-}
-
-/**
- * Convert from a selection of table indexes to a selection of data indexes.
- *
- * Table indexes: the indexes of the selected rows in the sorted table.
- * Data indexes: the indexes of the selected rows in the data frame.
- *
- * @param {Object} params
- * @param {Selection} params.selection - The selection of table indexes.
- * @param {string} params.column - The column to sort the rows along.
- * @param {DataFrame} params.data - The data frame.
- * @param {SortIndex} params.sortIndex - The sort index of the data frame for the column.
- * @param {Direction} params.direction - The direction of the sort.
- *
- * @returns {Promise<Selection>} A Promise to the selection of data indexes.
- */
-export function toDataSelection({ selection, column, data, sortIndex, direction }: { selection: Selection, column: string, data: DataFrame, sortIndex: SortIndex, direction: Direction }): Selection {
-  const { header, numRows, sortable } = data
-  const { ranges, anchor } = selection
-  if (!areValidRanges(selection.ranges)) {
-    throw new Error('Invalid ranges')
-  }
-  if (anchor !== undefined && !isValidIndex(anchor)) {
-    throw new Error('Invalid anchor')
-  }
-  if (column && !header.includes(column)) {
-    throw new Error('orderBy column is not in the data frame')
-  }
-  if (column && !sortable) {
-    throw new Error('Data frame is not sortable')
-  }
-
-  let dataRanges: Ranges = []
-  if (ranges.length === 0) {
-    // empty selection
-    dataRanges = []
-  } else if (ranges.length === 1 && 0 in ranges && ranges[0].start === 0 && ranges[0].end === numRows) {
-    // all data selected
-    dataRanges = [{ start: 0, end: numRows }]
-  } else {
-    // naive implementation, could be optimized
-    for (const range of ranges) {
-      for (let tableIndex = range.start; tableIndex < range.end; tableIndex++) {
-        dataRanges = selectIndex({ ranges: dataRanges, index: getDataIndex({ sortIndex, tableIndex, direction }) })
-      }
-    }
-  }
-  const anchorIndex = anchor !== undefined ? getDataIndex({ sortIndex, tableIndex: anchor, direction }) : undefined
-  return { ranges: dataRanges, anchor: anchorIndex }
+  const nextAnchor = anchor !== undefined ? getElement({ index: anchor, array: permutationIndexes }) : undefined
+  return { ranges: nextRanges, anchor: nextAnchor }
 }
 
 /**
@@ -438,41 +332,49 @@ export function toDataSelection({ selection, column, data, sortIndex, direction 
  * which requires the sort index of the data frame. If not available, it must be computed, which is
  * an async operation that can be expensive.
  *
- * TODO(SL): add typescript overloads for the function to make it clear which parameters work together?
- *
  * @param {Object} params
  * @param {number} params.tableIndex - The index of the row in the table (table domain, sorted row indexes).
  * @param {Selection} params.selection - The current selection state (data domain, row indexes).
  * @param {OrderBy} params.orderBy - The order if the rows are sorted.
  * @param {DataFrame} params.data - The data frame.
- * @param {Map<string,SortIndex> | undefined} params.sortIndexes - The map of sort indexes for each column of the data frame for the column (they can be missing, if so thay will be populated in this function).
- * @param {function | undefined} params.setSortIndexes - A function to update the map of sort indexes.
+ * @param {Map<string,number[]>} params.ranks - The map of ranks for each column of the data frame (they can be missing, if so thay will be populated in this function).
+ * @param {function} params.setColumnRanks - A function to update the map of column ranks.
  */
 export async function toggleRangeInTable({
   tableIndex,
   selection,
   orderBy,
   data,
-  sortIndexes: cachedSortIndexes,
-  setSortIndexes,
-}: { tableIndex: number, selection: Selection, orderBy: OrderBy, data: DataFrame, sortIndexes?: Map<string, SortIndex>, setSortIndexes?: (sortIndexes: Map<string, SortIndex>) => void }): Promise<Selection> {
+  ranksMap,
+  setRanksMap,
+}: { tableIndex: number, selection: Selection, orderBy: OrderBy, data: DataFrame, ranksMap: Map<string, Promise<number[]>>, setRanksMap: (setter: (ranksMap: Map<string, Promise<number[]>>) => Map<string, Promise<number[]>>) => void }): Promise<Selection> {
   // Extend the selection from the anchor to the index with sorted data
   // Convert the indexes to work in the data domain before converting back.
   if (!data.sortable) {
     throw new Error('Data frame is not sortable')
   }
-  if (!(0 in orderBy)) {
-    throw new Error('orderBy should have at least one element')
+  const orderByWithDefaultSort = [...orderBy, { column: '', direction: 'ascending' as const }]
+  const orderByWithRanksPromises = orderByWithDefaultSort.map(({ column, direction }) => {
+    return {
+      column,
+      direction,
+      ranks: ranksMap.get(column) ?? (column === '' ? getUnsortedRanks({ data }) : getRanks({ data, column })),
+    }
+  })
+  if (orderByWithRanksPromises.some(({ column }) => !ranksMap.has(column))) {
+    setRanksMap(ranksMap => {
+      const nextRanksMap = new Map(ranksMap)
+      orderByWithRanksPromises.forEach(({ column, ranks }) => nextRanksMap.set(column, ranks))
+      return nextRanksMap
+    })
   }
-  // TODO(SL): support multiple columns
-  const { column, direction } = orderBy[0]
-  const sortIndex = cachedSortIndexes?.get(column) ?? await getSortIndex({ data, column })
-  if (setSortIndexes && !cachedSortIndexes?.has(column)) {
-    setSortIndexes(new Map(cachedSortIndexes).set(column, sortIndex))
-  }
-  const tableSelection = toTableSelection({ selection, column, data, sortIndex, direction })
+  const orderByWithRanks = await Promise.all(orderByWithRanksPromises.map(async ({ column, direction, ranks }) => ({ column, direction, ranks: await ranks })))
+
+  const dataIndexes = computeDataIndexes(orderByWithRanks)
+  const tableIndexes = invertPermutationIndexes(dataIndexes)
+  const tableSelection = convertSelection({ selection, permutationIndexes: tableIndexes })
   const { ranges, anchor } = tableSelection
   const newTableSelection = { ranges: extendFromAnchor({ ranges, anchor, index: tableIndex }), anchor }
-  const newDataSelection = toDataSelection({ selection: newTableSelection, column, data, sortIndex, direction })
+  const newDataSelection = convertSelection({ selection: newTableSelection, permutationIndexes: dataIndexes })
   return newDataSelection
 }

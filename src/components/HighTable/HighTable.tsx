@@ -1,7 +1,7 @@
 import { MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DataFrame } from '../../helpers/dataframe.js'
 import { PartialRow } from '../../helpers/row.js'
-import { Selection, SortIndex, areAllSelected, isSelected, toggleAll, toggleIndexInSelection, toggleRangeInSelection, toggleRangeInTable } from '../../helpers/selection.js'
+import { Selection, areAllSelected, isSelected, toggleAll, toggleIndexInSelection, toggleRangeInSelection, toggleRangeInTable } from '../../helpers/selection.js'
 import { OrderBy, areEqualOrderBy } from '../../helpers/sort.js'
 import { cellStyle } from '../../helpers/width.js'
 import { useInputState } from '../../hooks/useInputState.js'
@@ -93,7 +93,7 @@ export default function HighTable({
 
   // TODO(SL): remove this state and only rely on the data frame for these operations?
   // ie. cache the previous sort indexes in the data frame itself
-  const [sortIndexes, setSortIndexes] = useState<Map<string, SortIndex>>(() => new Map())
+  const [ranksMap, setRanksMap] = useState<Map<string, Promise<number[]>>>(() => new Map())
 
   // Sorting is disabled if the data is not sortable
   const {
@@ -159,8 +159,8 @@ export default function HighTable({
         tableIndex,
         orderBy,
         data,
-        sortIndexes,
-        setSortIndexes,
+        ranksMap,
+        setRanksMap,
       })
       if (requestId === pendingSelectionRequest.current) {
         // only update the selection if the request is still the last one
@@ -170,7 +170,7 @@ export default function HighTable({
     return (event: MouseEvent): void => {
       void onSelectRowClick(event)
     }
-  }, [onSelectionChange, selection, data, orderBy, sortIndexes])
+  }, [data, onSelectionChange, orderBy, ranksMap, selection])
   const allRowsSelected = useMemo(() => {
     if (!selection) return false
     const { ranges } = selection
@@ -198,7 +198,7 @@ export default function HighTable({
     // reset the flag, the column widths will be recalculated
     setHasCompleteRow(false)
     // delete the cached sort indexes
-    setSortIndexes(new Map())
+    setRanksMap(new Map())
     // if uncontrolled, reset the selection (if controlled, it's the responsibility of the parent to do it)
     if (!isSelectionControlled) {
       onSelectionChange({ ranges: [], anchor: undefined })

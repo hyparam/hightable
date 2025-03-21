@@ -33,24 +33,17 @@ export function partitionOrderBy(orderBy: OrderBy, column: string): {prefix: Ord
 }
 
 export function toggleColumn(column: string, orderBy: OrderBy): OrderBy {
-  const { item } = partitionOrderBy(orderBy, column)
-  if (!item) {
-    // TODO(SL): when multiple columns are not supported yet, append the new column with ascending to the current orderBy
-    //   return [...orderBy, { column, direction: 'ascending' }]
-    // for now: remove the existing columns and only sort by the new column
-    // none -> ascending
-    return [{ column, direction: 'ascending' }]
-  } else if (item.direction === 'ascending') {
-    // TODO(SL): when multiple columns are not supported yet, replace the column with descending
-    //   return [...prefix, { column, direction: 'descending' }, ...suffix]
-    // for now: remove the existing columns and only sort by the new column
-    // ascending -> descending
-    return [{ column, direction: 'descending' }]
-  } else {
-    // TODO(SL): when multiple columns are not supported yet, remove the column
-    //   return [...prefix, ...suffix]
-    // for now: return an empty array
-    // descending -> none
-    return []
+  const { prefix, item, suffix } = partitionOrderBy(orderBy, column)
+  if (item && prefix.length === 0) {
+    // the column is the principal column. Cycle through the directions: ascending -> descending -> none
+    if (item.direction === 'ascending') {
+      // ascending -> descending
+      return [{ column, direction: 'descending' }, ...suffix]
+    } else {
+      // descending -> none
+      return [ ...suffix]
+    }
   }
+  // the column is not the principal column. Set it as the principal column with ascending direction
+  return [{ column, direction: 'ascending' }, ...prefix, ...suffix]
 }

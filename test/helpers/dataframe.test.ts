@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DataFrame, arrayDataFrame, getGetColumn, sortableDataFrame } from '../../src/helpers/dataframe.js'
+import { DataFrame, arrayDataFrame, getGetColumn, getRanks, sortableDataFrame } from '../../src/helpers/dataframe.js'
 import { AsyncRow, Row, awaitRows } from '../../src/helpers/row.js'
 import { wrapPromise } from '../../src/utils/promise.js'
 
@@ -61,6 +61,35 @@ describe('getGetColumn', () => {
 
 })
 
+describe('getRanks', () => {
+  const data = [
+    { id: 3, name: 'Charlie', age: 25 },
+    { id: 1, name: 'Alice', age: 30 },
+    { id: 2, name: 'Bob', age: 20 },
+    { id: 4, name: 'Dani', age: 20 },
+  ].map((cells, index) => ({ cells, index }))
+
+  const dataFrame: DataFrame = {
+    header: ['id', 'name', 'age'],
+    numRows: data.length,
+    rows({ start, end }): AsyncRow[] {
+      // Return the slice of data between start and end indices
+      return data.slice(start, end).map(wrapObject)
+    },
+    sortable: false,
+  }
+
+  it('should return different indexes when all the values are different', async () => {
+    const ranks = await getRanks({ data: dataFrame, column: 'id' })
+    expect(ranks).toEqual([2, 0, 1, 3])
+  })
+
+  it('should return equal indexes when the values are the same', async () => {
+    const ranks = await getRanks({ data: dataFrame, column: 'age' })
+    expect(ranks).toEqual([2, 3, 0, 0])
+  })
+})
+
 describe('sortableDataFrame', () => {
   const data = [
     { id: 3, name: 'Charlie', age: 25 },
@@ -118,13 +147,23 @@ describe('sortableDataFrame', () => {
     ])
   })
 
-  it('should return data sorted by column "age" in descending order', async () => {
+  it('should return data sorted by column "age" in descending order, using the data index in case of ties', async () => {
     const rows = await awaitRows(sortableDf.rows({ start: 0, end: 4, orderBy: [{ column: 'age', direction: 'descending' as const }] }))
     expect(rows).toEqual([
       { index: 1, cells:{ id: 1, name: 'Alice', age: 30 } },
       { index: 0, cells:{ id: 3, name: 'Charlie', age: 25 } },
+      { index: 2, cells:{ id: 2, name: 'Bob', age: 20 } },
+      { index: 3, cells:{ id: 4, name: 'Dani', age: 20 } },
+    ])
+  })
+
+  it('should return data sorted by columns "age" in ascending order and "name" in descending order', async () => {
+    const rows = await awaitRows(sortableDf.rows({ start: 0, end: 4, orderBy: [{ column: 'age', direction: 'ascending' as const }, { column: 'name', direction: 'descending' as const }] }))
+    expect(rows).toEqual([
       { index: 3, cells:{ id: 4, name: 'Dani', age: 20 } },
       { index: 2, cells:{ id: 2, name: 'Bob', age: 20 } },
+      { index: 0, cells:{ id: 3, name: 'Charlie', age: 25 } },
+      { index: 1, cells:{ id: 1, name: 'Alice', age: 30 } },
     ])
   })
 
