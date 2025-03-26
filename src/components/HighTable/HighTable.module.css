@@ -159,7 +159,8 @@
   --header-z-index: 10;
   --header-background-z-index: calc(var(--header-z-index) - 1);
   --header-separator-z-index: calc(var(--header-z-index) + 1);
-  --header-corner-z-index: calc(var(--header-z-index) + 2);
+  --header-corner-z-index: calc(var(--header-z-index) + 3);
+  --header-progress-z-index: calc(var(--header-z-index) + 2);
   --cell-placeholder-z-index: 1;
 
   table {
@@ -320,7 +321,7 @@
     width: 100%;
     height: 4px;
     background-color: #706fb1;
-    z-index: calc(var(--header-separator-z-index) + 1);
+    z-index: var(--header-progress-z-index);
   }
   /* TODO(SL): add a global pending state? */
   /* .pending thead th::before {
