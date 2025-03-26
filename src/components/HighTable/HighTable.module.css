@@ -38,8 +38,8 @@
       background-color: transparent;
       position: sticky;
       user-select: none;
-      z-index: 10;
       top: 0;
+      z-index: var(--header-z-index, auto);
     }
   }
 
@@ -69,6 +69,7 @@
     width: 12px;
     cursor: col-resize;
     background-color: #888;
+    z-index: var(--header-separator-z-index, auto);
   }
 
   /* row numbers */
@@ -80,6 +81,7 @@
     max-width: none;
     width: 48px;
     cursor: pointer;
+    z-index: var(--header-z-index, auto);
   }
   tbody [role="rowheader"] span {
     display: inline;
@@ -113,9 +115,9 @@
     min-width: 48px;
     max-width: none;
     width: 48px;
-    z-index: 15;
     top: 0;
     left: 0;
+    z-index: var(--header-corner-z-index, auto);
   }
   /* replace corner with checkbox if selection is enabled (read-only or not) */
   thead td:first-child input {
@@ -145,12 +147,22 @@
     left: 0;
     bottom: 0;
     background: var(--mock-row-label-background, transparent);
-    z-index: -10;
+    z-index: var(--header-background-z-index, auto);
   }
 }
 
 /* styling */
 .styled {
+  & {
+    isolation: isolate;
+  }
+  --header-z-index: 10;
+  --header-background-z-index: calc(var(--header-z-index) - 1);
+  --header-separator-z-index: calc(var(--header-z-index) + 1);
+  --header-corner-z-index: calc(var(--header-z-index) + 3);
+  --header-progress-z-index: calc(var(--header-z-index) + 2);
+  --cell-placeholder-z-index: 1;
+
   table {
     border-collapse: separate;
     border-spacing: 0;
@@ -260,6 +272,7 @@
   tbody td[aria-busy="true"]::after {
     content: "";
     position: absolute;
+    z-index: var(--cell-placeholder-z-index);
     top: 8px;
     left: 8px;
     right: 8px;
@@ -308,7 +321,7 @@
     width: 100%;
     height: 4px;
     background-color: #706fb1;
-    z-index: 100;
+    z-index: var(--header-progress-z-index);
   }
   /* TODO(SL): add a global pending state? */
   /* .pending thead th::before {
