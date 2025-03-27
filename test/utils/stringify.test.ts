@@ -21,8 +21,15 @@ describe('stringify', () => {
   })
 
   test('handles arrays', () => {
-    expect(stringify([1, 2, 3])).toBe('[1, 2, 3]')
-    expect(stringify(['a', 'b'])).toBe('[a, b]')
+    expect(stringify([1, 2, 3])).toBe(`[
+  1,
+  2,
+  3
+]`)
+    expect(stringify(['a', 'b'])).toBe(`[
+  a,
+  b
+]`)
   })
 
   test('handles objects', () => {
@@ -35,7 +42,11 @@ describe('stringify', () => {
       a: [1, 2, { x: 'x' }],
       b: { c: 'hello' },
     }
-    expect(stringify(nested)).toBe('{a: [1, 2, {x: x}], b: {c: hello}}')
+    expect(stringify(nested)).toBe(`{a: [
+  1,
+  2,
+  {x: x}
+], b: {c: hello}}`)
   })
 
   test('handles booleans', () => {
