@@ -33,9 +33,7 @@ export function rowCache(df: DataFrame): DataFrame {
       let hasCacheMiss = false
       for (let i = start; i <= end; i++) {
         if (i < end && !cache[i]) {
-          if (blockStart === undefined) {
-            blockStart = i
-          }
+          blockStart ??= i
         } else if (blockStart !== undefined) {
           const blockEnd = i
           const futureRows = df.rows({ start: blockStart, end: blockEnd, orderBy })
