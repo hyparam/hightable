@@ -2,6 +2,18 @@
 
 ## [Unreleased](https://github.com/hyparam/hightable/compare/v0.13.0...HEAD)
 
+### Changed
+
+- Export the default function to stringify cell values as `stringify`, and align the code with the same function in `hyperparam`. The only change is that arrays are now indented ([#82](https://github.com/hyparam/hightable/pull/82)).
+
+### Fixed
+
+- Fix the CSS stacking order to prevent cell placeholders to float above the row headers ([#81](https://github.com/hyparam/hightable/pull/81)).
+
+### Refactored
+
+- Use the variable name `styles` instead of `classes` for CSS module classes ([#83](https://github.com/hyparam/hightable/pull/83)).
+
 ## [0.13.0](https://github.com/hyparam/hightable/compare/v0.12.1...v0.13.0) - 2025-03-21
 
 ### Added

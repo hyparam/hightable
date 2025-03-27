@@ -8,5 +8,6 @@ export type { Selection } from './helpers/selection.js'
 export type { OrderBy } from './helpers/sort.js'
 export { resolvablePromise, wrapPromise } from './utils/promise.js'
 export type { ResolvablePromise } from './utils/promise.js'
+export { stringify } from './utils/stringify.js'
 export { HighTable }
 export default HighTable
