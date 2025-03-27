@@ -2,6 +2,10 @@
 
 ## [Unreleased](https://github.com/hyparam/hightable/compare/v0.13.1...HEAD)
 
+### Refactor
+
+- fix the return type of `stringify` ([#85](https://github.com/hyparam/hightable/pull/85)).
+
 ## [0.13.1](https://github.com/hyparam/hightable/compare/v0.13.0...v0.13.1) - 2025-03-27
 
 ### Changed
