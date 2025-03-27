@@ -3,7 +3,7 @@ import { CSSProperties, MouseEvent, useMemo } from 'react'
 interface Props {
   onDoubleClick?: (event: MouseEvent) => void
   onMouseDown?: (event: MouseEvent) => void
-  stringify: (value: unknown) => string
+  stringify: (value: unknown) => string | undefined
   style?: CSSProperties
   value: any
 }
@@ -23,6 +23,9 @@ export default function Cell({ onDoubleClick, onMouseDown, stringify, style, val
     return stringify(value)
   }, [stringify, value])
   const title = useMemo(() => {
+    if (str === undefined ) {
+      return undefined
+    }
     if (str.length > 400) {
       return `${str.slice(0, 397)}\u2026` // ...
     }
@@ -33,7 +36,7 @@ export default function Cell({ onDoubleClick, onMouseDown, stringify, style, val
   return (
     <td
       role="cell"
-      aria-busy={value === undefined}
+      aria-busy={str === undefined}
       onDoubleClick={onDoubleClick}
       onMouseDown={onMouseDown}
       style={style}

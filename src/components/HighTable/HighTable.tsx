@@ -40,7 +40,7 @@ interface Props {
   onOrderByChange?: (orderBy: OrderBy) => void // callback to call when a user interaction changes the order. The interactions are disabled if undefined.
   selection?: Selection // selection and anchor rows, expressed as data indexes (not as indexes in the table). If undefined, the selection is hidden and the interactions are disabled.
   onSelectionChange?: (selection: Selection) => void // callback to call when a user interaction changes the selection. The selection is expressed as data indexes (not as indexes in the table). The interactions are disabled if undefined.
-  stringify?: (value: unknown) => string
+  stringify?: (value: unknown) => string | undefined
   className?: string // additional class names
   styled?: boolean // use styled component? (default true)
 }
