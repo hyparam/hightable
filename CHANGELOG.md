@@ -1,6 +1,12 @@
 # CHANGELOG
 
-## [Unreleased](https://github.com/hyparam/hightable/compare/v0.13.2...HEAD)
+## [Unreleased](https://github.com/hyparam/hightable/compare/v0.13.3...HEAD)
+
+## [0.13.3](https://github.com/hyparam/hightable/compare/v0.13.2...v0.13.3) - 2025-04-01
+
+### Refactor
+
+- update development dependencies ([#89](https://github.com/hyparam/hightable/pull/89)).
 
 ## [0.13.2](https://github.com/hyparam/hightable/compare/v0.13.1...v0.13.2) - 2025-03-27
 
