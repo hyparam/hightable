@@ -3,6 +3,11 @@ export function cellStyle(width: number | undefined) {
   return { minWidth: px, maxWidth: px }
 }
 
+export function leftCellStyle(minWidth: number | undefined) {
+  const px = minWidth ? `${minWidth}px` : undefined
+  return { minWidth: px }
+}
+
 export function measureWidth(element: HTMLTableCellElement): number {
   // get computed cell padding
   const style = window.getComputedStyle(element)

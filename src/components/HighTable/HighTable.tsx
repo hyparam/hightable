@@ -3,7 +3,7 @@ import { DataFrame } from '../../helpers/dataframe.js'
 import { PartialRow } from '../../helpers/row.js'
 import { Selection, areAllSelected, isSelected, toggleAll, toggleIndexInSelection, toggleRangeInSelection, toggleRangeInTable } from '../../helpers/selection.js'
 import { OrderBy, areEqualOrderBy } from '../../helpers/sort.js'
-import { cellStyle } from '../../helpers/width.js'
+import { leftCellStyle } from '../../helpers/width.js'
 import { ColumnWidthProvider } from '../../hooks/useColumnWidth.js'
 import { useInputState } from '../../hooks/useInputState.js'
 import { stringify as stringifyDefault } from '../../utils/stringify.js'
@@ -360,9 +360,12 @@ export default function HighTable({
     length: Math.min(padding, data.numRows - offset - rowsLength),
   }, () => [])
 
-  // fixed corner width based on number of rows
-  const cornerWidth = Math.ceil(Math.log10(data.numRows + 1)) * 4 + 22
-  const cornerStyle = useMemo(() => cellStyle(cornerWidth), [cornerWidth])
+  // minimum left column width based on number of rows - it depends on CSS, so it's
+  // only a bottom limit
+  const cornerStyle = useMemo(() => {
+    const minWidth = Math.ceil(Math.log10(data.numRows + 1)) * 4 + 22
+    return leftCellStyle(minWidth)
+  }, [data.numRows])
 
   // don't render table if header is empty
   if (!data.header.length) return
