@@ -4,6 +4,7 @@ import { PartialRow } from '../../helpers/row.js'
 import { Selection, areAllSelected, isSelected, toggleAll, toggleIndexInSelection, toggleRangeInSelection, toggleRangeInTable } from '../../helpers/selection.js'
 import { OrderBy, areEqualOrderBy } from '../../helpers/sort.js'
 import { cellStyle } from '../../helpers/width.js'
+import { ColumnWidthProvider } from '../../hooks/useColumnWidth.js'
 import { useInputState } from '../../hooks/useInputState.js'
 import { stringify as stringifyDefault } from '../../utils/stringify.js'
 import { throttle } from '../../utils/throttle.js'
@@ -368,87 +369,89 @@ export default function HighTable({
 
   const ariaColCount = data.header.length + 1 // don't forget the selection column
   const ariaRowCount = data.numRows + 1 // don't forget the header row
-  return <div className={`${styles.hightable} ${styled ? styles.styled : ''} ${className}`}>
-    <div className={styles.tableScroll} ref={scrollRef}>
-      <div style={{ height: `${scrollHeight}px` }}>
-        <table
-          aria-readonly={true}
-          aria-colcount={ariaColCount}
-          aria-rowcount={ariaRowCount}
-          aria-multiselectable={showSelectionControls}
-          ref={tableRef}
-          role='grid'
-          style={{ top: `${offsetTop}px` }}
-          tabIndex={0}>
-          <thead role="rowgroup">
-            <Row ariaRowIndex={1} >
-              <TableCorner
-                onClick={getOnSelectAllRows()}
-                checked={allRowsSelected}
-                showCheckBox={showCornerSelection}
-                style={cornerStyle}
-              >&nbsp;</TableCorner>
-              <TableHeader
-                cacheKey={cacheKey}
-                dataReady={hasCompleteRow}
-                header={data.header}
-                orderBy={orderBy}
-                onOrderByChange={onOrderByChange}
-                sortable={enableOrderByInteractions}
-              />
-            </Row>
-          </thead>
-          <tbody role="rowgroup">
-            {prePadding.map((_, prePaddingIndex) => {
-              const tableIndex = offset - prePadding.length + prePaddingIndex
-              return (
-                <Row key={tableIndex} ariaRowIndex={tableIndex + 2} >
-                  <RowHeader style={cornerStyle} />
-                </Row>
-              )
-            })}
-            {slice?.rows.map((row, rowIndex) => {
-              const tableIndex = slice.offset + rowIndex
-              const dataIndex = row.index
-              const selected = isRowSelected(row.index) ?? false
-              return (
-                <Row
-                  key={tableIndex}
-                  selected={selected}
-                  ariaRowIndex={tableIndex + 2}
-                  title={rowError(row, data.header.length)}
-                >
-                  <RowHeader
-                    style={cornerStyle}
-                    onClick={dataIndex === undefined ? undefined : getOnSelectRowClick({ tableIndex, dataIndex })}
-                    checked={selected}
-                    showCheckBox={showSelection}
-                  >{formatRowNumber(dataIndex)}</RowHeader>
-                  {data.header.map((column, columnIndex) =>
-                    <Cell
-                      key={columnIndex}
-                      onDoubleClick={getOnDoubleClickCell(columnIndex, dataIndex)}
-                      onMouseDown={getOnMouseDownCell(columnIndex, dataIndex)}
-                      stringify={stringify}
-                      value={row.cells[column]}
-                    />
-                  )}
-                </Row>
-              )
-            })}
-            {postPadding.map((_, postPaddingIndex) => {
-              const tableIndex = offset + rowsLength + postPaddingIndex
-              return (
-                <Row key={tableIndex} ariaRowIndex={tableIndex + 2}>
-                  <RowHeader style={cornerStyle} />
-                </Row>
-              )
-            })}
-          </tbody>
-        </table>
+  return <ColumnWidthProvider localStorageKey={`${cacheKey}:column-widths`}>
+    <div className={`${styles.hightable} ${styled ? styles.styled : ''} ${className}`}>
+      <div className={styles.tableScroll} ref={scrollRef}>
+        <div style={{ height: `${scrollHeight}px` }}>
+          <table
+            aria-readonly={true}
+            aria-colcount={ariaColCount}
+            aria-rowcount={ariaRowCount}
+            aria-multiselectable={showSelectionControls}
+            ref={tableRef}
+            role='grid'
+            style={{ top: `${offsetTop}px` }}
+            tabIndex={0}>
+            <thead role="rowgroup">
+              <Row ariaRowIndex={1} >
+                <TableCorner
+                  onClick={getOnSelectAllRows()}
+                  checked={allRowsSelected}
+                  showCheckBox={showCornerSelection}
+                  style={cornerStyle}
+                >&nbsp;</TableCorner>
+                <TableHeader
+                  dataReady={hasCompleteRow}
+                  header={data.header}
+                  orderBy={orderBy}
+                  onOrderByChange={onOrderByChange}
+                  sortable={enableOrderByInteractions}
+                />
+              </Row>
+            </thead>
+            <tbody role="rowgroup">
+              {prePadding.map((_, prePaddingIndex) => {
+                const tableIndex = offset - prePadding.length + prePaddingIndex
+                return (
+                  <Row key={tableIndex} ariaRowIndex={tableIndex + 2} >
+                    <RowHeader style={cornerStyle} />
+                  </Row>
+                )
+              })}
+              {slice?.rows.map((row, rowIndex) => {
+                const tableIndex = slice.offset + rowIndex
+                const dataIndex = row.index
+                const selected = isRowSelected(row.index) ?? false
+                return (
+                  <Row
+                    key={tableIndex}
+                    selected={selected}
+                    ariaRowIndex={tableIndex + 2}
+                    title={rowError(row, data.header.length)}
+                  >
+                    <RowHeader
+                      style={cornerStyle}
+                      onClick={dataIndex === undefined ? undefined : getOnSelectRowClick({ tableIndex, dataIndex })}
+                      checked={selected}
+                      showCheckBox={showSelection}
+                    >{formatRowNumber(dataIndex)}</RowHeader>
+                    {data.header.map((column, columnIndex) =>
+                      <Cell
+                        key={columnIndex}
+                        onDoubleClick={getOnDoubleClickCell(columnIndex, dataIndex)}
+                        onMouseDown={getOnMouseDownCell(columnIndex, dataIndex)}
+                        stringify={stringify}
+                        value={row.cells[column]}
+                        columnIndex={columnIndex}
+                      />
+                    )}
+                  </Row>
+                )
+              })}
+              {postPadding.map((_, postPaddingIndex) => {
+                const tableIndex = offset + rowsLength + postPaddingIndex
+                return (
+                  <Row key={tableIndex} ariaRowIndex={tableIndex + 2}>
+                    <RowHeader style={cornerStyle} />
+                  </Row>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
+      {/* puts a background behind the row labels column */}
+      <div className={styles.mockRowLabel} style={cornerStyle}>&nbsp;</div>
     </div>
-    {/* puts a background behind the row labels column */}
-    <div className={styles.mockRowLabel} style={cornerStyle}>&nbsp;</div>
-  </div>
+  </ColumnWidthProvider>
 }

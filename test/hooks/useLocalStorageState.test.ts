@@ -115,4 +115,29 @@ describe('useLocalStorageState hook', () => {
     })
     expect(localStorage.length).toEqual(0)
   })
+
+  it('supports a function as a setter', () => {
+    const { result } = renderHook(() => useLocalStorageState<number | undefined>({ key: 'key' }))
+    const [ , setValue ] = result.current
+    act(() => {
+      setValue((prev) => (prev ?? 0) + 1)
+    })
+    const [ value ] = result.current
+    expect(value).toEqual(1)
+    expect(localStorage.getItem('key')).toEqual('1')
+    expect(localStorage.length).toEqual(1)
+    act(() => {
+      setValue((prev) => (prev ?? 0) + 1)
+    })
+    const [ value2 ] = result.current
+    expect(value2).toEqual(2)
+    expect(localStorage.getItem('key')).toEqual('2')
+    expect(localStorage.length).toEqual(1)
+    act(() => {
+      setValue(() => { return undefined })
+    })
+    const [ value3 ] = result.current
+    expect(value3).toEqual(undefined)
+    expect(localStorage.length).toEqual(0)
+  })
 })
