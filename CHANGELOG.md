@@ -1,6 +1,12 @@
 # CHANGELOG
 
-## [Unreleased](https://github.com/hyparam/hightable/compare/v0.13.3...HEAD)
+## [Unreleased](https://github.com/hyparam/hightable/compare/v0.13.4...HEAD)
+
+## [0.13.4](https://github.com/hyparam/hightable/compare/v0.13.3...v0.13.4) - 2025-04-02
+
+### Fixed
+
+- fix column widths ([#95](https://github.com/hyparam/hightable/pull/95), [#96](https://github.com/hyparam/hightable/pull/96)).
 
 ## [0.13.3](https://github.com/hyparam/hightable/compare/v0.13.2...v0.13.3) - 2025-04-01
 
