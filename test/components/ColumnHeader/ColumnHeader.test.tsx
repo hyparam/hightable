@@ -1,6 +1,7 @@
 import React from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import ColumnHeader from '../../../src/components/ColumnHeader/ColumnHeader.js'
+import { ColumnWidthProvider } from '../../../src/hooks/useColumnWidth.js'
 import { render } from '../../userEvent.js'
 
 import { measureWidth } from '../../../src/helpers/width.js'
@@ -31,33 +32,35 @@ describe('ColumnHeader', () => {
 
   it('renders column header correctly', () => {
     const content = 'test'
-    const { getByRole } = render(<table><thead><tr><ColumnHeader>{content}</ColumnHeader></tr></thead></table>)
+    const { getByRole } = render(<table><thead><tr><ColumnHeader columnIndex={0}>{content}</ColumnHeader></tr></thead></table>)
     const element = getByRole('columnheader')
     expect(element.textContent).toEqual(content)
     expect(measureWidth).not.toHaveBeenCalled()
   })
 
   it('measures the width if dataReady is true', () => {
-    render(<table><thead><tr><ColumnHeader dataReady={true} /></tr></thead></table>)
+    render(<table><thead><tr><ColumnHeader columnIndex={0} dataReady={true} /></tr></thead></table>)
     expect(measureWidth).toHaveBeenCalled()
   })
 
   it('measures the width again if dataReady toggles to true', () => {
-    const { rerender } = render(<table><thead><tr><ColumnHeader dataReady={true} /></tr></thead></table>)
+    const { rerender } = render(<table><thead><tr><ColumnHeader columnIndex={0} dataReady={true} /></tr></thead></table>)
     expect(measureWidth).toHaveBeenCalledTimes(1)
     // new data is being loaded
-    rerender(<table><thead><tr><ColumnHeader dataReady={false} /></tr></thead></table>)
+    rerender(<table><thead><tr><ColumnHeader columnIndex={0} dataReady={false} /></tr></thead></table>)
     expect(measureWidth).toHaveBeenCalledTimes(1)
     // new data is ready
-    rerender(<table><thead><tr><ColumnHeader dataReady={true} /></tr></thead></table>)
+    rerender(<table><thead><tr><ColumnHeader columnIndex={0} dataReady={true} /></tr></thead></table>)
     expect(measureWidth).toHaveBeenCalledTimes(2)
   })
 
   it('loads column width from localStorage when localStorageKey is provided', () => {
     const savedWidth = 42
-    localStorage.setItem(`${cacheKey}:width`, JSON.stringify(savedWidth))
+    localStorage.setItem(cacheKey, JSON.stringify([savedWidth]))
 
-    const { getByRole } = render(<table><thead><tr><ColumnHeader localStorageKey={cacheKey} /></tr></thead></table>)
+    const { getByRole } = render(<ColumnWidthProvider localStorageKey={cacheKey}>
+      <table><thead><tr><ColumnHeader columnIndex={0}/></tr></thead></table>
+    </ColumnWidthProvider>)
     const header = getByRole('columnheader')
     expect(header.style.maxWidth).toEqual(`${savedWidth}px`)
   })
@@ -65,9 +68,11 @@ describe('ColumnHeader', () => {
   it('handles double click to auto resize', async () => {
     // Set the initial width
     const savedWidth = 42
-    localStorage.setItem(`${cacheKey}:width`, JSON.stringify(savedWidth))
+    localStorage.setItem(cacheKey, JSON.stringify([savedWidth]))
 
-    const { user, getByRole } = render(<table><thead><tr><ColumnHeader localStorageKey={cacheKey} /></tr></thead></table>)
+    const { user, getByRole } = render(<ColumnWidthProvider localStorageKey={cacheKey}>
+      <table><thead><tr><ColumnHeader columnIndex={0} /></tr></thead></table>
+    </ColumnWidthProvider>)
     const header = getByRole('columnheader')
     const resizeHandle = getByRole('separator')
 
@@ -82,9 +87,11 @@ describe('ColumnHeader', () => {
   it('handles mouse click and drag to resize', async () => {
     // Set the initial width
     const savedWidth = 42
-    localStorage.setItem(`${cacheKey}:width`, JSON.stringify(savedWidth))
+    localStorage.setItem(cacheKey, JSON.stringify([savedWidth]))
 
-    const { user, getByRole } = render(<table><thead><tr><ColumnHeader localStorageKey={cacheKey} /></tr></thead></table>)
+    const { user, getByRole } = render(<ColumnWidthProvider localStorageKey={cacheKey}>
+      <table><thead><tr><ColumnHeader columnIndex={0} /></tr></thead></table>
+    </ColumnWidthProvider>)
 
     // Simulate resizing the column
     const header = getByRole('columnheader')
@@ -107,20 +114,24 @@ describe('ColumnHeader', () => {
   it('reloads column width when localStorageKey changes', () => {
     const cacheKey2 = 'key-2'
     const width1 = 150
-    localStorage.setItem(`${cacheKey}:width`, JSON.stringify(width1))
+    localStorage.setItem(cacheKey, JSON.stringify([width1]))
     const width2 = 300
-    localStorage.setItem(`${cacheKey2}:width`, JSON.stringify(width2))
+    localStorage.setItem(cacheKey2, JSON.stringify([width2]))
 
-    const { rerender, getByRole } = render(<table><thead><tr><ColumnHeader localStorageKey={cacheKey}/></tr></thead></table>)
+    const { rerender, getByRole } = render(<ColumnWidthProvider localStorageKey={cacheKey}>
+      <table><thead><tr><ColumnHeader columnIndex={0} /></tr></thead></table>
+    </ColumnWidthProvider>)
     const header = getByRole('columnheader')
     expect(header.style.maxWidth).toEqual(`${width1}px`)
-    rerender(<table><thead><tr><ColumnHeader localStorageKey={cacheKey2}/></tr></thead></table>)
+    rerender(<ColumnWidthProvider localStorageKey={cacheKey2}>
+      <table><thead><tr><ColumnHeader columnIndex={0} /></tr></thead></table>
+    </ColumnWidthProvider>)
     expect(header.style.maxWidth).toEqual(`${width2}px`)
   })
 
   it('call onClick (eg. to change orderBy) when clicking on the header, but not when clicking on the resize handle', async () => {
     const onClick = vi.fn()
-    const { user, getByRole } = render(<table><thead><tr><ColumnHeader onClick={onClick} /></tr></thead></table>)
+    const { user, getByRole } = render(<table><thead><tr><ColumnHeader columnIndex={0} onClick={onClick} /></tr></thead></table>)
     const header = getByRole('columnheader')
     const resizeHandle = getByRole('separator')
     await user.click(resizeHandle)
