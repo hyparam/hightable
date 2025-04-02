@@ -1,30 +1,29 @@
-import { MouseEvent, ReactNode, useCallback, useEffect, useRef } from 'react'
+import { MouseEvent, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { Direction } from '../../helpers/sort.js'
-import { measureWidth } from '../../helpers/width.js'
-import useColumnWidth from '../../hooks/useColumnWidth.js'
+import { cellStyle, measureWidth } from '../../helpers/width.js'
+import { useLocalStorageState } from '../../hooks/useLocalStorageState.js'
 import ColumnResizer from '../ColumnResizer/ColumnResizer.js'
 
 interface Props {
-  columnIndex: number // index of the column in the dataframe (0-based)
   children?: ReactNode
   dataReady?: boolean
   direction?: Direction
+  localStorageKey?: string
   onClick?: (e: MouseEvent) => void
   title?: string
   sortable?: boolean
 }
 
-export default function ColumnHeader({ columnIndex, dataReady, direction, onClick, title, sortable, children }: Props) {
+export default function ColumnHeader({ children, dataReady, direction, localStorageKey, onClick, title, sortable }: Props) {
   const ref = useRef<HTMLTableCellElement>(null)
+  const [width, setWidth] = useLocalStorageState<number>({ key: localStorageKey ? `${localStorageKey}:width` : undefined })
+  const [resizeWidth, setResizeWidth] = useState<number | undefined>(undefined)
+  const currentWidth = resizeWidth ?? width
 
-  // Get the column width from the context
-  const { getColumnStyle, setColumnWidth, getColumnWidth } = useColumnWidth()
-  const columnStyle = getColumnStyle?.(columnIndex)
-  const width = getColumnWidth?.(columnIndex)
-  const setWidth = useCallback((nextWidth: number | undefined) => {
-    setColumnWidth?.({ columnIndex, width: nextWidth })
-  }, [setColumnWidth, columnIndex])
+  const style = useMemo(() => {
+    return cellStyle(currentWidth)
+  }, [currentWidth])
 
   // Measure default column width when data is ready
   useEffect(() => {
@@ -46,10 +45,6 @@ export default function ColumnHeader({ columnIndex, dataReady, direction, onClic
         setWidth(undefined)
       })
       const nextWidth = measureWidth(element)
-      // TODO(SL): take the ColumnResizer size into account, because if
-      // the column title is larger than the cell values, the title is
-      // truncated
-      // TODO(SL): add a threshold to avoid resizing too small columns
       if (!isNaN(nextWidth)) {
         // should not happen in the browser (but fails in unit tests)
         setWidth(nextWidth)
@@ -65,12 +60,13 @@ export default function ColumnHeader({ columnIndex, dataReady, direction, onClic
       aria-sort={direction ?? 'none'}
       aria-disabled={!sortable}
       onClick={onClick}
-      style={columnStyle}
+      style={style}
       title={title}
     >
       {children}
       <ColumnResizer
-        setWidth={setWidth}
+        setFinalWidth={setWidth}
+        setResizeWidth={setResizeWidth}
         onDoubleClick={autoResize}
         width={width}
       />

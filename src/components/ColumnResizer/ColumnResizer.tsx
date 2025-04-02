@@ -2,11 +2,12 @@ import { MouseEvent, useCallback, useEffect, useState } from 'react'
 
 interface Props {
   onDoubleClick?: () => void
-  setWidth?: (width: number | undefined) => void
+  setResizeWidth?: (width?: number) => void
+  setFinalWidth?: (width: number) => void
   width?: number
 }
 
-export default function ColumnResizer({ onDoubleClick, setWidth, width }: Props) {
+export default function ColumnResizer({ onDoubleClick, setFinalWidth, setResizeWidth, width }: Props) {
   const [resizeClientX, setResizeClientX] = useState<number | undefined>(undefined)
 
   // Disable click event propagation
@@ -19,15 +20,15 @@ export default function ColumnResizer({ onDoubleClick, setWidth, width }: Props)
     e.stopPropagation()
     const nextResizeWidth = width ?? 0
     setResizeClientX(e.clientX - nextResizeWidth)
-    setWidth?.(nextResizeWidth)
-  }, [setWidth, width])
+    setResizeWidth?.(nextResizeWidth)
+  }, [setResizeWidth, width])
 
   // Handle mouse move event during resizing
   useEffect(() => {
     if (resizeClientX !== undefined) {
       function updateResizeWidth(clientX: number) {
         return function(event: globalThis.MouseEvent) {
-          setWidth?.(Math.max(1, event.clientX - clientX))
+          setResizeWidth?.(Math.max(1, event.clientX - clientX))
         }
       }
       const listener = updateResizeWidth(resizeClientX)
@@ -36,14 +37,15 @@ export default function ColumnResizer({ onDoubleClick, setWidth, width }: Props)
         window.removeEventListener('mousemove', listener)
       }
     }
-  }, [resizeClientX, setWidth])
+  }, [resizeClientX, setResizeWidth])
 
   // Handle mouse up to end resizing
   useEffect(() => {
     if (resizeClientX !== undefined) {
       function stopResizing(clientX: number) {
         return function(event: globalThis.MouseEvent) {
-          setWidth?.(Math.max(1, event.clientX - clientX))
+          setFinalWidth?.(Math.max(1, event.clientX - clientX))
+          setResizeWidth?.(undefined)
           setResizeClientX(undefined)
         }
       }
@@ -53,7 +55,7 @@ export default function ColumnResizer({ onDoubleClick, setWidth, width }: Props)
         window.removeEventListener('mouseup', listener)
       }
     }
-  }, [resizeClientX, setWidth])
+  }, [resizeClientX, setFinalWidth, setResizeWidth])
 
   return (
     <span

@@ -1,12 +1,11 @@
-import { MouseEvent, useMemo } from 'react'
-import useColumnWidth from '../../hooks/useColumnWidth.js'
+import { CSSProperties, MouseEvent, useMemo } from 'react'
 
 interface Props {
   onDoubleClick?: (event: MouseEvent) => void
   onMouseDown?: (event: MouseEvent) => void
   stringify: (value: unknown) => string | undefined
+  style?: CSSProperties
   value: any
-  columnIndex: number
 }
 
 /**
@@ -14,15 +13,11 @@ interface Props {
  *
  * @param props
  * @param props.value cell value
- * @param props.columnIndex column index in the dataframe (0-based)
+ * @param props.style CSS properties
  * @param props.onDoubleClick double click callback
  * @param props.onMouseDown mouse down callback
  */
-export default function Cell({ onDoubleClick, onMouseDown, stringify, columnIndex, value }: Props) {
-  // Get the column width from the context
-  const { getColumnStyle } = useColumnWidth()
-  const columnStyle = getColumnStyle?.(columnIndex)
-
+export default function Cell({ onDoubleClick, onMouseDown, stringify, style, value }: Props) {
   // render as truncated text
   const str = useMemo(() => {
     return stringify(value)
@@ -44,7 +39,7 @@ export default function Cell({ onDoubleClick, onMouseDown, stringify, columnInde
       aria-busy={str === undefined}
       onDoubleClick={onDoubleClick}
       onMouseDown={onMouseDown}
-      style={columnStyle}
+      style={style}
       title={title}>
       {str}
     </td>
