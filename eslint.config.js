@@ -1,13 +1,14 @@
 import javascript from '@eslint/js'
 import react from 'eslint-plugin-react'
 import reactHooks from 'eslint-plugin-react-hooks'
+import storybook from 'eslint-plugin-storybook'
 import globals from 'globals'
 import typescript from 'typescript-eslint'
 
 export default typescript.config(
   { ignores: ['coverage/', 'dist/'] },
   {
-    extends: [javascript.configs.recommended, ...typescript.configs.strictTypeChecked, ...typescript.configs.stylisticTypeChecked, 'plugin:storybook/recommended'],
+    extends: [javascript.configs.recommended, ...typescript.configs.strictTypeChecked, ...typescript.configs.stylisticTypeChecked],
     files: ['**/*.{ts,tsx,js}'],
     languageOptions: {
       globals: globals.browser,
@@ -96,5 +97,11 @@ export default typescript.config(
   {
     files: ['**/*.js'],
     ...typescript.configs.disableTypeChecked,
+  },
+  {
+    extends: [
+      ...storybook.configs['flat/recommended'],
+    ],
+    files: ['**/*.stories.tsx'],
   }
 )

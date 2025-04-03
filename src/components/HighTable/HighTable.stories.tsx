@@ -16,7 +16,7 @@ const data: DataFrame = {
 }
 
 const meta: Meta<typeof HighTable> = {
-  component: HighTable,  
+  component: HighTable,
 }
 
 export default meta
