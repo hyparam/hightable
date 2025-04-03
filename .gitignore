@@ -3,3 +3,5 @@ package-lock.json
 coverage
 /dist
 *.tgz
+
+*storybook.log
