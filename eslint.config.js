@@ -7,7 +7,7 @@ import typescript from 'typescript-eslint'
 export default typescript.config(
   { ignores: ['coverage/', 'dist/'] },
   {
-    extends: [javascript.configs.recommended, ...typescript.configs.strictTypeChecked, ...typescript.configs.stylisticTypeChecked],
+    extends: [javascript.configs.recommended, ...typescript.configs.strictTypeChecked, ...typescript.configs.stylisticTypeChecked, 'plugin:storybook/recommended'],
     files: ['**/*.{ts,tsx,js}'],
     languageOptions: {
       globals: globals.browser,
