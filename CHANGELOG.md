@@ -1,6 +1,12 @@
 # CHANGELOG
 
-## [Unreleased](https://github.com/hyparam/hightable/compare/v0.13.4...HEAD)
+## [Unreleased](https://github.com/hyparam/hightable/compare/v0.13.5...HEAD)
+
+## [0.13.5](https://github.com/hyparam/hightable/compare/v0.13.4...v0.13.5) - 2025-04-03
+
+### Fixed
+
+- fix scroll jitter ([#100](https://github.com/hyparam/hightable/pull/100).
 
 ## [0.13.4](https://github.com/hyparam/hightable/compare/v0.13.3...v0.13.4) - 2025-04-02
 
