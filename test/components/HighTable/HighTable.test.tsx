@@ -3,17 +3,17 @@ import React from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import HighTable from '../../../src/components/HighTable/HighTable.js'
 import { DataFrame, sortableDataFrame } from '../../../src/helpers/dataframe.js'
-import { wrapPromise } from '../../../src/utils/promise.js'
+import { wrapResolved } from '../../../src/utils/promise.js'
 import { render } from '../../userEvent.js'
 
 const data: DataFrame = {
   header: ['ID', 'Count'],
   numRows: 1000,
   rows: ({ start, end }) => Array.from({ length: end - start }, (_, index) => ({
-    index: wrapPromise(index + start),
+    index: wrapResolved(index + start),
     cells: {
-      ID: wrapPromise(`row ${index + start}`),
-      Count: wrapPromise(1000 - start - index),
+      ID: wrapResolved(`row ${index + start}`),
+      Count: wrapResolved(1000 - start - index),
     },
   })),
 }
@@ -22,10 +22,10 @@ const otherData: DataFrame = {
   header: ['ID', 'Count'],
   numRows: 1000,
   rows: ({ start, end }) => Array.from({ length: end - start }, (_, index) => ({
-    index: wrapPromise(index + start),
+    index: wrapResolved(index + start),
     cells: {
-      ID: wrapPromise(`other ${index + start}`),
-      Count: wrapPromise(1000 - start - index),
+      ID: wrapResolved(`other ${index + start}`),
+      Count: wrapResolved(1000 - start - index),
     },
   })),
 }
@@ -35,11 +35,11 @@ describe('HighTable', () => {
     header: ['ID', 'Name', 'Age'],
     numRows: 100,
     rows: vi.fn(({ start, end }: { start: number, end: number }) => Array.from({ length: end - start }, (_, index) => ({
-      index: wrapPromise(index + start),
+      index: wrapResolved(index + start),
       cells: {
-        ID: wrapPromise(index + start),
-        Name: wrapPromise(`Name ${index + start}`),
-        Age: wrapPromise(20 + index % 50),
+        ID: wrapResolved(index + start),
+        Name: wrapResolved(`Name ${index + start}`),
+        Age: wrapResolved(20 + index % 50),
       },
     }))
     ),
@@ -67,11 +67,9 @@ describe('HighTable', () => {
     })
   })
 
-  it('creates the rows after having fetched the data', async () => {
-    const { findByRole, queryByRole } = render(<HighTable data={mockData}/>)
-    expect(queryByRole('cell', { name: 'Name 0' })).toBeNull()
-    // await because we have to wait for the data to be fetched first
-    await findByRole('cell', { name: 'Name 0' })
+  it('creates the rows after having fetched the data', () => {
+    const { queryByRole } = render(<HighTable data={mockData}/>)
+    expect(queryByRole('cell', { name: 'Name 0' })).toBeDefined()
   })
 
   it('handles scroll to load more rows', async () => {

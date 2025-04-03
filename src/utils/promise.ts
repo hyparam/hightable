@@ -3,14 +3,16 @@ export type WrappedPromise<T> = Promise<T> & {
   rejected?: any
 }
 
+export type ResolvablePromise<T> = Promise<T> & {
+  resolve: (value: T) => void
+  reject: (reason?: any) => void
+}
+
 /**
  * Wrap a promise to save the resolved value and error.
  * Note: you can't await on a WrappedPromise, you must use then.
  */
-export function wrapPromise<T>(promise: Promise<T> | T): WrappedPromise<T> {
-  if (!(promise instanceof Promise)) {
-    promise = Promise.resolve(promise)
-  }
+export function wrapPromise<T>(promise: Promise<T>): WrappedPromise<T> {
   const wrapped: WrappedPromise<T> = promise.then(resolved => {
     wrapped.resolved = resolved
     return resolved
@@ -21,9 +23,14 @@ export function wrapPromise<T>(promise: Promise<T> | T): WrappedPromise<T> {
   return wrapped
 }
 
-export type ResolvablePromise<T> = Promise<T> & {
-  resolve: (value: T) => void
-  reject: (reason?: any) => void
+/**
+ * Similar to `wrapPromise`, but for a resolved value.
+ * Returns immediately without creating a microtask.
+ */
+export function wrapResolved<T>(value: T): WrappedPromise<T> {
+  const wrapped: WrappedPromise<T> = Promise.resolve(value) as WrappedPromise<T>
+  wrapped.resolved = value
+  return wrapped
 }
 
 /**
