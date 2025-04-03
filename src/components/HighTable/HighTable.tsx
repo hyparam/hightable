@@ -89,7 +89,6 @@ export default function HighTable({
    */
 
   const [slice, setSlice] = useState<Slice | undefined>(undefined)
-  const [rowsRange, setRowsRange] = useState({ start: 0, end: 0 })
   const [hasCompleteRow, setHasCompleteRow] = useState(false)
 
   // TODO(SL): remove this state and only rely on the data frame for these operations?
@@ -186,7 +185,7 @@ export default function HighTable({
 
   // total scrollable height
   const scrollHeight = (data.numRows + 1) * rowHeight
-  const offsetTop = Math.max(0, rowsRange.start - padding) * rowHeight
+  const offsetTop = slice === undefined ? 0 : Math.max(0, slice.offset - padding) * rowHeight
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const tableRef = useRef<HTMLTableElement>(null)
@@ -205,14 +204,93 @@ export default function HighTable({
       onSelectionChange({ ranges: [], anchor: undefined })
     }
   }
-
-  // handle scrolling and window resizing
+  // handle scrolling and window resizing, and fetch rows
   useEffect(() => {
     /**
      * Compute the dimensions based on the current scroll position.
      */
 
     function handleScroll() {
+
+      /**
+     * Fetch the rows in the range [start, end) and update the state.
+    */
+      async function fetchRows({ start, end }: {start: number, end: number}) {
+        const currentOrderBy = orderBy ?? []
+
+        // Don't update if the view, or slice, is unchanged
+        if (slice && slice.data === data && start === slice.offset && end === slice.offset + slice.rows.length && areEqualOrderBy(slice.orderedBy, currentOrderBy) ) {
+          return
+        }
+
+        if (start === end) {
+          const slice = {
+            offset: start,
+            rows: [],
+            orderedBy: currentOrderBy,
+            data,
+          }
+          setSlice(slice)
+          return
+        }
+
+        // Fetch a chunk of rows from the data frame
+        try {
+          const requestId = ++pendingRequest.current
+          const rowsChunk = data.rows({ start, end, orderBy: currentOrderBy })
+
+          const updateRows = throttle(() => {
+            const resolved: PartialRow[] = []
+            for (const asyncRow of rowsChunk) {
+              const resolvedRow: PartialRow = { cells: {} }
+              for (const [key, promise] of Object.entries(asyncRow.cells)) {
+                if ('resolved' in promise) {
+                  resolvedRow.cells[key] = promise.resolved
+                }
+              }
+              if ('resolved' in asyncRow.index) {
+                resolvedRow.index = asyncRow.index.resolved
+              }
+              resolved.push(resolvedRow)
+            }
+            const slice = {
+              offset: start,
+              rows: resolved,
+              orderedBy: currentOrderBy,
+              data,
+            }
+            setSlice(slice)
+            if (!hasCompleteRow) {
+            // check if at least one row is complete
+              const columnsSet = new Set(slice.data.header)
+              if (slice.rows.some(row => {
+                const keys = Object.keys(row.cells)
+                return keys.length === columnsSet.size && keys.every(key => columnsSet.has(key))
+              })) {
+                setHasCompleteRow(true)
+              }
+            }
+          }, 10)
+          updateRows() // initial update
+
+          // Subscribe to data updates
+          for (const asyncRow of rowsChunk) {
+            for (const promise of [asyncRow.index, ...Object.values(asyncRow.cells)] ) {
+              void promise.then(() => {
+                if (pendingRequest.current === requestId) {
+                  updateRows()
+                }
+              })
+            }
+          }
+
+          // Await all pending promises
+          await Promise.all(rowsChunk.flatMap(asyncRow => [asyncRow.index, ...Object.values(asyncRow.cells)]))
+        } catch (error) {
+          onError(error as Error)
+        }
+      }
+
       // view window height (0 is not allowed - the syntax is verbose, but makes it clear)
       const currentClientHeight = scrollRef.current?.clientHeight
       const clientHeight = currentClientHeight === undefined || currentClientHeight === 0 ? 100 : currentClientHeight
@@ -229,7 +307,7 @@ export default function HighTable({
       if (isNaN(end)) throw new Error(`invalid end row ${end}`)
       if (end - start > 1000) throw new Error(`attempted to render too many rows ${end - start} table must be contained in a scrollable div`)
 
-      setRowsRange({ start, end })
+      void fetchRows({ start, end })
     }
     // run once
     handleScroll()
@@ -243,92 +321,7 @@ export default function HighTable({
       scroller?.removeEventListener('scroll', handleScroll)
       window.removeEventListener('resize', handleScroll)
     }
-  }, [data.numRows, overscan, padding, scrollHeight])
-
-  // fetch rows
-  useEffect(() => {
-    /**
-     * Fetch the rows in the range [start, end) and update the state.
-    */
-    async function fetchRows() {
-      const { start, end } = rowsRange
-      const currentOrderBy = orderBy ?? []
-
-      // Don't update if the view, or slice, is unchanged
-      if (slice && slice.data === data && start === slice.offset && end === slice.offset + slice.rows.length && areEqualOrderBy(slice.orderedBy, currentOrderBy) ) {
-        return
-      }
-
-      if (start === end) {
-        const slice = {
-          offset: start,
-          rows: [],
-          orderedBy: currentOrderBy,
-          data,
-        }
-        setSlice(slice)
-        return
-      }
-
-      // Fetch a chunk of rows from the data frame
-      try {
-        const requestId = ++pendingRequest.current
-        const rowsChunk = data.rows({ start, end, orderBy: currentOrderBy })
-
-        const updateRows = throttle(() => {
-          const resolved: PartialRow[] = []
-          for (const asyncRow of rowsChunk) {
-            const resolvedRow: PartialRow = { cells: {} }
-            for (const [key, promise] of Object.entries(asyncRow.cells)) {
-              if ('resolved' in promise) {
-                resolvedRow.cells[key] = promise.resolved
-              }
-            }
-            if ('resolved' in asyncRow.index) {
-              resolvedRow.index = asyncRow.index.resolved
-            }
-            resolved.push(resolvedRow)
-          }
-          const slice = {
-            offset: start,
-            rows: resolved,
-            orderedBy: currentOrderBy,
-            data,
-          }
-          setSlice(slice)
-          if (!hasCompleteRow) {
-            // check if at least one row is complete
-            const columnsSet = new Set(slice.data.header)
-            if (slice.rows.some(row => {
-              const keys = Object.keys(row.cells)
-              return keys.length === columnsSet.size && keys.every(key => columnsSet.has(key))
-            })) {
-              setHasCompleteRow(true)
-            }
-          }
-        }, 10)
-        updateRows() // initial update
-
-        // Subscribe to data updates
-        for (const asyncRow of rowsChunk) {
-          for (const promise of [asyncRow.index, ...Object.values(asyncRow.cells)] ) {
-            void promise.then(() => {
-              if (pendingRequest.current === requestId) {
-                updateRows()
-              }
-            })
-          }
-        }
-
-        // Await all pending promises
-        await Promise.all(rowsChunk.flatMap(asyncRow => [asyncRow.index, ...Object.values(asyncRow.cells)]))
-      } catch (error) {
-        onError(error as Error)
-      }
-    }
-    // update
-    void fetchRows()
-  }, [data, onError, orderBy, slice, rowsRange, hasCompleteRow])
+  }, [data, overscan, padding, scrollHeight, onError, orderBy, slice, hasCompleteRow])
 
   const getOnDoubleClickCell = useCallback((col: number, row?: number) => {
     // TODO(SL): give feedback (a specific class on the cell element?) about why the double click is disabled?
