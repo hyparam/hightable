@@ -186,7 +186,7 @@ export default function HighTable({
 
   // total scrollable height
   const scrollHeight = (data.numRows + 1) * rowHeight
-  const offsetTop = Math.max(0, rowsRange.start - padding) * rowHeight
+  const offsetTop = slice ? Math.max(0, slice.offset - padding) * rowHeight : 0
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const tableRef = useRef<HTMLTableElement>(null)
