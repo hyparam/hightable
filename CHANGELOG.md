@@ -7,7 +7,7 @@
 ### Changed
 
 - Add `wrapResolved` as a faster version of `wrapPromise` ([#103](https://github.com/hyparam/hightable/pull/103)).
-- `wrapPromise<T>` now ONLY accepts an argument of type `Promise<T>`, and no longer accepts an argument of type `T`. In those cases use `wrapResolved<T>`
+- **Breaking** `wrapPromise<T>` now ONLY accepts an argument of type `Promise<T>`, and no longer accepts an argument of type `T`. In those cases use `wrapResolved<T>`
 
 ## [0.13.5](https://github.com/hyparam/hightable/compare/v0.13.4...v0.13.5) - 2025-04-03
 
