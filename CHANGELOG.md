@@ -1,12 +1,19 @@
 # CHANGELOG
 
-## [Unreleased](https://github.com/hyparam/hightable/compare/v0.13.5...HEAD)
+## [Unreleased](https://github.com/hyparam/hightable/compare/v0.14.0...HEAD)
+
+## [0.14.0](https://github.com/hyparam/hightable/compare/v0.13.5...v0.14.0) - 2025-04-04
+
+### Changed
+
+- Add `wrapResolved` as a faster version of `wrapPromise` ([#103](https://github.com/hyparam/hightable/pull/103)).
+- **Breaking** `wrapPromise<T>` now ONLY accepts an argument of type `Promise<T>`, and no longer accepts an argument of type `T`. In those cases use `wrapResolved<T>`
 
 ## [0.13.5](https://github.com/hyparam/hightable/compare/v0.13.4...v0.13.5) - 2025-04-03
 
 ### Fixed
 
-- fix scroll jitter ([#100](https://github.com/hyparam/hightable/pull/100).
+- fix scroll jitter ([#100](https://github.com/hyparam/hightable/pull/100)).
 
 ## [0.13.4](https://github.com/hyparam/hightable/compare/v0.13.3...v0.13.4) - 2025-04-02
 
