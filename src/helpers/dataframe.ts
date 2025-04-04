@@ -1,4 +1,4 @@
-import { wrapPromise } from '../utils/promise.js'
+import { wrapResolved } from '../utils/promise.js'
 import { AsyncRow, Cells, asyncRows } from './row.js'
 import { OrderBy } from './sort.js'
 
@@ -186,8 +186,8 @@ export function arrayDataFrame(data: Cells[]): DataFrame {
     numRows: data.length,
     rows({ start, end }): AsyncRow[] {
       return data.slice(start, end).map((cells, i) => ({
-        index: wrapPromise(start + i),
-        cells: Object.fromEntries(Object.entries(cells).map(([key, value]) => [key, wrapPromise(value)])),
+        index: wrapResolved(start + i),
+        cells: Object.fromEntries(Object.entries(cells).map(([key, value]) => [key, wrapResolved(value)])),
       }))
     },
     getColumn({ column, start = 0, end = data.length }): Promise<any[]> {

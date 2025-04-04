@@ -2,7 +2,7 @@ import { describe, expect, it, test, vi } from 'vitest'
 import { DataFrame, sortableDataFrame } from '../../src/helpers/dataframe.js'
 import { AsyncRow, Row } from '../../src/helpers/row.js'
 import { areAllSelected, areValidRanges, convertSelection, extendFromAnchor, invertPermutationIndexes, isSelected, isValidIndex, isValidRange, selectRange, toggleAll, toggleIndex, toggleIndexInSelection, toggleRangeInSelection, toggleRangeInTable, unselectRange } from '../../src/helpers/selection.js'
-import { wrapPromise } from '../../src/utils/promise.js'
+import { wrapResolved } from '../../src/utils/promise.js'
 
 describe('an index', () => {
   test('is a positive integer', () => {
@@ -221,9 +221,9 @@ const data = [
 
 export function wrapObject({ index, cells }: Row): AsyncRow {
   return {
-    index: wrapPromise(index),
+    index: wrapResolved(index),
     cells: Object.fromEntries(
-      Object.entries(cells).map(([key, value]) => [key, wrapPromise(value)])
+      Object.entries(cells).map(([key, value]) => [key, wrapResolved(value)])
     ),
   }
 }

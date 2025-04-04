@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { AsyncRow, awaitRows } from '../../src/helpers/row.js'
 import { rowCache } from '../../src/helpers/rowCache.js'
-import { wrapPromise } from '../../src/utils/promise.js'
+import { wrapResolved } from '../../src/utils/promise.js'
 
 // Mock DataFrame
 function makeDf() {
@@ -12,9 +12,9 @@ function makeDf() {
       new Array(end - start)
         .fill(null)
         .map((_, index) => ({
-          index: wrapPromise(start + index),
+          index: wrapResolved(start + index),
           cells: {
-            id: wrapPromise(start + index),
+            id: wrapResolved(start + index),
           },
         }))
     ),
