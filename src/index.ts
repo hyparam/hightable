@@ -6,7 +6,7 @@ export type { AsyncRow, Cells, PartialRow, ResolvableRow, Row } from './helpers/
 export { rowCache } from './helpers/rowCache.js'
 export type { Selection } from './helpers/selection.js'
 export type { OrderBy } from './helpers/sort.js'
-export { resolvablePromise, wrapPromise } from './utils/promise.js'
+export { resolvablePromise, wrapPromise, wrapResolved } from './utils/promise.js'
 export type { ResolvablePromise } from './utils/promise.js'
 export { stringify } from './utils/stringify.js'
 export { HighTable }
