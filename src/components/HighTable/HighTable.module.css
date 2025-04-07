@@ -303,14 +303,6 @@
   tbody tr:nth-child(7n) td[aria-busy="true"]::after {
     animation-delay: -1.5s;
   }
-  @keyframes textshimmer {
-    0% {
-      background-position: -120px 0;
-    }
-    100% {
-      background-position: 120px 0;
-    }
-  }
 
   /* pending table state */
   thead th::before {
@@ -327,15 +319,6 @@
   /* .pending thead th::before {
     animation: shimmer 2s infinite linear;
   } */
-  @keyframes shimmer {
-    0%,
-    100% {
-      background-color: #6fb176;
-    }
-    50% {
-      background-color: #adc6b0;
-    }
-  }
 
   /* don't hover on mobile */
   @media (hover: hover) {
@@ -353,4 +336,23 @@
   /* mock row numbers */
   /* Note that this class cannot be easily overriden by custom CSS. Use the variable to change the background. */
   --mock-row-label-background: #f1f1f3;
+}
+
+@keyframes textshimmer {
+  0% {
+    background-position: -120px 0;
+  }
+  100% {
+    background-position: 120px 0;
+  }
+}
+
+@keyframes shimmer {
+  0%,
+  100% {
+    background-color: #6fb176;
+  }
+  50% {
+    background-color: #adc6b0;
+  }
 }
