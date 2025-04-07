@@ -1,6 +1,16 @@
 # CHANGELOG
 
-## [Unreleased](https://github.com/hyparam/hightable/compare/v0.14.0...HEAD)
+## [Unreleased](https://github.com/hyparam/hightable/compare/v0.14.1...HEAD)
+
+## [0.14.1](https://github.com/hyparam/hightable/compare/v0.14.0...v0.14.1) - 2025-04-07
+
+### Added
+
+- Export `wrapResolved` ([#105](https://github.com/hyparam/hightable/pull/105)).
+
+### Fixed
+
+- Fix CSS for placeholders animation ([#106](https://github.com/hyparam/hightable/pull/106)).
 
 ## [0.14.0](https://github.com/hyparam/hightable/compare/v0.13.5...v0.14.0) - 2025-04-04
 
