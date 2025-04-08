@@ -1,10 +1,9 @@
 import { act, fireEvent, waitFor, within } from '@testing-library/react'
-import React from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import HighTable from '../../../src/components/HighTable/HighTable.js'
-import { DataFrame, sortableDataFrame } from '../../../src/helpers/dataframe.js'
-import { wrapResolved } from '../../../src/utils/promise.js'
-import { render } from '../../userEvent.js'
+import { DataFrame, sortableDataFrame } from '../../helpers/dataframe.js'
+import { wrapResolved } from '../../utils/promise.js'
+import { render } from '../../utils/userEvent.js'
+import HighTable from './HighTable.js'
 
 const data: DataFrame = {
   header: ['ID', 'Count'],
@@ -127,15 +126,20 @@ describe('HighTable', () => {
 })
 
 describe('When sorted, HighTable', () => {
-  function checkRowContents(row: HTMLElement, rowNumber: string, ID: string, Count: string) {
+  function checkRowContents(row: HTMLElement | undefined, rowNumber: string, ID: string, Count: string) {
+    expect(row).toBeDefined()
+    if (!row) {
+      throw new Error('Row is undefined')
+    }
+
     const selectionCell = within(row).getByRole('rowheader')
     expect(selectionCell).toBeDefined()
     expect(selectionCell.textContent).toBe(rowNumber)
 
     const columns = within(row).getAllByRole('cell')
     expect(columns).toHaveLength(2)
-    expect(columns[0].textContent).toBe(ID)
-    expect(columns[1].textContent).toBe(Count)
+    expect(columns[0]?.textContent).toBe(ID)
+    expect(columns[1]?.textContent).toBe(Count)
   }
 
   it('shows the rows in the right order', async () => {
@@ -147,7 +151,7 @@ describe('When sorted, HighTable', () => {
     const table = getByRole('grid') // not table! because the table is interactive. See https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Roles/grid_role
     // first rowgroup is for the thead second is for tbody
     const tbody = within(table).getAllByRole('rowgroup')[1]
-    let rows = within(tbody).getAllByRole('row')
+    let rows = tbody ? within(tbody).getAllByRole('row') : []
     checkRowContents(rows[0], '1', 'row 0', '1,000')
 
     // Click on the Count header to sort by Count (none -> ascending)
@@ -155,28 +159,32 @@ describe('When sorted, HighTable', () => {
     await user.click(countHeader)
     await findAllByRole('cell', { name: 'row 999' })
 
-    rows = within(within(getByRole('grid')).getAllByRole('rowgroup')[1]).getAllByRole('row')
+    let rowGroups = within(getByRole('grid')).getAllByRole('rowgroup')[1]
+    rows = rowGroups ? within(rowGroups).getAllByRole('row') : []
     checkRowContents(rows[0], '1,000', 'row 999', '1')
 
     // Click again on the Count header to sort by descending Count (ascending -> descending)
     await user.click(countHeader)
     await findAllByRole('cell', { name: 'row 0' })
 
-    rows = within(within(getByRole('grid')).getAllByRole('rowgroup')[1]).getAllByRole('row')
+    rowGroups = within(getByRole('grid')).getAllByRole('rowgroup')[1]
+    rows = rowGroups ? within(rowGroups).getAllByRole('row') : []
     checkRowContents(rows[0], '1', 'row 0', '1,000')
 
     // Click again on the Count header to remove the sort (descending -> none)
     await user.click(countHeader)
     await findAllByRole('cell', { name: 'row 0' })
 
-    rows = within(within(getByRole('grid')).getAllByRole('rowgroup')[1]).getAllByRole('row')
+    rowGroups = within(getByRole('grid')).getAllByRole('rowgroup')[1]
+    rows = rowGroups ? within(rowGroups).getAllByRole('row') : []
     checkRowContents(rows[0], '1', 'row 0', '1,000')
 
     // Click on the Count header to sort by Count (none -> ascending)
     await user.click(countHeader)
     await findAllByRole('cell', { name: 'row 999' })
 
-    rows = within(within(getByRole('grid')).getAllByRole('rowgroup')[1]).getAllByRole('row')
+    rowGroups = within(getByRole('grid')).getAllByRole('rowgroup')[1]
+    rows = rowGroups ? within(rowGroups).getAllByRole('row') : []
     checkRowContents(rows[0], '1,000', 'row 999', '1')
   })
 
@@ -251,7 +259,7 @@ describe('in controlled selection state (selection and onSelection props), ', ()
     // no need to await because the data is already fetched
     const selectedRows = getAllByRole('row', { selected: true })
     expect(selectedRows).toHaveLength(1)
-    expect(selectedRows[0].getAttribute('aria-rowindex')).toBe(`${other + 2}`)
+    expect(selectedRows[0]?.getAttribute('aria-rowindex')).toBe(`${other + 2}`)
     expect(onSelectionChange).not.toHaveBeenCalled()
   })
 
@@ -390,7 +398,7 @@ describe('in controlled selection state, read-only (selection prop), ', () => {
     // no need to await because the data is already fetched
     const selectedRows = getAllByRole('row', { selected: true })
     expect(selectedRows).toHaveLength(1)
-    expect(selectedRows[0].getAttribute('aria-rowindex')).toBe(`${other + 2}`)
+    expect(selectedRows[0]?.getAttribute('aria-rowindex')).toBe(`${other + 2}`)
   })
 
   it('on data change, the selection stays the same', async () => {
