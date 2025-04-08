@@ -12,18 +12,22 @@ function random(seed: number) {
 }
 
 const data: DataFrame = {
-  header: ['ID', 'Count', 'Value1', 'Value2', 'Value3'],
+  header: ['ID', 'Count', 'Constant', 'Value1', 'Value2', 'Value3'],
   numRows: 1000,
-  rows: ({ start, end }) => Array.from({ length: end - start }, (_, index) => ({
-    index: wrapResolved(index + start),
-    cells: {
-      ID: wrapResolved(`row ${index + start}`),
-      Count: wrapResolved(1000 - start - index),
-      Value1: wrapResolved(Math.floor(100 * random(135 + index))),
-      Value2: wrapResolved(Math.floor(100 * random(648 + index))),
-      Value3: wrapResolved(Math.floor(100 * random(315 + index))),
-    },
-  })),
+  rows: ({ start, end }) => Array.from({ length: end - start }, (_, i) => {
+    const index = i + start
+    return {
+      index: wrapResolved(index),
+      cells: {
+        ID: wrapResolved(`row ${index}`),
+        Count: wrapResolved(1000 - index),
+        Constant: wrapResolved(42),
+        Value1: wrapResolved(Math.floor(100 * random(135 + index))),
+        Value2: wrapResolved(Math.floor(100 * random(648 + index))),
+        Value3: wrapResolved(Math.floor(100 * random(315 + index))),
+      },
+    }
+  }),
 }
 
 function delay<T>(value: T, ms: number): Promise<T> {
