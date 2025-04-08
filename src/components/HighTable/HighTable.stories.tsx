@@ -12,16 +12,18 @@ function random(seed: number) {
 }
 
 const data: DataFrame = {
-  header: ['ID', 'Count', 'Double', 'Value1', 'Value2', 'Value3'],
+  header: ['ID', 'Count', 'Double', 'Constant', 'Value1', 'Value2', 'Value3'],
   numRows: 1000,
-  rows: ({ start, end }) => Array.from({ length: end - start }, (_, index) => {
-    const count = 1000 - start - index
+  rows: ({ start, end }) => Array.from({ length: end - start }, (_, i) => {
+    const index = i + start
+    const count = 1000 - index
     return {
-      index: wrapResolved(index + start),
+      index: wrapResolved(index),
       cells: {
-        ID: wrapResolved(`row ${index + start}`),
-        Count: wrapResolved(1000 - start - index),
+        ID: wrapResolved(`row ${index}`),
+        Count: wrapResolved(count),
         Double: wrapResolved(count * 2),
+        Constant: wrapResolved(42),
         Value1: wrapResolved(Math.floor(100 * random(135 + index))),
         Value2: wrapResolved(Math.floor(100 * random(648 + index))),
         Value3: wrapResolved(Math.floor(100 * random(315 + index))),
