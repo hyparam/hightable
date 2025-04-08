@@ -24,8 +24,8 @@ export default function TableHeader({
     }}, [orderBy, onOrderByChange]
   )
 
-  const directionByColumn = useMemo(() => {
-    return new Map((orderBy ?? []).map(({ column, direction }) => [column, direction]))
+  const orderByColumn = useMemo(() => {
+    return new Map((orderBy ?? []).map(({ column, direction }, index) => [column, { direction, index }]))
   }, [orderBy])
 
   return header.map((name, columnIndex) => {
@@ -37,7 +37,9 @@ export default function TableHeader({
       <ColumnHeader
         key={columnIndex}
         dataReady={dataReady}
-        direction={directionByColumn.get(name)}
+        direction={orderByColumn.get(name)?.direction}
+        ariaPosInSet={orderByColumn.get(name)?.index}
+        ariaSetSize={orderBy?.length}
         onClick={getOnOrderByClick(name)}
         sortable={sortable}
         title={name}
