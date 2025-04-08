@@ -3,6 +3,7 @@ import { flushSync } from 'react-dom'
 import { Direction } from '../../helpers/sort.js'
 import { measureWidth } from '../../helpers/width.js'
 import useColumnWidth from '../../hooks/useColumnWidth.js'
+import { useConfig } from '../../hooks/useConfig.js'
 import ColumnResizer from '../ColumnResizer/ColumnResizer.js'
 
 interface Props {
@@ -17,6 +18,8 @@ interface Props {
 
 export default function ColumnHeader({ columnIndex, dataReady, direction, onClick, title, sortable, children }: Props) {
   const ref = useRef<HTMLTableCellElement>(null)
+  const { customClass } = useConfig()
+  const className = customClass?.columnHeaders?.[columnIndex]
 
   // Get the column width from the context
   const { getColumnStyle, setColumnWidth, getColumnWidth } = useColumnWidth()
@@ -67,6 +70,7 @@ export default function ColumnHeader({ columnIndex, dataReady, direction, onClic
       onClick={onClick}
       style={columnStyle}
       title={title}
+      className={className}
     >
       {children}
       <ColumnResizer

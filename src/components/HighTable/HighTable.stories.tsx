@@ -5,15 +5,19 @@ import { wrapResolved } from '../../utils/promise.js'
 import HighTable from './HighTable.js'
 
 const data: DataFrame = {
-  header: ['ID', 'Count'],
+  header: ['ID', 'Count', 'Double'],
   numRows: 1000,
-  rows: ({ start, end }) => Array.from({ length: end - start }, (_, index) => ({
-    index: wrapResolved(index + start),
-    cells: {
-      ID: wrapResolved(`row ${index + start}`),
-      Count: wrapResolved(1000 - start - index),
-    },
-  })),
+  rows: ({ start, end }) => Array.from({ length: end - start }, (_, index) => {
+    const count = 1000 - start - index
+    return{
+      index: wrapResolved(index + start),
+      cells: {
+        ID: wrapResolved(`row ${index + start}`),
+        Count: wrapResolved(count),
+        'Double': wrapResolved(count * 2),
+      },
+    }
+  }),
 }
 
 function delay<T>(value: T, ms: number): Promise<T> {
@@ -51,5 +55,20 @@ export const Default: Story = {
 export const Placeholders: Story = {
   args: {
     data: delayedData,
+  },
+}
+export const CustomHeaderStyle: Story = {
+  args: {
+    data,
+    config: {
+      customClass: {
+        // See .storybook/global.css for the CSS rule
+        // .custom-hightable thead th.delegated {
+        //   background-color: #ffe9a9;
+        // }
+        hightable: 'custom-hightable',
+        columnHeaders: [undefined, undefined, 'delegated'],
+      },
+    },
   },
 }
