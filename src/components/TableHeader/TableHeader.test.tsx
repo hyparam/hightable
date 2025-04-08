@@ -1,7 +1,6 @@
-import React from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import TableHeader from '../../../src/components/TableHeader/TableHeader.js'
-import { render } from '../../userEvent.js'
+import { render } from '../../utils/userEvent.js'
+import TableHeader from './TableHeader.js'
 
 describe('TableHeader', () => {
   const header = ['Name', 'Age', 'Address']

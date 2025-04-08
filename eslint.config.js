@@ -85,7 +85,7 @@ export default typescript.config(
     settings: { react: { version: 'detect' } },
   },
   {
-    files: ['test/**/*.{ts,tsx}', '*.{js,ts}'],
+    files: ['test/**/*.{ts,tsx}', '**/*.test.{ts,tsx}', '*.{js,ts}'],
     languageOptions: {
       ecmaVersion: 2020,
       globals: {

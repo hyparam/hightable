@@ -1,11 +1,10 @@
-import React from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import ColumnHeader from '../../../src/components/ColumnHeader/ColumnHeader.js'
-import { ColumnWidthProvider } from '../../../src/hooks/useColumnWidth.js'
-import { render } from '../../userEvent.js'
+import { ColumnWidthProvider } from '../../hooks/useColumnWidth.js'
+import { render } from '../../utils/userEvent.js'
+import ColumnHeader from './ColumnHeader.js'
 
-import { measureWidth } from '../../../src/helpers/width.js'
-vi.mock('../../../src/helpers/width.js', { spy: true })
+import { measureWidth } from '../../helpers/width.js'
+vi.mock('../../helpers/width.js', { spy: true })
 
 vi.stubGlobal('localStorage', (() => {
   const store = new Map<string, string>()
