@@ -428,16 +428,20 @@ export default function HighTable({
                       checked={selected}
                       showCheckBox={showSelection}
                     >{formatRowNumber(dataIndex)}</RowHeader>
-                    {data.header.map((column, columnIndex) =>
-                      <Cell
+                    {data.header.map((column, columnIndex) => {
+                      // Note: the resolved cell value can be undefined
+                      const hasResolved = column in row.cells
+                      const value = row.cells[column]
+                      return <Cell
                         key={columnIndex}
                         onDoubleClick={getOnDoubleClickCell(columnIndex, dataIndex)}
                         onMouseDown={getOnMouseDownCell(columnIndex, dataIndex)}
                         stringify={stringify}
-                        value={row.cells[column]}
+                        value={value}
                         columnIndex={columnIndex}
+                        hasResolved={hasResolved}
                       />
-                    )}
+                    })}
                   </Row>
                 )
               })}

@@ -49,6 +49,24 @@ const delayedData = sortableDataFrame({
 
 const sortableData = sortableDataFrame(data)
 
+const dataWithUndefinedCells: DataFrame = {
+  header: ['ID', 'Count'],
+  numRows: 1000,
+  rows: ({ start, end }) => Array.from({ length: end - start }, (_, index) => {
+    const id = index % 2 === 0 ? `row ${index + start}` : undefined
+    const ms = index % 3 === 0 ? 0 :
+      index % 3 === 1 ? 100 * Math.floor(10 * Math.random()) :
+        100 * Math.floor(100 * Math.random())
+    return {
+      index: wrapResolved(index + start),
+      cells: {
+        ID: ms ? wrapPromise(delay(id, ms)) : wrapResolved(id),
+        Count: wrapResolved(1000 - start - index),
+      },
+    }
+  }),
+}
+
 const meta: Meta<typeof HighTable> = {
   component: HighTable,
 }
@@ -65,7 +83,11 @@ export const Placeholders: Story = {
     data: delayedData,
   },
 }
-
+export const UndefinedCells: Story = {
+  args: {
+    data: dataWithUndefinedCells,
+  },
+}
 export const MultiSort: Story = {
   render: (args) => {
     const [orderBy, setOrderBy] = useState<OrderBy>([

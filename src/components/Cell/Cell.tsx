@@ -7,6 +7,7 @@ interface Props {
   stringify: (value: unknown) => string | undefined
   value: any
   columnIndex: number
+  hasResolved: boolean
 }
 
 /**
@@ -17,8 +18,10 @@ interface Props {
  * @param props.columnIndex column index in the dataframe (0-based)
  * @param props.onDoubleClick double click callback
  * @param props.onMouseDown mouse down callback
+ * @param props.stringify function to stringify the value
+ * @param props.hasResolved function to get the column style
  */
-export default function Cell({ onDoubleClick, onMouseDown, stringify, columnIndex, value }: Props) {
+export default function Cell({ onDoubleClick, onMouseDown, stringify, columnIndex, value, hasResolved }: Props) {
   // Get the column width from the context
   const { getColumnStyle } = useColumnWidth()
   const columnStyle = getColumnStyle?.(columnIndex)
@@ -41,7 +44,7 @@ export default function Cell({ onDoubleClick, onMouseDown, stringify, columnInde
   return (
     <td
       role="cell"
-      aria-busy={str === undefined}
+      aria-busy={!hasResolved}
       onDoubleClick={onDoubleClick}
       onMouseDown={onMouseDown}
       style={columnStyle}
