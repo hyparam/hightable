@@ -1,20 +1,30 @@
 import type { Meta, StoryObj } from '@storybook/react'
 import { sortableDataFrame, wrapPromise } from 'hightable'
+import { useState } from 'react'
 import { DataFrame } from '../../helpers/dataframe.js'
+import { OrderBy } from '../../helpers/sort.js'
 import { wrapResolved } from '../../utils/promise.js'
 import HighTable from './HighTable.js'
 
+function random(seed: number) {
+  const x = Math.sin(seed) * 10000
+  return x - Math.floor(x)
+}
+
 const data: DataFrame = {
-  header: ['ID', 'Count', 'Double'],
+  header: ['ID', 'Count', 'Double', 'Value1', 'Value2', 'Value3'],
   numRows: 1000,
   rows: ({ start, end }) => Array.from({ length: end - start }, (_, index) => {
     const count = 1000 - start - index
-    return{
+    return {
       index: wrapResolved(index + start),
       cells: {
         ID: wrapResolved(`row ${index + start}`),
-        Count: wrapResolved(count),
-        'Double': wrapResolved(count * 2),
+        Count: wrapResolved(1000 - start - index),
+        Double: wrapResolved(count * 2),
+        Value1: wrapResolved(Math.floor(100 * random(135 + index))),
+        Value2: wrapResolved(Math.floor(100 * random(648 + index))),
+        Value3: wrapResolved(Math.floor(100 * random(315 + index))),
       },
     }
   }),
@@ -41,6 +51,8 @@ const delayedData = sortableDataFrame({
   }),
 })
 
+const sortableData = sortableDataFrame(data)
+
 const meta: Meta<typeof HighTable> = {
   component: HighTable,
 }
@@ -55,6 +67,25 @@ export const Default: Story = {
 export const Placeholders: Story = {
   args: {
     data: delayedData,
+  },
+}
+export const MultiSort: Story = {
+  render: (args) => {
+    const [orderBy, setOrderBy] = useState<OrderBy>([
+      { column: 'Count', direction: 'ascending' },
+      { column: 'Value1', direction: 'descending' },
+      { column: 'Value2', direction: 'ascending' },
+    ])
+    return (
+      <HighTable
+        {...args}
+        orderBy={orderBy}
+        onOrderByChange={setOrderBy}
+      />
+    )
+  },
+  args: {
+    data: sortableData,
   },
 }
 export const CustomHeaderStyle: Story = {
