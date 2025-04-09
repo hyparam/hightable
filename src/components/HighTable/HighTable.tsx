@@ -43,7 +43,7 @@ interface Props {
   onSelectionChange?: (selection: Selection) => void // callback to call when a user interaction changes the selection. The selection is expressed as data indexes (not as indexes in the table). The interactions are disabled if undefined.
   stringify?: (value: unknown) => string | undefined
   className?: string // additional class names for the component
-  columnClassNames?: (string | undefined)[] // list of additional class names for the header and cells or each column. The index in this array corresponds to the column index in data.header
+  columnClassNames?: (string | undefined)[] // list of additional class names for the header and cells of each column. The index in this array corresponds to the column index in data.header
   styled?: boolean // use styled component? (default true)
 }
 
