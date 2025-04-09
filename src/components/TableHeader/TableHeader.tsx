@@ -8,13 +8,14 @@ interface TableProps {
   onOrderByChange?: (orderBy: OrderBy) => void // callback to call when a user interaction changes the order. The interactions are disabled if undefined.
   dataReady: boolean
   sortable?: boolean
+  columnClassNames?: (string | undefined)[] // array of class names for each column
 }
 
 /**
  * Render a header for a table.
  */
 export default function TableHeader({
-  header, orderBy, onOrderByChange, dataReady, sortable = true,
+  header, orderBy, onOrderByChange, dataReady, sortable = true, columnClassNames = [],
 }: TableProps) {
   // Function to handle click for changing orderBy
   const getOnOrderByClick = useCallback((columnHeader: string) => {
@@ -44,6 +45,7 @@ export default function TableHeader({
         sortable={sortable}
         title={name}
         columnIndex={columnIndex}
+        className={columnClassNames[columnIndex]}
       >
         {name}
       </ColumnHeader>

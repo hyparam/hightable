@@ -116,15 +116,11 @@ export const MultiSort: Story = {
 export const CustomHeaderStyle: Story = {
   args: {
     data,
-    config: {
-      customClass: {
-        // See .storybook/global.css for the CSS rule
-        // .custom-hightable thead th.delegated {
-        //   background-color: #ffe9a9;
-        // }
-        hightable: 'custom-hightable',
-        columnHeaders: [undefined, undefined, 'delegated'],
-      },
-    },
+    // See .storybook/global.css for the CSS rule
+    // .custom-hightable thead th.delegated {
+    //   background-color: #ffe9a9;
+    // }
+    className: 'custom-hightable',
+    columnClassNames: [undefined, undefined, 'delegated'],
   },
 }
