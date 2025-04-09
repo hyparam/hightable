@@ -8,6 +8,7 @@ interface Props {
   value: any
   columnIndex: number
   hasResolved: boolean
+  className?: string
 }
 
 /**
@@ -20,8 +21,9 @@ interface Props {
  * @param props.onMouseDown mouse down callback
  * @param props.stringify function to stringify the value
  * @param props.hasResolved function to get the column style
+ * @param props.className optional class name
  */
-export default function Cell({ onDoubleClick, onMouseDown, stringify, columnIndex, value, hasResolved }: Props) {
+export default function Cell({ onDoubleClick, onMouseDown, stringify, columnIndex, value, hasResolved, className }: Props) {
   // Get the column width from the context
   const { getColumnStyle } = useColumnWidth()
   const columnStyle = getColumnStyle?.(columnIndex)
@@ -48,6 +50,7 @@ export default function Cell({ onDoubleClick, onMouseDown, stringify, columnInde
       onDoubleClick={onDoubleClick}
       onMouseDown={onMouseDown}
       style={columnStyle}
+      className={className}
       title={title}>
       {str}
     </td>

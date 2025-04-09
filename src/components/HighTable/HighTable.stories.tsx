@@ -12,15 +12,17 @@ function random(seed: number) {
 }
 
 const data: DataFrame = {
-  header: ['ID', 'Count', 'Constant', 'Value1', 'Value2', 'Value3'],
+  header: ['ID', 'Count', 'Double', 'Constant', 'Value1', 'Value2', 'Value3'],
   numRows: 1000,
   rows: ({ start, end }) => Array.from({ length: end - start }, (_, i) => {
     const index = i + start
+    const count = 1000 - index
     return {
       index: wrapResolved(index),
       cells: {
         ID: wrapResolved(`row ${index}`),
-        Count: wrapResolved(1000 - index),
+        Count: wrapResolved(count),
+        Double: wrapResolved(count * 2),
         Constant: wrapResolved(42),
         Value1: wrapResolved(Math.floor(100 * random(135 + index))),
         Value2: wrapResolved(Math.floor(100 * random(648 + index))),
@@ -109,5 +111,16 @@ export const MultiSort: Story = {
   },
   args: {
     data: sortableData,
+  },
+}
+export const CustomHeaderStyle: Story = {
+  args: {
+    data,
+    // See .storybook/global.css for the CSS rule
+    // .custom-hightable thead th.delegated {
+    //   background-color: #ffe9a9;
+    // }
+    className: 'custom-hightable',
+    columnClassNames: [undefined, undefined, 'delegated'],
   },
 }

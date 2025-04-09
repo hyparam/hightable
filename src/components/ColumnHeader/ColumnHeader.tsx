@@ -15,9 +15,10 @@ interface Props {
   sortable?: boolean
   ariaPosInSet?: number // index of the column in the orderBy array (0-based)
   ariaSetSize?: number // size of the orderBy array
+  className?: string // optional class name
 }
 
-export default function ColumnHeader({ columnIndex, dataReady, direction, onClick, title, sortable, ariaPosInSet, ariaSetSize, children }: Props) {
+export default function ColumnHeader({ columnIndex, dataReady, direction, onClick, title, sortable, ariaPosInSet, ariaSetSize, className, children }: Props) {
   const ref = useRef<HTMLTableCellElement>(null)
 
   // Get the column width from the context
@@ -71,6 +72,7 @@ export default function ColumnHeader({ columnIndex, dataReady, direction, onClic
       onClick={onClick}
       style={columnStyle}
       title={title}
+      className={className}
     >
       {children}
       <ColumnResizer

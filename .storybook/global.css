@@ -90,3 +90,12 @@ h6 {
 * {
   font-family: "Mulish", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
+
+/* See CustomHeaderStyle story in HightTable.stories.tsx */
+/* Note that a top level class (custom-hightable here) must be passed to beat the specificity of CSS modules */
+.custom-hightable thead th.delegated {
+  background-color: #f3d373;
+}
+.custom-hightable tbody tr:not(:hover) td.delegated {
+  background-color: #ffe9a9;
+}
