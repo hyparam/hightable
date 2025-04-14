@@ -1,6 +1,21 @@
 # CHANGELOG
 
-## [Unreleased](https://github.com/hyparam/hightable/compare/v0.14.1...HEAD)
+## [Unreleased](https://github.com/hyparam/hightable/compare/v0.14.2...HEAD)
+
+## [0.14.2](https://github.com/hyparam/hightable/compare/v0.14.1...v0.14.2) - 2025-04-14
+
+### Added
+
+- add `columnClassNames` prop (array of class names, indexed by column index in `data.header`) to `HighTable` to style the columns ([#112](https://github.com/hyparam/hightable/pull/112)).
+- provide the sort order with `aria-posinset` and `aria-setsize` to style the column header cells ([#111](https://github.com/hyparam/hightable/pull/111) and [#114](https://github.com/hyparam/hightable/pull/114)).
+
+### Fixed
+
+- show an empty cell when it resolves to undefined, instead of an infinitely loading placeholder ([#110](https://github.com/hyparam/hightable/pull/110)).
+
+### Refactor
+
+- move component tests to src ([#109](https://github.com/hyparam/hightable/pull/109)).
 
 ## [0.14.1](https://github.com/hyparam/hightable/compare/v0.14.0...v0.14.1) - 2025-04-07
 
