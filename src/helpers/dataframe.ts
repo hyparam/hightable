@@ -158,7 +158,6 @@ export function sortableDataFrame(data: DataFrame): DataFrame {
         const indexesSlice = indexes.then(indexes => indexes.slice(start, end))
         const rowsSlice = indexesSlice.then(indexes => Promise.all(
           // TODO(SL): optimize to fetch groups of rows instead of individual rows?
-          // if so: maybe the 'reverse' above should be done after fetching the rows
           indexes.map(i => {
             const asyncRowInArray = data.rows({ start: i, end: i + 1 })
             if (!(0 in asyncRowInArray)) {
