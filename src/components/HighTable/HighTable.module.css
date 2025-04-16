@@ -162,6 +162,7 @@
   --header-corner-z-index: calc(var(--header-z-index) + 3);
   --header-progress-z-index: calc(var(--header-z-index) + 2);
   --cell-placeholder-z-index: 1;
+  --cell-horizontal-padding: 12px;
 
   table {
     border-collapse: separate;
@@ -185,6 +186,11 @@
       height: 20px;
       padding-top: 8px;
       top: -1px; /* fix 1px gap above thead */
+
+      /* sorting is enabled - add space for the sort caret */
+      &[aria-disabled="false"] {
+        padding-right: calc(var(--cell-horizontal-padding) + 8px);
+      }
     }
   }
 
@@ -215,7 +221,7 @@
     border-right: 1px solid #ddd;
     height: 32px;
     max-width: 2000px; /* prevent columns expanding */
-    padding: 4px 12px;
+    padding: 4px var(--cell-horizontal-padding);
     text-align: left;
     text-overflow: ellipsis;
     white-space: nowrap;
