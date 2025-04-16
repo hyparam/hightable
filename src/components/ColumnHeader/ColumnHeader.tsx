@@ -65,7 +65,7 @@ export default function ColumnHeader({ columnIndex, dataReady, direction, onClic
       ref={ref}
       scope="col"
       role="columnheader"
-      aria-sort={direction ?? 'none'}
+      aria-sort={direction ?? (sortable ? 'none' : undefined)}
       aria-disabled={!sortable}
       aria-posinset={ariaSetSize !== undefined ? ariaPosInSet : undefined}
       aria-setsize={ariaSetSize}
