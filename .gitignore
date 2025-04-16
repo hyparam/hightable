@@ -5,3 +5,4 @@ coverage
 *.tgz
 
 *storybook.log
+storybook-static

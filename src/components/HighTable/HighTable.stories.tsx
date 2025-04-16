@@ -1,9 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react'
-import { sortableDataFrame, wrapPromise } from 'hightable'
 import { useState } from 'react'
-import { DataFrame } from '../../helpers/dataframe.js'
+import { DataFrame, sortableDataFrame } from '../../helpers/dataframe.js'
 import { OrderBy } from '../../helpers/sort.js'
-import { wrapResolved } from '../../utils/promise.js'
+import { wrapPromise, wrapResolved } from '../../utils/promise.js'
 import HighTable from './HighTable.js'
 
 function random(seed: number) {
