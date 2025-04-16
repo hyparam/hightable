@@ -49,10 +49,6 @@ export default function ColumnHeader({ columnIndex, dataReady, direction, onClic
         setWidth(undefined)
       })
       const nextWidth = measureWidth(element)
-      // TODO(SL): take the ColumnResizer size into account, because if
-      // the column title is larger than the cell values, the title is
-      // truncated
-      // TODO(SL): add a threshold to avoid resizing too small columns
       if (!isNaN(nextWidth)) {
         // should not happen in the browser (but fails in unit tests)
         setWidth(nextWidth)
