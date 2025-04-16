@@ -1,6 +1,28 @@
 # CHANGELOG
 
-## [Unreleased](https://github.com/hyparam/hightable/compare/v0.14.2...HEAD)
+## [Unreleased](https://github.com/hyparam/hightable/compare/v0.15.0...HEAD)
+
+## [0.15.0](https://github.com/hyparam/hightable/compare/v0.14.2...v0.15.0) - 2025-04-16
+
+### Changed
+
+- set `aria-sort="none"` on header cells only if the data is sortable. Otherwise the attribute is not present ([#125](https://github.com/hyparam/hightable/pull/125)).
+
+### Removed
+
+- **Breaking** removed `aria-disabled` on header cells. Use `aria-sort` existence instead to check if sorting is enabled ([#125](https://github.com/hyparam/hightable/pull/125)).
+
+### Fixed
+
+- added right padding to the header cells (in the `.styled` class) when sorting is enabled to avoid overlap with the sort caret ([#122](https://github.com/hyparam/hightable/pull/122), [#125](https://github.com/hyparam/hightable/pull/125)).
+- don't save to localstorage if cacheKey is not provided ([#123](https://github.com/hyparam/hightable/pull/123)).
+- don't autoresize the columns when data has changed, if localstorage contains values ([#123](https://github.com/hyparam/hightable/pull/123)).
+- added 1 pixel to measured column width to avoid rounding errors ([#125](https://github.com/hyparam/hightable/pull/125)).
+
+### Refactored
+
+- updated dev dependencies ([#120](https://github.com/hyparam/hightable/pull/120)).
+- fixed an import in a storybook file. The bug did not affect the library ([#121](https://github.com/hyparam/hightable/pull/121)).
 
 ## [0.14.2](https://github.com/hyparam/hightable/compare/v0.14.1...v0.14.2) - 2025-04-14
 
