@@ -29,17 +29,17 @@ export default function ColumnHeader({ columnIndex, dataReady, direction, onClic
     setColumnWidth?.({ columnIndex, width: nextWidth })
   }, [setColumnWidth, columnIndex])
 
-  // Measure default column width when data is ready
+  // Measure default column width when data is ready, if no width is set
   useEffect(() => {
     const element = ref.current
-    if (dataReady && element) {
+    if (dataReady && element && width === undefined) {
       const nextWidth = measureWidth(element)
       if (!isNaN(nextWidth)) {
         // should not happen in the browser (but fails in unit tests)
         setWidth(nextWidth)
       }
     }
-  }, [dataReady, setWidth])
+  }, [dataReady, setWidth, width])
 
   const autoResize = useCallback(() => {
     const element = ref.current

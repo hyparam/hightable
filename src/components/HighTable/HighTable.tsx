@@ -30,7 +30,7 @@ const rowHeight = 33 // row height px
 
 interface Props {
   data: DataFrame
-  cacheKey?: string // used to persist column widths
+  cacheKey?: string // used to persist column widths. If undefined, the column widths are not persisted. It is expected to be unique for each table.
   overscan?: number // number of rows to fetch outside of the viewport
   padding?: number // number of padding rows to render outside of the viewport
   focus?: boolean // focus table on mount? (default true)
