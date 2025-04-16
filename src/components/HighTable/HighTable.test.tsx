@@ -549,3 +549,68 @@ describe('in disabled selection state (neither selection nor onSelection props),
     expect(queryByRole('row', { selected: true })).toBeNull()
   })
 })
+
+const initialWidth = 42
+const measureWidth = vi.fn(() => initialWidth)
+vi.mock(import('../../helpers/width.js'), async (importOriginal ) => {
+  const actual = await importOriginal()
+  return {
+    ...actual,
+    measureWidth: () => measureWidth(),
+  }})
+describe('HighTable localstorage', () => {
+  it('saves the autosized column widths on initialization, if not saved before', () => {
+    localStorage.clear()
+    const { getAllByRole } = render(<HighTable data={data} cacheKey="key" />)
+    const header = getAllByRole('columnheader')[0]
+    if (!header) {
+      throw new Error('Header should not be null')
+    }
+    expect(header.style.maxWidth).toEqual(`${initialWidth}px`)
+    expect(measureWidth).toHaveBeenCalled()
+    expect(localStorage.getItem('key:column-widths')).toEqual(JSON.stringify([initialWidth, initialWidth]))
+  })
+  it('saves nothing on initialization if cacheKey is not provided', () => {
+    localStorage.clear()
+    const { getAllByRole } = render(<HighTable data={data} />)
+    const header = getAllByRole('columnheader')[0]
+    if (!header) {
+      throw new Error('Header should not be null')
+    }
+    expect(header.style.maxWidth).toEqual(`${initialWidth}px`)
+    expect(measureWidth).toHaveBeenCalled()
+    expect(localStorage.getItem('key:column-widths')).toBeNull()
+    expect(localStorage.getItem('undefined:column-widths')).toBeNull()
+    expect(localStorage.length).toBe(0)
+  })
+  it('is used to load previously saved column widths', () => {
+    localStorage.clear()
+    const savedWidth = initialWidth * 2
+    localStorage.setItem('key:column-widths', JSON.stringify([savedWidth, savedWidth]))
+
+    const { getAllByRole } = render(<HighTable data={data} cacheKey="key" />)
+    const header = getAllByRole('columnheader')[0]
+    if (!header) {
+      throw new Error('Header should not be null')
+    }
+    expect(localStorage.getItem('key:column-widths')).toEqual(JSON.stringify([savedWidth, savedWidth]))
+    expect(header.style.maxWidth).toEqual(`${savedWidth}px`)
+  })
+  it('is updated if new data are loaded', () => {
+    localStorage.clear()
+    const savedWidth = initialWidth * 2
+    localStorage.setItem('key:column-widths', JSON.stringify([savedWidth, savedWidth]))
+
+    const { getAllByRole, rerender } = render(<HighTable data={data} cacheKey="key" />)
+
+    const otherKey = 'other-key'
+    /* Note that we expect the cache key to be different for different data */
+    rerender(<HighTable data={otherData} cacheKey={otherKey} />)
+    const header = getAllByRole('columnheader')[0]
+    if (!header) {
+      throw new Error('Header should not be null')
+    }
+    expect(localStorage.getItem(`${otherKey}:column-widths`)).toEqual(JSON.stringify([initialWidth, initialWidth]))
+    expect(header.style.maxWidth).toEqual(`${initialWidth}px`)
+  })
+})

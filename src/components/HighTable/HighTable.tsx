@@ -30,7 +30,7 @@ const rowHeight = 33 // row height px
 
 interface Props {
   data: DataFrame
-  cacheKey?: string // used to persist column widths
+  cacheKey?: string // used to persist column widths. If undefined, the column widths are not persisted. It is expected to be unique for each table.
   overscan?: number // number of rows to fetch outside of the viewport
   padding?: number // number of padding rows to render outside of the viewport
   focus?: boolean // focus table on mount? (default true)
@@ -374,7 +374,7 @@ export default function HighTable({
 
   const ariaColCount = data.header.length + 1 // don't forget the selection column
   const ariaRowCount = data.numRows + 1 // don't forget the header row
-  return <ColumnWidthProvider localStorageKey={`${cacheKey}:column-widths`}>
+  return <ColumnWidthProvider localStorageKey={cacheKey ? `${cacheKey}:column-widths` : undefined}>
     <div className={`${styles.hightable} ${styled ? styles.styled : ''} ${className}`}>
       <div className={styles.tableScroll} ref={scrollRef}>
         <div style={{ height: `${scrollHeight}px` }}>
