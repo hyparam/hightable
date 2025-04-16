@@ -374,7 +374,7 @@ export default function HighTable({
 
   const ariaColCount = data.header.length + 1 // don't forget the selection column
   const ariaRowCount = data.numRows + 1 // don't forget the header row
-  return <ColumnWidthProvider localStorageKey={`${cacheKey}:column-widths`}>
+  return <ColumnWidthProvider localStorageKey={cacheKey ? `${cacheKey}:column-widths` : undefined}>
     <div className={`${styles.hightable} ${styled ? styles.styled : ''} ${className}`}>
       <div className={styles.tableScroll} ref={scrollRef}>
         <div style={{ height: `${scrollHeight}px` }}>
