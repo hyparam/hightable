@@ -15,18 +15,28 @@ interface TableProps {
  * Render a header for a table.
  */
 export default function TableHeader({
-  header, orderBy, onOrderByChange, dataReady, sortable = true, columnClassNames = [],
+  header,
+  orderBy,
+  onOrderByChange,
+  dataReady,
+  sortable = true,
+  columnClassNames = [],
 }: TableProps) {
   // Function to handle click for changing orderBy
-  const getOnOrderByClick = useCallback((columnHeader: string) => {
-    if (!onOrderByChange || !orderBy) return undefined
-    return () => {
-      onOrderByChange(toggleColumn(columnHeader, orderBy))
-    }}, [orderBy, onOrderByChange]
+  const getOnOrderByClick = useCallback(
+    (columnHeader: string) => {
+      if (!onOrderByChange || !orderBy) return undefined
+      return () => {
+        onOrderByChange(toggleColumn(columnHeader, orderBy))
+      }
+    },
+    [orderBy, onOrderByChange]
   )
 
   const orderByColumn = useMemo(() => {
-    return new Map((orderBy ?? []).map(({ column, direction }, index) => [column, { direction, index }]))
+    return new Map(
+      (orderBy ?? []).map(({ column, direction }, index) => [column, { direction, index }])
+    )
   }, [orderBy])
 
   return header.map((name, columnIndex) => {
