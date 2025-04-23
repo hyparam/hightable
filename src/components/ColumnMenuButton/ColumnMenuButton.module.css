@@ -3,7 +3,7 @@
   align-items: center;
   justify-content: center;
   position: absolute;
-  right: 16px;
+  right: 12px;
   top: 55%;
   transform: translateY(-50%);
   width: 20px;
@@ -17,13 +17,13 @@
 }
 
 .columnMenuButton:hover {
-  background-color: rgba(0, 0, 0, 0.05);
+  background-color: #dbdbe5;
 }
 
 .caret {
   font-size: 12px;
   line-height: 1;
-  color: #666;
+  color: #444;
 }
 
 :global(th:hover) .columnMenuButton {
