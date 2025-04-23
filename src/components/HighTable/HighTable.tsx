@@ -416,8 +416,9 @@ export default function HighTable({
               })}
               {slice?.rows.map((row, rowIndex) => {
                 const tableIndex = slice.offset + rowIndex
-                const dataIndex = row.index
-                const selected = isRowSelected(row.index) ?? false
+                const inferredDataIndex = orderBy === undefined || orderBy.length === 0 ? tableIndex : undefined
+                const dataIndex = row.index ?? inferredDataIndex
+                const selected = isRowSelected(dataIndex) ?? false
                 return (
                   <Row
                     key={tableIndex}
