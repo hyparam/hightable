@@ -15,6 +15,9 @@ interface Props {
   direction?: Direction
   onClick?: (e: MouseEvent) => void
   onHideColumn?: (columnIndex: number) => void
+  onShowAllColumns?: () => void
+  hasHiddenColumns?: boolean
+  title?: string
   sortable?: boolean
   orderByIndex?: number // index of the column in the orderBy array (0-based)
   orderBySize?: number // size of the orderBy array
@@ -30,6 +33,8 @@ export default function ColumnHeader({
   direction,
   onClick,
   onHideColumn,
+  onShowAllColumns,
+  hasHiddenColumns,
   sortable,
   className,
   children,
@@ -156,6 +161,8 @@ export default function ColumnHeader({
         column={description}
         columnIndex={columnIndex}
         onHideColumn={onHideColumn}
+        onShowAllColumns={onShowAllColumns}
+        hasHiddenColumns={hasHiddenColumns}
         sortable={sortable}
         onSort={onClick ? () => onClick({} as MouseEvent) : undefined}
         isVisible={showMenu}

@@ -6,6 +6,8 @@ interface ColumnMenuProps {
   column: string
   columnIndex: number
   onHideColumn?: (columnIndex: number) => void
+  onShowAllColumns?: () => void
+  hasHiddenColumns?: boolean
   sortable?: boolean
   onSort?: (columnIndex: number) => void
   isVisible?: boolean
@@ -17,6 +19,8 @@ export default function ColumnMenu({
   column,
   columnIndex,
   onHideColumn,
+  onShowAllColumns,
+  hasHiddenColumns = false,
   sortable,
   onSort,
   isVisible = false,
@@ -31,6 +35,13 @@ export default function ColumnMenu({
     }
     onClose()
   }, [columnIndex, onHideColumn, onClose])
+
+  const handleShowAllColumns = useCallback(() => {
+    if (onShowAllColumns) {
+      onShowAllColumns()
+    }
+    onClose()
+  }, [onShowAllColumns, onClose])
 
   const handleSort = useCallback(() => {
     if (onSort) {
@@ -73,6 +84,11 @@ export default function ColumnMenu({
         <li className={styles.columnMenuItem} onClick={handleHideColumn}>
           Hide column
         </li>
+        {hasHiddenColumns && (
+          <li className={styles.columnMenuItem} onClick={handleShowAllColumns}>
+            Show all columns
+          </li>
+        )}
         {sortable && (
           <li className={styles.columnMenuItem} onClick={handleSort}>
             Sort ascending

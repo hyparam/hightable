@@ -93,6 +93,29 @@ export default function HighTable({
   const [slice, setSlice] = useState<Slice | undefined>(undefined)
   const [rowsRange, setRowsRange] = useState({ start: 0, end: 0 })
   const [hasCompleteRow, setHasCompleteRow] = useState(false)
+  
+  // Add state for tracking hidden columns
+  const [hiddenColumns, setHiddenColumns] = useState<number[]>([])
+
+  // Create a filtered header based on hidden columns
+  const visibleHeader = useMemo(() => 
+    data.header.filter((_, index) => !hiddenColumns.includes(index)),
+  [data.header, hiddenColumns])
+
+  // Replace the unused visibleColumnClassNames with a more useful function
+  const isColumnVisible = useCallback((index: number) => 
+    !hiddenColumns.includes(index),
+  [hiddenColumns])
+
+  // Handler for hiding a column
+  const handleHideColumn = useCallback((columnIndex: number) => {
+    setHiddenColumns(prev => [...prev, columnIndex])
+  }, [])
+
+  // Handler for showing all columns
+  const handleShowAllColumns = useCallback(() => {
+    setHiddenColumns([])
+  }, [])
 
   // TODO(SL): remove this state and only rely on the data frame for these operations?
   // ie. cache the previous sort indexes in the data frame itself
@@ -372,7 +395,7 @@ export default function HighTable({
   // don't render table if header is empty
   if (!data.header.length) return
 
-  const ariaColCount = data.header.length + 1 // don't forget the selection column
+  const ariaColCount = visibleHeader.length + 1 // don't forget the selection column
   const ariaRowCount = data.numRows + 1 // don't forget the header row
   return <ColumnWidthProvider localStorageKey={cacheKey ? `${cacheKey}:column-widths` : undefined}>
     <div className={`${styles.hightable} ${styled ? styles.styled : ''} ${className}`}>
@@ -399,17 +422,14 @@ export default function HighTable({
                 >&nbsp;</TableCorner>
                 <TableHeader
                   dataReady={hasCompleteRow}
-                  header={data.header}
+                  header={visibleHeader}
                   orderBy={orderBy}
                   onOrderByChange={onOrderByChange}
                   sortable={enableOrderByInteractions}
-                  columnClassNames={columnClassNames}
-                  onHideColumn={(columnIndex) => {
-                    // Implement column hiding logic here
-                    // This could involve creating a new dataframe with the column filtered out
-                    // or maintaining a list of hidden columns in state
-                    console.log(`Hide column ${data.header[columnIndex]}`);
-                  }}
+                  columnClassNames={columnClassNames.filter((_, index) => isColumnVisible(index))}
+                  onHideColumn={handleHideColumn}
+                  onShowAllColumns={handleShowAllColumns}
+                  hasHiddenColumns={hiddenColumns.length > 0}
                 />
               </Row>
             </thead>
@@ -432,7 +452,7 @@ export default function HighTable({
                     key={tableIndex}
                     selected={selected}
                     ariaRowIndex={tableIndex + 2}
-                    title={rowError(row, data.header.length)}
+                    title={rowError(row, visibleHeader.length)}
                   >
                     <RowHeader
                       busy={dataIndex === undefined}
@@ -442,22 +462,25 @@ export default function HighTable({
                       showCheckBox={showSelection}
                       ariaColIndex={1}
                     >{formatRowNumber(dataIndex)}</RowHeader>
-                    {data.header.map((column, columnIndex) => {
-                      // Note: the resolved cell value can be undefined
-                      const hasResolved = column in row.cells
-                      const value = row.cells[column]
-                      return <Cell
-                        key={columnIndex}
-                        onDoubleClick={getOnDoubleClickCell(columnIndex, dataIndex)}
-                        onMouseDown={getOnMouseDownCell(columnIndex, dataIndex)}
-                        stringify={stringify}
-                        value={value}
-                        columnIndex={columnIndex}
-                        hasResolved={hasResolved}
-                        className={columnClassNames[columnIndex]}
-                        ariaColIndex={columnIndex + 2} // 1-based index, +1 for the row header
-                      />
-                    })}
+                    {data.header
+                      .map((column, index) => ({ column, index }))
+                      .filter(({ index }) => isColumnVisible(index))
+                      .map(({ column, index: columnIndex }) => {
+                        // Note: the resolved cell value can be undefined
+                        const hasResolved = column in row.cells
+                        const value = row.cells[column]
+                        return <Cell
+                          key={columnIndex}
+                          onDoubleClick={getOnDoubleClickCell(columnIndex, dataIndex)}
+                          onMouseDown={getOnMouseDownCell(columnIndex, dataIndex)}
+                          stringify={stringify}
+                          value={value}
+                          columnIndex={columnIndex}
+                          hasResolved={hasResolved}
+                          className={columnClassNames[columnIndex]}
+                          ariaColIndex={columnIndex + 2}
+                        />
+                      })}
                   </Row>
                 )
               })}
