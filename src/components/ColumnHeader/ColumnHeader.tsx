@@ -18,16 +18,30 @@ interface Props {
   className?: string // optional class name
 }
 
-export default function ColumnHeader({ columnIndex, columnName, dataReady, direction, onClick, sortable, orderByIndex, orderBySize, className, children }: Props) {
+export default function ColumnHeader({
+  orderByIndex,
+  orderBySize,
+  columnIndex,
+  columnName,
+  dataReady,
+  direction,
+  onClick,
+  sortable,
+  className,
+  children,
+}: Props) {
   const ref = useRef<HTMLTableCellElement>(null)
 
   // Get the column width from the context
   const { getColumnStyle, setColumnWidth, getColumnWidth } = useColumnWidth()
   const columnStyle = getColumnStyle?.(columnIndex)
   const width = getColumnWidth?.(columnIndex)
-  const setWidth = useCallback((nextWidth: number | undefined) => {
-    setColumnWidth?.({ columnIndex, width: nextWidth })
-  }, [setColumnWidth, columnIndex])
+  const setWidth = useCallback(
+    (nextWidth: number | undefined) => {
+      setColumnWidth?.({ columnIndex, width: nextWidth })
+    },
+    [setColumnWidth, columnIndex]
+  )
 
   // Measure default column width when data is ready, if no width is set
   useEffect(() => {
@@ -88,11 +102,7 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
       className={className}
     >
       {children}
-      <ColumnResizer
-        setWidth={setWidth}
-        onDoubleClick={autoResize}
-        width={width}
-      />
+      <ColumnResizer setWidth={setWidth} onDoubleClick={autoResize} width={width} />
     </th>
   )
 }
