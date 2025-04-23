@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { OrderBy, toggleColumn } from '../../helpers/sort.js'
 import ColumnHeader from '../ColumnHeader/ColumnHeader.js'
 
@@ -9,6 +9,7 @@ interface TableProps {
   dataReady: boolean
   sortable?: boolean
   columnClassNames?: (string | undefined)[] // array of class names for each column
+  onHideColumn?: (columnIndex: number) => void
 }
 
 /**
@@ -21,6 +22,7 @@ export default function TableHeader({
   dataReady,
   sortable = true,
   columnClassNames = [],
+  onHideColumn,
 }: TableProps) {
   // Function to handle click for changing orderBy
   const getOnOrderByClick = useCallback(
@@ -39,7 +41,23 @@ export default function TableHeader({
     )
   }, [orderBy])
 
-  return header.map((name, columnIndex) => {
+  // Track visible columns
+  const [visibleColumns, setVisibleColumns] = useState<number[]>(header.map((_, index) => index))
+
+  const handleHideColumn = useCallback(
+    (columnIndex: number) => {
+      if (onHideColumn) {
+        onHideColumn(columnIndex)
+      } else {
+        // Default implementation if no handler provided
+        setVisibleColumns(prev => prev.filter(idx => idx !== columnIndex))
+      }
+    },
+    [onHideColumn]
+  )
+
+  return visibleColumns.map(columnIndex => {
+    const name = header[columnIndex] as string
     // Note: columnIndex is the index of the column in the dataframe header
     // and not the index of the column in the table (which can be different if
     // some columns are hidden, or if the order is changed)
@@ -52,6 +70,7 @@ export default function TableHeader({
         orderByIndex={orderByColumn.get(name)?.index}
         orderBySize={orderBy?.length}
         onClick={getOnOrderByClick(name)}
+        onHideColumn={handleHideColumn}
         sortable={sortable}
         columnName={name}
         columnIndex={columnIndex}

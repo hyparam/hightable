@@ -404,6 +404,12 @@ export default function HighTable({
                   onOrderByChange={onOrderByChange}
                   sortable={enableOrderByInteractions}
                   columnClassNames={columnClassNames}
+                  onHideColumn={(columnIndex) => {
+                    // Implement column hiding logic here
+                    // This could involve creating a new dataframe with the column filtered out
+                    // or maintaining a list of hidden columns in state
+                    console.log(`Hide column ${data.header[columnIndex]}`);
+                  }}
                 />
               </Row>
             </thead>
