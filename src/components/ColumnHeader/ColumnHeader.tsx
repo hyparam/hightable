@@ -5,6 +5,7 @@ import { measureWidth } from '../../helpers/width.js'
 import useColumnWidth from '../../hooks/useColumnWidth.js'
 import ColumnResizer from '../ColumnResizer/ColumnResizer.js'
 import ColumnMenu from '../ColumnMenu/ColumnMenu.js'
+import ColumnMenuButton from '../ColumnMenuButton/ColumnMenuButton.js'
 
 interface Props {
   columnIndex: number // index of the column in the dataframe (0-based)
@@ -116,25 +117,39 @@ export default function ColumnHeader({
     }
   }, [showMenu])
 
+  // Handle menu button click
+  const handleMenuButtonClick = useCallback((e: MouseEvent) => {
+    const rect = ref.current?.getBoundingClientRect()
+    if (rect) {
+      setMenuPosition({
+        x: e.clientX,
+        y: rect.bottom,
+      })
+      setShowMenu(true)
+    }
+  }, [])
+
   return (
     <>
       <th
-      ref={ref}
-      scope="col"
-      role="columnheader"
-      aria-sort={direction ?? (sortable ? 'none' : undefined)}
-      data-order-by-index={orderBySize !== undefined ? orderByIndex : undefined}
-      data-order-by-size={orderBySize}
-      aria-description={description}
-      // 1-based index, +1 for the row header
-      // TODO(SL): don't hardcode it, but get it from the table context
-      aria-colindex={columnIndex + 2}
-      title={description}
-      onClick={onClick}
-      style={columnStyle}
-      className={className}
+        ref={ref}
+        scope="col"
+        role="columnheader"
+        aria-sort={direction ?? (sortable ? 'none' : undefined)}
+        data-order-by-index={orderBySize !== undefined ? orderByIndex : undefined}
+        data-order-by-size={orderBySize}
+        aria-description={description}
+        // 1-based index, +1 for the row header
+        // TODO(SL): don't hardcode it, but get it from the table context
+        aria-colindex={columnIndex + 2}
+        title={description}
+        onClick={onClick}
+        onContextMenu={handleContextMenu}
+        style={{ ...columnStyle, position: 'relative' }}
+        className={className}
       >
-        {children}
+        <span style={{ paddingRight: '24px' }}>{children}</span>
+        <ColumnMenuButton onClick={handleMenuButtonClick} />
         <ColumnResizer setWidth={setWidth} onDoubleClick={autoResize} width={width} />
       </th>
       <ColumnMenu

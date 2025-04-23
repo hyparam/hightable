@@ -1,0 +1,30 @@
+.columnMenuButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  right: 16px;
+  top: 55%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  border-radius: 3px;
+  background-color: #f1f1f3;
+}
+
+.columnMenuButton:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.caret {
+  font-size: 12px;
+  line-height: 1;
+  color: #666;
+}
+
+:global(th:hover) .columnMenuButton {
+  opacity: 1;
+}

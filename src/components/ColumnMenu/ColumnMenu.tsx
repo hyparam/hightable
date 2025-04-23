@@ -1,4 +1,5 @@
-import { useCallback, useRef } from 'react'
+import { useCallback, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import styles from './ColumnMenu.module.css'
 
 interface ColumnMenuProps {
@@ -38,16 +39,32 @@ export default function ColumnMenu({
     onClose()
   }, [columnIndex, onSort, onClose])
 
+  useEffect(() => {
+    if (isVisible) {
+      const handleClickOutside = (event: MouseEvent) => {
+        if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+          onClose()
+        }
+      }
+      
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside)
+      }
+    }
+  }, [isVisible, onClose])
+
   if (!isVisible) return null
 
-  return (
+  return createPortal(
     <div
       ref={menuRef}
       className={styles.columnMenu}
       style={{
-        position: 'absolute',
+        position: 'fixed',
         top: position.y,
         left: position.x,
+        zIndex: 9999,
       }}
     >
       <div className={styles.columnMenuHeader}>{column}</div>
@@ -66,6 +83,7 @@ export default function ColumnMenu({
           Show histogram
         </li> */}
       </ul>
-    </div>
+    </div>,
+    document.body
   )
 }
