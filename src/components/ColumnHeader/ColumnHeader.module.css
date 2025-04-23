@@ -1,0 +1,12 @@
+.headerText {
+  display: block;
+  padding-right: 24px;
+  white-space: nowrap;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+:global(th:hover) .headerText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+} 

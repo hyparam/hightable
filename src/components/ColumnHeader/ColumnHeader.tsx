@@ -6,6 +6,7 @@ import useColumnWidth from '../../hooks/useColumnWidth.js'
 import ColumnResizer from '../ColumnResizer/ColumnResizer.js'
 import ColumnMenu from '../ColumnMenu/ColumnMenu.js'
 import ColumnMenuButton from '../ColumnMenuButton/ColumnMenuButton.js'
+import styles from './ColumnHeader.module.css'
 
 interface Props {
   columnIndex: number // index of the column in the dataframe (0-based)
@@ -153,7 +154,9 @@ export default function ColumnHeader({
         style={{ ...columnStyle, position: 'relative' }}
         className={className}
       >
-        <span style={{ paddingRight: '24px' }}>{children}</span>
+        <span className={styles.headerText}>
+          {children}
+        </span>
         <ColumnMenuButton onClick={handleMenuButtonClick} />
         <ColumnResizer setWidth={setWidth} onDoubleClick={autoResize} width={width} />
       </th>

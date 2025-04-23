@@ -13,6 +13,7 @@
   transition: opacity 0.2s ease;
   border-radius: 3px;
   background-color: #f1f1f3;
+  z-index: 3;
 }
 
 .columnMenuButton:hover {
