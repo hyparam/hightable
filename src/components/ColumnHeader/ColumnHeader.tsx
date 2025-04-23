@@ -1,9 +1,10 @@
-import { MouseEvent, ReactNode, useCallback, useEffect, useMemo, useRef } from 'react'
+import { MouseEvent, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { Direction } from '../../helpers/sort.js'
 import { measureWidth } from '../../helpers/width.js'
 import useColumnWidth from '../../hooks/useColumnWidth.js'
 import ColumnResizer from '../ColumnResizer/ColumnResizer.js'
+import ColumnMenu from '../ColumnMenu/ColumnMenu.js'
 
 interface Props {
   columnIndex: number // index of the column in the dataframe (0-based)
@@ -12,6 +13,7 @@ interface Props {
   dataReady?: boolean
   direction?: Direction
   onClick?: (e: MouseEvent) => void
+  onHideColumn?: (columnIndex: number) => void
   sortable?: boolean
   orderByIndex?: number // index of the column in the orderBy array (0-based)
   orderBySize?: number // size of the orderBy array
@@ -26,11 +28,14 @@ export default function ColumnHeader({
   dataReady,
   direction,
   onClick,
+  onHideColumn,
   sortable,
   className,
   children,
 }: Props) {
   const ref = useRef<HTMLTableCellElement>(null)
+  const [showMenu, setShowMenu] = useState(false)
+  const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 })
 
   // Get the column width from the context
   const { getColumnStyle, setColumnWidth, getColumnWidth } = useColumnWidth()
@@ -84,8 +89,36 @@ export default function ColumnHeader({
     }
   }, [sortable, columnName, direction, orderByIndex])
 
+  const handleContextMenu = useCallback((e: MouseEvent) => {
+    e.preventDefault()
+    setMenuPosition({
+      x: e.clientX,
+      y: e.clientY,
+    })
+    setShowMenu(true)
+  }, [])
+
+  const closeMenu = useCallback(() => {
+    setShowMenu(false)
+  }, [])
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    if (showMenu) {
+      const handleClickOutside = () => {
+        setShowMenu(false)
+      }
+
+      document.addEventListener('click', handleClickOutside)
+      return () => {
+        document.removeEventListener('click', handleClickOutside)
+      }
+    }
+  }, [showMenu])
+
   return (
-    <th
+    <>
+      <th
       ref={ref}
       scope="col"
       role="columnheader"
@@ -100,9 +133,20 @@ export default function ColumnHeader({
       onClick={onClick}
       style={columnStyle}
       className={className}
-    >
-      {children}
-      <ColumnResizer setWidth={setWidth} onDoubleClick={autoResize} width={width} />
-    </th>
+      >
+        {children}
+        <ColumnResizer setWidth={setWidth} onDoubleClick={autoResize} width={width} />
+      </th>
+      <ColumnMenu
+        column={description}
+        columnIndex={columnIndex}
+        onHideColumn={onHideColumn}
+        sortable={sortable}
+        onSort={onClick ? () => onClick({} as MouseEvent) : undefined}
+        isVisible={showMenu}
+        position={menuPosition}
+        onClose={closeMenu}
+      />
+    </>
   )
 }
