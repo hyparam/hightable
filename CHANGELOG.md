@@ -1,6 +1,20 @@
 # CHANGELOG
 
-## [Unreleased](https://github.com/hyparam/hightable/compare/v0.15.0...HEAD)
+## [Unreleased](https://github.com/hyparam/hightable/compare/v0.15.1...HEAD)
+
+## [0.15.1](https://github.com/hyparam/hightable/compare/v0.15.0...v0.15.1) - 2025-04-24
+
+### Added
+
+- show a placeholder (blurred number) while row index is loading ([#131](https://github.com/hyparam/hightable/pull/131)).
+
+### Changed
+
+- get row index as soon as possible when unsorted ([#130](https://github.com/hyparam/hightable/pull/130)).
+
+### Refactored
+
+- updated dev dependencies ([#132](https://github.com/hyparam/hightable/pull/132)).
 
 ## [0.15.0](https://github.com/hyparam/hightable/compare/v0.14.2...v0.15.0) - 2025-04-16
 
