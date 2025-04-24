@@ -314,6 +314,12 @@
     animation-delay: -1.5s;
   }
 
+  /* pending row index cell state */
+  tbody th[aria-busy="true"]::after {
+    content: "427"; /* decorative purpose only - https://developer.mozilla.org/en-US/docs/Web/CSS/content#accessibility */
+    filter: blur(4px);
+  }
+
   /* pending table state */
   thead th::before {
     content: "";

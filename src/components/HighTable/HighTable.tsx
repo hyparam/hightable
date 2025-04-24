@@ -427,6 +427,7 @@ export default function HighTable({
                     title={rowError(row, data.header.length)}
                   >
                     <RowHeader
+                      busy={dataIndex === undefined}
                       style={cornerStyle}
                       onClick={dataIndex === undefined ? undefined : getOnSelectRowClick({ tableIndex, dataIndex })}
                       checked={selected}
