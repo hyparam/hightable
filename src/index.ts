@@ -1,5 +1,5 @@
 import HighTable from './components/HighTable/HighTable.js'
-export { arrayDataFrame, sortableDataFrame } from './helpers/dataframe.js'
+export { arrayDataFrame, sortableDataFrame, getGetColumn } from './helpers/dataframe.js'
 export type { DataFrame } from './helpers/dataframe.js'
 export { asyncRows, awaitRow, awaitRows, resolvableRow } from './helpers/row.js'
 export type { AsyncRow, Cells, PartialRow, ResolvableRow, Row } from './helpers/row.js'
