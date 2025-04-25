@@ -164,6 +164,22 @@
   --cell-placeholder-z-index: 1;
   --cell-horizontal-padding: 12px;
 
+  --focus-border-color: black;
+  --focus-border-width: 2px;
+
+  .table-scroll:focus {
+    outline: none;
+    border-radius: 4px;
+    border-color: var(--focus-border-color);
+    border-width: var(--focus-border-width);
+    border-style: solid;
+    & + .mock-row-label {
+      top: var(--focus-border-width);
+      left: var(--focus-border-width);
+      bottom: var(--focus-border-width);
+    }
+  }
+
   table {
     border-collapse: separate;
     border-spacing: 0;
