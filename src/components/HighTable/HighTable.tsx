@@ -376,7 +376,7 @@ export default function HighTable({
   const ariaRowCount = data.numRows + 1 // don't forget the header row
   return <ColumnWidthProvider localStorageKey={cacheKey ? `${cacheKey}:column-widths` : undefined}>
     <div className={`${styles.hightable} ${styled ? styles.styled : ''} ${className}`}>
-      <div className={styles.tableScroll} ref={scrollRef}>
+      <div className={styles.tableScroll} ref={scrollRef} tabIndex={0}>
         <div style={{ height: `${scrollHeight}px` }}>
           <table
             aria-readonly={true}
@@ -386,7 +386,7 @@ export default function HighTable({
             ref={tableRef}
             role='grid'
             style={{ top: `${offsetTop}px` }}
-            tabIndex={0}>
+          >
             <thead role="rowgroup">
               <Row ariaRowIndex={1} >
                 <TableCorner
