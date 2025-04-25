@@ -54,10 +54,10 @@
     top: 0;
   }
   th[aria-sort="ascending"]::after {
-    content: "▾";
+    content: "▴";
   }
   th[aria-sort="descending"]::after {
-    content: "▴";
+    content: "▾";
   }
 
   /* column resize */

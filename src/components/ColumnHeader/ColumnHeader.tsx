@@ -7,18 +7,32 @@ import ColumnResizer from '../ColumnResizer/ColumnResizer.js'
 
 interface Props {
   columnIndex: number // index of the column in the dataframe (0-based)
+  columnName: string
   children?: ReactNode
   dataReady?: boolean
   direction?: Direction
   onClick?: (e: MouseEvent) => void
-  title?: string
   sortable?: boolean
   ariaPosInSet?: number // index of the column in the orderBy array (0-based)
   ariaSetSize?: number // size of the orderBy array
   className?: string // optional class name
 }
 
-export default function ColumnHeader({ columnIndex, dataReady, direction, onClick, title, sortable, ariaPosInSet, ariaSetSize, className, children }: Props) {
+function getActionFromOrderByColumn({ columnName, direction, ariaPosInSet }: { columnName: string; direction?: Direction, ariaPosInSet?: number }) {
+  let prefix = 'Press to '
+  if (ariaPosInSet !== undefined && ariaPosInSet > 0) {
+    prefix += `sort by ${columnName} in ascending order`
+  } else if (direction === 'ascending') {
+    prefix += `sort by ${columnName} in descending order`
+  } else if (direction === 'descending') {
+    prefix += `stop sorting by ${columnName}`
+  } else {
+    prefix += `sort by ${columnName} in ascending order`
+  }
+  return prefix
+}
+
+export default function ColumnHeader({ columnIndex, columnName, dataReady, direction, onClick, sortable, ariaPosInSet, ariaSetSize, className, children }: Props) {
   const ref = useRef<HTMLTableCellElement>(null)
 
   // Get the column width from the context
@@ -56,17 +70,20 @@ export default function ColumnHeader({ columnIndex, dataReady, direction, onClic
     }
   }, [setWidth])
 
+  const description = sortable ? getActionFromOrderByColumn({ columnName, direction, ariaPosInSet }) : `The column ${columnName} cannot be sorted`
+
   return (
     <th
       ref={ref}
       scope="col"
       role="columnheader"
       aria-sort={direction ?? (sortable ? 'none' : undefined)}
+      aria-description={description}
+      title={description}
       aria-posinset={ariaSetSize !== undefined ? ariaPosInSet : undefined}
       aria-setsize={ariaSetSize}
       onClick={onClick}
       style={columnStyle}
-      title={title}
       className={className}
     >
       {children}
