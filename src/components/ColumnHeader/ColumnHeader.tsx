@@ -1,4 +1,4 @@
-import { MouseEvent, ReactNode, useCallback, useEffect, useRef } from 'react'
+import { MouseEvent, ReactNode, useCallback, useEffect, useMemo, useRef } from 'react'
 import { flushSync } from 'react-dom'
 import { Direction } from '../../helpers/sort.js'
 import { measureWidth } from '../../helpers/width.js'
@@ -16,20 +16,6 @@ interface Props {
   ariaPosInSet?: number // index of the column in the orderBy array (0-based)
   ariaSetSize?: number // size of the orderBy array
   className?: string // optional class name
-}
-
-function getActionFromOrderByColumn({ columnName, direction, ariaPosInSet }: { columnName: string; direction?: Direction, ariaPosInSet?: number }) {
-  let prefix = 'Press to '
-  if (ariaPosInSet !== undefined && ariaPosInSet > 0) {
-    prefix += `sort by ${columnName} in ascending order`
-  } else if (direction === 'ascending') {
-    prefix += `sort by ${columnName} in descending order`
-  } else if (direction === 'descending') {
-    prefix += `stop sorting by ${columnName}`
-  } else {
-    prefix += `sort by ${columnName} in ascending order`
-  }
-  return prefix
 }
 
 export default function ColumnHeader({ columnIndex, columnName, dataReady, direction, onClick, sortable, ariaPosInSet, ariaSetSize, className, children }: Props) {
@@ -70,7 +56,19 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
     }
   }, [setWidth])
 
-  const description = sortable ? getActionFromOrderByColumn({ columnName, direction, ariaPosInSet }) : `The column ${columnName} cannot be sorted`
+  const description = useMemo(() => {
+    if (!sortable) {
+      return `The column ${columnName} cannot be sorted`
+    } else if (ariaPosInSet !== undefined && ariaPosInSet > 0) {
+      return `Press to sort by ${columnName} in ascending order`
+    } else if (direction === 'ascending') {
+      return `Press to sort by ${columnName} in descending order`
+    } else if (direction === 'descending') {
+      return `Press to stop sorting by ${columnName}`
+    } else {
+      return `Press to sort by ${columnName} in ascending order`
+    }
+  }, [sortable, columnName, direction, ariaPosInSet])
 
   return (
     <th
