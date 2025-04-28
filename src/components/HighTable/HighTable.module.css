@@ -218,7 +218,7 @@
     color: #d5d4d6;
   }
 
-  th[aria-posinset="0"]::after {
+  th[data-order-by-index="0"]::after {
     color: inherit;
   }
 
