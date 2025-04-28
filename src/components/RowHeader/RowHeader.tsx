@@ -1,4 +1,5 @@
-import { CSSProperties, MouseEvent, ReactNode } from 'react'
+import { CSSProperties, MouseEvent, ReactNode, useRef } from 'react'
+import { useTabIndex } from '../../hooks/useFocus'
 
 interface Props {
   busy?: boolean
@@ -7,14 +8,18 @@ interface Props {
   onClick?: (event: MouseEvent) => void
   showCheckBox?: boolean
   style?: CSSProperties
-  ariaColIndex?: number
-  tabIndex?: number
+  ariaColIndex: number
+  ariaRowIndex: number
 }
 
-export default function RowHeader({ children, checked, onClick, showCheckBox, style, busy, ariaColIndex, tabIndex }: Props) {
+export default function RowHeader({ children, checked, onClick, showCheckBox, style, busy, ariaColIndex, ariaRowIndex }: Props) {
+  const ref = useRef<HTMLTableCellElement>(null)
+  const tabIndex = useTabIndex({ ref, ariaColIndex, ariaRowIndex })
+
   const disabled = !onClick
   return (
     <th
+      ref={ref}
       scope="row"
       role="rowheader"
       style={style}

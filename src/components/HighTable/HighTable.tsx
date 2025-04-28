@@ -5,7 +5,7 @@ import { Selection, areAllSelected, isSelected, toggleAll, toggleIndexInSelectio
 import { OrderBy, areEqualOrderBy } from '../../helpers/sort.js'
 import { leftCellStyle } from '../../helpers/width.js'
 import { ColumnWidthProvider } from '../../hooks/useColumnWidth.js'
-import { FocusProvider, useTabIndex } from '../../hooks/useFocus.js'
+import { FocusProvider, useFocus } from '../../hooks/useFocus.js'
 import { useInputState } from '../../hooks/useInputState.js'
 import { stringify as stringifyDefault } from '../../utils/stringify.js'
 import { throttle } from '../../utils/throttle.js'
@@ -71,7 +71,6 @@ export default function HighTable(props: Props) {
  */
 export function HighTableInner({
   data,
-  cacheKey,
   overscan = 20,
   padding = 20,
   focus = true,
@@ -107,7 +106,7 @@ export function HighTableInner({
   const [slice, setSlice] = useState<Slice | undefined>(undefined)
   const [rowsRange, setRowsRange] = useState({ start: 0, end: 0 })
   const [hasCompleteRow, setHasCompleteRow] = useState(false)
-  const getTabIndex = useTabIndex()
+  const { onKeyDown } = useFocus()
 
   // TODO(SL): remove this state and only rely on the data frame for these operations?
   // ie. cache the previous sort indexes in the data frame itself
@@ -401,6 +400,7 @@ export function HighTableInner({
             ref={tableRef}
             role='grid'
             style={{ top: `${offsetTop}px` }}
+            onKeyDown={onKeyDown}
           >
             <caption id="caption" hidden>Virtual-scroll table</caption>
             <thead role="rowgroup">
@@ -411,7 +411,7 @@ export function HighTableInner({
                   showCheckBox={showCornerSelection}
                   style={cornerStyle}
                   ariaColIndex={1}
-                  tabIndex={getTabIndex({ colIndex: 1, rowIndex: 1 })} // 1-based index
+                  ariaRowIndex={1}
                 >&nbsp;</TableCorner>
                 <TableHeader
                   dataReady={hasCompleteRow}
@@ -427,9 +427,10 @@ export function HighTableInner({
             <tbody role="rowgroup">
               {prePadding.map((_, prePaddingIndex) => {
                 const tableIndex = offset - prePadding.length + prePaddingIndex
+                const ariaRowIndex = tableIndex + 2 // 1-based index, +1 for the header
                 return (
-                  <Row key={tableIndex} ariaRowIndex={tableIndex + 2} >
-                    <RowHeader style={cornerStyle} ariaColIndex={1} tabIndex={getTabIndex({ colIndex: 1, rowIndex: tableIndex })} />
+                  <Row key={tableIndex} ariaRowIndex={ariaRowIndex}>
+                    <RowHeader style={cornerStyle} ariaColIndex={1} ariaRowIndex={ariaRowIndex} />
                   </Row>
                 )
               })}
@@ -439,7 +440,6 @@ export function HighTableInner({
                 const dataIndex = row.index ?? inferredDataIndex
                 const selected = isRowSelected(dataIndex) ?? false
                 const ariaRowIndex = tableIndex + 2 // 1-based index, +1 for the header
-                const ariaColIndex = 2 // 1-based index, +1 for the row header
                 return (
                   <Row
                     key={tableIndex}
@@ -454,7 +454,7 @@ export function HighTableInner({
                       checked={selected}
                       showCheckBox={showSelection}
                       ariaColIndex={1}
-                      tabIndex={getTabIndex({ colIndex: 1, rowIndex: ariaRowIndex })}
+                      ariaRowIndex={ariaRowIndex}
                     >{formatRowNumber(dataIndex)}</RowHeader>
                     {data.header.map((column, columnIndex) => {
                       // Note: the resolved cell value can be undefined
@@ -469,8 +469,8 @@ export function HighTableInner({
                         columnIndex={columnIndex}
                         hasResolved={hasResolved}
                         className={columnClassNames[columnIndex]}
-                        ariaColIndex={ariaColIndex}
-                        tabIndex={getTabIndex({ colIndex: ariaColIndex, rowIndex: ariaRowIndex })}
+                        ariaColIndex={columnIndex + 2}
+                        ariaRowIndex={ariaRowIndex}
                       />
                     })}
                   </Row>
@@ -478,9 +478,10 @@ export function HighTableInner({
               })}
               {postPadding.map((_, postPaddingIndex) => {
                 const tableIndex = offset + rowsLength + postPaddingIndex
+                const ariaRowIndex = tableIndex + 2 // 1-based index, +1 for the header
                 return (
-                  <Row key={tableIndex} ariaRowIndex={tableIndex + 2}>
-                    <RowHeader style={cornerStyle} ariaColIndex={1} tabIndex={getTabIndex({ colIndex: 1, rowIndex: tableIndex })} />
+                  <Row key={tableIndex} ariaRowIndex={ariaRowIndex}>
+                    <RowHeader style={cornerStyle} ariaColIndex={1} ariaRowIndex={ariaRowIndex} />
                   </Row>
                 )
               })}

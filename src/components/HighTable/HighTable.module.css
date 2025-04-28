@@ -240,6 +240,14 @@
     text-align: left;
     text-overflow: ellipsis;
     white-space: nowrap;
+
+    &:focus-visible {
+      outline-color: var(--focus-border-color);
+      outline-width: 1px;
+      outline-style: solid;
+      outline-offset: -1px;
+      background-color: #f1f1f3;
+    }
   }
 
   /* row error */

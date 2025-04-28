@@ -1,5 +1,6 @@
-import { MouseEvent, useMemo } from 'react'
+import { MouseEvent, useMemo, useRef } from 'react'
 import useColumnWidth from '../../hooks/useColumnWidth.js'
+import { useTabIndex } from '../../hooks/useFocus.js'
 
 interface Props {
   onDoubleClick?: (event: MouseEvent) => void
@@ -9,7 +10,7 @@ interface Props {
   columnIndex: number
   hasResolved: boolean
   ariaColIndex: number
-  tabIndex: number
+  ariaRowIndex: number
   className?: string
 }
 
@@ -24,10 +25,13 @@ interface Props {
  * @param props.stringify function to stringify the value
  * @param props.hasResolved function to get the column style
  * @param props.ariaColIndex aria col index
- * @param props.tabIndex tab index for the cell
+ * @param props.ariaRowIndex aria row index
  * @param props.className optional class name
  */
-export default function Cell({ onDoubleClick, onMouseDown, stringify, columnIndex, value, hasResolved, className, ariaColIndex, tabIndex }: Props) {
+export default function Cell({ onDoubleClick, onMouseDown, stringify, columnIndex, value, hasResolved, className, ariaColIndex, ariaRowIndex }: Props) {
+  const ref = useRef<HTMLTableCellElement>(null)
+  const tabIndex = useTabIndex({ ref, ariaColIndex, ariaRowIndex })
+
   // Get the column width from the context
   const { getColumnStyle } = useColumnWidth()
   const columnStyle = getColumnStyle?.(columnIndex)
@@ -49,6 +53,7 @@ export default function Cell({ onDoubleClick, onMouseDown, stringify, columnInde
   }, [str])
   return (
     <td
+      ref={ref}
       role="cell"
       aria-busy={!hasResolved}
       aria-colindex={ariaColIndex}

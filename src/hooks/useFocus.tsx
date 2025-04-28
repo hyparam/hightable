@@ -1,4 +1,4 @@
-import { KeyboardEvent, ReactNode, createContext, useCallback, useContext, useMemo, useState } from 'react'
+import { KeyboardEvent, ReactNode, RefObject, createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 
 interface FocusContextType {
   colIndex: number // table column index, same semantic as aria-colindex (1-based, includes row headers)
@@ -27,7 +27,11 @@ export function FocusProvider({ colCount, rowCount, children }: FocusProviderPro
   const [rowIndex, setRowIndex] = useState(1)
 
   const onKeyDown = useCallback((event: KeyboardEvent) => {
+    // avoid scrolling the table when the user is navigating with the keyboard
+    event.stopPropagation()
+    event.preventDefault()
     const { key } = event
+
     if (key === 'ArrowRight') {
       setColIndex((prev) => prev < colCount ? prev + 1 : prev)
     } else if (key === 'ArrowLeft') {
@@ -54,17 +58,29 @@ export function FocusProvider({ colCount, rowCount, children }: FocusProviderPro
   )
 }
 
-interface CellPosition {
-  colIndex: number // table column index, same semantic as aria-colindex (1-based, includes row headers)
-  rowIndex: number // table row index, same semantic as aria-rowindex (1-based, includes column headers)
+interface CellData {
+  ref: RefObject<HTMLElement | null> // ref to the HTML element
+  ariaColIndex: number // table column index, same semantic as aria-colindex (1-based, includes row headers)
+  ariaRowIndex: number // table row index, same semantic as aria-rowindex (1-based, includes column headers)
 }
 type TabIndex = -1 | 0 // -1 if the cell is not focused, 0 if it is focused
 
-export function useTabIndex(): ({ colIndex, rowIndex }: CellPosition) => TabIndex {
+export function useTabIndex({ ref, ariaColIndex, ariaRowIndex }: CellData): TabIndex {
   const focus = useContext(FocusContext)
-  return useCallback(({ colIndex, rowIndex }: CellPosition): TabIndex => {
-    // Check if the cell is focused
-    const isFocused = colIndex === focus.colIndex && rowIndex === focus.rowIndex
-    return isFocused ? 0 : -1 // -1 if the cell is not focused, 0 if it is focused
-  }, [focus.rowIndex, focus.colIndex])
+
+  // Check if the cell is focused
+  const isFocused = ariaColIndex === focus.colIndex && ariaRowIndex === focus.rowIndex
+
+  useEffect(() => {
+    // set the focus on the cell when needed
+    if (ref.current && isFocused && document.activeElement !== ref.current) {
+      ref.current.focus()
+    }
+  }, [ref, isFocused, ariaColIndex, ariaRowIndex])
+
+  return isFocused ? 0 : -1 // -1 if the cell is not focused, 0 if it is focused
+}
+
+export function useFocus(): FocusContextType {
+  return useContext(FocusContext)
 }

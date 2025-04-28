@@ -1,6 +1,5 @@
 import { useCallback, useMemo } from 'react'
 import { OrderBy, toggleColumn } from '../../helpers/sort.js'
-import { useTabIndex } from '../../hooks/useFocus.js'
 import ColumnHeader from '../ColumnHeader/ColumnHeader.js'
 
 interface TableProps {
@@ -19,8 +18,6 @@ interface TableProps {
 export default function TableHeader({
   header, orderBy, onOrderByChange, dataReady, ariaRowIndex, sortable = true, columnClassNames = [],
 }: TableProps) {
-  const getTabIndex = useTabIndex()
-
   // Function to handle click for changing orderBy
   const getOnOrderByClick = useCallback((columnHeader: string) => {
     if (!onOrderByChange || !orderBy) return undefined
@@ -51,8 +48,8 @@ export default function TableHeader({
         columnName={name}
         columnIndex={columnIndex}
         className={columnClassNames[columnIndex]}
-        tabIndex={getTabIndex({ colIndex: ariaColIndex, rowIndex: ariaRowIndex })}
         ariaColIndex={ariaColIndex}
+        ariaRowIndex={ariaRowIndex}
       >
         {name}
       </ColumnHeader>
