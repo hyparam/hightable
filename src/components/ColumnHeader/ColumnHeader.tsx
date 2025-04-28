@@ -79,7 +79,9 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
       data-order-by-index={orderBySize !== undefined ? orderByIndex : undefined}
       data-order-by-size={orderBySize}
       aria-description={description}
-      aria-colindex={columnIndex + 2} // 1-based index, +1 for the row header
+      // 1-based index, +1 for the row header
+      // TODO(SL): don't hardcode it, but get it from the table context
+      aria-colindex={columnIndex + 2}
       title={description}
       onClick={onClick}
       style={columnStyle}
