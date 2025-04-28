@@ -12,7 +12,14 @@ interface Props {
 export default function RowHeader({ children, checked, onClick, showCheckBox, style, busy }: Props) {
   const disabled = !onClick
   return (
-    <th scope="row" role="rowheader" style={style} onClick={onClick} aria-busy={busy}>
+    <th
+      scope="row"
+      role="rowheader"
+      style={style}
+      onClick={onClick}
+      aria-busy={busy}
+      aria-readonly={true}
+    >
       <span>{children}</span>
       { showCheckBox && <input type='checkbox' disabled={disabled} checked={checked} readOnly /> }
     </th>

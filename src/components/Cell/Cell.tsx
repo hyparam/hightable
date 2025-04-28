@@ -47,6 +47,7 @@ export default function Cell({ onDoubleClick, onMouseDown, stringify, columnInde
     <td
       role="cell"
       aria-busy={!hasResolved}
+      aria-readonly={true}
       onDoubleClick={onDoubleClick}
       onMouseDown={onMouseDown}
       style={columnStyle}

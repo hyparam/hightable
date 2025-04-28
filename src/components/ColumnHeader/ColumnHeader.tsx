@@ -77,6 +77,7 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
       role="columnheader"
       aria-sort={direction ?? (sortable ? 'none' : undefined)}
       aria-description={description}
+      aria-readonly={true}
       title={description}
       aria-posinset={ariaSetSize !== undefined ? ariaPosInSet : undefined}
       aria-setsize={ariaSetSize}
