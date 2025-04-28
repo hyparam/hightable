@@ -19,7 +19,6 @@ export default function RowHeader({ children, checked, onClick, showCheckBox, st
       style={style}
       onClick={onClick}
       aria-busy={busy}
-      aria-readonly={true}
       aria-colindex={ariaColIndex}
     >
       <span>{children}</span>

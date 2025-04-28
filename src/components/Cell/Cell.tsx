@@ -49,7 +49,6 @@ export default function Cell({ onDoubleClick, onMouseDown, stringify, columnInde
     <td
       role="cell"
       aria-busy={!hasResolved}
-      aria-readonly={true}
       aria-colindex={ariaColIndex}
       onDoubleClick={onDoubleClick}
       onMouseDown={onMouseDown}
