@@ -43,7 +43,7 @@ export default function TableHeader({
         ariaSetSize={orderBy?.length}
         onClick={getOnOrderByClick(name)}
         sortable={sortable}
-        title={name}
+        columnName={name}
         columnIndex={columnIndex}
         className={columnClassNames[columnIndex]}
       >
