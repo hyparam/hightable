@@ -395,6 +395,7 @@ export default function HighTable({
                   checked={allRowsSelected}
                   showCheckBox={showCornerSelection}
                   style={cornerStyle}
+                  ariaColIndex={1}
                 >&nbsp;</TableCorner>
                 <TableHeader
                   dataReady={hasCompleteRow}
@@ -411,7 +412,7 @@ export default function HighTable({
                 const tableIndex = offset - prePadding.length + prePaddingIndex
                 return (
                   <Row key={tableIndex} ariaRowIndex={tableIndex + 2} >
-                    <RowHeader style={cornerStyle} />
+                    <RowHeader style={cornerStyle} ariaColIndex={1} />
                   </Row>
                 )
               })}
@@ -433,6 +434,7 @@ export default function HighTable({
                       onClick={dataIndex === undefined ? undefined : getOnSelectRowClick({ tableIndex, dataIndex })}
                       checked={selected}
                       showCheckBox={showSelection}
+                      ariaColIndex={1}
                     >{formatRowNumber(dataIndex)}</RowHeader>
                     {data.header.map((column, columnIndex) => {
                       // Note: the resolved cell value can be undefined
@@ -447,6 +449,7 @@ export default function HighTable({
                         columnIndex={columnIndex}
                         hasResolved={hasResolved}
                         className={columnClassNames[columnIndex]}
+                        ariaColIndex={columnIndex + 2} // 1-based index, +1 for the row header
                       />
                     })}
                   </Row>
@@ -456,7 +459,7 @@ export default function HighTable({
                 const tableIndex = offset + rowsLength + postPaddingIndex
                 return (
                   <Row key={tableIndex} ariaRowIndex={tableIndex + 2}>
-                    <RowHeader style={cornerStyle} />
+                    <RowHeader style={cornerStyle} ariaColIndex={1} />
                   </Row>
                 )
               })}

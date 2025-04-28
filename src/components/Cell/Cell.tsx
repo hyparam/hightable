@@ -9,6 +9,7 @@ interface Props {
   columnIndex: number
   hasResolved: boolean
   className?: string
+  ariaColIndex?: number
 }
 
 /**
@@ -22,8 +23,9 @@ interface Props {
  * @param props.stringify function to stringify the value
  * @param props.hasResolved function to get the column style
  * @param props.className optional class name
+ * @param props.ariaColIndex optional aria col index
  */
-export default function Cell({ onDoubleClick, onMouseDown, stringify, columnIndex, value, hasResolved, className }: Props) {
+export default function Cell({ onDoubleClick, onMouseDown, stringify, columnIndex, value, hasResolved, className, ariaColIndex }: Props) {
   // Get the column width from the context
   const { getColumnStyle } = useColumnWidth()
   const columnStyle = getColumnStyle?.(columnIndex)
@@ -48,6 +50,7 @@ export default function Cell({ onDoubleClick, onMouseDown, stringify, columnInde
       role="cell"
       aria-busy={!hasResolved}
       aria-readonly={true}
+      aria-colindex={ariaColIndex}
       onDoubleClick={onDoubleClick}
       onMouseDown={onMouseDown}
       style={columnStyle}
