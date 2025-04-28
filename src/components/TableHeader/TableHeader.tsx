@@ -39,8 +39,8 @@ export default function TableHeader({
         key={columnIndex}
         dataReady={dataReady}
         direction={orderByColumn.get(name)?.direction}
-        ariaPosInSet={orderByColumn.get(name)?.index}
-        ariaSetSize={orderBy?.length}
+        orderByIndex={orderByColumn.get(name)?.index}
+        orderBySize={orderBy?.length}
         onClick={getOnOrderByClick(name)}
         sortable={sortable}
         columnName={name}

@@ -13,12 +13,12 @@ interface Props {
   direction?: Direction
   onClick?: (e: MouseEvent) => void
   sortable?: boolean
-  ariaPosInSet?: number // index of the column in the orderBy array (0-based)
-  ariaSetSize?: number // size of the orderBy array
+  orderByIndex?: number // index of the column in the orderBy array (0-based)
+  orderBySize?: number // size of the orderBy array
   className?: string // optional class name
 }
 
-export default function ColumnHeader({ columnIndex, columnName, dataReady, direction, onClick, sortable, ariaPosInSet, ariaSetSize, className, children }: Props) {
+export default function ColumnHeader({ columnIndex, columnName, dataReady, direction, onClick, sortable, orderByIndex, orderBySize, className, children }: Props) {
   const ref = useRef<HTMLTableCellElement>(null)
 
   // Get the column width from the context
@@ -59,7 +59,7 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
   const description = useMemo(() => {
     if (!sortable) {
       return `The column ${columnName} cannot be sorted`
-    } else if (ariaPosInSet !== undefined && ariaPosInSet > 0) {
+    } else if (orderByIndex !== undefined && orderByIndex > 0) {
       return `Press to sort by ${columnName} in ascending order`
     } else if (direction === 'ascending') {
       return `Press to sort by ${columnName} in descending order`
@@ -68,7 +68,7 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
     } else {
       return `Press to sort by ${columnName} in ascending order`
     }
-  }, [sortable, columnName, direction, ariaPosInSet])
+  }, [sortable, columnName, direction, orderByIndex])
 
   return (
     <th
@@ -76,11 +76,11 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
       scope="col"
       role="columnheader"
       aria-sort={direction ?? (sortable ? 'none' : undefined)}
+      data-order-by-index={orderBySize !== undefined ? orderByIndex : undefined}
+      data-order-by-size={orderBySize}
       aria-description={description}
       aria-readonly={true}
       title={description}
-      aria-posinset={ariaSetSize !== undefined ? ariaPosInSet : undefined}
-      aria-setsize={ariaSetSize}
       onClick={onClick}
       style={columnStyle}
       className={className}
