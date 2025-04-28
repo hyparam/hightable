@@ -7,11 +7,12 @@ interface Props {
   showCheckBox?: boolean
   style?: CSSProperties
   ariaColIndex?: number
+  tabIndex?: number
 }
 
-export default function TableCorner({ children, checked, onClick, showCheckBox, style, ariaColIndex }: Props) {
+export default function TableCorner({ children, checked, onClick, showCheckBox, style, ariaColIndex, tabIndex }: Props) {
   return (
-    <td aria-disabled={!showCheckBox} style={style} onClick={onClick} aria-colindex={ariaColIndex}>
+    <td aria-disabled={!showCheckBox} style={style} onClick={onClick} aria-colindex={ariaColIndex} tabIndex={tabIndex}>
       <span>{children}</span>
       { showCheckBox && <input type='checkbox' checked={checked} readOnly /> }
     </td>

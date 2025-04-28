@@ -15,6 +15,7 @@ describe('TableHeader', () => {
       <TableHeader
         dataReady={dataReady}
         header={header}
+        ariaRowIndex={1}
       />
     </tr></thead></table>)
     header.forEach(columnHeader => {
@@ -29,7 +30,9 @@ describe('TableHeader', () => {
         header={header}
         orderBy={[]}
         onOrderByChange={onOrderByChange}
-        dataReady={dataReady} />
+        dataReady={dataReady}
+        ariaRowIndex={1}
+      />
     </tr></thead></table>)
 
     const ageHeader = getByText('Age')
@@ -45,7 +48,9 @@ describe('TableHeader', () => {
         header={header}
         onOrderByChange={onOrderByChange}
         orderBy={[{ column: 'Age', direction: 'ascending' }]}
-        dataReady={dataReady} />
+        dataReady={dataReady}
+        ariaRowIndex={1}
+      />
     </tr></thead></table>)
 
     const ageHeader = getByText('Age')
@@ -61,7 +66,9 @@ describe('TableHeader', () => {
         header={header}
         onOrderByChange={onOrderByChange}
         orderBy={[{ column: 'Age', direction: 'descending' }]}
-        dataReady={dataReady} />
+        dataReady={dataReady}
+        ariaRowIndex={1}
+      />
     </tr></thead></table>)
 
     const ageHeader = getByText('Age')
@@ -77,7 +84,9 @@ describe('TableHeader', () => {
         header={header}
         onOrderByChange={onOrderByChange}
         orderBy={[{ column: 'Age', direction: 'ascending' }]}
-        dataReady={dataReady} />
+        dataReady={dataReady}
+        ariaRowIndex={1}
+      />
     </tr></thead></table>)
 
     const addressHeader = getByText('Address')

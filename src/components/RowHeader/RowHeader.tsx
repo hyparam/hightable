@@ -8,9 +8,10 @@ interface Props {
   showCheckBox?: boolean
   style?: CSSProperties
   ariaColIndex?: number
+  tabIndex?: number
 }
 
-export default function RowHeader({ children, checked, onClick, showCheckBox, style, busy, ariaColIndex }: Props) {
+export default function RowHeader({ children, checked, onClick, showCheckBox, style, busy, ariaColIndex, tabIndex }: Props) {
   const disabled = !onClick
   return (
     <th
@@ -20,6 +21,7 @@ export default function RowHeader({ children, checked, onClick, showCheckBox, st
       onClick={onClick}
       aria-busy={busy}
       aria-colindex={ariaColIndex}
+      tabIndex={tabIndex}
     >
       <span>{children}</span>
       { showCheckBox && <input type='checkbox' disabled={disabled} checked={checked} readOnly /> }

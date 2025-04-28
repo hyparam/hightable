@@ -15,10 +15,12 @@ interface Props {
   sortable?: boolean
   orderByIndex?: number // index of the column in the orderBy array (0-based)
   orderBySize?: number // size of the orderBy array
+  ariaColIndex?: number // aria col index for the header
+  tabIndex?: number // tab index for the cell
   className?: string // optional class name
 }
 
-export default function ColumnHeader({ columnIndex, columnName, dataReady, direction, onClick, sortable, orderByIndex, orderBySize, className, children }: Props) {
+export default function ColumnHeader({ columnIndex, columnName, dataReady, direction, onClick, sortable, orderByIndex, orderBySize, ariaColIndex, tabIndex, className, children }: Props) {
   const ref = useRef<HTMLTableCellElement>(null)
 
   // Get the column width from the context
@@ -79,9 +81,8 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
       data-order-by-index={orderBySize !== undefined ? orderByIndex : undefined}
       data-order-by-size={orderBySize}
       aria-description={description}
-      // 1-based index, +1 for the row header
-      // TODO(SL): don't hardcode it, but get it from the table context
-      aria-colindex={columnIndex + 2}
+      aria-colindex={ariaColIndex}
+      tabIndex={tabIndex}
       title={description}
       onClick={onClick}
       style={columnStyle}
