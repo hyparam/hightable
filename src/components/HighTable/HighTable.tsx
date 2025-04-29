@@ -113,7 +113,7 @@ export function HighTableInner({
   const [slice, setSlice] = useState<Slice | undefined>(undefined)
   const [rowsRange, setRowsRange] = useState({ start: 0, end: 0 })
   const [hasCompleteRow, setHasCompleteRow] = useState(false)
-  const { onKeyDown } = useFocus()
+  const { onKeyDown, rowIndex } = useFocus()
 
   // TODO(SL): remove this state and only rely on the data frame for these operations?
   // ie. cache the previous sort indexes in the data frame itself
@@ -228,6 +228,28 @@ export function HighTableInner({
       onSelectionChange({ ranges: [], anchor: undefined })
     }
   }
+
+  // scroll vertically to the focused cell if needed
+  useEffect(() => {
+    if (rowIndex === 1) {
+      // don't scroll if the cell is in the first row or column
+      return
+    }
+    if (!slice) {
+      // don't scroll if the slice is not ready
+      return
+    }
+    const tableIndex = rowIndex - 2 // 0-based index, -1 for the header
+    if (tableIndex < slice.offset || tableIndex >= slice.offset + slice.rows.length) {
+      // scroll to the estimated position of the cell (and wait for the cell to be fetched and rendered)
+      const rowTop = tableIndex * rowHeight
+      const scroller = scrollRef.current
+      if (scroller) {
+        // scroll to the cell
+        scroller.scrollTop = rowTop
+      }
+    }
+  }, [rowIndex, slice])
 
   // handle scrolling and window resizing
   useEffect(() => {
