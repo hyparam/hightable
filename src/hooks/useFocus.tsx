@@ -107,8 +107,6 @@ interface CellFocus {
 export function useCellFocus({ ref, ariaColIndex, ariaRowIndex }: CellData): CellFocus {
   const { colIndex, rowIndex, setColIndex, setRowIndex } = useContext(FocusContext)
 
-  const cell = ariaColIndex === 1 && ariaRowIndex === 1
-
   // Check if the cell is focused
   const isFocused = ariaColIndex === colIndex && ariaRowIndex === rowIndex
 
@@ -117,7 +115,7 @@ export function useCellFocus({ ref, ariaColIndex, ariaRowIndex }: CellData): Cel
     if (ref.current && isFocused && document.activeElement !== ref.current) {
       ref.current.focus()
     }
-  }, [ref, isFocused, ariaColIndex, ariaRowIndex, cell])
+  }, [ref, isFocused, ariaColIndex, ariaRowIndex])
 
   const tabIndex = isFocused ? 0 : -1 // -1 if the cell is not focused, 0 if it is focused
 
