@@ -48,6 +48,8 @@ interface Props {
   styled?: boolean // use styled component? (default true)
 }
 
+const defaultPadding = 20
+
 /**
  * Render a table with streaming rows on demand from a DataFrame.
  *
@@ -62,7 +64,7 @@ export default function HighTable(props: Props) {
   const ariaRowCount = data.numRows + 1 // don't forget the header row
   return (
     <ColumnWidthProvider localStorageKey={cacheKey ? `${cacheKey}:column-widths` : undefined}>
-      <FocusProvider colCount={ariaColCount} rowCount={ariaRowCount}>
+      <FocusProvider colCount={ariaColCount} rowCount={ariaRowCount} rowPadding={props.padding ?? defaultPadding}>
         <HighTableInner {...props} />
       </FocusProvider>
     </ColumnWidthProvider>
@@ -77,7 +79,7 @@ export default function HighTable(props: Props) {
 export function HighTableInner({
   data,
   overscan = 20,
-  padding = 20,
+  padding = defaultPadding,
   focus = true,
   orderBy: propOrderBy,
   onOrderByChange: propOnOrderByChange,

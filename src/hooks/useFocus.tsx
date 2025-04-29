@@ -21,10 +21,11 @@ export const FocusContext = createContext<FocusContextType>(defaultFocusContext)
 interface FocusProviderProps {
   colCount: number // number of columns in the table, same semantic as aria-colcount (includes row headers)
   rowCount: number // number of rows in the table, same semantic as aria-rowcount (includes column headers)
+  rowPadding: number // number of rows to skip when navigating with the keyboard
   children: ReactNode
 }
 
-export function FocusProvider({ colCount, rowCount, children }: FocusProviderProps) {
+export function FocusProvider({ colCount, rowCount, rowPadding, children }: FocusProviderProps) {
   const [colIndex, setColIndex] = useState(1)
   const [rowIndex, setRowIndex] = useState(1)
 
@@ -57,8 +58,12 @@ export function FocusProvider({ colCount, rowCount, children }: FocusProviderPro
       setColIndex(1)
     } else if (key === 'End') {
       setColIndex(colCount)
+    } else if (key === 'PageDown') {
+      setRowIndex((prev) => prev + rowPadding <= rowCount ? prev + rowPadding : rowCount )
+    } else if (key === 'PageUp') {
+      setRowIndex((prev) => prev - rowPadding >= 1 ? prev - rowPadding : 1)
     }
-  }, [colCount, rowCount])
+  }, [colCount, rowCount, rowPadding])
 
   const value = useMemo(() => {
     return {
