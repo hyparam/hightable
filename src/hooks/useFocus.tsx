@@ -35,14 +35,25 @@ export function FocusProvider({ colCount, rowCount, children }: FocusProviderPro
     const { key } = event
 
     if (key === 'ArrowRight') {
-      setColIndex((prev) => prev < colCount ? prev + 1 : prev)
+      if (event.ctrlKey) {
+        setColIndex(colCount)
+      } else {
+        setColIndex((prev) => prev < colCount ? prev + 1 : prev)
+      }
     } else if (key === 'ArrowLeft') {
-      setColIndex((prev) => prev > 1 ? prev - 1 : prev)
+      if (event.ctrlKey) {
+        setColIndex(1)
+      } else {
+        setColIndex((prev) => prev > 1 ? prev - 1 : prev)
+      }
     } else if (key === 'ArrowDown') {
       setRowIndex((prev) => prev < rowCount ? prev + 1 : prev)
     } else if (key === 'ArrowUp') {
       setRowIndex((prev) => prev > 1 ? prev - 1 : prev)
     } else if (key === 'Home') {
+      if (event.ctrlKey) {
+        setRowIndex(1)
+      }
       setColIndex(1)
     } else if (key === 'End') {
       setColIndex(colCount)
