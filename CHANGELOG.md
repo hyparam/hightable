@@ -1,6 +1,28 @@
 # CHANGELOG
 
-## [Unreleased](https://github.com/hyparam/hightable/compare/v0.15.1...HEAD)
+## [Unreleased](https://github.com/hyparam/hightable/compare/v0.15.2...HEAD)
+
+## [0.15.2](https://github.com/hyparam/hightable/compare/v0.15.1...v0.15.2) - 2025-04-29
+
+### Added
+
+- export `getGetColumn` ([#134](https://github.com/hyparam/hightable/pull/134)).
+- add a caption for the table and related aria attributes ([#135](https://github.com/hyparam/hightable/pull/135)).
+- add `aria-colindex` to the cells ([#139](https://github.com/hyparam/hightable/pull/139)).
+
+### Changed
+
+- focus the table when entering the page, allowing to scroll with the keyboard, and highlight it ([#135](https://github.com/hyparam/hightable/pull/135)).
+- use custom `data-...` attributes instead of misuing `aria-posinset` and `aria-setsize` to give the sort order in header columns ([#139](https://github.com/hyparam/hightable/pull/139)).
+
+### Fixed
+
+- increase contrast of the row indexes ([#138](https://github.com/hyparam/hightable/pull/138)).
+- switch the up and down arrows in the header cells when sorting ([#135](https://github.com/hyparam/hightable/pull/135)).
+
+### Refactored
+
+- updated dev dependencies ([#141](https://github.com/hyparam/hightable/pull/141)).
 
 ## [0.15.1](https://github.com/hyparam/hightable/compare/v0.15.0...v0.15.1) - 2025-04-24
 
