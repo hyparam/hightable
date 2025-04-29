@@ -231,10 +231,6 @@ export function HighTableInner({
 
   // scroll vertically to the focused cell if needed
   useEffect(() => {
-    if (rowIndex === 1) {
-      // don't scroll if the cell is in the first row or column
-      return
-    }
     if (!slice) {
       // don't scroll if the slice is not ready
       return

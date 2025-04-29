@@ -48,9 +48,17 @@ export function FocusProvider({ colCount, rowCount, rowPadding, children }: Focu
         setColIndex((prev) => prev > 1 ? prev - 1 : prev)
       }
     } else if (key === 'ArrowDown') {
-      setRowIndex((prev) => prev < rowCount ? prev + 1 : prev)
+      if (event.ctrlKey) {
+        setRowIndex(rowCount)
+      } else {
+        setRowIndex((prev) => prev < rowCount ? prev + 1 : prev)
+      }
     } else if (key === 'ArrowUp') {
-      setRowIndex((prev) => prev > 1 ? prev - 1 : prev)
+      if (event.ctrlKey) {
+        setRowIndex(1)
+      } else {
+        setRowIndex((prev) => prev > 1 ? prev - 1 : prev)
+      }
     } else if (key === 'Home') {
       if (event.ctrlKey) {
         setRowIndex(1)
