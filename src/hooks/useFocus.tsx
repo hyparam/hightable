@@ -42,6 +42,10 @@ export function FocusProvider({ colCount, rowCount, children }: FocusProviderPro
       setRowIndex((prev) => prev < rowCount ? prev + 1 : prev)
     } else if (key === 'ArrowUp') {
       setRowIndex((prev) => prev > 1 ? prev - 1 : prev)
+    } else if (key === 'Home') {
+      setColIndex(1)
+    } else if (key === 'End') {
+      setColIndex(colCount)
     }
   }, [colCount, rowCount])
 
