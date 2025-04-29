@@ -57,6 +57,9 @@ export function FocusProvider({ colCount, rowCount, rowPadding, children }: Focu
       }
       setColIndex(1)
     } else if (key === 'End') {
+      if (event.ctrlKey) {
+        setRowIndex(rowCount)
+      }
       setColIndex(colCount)
     } else if (key === 'PageDown') {
       setRowIndex((prev) => prev + rowPadding <= rowCount ? prev + rowPadding : rowCount )
