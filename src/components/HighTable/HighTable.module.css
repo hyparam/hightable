@@ -241,7 +241,7 @@
     text-overflow: ellipsis;
     white-space: nowrap;
 
-    &:focus-visible {
+    &:focus {
       outline-color: var(--focus-border-color);
       outline-width: 1px;
       outline-style: solid;
