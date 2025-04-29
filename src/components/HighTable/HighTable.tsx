@@ -48,6 +48,14 @@ interface Props {
   styled?: boolean // use styled component? (default true)
 }
 
+/**
+ * Render a table with streaming rows on demand from a DataFrame.
+ *
+ * orderBy: the order used to fetch the rows. If set, the component is controlled, and the property cannot be unset (undefined) later. If undefined, the component is uncontrolled (internal state). If the data cannot be sorted, it's ignored.
+ * onOrderByChange: the callback to call when the order changes. If undefined, the component order is read-only if controlled (orderBy is set), or disabled if not (or if the data cannot be sorted).
+ * selection: the selected rows and the anchor row. If set, the component is controlled, and the property cannot be unset (undefined) later. If undefined, the component is uncontrolled (internal state).
+ * onSelectionChange: the callback to call when the selection changes. If undefined, the component selection is read-only if controlled (selection is set), or disabled if not.
+ */
 export default function HighTable(props: Props) {
   const { data, cacheKey } = props
   const ariaColCount = data.header.length + 1 // don't forget the selection column
@@ -62,12 +70,9 @@ export default function HighTable(props: Props) {
 }
 
 /**
- * Render a table with streaming rows on demand from a DataFrame.
- *
- * orderBy: the order used to fetch the rows. If set, the component is controlled, and the property cannot be unset (undefined) later. If undefined, the component is uncontrolled (internal state). If the data cannot be sorted, it's ignored.
- * onOrderByChange: the callback to call when the order changes. If undefined, the component order is read-only if controlled (orderBy is set), or disabled if not (or if the data cannot be sorted).
- * selection: the selected rows and the anchor row. If set, the component is controlled, and the property cannot be unset (undefined) later. If undefined, the component is uncontrolled (internal state).
- * onSelectionChange: the callback to call when the selection changes. If undefined, the component selection is read-only if controlled (selection is set), or disabled if not.
+ * The main purpose of extracting HighTableInner from HighTable is to
+ * separate the context providers from the main component. It will also
+ * remove the need to reindent the code if adding a new context provide.
  */
 export function HighTableInner({
   data,

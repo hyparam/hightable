@@ -4,14 +4,16 @@ interface FocusContextType {
   colIndex: number // table column index, same semantic as aria-colindex (1-based, includes row headers)
   rowIndex: number // table row index, same semantic as aria-rowindex (1-based, includes column headers)
   onKeyDown: (event: KeyboardEvent) => void // function to handle keydown events. It is created only once and does not change when the focus changes.
+  setColIndex: (colIndex: number) => void // function to set the column index
+  setRowIndex: (rowIndex: number) => void // function to set the row index
 }
 
 const defaultFocusContext: FocusContextType = {
   colIndex: 1, // the focus is initially on the top-left cell
   rowIndex: 1, // the focus is initially on the top-left cell
-  onKeyDown: () => {
-    // no-op
-  },
+  onKeyDown: () => { /* no-op */ },
+  setColIndex: () => { /* no-op */ },
+  setRowIndex: () => { /* no-op */ },
 }
 
 export const FocusContext = createContext<FocusContextType>(defaultFocusContext)
@@ -48,6 +50,8 @@ export function FocusProvider({ colCount, rowCount, children }: FocusProviderPro
       colIndex,
       rowIndex,
       onKeyDown,
+      setColIndex,
+      setRowIndex,
     }
   }, [colIndex, rowIndex, onKeyDown])
 
@@ -64,21 +68,37 @@ interface CellData {
   ariaRowIndex: number // table row index, same semantic as aria-rowindex (1-based, includes column headers)
 }
 type TabIndex = -1 | 0 // -1 if the cell is not focused, 0 if it is focused
+interface CellFocus {
+  tabIndex: TabIndex // -1 if the cell is not focused, 0 if it is focused
+  focusCell: () => void // function to set the focus on the cell
+}
 
-export function useTabIndex({ ref, ariaColIndex, ariaRowIndex }: CellData): TabIndex {
-  const focus = useContext(FocusContext)
+export function useCellFocus({ ref, ariaColIndex, ariaRowIndex }: CellData): CellFocus {
+  const { colIndex, rowIndex, setColIndex, setRowIndex } = useContext(FocusContext)
+
+  const cell = ariaColIndex === 1 && ariaRowIndex === 1
 
   // Check if the cell is focused
-  const isFocused = ariaColIndex === focus.colIndex && ariaRowIndex === focus.rowIndex
+  const isFocused = ariaColIndex === colIndex && ariaRowIndex === rowIndex
 
   useEffect(() => {
     // set the focus on the cell when needed
     if (ref.current && isFocused && document.activeElement !== ref.current) {
       ref.current.focus()
     }
-  }, [ref, isFocused, ariaColIndex, ariaRowIndex])
+  }, [ref, isFocused, ariaColIndex, ariaRowIndex, cell])
 
-  return isFocused ? 0 : -1 // -1 if the cell is not focused, 0 if it is focused
+  const tabIndex = isFocused ? 0 : -1 // -1 if the cell is not focused, 0 if it is focused
+
+  const focusCell = useCallback(() => {
+    setColIndex(ariaColIndex)
+    setRowIndex(ariaRowIndex)
+  }, [setColIndex, setRowIndex, ariaColIndex, ariaRowIndex])
+
+  return {
+    tabIndex,
+    focusCell,
+  }
 }
 
 export function useFocus(): FocusContextType {

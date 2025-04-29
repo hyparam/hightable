@@ -1,6 +1,6 @@
-import { MouseEvent, useMemo, useRef } from 'react'
+import { MouseEvent, useCallback, useMemo, useRef } from 'react'
 import useColumnWidth from '../../hooks/useColumnWidth.js'
-import { useTabIndex } from '../../hooks/useFocus.js'
+import { useCellFocus } from '../../hooks/useFocus.js'
 
 interface Props {
   onDoubleClick?: (event: MouseEvent) => void
@@ -30,7 +30,15 @@ interface Props {
  */
 export default function Cell({ onDoubleClick, onMouseDown, stringify, columnIndex, value, hasResolved, className, ariaColIndex, ariaRowIndex }: Props) {
   const ref = useRef<HTMLTableCellElement>(null)
-  const tabIndex = useTabIndex({ ref, ariaColIndex, ariaRowIndex })
+  const { tabIndex, focusCell } = useCellFocus({ ref, ariaColIndex, ariaRowIndex })
+  const handleMouseDown = useCallback((event: MouseEvent) => {
+    focusCell()
+    onMouseDown?.(event)
+  }, [onMouseDown, focusCell])
+  const handleDoubleClick = useCallback((event: MouseEvent) => {
+    focusCell()
+    onDoubleClick?.(event)
+  }, [onDoubleClick, focusCell])
 
   // Get the column width from the context
   const { getColumnStyle } = useColumnWidth()
@@ -58,8 +66,8 @@ export default function Cell({ onDoubleClick, onMouseDown, stringify, columnInde
       aria-busy={!hasResolved}
       aria-colindex={ariaColIndex}
       tabIndex={tabIndex}
-      onDoubleClick={onDoubleClick}
-      onMouseDown={onMouseDown}
+      onDoubleClick={handleDoubleClick}
+      onMouseDown={handleMouseDown}
       style={columnStyle}
       className={className}
       title={title}>
