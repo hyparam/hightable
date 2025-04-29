@@ -1,31 +1,31 @@
 import { KeyboardEvent, ReactNode, RefObject, createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 
-interface FocusContextType {
+interface CellsNavigationContextType {
   colIndex: number // table column index, same semantic as aria-colindex (1-based, includes row headers)
   rowIndex: number // table row index, same semantic as aria-rowindex (1-based, includes column headers)
-  onKeyDown: (event: KeyboardEvent) => void // function to handle keydown events. It is created only once and does not change when the focus changes.
-  setColIndex: (colIndex: number) => void // function to set the column index
-  setRowIndex: (rowIndex: number) => void // function to set the row index
+  onKeyDown?: (event: KeyboardEvent) => void // function to handle keydown events. It is created only once.
+  setColIndex?: (colIndex: number) => void // function to set the column index
+  setRowIndex?: (rowIndex: number) => void // function to set the row index
 }
 
-const defaultFocusContext: FocusContextType = {
-  colIndex: 1, // the focus is initially on the top-left cell
-  rowIndex: 1, // the focus is initially on the top-left cell
-  onKeyDown: () => { /* no-op */ },
-  setColIndex: () => { /* no-op */ },
-  setRowIndex: () => { /* no-op */ },
+const defaultCellsNavigationContext: CellsNavigationContextType = {
+  colIndex: 1, // the cursor cell is initially the top-left cell
+  rowIndex: 1, //
+  onKeyDown: undefined,
+  setColIndex: undefined,
+  setRowIndex: undefined,
 }
 
-export const FocusContext = createContext<FocusContextType>(defaultFocusContext)
+export const CellsNavigationContext = createContext<CellsNavigationContextType>(defaultCellsNavigationContext)
 
-interface FocusProviderProps {
+interface CellsNavigationProviderProps {
   colCount: number // number of columns in the table, same semantic as aria-colcount (includes row headers)
   rowCount: number // number of rows in the table, same semantic as aria-rowcount (includes column headers)
   rowPadding: number // number of rows to skip when navigating with the keyboard
   children: ReactNode
 }
 
-export function FocusProvider({ colCount, rowCount, rowPadding, children }: FocusProviderProps) {
+export function CellsNavigationProvider({ colCount, rowCount, rowPadding, children }: CellsNavigationProviderProps) {
   const [colIndex, setColIndex] = useState(1)
   const [rowIndex, setRowIndex] = useState(1)
 
@@ -90,9 +90,9 @@ export function FocusProvider({ colCount, rowCount, rowPadding, children }: Focu
   }, [colIndex, rowIndex, onKeyDown])
 
   return (
-    <FocusContext.Provider value={value}>
+    <CellsNavigationContext.Provider value={value}>
       {children}
-    </FocusContext.Provider>
+    </CellsNavigationContext.Provider>
   )
 }
 
@@ -101,38 +101,40 @@ interface CellData {
   ariaColIndex: number // table column index, same semantic as aria-colindex (1-based, includes row headers)
   ariaRowIndex: number // table row index, same semantic as aria-rowindex (1-based, includes column headers)
 }
-type TabIndex = -1 | 0 // -1 if the cell is not focused, 0 if it is focused
+type TabIndex = -1 | 0 // roving tabindex: -1 for all cells except the current navigation cell, which is 0
 interface CellFocus {
-  tabIndex: TabIndex // -1 if the cell is not focused, 0 if it is focused
-  focusCell: () => void // function to set the focus on the cell
+  tabIndex: TabIndex
+  navigateToCell: () => void
 }
 
-export function useCellFocus({ ref, ariaColIndex, ariaRowIndex }: CellData): CellFocus {
-  const { colIndex, rowIndex, setColIndex, setRowIndex } = useContext(FocusContext)
+export function useCellNavigation({ ref, ariaColIndex, ariaRowIndex }: CellData): CellFocus {
+  const { colIndex, rowIndex, setColIndex, setRowIndex } = useContext(CellsNavigationContext)
 
-  // Check if the cell is focused
-  const isFocused = ariaColIndex === colIndex && ariaRowIndex === rowIndex
+  // Check if the cell is the current navigation cell
+  const isCurrentCell = ariaColIndex === colIndex && ariaRowIndex === rowIndex
 
   useEffect(() => {
-    // set the focus on the cell when needed
-    if (ref.current && isFocused && document.activeElement !== ref.current) {
+    // focus on the cell when needed
+    if (ref.current && isCurrentCell && document.activeElement !== ref.current) {
       ref.current.focus()
     }
-  }, [ref, isFocused, ariaColIndex, ariaRowIndex])
+  }, [ref, isCurrentCell, ariaColIndex, ariaRowIndex])
 
-  const tabIndex = isFocused ? 0 : -1 // -1 if the cell is not focused, 0 if it is focused
+  // Roving tabindex: only the current navigation cell is focusable with Tab (tabindex = 0)
+  // All other cells are focusable only with javascript .focus() (tabindex = -1)
+  const tabIndex = isCurrentCell ? 0 : -1
 
-  const focusCell = useCallback(() => {
-    setColIndex(ariaColIndex)
-    setRowIndex(ariaRowIndex)
+  const navigateToCell = useCallback(() => {
+    setColIndex?.(ariaColIndex)
+    setRowIndex?.(ariaRowIndex)
   }, [setColIndex, setRowIndex, ariaColIndex, ariaRowIndex])
 
   return {
     tabIndex,
-    focusCell,
+    navigateToCell,
   }
 }
 
-export function useFocus(): FocusContextType {
-  return useContext(FocusContext)
+export function useCellsNavigation(): CellsNavigationContextType {
+  return useContext(CellsNavigationContext)
 }

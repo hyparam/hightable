@@ -1,5 +1,5 @@
 import { CSSProperties, MouseEvent, ReactNode, useCallback, useRef } from 'react'
-import { useCellFocus } from '../../hooks/useFocus'
+import { useCellNavigation } from '../../hooks/useCellsNavigation'
 
 interface Props {
   busy?: boolean
@@ -14,11 +14,11 @@ interface Props {
 
 export default function RowHeader({ children, checked, onClick, showCheckBox, style, busy, ariaColIndex, ariaRowIndex }: Props) {
   const ref = useRef<HTMLTableCellElement>(null)
-  const { tabIndex, focusCell } = useCellFocus({ ref, ariaColIndex, ariaRowIndex })
+  const { tabIndex, navigateToCell } = useCellNavigation({ ref, ariaColIndex, ariaRowIndex })
   const handleClick = useCallback((event: MouseEvent) => {
-    focusCell()
+    navigateToCell()
     onClick?.(event)
-  }, [onClick, focusCell])
+  }, [onClick, navigateToCell])
 
   const disabled = !onClick
   return (

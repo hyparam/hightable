@@ -2,8 +2,8 @@ import { MouseEvent, ReactNode, useCallback, useEffect, useMemo, useRef } from '
 import { flushSync } from 'react-dom'
 import { Direction } from '../../helpers/sort.js'
 import { measureWidth } from '../../helpers/width.js'
+import { useCellNavigation } from '../../hooks/useCellsNavigation.js'
 import useColumnWidth from '../../hooks/useColumnWidth.js'
-import { useCellFocus } from '../../hooks/useFocus.js'
 import ColumnResizer from '../ColumnResizer/ColumnResizer.js'
 
 interface Props {
@@ -23,11 +23,11 @@ interface Props {
 
 export default function ColumnHeader({ columnIndex, columnName, dataReady, direction, onClick, sortable, orderByIndex, orderBySize, ariaColIndex, ariaRowIndex, className, children }: Props) {
   const ref = useRef<HTMLTableCellElement>(null)
-  const { tabIndex, focusCell } = useCellFocus({ ref, ariaColIndex, ariaRowIndex })
+  const { tabIndex, navigateToCell } = useCellNavigation({ ref, ariaColIndex, ariaRowIndex })
   const handleClick = useCallback((event: MouseEvent) => {
-    focusCell()
+    navigateToCell()
     onClick?.(event)
-  }, [onClick, focusCell])
+  }, [onClick, navigateToCell])
 
   // Get the column width from the context
   const { getColumnStyle, setColumnWidth, getColumnWidth } = useColumnWidth()

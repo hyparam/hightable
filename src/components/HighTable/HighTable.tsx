@@ -4,8 +4,8 @@ import { PartialRow } from '../../helpers/row.js'
 import { Selection, areAllSelected, isSelected, toggleAll, toggleIndexInSelection, toggleRangeInSelection, toggleRangeInTable } from '../../helpers/selection.js'
 import { OrderBy, areEqualOrderBy } from '../../helpers/sort.js'
 import { leftCellStyle } from '../../helpers/width.js'
+import { CellsNavigationProvider, useCellsNavigation } from '../../hooks/useCellsNavigation.js'
 import { ColumnWidthProvider } from '../../hooks/useColumnWidth.js'
-import { FocusProvider, useFocus } from '../../hooks/useFocus.js'
 import { useInputState } from '../../hooks/useInputState.js'
 import { stringify as stringifyDefault } from '../../utils/stringify.js'
 import { throttle } from '../../utils/throttle.js'
@@ -64,9 +64,9 @@ export default function HighTable(props: Props) {
   const ariaRowCount = data.numRows + 1 // don't forget the header row
   return (
     <ColumnWidthProvider localStorageKey={cacheKey ? `${cacheKey}:column-widths` : undefined}>
-      <FocusProvider colCount={ariaColCount} rowCount={ariaRowCount} rowPadding={props.padding ?? defaultPadding}>
+      <CellsNavigationProvider colCount={ariaColCount} rowCount={ariaRowCount} rowPadding={props.padding ?? defaultPadding}>
         <HighTableInner {...props} />
-      </FocusProvider>
+      </CellsNavigationProvider>
     </ColumnWidthProvider>
   )
 }
@@ -113,7 +113,7 @@ export function HighTableInner({
   const [slice, setSlice] = useState<Slice | undefined>(undefined)
   const [rowsRange, setRowsRange] = useState({ start: 0, end: 0 })
   const [hasCompleteRow, setHasCompleteRow] = useState(false)
-  const { onKeyDown, rowIndex } = useFocus()
+  const { onKeyDown, rowIndex } = useCellsNavigation()
   const [lastRowIndex, setLastRowIndex] = useState(rowIndex)
 
   // TODO(SL): remove this state and only rely on the data frame for these operations?

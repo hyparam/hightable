@@ -1,5 +1,5 @@
 import { CSSProperties, MouseEvent, ReactNode, useCallback, useRef } from 'react'
-import { useCellFocus } from '../../hooks/useFocus'
+import { useCellNavigation } from '../../hooks/useCellsNavigation'
 
 interface Props {
   checked?: boolean
@@ -13,11 +13,11 @@ interface Props {
 
 export default function TableCorner({ children, checked, onClick, showCheckBox, style, ariaColIndex, ariaRowIndex }: Props) {
   const ref = useRef<HTMLTableCellElement>(null)
-  const { tabIndex, focusCell } = useCellFocus({ ref, ariaColIndex, ariaRowIndex })
+  const { tabIndex, navigateToCell } = useCellNavigation({ ref, ariaColIndex, ariaRowIndex })
   const handleClick = useCallback((event: MouseEvent) => {
-    focusCell()
+    navigateToCell()
     onClick?.(event)
-  }, [onClick, focusCell])
+  }, [onClick, navigateToCell])
 
   return (
     <td
