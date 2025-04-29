@@ -30,9 +30,6 @@ export function FocusProvider({ colCount, rowCount, rowPadding, children }: Focu
   const [rowIndex, setRowIndex] = useState(1)
 
   const onKeyDown = useCallback((event: KeyboardEvent) => {
-    // avoid scrolling the table when the user is navigating with the keyboard
-    event.stopPropagation()
-    event.preventDefault()
     const { key } = event
 
     if (key === 'ArrowRight') {
@@ -73,7 +70,13 @@ export function FocusProvider({ colCount, rowCount, rowPadding, children }: Focu
       setRowIndex((prev) => prev + rowPadding <= rowCount ? prev + rowPadding : rowCount )
     } else if (key === 'PageUp') {
       setRowIndex((prev) => prev - rowPadding >= 1 ? prev - rowPadding : 1)
+    } else {
+      // if the key is not one of the above, do not handle it
+      return
     }
+    // avoid scrolling the table when the user is navigating with the keyboard
+    event.stopPropagation()
+    event.preventDefault()
   }, [colCount, rowCount, rowPadding])
 
   const value = useMemo(() => {
