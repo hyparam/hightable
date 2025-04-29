@@ -238,8 +238,7 @@ export function HighTableInner({
     const tableIndex = rowIndex - 2 // 0-based index, -1 for the header
     if (tableIndex < slice.offset || tableIndex >= slice.offset + slice.rows.length) {
       // scroll to the estimated position of the cell (and wait for the cell to be fetched and rendered)
-      // +1 <- to avoid having the cell under the sticky header
-      const rowTop = (tableIndex + 1) * rowHeight
+      const rowTop = tableIndex * rowHeight
       const scroller = scrollRef.current
       if (scroller) {
         // scroll to the cell
