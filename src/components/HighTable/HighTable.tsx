@@ -244,14 +244,25 @@ export function HighTableInner({
     }
     setLastCellPosition({ rowIndex, colIndex })
     const tableIndex = rowIndex - 2 // 0-based index, -1 for the header
+    const scroller = scrollRef.current
+    if (!scroller) {
+      // don't scroll if the scroller is not ready
+      return
+    }
+    let nextScrollTop = scroller.scrollTop
+    // if tableIndex outside of the slice, scroll to the estimated position of the cell,
+    // to wait for the cell to be fetched and rendered
     if (tableIndex < slice.offset || tableIndex >= slice.offset + slice.rows.length) {
-      // scroll to the estimated position of the cell (and wait for the cell to be fetched and rendered)
-      const rowTop = tableIndex * rowHeight
-      const scroller = scrollRef.current
-      if (scroller) {
-        // scroll to the cell
-        scroller.scrollTop = rowTop
-      }
+      nextScrollTop = tableIndex * rowHeight
+    }
+    // if the cell is under the header, scroll up to show it
+    if (nextScrollTop > tableIndex * rowHeight - rowHeight / 2) {
+      nextScrollTop -= rowHeight
+    }
+
+    if (nextScrollTop !== scroller.scrollTop) {
+      // scroll to the cell
+      scroller.scrollTop = nextScrollTop
     }
   }, [rowIndex, colIndex, slice, lastCellPosition, padding])
 
