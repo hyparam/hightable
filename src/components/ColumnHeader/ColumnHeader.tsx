@@ -99,6 +99,8 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
         setWidth={setWidth}
         onDoubleClick={autoResize}
         width={width}
+        tabIndex={tabIndex}
+        navigateToCell={navigateToCell}
       />
     </th>
   )

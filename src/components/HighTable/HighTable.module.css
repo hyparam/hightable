@@ -265,9 +265,16 @@
   thead [role="separator"] {
     background-color: transparent;
     transition: background-color 0.2s ease;
-  }
-  thead [role="separator"]:hover {
-    background-color: #aab;
+    &:hover {
+      background-color: #aab;
+    }
+    &:focus {
+      outline-style: solid;
+      outline-color: var(--focus-border-color);
+      outline-width: var(--focus-border-width);
+      outline-offset: -2px;
+      background-color: #aab;
+    }
   }
 
   /* row numbers */
