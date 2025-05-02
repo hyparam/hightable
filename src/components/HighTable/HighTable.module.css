@@ -165,9 +165,10 @@
   --cell-horizontal-padding: 12px;
 
   --focus-border-width: 2px;
-  --focus-border-color: black;
-  --focus-error-border-color: red;
+  --focus-border-color: #706fb1;
+  --focus-background-color: #efeef6;
   --focusable-border-color: #666;
+  --focusable-background-color: #f1f1f3;
 
   .table-scroll:focus {
     outline: none;
@@ -237,24 +238,21 @@
     text-overflow: ellipsis;
     white-space: nowrap;
 
-    outline-width: 1px;
-    outline-offset: -1px;
-
     /* focusable cell (only one: the current navigation cell) */
     &[tabindex="0"] {
-      outline-color: var(--focusable-border-color);
       outline-style: solid;
-      background-color: #f1f1f3;
+      outline-color: var(--focusable-border-color);
+      outline-width: 1px;
+      outline-offset: -1px;
+      background-color: var(--focusable-background-color);
     }
     /* focused cell: when the current navigation cell is focused. It should never be another cell */
     &:focus {
       outline-style: solid;
-      background-color: #f1f1f3;
-      /* in case a cell is focused but not focusable, show an error color */
-      outline-color: var(--focus-error-border-color);
-      &[tabindex="0"] {
-        outline-color: var(--focus-border-color);
-      }
+      outline-color: var(--focus-border-color);
+      outline-width: var(--focus-border-width);
+      outline-offset: -2px;
+      background-color: var(--focus-background-color);
     }
   }
 
