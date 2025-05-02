@@ -26,12 +26,11 @@ interface CellsNavigationProviderProps {
 }
 
 export function CellsNavigationProvider({ colCount, rowCount, rowPadding, children }: CellsNavigationProviderProps) {
-  const [colIndex, setColIndex] = useState(1)
-  const [rowIndex, setRowIndex] = useState(1)
+  const [colIndex, setColIndex] = useState(defaultCellsNavigationContext.colIndex)
+  const [rowIndex, setRowIndex] = useState(defaultCellsNavigationContext.rowIndex)
 
   const onKeyDown = useCallback((event: KeyboardEvent) => {
     const { key } = event
-
     if (key === 'ArrowRight') {
       if (event.ctrlKey) {
         setColIndex(colCount)
