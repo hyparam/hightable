@@ -275,6 +275,9 @@
       outline-offset: -2px;
       background-color: #aab;
     }
+    &[aria-busy="true"] {
+      background-color: #ddd;
+    }
   }
 
   /* row numbers */

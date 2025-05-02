@@ -67,6 +67,7 @@ export default function ColumnResizer({ onDoubleClick, setWidth, width, tabIndex
     <span
       role="separator"
       aria-orientation="vertical"
+      aria-busy={resizeClientX !== undefined}
       // TODO: make it focusable + keyboard accessible and add aria properties (https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Reference/Roles/separator_role)
       // Note that aria-valuenow would be helpful for tests.
       onDoubleClick={handleDoubleClick}
