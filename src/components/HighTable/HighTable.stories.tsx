@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react'
 import { useState } from 'react'
 import { DataFrame, sortableDataFrame } from '../../helpers/dataframe.js'
+import { rowCache } from '../../helpers/rowCache.js'
 import { OrderBy } from '../../helpers/sort.js'
 import { wrapPromise, wrapResolved } from '../../utils/promise.js'
 import HighTable from './HighTable.js'
@@ -52,7 +53,7 @@ const delayedData = sortableDataFrame({
   }),
 })
 
-const sortableData = sortableDataFrame(data)
+const sortableData = rowCache(sortableDataFrame(data))
 
 const dataWithUndefinedCells: DataFrame = {
   header: ['ID', 'Count'],
