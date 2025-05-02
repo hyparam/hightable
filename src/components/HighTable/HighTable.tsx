@@ -113,8 +113,8 @@ export function HighTableInner({
   const [slice, setSlice] = useState<Slice | undefined>(undefined)
   const [rowsRange, setRowsRange] = useState({ start: 0, end: 0 })
   const [hasCompleteRow, setHasCompleteRow] = useState(false)
-  const { onKeyDown, rowIndex } = useCellsNavigation()
-  const [lastRowIndex, setLastRowIndex] = useState(rowIndex)
+  const { onKeyDown, rowIndex, colIndex } = useCellsNavigation()
+  const [lastCellPosition, setLastCellPosition] = useState({ rowIndex, colIndex })
 
   // TODO(SL): remove this state and only rely on the data frame for these operations?
   // ie. cache the previous sort indexes in the data frame itself
@@ -236,13 +236,13 @@ export function HighTableInner({
       // don't scroll if the slice is not ready
       return
     }
-    if (lastRowIndex === rowIndex) {
-      // don't scroll if the row index is unchanged
-      // occurs when the user is scrolling with the mouse for example, and the focused
+    if (lastCellPosition.rowIndex === rowIndex && lastCellPosition.colIndex === colIndex) {
+      // don't scroll if the navigation cell is unchanged
+      // occurs when the user is scrolling with the mouse for example, and the
       // cell exits the viewport: don't want to scroll back to it
       return
     }
-    setLastRowIndex(rowIndex)
+    setLastCellPosition({ rowIndex, colIndex })
     const tableIndex = rowIndex - 2 // 0-based index, -1 for the header
     if (tableIndex < slice.offset || tableIndex >= slice.offset + slice.rows.length) {
       // scroll to the estimated position of the cell (and wait for the cell to be fetched and rendered)
@@ -253,7 +253,7 @@ export function HighTableInner({
         scroller.scrollTop = rowTop
       }
     }
-  }, [rowIndex, slice, lastRowIndex])
+  }, [rowIndex, colIndex, slice, lastCellPosition, padding])
 
   // handle scrolling and window resizing
   useEffect(() => {
