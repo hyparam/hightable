@@ -16,7 +16,7 @@ describe('ColumnMenu', () => {
     columnIndex: 0,
     position: { x: 100, y: 100 },
     onClose: vi.fn(),
-    isVisible: true
+    isVisible: true,
   }
 
   beforeEach(() => {
@@ -24,63 +24,51 @@ describe('ColumnMenu', () => {
   })
 
   it('renders nothing when not visible', () => {
-    const { container } = render(
-      <ColumnMenu {...defaultProps} isVisible={false} />
-    )
+    const { container } = render(<ColumnMenu {...defaultProps} isVisible={false} />)
     expect(container.firstChild).toBeNull()
   })
 
   it('renders the column menu with header when visible', () => {
     const { getByText } = render(<ColumnMenu {...defaultProps} />)
-    
+
     // Verify header
     expect(getByText('Test Column')).toBeDefined()
-    
+
     // Verify menu items
     expect(getByText('Hide column')).toBeDefined()
   })
 
   it('calls onHideColumn when hide column is clicked', async () => {
     const onHideColumn = vi.fn()
-    const { user, getByText } = render(
-      <ColumnMenu {...defaultProps} onHideColumn={onHideColumn} />
-    )
-    
+    const { user, getByText } = render(<ColumnMenu {...defaultProps} onHideColumn={onHideColumn} />)
+
     await user.click(getByText('Hide column'))
-    
+
     expect(onHideColumn).toHaveBeenCalledWith(defaultProps.columnIndex)
     expect(defaultProps.onClose).toHaveBeenCalled()
   })
 
   it('shows "Show all columns" when hasHiddenColumns is true', () => {
-    const { getByText } = render(
-      <ColumnMenu {...defaultProps} hasHiddenColumns={true} />
-    )
-    
+    const { getByText } = render(<ColumnMenu {...defaultProps} hasHiddenColumns={true} />)
+
     expect(getByText('Show all columns')).toBeDefined()
   })
 
   it('calls onShowAllColumns when "Show all columns" is clicked', async () => {
     const onShowAllColumns = vi.fn()
     const { user, getByText } = render(
-      <ColumnMenu 
-        {...defaultProps} 
-        hasHiddenColumns={true} 
-        onShowAllColumns={onShowAllColumns} 
-      />
+      <ColumnMenu {...defaultProps} hasHiddenColumns={true} onShowAllColumns={onShowAllColumns} />
     )
-    
+
     await user.click(getByText('Show all columns'))
-    
+
     expect(onShowAllColumns).toHaveBeenCalled()
     expect(defaultProps.onClose).toHaveBeenCalled()
   })
 
   it('shows sorting options when sortable is true', () => {
-    const { getByText, container } = render(
-      <ColumnMenu {...defaultProps} sortable={true} />
-    )
-    
+    const { getByText, container } = render(<ColumnMenu {...defaultProps} sortable={true} />)
+
     expect(getByText('Sort ascending')).toBeDefined()
     expect(getByText('Sort descending')).toBeDefined()
     // Verify the divider is present between hide column and sort options
@@ -93,22 +81,18 @@ describe('ColumnMenu', () => {
     const { getByText } = render(
       <ColumnMenu {...defaultProps} sortable={true} direction="ascending" />
     )
-    
+
     expect(getByText('Clear sort')).toBeDefined()
   })
 
   it('calls onSort with ascending direction when "Sort ascending" is clicked', async () => {
     const onSort = vi.fn()
     const { user, getByText } = render(
-      <ColumnMenu 
-        {...defaultProps} 
-        sortable={true} 
-        onSort={onSort} 
-      />
+      <ColumnMenu {...defaultProps} sortable={true} onSort={onSort} />
     )
-    
+
     await user.click(getByText('Sort ascending'))
-    
+
     expect(onSort).toHaveBeenCalledWith(defaultProps.columnIndex, 'ascending')
     expect(defaultProps.onClose).toHaveBeenCalled()
   })
@@ -116,15 +100,11 @@ describe('ColumnMenu', () => {
   it('calls onSort with descending direction when "Sort descending" is clicked', async () => {
     const onSort = vi.fn()
     const { user, getByText } = render(
-      <ColumnMenu 
-        {...defaultProps} 
-        sortable={true} 
-        onSort={onSort} 
-      />
+      <ColumnMenu {...defaultProps} sortable={true} onSort={onSort} />
     )
-    
+
     await user.click(getByText('Sort descending'))
-    
+
     expect(onSort).toHaveBeenCalledWith(defaultProps.columnIndex, 'descending')
     expect(defaultProps.onClose).toHaveBeenCalled()
   })
@@ -132,16 +112,11 @@ describe('ColumnMenu', () => {
   it('calls onSort with null when "Clear sort" is clicked', async () => {
     const onSort = vi.fn()
     const { user, getByText } = render(
-      <ColumnMenu 
-        {...defaultProps} 
-        sortable={true}
-        direction="ascending"
-        onSort={onSort} 
-      />
+      <ColumnMenu {...defaultProps} sortable={true} direction="ascending" onSort={onSort} />
     )
-    
+
     await user.click(getByText('Clear sort'))
-    
+
     expect(onSort).toHaveBeenCalledWith(defaultProps.columnIndex, null)
     expect(defaultProps.onClose).toHaveBeenCalled()
   })
@@ -150,23 +125,23 @@ describe('ColumnMenu', () => {
     const { getByText } = render(
       <ColumnMenu {...defaultProps} sortable={true} direction="ascending" />
     )
-    
-    const ascendingItem = getByText('Sort ascending').closest(`.${styles.columnMenuItem}`);
-    const descendingItem = getByText('Sort descending').closest(`.${styles.columnMenuItem}`);
-    
-    expect(ascendingItem?.className).toContain(styles.activeDirection);
-    expect(descendingItem?.className).not.toContain(styles.activeDirection);
-  });
+
+    const ascendingItem = getByText('Sort ascending').closest(`.${styles.columnMenuItem}`)
+    const descendingItem = getByText('Sort descending').closest(`.${styles.columnMenuItem}`)
+
+    expect(ascendingItem?.className).toContain(styles.activeDirection)
+    expect(descendingItem?.className).not.toContain(styles.activeDirection)
+  })
 
   it('applies activeDirection class to the descending option when direction is descending', () => {
     const { getByText } = render(
       <ColumnMenu {...defaultProps} sortable={true} direction="descending" />
     )
-    
-    const ascendingItem = getByText('Sort ascending').closest(`.${styles.columnMenuItem}`);
-    const descendingItem = getByText('Sort descending').closest(`.${styles.columnMenuItem}`);
-    
-    expect(descendingItem?.className).toContain(styles.activeDirection);
-    expect(ascendingItem?.className).not.toContain(styles.activeDirection);
-  });
-}) 
+
+    const ascendingItem = getByText('Sort ascending').closest(`.${styles.columnMenuItem}`)
+    const descendingItem = getByText('Sort descending').closest(`.${styles.columnMenuItem}`)
+
+    expect(descendingItem?.className).toContain(styles.activeDirection)
+    expect(ascendingItem?.className).not.toContain(styles.activeDirection)
+  })
+})

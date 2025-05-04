@@ -7,9 +7,9 @@ interface ColumnMenuButtonProps {
 
 export default function ColumnMenuButton({ onClick }: ColumnMenuButtonProps) {
   return (
-    <div 
-      className={styles.columnMenuButton} 
-      onClick={(e) => {
+    <div
+      className={styles.columnMenuButton}
+      onClick={e => {
         e.stopPropagation()
         onClick(e)
       }}
@@ -20,4 +20,4 @@ export default function ColumnMenuButton({ onClick }: ColumnMenuButtonProps) {
       <span className={styles.menuIcon}>⋮</span>
     </div>
   )
-} 
+}

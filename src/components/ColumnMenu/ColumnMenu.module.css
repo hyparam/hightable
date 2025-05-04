@@ -45,7 +45,7 @@
 }
 
 .activeDirection::before {
-  content: "✓";
+  content: '✓';
   position: absolute;
   left: 4px;
   color: #706fb1;

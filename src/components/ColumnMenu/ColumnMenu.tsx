@@ -74,7 +74,7 @@ export default function ColumnMenu({
           onClose()
         }
       }
-      
+
       document.addEventListener('mousedown', handleClickOutside)
       return () => {
         document.removeEventListener('mousedown', handleClickOutside)
@@ -109,14 +109,14 @@ export default function ColumnMenu({
         {sortable && (
           <>
             <div className={styles.columnMenuDivider} />
-            <li 
-              className={`${styles.columnMenuItem} ${direction === 'ascending' ? styles.activeDirection : ''}`} 
+            <li
+              className={`${styles.columnMenuItem} ${direction === 'ascending' ? styles.activeDirection : ''}`}
               onClick={handleSortAscending}
             >
               Sort ascending
             </li>
-            <li 
-              className={`${styles.columnMenuItem} ${direction === 'descending' ? styles.activeDirection : ''}`} 
+            <li
+              className={`${styles.columnMenuItem} ${direction === 'descending' ? styles.activeDirection : ''}`}
               onClick={handleSortDescending}
             >
               Sort descending
