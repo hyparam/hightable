@@ -39,6 +39,7 @@ export default function ColumnHeader({
   sortable,
   className,
   children,
+  title,
 }: Props) {
   const ref = useRef<HTMLTableCellElement>(null)
   const [showMenu, setShowMenu] = useState(false)
@@ -153,7 +154,7 @@ export default function ColumnHeader({
         onContextMenu={handleContextMenu}
         style={{ ...columnStyle, position: 'relative' }}
         className={className}
-        aria-label={title}
+        aria-label={title || columnName}
       >
         <span className={styles.headerText}>
           {children}
