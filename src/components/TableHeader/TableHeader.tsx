@@ -42,7 +42,7 @@ export default function TableHeader({
           const { prefix, suffix } = partitionOrderBy(orderBy, columnHeader);
           
           if (sortDirection === null) {
-            // Remove sort
+            // Clear sort
             onOrderByChange([...prefix, ...suffix]);
           } else {
             // Apply specific sort direction

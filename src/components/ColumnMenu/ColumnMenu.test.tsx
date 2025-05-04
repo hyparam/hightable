@@ -85,16 +85,16 @@ describe('ColumnMenu', () => {
     expect(getByText('Sort descending')).toBeDefined()
     // Verify the divider is present between hide column and sort options
     expect(container.querySelectorAll(`.${styles.columnMenuDivider}`).length).toBe(2) // Header divider + sort section divider
-    // Remove sort should not be visible when no direction is set
-    expect(() => getByText('Remove sort')).toThrow()
+    // Clear sort should not be visible when no direction is set
+    expect(() => getByText('Clear sort')).toThrow()
   })
 
-  it('shows "Remove sort" when a direction is set', () => {
+  it('shows "Clear sort" when a direction is set', () => {
     const { getByText } = render(
       <ColumnMenu {...defaultProps} sortable={true} direction="ascending" />
     )
     
-    expect(getByText('Remove sort')).toBeDefined()
+    expect(getByText('Clear sort')).toBeDefined()
   })
 
   it('calls onSort with ascending direction when "Sort ascending" is clicked', async () => {
@@ -129,7 +129,7 @@ describe('ColumnMenu', () => {
     expect(defaultProps.onClose).toHaveBeenCalled()
   })
 
-  it('calls onSort with null when "Remove sort" is clicked', async () => {
+  it('calls onSort with null when "Clear sort" is clicked', async () => {
     const onSort = vi.fn()
     const { user, getByText } = render(
       <ColumnMenu 
@@ -140,7 +140,7 @@ describe('ColumnMenu', () => {
       />
     )
     
-    await user.click(getByText('Remove sort'))
+    await user.click(getByText('Clear sort'))
     
     expect(onSort).toHaveBeenCalledWith(defaultProps.columnIndex, null)
     expect(defaultProps.onClose).toHaveBeenCalled()

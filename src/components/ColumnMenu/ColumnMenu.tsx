@@ -123,7 +123,7 @@ export default function ColumnMenu({
             </li>
             {direction && (
               <li className={styles.columnMenuItem} onClick={handleRemoveSort}>
-                Remove sort
+                Clear sort
               </li>
             )}
           </>
