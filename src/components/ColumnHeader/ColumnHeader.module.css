@@ -1,9 +1,10 @@
 .headerText {
-  display: block;
-  padding-right: 24px;
+  display: inline-block;
   white-space: nowrap;
   overflow: visible;
   text-overflow: clip;
+  line-height: 1.5;
+  vertical-align: middle;
 }
 
 :global(th:hover) .headerText {

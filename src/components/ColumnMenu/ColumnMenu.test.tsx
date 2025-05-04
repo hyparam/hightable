@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { render } from '../../utils/userEvent.js'
 import ColumnMenu from './ColumnMenu.js'
+import styles from './ColumnMenu.module.css'
 
 // Mock createPortal to make testing easier
 vi.mock('react-dom', () => {
@@ -75,15 +76,28 @@ describe('ColumnMenu', () => {
     expect(defaultProps.onClose).toHaveBeenCalled()
   })
 
-  it('shows sort option when sortable is true', () => {
-    const { getByText } = render(
+  it('shows sorting options when sortable is true', () => {
+    const { getByText, container } = render(
       <ColumnMenu {...defaultProps} sortable={true} />
     )
     
     expect(getByText('Sort ascending')).toBeDefined()
+    expect(getByText('Sort descending')).toBeDefined()
+    // Verify the divider is present between hide column and sort options
+    expect(container.querySelectorAll(`.${styles.columnMenuDivider}`).length).toBe(2) // Header divider + sort section divider
+    // Remove sort should not be visible when no direction is set
+    expect(() => getByText('Remove sort')).toThrow()
   })
 
-  it('calls onSort when sort option is clicked', async () => {
+  it('shows "Remove sort" when a direction is set', () => {
+    const { getByText } = render(
+      <ColumnMenu {...defaultProps} sortable={true} direction="ascending" />
+    )
+    
+    expect(getByText('Remove sort')).toBeDefined()
+  })
+
+  it('calls onSort with ascending direction when "Sort ascending" is clicked', async () => {
     const onSort = vi.fn()
     const { user, getByText } = render(
       <ColumnMenu 
@@ -95,7 +109,64 @@ describe('ColumnMenu', () => {
     
     await user.click(getByText('Sort ascending'))
     
-    expect(onSort).toHaveBeenCalledWith(defaultProps.columnIndex)
+    expect(onSort).toHaveBeenCalledWith(defaultProps.columnIndex, 'ascending')
     expect(defaultProps.onClose).toHaveBeenCalled()
   })
+
+  it('calls onSort with descending direction when "Sort descending" is clicked', async () => {
+    const onSort = vi.fn()
+    const { user, getByText } = render(
+      <ColumnMenu 
+        {...defaultProps} 
+        sortable={true} 
+        onSort={onSort} 
+      />
+    )
+    
+    await user.click(getByText('Sort descending'))
+    
+    expect(onSort).toHaveBeenCalledWith(defaultProps.columnIndex, 'descending')
+    expect(defaultProps.onClose).toHaveBeenCalled()
+  })
+
+  it('calls onSort with null when "Remove sort" is clicked', async () => {
+    const onSort = vi.fn()
+    const { user, getByText } = render(
+      <ColumnMenu 
+        {...defaultProps} 
+        sortable={true}
+        direction="ascending"
+        onSort={onSort} 
+      />
+    )
+    
+    await user.click(getByText('Remove sort'))
+    
+    expect(onSort).toHaveBeenCalledWith(defaultProps.columnIndex, null)
+    expect(defaultProps.onClose).toHaveBeenCalled()
+  })
+
+  it('applies activeDirection class to the ascending option when direction is ascending', () => {
+    const { getByText } = render(
+      <ColumnMenu {...defaultProps} sortable={true} direction="ascending" />
+    )
+    
+    const ascendingItem = getByText('Sort ascending').closest(`.${styles.columnMenuItem}`);
+    const descendingItem = getByText('Sort descending').closest(`.${styles.columnMenuItem}`);
+    
+    expect(ascendingItem?.className).toContain(styles.activeDirection);
+    expect(descendingItem?.className).not.toContain(styles.activeDirection);
+  });
+
+  it('applies activeDirection class to the descending option when direction is descending', () => {
+    const { getByText } = render(
+      <ColumnMenu {...defaultProps} sortable={true} direction="descending" />
+    )
+    
+    const ascendingItem = getByText('Sort ascending').closest(`.${styles.columnMenuItem}`);
+    const descendingItem = getByText('Sort descending').closest(`.${styles.columnMenuItem}`);
+    
+    expect(descendingItem?.className).toContain(styles.activeDirection);
+    expect(ascendingItem?.className).not.toContain(styles.activeDirection);
+  });
 }) 

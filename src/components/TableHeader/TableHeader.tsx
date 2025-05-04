@@ -1,5 +1,5 @@
-import { useCallback, useMemo } from 'react'
-import { OrderBy, toggleColumn } from '../../helpers/sort.js'
+import { MouseEvent, useCallback, useMemo } from 'react'
+import { OrderBy, partitionOrderBy, Direction } from '../../helpers/sort.js'
 import ColumnHeader from '../ColumnHeader/ColumnHeader.js'
 
 interface TableProps {
@@ -32,8 +32,40 @@ export default function TableHeader({
   const getOnOrderByClick = useCallback(
     (columnHeader: string) => {
       if (!onOrderByChange || !orderBy) return undefined
-      return () => {
-        onOrderByChange(toggleColumn(columnHeader, orderBy))
+      
+      return (e: MouseEvent & { sortDirection: Direction } ) => {
+        // Check if we have an explicit sort direction from the menu
+        const sortDirection = e.sortDirection;
+        
+        if (sortDirection !== undefined) {
+          // Handle explicit sort directions from the menu
+          const { prefix, suffix } = partitionOrderBy(orderBy, columnHeader);
+          
+          if (sortDirection === null) {
+            // Remove sort
+            onOrderByChange([...prefix, ...suffix]);
+          } else {
+            // Apply specific sort direction
+            onOrderByChange([{ column: columnHeader, direction: sortDirection }, ...prefix, ...suffix]);
+          }
+        } else {
+          // Regular click toggles through the sort states (legacy behavior)
+          const { prefix, item, suffix } = partitionOrderBy(orderBy, columnHeader);
+          
+          if (item && prefix.length === 0) {
+            // Column is already the primary sort - cycle through directions
+            if (item.direction === 'ascending') {
+              // ascending -> descending
+              onOrderByChange([{ column: columnHeader, direction: 'descending' }, ...suffix]);
+            } else {
+              // descending -> none
+              onOrderByChange([...suffix]);
+            }
+          } else {
+            // Column is not primary sort - make it primary with ascending direction
+            onOrderByChange([{ column: columnHeader, direction: 'ascending' }, ...prefix, ...suffix]);
+          }
+        }
       }
     },
     [orderBy, onOrderByChange]

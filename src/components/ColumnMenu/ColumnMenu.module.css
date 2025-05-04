@@ -37,8 +37,16 @@
 .columnMenuItem {
   padding: 8px 12px;
   cursor: pointer;
+  position: relative;
 }
 
 .columnMenuItem:hover {
   background-color: #dbdbe5;
+}
+
+.activeDirection::before {
+  content: "✓";
+  position: absolute;
+  left: 4px;
+  color: #706fb1;
 }

@@ -11,7 +11,7 @@
     padding: 0;
   }
 
-  /* Note that this class cannot be easily overriden by custom CSS. It's not really an issue as its role is functional. */
+  /* Note that this class cannot be easily overridden by custom CSS. It's not really an issue as its role is functional. */
   .table-scroll {
     flex: 1;
     overflow: auto;
@@ -49,15 +49,20 @@
   }
   th[aria-sort="ascending"]::after,
   th[aria-sort="descending"]::after {
-    position: absolute;
-    right: 0;
-    top: 0;
+    position: relative;
+    display: inline-block;
+    margin-left: 8px;
+    font-size: 14px;
+    font-weight: bold;
+    vertical-align: middle;
+    line-height: 1;
+    transform: translateY(-1px);
   }
   th[aria-sort="ascending"]::after {
-    content: "▴";
+    content: "↓";
   }
   th[aria-sort="descending"]::after {
-    content: "▾";
+    content: "↑";
   }
 
   /* column resize */
@@ -203,19 +208,14 @@
       padding-top: 8px;
       top: -1px; /* fix 1px gap above thead */
 
-      /* sorting is enabled - add space for the sort caret */
       &[aria-sort] {
-        padding-right: calc(var(--cell-horizontal-padding) + 8px);
+        padding-right: calc(var(--cell-horizontal-padding) + 24px);
       }
     }
   }
 
   th[aria-sort]::after {
-    right: 8px;
-    top: 8px;
-    padding-left: 2px;
-    background: none;
-    color: #d5d4d6;
+    color: #706fb1;
   }
 
   th[data-order-by-index="0"]::after {

@@ -3,7 +3,7 @@
   align-items: center;
   justify-content: center;
   position: absolute;
-  right: 12px;
+  right: 8px;
   top: 55%;
   transform: translateY(-50%);
   width: 20px;
@@ -20,10 +20,11 @@
   background-color: #dbdbe5;
 }
 
-.caret {
-  font-size: 12px;
+.menuIcon {
+  font-size: 16px;
   line-height: 1;
   color: #444;
+  font-weight: bold;
 }
 
 :global(th:hover) .columnMenuButton {

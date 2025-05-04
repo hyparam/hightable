@@ -1,5 +1,6 @@
 import { useCallback, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
+import { Direction } from '../../helpers/sort.js'
 import styles from './ColumnMenu.module.css'
 
 interface ColumnMenuProps {
@@ -9,7 +10,8 @@ interface ColumnMenuProps {
   onShowAllColumns?: () => void
   hasHiddenColumns?: boolean
   sortable?: boolean
-  onSort?: (columnIndex: number) => void
+  direction?: Direction
+  onSort?: (columnIndex: number, direction: Direction | null) => void
   isVisible?: boolean
   position: { x: number; y: number }
   onClose: () => void
@@ -22,6 +24,7 @@ export default function ColumnMenu({
   onShowAllColumns,
   hasHiddenColumns = false,
   sortable,
+  direction,
   onSort,
   isVisible = false,
   position,
@@ -43,9 +46,23 @@ export default function ColumnMenu({
     onClose()
   }, [onShowAllColumns, onClose])
 
-  const handleSort = useCallback(() => {
+  const handleSortAscending = useCallback(() => {
     if (onSort) {
-      onSort(columnIndex)
+      onSort(columnIndex, 'ascending')
+    }
+    onClose()
+  }, [columnIndex, onSort, onClose])
+
+  const handleSortDescending = useCallback(() => {
+    if (onSort) {
+      onSort(columnIndex, 'descending')
+    }
+    onClose()
+  }, [columnIndex, onSort, onClose])
+
+  const handleRemoveSort = useCallback(() => {
+    if (onSort) {
+      onSort(columnIndex, null)
     }
     onClose()
   }, [columnIndex, onSort, onClose])
@@ -90,9 +107,26 @@ export default function ColumnMenu({
           </li>
         )}
         {sortable && (
-          <li className={styles.columnMenuItem} onClick={handleSort}>
-            Sort ascending
-          </li>
+          <>
+            <div className={styles.columnMenuDivider} />
+            <li 
+              className={`${styles.columnMenuItem} ${direction === 'ascending' ? styles.activeDirection : ''}`} 
+              onClick={handleSortAscending}
+            >
+              Sort ascending
+            </li>
+            <li 
+              className={`${styles.columnMenuItem} ${direction === 'descending' ? styles.activeDirection : ''}`} 
+              onClick={handleSortDescending}
+            >
+              Sort descending
+            </li>
+            {direction && (
+              <li className={styles.columnMenuItem} onClick={handleRemoveSort}>
+                Remove sort
+              </li>
+            )}
+          </>
         )}
         {/* Future menu items can be added here */}
         {/* <li className={styles.columnMenuItem}>

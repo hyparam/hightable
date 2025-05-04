@@ -17,7 +17,7 @@ export default function ColumnMenuButton({ onClick }: ColumnMenuButtonProps) {
       role="button"
       tabIndex={0}
     >
-      <span className={styles.caret}>▾</span>
+      <span className={styles.menuIcon}>⋮</span>
     </div>
   )
 } 

@@ -153,6 +153,7 @@ export default function ColumnHeader({
         onContextMenu={handleContextMenu}
         style={{ ...columnStyle, position: 'relative' }}
         className={className}
+        aria-label={title}
       >
         <span className={styles.headerText}>
           {children}
@@ -167,7 +168,15 @@ export default function ColumnHeader({
         onShowAllColumns={onShowAllColumns}
         hasHiddenColumns={hasHiddenColumns}
         sortable={sortable}
-        onSort={onClick ? () => onClick({} as MouseEvent) : undefined}
+        direction={direction}
+        onSort={(_colIndex, sortDirection) => {
+          if (onClick) {
+            // Create a synthetic event with sort direction for TableHeader
+            const event = {} as MouseEvent & { sortDirection: typeof sortDirection };
+            event.sortDirection = sortDirection;
+            onClick(event);
+          }
+        }}
         isVisible={showMenu}
         position={menuPosition}
         onClose={closeMenu}
