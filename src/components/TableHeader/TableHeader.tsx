@@ -33,7 +33,7 @@ export default function TableHeader({
     (columnHeader: string) => {
       if (!onOrderByChange || !orderBy) return undefined
       
-      return (e: MouseEvent & { sortDirection: Direction } ) => {
+      return (e: MouseEvent & { sortDirection?: Direction } ) => {
         // Check if we have an explicit sort direction from the menu
         const sortDirection = e.sortDirection;
         
