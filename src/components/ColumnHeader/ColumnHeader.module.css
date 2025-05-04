@@ -1,10 +1,11 @@
 .headerText {
   display: inline-block;
   white-space: nowrap;
-  overflow: visible;
-  text-overflow: clip;
+  overflow: hidden;
+  text-overflow: ellipsis;
   line-height: 1.5;
   vertical-align: middle;
+  width: calc(100% - 20px);
 }
 
 :global(th:hover) .headerText {
