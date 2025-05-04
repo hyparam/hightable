@@ -33,7 +33,7 @@ describe('ColumnHeader', () => {
     const content = 'test'
     const { getByRole } = render(<table><thead><tr><ColumnHeader columnName="test" columnIndex={0}>{content}</ColumnHeader></tr></thead></table>)
     const element = getByRole('columnheader')
-    expect(element.textContent).toEqual(content)
+    expect(element.textContent).toEqual(content + "⋮")
     expect(measureWidth).not.toHaveBeenCalled()
   })
 
