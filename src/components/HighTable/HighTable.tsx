@@ -49,6 +49,7 @@ interface Props {
 }
 
 const defaultPadding = 20
+const ariaOffset = 2 // 1-based index, +1 for the header
 
 /**
  * Render a table with streaming rows on demand from a DataFrame.
@@ -242,7 +243,7 @@ export function HighTableInner({
       return
     }
     setLastCellPosition({ rowIndex, colIndex })
-    const tableIndex = rowIndex - 2 // 0-based index, -1 for the header
+    const tableIndex = rowIndex - ariaOffset
     const scroller = scrollRef.current
     if (!scroller) {
       // don't scroll if the scroller is not ready
@@ -472,7 +473,7 @@ export function HighTableInner({
             <tbody role="rowgroup">
               {prePadding.map((_, prePaddingIndex) => {
                 const tableIndex = offset - prePadding.length + prePaddingIndex
-                const ariaRowIndex = tableIndex + 2 // 1-based index, +1 for the header
+                const ariaRowIndex = tableIndex + ariaOffset
                 return (
                   <Row key={tableIndex} ariaRowIndex={ariaRowIndex}>
                     <RowHeader style={cornerStyle} ariaColIndex={1} ariaRowIndex={ariaRowIndex} />
@@ -484,7 +485,7 @@ export function HighTableInner({
                 const inferredDataIndex = orderBy === undefined || orderBy.length === 0 ? tableIndex : undefined
                 const dataIndex = row.index ?? inferredDataIndex
                 const selected = isRowSelected(dataIndex) ?? false
-                const ariaRowIndex = tableIndex + 2 // 1-based index, +1 for the header
+                const ariaRowIndex = tableIndex + ariaOffset
                 return (
                   <Row
                     key={tableIndex}
@@ -514,7 +515,7 @@ export function HighTableInner({
                         columnIndex={columnIndex}
                         hasResolved={hasResolved}
                         className={columnClassNames[columnIndex]}
-                        ariaColIndex={columnIndex + 2}
+                        ariaColIndex={columnIndex + ariaOffset}
                         ariaRowIndex={ariaRowIndex}
                       />
                     })}
@@ -523,7 +524,7 @@ export function HighTableInner({
               })}
               {postPadding.map((_, postPaddingIndex) => {
                 const tableIndex = offset + rowsLength + postPaddingIndex
-                const ariaRowIndex = tableIndex + 2 // 1-based index, +1 for the header
+                const ariaRowIndex = tableIndex + ariaOffset
                 return (
                   <Row key={tableIndex} ariaRowIndex={ariaRowIndex}>
                     <RowHeader style={cornerStyle} ariaColIndex={1} ariaRowIndex={ariaRowIndex} />
