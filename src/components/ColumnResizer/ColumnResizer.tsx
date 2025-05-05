@@ -79,6 +79,7 @@ export default function ColumnResizer({ onDoubleClick, setWidth, width, tabIndex
       // let the event propagate to the parent
       return
     }
+    e.preventDefault()
     e.stopPropagation()
     if (resizeClientX !== undefined) {
       // don't allow keyboard events when resizing with the mouse
