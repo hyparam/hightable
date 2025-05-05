@@ -1,4 +1,4 @@
-import { KeyboardEvent, MouseEvent, useCallback, useEffect, useState } from 'react'
+import { KeyboardEvent, MouseEvent, useCallback, useEffect, useMemo, useState } from 'react'
 
 interface Props {
   onDoubleClick?: () => void
@@ -110,6 +110,13 @@ export default function ColumnResizer({ onDoubleClick, setWidth, width, tabIndex
 
   const ariaBusy = resizeClientX !== undefined || activeKeyboard
 
+  const ariaValueText = useMemo(() => {
+    if (width === undefined) {
+      return 'No width set.'
+    }
+    return `Width set to ${width} pixels.`
+  }, [width])
+
   return (
     <span
       role="separator"
@@ -117,7 +124,10 @@ export default function ColumnResizer({ onDoubleClick, setWidth, width, tabIndex
       aria-busy={ariaBusy}
       aria-valuemin={minWidth}
       aria-valuenow={width}
+      aria-valuetext={ariaValueText}
+      // TODO: use aria-labelledby and aria-describedby to allow translation
       aria-label="Resize column"
+      aria-description='Press "Enter" or "Space" to autoresize the column. Press "Escape" to cancel resizing. Press "ArrowRight" or "ArrowLeft" to resize the column by 10 pixels.'
       onDoubleClick={handleDoubleClick}
       onMouseDown={onMouseDown}
       onClick={disableOnClick}
