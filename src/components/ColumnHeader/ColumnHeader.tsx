@@ -86,6 +86,7 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
       aria-sort={direction ?? (sortable ? 'none' : undefined)}
       data-order-by-index={orderBySize !== undefined ? orderByIndex : undefined}
       data-order-by-size={orderBySize}
+      aria-label={columnName}
       aria-description={description}
       aria-colindex={ariaColIndex}
       tabIndex={tabIndex}
