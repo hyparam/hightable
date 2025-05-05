@@ -18,6 +18,9 @@
     & > div {
       position: relative;
     }
+    /* avoid the row and column headers (sticky) to overlap the current navigation cell */
+    scroll-padding-inline-start: var(--row-number-width);
+    scroll-padding-block-start: var(--column-header-height);
   }
 
   table {

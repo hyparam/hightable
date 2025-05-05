@@ -1,4 +1,4 @@
-import { MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { CSSProperties, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DataFrame } from '../../helpers/dataframe.js'
 import { PartialRow } from '../../helpers/row.js'
 import { Selection, areAllSelected, isSelected, toggleAll, toggleIndexInSelection, toggleRangeInSelection, toggleRangeInTable } from '../../helpers/selection.js'
@@ -213,7 +213,6 @@ export function HighTableInner({
   const offsetTop = slice ? Math.max(0, slice.offset - padding) * rowHeight : 0
 
   const scrollRef = useRef<HTMLDivElement>(null)
-  const tableRef = useRef<HTMLTableElement>(null)
   const pendingRequest = useRef(0)
 
   // invalidate when data changes so that columns will auto-resize
@@ -255,11 +254,6 @@ export function HighTableInner({
     if (tableIndex < slice.offset || tableIndex >= slice.offset + slice.rows.length) {
       nextScrollTop = tableIndex * rowHeight
     }
-    // if the cell is under the header, scroll up to show it
-    if (nextScrollTop > tableIndex * rowHeight - rowHeight / 2) {
-      nextScrollTop -= rowHeight
-    }
-
     if (nextScrollTop !== scroller.scrollTop) {
       // scroll to the cell
       scroller.scrollTop = nextScrollTop
@@ -408,7 +402,7 @@ export function HighTableInner({
   // focus table on mount so arrow keys work
   useEffect(() => {
     if (focus) {
-      tableRef.current?.focus()
+      scrollRef.current?.focus()
     }
   }, [focus])
 
@@ -422,10 +416,18 @@ export function HighTableInner({
 
   // minimum left column width based on number of rows - it depends on CSS, so it's
   // only a bottom limit
-  const cornerStyle = useMemo(() => {
-    const minWidth = Math.ceil(Math.log10(data.numRows + 1)) * 4 + 22
-    return leftCellStyle(minWidth)
+  const rowHeaderWidth = useMemo(() => {
+    return Math.ceil(Math.log10(data.numRows + 1)) * 4 + 22
   }, [data.numRows])
+  const cornerStyle = useMemo(() => {
+    return leftCellStyle(rowHeaderWidth)
+  }, [rowHeaderWidth])
+  const tableScrollStyle = useMemo(() => {
+    return {
+      '--column-header-height': `${rowHeight}px`,
+      '--row-number-width': `${rowHeaderWidth}px`,
+    } as CSSProperties
+  }, [rowHeaderWidth])
 
   // don't render table if header is empty
   if (!data.header.length) return
@@ -434,14 +436,13 @@ export function HighTableInner({
   const ariaRowCount = data.numRows + 1 // don't forget the header row
   return (
     <div className={`${styles.hightable} ${styled ? styles.styled : ''} ${className}`}>
-      <div className={styles.tableScroll} ref={scrollRef} role="group" aria-labelledby="caption">
+      <div className={styles.tableScroll} ref={scrollRef} role="group" aria-labelledby="caption" style={tableScrollStyle}>
         <div style={{ height: `${scrollHeight}px` }}>
           <table
             aria-readonly={true}
             aria-colcount={ariaColCount}
             aria-rowcount={ariaRowCount}
             aria-multiselectable={showSelectionControls}
-            ref={tableRef}
             role='grid'
             style={{ top: `${offsetTop}px` }}
             onKeyDown={onKeyDown}
@@ -478,8 +479,8 @@ export function HighTableInner({
                   </Row>
                 )
               })}
-              {slice?.rows.map((row, rowIndex) => {
-                const tableIndex = slice.offset + rowIndex
+              {slice?.rows.map((row, sliceIndex) => {
+                const tableIndex = slice.offset + sliceIndex
                 const inferredDataIndex = orderBy === undefined || orderBy.length === 0 ? tableIndex : undefined
                 const dataIndex = row.index ?? inferredDataIndex
                 const selected = isRowSelected(dataIndex) ?? false

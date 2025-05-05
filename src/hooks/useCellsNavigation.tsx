@@ -124,6 +124,9 @@ export function useCellNavigation({ ref, ariaColIndex, ariaRowIndex }: CellData)
     // focus on the cell when needed
     if (ref.current && isCurrentCell && document.hasFocus() && document.activeElement !== ref.current && shouldFocus) {
       ref.current.focus()
+      // scroll the cell into view (note scroll-padding-inline-start and scroll-padding-block-start are set in the CSS
+      // to avoid the cell being hidden by the row and column headers)
+      ref.current.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'nearest' })
       setShouldFocus?.(false)
     }
   }, [ref, isCurrentCell, ariaColIndex, ariaRowIndex, shouldFocus, setShouldFocus])
