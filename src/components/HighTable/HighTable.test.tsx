@@ -5,6 +5,8 @@ import { wrapResolved } from '../../utils/promise.js'
 import { render } from '../../utils/userEvent.js'
 import HighTable from './HighTable.js'
 
+Element.prototype.scrollIntoView = vi.fn()
+
 const data: DataFrame = {
   header: ['ID', 'Count'],
   numRows: 1000,
