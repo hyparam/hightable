@@ -115,6 +115,7 @@ export default function ColumnResizer({ onDoubleClick, setWidth, width, tabIndex
       aria-orientation="vertical"
       aria-busy={ariaBusy}
       // Note that aria-valuenow would be helpful for tests.
+      aria-label="Resize column"
       onDoubleClick={handleDoubleClick}
       onMouseDown={onMouseDown}
       onClick={disableOnClick}
