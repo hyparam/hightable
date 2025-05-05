@@ -9,6 +9,7 @@ interface Props {
 }
 
 const keyboardShiftWidth = 10
+const minWidth = 1
 
 export default function ColumnResizer({ onDoubleClick, setWidth, width, tabIndex, navigateToCell }: Props) {
   const [resizeClientX, setResizeClientX] = useState<number | undefined>(undefined)
@@ -101,9 +102,9 @@ export default function ColumnResizer({ onDoubleClick, setWidth, width, tabIndex
       return
     }
     if (e.key === 'ArrowRight') {
-      setWidth?.(Math.max(1, width + keyboardShiftWidth))
+      setWidth?.(Math.max(minWidth, width + keyboardShiftWidth))
     } else if (e.key === 'ArrowLeft') {
-      setWidth?.(Math.max(1, width - keyboardShiftWidth))
+      setWidth?.(Math.max(minWidth, width - keyboardShiftWidth))
     }
   }, [onDoubleClick, resizeClientX, setWidth, width, activeKeyboard, navigateToCell])
 
@@ -114,7 +115,8 @@ export default function ColumnResizer({ onDoubleClick, setWidth, width, tabIndex
       role="separator"
       aria-orientation="vertical"
       aria-busy={ariaBusy}
-      // Note that aria-valuenow would be helpful for tests.
+      aria-valuemin={minWidth}
+      aria-valuenow={width}
       aria-label="Resize column"
       onDoubleClick={handleDoubleClick}
       onMouseDown={onMouseDown}
