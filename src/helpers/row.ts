@@ -4,6 +4,8 @@ import { ResolvablePromise, WrappedPromise, resolvablePromise } from '../utils/p
  * A row where each cell is a promise.
  * The promise must be wrapped with `wrapPromise` so that HighTable can render
  * the state synchronously.
+ * Raise an error with format: {numRows: number} if the row cannot be resolved because
+ * it's beyond the max number of rows (eg: iceberg position/equality deletes, or filtered rows).
  */
 export interface AsyncRow {
   cells: Record<string, WrappedPromise<any>>
