@@ -75,23 +75,23 @@ const dataWithUndefinedCells: DataFrame = {
 
 const filteredData: DataFrame = rowCache(sortableDataFrame({
   header: ['ID', 'Count', 'Value1', 'Value2'],
-  numRows: 100,
+  numRows: 1000,
   // only the first 15 rows are valid, the rest are deleted
   rows: ({ start, end }) => Array.from({ length: end - start }, (_, index) => {
-    if (index < 15) {
-      const id = `row ${index + start}`
-      const count = 1000 - start - index
+    const id = index + start
+    if (id < 150) {
+      const count = 1000 - id
       return {
-        index: wrapResolved(index + start),
+        index: wrapResolved(id),
         cells: {
-          ID: wrapResolved(id),
+          ID: wrapResolved( `row ${id}`),
           Count: wrapResolved(count),
           Value1: wrapResolved(Math.floor(100 * random(135 + index))),
           Value2: wrapResolved(Math.floor(100 * random(648 + index))),
         },
       }
     } else {
-      const error = { numRows: 15 }
+      const error = { numRows: 150 }
       return {
         index: wrapPromise<number>(Promise.reject(error)),
         cells: {
