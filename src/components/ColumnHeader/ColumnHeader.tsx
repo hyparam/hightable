@@ -1,4 +1,4 @@
-import { MouseEvent, ReactNode, useCallback, useEffect, useMemo, useRef } from 'react'
+import { ReactNode, useCallback, useEffect, useMemo, useRef } from 'react'
 import { flushSync } from 'react-dom'
 import { Direction } from '../../helpers/sort.js'
 import { measureWidth } from '../../helpers/width.js'
@@ -12,7 +12,7 @@ interface Props {
   children?: ReactNode
   dataReady?: boolean
   direction?: Direction
-  onClick?: (e: MouseEvent) => void
+  onClick?: () => void
   sortable?: boolean
   orderByIndex?: number // index of the column in the orderBy array (0-based)
   orderBySize?: number // size of the orderBy array
@@ -24,9 +24,9 @@ interface Props {
 export default function ColumnHeader({ columnIndex, columnName, dataReady, direction, onClick, sortable, orderByIndex, orderBySize, ariaColIndex, ariaRowIndex, className, children }: Props) {
   const ref = useRef<HTMLTableCellElement>(null)
   const { tabIndex, navigateToCell } = useCellNavigation({ ref, ariaColIndex, ariaRowIndex })
-  const handleClick = useCallback((event: MouseEvent) => {
+  const handleClick = useCallback(() => {
     navigateToCell()
-    onClick?.(event)
+    onClick?.()
   }, [onClick, navigateToCell])
 
   // Get the column width from the context
@@ -78,6 +78,18 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
     }
   }, [sortable, columnName, direction, orderByIndex])
 
+  const onKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.target !== ref.current) {
+      // only handle keyboard events when the header is focused
+      return
+    }
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      e.stopPropagation()
+      onClick?.()
+    }
+  }, [onClick])
+
   return (
     <th
       ref={ref}
@@ -92,6 +104,7 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
       tabIndex={tabIndex}
       title={description}
       onClick={handleClick}
+      onKeyDown={onKeyDown}
       style={columnStyle}
       className={className}
     >
