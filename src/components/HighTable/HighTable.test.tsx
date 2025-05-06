@@ -751,5 +751,23 @@ describe('Navigating Hightable with the keyboard', () => {
       await user.keyboard('{Shift>}{Tab}{/Shift}')
       expect(document.activeElement).toBe(cell)
     })
+
+    it('the column resizer is activated on focus, and loses focus when Escape is pressed', async () => {
+      const { user } = render(<HighTable data={data} />)
+      // go to the column resizer
+      await user.keyboard('{Tab}{ArrowRight}')
+      const cell = document.activeElement
+      await user.keyboard('{Tab}')
+      // press Enter to activate the column resizer
+      const separator = document.activeElement
+      if (!separator) {
+        throw new Error('Separator is null')
+      }
+      expect(separator.getAttribute('aria-busy')).toBe('true')
+      // escape to deactivate the column resizer
+      await user.keyboard('{Escape}')
+      expect(separator.getAttribute('aria-busy')).toBe('false')
+      expect(document.activeElement).toBe(cell)
+    })
   })
 })
