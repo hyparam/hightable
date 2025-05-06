@@ -9,10 +9,7 @@ export default function ColumnMenuButton({ onClick }: ColumnMenuButtonProps) {
   return (
     <div
       className={styles.columnMenuButton}
-      onClick={e => {
-        e.stopPropagation()
-        onClick(e)
-      }}
+      onClick={onClick}
       aria-label="Column options"
       role="button"
       tabIndex={0}
