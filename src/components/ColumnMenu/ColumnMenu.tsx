@@ -61,9 +61,7 @@ export default function ColumnMenu({
   }, [columnIndex, onSort, onClose])
 
   const handleRemoveSort = useCallback(() => {
-    if (onSort) {
-      onSort(columnIndex, null)
-    }
+    onSort.?(columnIndex, null)
     onClose()
   }, [columnIndex, onSort, onClose])
 
