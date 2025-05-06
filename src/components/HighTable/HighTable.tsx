@@ -322,8 +322,17 @@ export default function HighTable({
                 updateRows()
               }
             }).catch((error: unknown) => {
-              if (pendingRequest.current === requestId && typeof error === 'object' && error !== null && 'numRows' in error && typeof error.numRows === 'number') {
-                // The data frame has only numRows, let's update the state
+              if (
+                pendingRequest.current === requestId
+                && typeof error === 'object'
+                && error !== null
+                && 'numRows' in error
+                && typeof error.numRows === 'number'
+                && error.numRows >= 0
+                && error.numRows < numRows
+                && Number.isInteger(error.numRows)
+              ) {
+                // The data frame only has numRows, let's update the state
                 setNumRows(error.numRows)
               }
             })
