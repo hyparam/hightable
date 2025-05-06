@@ -96,8 +96,8 @@ export default function ColumnResizer({ onDoubleClick, setWidth, width, tabIndex
       return
     }
     if (e.key === 'Enter' || e.key === ' ') {
-      // autoresize
-      onDoubleClick?.()
+      // autoresize and exit keyboard mode
+      handleDoubleClick()
       return
     }
     if (width === undefined) {
@@ -109,7 +109,7 @@ export default function ColumnResizer({ onDoubleClick, setWidth, width, tabIndex
     } else if (e.key === 'ArrowLeft') {
       setWidth?.(Math.max(minWidth, width - keyboardShiftWidth))
     }
-  }, [onDoubleClick, resizeClientX, setWidth, width, activeKeyboard, navigateToCell])
+  }, [handleDoubleClick, resizeClientX, setWidth, width, activeKeyboard, navigateToCell])
 
   const ariaBusy = resizeClientX !== undefined || activeKeyboard
 

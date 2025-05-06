@@ -769,5 +769,42 @@ describe('Navigating Hightable with the keyboard', () => {
       expect(separator.getAttribute('aria-busy')).toBe('false')
       expect(document.activeElement).toBe(cell)
     })
+
+    it('the column resizer changes the column width when ArrowRight or ArrowLeft are pressed', async () => {
+      const { user } = render(<HighTable data={data} />)
+      // go to the column resizer
+      await user.keyboard('{Tab}{ArrowRight}{Tab}')
+      const separator = document.activeElement
+      if (!separator) {
+        throw new Error('Separator is null')
+      }
+      const value = separator.getAttribute('aria-valuenow')
+      // the column measurement is mocked
+      expect(value).toBe(initialWidth.toString())
+      await user.keyboard('{ArrowRight}')
+      expect(separator.getAttribute('aria-valuenow')).toBe((initialWidth + 10).toString())
+      await user.keyboard('{ArrowLeft}{ArrowLeft}{ArrowLeft}')
+      expect(separator.getAttribute('aria-valuenow')).toBe((initialWidth - 20).toString())
+    })
+
+    it.for(['{ }', '{Enter}'])('the column resizer autosizes the column and exits resize mode when %s is pressed', async (key) => {
+      const { user } = render(<HighTable data={data} />)
+      // go to the column resizer
+      await user.keyboard('{Tab}{ArrowRight}')
+      const cell = document.activeElement
+      await user.keyboard('{Tab}')
+      const separator = document.activeElement
+      if (!separator) {
+        throw new Error('Separator is null')
+      }
+      const value = separator.getAttribute('aria-valuenow')
+      // the column measurement is mocked
+      expect(value).toBe(initialWidth.toString())
+      await user.keyboard('{ArrowRight}')
+      expect(separator.getAttribute('aria-valuenow')).toBe((initialWidth + 10).toString())
+      await user.keyboard(key)
+      expect(separator.getAttribute('aria-valuenow')).toBe(initialWidth.toString())
+      expect(document.activeElement).toBe(cell)
+    })
   })
 })
