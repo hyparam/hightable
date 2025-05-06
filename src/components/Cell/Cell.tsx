@@ -1,10 +1,11 @@
-import { MouseEvent, useCallback, useMemo, useRef } from 'react'
+import { KeyboardEvent, MouseEvent, useCallback, useMemo, useRef } from 'react'
 import { useCellNavigation } from '../../hooks/useCellsNavigation.js'
 import useColumnWidth from '../../hooks/useColumnWidth.js'
 
 interface Props {
   onDoubleClick?: (event: MouseEvent) => void
   onMouseDown?: (event: MouseEvent) => void
+  onKeyDown?: (event: KeyboardEvent) => void
   stringify: (value: unknown) => string | undefined
   value: any
   columnIndex: number
@@ -22,13 +23,14 @@ interface Props {
  * @param props.columnIndex column index in the dataframe (0-based)
  * @param props.onDoubleClick double click callback
  * @param props.onMouseDown mouse down callback
+ * @param props.onKeyDown key down callback
  * @param props.stringify function to stringify the value
  * @param props.hasResolved function to get the column style
  * @param props.ariaColIndex aria col index
  * @param props.ariaRowIndex aria row index
  * @param props.className optional class name
  */
-export default function Cell({ onDoubleClick, onMouseDown, stringify, columnIndex, value, hasResolved, className, ariaColIndex, ariaRowIndex }: Props) {
+export default function Cell({ onDoubleClick, onMouseDown, onKeyDown, stringify, columnIndex, value, hasResolved, className, ariaColIndex, ariaRowIndex }: Props) {
   const ref = useRef<HTMLTableCellElement>(null)
   const { tabIndex, navigateToCell } = useCellNavigation({ ref, ariaColIndex, ariaRowIndex })
   const handleMouseDown = useCallback((event: MouseEvent) => {
@@ -68,6 +70,7 @@ export default function Cell({ onDoubleClick, onMouseDown, stringify, columnInde
       tabIndex={tabIndex}
       onDoubleClick={handleDoubleClick}
       onMouseDown={handleMouseDown}
+      onKeyDown={onKeyDown}
       style={columnStyle}
       className={className}
       title={title}>

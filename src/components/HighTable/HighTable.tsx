@@ -37,6 +37,7 @@ interface Props {
   focus?: boolean // focus table on mount? (default true)
   onDoubleClickCell?: (event: MouseEvent, col: number, row: number) => void
   onMouseDownCell?: (event: MouseEvent, col: number, row: number) => void
+  onKeyDownCell?: (event: KeyboardEvent, col: number, row: number) => void // for accessibility, it should be passed if onDoubleClickCell is passed. It can handle more than that action though.
   onError?: (error: Error) => void
   orderBy?: OrderBy // order used to fetch the rows. If undefined, the table is unordered, the sort controls are hidden and the interactions are disabled. Pass [] to fetch the rows in the original order.
   onOrderByChange?: (orderBy: OrderBy) => void // callback to call when a user interaction changes the order. The interactions are disabled if undefined.
@@ -89,6 +90,7 @@ export function HighTableInner({
   onSelectionChange: propOnSelectionChange,
   onDoubleClickCell,
   onMouseDownCell,
+  onKeyDownCell,
   onError = console.error,
   stringify = stringifyDefault,
   className = '',
@@ -419,6 +421,12 @@ export function HighTableInner({
       onMouseDownCell(e, col, row)
     }
   }, [onMouseDownCell])
+  const getOnKeyDownCell = useCallback((col: number, row?: number) => {
+    if (!onKeyDownCell || row === undefined) return
+    return (e: KeyboardEvent) => {
+      onKeyDownCell(e, col, row)
+    }
+  }, [onKeyDownCell])
 
   // focus table on mount so arrow keys work
   useEffect(() => {
@@ -535,6 +543,7 @@ export function HighTableInner({
                         key={columnIndex}
                         onDoubleClick={getOnDoubleClickCell(columnIndex, dataIndex)}
                         onMouseDown={getOnMouseDownCell(columnIndex, dataIndex)}
+                        onKeyDown={getOnKeyDownCell(columnIndex, dataIndex)}
                         stringify={stringify}
                         value={value}
                         columnIndex={columnIndex}
