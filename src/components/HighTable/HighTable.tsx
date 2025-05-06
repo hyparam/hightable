@@ -116,6 +116,7 @@ export function HighTableInner({
   const [hasCompleteRow, setHasCompleteRow] = useState(false)
   const { onKeyDown, rowIndex, colIndex } = useCellsNavigation()
   const [lastCellPosition, setLastCellPosition] = useState({ rowIndex, colIndex })
+  const [numRows, setNumRows] = useState(data.numRows)
 
   // TODO(SL): remove this state and only rely on the data frame for these operations?
   // ie. cache the previous sort indexes in the data frame itself
@@ -149,15 +150,15 @@ export function HighTableInner({
 
   const showSelection = selection !== undefined
   const showSelectionControls = showSelection && enableSelectionInteractions
-  const showCornerSelection = showSelectionControls || showSelection && areAllSelected({ ranges: selection.ranges, length: data.numRows })
+  const showCornerSelection = showSelectionControls || showSelection && areAllSelected({ ranges: selection.ranges, length: numRows })
   const getOnSelectAllRows = useCallback(() => {
     if (!selection) return
     const { ranges } = selection
     return () => { onSelectionChange({
-      ranges: toggleAll({ ranges, length: data.numRows }),
+      ranges: toggleAll({ ranges, length: numRows }),
       anchor: undefined,
     }) }
-  }, [onSelectionChange, data.numRows, selection])
+  }, [onSelectionChange, numRows, selection])
 
   const pendingSelectionRequest = useRef(0)
   const getOnSelectRowClick = useCallback(({ tableIndex, dataIndex }: {tableIndex: number, dataIndex: number}) => {
@@ -200,8 +201,8 @@ export function HighTableInner({
   const allRowsSelected = useMemo(() => {
     if (!selection) return false
     const { ranges } = selection
-    return areAllSelected({ ranges, length: data.numRows })
-  }, [selection, data.numRows])
+    return areAllSelected({ ranges, length: numRows })
+  }, [selection, numRows])
   const isRowSelected = useCallback((dataIndex: number | undefined) => {
     if (!selection) return undefined
     if (dataIndex === undefined) return undefined
@@ -210,7 +211,7 @@ export function HighTableInner({
   }, [selection])
 
   // total scrollable height
-  const scrollHeight = (data.numRows + 1) * rowHeight
+  const scrollHeight = (numRows + 1) * rowHeight
   const offsetTop = slice ? Math.max(0, slice.offset - padding) * rowHeight : 0
 
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -228,6 +229,8 @@ export function HighTableInner({
     if (!isSelectionControlled) {
       onSelectionChange({ ranges: [], anchor: undefined })
     }
+    // reset the number of rows
+    setNumRows(data.numRows)
   }
 
   // scroll vertically to the focused cell if needed
@@ -275,10 +278,10 @@ export function HighTableInner({
       const scrollTop = scrollRef.current?.scrollTop ?? 0
 
       // determine rows to fetch based on current scroll position (indexes refer to the virtual table domain)
-      const startView = Math.floor(data.numRows * scrollTop / scrollHeight)
-      const endView = Math.ceil(data.numRows * (scrollTop + clientHeight) / scrollHeight)
+      const startView = Math.floor(numRows * scrollTop / scrollHeight)
+      const endView = Math.ceil(numRows * (scrollTop + clientHeight) / scrollHeight)
       const start = Math.max(0, startView - overscan)
-      const end = Math.min(data.numRows, endView + overscan)
+      const end = Math.min(numRows, endView + overscan)
 
       if (isNaN(start)) throw new Error(`invalid start row ${start}`)
       if (isNaN(end)) throw new Error(`invalid end row ${end}`)
@@ -298,7 +301,7 @@ export function HighTableInner({
       scroller?.removeEventListener('scroll', handleScroll)
       window.removeEventListener('resize', handleScroll)
     }
-  }, [data.numRows, overscan, padding, scrollHeight])
+  }, [numRows, overscan, padding, scrollHeight])
 
   // fetch rows
   useEffect(() => {
@@ -371,6 +374,21 @@ export function HighTableInner({
               if (pendingRequest.current === requestId) {
                 updateRows()
               }
+            }).catch((error: unknown) => {
+              if (
+                pendingRequest.current === requestId
+                && typeof error === 'object'
+                && error !== null
+                && 'numRows' in error
+                && typeof error.numRows === 'number'
+                && error.numRows >= 0
+                && error.numRows < numRows
+                && Number.isInteger(error.numRows)
+              ) {
+                // The data frame only has numRows, let's update the state
+                setNumRows(error.numRows)
+              }
+              // TODO(SL): handle the error
             })
           }
         }
@@ -383,7 +401,7 @@ export function HighTableInner({
     }
     // update
     void fetchRows()
-  }, [data, onError, orderBy, slice, rowsRange, hasCompleteRow])
+  }, [data, onError, orderBy, slice, rowsRange, hasCompleteRow, numRows])
 
   const getOnDoubleClickCell = useCallback((col: number, row?: number) => {
     // TODO(SL): give feedback (a specific class on the cell element?) about why the double click is disabled?
@@ -411,15 +429,13 @@ export function HighTableInner({
   const offset = slice?.offset ?? 0
   const rowsLength = slice?.rows.length ?? 0
   const prePadding = Array.from({ length: Math.min(padding, offset) }, () => [])
-  const postPadding = Array.from({
-    length: Math.min(padding, data.numRows - offset - rowsLength),
-  }, () => [])
+  const postPadding = Array.from({ length: Math.min(padding, numRows - offset - rowsLength) }, () => [])
 
   // minimum left column width based on number of rows - it depends on CSS, so it's
   // only a bottom limit
   const rowHeaderWidth = useMemo(() => {
-    return Math.ceil(Math.log10(data.numRows + 1)) * 4 + 22
-  }, [data.numRows])
+    return Math.ceil(Math.log10(numRows + 1)) * 4 + 22
+  }, [numRows])
   const cornerStyle = useMemo(() => {
     return leftCellStyle(rowHeaderWidth)
   }, [rowHeaderWidth])
@@ -434,7 +450,7 @@ export function HighTableInner({
   if (!data.header.length) return
 
   const ariaColCount = data.header.length + 1 // don't forget the selection column
-  const ariaRowCount = data.numRows + 1 // don't forget the header row
+  const ariaRowCount = numRows + 1 // don't forget the header row
   return (
     <div className={`${styles.hightable} ${styled ? styles.styled : ''} ${className}`}>
       <div className={styles.tableScroll} ref={scrollRef} role="group" aria-labelledby="caption" style={tableScrollStyle}>
