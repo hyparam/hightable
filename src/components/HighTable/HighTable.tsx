@@ -335,6 +335,7 @@ export default function HighTable({
                 // The data frame only has numRows, let's update the state
                 setNumRows(error.numRows)
               }
+              // TODO(SL): handle the error
             })
           }
         }
