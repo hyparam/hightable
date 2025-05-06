@@ -114,7 +114,7 @@ export function HighTableInner({
   const [slice, setSlice] = useState<Slice | undefined>(undefined)
   const [rowsRange, setRowsRange] = useState({ start: 0, end: 0 })
   const [hasCompleteRow, setHasCompleteRow] = useState(false)
-  const { onKeyDown, rowIndex, colIndex } = useCellsNavigation()
+  const { shouldFocus, onTableKeyDown, onScrollKeyDown, rowIndex, colIndex } = useCellsNavigation()
   const [lastCellPosition, setLastCellPosition] = useState({ rowIndex, colIndex })
   const [numRows, setNumRows] = useState(data.numRows)
 
@@ -239,7 +239,7 @@ export function HighTableInner({
       // don't scroll if the slice is not ready
       return
     }
-    if (lastCellPosition.rowIndex === rowIndex && lastCellPosition.colIndex === colIndex) {
+    if (!shouldFocus && lastCellPosition.rowIndex === rowIndex && lastCellPosition.colIndex === colIndex) {
       // don't scroll if the navigation cell is unchanged
       // occurs when the user is scrolling with the mouse for example, and the
       // cell exits the viewport: don't want to scroll back to it
@@ -262,7 +262,7 @@ export function HighTableInner({
       // scroll to the cell
       scroller.scrollTop = nextScrollTop
     }
-  }, [rowIndex, colIndex, slice, lastCellPosition, padding])
+  }, [rowIndex, colIndex, slice, lastCellPosition, padding, shouldFocus])
 
   // handle scrolling and window resizing
   useEffect(() => {
@@ -453,7 +453,7 @@ export function HighTableInner({
   const ariaRowCount = numRows + 1 // don't forget the header row
   return (
     <div className={`${styles.hightable} ${styled ? styles.styled : ''} ${className}`}>
-      <div className={styles.tableScroll} ref={scrollRef} role="group" aria-labelledby="caption" style={tableScrollStyle}>
+      <div className={styles.tableScroll} ref={scrollRef} role="group" aria-labelledby="caption" style={tableScrollStyle} onKeyDown={onScrollKeyDown} tabIndex={0}>
         <div style={{ height: `${scrollHeight}px` }}>
           <table
             aria-readonly={true}
@@ -462,7 +462,7 @@ export function HighTableInner({
             aria-multiselectable={showSelectionControls}
             role='grid'
             style={{ top: `${offsetTop}px` }}
-            onKeyDown={onKeyDown}
+            onKeyDown={onTableKeyDown}
           >
             <caption id="caption" hidden>Virtual-scroll table</caption>
             <thead role="rowgroup">
