@@ -114,7 +114,7 @@ export function HighTableInner({
   const [slice, setSlice] = useState<Slice | undefined>(undefined)
   const [rowsRange, setRowsRange] = useState({ start: 0, end: 0 })
   const [hasCompleteRow, setHasCompleteRow] = useState(false)
-  const { shouldFocus, onTableKeyDown, onScrollKeyDown, rowIndex, colIndex } = useCellsNavigation()
+  const { enterCellsNavigation, setEnterCellsNavigation, onTableKeyDown, onScrollKeyDown, rowIndex, colIndex } = useCellsNavigation()
   const [lastCellPosition, setLastCellPosition] = useState({ rowIndex, colIndex })
   const [numRows, setNumRows] = useState(data.numRows)
 
@@ -239,12 +239,13 @@ export function HighTableInner({
       // don't scroll if the slice is not ready
       return
     }
-    if (!shouldFocus && lastCellPosition.rowIndex === rowIndex && lastCellPosition.colIndex === colIndex) {
+    if (!enterCellsNavigation && lastCellPosition.rowIndex === rowIndex && lastCellPosition.colIndex === colIndex) {
       // don't scroll if the navigation cell is unchanged
       // occurs when the user is scrolling with the mouse for example, and the
       // cell exits the viewport: don't want to scroll back to it
       return
     }
+    setEnterCellsNavigation?.(false)
     setLastCellPosition({ rowIndex, colIndex })
     const tableIndex = rowIndex - ariaOffset
     const scroller = scrollRef.current
@@ -262,7 +263,7 @@ export function HighTableInner({
       // scroll to the cell
       scroller.scrollTop = nextScrollTop
     }
-  }, [rowIndex, colIndex, slice, lastCellPosition, padding, shouldFocus])
+  }, [rowIndex, colIndex, slice, lastCellPosition, padding, enterCellsNavigation, setEnterCellsNavigation])
 
   // handle scrolling and window resizing
   useEffect(() => {
