@@ -1,5 +1,5 @@
 import { MouseEvent, useCallback, useMemo } from 'react'
-import { OrderBy, partitionOrderBy, Direction } from '../../helpers/sort.js'
+import { Direction, OrderBy, partitionOrderBy } from '../../helpers/sort.js'
 import ColumnHeader from '../ColumnHeader/ColumnHeader.js'
 
 interface TableProps {
@@ -32,18 +32,18 @@ export default function TableHeader({
   const getOnOrderByClick = useCallback(
     (columnHeader: string) => {
       if (!onOrderByChange || !orderBy) return undefined
-      
+
       return (e: MouseEvent & { sortDirection?: Direction } ) => {
         // Check if we have an explicit sort direction from the menu
-        const sortDirection = e.sortDirection
-        
+        const { sortDirection } = e
+
         // If the sort direction is undefined, it means the header was clicked
         if (sortDirection !== undefined) {
           // This branch handles sort actions coming from the column menu
           // The menu explicitly passes 'ascending', 'descending', or null
           // as opposed to header clicks which don't specify a direction (undefined)
           const { prefix, suffix } = partitionOrderBy(orderBy, columnHeader)
-          
+
           if (sortDirection === null) {
             // User selected "Clear sort" from the column menu
             // This removes the column from the sort criteria entirely
@@ -57,9 +57,9 @@ export default function TableHeader({
           // This branch handles direct column header clicks (not from menu)
           // Implements the cycling behavior: none → ascending → descending → none
           const { prefix, item, suffix } = partitionOrderBy(orderBy, columnHeader)
-          
-          if (item && prefix.length === 0) {
-            // Column is already the primary sort - cycle through directions
+
+          if (item) {
+            // Column is already in the sort - cycle through directions
             if (item.direction === 'ascending') {
               // ascending -> descending
               onOrderByChange([{ column: columnHeader, direction: 'descending' }, ...suffix])
@@ -68,7 +68,7 @@ export default function TableHeader({
               onOrderByChange([...suffix])
             }
           } else {
-            // Column is not primary sort - make it primary with ascending direction
+            // Column is not in sort - make it primary with ascending direction
             onOrderByChange([{ column: columnHeader, direction: 'ascending' }, ...prefix, ...suffix])
           }
         }

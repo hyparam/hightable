@@ -1,4 +1,4 @@
-import { useCallback, useRef, useEffect } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { Direction } from '../../helpers/sort.js'
 import styles from './ColumnMenu.module.css'
@@ -59,7 +59,7 @@ export default function ColumnMenu({
 
   useEffect(() => {
     if (isVisible) {
-      const handleClickOutside = (event: MouseEvent) => {
+      function handleClickOutside(event: MouseEvent) {
         if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
           onClose()
         }
@@ -91,12 +91,12 @@ export default function ColumnMenu({
         <li className={styles.columnMenuItem} onClick={handleHideColumn}>
           Hide column
         </li>
-        {hasHiddenColumns && (
+        {hasHiddenColumns &&
           <li className={styles.columnMenuItem} onClick={handleShowAllColumns}>
             Show all columns
           </li>
-        )}
-        {sortable && (
+        }
+        {sortable &&
           <>
             <div className={styles.columnMenuDivider} />
             <li
@@ -111,13 +111,13 @@ export default function ColumnMenu({
             >
               Sort descending
             </li>
-            {direction && (
+            {direction &&
               <li className={styles.columnMenuItem} onClick={handleRemoveSort}>
                 Clear sort
               </li>
-            )}
+            }
           </>
-        )}
+        }
         {/* Future menu items can be added here */}
         {/* <li className={styles.columnMenuItem}>
           Show histogram

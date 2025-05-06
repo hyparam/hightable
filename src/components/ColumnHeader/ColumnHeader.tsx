@@ -113,7 +113,7 @@ export default function ColumnHeader({
   // Close menu when clicking outside
   useEffect(() => {
     if (showMenu) {
-      const handleClickOutside = () => {
+      function handleClickOutside() {
         setShowMenu(false)
       }
 
@@ -140,13 +140,13 @@ export default function ColumnHeader({
   const handleSort = useCallback((_colIndex: number, sortDirection: Direction | null) => {
     if (onClick) {
       // Create a synthetic event with sort direction for TableHeader
-      const event = {} as MouseEvent & { sortDirection: typeof sortDirection };
-      event.sortDirection = sortDirection;
-      onClick(event);
+      const event = {} as MouseEvent & { sortDirection: typeof sortDirection }
+      event.sortDirection = sortDirection
+      onClick(event)
     }
-  }, [onClick]);
+  }, [onClick])
 
-  const renderColumnMenu = useCallback(() => {
+  function renderColumnMenu() {
     return (
       <ColumnMenu
         column={description}
@@ -161,20 +161,8 @@ export default function ColumnHeader({
         position={menuPosition}
         onClose={closeMenu}
       />
-    );
-  }, [
-    description, 
-    columnIndex, 
-    onHideColumn, 
-    onShowAllColumns, 
-    hasHiddenColumns, 
-    sortable, 
-    direction, 
-    handleSort, 
-    showMenu, 
-    menuPosition, 
-    closeMenu
-  ]);
+    )
+  }
 
   return (
     <>
@@ -194,7 +182,7 @@ export default function ColumnHeader({
         onContextMenu={handleContextMenu}
         style={{ ...columnStyle, position: 'relative' }}
         className={className}
-        aria-label={title || columnName}
+        aria-label={title ?? columnName}
       >
         <span className={styles.headerText}>
           {children}

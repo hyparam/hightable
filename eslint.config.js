@@ -20,7 +20,6 @@ export default typescript.config(
     plugins: {
       react,
       'react-hooks': reactHooks,
-      prettier: prettierPlugin, 
     },
     rules: {
       ...react.configs.recommended.rules,
@@ -102,7 +101,6 @@ export default typescript.config(
   {
     extends: [
       ...storybook.configs['flat/recommended'],
-      ...prettierConfig,
     ],
     files: ['**/*.stories.tsx'],
   }

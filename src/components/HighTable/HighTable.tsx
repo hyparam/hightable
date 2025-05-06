@@ -93,17 +93,17 @@ export default function HighTable({
   const [slice, setSlice] = useState<Slice | undefined>(undefined)
   const [rowsRange, setRowsRange] = useState({ start: 0, end: 0 })
   const [hasCompleteRow, setHasCompleteRow] = useState(false)
-  
+
   // Add state for tracking hidden columns
   const [hiddenColumns, setHiddenColumns] = useState<number[]>([])
 
   // Create a filtered header based on hidden columns
-  const visibleHeader = useMemo(() => 
+  const visibleHeader = useMemo(() =>
     data.header.filter((_, index) => !hiddenColumns.includes(index)),
   [data.header, hiddenColumns])
 
   // Replace the unused visibleColumnClassNames with a more useful function
-  const isColumnVisible = useCallback((index: number) => 
+  const isColumnVisible = useCallback((index: number) =>
     !hiddenColumns.includes(index),
   [hiddenColumns])
 
@@ -395,7 +395,7 @@ export default function HighTable({
   // We use map/filter/map to preserve original column indexes after filtering:
   // 1. First map: Annotate each column with its original index
   // 2. Filter: Remove hidden columns while keeping original index information
-  // 3. During render: Use the preserved originalIndex to access properties that 
+  // 3. During render: Use the preserved originalIndex to access properties that
   //    depend on the column's position in the original array (CSS classes, event handlers, etc.)
   const visibleColumns = useMemo(
     () =>
