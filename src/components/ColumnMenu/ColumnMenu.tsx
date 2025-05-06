@@ -33,35 +33,27 @@ export default function ColumnMenu({
   const menuRef = useRef<HTMLDivElement>(null)
 
   const handleHideColumn = useCallback(() => {
-    if (onHideColumn) {
-      onHideColumn(columnIndex)
-    }
+    onHideColumn?.(columnIndex)
     onClose()
   }, [columnIndex, onHideColumn, onClose])
 
   const handleShowAllColumns = useCallback(() => {
-    if (onShowAllColumns) {
-      onShowAllColumns()
-    }
+    onShowAllColumns?.()
     onClose()
   }, [onShowAllColumns, onClose])
 
   const handleSortAscending = useCallback(() => {
-    if (onSort) {
-      onSort(columnIndex, 'ascending')
-    }
+    onSort?.(columnIndex, 'ascending')
     onClose()
   }, [columnIndex, onSort, onClose])
 
   const handleSortDescending = useCallback(() => {
-    if (onSort) {
-      onSort(columnIndex, 'descending')
-    }
+    onSort?.(columnIndex, 'descending')
     onClose()
   }, [columnIndex, onSort, onClose])
 
   const handleRemoveSort = useCallback(() => {
-    onSort.?(columnIndex, null)
+    onSort?.(columnIndex, null)
     onClose()
   }, [columnIndex, onSort, onClose])
 

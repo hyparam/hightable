@@ -35,35 +35,41 @@ export default function TableHeader({
       
       return (e: MouseEvent & { sortDirection?: Direction } ) => {
         // Check if we have an explicit sort direction from the menu
-        const sortDirection = e.sortDirection;
+        const sortDirection = e.sortDirection
         
+        // If the sort direction is undefined, it means the header was clicked
         if (sortDirection !== undefined) {
-          // Handle explicit sort directions from the menu
-          const { prefix, suffix } = partitionOrderBy(orderBy, columnHeader);
+          // This branch handles sort actions coming from the column menu
+          // The menu explicitly passes 'ascending', 'descending', or null
+          // as opposed to header clicks which don't specify a direction (undefined)
+          const { prefix, suffix } = partitionOrderBy(orderBy, columnHeader)
           
           if (sortDirection === null) {
-            // Clear sort
-            onOrderByChange([...prefix, ...suffix]);
+            // User selected "Clear sort" from the column menu
+            // This removes the column from the sort criteria entirely
+            onOrderByChange([...prefix, ...suffix])
           } else {
-            // Apply specific sort direction
-            onOrderByChange([{ column: columnHeader, direction: sortDirection }, ...prefix, ...suffix]);
+            // User selected either "Sort ascending" or "Sort descending" from the menu
+            // Apply the exact sort direction that was requested
+            onOrderByChange([{ column: columnHeader, direction: sortDirection }, ...prefix, ...suffix])
           }
         } else {
-          // Regular click toggles through the sort states (legacy behavior)
-          const { prefix, item, suffix } = partitionOrderBy(orderBy, columnHeader);
+          // This branch handles direct column header clicks (not from menu)
+          // Implements the cycling behavior: none → ascending → descending → none
+          const { prefix, item, suffix } = partitionOrderBy(orderBy, columnHeader)
           
           if (item && prefix.length === 0) {
             // Column is already the primary sort - cycle through directions
             if (item.direction === 'ascending') {
               // ascending -> descending
-              onOrderByChange([{ column: columnHeader, direction: 'descending' }, ...suffix]);
+              onOrderByChange([{ column: columnHeader, direction: 'descending' }, ...suffix])
             } else {
               // descending -> none
-              onOrderByChange([...suffix]);
+              onOrderByChange([...suffix])
             }
           } else {
             // Column is not primary sort - make it primary with ascending direction
-            onOrderByChange([{ column: columnHeader, direction: 'ascending' }, ...prefix, ...suffix]);
+            onOrderByChange([{ column: columnHeader, direction: 'ascending' }, ...prefix, ...suffix])
           }
         }
       }

@@ -126,6 +126,7 @@ export default function ColumnHeader({
 
   // Handle menu button click
   const handleMenuButtonClick = useCallback((e: MouseEvent) => {
+    e.stopPropagation()
     const rect = ref.current?.getBoundingClientRect()
     if (rect) {
       setMenuPosition({
@@ -135,6 +136,45 @@ export default function ColumnHeader({
       setShowMenu(true)
     }
   }, [])
+
+  const handleSort = useCallback((_colIndex: number, sortDirection: Direction | null) => {
+    if (onClick) {
+      // Create a synthetic event with sort direction for TableHeader
+      const event = {} as MouseEvent & { sortDirection: typeof sortDirection };
+      event.sortDirection = sortDirection;
+      onClick(event);
+    }
+  }, [onClick]);
+
+  const renderColumnMenu = useCallback(() => {
+    return (
+      <ColumnMenu
+        column={description}
+        columnIndex={columnIndex}
+        onHideColumn={onHideColumn}
+        onShowAllColumns={onShowAllColumns}
+        hasHiddenColumns={hasHiddenColumns}
+        sortable={sortable}
+        direction={direction}
+        onSort={handleSort}
+        isVisible={showMenu}
+        position={menuPosition}
+        onClose={closeMenu}
+      />
+    );
+  }, [
+    description, 
+    columnIndex, 
+    onHideColumn, 
+    onShowAllColumns, 
+    hasHiddenColumns, 
+    sortable, 
+    direction, 
+    handleSort, 
+    showMenu, 
+    menuPosition, 
+    closeMenu
+  ]);
 
   return (
     <>
@@ -162,26 +202,8 @@ export default function ColumnHeader({
         <ColumnMenuButton onClick={handleMenuButtonClick} />
         <ColumnResizer setWidth={setWidth} onDoubleClick={autoResize} width={width} />
       </th>
-      <ColumnMenu
-        column={description}
-        columnIndex={columnIndex}
-        onHideColumn={onHideColumn}
-        onShowAllColumns={onShowAllColumns}
-        hasHiddenColumns={hasHiddenColumns}
-        sortable={sortable}
-        direction={direction}
-        onSort={(_colIndex, sortDirection) => {
-          if (onClick) {
-            // Create a synthetic event with sort direction for TableHeader
-            const event = {} as MouseEvent & { sortDirection: typeof sortDirection };
-            event.sortDirection = sortDirection;
-            onClick(event);
-          }
-        }}
-        isVisible={showMenu}
-        position={menuPosition}
-        onClose={closeMenu}
-      />
+      {/* ColumnMenu is rendered via portal to document.body */}
+      {renderColumnMenu()}
     </>
   )
 }

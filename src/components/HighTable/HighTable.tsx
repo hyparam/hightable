@@ -392,11 +392,25 @@ export default function HighTable({
     return leftCellStyle(minWidth)
   }, [data.numRows])
 
+  // We use map/filter/map to preserve original column indexes after filtering:
+  // 1. First map: Annotate each column with its original index
+  // 2. Filter: Remove hidden columns while keeping original index information
+  // 3. During render: Use the preserved originalIndex to access properties that 
+  //    depend on the column's position in the original array (CSS classes, event handlers, etc.)
+  const visibleColumns = useMemo(
+    () =>
+      data.header
+        .map((column, index) => ({ column, originalIndex: index }))
+        .filter(({ originalIndex }) => isColumnVisible(originalIndex)),
+    [data.header, isColumnVisible]
+  )
+
   // don't render table if header is empty
   if (!data.header.length) return
 
   const ariaColCount = visibleHeader.length + 1 // don't forget the selection column
   const ariaRowCount = data.numRows + 1 // don't forget the header row
+
   return <ColumnWidthProvider localStorageKey={cacheKey ? `${cacheKey}:column-widths` : undefined}>
     <div className={`${styles.hightable} ${styled ? styles.styled : ''} ${className}`}>
       <div className={styles.tableScroll} ref={scrollRef} role="group" aria-labelledby="caption">
@@ -462,25 +476,21 @@ export default function HighTable({
                       showCheckBox={showSelection}
                       ariaColIndex={1}
                     >{formatRowNumber(dataIndex)}</RowHeader>
-                    {data.header
-                      .map((column, index) => ({ column, index }))
-                      .filter(({ index }) => isColumnVisible(index))
-                      .map(({ column, index: columnIndex }) => {
-                        // Note: the resolved cell value can be undefined
-                        const hasResolved = column in row.cells
-                        const value = row.cells[column]
-                        return <Cell
-                          key={columnIndex}
-                          onDoubleClick={getOnDoubleClickCell(columnIndex, dataIndex)}
-                          onMouseDown={getOnMouseDownCell(columnIndex, dataIndex)}
-                          stringify={stringify}
-                          value={value}
-                          columnIndex={columnIndex}
-                          hasResolved={hasResolved}
-                          className={columnClassNames[columnIndex]}
-                          ariaColIndex={columnIndex + 2}
-                        />
-                      })}
+                    {visibleColumns.map(({ column, originalIndex }) => {
+                      const hasResolved = column in row.cells
+                      const value = row.cells[column]
+                      return <Cell
+                        key={originalIndex}
+                        onDoubleClick={getOnDoubleClickCell(originalIndex, dataIndex)}
+                        onMouseDown={getOnMouseDownCell(originalIndex, dataIndex)}
+                        stringify={stringify}
+                        value={value}
+                        columnIndex={originalIndex}
+                        hasResolved={hasResolved}
+                        className={columnClassNames[originalIndex]}
+                        ariaColIndex={originalIndex + 2}
+                      />
+                    })}
                   </Row>
                 )
               })}
