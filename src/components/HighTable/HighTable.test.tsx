@@ -733,4 +733,23 @@ describe('Navigating Hightable with the keyboard', () => {
       expect(getFocusCoordinates()).toEqual({ rowIndex: expectedRowIndex, colIndex: expectedColIndex })
     })
   })
+
+  describe('When a header cell is focused', () => {
+    it('the column resizer and the header cell are focusable', async () => {
+      const { user } = render(<HighTable data={data} />)
+      // go to the header cell (ID)
+      await user.keyboard('{Tab}{ArrowRight}')
+      const cell = document.activeElement
+      // Tab focuses the column resizer
+      await user.keyboard('{Tab}')
+      const focusedElement = document.activeElement
+      if (!focusedElement) {
+        throw new Error('Focused element not found')
+      }
+      expect(focusedElement.getAttribute('role')).toBe('separator')
+      // Shift+Tab focuses the header cell again
+      await user.keyboard('{Shift>}{Tab}{/Shift}')
+      expect(document.activeElement).toBe(cell)
+    })
+  })
 })
