@@ -1,4 +1,4 @@
-import { CSSProperties, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { CSSProperties, KeyboardEvent, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DataFrame } from '../../helpers/dataframe.js'
 import { PartialRow } from '../../helpers/row.js'
 import { Selection, areAllSelected, isSelected, toggleAll, toggleIndexInSelection, toggleRangeInSelection, toggleRangeInTable } from '../../helpers/selection.js'
@@ -447,6 +447,13 @@ export function HighTableInner({
       '--row-number-width': `${rowHeaderWidth}px`,
     } as CSSProperties
   }, [rowHeaderWidth])
+  const restrictedOnScrollKeyDown = useCallback((event: KeyboardEvent) => {
+    if (event.target !== scrollRef.current) {
+      // don't handle the event if the target is not the scroller
+      return
+    }
+    onScrollKeyDown?.(event)
+  }, [onScrollKeyDown])
 
   // don't render table if header is empty
   if (!data.header.length) return
@@ -455,7 +462,7 @@ export function HighTableInner({
   const ariaRowCount = numRows + 1 // don't forget the header row
   return (
     <div className={`${styles.hightable} ${styled ? styles.styled : ''} ${className}`}>
-      <div className={styles.tableScroll} ref={scrollRef} role="group" aria-labelledby="caption" style={tableScrollStyle} onKeyDown={onScrollKeyDown} tabIndex={0}>
+      <div className={styles.tableScroll} ref={scrollRef} role="group" aria-labelledby="caption" style={tableScrollStyle} onKeyDown={restrictedOnScrollKeyDown} tabIndex={0}>
         <div style={{ height: `${scrollHeight}px` }}>
           <table
             aria-readonly={true}

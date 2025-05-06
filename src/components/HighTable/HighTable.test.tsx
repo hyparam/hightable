@@ -659,6 +659,18 @@ describe('Navigating Hightable with the keyboard', () => {
       await user.keyboard(key)
       expect(document.activeElement).toBe(scrollableDiv)
     })
+    it('pressing "Tab", then "Tab", then "Shift+Tab", then "Shift+Tab" moves the focus back to the scrollable div', async () => {
+      const { user, getByLabelText } = render(<HighTable data={data} />)
+      const scrollableDiv = getByLabelText('Virtual-scroll table')
+      await user.keyboard('{Tab}')
+      expect(document.activeElement).not.toBe(scrollableDiv)
+      await user.keyboard('{Tab}')
+      expect(document.activeElement).not.toBe(scrollableDiv)
+      await user.keyboard('{Shift>}{Tab}{/Shift}')
+      expect(document.activeElement).not.toBe(scrollableDiv)
+      await user.keyboard('{Shift>}{Tab}{/Shift}')
+      expect(document.activeElement).toBe(scrollableDiv)
+    })
   })
 
   function getFocusCoordinates() {
