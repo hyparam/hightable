@@ -73,6 +73,38 @@ const dataWithUndefinedCells: DataFrame = {
   }),
 }
 
+const filteredData: DataFrame = rowCache(sortableDataFrame({
+  header: ['ID', 'Count', 'Value1', 'Value2'],
+  numRows: 100,
+  // only the first 15 rows are valid, the rest are deleted
+  rows: ({ start, end }) => Array.from({ length: end - start }, (_, index) => {
+    if (index < 15) {
+      const id = `row ${index + start}`
+      const count = 1000 - start - index
+      return {
+        index: wrapResolved(index + start),
+        cells: {
+          ID: wrapResolved(id),
+          Count: wrapResolved(count),
+          Value1: wrapResolved(Math.floor(100 * random(135 + index))),
+          Value2: wrapResolved(Math.floor(100 * random(648 + index))),
+        },
+      }
+    } else {
+      const error = { numRows: 15 }
+      return {
+        index: wrapPromise<number>(Promise.reject(error)),
+        cells: {
+          ID: wrapPromise<string>(Promise.reject(error)),
+          Count: wrapPromise<number>(Promise.reject(error)),
+          Value1: wrapPromise<number>(Promise.reject(error)),
+          Value2: wrapPromise<number>(Promise.reject(error)),
+        },
+      }
+    }
+  }),
+}))
+
 const meta: Meta<typeof HighTable> = {
   component: HighTable,
 }
@@ -122,5 +154,10 @@ export const CustomHeaderStyle: Story = {
     // }
     className: 'custom-hightable',
     columnClassNames: [undefined, undefined, 'delegated'],
+  },
+}
+export const FilteredRows: Story = {
+  args: {
+    data: filteredData,
   },
 }
