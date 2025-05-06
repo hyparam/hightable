@@ -115,6 +115,17 @@ describe('HighTable', () => {
     expect(mockMiddleClick).toHaveBeenCalledWith(expect.anything(), 1, 0)
   })
 
+  it('correctly handles key down on cell', async () => {
+    const mockKeyDown = vi.fn()
+    const { user, findByText } = render(<HighTable data={mockData} onKeyDownCell={mockKeyDown} />)
+    const cell = await findByText('Name 0')
+    cell.focus()
+
+    await user.keyboard('{Enter}')
+
+    expect(mockKeyDown).toHaveBeenCalledWith(expect.anything(), 1, 0)
+  })
+
   it('displays error when data fetch fails', async () => {
     const mockOnError = vi.fn()
     mockData.rows.mockRejectedValueOnce(new Error('Failed to fetch data'))
