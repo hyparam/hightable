@@ -616,3 +616,46 @@ describe('HighTable localstorage', () => {
     expect(header.style.maxWidth).toEqual(`${initialWidth}px`)
   })
 })
+
+describe('Navigating Hightable with the keyboard', () => {
+  describe('On mount, the scrollable div', () => {
+    it('is focused by default', () => {
+      const { queryByLabelText } = render(<HighTable data={data} />)
+      const scrollableDiv = queryByLabelText('Virtual-scroll table')
+      expect(scrollableDiv).toBeDefined()
+      expect(document.activeElement).toBe(scrollableDiv)
+    })
+    it('is not focused if focus prop is false', () => {
+      const { queryByLabelText } = render(<HighTable data={data} focus={false} />)
+      const scrollableDiv = queryByLabelText('Virtual-scroll table')
+      expect(scrollableDiv).toBeDefined()
+      expect(document.activeElement).not.toBe(scrollableDiv)
+    })
+  })
+
+  describe('When the scrollable div is focused', () => {
+    it.for(['{Tab}', '{ }', '{Enter}'])('moves the focus to the first cell when pressing "%s"', async (key) => {
+      const { user } = render(<HighTable data={data} />)
+      await user.keyboard(key)
+      const focusedElement = document.activeElement
+      expect(focusedElement).toBeDefined()
+      if (!focusedElement) {
+        throw new Error('Focused element not found')
+      }
+      expect(focusedElement.getAttribute('aria-colindex')).toBe('1')
+      expect(focusedElement.closest('[role="row"]')?.getAttribute('aria-rowindex')).toBe('1')
+    })
+    it.for(['{Shift>}{Tab}{/Shift}'])('moves the focus outside of the table when pressing "%s"', async (key) => {
+      const { user } = render(<HighTable data={data} />)
+      await user.keyboard(key)
+      const focusedElement = document.activeElement
+      expect(focusedElement?.localName).toBe('body')
+    })
+    it.for(['{ArrowUp}', '{ArrowDown}', '{ArrowLeft}', '{ArrowRight}'])('scroll while keeping the focus on the scrollable div when pressing "%s"', async (key) => {
+      const { user, getByLabelText } = render(<HighTable data={data} />)
+      const scrollableDiv = getByLabelText('Virtual-scroll table')
+      await user.keyboard(key)
+      expect(document.activeElement).toBe(scrollableDiv)
+    })
+  })
+})
