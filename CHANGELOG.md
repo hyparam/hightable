@@ -1,6 +1,17 @@
 # CHANGELOG
 
-## [Unreleased](https://github.com/hyparam/hightable/compare/v0.15.2...HEAD)
+## [Unreleased](https://github.com/hyparam/hightable/compare/v0.15.3...HEAD)
+
+## [0.15.3](https://github.com/hyparam/hightable/compare/v0.15.2...v0.15.3) - 2025-05-06
+
+### Added
+
+- handle unknown number of rows (iceberg, filtered data) ([#149](https://github.com/hyparam/hightable/pull/149)).
+
+### Refactored
+
+- updated dev dependencies ([#148](https://github.com/hyparam/hightable/pull/148)).
+- fix a storybook story by caching the rows ([#145](https://github.com/hyparam/hightable/pull/145)).
 
 ## [0.15.2](https://github.com/hyparam/hightable/compare/v0.15.1...v0.15.2) - 2025-04-29
 
