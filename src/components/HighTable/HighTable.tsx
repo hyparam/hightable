@@ -49,6 +49,7 @@ interface Props {
 }
 
 const defaultPadding = 20
+const defaultOverscan = 20
 const ariaOffset = 2 // 1-based index, +1 for the header
 
 /**
@@ -79,7 +80,7 @@ export default function HighTable(props: Props) {
  */
 export function HighTableInner({
   data,
-  overscan = 20,
+  overscan = defaultOverscan,
   padding = defaultPadding,
   focus = true,
   orderBy: propOrderBy,
