@@ -144,4 +144,13 @@ describe('ColumnHeader', () => {
     await user.click(header)
     expect(onClick).toHaveBeenCalled()
   })
+
+  it.for(['{ }', '{Enter}'])('call onClick (eg. to change orderBy) when pressing "%s" while the header is focused', async (key) => {
+    const onClick = vi.fn()
+    const { user, getByRole } = render(<table><thead><tr><ColumnHeader columnName="test" {...defaultProps} onClick={onClick} /></tr></thead></table>)
+    const header = getByRole('columnheader')
+    header.focus()
+    await user.keyboard(key)
+    expect(onClick).toHaveBeenCalled()
+  })
 })

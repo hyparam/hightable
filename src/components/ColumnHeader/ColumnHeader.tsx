@@ -1,4 +1,4 @@
-import { ReactNode, useCallback, useEffect, useMemo, useRef } from 'react'
+import { KeyboardEvent, ReactNode, useCallback, useEffect, useMemo, useRef } from 'react'
 import { flushSync } from 'react-dom'
 import { Direction } from '../../helpers/sort.js'
 import { measureWidth } from '../../helpers/width.js'
