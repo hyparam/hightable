@@ -17,6 +17,7 @@ describe('ColumnMenu', () => {
     position: { x: 100, y: 100 },
     onClose: vi.fn(),
     isVisible: true,
+    visibleHeader: ['Column 1', 'Column 2', 'Column 3'],
   }
 
   beforeEach(() => {
@@ -46,6 +47,15 @@ describe('ColumnMenu', () => {
 
     expect(onHideColumn).toHaveBeenCalledWith(defaultProps.columnIndex)
     expect(defaultProps.onClose).toHaveBeenCalled()
+  })
+
+  it('disables hide column when it is the last visible column', () => {
+    const { getByText } = render(
+      <ColumnMenu {...defaultProps} visibleHeader={['Last Column']} />
+    )
+
+    const hideColumnItem = getByText('Hide column').closest('[role="menuitem"]')
+    expect(hideColumnItem?.getAttribute('aria-disabled')).toBe('true')
   })
 
   it('shows "Show all columns" when hasHiddenColumns is true', () => {

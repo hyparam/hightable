@@ -22,6 +22,7 @@ interface Props {
   orderByIndex?: number // index of the column in the orderBy array (0-based)
   orderBySize?: number // size of the orderBy array
   className?: string // optional class name
+  visibleHeader?: string[] // list of visible column headers
 }
 
 export default function ColumnHeader({
@@ -39,6 +40,7 @@ export default function ColumnHeader({
   className,
   children,
   title,
+  visibleHeader = [],
 }: Props) {
   const ref = useRef<HTMLTableCellElement>(null)
   const [showMenu, setShowMenu] = useState(false)
@@ -159,6 +161,7 @@ export default function ColumnHeader({
         isVisible={showMenu}
         position={menuPosition}
         onClose={closeMenu}
+        visibleHeader={visibleHeader}
       />
     )
   }

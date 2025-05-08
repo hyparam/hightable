@@ -114,6 +114,8 @@ export default function HighTable({
     const columnName = visibleHeader[columnIndex]
     if (columnName === undefined) return
     const originalIndex = data.header.indexOf(columnName)
+    // Don't hide if this would be the last visible column
+    if (visibleHeader.length <= 1) return
     setHiddenColumns(prev => [...prev, originalIndex])
   }, [data.header, visibleHeader])
 
@@ -463,6 +465,7 @@ export default function HighTable({
                   onHideColumn={handleHideColumn}
                   onShowAllColumns={handleShowAllColumns}
                   hasHiddenColumns={hiddenColumns.length > 0}
+                  hiddenColumns={hiddenColumns}
                 />
               </Row>
             </thead>

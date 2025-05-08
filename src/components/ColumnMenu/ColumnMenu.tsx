@@ -14,6 +14,7 @@ interface ColumnMenuProps {
   isVisible?: boolean
   position: { x: number; y: number }
   onClose: () => void
+  visibleHeader?: string[]
 }
 
 export default function ColumnMenu({
@@ -28,13 +29,15 @@ export default function ColumnMenu({
   isVisible = false,
   position,
   onClose,
+  visibleHeader = [],
 }: ColumnMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null)
 
   const handleHideColumn = useCallback(() => {
+    if (visibleHeader.length <= 1) return
     onHideColumn?.(columnIndex)
     onClose()
-  }, [columnIndex, onHideColumn, onClose])
+  }, [columnIndex, onHideColumn, onClose, visibleHeader.length])
 
   const handleShowAllColumns = useCallback(() => {
     onShowAllColumns?.()
@@ -91,7 +94,13 @@ export default function ColumnMenu({
       <div role="presentation">{column}</div>
       <hr role="separator" />
       <ul role="group" aria-label="Column actions">
-        <li role="menuitem" aria-haspopup="false" onClick={handleHideColumn}>
+        <li
+          role="menuitem"
+          aria-haspopup="false"
+          onClick={handleHideColumn}
+          aria-disabled={visibleHeader.length <= 1}
+          style={{ opacity: visibleHeader.length <= 1 ? 0.5 : 1, cursor: visibleHeader.length <= 1 ? 'not-allowed' : 'pointer' }}
+        >
           Hide column
         </li>
         {hasHiddenColumns &&
