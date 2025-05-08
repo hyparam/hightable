@@ -56,7 +56,7 @@
     font-weight: bold;
     vertical-align: middle;
     line-height: 1;
-    transform: translateY(-1px);
+    transform: translateY(-3px);
   }
   th[aria-sort="ascending"]::after {
     content: "↓";
@@ -203,10 +203,14 @@
       border: none;
       border-bottom: 2px solid #c9c9c9;
       box-sizing: content-box;
-      color: #444;
+      color: #333;
       height: 20px;
       padding-top: 8px;
       top: -1px; /* fix 1px gap above thead */
+      white-space: nowrap;
+      width: calc(100% - 20px);
+      line-height: 1.5;
+      vertical-align: middle;
 
       &[aria-sort] {
         padding-right: calc(var(--cell-horizontal-padding) + 24px);
@@ -215,7 +219,7 @@
   }
 
   th[aria-sort]::after {
-    color: #706fb1;
+    color: inherit;
   }
 
   th[data-order-by-index="0"]::after {
@@ -240,6 +244,36 @@
     text-align: left;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  th > div[role="button"] {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    right: 8px;
+    top: 55%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    border-radius: 3px;
+    background-color: #f1f1f3;
+    z-index: 3;
+  }
+
+  th:hover > div[role="button"] {
+    background-color: #dbdbe5;
+    opacity: 1;
+  }
+
+  th > div[role="button"] > span {
+    font-size: 16px;
+    line-height: 1;
+    color: #444;
+    font-weight: bold;
   }
 
   /* row error */

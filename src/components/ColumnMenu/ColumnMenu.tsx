@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { Direction } from '../../helpers/sort.js'
-import styles from './ColumnMenu.module.css'
 
 interface ColumnMenuProps {
   column: string
@@ -74,10 +73,14 @@ export default function ColumnMenu({
 
   if (!isVisible) return null
 
+  console.log(document)
+
   return createPortal(
     <div
       ref={menuRef}
-      className={styles.columnMenu}
+      role="menu"
+      aria-label={`Column menu for ${column}`}
+      aria-orientation="vertical"
       style={{
         position: 'fixed',
         top: position.y,
@@ -85,45 +88,45 @@ export default function ColumnMenu({
         zIndex: 9999,
       }}
     >
-      <div className={styles.columnMenuHeader}>{column}</div>
-      <div className={styles.columnMenuDivider} />
-      <ul className={styles.columnMenuList}>
-        <li className={styles.columnMenuItem} onClick={handleHideColumn}>
+      <div role="presentation">{column}</div>
+      <hr role="separator" />
+      <ul role="group" aria-label="Column actions">
+        <li role="menuitem" aria-haspopup="false" onClick={handleHideColumn}>
           Hide column
         </li>
         {hasHiddenColumns &&
-          <li className={styles.columnMenuItem} onClick={handleShowAllColumns}>
+          <li role="menuitem" aria-haspopup="false" onClick={handleShowAllColumns}>
             Show all columns
           </li>
         }
         {sortable &&
           <>
-            <div className={styles.columnMenuDivider} />
+            <hr role="separator" />
             <li
-              className={`${styles.columnMenuItem} ${direction === 'ascending' ? styles.activeDirection : ''}`}
+              role="menuitem"
+              aria-haspopup="false"
+              aria-checked={direction === 'ascending'}
               onClick={handleSortAscending}
             >
               Sort ascending
             </li>
             <li
-              className={`${styles.columnMenuItem} ${direction === 'descending' ? styles.activeDirection : ''}`}
+              role="menuitem"
+              aria-haspopup="false"
+              aria-checked={direction === 'descending'}
               onClick={handleSortDescending}
             >
               Sort descending
             </li>
             {direction &&
-              <li className={styles.columnMenuItem} onClick={handleRemoveSort}>
+              <li role="menuitem" aria-haspopup="false" onClick={handleRemoveSort}>
                 Clear sort
               </li>
             }
           </>
         }
-        {/* Future menu items can be added here */}
-        {/* <li className={styles.columnMenuItem}>
-          Show histogram
-        </li> */}
       </ul>
     </div>,
-    document.body
+    document.querySelector('.hightable') ?? document.body
   )
 }
