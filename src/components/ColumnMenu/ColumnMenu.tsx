@@ -76,7 +76,6 @@ export default function ColumnMenu({
 
   if (!isVisible) return null
 
-  console.log(document)
 
   return createPortal(
     <div
