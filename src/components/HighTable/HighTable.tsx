@@ -110,8 +110,12 @@ export default function HighTable({
 
   // Handler for hiding a column
   const handleHideColumn = useCallback((columnIndex: number) => {
-    setHiddenColumns(prev => [...prev, columnIndex])
-  }, [])
+    // Get the original column index from the visible header
+    const columnName = visibleHeader[columnIndex]
+    if (columnName === undefined) return
+    const originalIndex = data.header.indexOf(columnName)
+    setHiddenColumns(prev => [...prev, originalIndex])
+  }, [data.header, visibleHeader])
 
   // Handler for showing all columns
   const handleShowAllColumns = useCallback(() => {
