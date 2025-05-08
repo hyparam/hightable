@@ -375,7 +375,7 @@ export default function HighTable({
     }
     // update
     void fetchRows()
-  }, [data, onError, orderBy, slice, rowsRange, hasCompleteRow])
+  }, [data, onError, orderBy, slice, rowsRange, hasCompleteRow, numRows])
 
   const getOnDoubleClickCell = useCallback((col: number, row?: number) => {
     // TODO(SL): give feedback (a specific class on the cell element?) about why the double click is disabled?
