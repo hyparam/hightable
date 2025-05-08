@@ -103,7 +103,6 @@ export default function HighTable({
     data.header.filter((_, index) => !hiddenColumns.includes(index)),
   [data.header, hiddenColumns])
 
-  // Replace the unused visibleColumnClassNames with a more useful function
   const isColumnVisible = useCallback((index: number) =>
     !hiddenColumns.includes(index),
   [hiddenColumns])
