@@ -110,6 +110,30 @@ describe('ColumnHeader', () => {
     expect(header.style.maxWidth).toEqual(`${savedWidth + delta}px`)
   })
 
+  it('stops event propagation when menu button is clicked', async () => {
+    const onClick = vi.fn()
+    const { user, getByRole } = render(
+      <ColumnWidthProvider localStorageKey={cacheKey}>
+        <table>
+          <thead>
+            <tr>
+              <ColumnHeader
+                columnName="test"
+                columnIndex={0}
+                onClick={onClick}
+              />
+            </tr>
+          </thead>
+        </table>
+      </ColumnWidthProvider>
+    )
+
+    const button = getByRole('button')
+    await user.click(button)
+
+    expect(onClick).not.toHaveBeenCalled()
+  })
+
   it('reloads column width when localStorageKey changes', () => {
     const cacheKey2 = 'key-2'
     const width1 = 150

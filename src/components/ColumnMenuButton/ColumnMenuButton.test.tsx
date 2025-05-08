@@ -21,21 +21,4 @@ describe('ColumnMenuButton', () => {
 
     expect(onClick).toHaveBeenCalledTimes(1)
   })
-
-  it('stops event propagation when clicked', async () => {
-    const onClick = vi.fn()
-    const containerClick = vi.fn()
-
-    const { user, getByRole } = render(
-      <div onClick={containerClick}>
-        <ColumnMenuButton onClick={onClick} />
-      </div>
-    )
-
-    const button = getByRole('button')
-    await user.click(button)
-
-    expect(onClick).toHaveBeenCalledTimes(1)
-    expect(containerClick).not.toHaveBeenCalled()
-  })
 })

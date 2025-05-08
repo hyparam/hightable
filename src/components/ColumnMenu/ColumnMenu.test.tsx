@@ -2,7 +2,6 @@ import React from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { render } from '../../utils/userEvent.js'
 import ColumnMenu from './ColumnMenu.js'
-import styles from './ColumnMenu.module.css'
 
 // Mock createPortal to make testing easier
 vi.mock('react-dom', () => {
@@ -68,12 +67,12 @@ describe('ColumnMenu', () => {
   })
 
   it('shows sorting options when sortable is true', () => {
-    const { getByText, container } = render(<ColumnMenu {...defaultProps} sortable={true} />)
+    const { getByText, getAllByRole } = render(<ColumnMenu {...defaultProps} sortable={true} />)
 
     expect(getByText('Sort ascending')).toBeDefined()
     expect(getByText('Sort descending')).toBeDefined()
-    // Verify the divider is present between hide column and sort options
-    expect(container.querySelectorAll(`.${styles.columnMenuDivider}`).length).toBe(2) // Header divider + sort section divider
+    // Verify the dividers are present (header divider + sort section divider)
+    expect(getAllByRole('separator').length).toBe(2)
     // Clear sort should not be visible when no direction is set
     expect(() => getByText('Clear sort')).toThrow()
   })
@@ -122,27 +121,27 @@ describe('ColumnMenu', () => {
     expect(defaultProps.onClose).toHaveBeenCalled()
   })
 
-  it('applies activeDirection class to the ascending option when direction is ascending', () => {
+  it('applies aria-checked to the ascending option when direction is ascending', () => {
     const { getByText } = render(
       <ColumnMenu {...defaultProps} sortable={true} direction="ascending" />
     )
 
-    const ascendingItem = getByText('Sort ascending').closest(`.${styles.columnMenuItem}`)
-    const descendingItem = getByText('Sort descending').closest(`.${styles.columnMenuItem}`)
+    const ascendingItem = getByText('Sort ascending').closest('[role="menuitem"]')
+    const descendingItem = getByText('Sort descending').closest('[role="menuitem"]')
 
-    expect(ascendingItem?.className).toContain(styles.activeDirection)
-    expect(descendingItem?.className).not.toContain(styles.activeDirection)
+    expect(ascendingItem?.getAttribute('aria-checked')).toBe('true')
+    expect(descendingItem?.getAttribute('aria-checked')).toBe('false')
   })
 
-  it('applies activeDirection class to the descending option when direction is descending', () => {
+  it('applies aria-checked to the descending option when direction is descending', () => {
     const { getByText } = render(
       <ColumnMenu {...defaultProps} sortable={true} direction="descending" />
     )
 
-    const ascendingItem = getByText('Sort ascending').closest(`.${styles.columnMenuItem}`)
-    const descendingItem = getByText('Sort descending').closest(`.${styles.columnMenuItem}`)
+    const ascendingItem = getByText('Sort ascending').closest('[role="menuitem"]')
+    const descendingItem = getByText('Sort descending').closest('[role="menuitem"]')
 
-    expect(descendingItem?.className).toContain(styles.activeDirection)
-    expect(ascendingItem?.className).not.toContain(styles.activeDirection)
+    expect(descendingItem?.getAttribute('aria-checked')).toBe('true')
+    expect(ascendingItem?.getAttribute('aria-checked')).toBe('false')
   })
 })
