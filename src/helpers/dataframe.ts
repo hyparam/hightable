@@ -1,6 +1,6 @@
 import { wrapResolved } from '../utils/promise.js'
 import { AsyncRow, Cells, asyncRows } from './row.js'
-import { OrderBy } from './sort.js'
+import { Direction, OrderBy } from './sort.js'
 
 /**
  * Function that gets values in a column.
@@ -83,7 +83,7 @@ export async function getRanks({ data, column }: {data: DataFrame, column: strin
   return ascendingRanks
 }
 
-export function computeDataIndexes(orderBy: { direction: 'ascending' | 'descending', ranks: number[] }[]): number[] {
+export function computeDataIndexes(orderBy: { direction: Direction, ranks: number[] }[]): number[] {
   if (!(0 in orderBy)) {
     throw new Error('orderBy should have at least one element')
   }
