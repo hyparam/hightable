@@ -37,6 +37,7 @@
     "build": "npm run build:bundle && npm run build:types",
     "coverage": "vitest run --coverage --coverage.include=src",
     "lint": "eslint",
+    "lint:fix": "eslint --fix",
     "prepublishOnly": "npm run build",
     "storybook": "storybook dev -p 6006",
     "test": "vitest run",

@@ -1,4 +1,4 @@
-export type Direction = 'ascending' | 'descending'
+export type Direction = 'ascending' | 'descending' | null
 
 export interface ColumnOrderBy {
     column: string // column name to sort by.
