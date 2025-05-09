@@ -76,7 +76,6 @@ export default function ColumnMenu({
 
   if (!isVisible) return null
 
-
   return createPortal(
     <div
       ref={menuRef}

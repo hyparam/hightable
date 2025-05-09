@@ -150,7 +150,7 @@ export default function ColumnHeader({
   function renderColumnMenu() {
     return (
       <ColumnMenu
-        column={title}
+        column={title ?? columnName}
         columnIndex={columnIndex}
         onHideColumn={onHideColumn}
         onShowAllColumns={onShowAllColumns}
