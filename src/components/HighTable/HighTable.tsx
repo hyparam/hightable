@@ -430,7 +430,7 @@ export default function HighTable({
   if (!data.header.length) return
 
   const ariaColCount = visibleHeader.length + 1 // don't forget the selection column
-  const ariaRowCount = data.numRows + 1 // don't forget the header row
+  const ariaRowCount = numRows + 1 // don't forget the header row
   return <ColumnWidthProvider localStorageKey={cacheKey ? `${cacheKey}:column-widths` : undefined}>
     <div className={`${styles.hightable} ${styled ? styles.styled : ''} ${className}`}>
       <div className={styles.tableScroll} ref={scrollRef} role="group" aria-labelledby="caption">
