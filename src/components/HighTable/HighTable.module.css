@@ -62,7 +62,7 @@
     content: "↓";
   }
   th[aria-sort="descending"]::after {
-    content: "↑";
+    content: "↓";
   }
 
   /* column resize */
