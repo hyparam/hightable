@@ -114,7 +114,7 @@ export default function TableHeader({
         columnName={name}
         columnIndex={columnIndex}
         className={columnClassNames[columnIndex]}
-        visibleHeader={header.filter((_, index) => !hiddenColumns?.includes(index))}
+        visibleHeader={header}
       >
         {name}
       </ColumnHeader>
