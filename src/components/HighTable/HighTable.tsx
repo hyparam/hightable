@@ -1,9 +1,10 @@
-import { MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { CSSProperties, KeyboardEvent, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DataFrame } from '../../helpers/dataframe.js'
 import { PartialRow } from '../../helpers/row.js'
 import { Selection, areAllSelected, isSelected, toggleAll, toggleIndexInSelection, toggleRangeInSelection, toggleRangeInTable } from '../../helpers/selection.js'
 import { OrderBy, areEqualOrderBy } from '../../helpers/sort.js'
 import { leftCellStyle } from '../../helpers/width.js'
+import { CellsNavigationProvider, useCellsNavigation } from '../../hooks/useCellsNavigation.js'
 import { ColumnWidthProvider } from '../../hooks/useColumnWidth.js'
 import { useInputState } from '../../hooks/useInputState.js'
 import { stringify as stringifyDefault } from '../../utils/stringify.js'
@@ -47,6 +48,10 @@ interface Props {
   styled?: boolean // use styled component? (default true)
 }
 
+const defaultPadding = 20
+const defaultOverscan = 20
+const ariaOffset = 2 // 1-based index, +1 for the header
+
 /**
  * Render a table with streaming rows on demand from a DataFrame.
  *
@@ -55,11 +60,28 @@ interface Props {
  * selection: the selected rows and the anchor row. If set, the component is controlled, and the property cannot be unset (undefined) later. If undefined, the component is uncontrolled (internal state).
  * onSelectionChange: the callback to call when the selection changes. If undefined, the component selection is read-only if controlled (selection is set), or disabled if not.
  */
-export default function HighTable({
+export default function HighTable(props: Props) {
+  const { data, cacheKey } = props
+  const ariaColCount = data.header.length + 1 // don't forget the selection column
+  const ariaRowCount = data.numRows + 1 // don't forget the header row
+  return (
+    <ColumnWidthProvider localStorageKey={cacheKey ? `${cacheKey}:column-widths` : undefined}>
+      <CellsNavigationProvider colCount={ariaColCount} rowCount={ariaRowCount} rowPadding={props.padding ?? defaultPadding}>
+        <HighTableInner {...props} />
+      </CellsNavigationProvider>
+    </ColumnWidthProvider>
+  )
+}
+
+/**
+ * The main purpose of extracting HighTableInner from HighTable is to
+ * separate the context providers from the main component. It will also
+ * remove the need to reindent the code if adding a new context provide.
+ */
+export function HighTableInner({
   data,
-  cacheKey,
-  overscan = 20,
-  padding = 20,
+  overscan = defaultOverscan,
+  padding = defaultPadding,
   focus = true,
   orderBy: propOrderBy,
   onOrderByChange: propOnOrderByChange,
@@ -93,6 +115,8 @@ export default function HighTable({
   const [slice, setSlice] = useState<Slice | undefined>(undefined)
   const [rowsRange, setRowsRange] = useState({ start: 0, end: 0 })
   const [hasCompleteRow, setHasCompleteRow] = useState(false)
+  const { enterCellsNavigation, setEnterCellsNavigation, onTableKeyDown, onScrollKeyDown, rowIndex, colIndex } = useCellsNavigation()
+  const [lastCellPosition, setLastCellPosition] = useState({ rowIndex, colIndex })
   const [numRows, setNumRows] = useState(data.numRows)
 
   // TODO(SL): remove this state and only rely on the data frame for these operations?
@@ -192,7 +216,6 @@ export default function HighTable({
   const offsetTop = slice ? Math.max(0, slice.offset - padding) * rowHeight : 0
 
   const scrollRef = useRef<HTMLDivElement>(null)
-  const tableRef = useRef<HTMLTableElement>(null)
   const pendingRequest = useRef(0)
 
   // invalidate when data changes so that columns will auto-resize
@@ -210,6 +233,38 @@ export default function HighTable({
     // reset the number of rows
     setNumRows(data.numRows)
   }
+
+  // scroll vertically to the focused cell if needed
+  useEffect(() => {
+    if (!slice) {
+      // don't scroll if the slice is not ready
+      return
+    }
+    if (!enterCellsNavigation && lastCellPosition.rowIndex === rowIndex && lastCellPosition.colIndex === colIndex) {
+      // don't scroll if the navigation cell is unchanged
+      // occurs when the user is scrolling with the mouse for example, and the
+      // cell exits the viewport: don't want to scroll back to it
+      return
+    }
+    setEnterCellsNavigation?.(false)
+    setLastCellPosition({ rowIndex, colIndex })
+    const tableIndex = rowIndex - ariaOffset
+    const scroller = scrollRef.current
+    if (!scroller) {
+      // don't scroll if the scroller is not ready
+      return
+    }
+    let nextScrollTop = scroller.scrollTop
+    // if tableIndex outside of the slice, scroll to the estimated position of the cell,
+    // to wait for the cell to be fetched and rendered
+    if (tableIndex < slice.offset || tableIndex >= slice.offset + slice.rows.length) {
+      nextScrollTop = tableIndex * rowHeight
+    }
+    if (nextScrollTop !== scroller.scrollTop) {
+      // scroll to the cell
+      scroller.scrollTop = nextScrollTop
+    }
+  }, [rowIndex, colIndex, slice, lastCellPosition, padding, enterCellsNavigation, setEnterCellsNavigation])
 
   // handle scrolling and window resizing
   useEffect(() => {
@@ -348,7 +403,7 @@ export default function HighTable({
     }
     // update
     void fetchRows()
-  }, [data, onError, orderBy, slice, rowsRange, hasCompleteRow])
+  }, [data, onError, orderBy, slice, rowsRange, hasCompleteRow, numRows])
 
   const getOnDoubleClickCell = useCallback((col: number, row?: number) => {
     // TODO(SL): give feedback (a specific class on the cell element?) about why the double click is disabled?
@@ -368,7 +423,7 @@ export default function HighTable({
   // focus table on mount so arrow keys work
   useEffect(() => {
     if (focus) {
-      tableRef.current?.focus()
+      scrollRef.current?.focus()
     }
   }, [focus])
 
@@ -380,28 +435,43 @@ export default function HighTable({
 
   // minimum left column width based on number of rows - it depends on CSS, so it's
   // only a bottom limit
-  const cornerStyle = useMemo(() => {
-    const minWidth = Math.ceil(Math.log10(numRows + 1)) * 4 + 22
-    return leftCellStyle(minWidth)
+  const rowHeaderWidth = useMemo(() => {
+    return Math.ceil(Math.log10(numRows + 1)) * 4 + 22
   }, [numRows])
+  const cornerStyle = useMemo(() => {
+    return leftCellStyle(rowHeaderWidth)
+  }, [rowHeaderWidth])
+  const tableScrollStyle = useMemo(() => {
+    return {
+      '--column-header-height': `${rowHeight}px`,
+      '--row-number-width': `${rowHeaderWidth}px`,
+    } as CSSProperties
+  }, [rowHeaderWidth])
+  const restrictedOnScrollKeyDown = useCallback((event: KeyboardEvent) => {
+    if (event.target !== scrollRef.current) {
+      // don't handle the event if the target is not the scroller
+      return
+    }
+    onScrollKeyDown?.(event)
+  }, [onScrollKeyDown])
 
   // don't render table if header is empty
   if (!data.header.length) return
 
   const ariaColCount = data.header.length + 1 // don't forget the selection column
   const ariaRowCount = numRows + 1 // don't forget the header row
-  return <ColumnWidthProvider localStorageKey={cacheKey ? `${cacheKey}:column-widths` : undefined}>
+  return (
     <div className={`${styles.hightable} ${styled ? styles.styled : ''} ${className}`}>
-      <div className={styles.tableScroll} ref={scrollRef} role="group" aria-labelledby="caption">
+      <div className={styles.tableScroll} ref={scrollRef} role="group" aria-labelledby="caption" style={tableScrollStyle} onKeyDown={restrictedOnScrollKeyDown} tabIndex={0}>
         <div style={{ height: `${scrollHeight}px` }}>
           <table
             aria-readonly={true}
             aria-colcount={ariaColCount}
             aria-rowcount={ariaRowCount}
             aria-multiselectable={showSelectionControls}
-            ref={tableRef}
             role='grid'
             style={{ top: `${offsetTop}px` }}
+            onKeyDown={onTableKeyDown}
           >
             <caption id="caption" hidden>Virtual-scroll table</caption>
             <thead role="rowgroup">
@@ -412,6 +482,7 @@ export default function HighTable({
                   showCheckBox={showCornerSelection}
                   style={cornerStyle}
                   ariaColIndex={1}
+                  ariaRowIndex={1}
                 >&nbsp;</TableCorner>
                 <TableHeader
                   dataReady={hasCompleteRow}
@@ -420,28 +491,31 @@ export default function HighTable({
                   onOrderByChange={onOrderByChange}
                   sortable={enableOrderByInteractions}
                   columnClassNames={columnClassNames}
+                  ariaRowIndex={1}
                 />
               </Row>
             </thead>
             <tbody role="rowgroup">
               {prePadding.map((_, prePaddingIndex) => {
                 const tableIndex = offset - prePadding.length + prePaddingIndex
+                const ariaRowIndex = tableIndex + ariaOffset
                 return (
-                  <Row key={tableIndex} ariaRowIndex={tableIndex + 2} >
-                    <RowHeader style={cornerStyle} ariaColIndex={1} />
+                  <Row key={tableIndex} ariaRowIndex={ariaRowIndex}>
+                    <RowHeader style={cornerStyle} ariaColIndex={1} ariaRowIndex={ariaRowIndex} />
                   </Row>
                 )
               })}
-              {slice?.rows.map((row, rowIndex) => {
-                const tableIndex = slice.offset + rowIndex
+              {slice?.rows.map((row, sliceIndex) => {
+                const tableIndex = slice.offset + sliceIndex
                 const inferredDataIndex = orderBy === undefined || orderBy.length === 0 ? tableIndex : undefined
                 const dataIndex = row.index ?? inferredDataIndex
                 const selected = isRowSelected(dataIndex) ?? false
+                const ariaRowIndex = tableIndex + ariaOffset
                 return (
                   <Row
                     key={tableIndex}
                     selected={selected}
-                    ariaRowIndex={tableIndex + 2}
+                    ariaRowIndex={ariaRowIndex}
                     title={rowError(row, data.header.length)}
                   >
                     <RowHeader
@@ -451,6 +525,7 @@ export default function HighTable({
                       checked={selected}
                       showCheckBox={showSelection}
                       ariaColIndex={1}
+                      ariaRowIndex={ariaRowIndex}
                     >{formatRowNumber(dataIndex)}</RowHeader>
                     {data.header.map((column, columnIndex) => {
                       // Note: the resolved cell value can be undefined
@@ -465,7 +540,8 @@ export default function HighTable({
                         columnIndex={columnIndex}
                         hasResolved={hasResolved}
                         className={columnClassNames[columnIndex]}
-                        ariaColIndex={columnIndex + 2} // 1-based index, +1 for the row header
+                        ariaColIndex={columnIndex + ariaOffset}
+                        ariaRowIndex={ariaRowIndex}
                       />
                     })}
                   </Row>
@@ -473,9 +549,10 @@ export default function HighTable({
               })}
               {postPadding.map((_, postPaddingIndex) => {
                 const tableIndex = offset + rowsLength + postPaddingIndex
+                const ariaRowIndex = tableIndex + ariaOffset
                 return (
-                  <Row key={tableIndex} ariaRowIndex={tableIndex + 2}>
-                    <RowHeader style={cornerStyle} ariaColIndex={1} />
+                  <Row key={tableIndex} ariaRowIndex={ariaRowIndex}>
+                    <RowHeader style={cornerStyle} ariaColIndex={1} ariaRowIndex={ariaRowIndex} />
                   </Row>
                 )
               })}
@@ -486,5 +563,5 @@ export default function HighTable({
       {/* puts a background behind the row labels column */}
       <div className={styles.mockRowLabel} style={cornerStyle}>&nbsp;</div>
     </div>
-  </ColumnWidthProvider>
+  )
 }

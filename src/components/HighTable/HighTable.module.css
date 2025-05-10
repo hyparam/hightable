@@ -18,6 +18,9 @@
     & > div {
       position: relative;
     }
+    /* avoid the row and column headers (sticky) to overlap the current navigation cell */
+    scroll-padding-inline-start: var(--row-number-width);
+    scroll-padding-block-start: var(--column-header-height);
   }
 
   table {
@@ -63,10 +66,10 @@
   /* column resize */
   thead [role="separator"] {
     position: absolute;
-    top: 0;
+    top: 1px;
     right: 0;
     bottom: 0;
-    width: 12px;
+    width: 8px;
     cursor: col-resize;
     background-color: #888;
     z-index: var(--header-separator-z-index, auto);
@@ -164,8 +167,11 @@
   --cell-placeholder-z-index: 1;
   --cell-horizontal-padding: 12px;
 
-  --focus-border-color: black;
   --focus-border-width: 2px;
+  --focus-border-color: #706fb1;
+  --focus-background-color: #efeef6;
+  --focusable-border-color: #666;
+  --focusable-background-color: #f1f1f3;
 
   .table-scroll:focus {
     outline: none;
@@ -195,24 +201,25 @@
   thead {
     th {
       background-color: #f1f1f3;
-      border: none;
+      /* border: none; */
       border-bottom: 2px solid #c9c9c9;
       box-sizing: content-box;
       color: #444;
       height: 20px;
-      padding-top: 8px;
+      padding-top: 4px;
+      padding-bottom: 4px;
       top: -1px; /* fix 1px gap above thead */
 
       /* sorting is enabled - add space for the sort caret */
       &[aria-sort] {
-        padding-right: calc(var(--cell-horizontal-padding) + 8px);
+        padding-right: calc(var(--cell-horizontal-padding) + 12px);
       }
     }
   }
 
   th[aria-sort]::after {
-    right: 8px;
-    top: 8px;
+    right: 12px;
+    top: 4px;
     padding-left: 2px;
     background: none;
     color: #d5d4d6;
@@ -220,13 +227,6 @@
 
   th[data-order-by-index="0"]::after {
     color: inherit;
-  }
-
-  tbody tr:first-child {
-    td,
-    th {
-      border-top: 1px solid transparent;
-    }
   }
 
   /* cells */
@@ -240,6 +240,23 @@
     text-align: left;
     text-overflow: ellipsis;
     white-space: nowrap;
+
+    /* focusable cell (only one: the current navigation cell) */
+    &[tabindex="0"] {
+      outline-style: solid;
+      outline-color: var(--focusable-border-color);
+      outline-width: 1px;
+      outline-offset: -1px;
+      background-color: var(--focusable-background-color);
+    }
+    /* focused cell: when the current navigation cell is focused. It should never be another cell */
+    &:focus {
+      outline-style: solid;
+      outline-color: var(--focus-border-color);
+      outline-width: var(--focus-border-width);
+      outline-offset: -2px;
+      background-color: var(--focus-background-color);
+    }
   }
 
   /* row error */
@@ -249,13 +266,21 @@
 
   /* column resize */
   thead [role="separator"] {
-    background-color: inherit;
-    border-right: 1px solid #ddd;
-    width: 8px;
+    background-color: transparent;
     transition: background-color 0.2s ease;
-  }
-  thead [role="separator"]:hover {
-    background-color: #aab;
+    &:hover {
+      background-color: #aab;
+    }
+    &:focus {
+      outline-style: solid;
+      outline-color: var(--focus-border-color);
+      outline-width: var(--focus-border-width);
+      outline-offset: -2px;
+      background-color: #aab;
+    }
+    &[aria-busy="true"] {
+      background-color: #ddd;
+    }
   }
 
   /* row numbers */
@@ -335,22 +360,6 @@
     content: "427"; /* decorative purpose only - https://developer.mozilla.org/en-US/docs/Web/CSS/content#accessibility */
     filter: blur(4px);
   }
-
-  /* pending table state */
-  thead th::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 4px;
-    background-color: #706fb1;
-    z-index: var(--header-progress-z-index);
-  }
-  /* TODO(SL): add a global pending state? */
-  /* .pending thead th::before {
-    animation: shimmer 2s infinite linear;
-  } */
 
   /* don't hover on mobile */
   @media (hover: hover) {

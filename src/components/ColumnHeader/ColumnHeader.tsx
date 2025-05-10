@@ -2,6 +2,7 @@ import { MouseEvent, ReactNode, useCallback, useEffect, useMemo, useRef } from '
 import { flushSync } from 'react-dom'
 import { Direction } from '../../helpers/sort.js'
 import { measureWidth } from '../../helpers/width.js'
+import { useCellNavigation } from '../../hooks/useCellsNavigation.js'
 import useColumnWidth from '../../hooks/useColumnWidth.js'
 import ColumnResizer from '../ColumnResizer/ColumnResizer.js'
 
@@ -15,11 +16,18 @@ interface Props {
   sortable?: boolean
   orderByIndex?: number // index of the column in the orderBy array (0-based)
   orderBySize?: number // size of the orderBy array
+  ariaColIndex: number // aria col index for the header
+  ariaRowIndex: number // aria row index for the header
   className?: string // optional class name
 }
 
-export default function ColumnHeader({ columnIndex, columnName, dataReady, direction, onClick, sortable, orderByIndex, orderBySize, className, children }: Props) {
+export default function ColumnHeader({ columnIndex, columnName, dataReady, direction, onClick, sortable, orderByIndex, orderBySize, ariaColIndex, ariaRowIndex, className, children }: Props) {
   const ref = useRef<HTMLTableCellElement>(null)
+  const { tabIndex, navigateToCell } = useCellNavigation({ ref, ariaColIndex, ariaRowIndex })
+  const handleClick = useCallback((event: MouseEvent) => {
+    navigateToCell()
+    onClick?.(event)
+  }, [onClick, navigateToCell])
 
   // Get the column width from the context
   const { getColumnStyle, setColumnWidth, getColumnWidth } = useColumnWidth()
@@ -78,12 +86,12 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
       aria-sort={direction ?? (sortable ? 'none' : undefined)}
       data-order-by-index={orderBySize !== undefined ? orderByIndex : undefined}
       data-order-by-size={orderBySize}
+      aria-label={columnName}
       aria-description={description}
-      // 1-based index, +1 for the row header
-      // TODO(SL): don't hardcode it, but get it from the table context
-      aria-colindex={columnIndex + 2}
+      aria-colindex={ariaColIndex}
+      tabIndex={tabIndex}
       title={description}
-      onClick={onClick}
+      onClick={handleClick}
       style={columnStyle}
       className={className}
     >
@@ -92,6 +100,8 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
         setWidth={setWidth}
         onDoubleClick={autoResize}
         width={width}
+        tabIndex={tabIndex}
+        navigateToCell={navigateToCell}
       />
     </th>
   )
