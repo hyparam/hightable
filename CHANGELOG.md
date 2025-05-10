@@ -1,6 +1,17 @@
 # CHANGELOG
 
-## [Unreleased](https://github.com/hyparam/hightable/compare/v0.15.3...HEAD)
+## [Unreleased](https://github.com/hyparam/hightable/compare/v0.15.4...HEAD)
+
+## [0.15.4](https://github.com/hyparam/hightable/compare/v0.15.3...v0.15.4) - 2025-05-10
+
+### Added
+
+- add `onKeyDownCell` prop to `HighTable` to react to key press on a table cell. For accessibility, it should be passed if onDoubleClickCell is passed ([#140](https://github.com/hyparam/hightable/pull/140)).
+- support navigation with the keyboard ([#140](https://github.com/hyparam/hightable/pull/140), [#152](https://github.com/hyparam/hightable/pull/152), [#153](https://github.com/hyparam/hightable/pull/153)).
+
+### Refactored
+
+- updated dev dependencies ([#155](https://github.com/hyparam/hightable/pull/155)).
 
 ## [0.15.3](https://github.com/hyparam/hightable/compare/v0.15.2...v0.15.3) - 2025-05-06
 
