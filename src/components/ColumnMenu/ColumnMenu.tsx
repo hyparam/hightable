@@ -4,7 +4,7 @@ import { Direction } from '../../helpers/sort.js'
 
 interface ColumnMenuProps {
   column: string
-  columnIndex: number
+  columnIndex: number // original index in data.header
   onHideColumn?: (columnIndex: number) => void
   onShowAllColumns?: () => void
   hasHiddenColumns?: boolean

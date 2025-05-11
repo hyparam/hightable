@@ -148,12 +148,10 @@ export default function ColumnHeader({
   }, [onClick])
 
   function renderColumnMenu() {
-    // Find the index of this column in the visible header array
-    const visibleIndex = visibleHeader.indexOf(columnName)
     return (
       <ColumnMenu
         column={title ?? columnName}
-        columnIndex={visibleIndex}
+        columnIndex={columnIndex}
         onHideColumn={onHideColumn}
         onShowAllColumns={onShowAllColumns}
         hasHiddenColumns={hasHiddenColumns}

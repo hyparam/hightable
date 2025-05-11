@@ -85,6 +85,36 @@ export default function TableHeader({
     )
   }, [orderBy])
 
+  // Memoize the mapping from visible indices to original indices
+  const visibleToOriginalMap = useMemo(() => {
+    // Create a mapping function that converts visible indices to original indices
+    const mapping = new Map<number, number>()
+
+    // Check if there are no hidden columns - this is an optimization path
+    // When no columns are hidden, visible indices exactly match original indices
+    // (i.e., visibleIndex 0 → originalIndex 0, visibleIndex 1 → originalIndex 1, etc.)
+    if (!hiddenColumns || hiddenColumns.length === 0) {
+      header.forEach((_, idx) => mapping.set(idx, idx))
+      return mapping
+    }
+
+    // Sort hidden columns for consistent processing
+    const sortedHiddenColumns = [...hiddenColumns].sort((a, b) => a - b)
+
+    // For each visible index, calculate the corresponding original index
+    header.forEach((_, visibleIndex) => {
+      let hiddenBefore = 0
+      for (const hiddenIdx of sortedHiddenColumns) {
+        if (hiddenIdx <= visibleIndex + hiddenBefore) {
+          hiddenBefore++
+        }
+      }
+      mapping.set(visibleIndex, visibleIndex + hiddenBefore)
+    })
+
+    return mapping
+  }, [header, hiddenColumns])
+
   const handleHideColumn = useCallback(
     (columnIndex: number) => {
       if (onHideColumn) {
@@ -94,14 +124,14 @@ export default function TableHeader({
     [onHideColumn]
   )
 
-  return header.map((name, columnIndex) => {
-    // Note: columnIndex is the index of the column in the dataframe header
-    // and not the index of the column in the table (which can be different if
-    // some columns are hidden, or if the order is changed)
+  return header.map((name, visibleIndex) => {
+    // Get the original index from our memoized mapping
+    const originalIndex = visibleToOriginalMap.get(visibleIndex) ?? visibleIndex
+
     return (
       // The ColumnHeader component width is controlled by the parent
       <ColumnHeader
-        key={columnIndex}
+        key={originalIndex}
         dataReady={dataReady}
         direction={orderByColumn.get(name)?.direction}
         orderByIndex={orderByColumn.get(name)?.index}
@@ -112,8 +142,8 @@ export default function TableHeader({
         hasHiddenColumns={hasHiddenColumns}
         sortable={sortable}
         columnName={name}
-        columnIndex={columnIndex}
-        className={columnClassNames[columnIndex]}
+        columnIndex={originalIndex}
+        className={columnClassNames[originalIndex]}
         visibleHeader={header}
       >
         {name}
