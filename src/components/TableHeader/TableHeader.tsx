@@ -11,7 +11,6 @@ interface TableProps {
   columnClassNames?: (string | undefined)[] // array of class names for each column
   onHideColumn?: (columnIndex: number) => void
   onShowAllColumns?: () => void
-  hasHiddenColumns?: boolean
   hiddenColumns?: number[]
 }
 
@@ -27,9 +26,11 @@ export default function TableHeader({
   columnClassNames = [],
   onHideColumn,
   onShowAllColumns,
-  hasHiddenColumns,
   hiddenColumns,
 }: TableProps) {
+  // Derive hasHiddenColumns from hiddenColumns prop
+  const hasHiddenColumns = Boolean(hiddenColumns && hiddenColumns.length > 0)
+
   // Function to handle click for changing orderBy
   const getOnOrderByClick = useCallback(
     (columnHeader: string) => {
@@ -138,8 +139,7 @@ export default function TableHeader({
         orderBySize={orderBy?.length}
         onClick={getOnOrderByClick(name)}
         onHideColumn={handleHideColumn}
-        onShowAllColumns={onShowAllColumns}
-        hasHiddenColumns={hasHiddenColumns}
+        onShowAllColumns={hasHiddenColumns ? onShowAllColumns : undefined}
         sortable={sortable}
         columnName={name}
         columnIndex={originalIndex}

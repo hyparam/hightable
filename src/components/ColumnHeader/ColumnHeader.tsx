@@ -16,7 +16,6 @@ interface Props {
   onClick?: (e: MouseEvent) => void
   onHideColumn?: (columnIndex: number) => void
   onShowAllColumns?: () => void
-  hasHiddenColumns?: boolean
   title?: string
   sortable?: boolean
   orderByIndex?: number // index of the column in the orderBy array (0-based)
@@ -35,7 +34,6 @@ export default function ColumnHeader({
   onClick,
   onHideColumn,
   onShowAllColumns,
-  hasHiddenColumns,
   sortable,
   className,
   children,
@@ -148,6 +146,9 @@ export default function ColumnHeader({
   }, [onClick])
 
   function renderColumnMenu() {
+    // We know columns are hidden if the onShowAllColumns callback is provided
+    const hasHiddenColumns = Boolean(onShowAllColumns)
+
     return (
       <ColumnMenu
         column={title ?? columnName}

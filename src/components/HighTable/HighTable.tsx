@@ -422,6 +422,10 @@ export default function HighTable({
     [data.header, isColumnVisible]
   )
 
+  const visibleColumnClassNames = useMemo(() =>
+    columnClassNames.filter((_, index) => isColumnVisible(index))
+  , [columnClassNames, isColumnVisible])
+
   // don't render table if header is empty
   if (!data.header.length) return
 
@@ -456,10 +460,9 @@ export default function HighTable({
                   orderBy={orderBy}
                   onOrderByChange={onOrderByChange}
                   sortable={enableOrderByInteractions}
-                  columnClassNames={columnClassNames.filter((_, index) => isColumnVisible(index))}
+                  columnClassNames={visibleColumnClassNames}
                   onHideColumn={handleHideColumn}
                   onShowAllColumns={handleShowAllColumns}
-                  hasHiddenColumns={hiddenColumns.length > 0}
                   hiddenColumns={hiddenColumns}
                 />
               </Row>
