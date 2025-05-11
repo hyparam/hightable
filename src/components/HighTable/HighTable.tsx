@@ -486,7 +486,7 @@ export default function HighTable({
                     key={tableIndex}
                     selected={selected}
                     ariaRowIndex={tableIndex + 2}
-                    title={hiddenColumns.length > 0 ? undefined : rowError(row, data.header.length)}
+                    title={rowError(row, data.header.length, hiddenColumns)}
                   >
                     <RowHeader
                       busy={dataIndex === undefined}
