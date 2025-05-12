@@ -13,15 +13,16 @@ interface Props {
   children?: ReactNode
   dataReady?: boolean
   direction?: Direction
-  onClick?: (e: MouseEvent) => void
-  onHideColumn?: (columnIndex: number) => void
+  onClick?: (e: MouseEvent) => void // legacy prop - will be removed
+  onHideColumn?: () => void // No longer needs columnIndex
   onShowAllColumns?: () => void
   title?: string
-  sortable?: boolean
+  sortable?: boolean // legacy prop - will be removed
   orderByIndex?: number // index of the column in the orderBy array (0-based)
   orderBySize?: number // size of the orderBy array
   className?: string // optional class name
   visibleHeader?: string[] // list of visible column headers
+  changeSort?: (options?: {direction: Direction | null}) => void // new unified sort prop
 }
 
 export default function ColumnHeader({
@@ -39,10 +40,14 @@ export default function ColumnHeader({
   children,
   title,
   visibleHeader = [],
+  changeSort,
 }: Props) {
   const ref = useRef<HTMLTableCellElement>(null)
   const [showMenu, setShowMenu] = useState(false)
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 })
+
+  // Derive sortable from changeSort
+  const isSortable = sortable !== false && (sortable ?? changeSort !== undefined)
 
   // Get the column width from the context
   const { getColumnStyle, setColumnWidth, getColumnWidth } = useColumnWidth()
@@ -83,7 +88,7 @@ export default function ColumnHeader({
   }, [setWidth])
 
   const description = useMemo(() => {
-    if (!sortable) {
+    if (!isSortable) {
       return `The column ${columnName} cannot be sorted`
     } else if (orderByIndex !== undefined && orderByIndex > 0) {
       return `Press to sort by ${columnName} in ascending order`
@@ -94,7 +99,7 @@ export default function ColumnHeader({
     } else {
       return `Press to sort by ${columnName} in ascending order`
     }
-  }, [sortable, columnName, direction, orderByIndex])
+  }, [isSortable, columnName, direction, orderByIndex])
 
   const handleContextMenu = useCallback((e: MouseEvent) => {
     e.preventDefault()
@@ -136,29 +141,65 @@ export default function ColumnHeader({
     }
   }, [])
 
-  const handleSort = useCallback((_colIndex: number, sortDirection: Direction | null) => {
-    if (onClick) {
-      // Create a synthetic event with sort direction for TableHeader
-      const event = {} as MouseEvent & { sortDirection: typeof sortDirection }
-      event.sortDirection = sortDirection
+  // Handle header click for sorting
+  const handleHeaderClick = useCallback((e: MouseEvent) => {
+
+    if (changeSort) {
+      changeSort()
+      return
+    }
+
+    onClick?.(e)
+  }, [changeSort, onClick])
+
+  const handleHideThisColumn = useCallback(() => {
+    onHideColumn?.()
+  }, [onHideColumn])
+
+  const handleSortAscending = useCallback(() => {
+    if (changeSort) {
+      changeSort({ direction: 'ascending' })
+    } else if (onClick) {
+      const event = {} as MouseEvent & { sortDirection: 'ascending' }
+      event.sortDirection = 'ascending'
       onClick(event)
     }
-  }, [onClick])
+  }, [changeSort, onClick])
+
+  const handleSortDescending = useCallback(() => {
+    if (changeSort) {
+      changeSort({ direction: 'descending' })
+    } else if (onClick) {
+      const event = {} as MouseEvent & { sortDirection: 'descending' }
+      event.sortDirection = 'descending'
+      onClick(event)
+    }
+  }, [changeSort, onClick])
+
+  const handleClearSort = useCallback(() => {
+    if (changeSort) {
+      changeSort({ direction: null })
+    } else if (onClick) {
+      const event = {} as MouseEvent & { sortDirection: null }
+      event.sortDirection = null
+      onClick(event)
+    }
+  }, [changeSort, onClick])
 
   function renderColumnMenu() {
-    // We know columns are hidden if the onShowAllColumns callback is provided
     const hasHiddenColumns = Boolean(onShowAllColumns)
 
     return (
       <ColumnMenu
         column={title ?? columnName}
-        columnIndex={columnIndex}
-        onHideColumn={onHideColumn}
+        onHideColumn={handleHideThisColumn}
         onShowAllColumns={onShowAllColumns}
         hasHiddenColumns={hasHiddenColumns}
-        sortable={sortable}
+        sortable={isSortable}
         direction={direction}
-        onSort={handleSort}
+        onSortAscending={handleSortAscending}
+        onSortDescending={handleSortDescending}
+        onClearSort={handleClearSort}
         isVisible={showMenu}
         position={menuPosition}
         onClose={closeMenu}
@@ -173,7 +214,7 @@ export default function ColumnHeader({
         ref={ref}
         scope="col"
         role="columnheader"
-        aria-sort={direction ?? (sortable ? 'none' : undefined)}
+        aria-sort={direction ?? (isSortable ? 'none' : undefined)}
         data-order-by-index={orderBySize !== undefined ? orderByIndex : undefined}
         data-order-by-size={orderBySize}
         aria-description={description}
@@ -181,7 +222,7 @@ export default function ColumnHeader({
         // TODO(SL): don't hardcode it, but get it from the table context
         aria-colindex={columnIndex + 2}
         title={description}
-        onClick={onClick}
+        onClick={handleHeaderClick}
         onContextMenu={handleContextMenu}
         style={{ ...columnStyle, position: 'relative' }}
         className={className}

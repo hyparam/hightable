@@ -4,13 +4,14 @@ import { Direction } from '../../helpers/sort.js'
 
 interface ColumnMenuProps {
   column: string
-  columnIndex: number // original index in data.header
-  onHideColumn?: (columnIndex: number) => void
+  onHideColumn?: () => void
   onShowAllColumns?: () => void
   hasHiddenColumns?: boolean
   sortable?: boolean
   direction?: Direction
-  onSort?: (columnIndex: number, direction: Direction | null) => void
+  onSortAscending?: () => void
+  onSortDescending?: () => void
+  onClearSort?: () => void
   isVisible?: boolean
   position: { x: number; y: number }
   onClose: () => void
@@ -19,13 +20,14 @@ interface ColumnMenuProps {
 
 export default function ColumnMenu({
   column,
-  columnIndex,
   onHideColumn,
   onShowAllColumns,
   hasHiddenColumns = false,
   sortable,
   direction,
-  onSort,
+  onSortAscending,
+  onSortDescending,
+  onClearSort,
   isVisible = false,
   position,
   onClose,
@@ -35,9 +37,9 @@ export default function ColumnMenu({
 
   const handleHideColumn = useCallback(() => {
     if (visibleHeader.length <= 1) return
-    onHideColumn?.(columnIndex)
+    onHideColumn?.()
     onClose()
-  }, [columnIndex, onHideColumn, onClose, visibleHeader.length])
+  }, [onHideColumn, onClose, visibleHeader.length])
 
   const handleShowAllColumns = useCallback(() => {
     onShowAllColumns?.()
@@ -45,19 +47,19 @@ export default function ColumnMenu({
   }, [onShowAllColumns, onClose])
 
   const handleSortAscending = useCallback(() => {
-    onSort?.(columnIndex, 'ascending')
+    onSortAscending?.()
     onClose()
-  }, [columnIndex, onSort, onClose])
+  }, [onSortAscending, onClose])
 
   const handleSortDescending = useCallback(() => {
-    onSort?.(columnIndex, 'descending')
+    onSortDescending?.()
     onClose()
-  }, [columnIndex, onSort, onClose])
+  }, [onSortDescending, onClose])
 
   const handleRemoveSort = useCallback(() => {
-    onSort?.(columnIndex, null)
+    onClearSort?.()
     onClose()
-  }, [columnIndex, onSort, onClose])
+  }, [onClearSort, onClose])
 
   useEffect(() => {
     if (isVisible) {

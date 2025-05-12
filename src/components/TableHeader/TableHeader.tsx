@@ -1,5 +1,5 @@
-import { MouseEvent, useCallback, useMemo } from 'react'
-import { Direction, OrderBy, partitionOrderBy } from '../../helpers/sort.js'
+import { useCallback, useMemo } from 'react'
+import { Direction, OrderBy, partitionOrderBy, toggleColumn } from '../../helpers/sort.js'
 import ColumnHeader from '../ColumnHeader/ColumnHeader.js'
 
 interface TableProps {
@@ -30,55 +30,6 @@ export default function TableHeader({
 }: TableProps) {
   // Derive hasHiddenColumns from hiddenColumns prop
   const hasHiddenColumns = Boolean(hiddenColumns && hiddenColumns.length > 0)
-
-  // Function to handle click for changing orderBy
-  const getOnOrderByClick = useCallback(
-    (columnHeader: string) => {
-      if (!onOrderByChange || !orderBy) return undefined
-
-      return (e: MouseEvent & { sortDirection?: Direction } ) => {
-        // Check if we have an explicit sort direction from the menu
-        const { sortDirection } = e
-
-        // If the sort direction is undefined, it means the header was clicked
-        if (sortDirection !== undefined) {
-          // This branch handles sort actions coming from the column menu
-          // The menu explicitly passes 'ascending', 'descending', or null
-          // as opposed to header clicks which don't specify a direction (undefined)
-          const { prefix, suffix } = partitionOrderBy(orderBy, columnHeader)
-
-          if (sortDirection === null) {
-            // User selected "Clear sort" from the column menu
-            // This removes the column from the sort criteria entirely
-            onOrderByChange([...prefix, ...suffix])
-          } else {
-            // User selected either "Sort ascending" or "Sort descending" from the menu
-            // Apply the exact sort direction that was requested
-            onOrderByChange([{ column: columnHeader, direction: sortDirection }, ...prefix, ...suffix])
-          }
-        } else {
-          // This branch handles direct column header clicks (not from menu)
-          // Implements the cycling behavior: none → ascending → descending → none
-          const { prefix, item, suffix } = partitionOrderBy(orderBy, columnHeader)
-
-          if (item) {
-            // Column is already in the sort - cycle through directions
-            if (item.direction === 'ascending') {
-              // ascending -> descending
-              onOrderByChange([{ column: columnHeader, direction: 'descending' }, ...suffix])
-            } else {
-              // descending -> none
-              onOrderByChange([...suffix])
-            }
-          } else {
-            // Column is not in sort - make it primary with ascending direction
-            onOrderByChange([{ column: columnHeader, direction: 'ascending' }, ...prefix, ...suffix])
-          }
-        }
-      }
-    },
-    [orderBy, onOrderByChange]
-  )
 
   const orderByColumn = useMemo(() => {
     return new Map(
@@ -116,10 +67,41 @@ export default function TableHeader({
     return mapping
   }, [header, hiddenColumns])
 
-  const handleHideColumn = useCallback(
-    (columnIndex: number) => {
-      if (onHideColumn) {
-        onHideColumn(columnIndex)
+  // Create changeSort callbacks for each column
+  const getChangeSort = useCallback(
+    (columnName: string) => {
+      // If sorting is disabled or orderBy/onOrderByChange are not provided, return undefined
+      if (!orderBy || !onOrderByChange) return undefined
+
+      return (options?: { direction: Direction | null }) => {
+        if (!options) {
+          // Toggle sort when called without options (header click)
+          onOrderByChange(toggleColumn(columnName, orderBy))
+          return
+        }
+
+        const { direction } = options
+        const { prefix, suffix } = partitionOrderBy(orderBy, columnName)
+
+        if (direction === null) {
+          // Remove column from sort criteria
+          onOrderByChange([...prefix, ...suffix])
+        } else {
+          // Set explicit direction as primary sort
+          onOrderByChange([{ column: columnName, direction }, ...prefix, ...suffix])
+        }
+      }
+    },
+    [orderBy, onOrderByChange]
+  )
+
+  // Create hide column callbacks for each column
+  const getHideColumnCallback = useCallback(
+    (originalIndex: number) => {
+      if (!onHideColumn) return undefined
+
+      return () => {
+        onHideColumn(originalIndex)
       }
     },
     [onHideColumn]
@@ -137,10 +119,10 @@ export default function TableHeader({
         direction={orderByColumn.get(name)?.direction}
         orderByIndex={orderByColumn.get(name)?.index}
         orderBySize={orderBy?.length}
-        onClick={getOnOrderByClick(name)}
-        onHideColumn={handleHideColumn}
+        changeSort={getChangeSort(name)}
+        onHideColumn={getHideColumnCallback(originalIndex)}
         onShowAllColumns={hasHiddenColumns ? onShowAllColumns : undefined}
-        sortable={sortable}
+        sortable={sortable && orderBy !== undefined}
         columnName={name}
         columnIndex={originalIndex}
         className={columnClassNames[originalIndex]}
