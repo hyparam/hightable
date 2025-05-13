@@ -259,11 +259,6 @@
     }
   }
 
-  /* row error */
-  tr[title] {
-    color: #a11;
-  }
-
   /* column resize */
   thead [role="separator"] {
     background-color: transparent;
