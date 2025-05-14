@@ -106,8 +106,9 @@ export function CellsNavigationProvider({ colCount, rowCount, rowPadding, childr
   }, [])
 
   const focusFirstCell = useCallback(() => {
-    setColIndex(1)
-    setRowIndex(1)
+    setColIndex(defaultCellsNavigationContext.colIndex)
+    setRowIndex(defaultCellsNavigationContext.rowIndex)
+    setEnterCellsNavigation(true)
     setShouldFocus(true)
   }, [])
 
