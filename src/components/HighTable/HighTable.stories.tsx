@@ -105,6 +105,23 @@ const filteredData: DataFrame = rowCache(sortableDataFrame({
   }),
 }))
 
+const longStringsData: DataFrame = {
+  header: ['ID', 'LongString', 'Value1', 'Value2'],
+  numRows: 1000,
+  rows: ({ start, end }) => Array.from({ length: end - start }, (_, index) => {
+    const id = index + start
+    return {
+      index: wrapResolved(id),
+      cells: {
+        ID: wrapResolved( `row ${id}`),
+        LongString: wrapResolved('Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum'.repeat(10)),
+        Value1: wrapResolved(Math.floor(100 * random(135 + index))),
+        Value2: wrapResolved(Math.floor(100 * random(648 + index))),
+      },
+    }
+  }),
+}
+
 const meta: Meta<typeof HighTable> = {
   component: HighTable,
 }
@@ -159,5 +176,10 @@ export const CustomHeaderStyle: Story = {
 export const FilteredRows: Story = {
   args: {
     data: filteredData,
+  },
+}
+export const LongStrings: Story = {
+  args: {
+    data: longStringsData,
   },
 }
