@@ -11,6 +11,7 @@ interface CellsNavigationContextType {
   setRowIndex?: (rowIndex: number) => void // function to set the row index
   setShouldFocus?: (shouldFocus: boolean) => void // function to set the shouldFocus state
   setEnterCellsNavigation?: (enterCellsNavigation: boolean) => void // function to set the enterCellsNavigation state
+  focusFirstCell?: () => void // function to focus the first cell
 }
 
 const defaultCellsNavigationContext: CellsNavigationContextType = {
@@ -104,6 +105,12 @@ export function CellsNavigationProvider({ colCount, rowCount, rowPadding, childr
     }
   }, [])
 
+  const focusFirstCell = useCallback(() => {
+    setColIndex(1)
+    setRowIndex(1)
+    setShouldFocus(true)
+  }, [])
+
   const value = useMemo(() => {
     return {
       colIndex,
@@ -116,9 +123,10 @@ export function CellsNavigationProvider({ colCount, rowCount, rowPadding, childr
       setShouldFocus,
       enterCellsNavigation,
       setEnterCellsNavigation,
+      focusFirstCell,
     }
   }, [colIndex, rowIndex, onTableKeyDown, onScrollKeyDown, shouldFocus, enterCellsNavigation,
-    setEnterCellsNavigation])
+    setEnterCellsNavigation, focusFirstCell])
 
   return (
     <CellsNavigationContext.Provider value={value}>

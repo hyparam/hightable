@@ -117,7 +117,7 @@ export function HighTableInner({
   const [slice, setSlice] = useState<Slice | undefined>(undefined)
   const [rowsRange, setRowsRange] = useState({ start: 0, end: 0 })
   const [hasCompleteRow, setHasCompleteRow] = useState(false)
-  const { enterCellsNavigation, setEnterCellsNavigation, onTableKeyDown, onScrollKeyDown, rowIndex, colIndex } = useCellsNavigation()
+  const { enterCellsNavigation, setEnterCellsNavigation, onTableKeyDown, onScrollKeyDown, rowIndex, colIndex, focusFirstCell } = useCellsNavigation()
   const [lastCellPosition, setLastCellPosition] = useState({ rowIndex, colIndex })
   const [numRows, setNumRows] = useState(data.numRows)
 
@@ -428,12 +428,21 @@ export function HighTableInner({
     }
   }, [onKeyDownCell])
 
-  // focus table on mount so arrow keys work
+  // focus table on mount, or on data change, so arrow keys work
   useEffect(() => {
     if (focus) {
-      scrollRef.current?.focus()
+      // Try focusing the first cell
+    // TODO(SL): change to something more React-ish?
+      const cell = scrollRef.current?.querySelector('td')
+      if (cell) {
+        cell.focus()
+      } else {
+      // If the table is not ready, focus the scroller
+        scrollRef.current?.focus()
+      }
+      focusFirstCell?.()
     }
-  }, [focus])
+  }, [data, focus, focusFirstCell])
 
   // add empty pre and post rows to fill the viewport
   const offset = slice?.offset ?? 0
