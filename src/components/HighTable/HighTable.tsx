@@ -432,14 +432,6 @@ export function HighTableInner({
   useEffect(() => {
     if (focus) {
       // Try focusing the first cell
-    // TODO(SL): change to something more React-ish?
-      const cell = scrollRef.current?.querySelector('td')
-      if (cell) {
-        cell.focus()
-      } else {
-      // If the table is not ready, focus the scroller
-        scrollRef.current?.focus()
-      }
       focusFirstCell?.()
     }
   }, [data, focus, focusFirstCell])
