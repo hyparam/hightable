@@ -235,7 +235,7 @@
     border-bottom: 1px solid #ddd;
     border-right: 1px solid #ddd;
     height: 32px;
-    max-width: 2000px; /* prevent columns expanding */
+    max-width: 600px; /* prevent columns expanding */
     padding: 4px var(--cell-horizontal-padding);
     text-align: left;
     text-overflow: ellipsis;
