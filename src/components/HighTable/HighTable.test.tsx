@@ -1,4 +1,5 @@
 import { act, fireEvent, waitFor, within } from '@testing-library/react'
+import { UserEvent } from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { DataFrame, sortableDataFrame } from '../../helpers/dataframe.js'
 import { wrapResolved } from '../../utils/promise.js'
@@ -631,47 +632,54 @@ describe('HighTable localstorage', () => {
 })
 
 describe('Navigating Hightable with the keyboard', () => {
-  describe('On mount, the scrollable div', () => {
-    it('is focused by default', () => {
-      const { queryByLabelText } = render(<HighTable data={data} />)
-      const scrollableDiv = queryByLabelText('Virtual-scroll table')
-      expect(scrollableDiv).toBeDefined()
-      expect(document.activeElement).toBe(scrollableDiv)
+  describe('On mount, ', () => {
+    it('the first cell is focused by default', () => {
+      render(<HighTable data={data} />)
+      const focusedElement = document.activeElement
+      expect(focusedElement?.getAttribute('aria-colindex')).toBe('1')
+      expect(focusedElement?.closest('[role="row"]')?.getAttribute('aria-rowindex')).toBe('1')
     })
-    it('is not focused if focus prop is false', () => {
-      const { queryByLabelText } = render(<HighTable data={data} focus={false} />)
-      const scrollableDiv = queryByLabelText('Virtual-scroll table')
-      expect(scrollableDiv).toBeDefined()
-      expect(document.activeElement).not.toBe(scrollableDiv)
+    it('the first cell is not focused if focus prop is false, and neither is the table scroller', () => {
+      render(<HighTable data={data} focus={false} />)
+      expect(document.activeElement?.localName).toBe('body')
+    })
+    it('pressing "Shift+Tab" moves the focus to the scrollable div', async () => {
+      const { user, getByLabelText } = render(<HighTable data={data} />)
+      const scrollableDiv = getByLabelText('Virtual-scroll table')
+      await user.keyboard('{Shift>}{Tab}{/Shift}')
+      expect(document.activeElement).toBe(scrollableDiv)
     })
   })
 
   describe('When the scrollable div is focused', () => {
+    async function setFocusOnScrollableDiv(user: UserEvent) {
+      await user.keyboard('{Shift>}{Tab}{/Shift}')
+    }
     it.for(['{Tab}', '{ }', '{Enter}'])('moves the focus to the first cell when pressing "%s"', async (key) => {
       const { user } = render(<HighTable data={data} />)
+      await setFocusOnScrollableDiv(user)
       await user.keyboard(key)
       const focusedElement = document.activeElement
-      expect(focusedElement).toBeDefined()
-      if (!focusedElement) {
-        throw new Error('Focused element not found')
-      }
-      expect(focusedElement.getAttribute('aria-colindex')).toBe('1')
-      expect(focusedElement.closest('[role="row"]')?.getAttribute('aria-rowindex')).toBe('1')
+      expect(focusedElement?.getAttribute('aria-colindex')).toBe('1')
+      expect(focusedElement?.closest('[role="row"]')?.getAttribute('aria-rowindex')).toBe('1')
     })
     it.for(['{Shift>}{Tab}{/Shift}'])('moves the focus outside of the table when pressing "%s"', async (key) => {
       const { user } = render(<HighTable data={data} />)
+      await setFocusOnScrollableDiv(user)
       await user.keyboard(key)
       const focusedElement = document.activeElement
       expect(focusedElement?.localName).toBe('body')
     })
     it.for(['{ArrowUp}', '{ArrowDown}', '{ArrowLeft}', '{ArrowRight}'])('scroll while keeping the focus on the scrollable div when pressing "%s"', async (key) => {
       const { user, getByLabelText } = render(<HighTable data={data} />)
+      await setFocusOnScrollableDiv(user)
       const scrollableDiv = getByLabelText('Virtual-scroll table')
       await user.keyboard(key)
       expect(document.activeElement).toBe(scrollableDiv)
     })
     it('pressing "Tab", then "Tab", then "Shift+Tab", then "Shift+Tab" moves the focus back to the scrollable div', async () => {
       const { user, getByLabelText } = render(<HighTable data={data} />)
+      await setFocusOnScrollableDiv(user)
       const scrollableDiv = getByLabelText('Virtual-scroll table')
       await user.keyboard('{Tab}')
       expect(document.activeElement).not.toBe(scrollableDiv)
@@ -686,12 +694,8 @@ describe('Navigating Hightable with the keyboard', () => {
 
   function getFocusCoordinates() {
     const focusedElement = document.activeElement
-    expect(focusedElement).toBeDefined()
-    if (!focusedElement) {
-      throw new Error('Focused element not found')
-    }
-    const rowIndex = focusedElement.closest('[role="row"]')?.getAttribute('aria-rowindex')
-    const colIndex = focusedElement.getAttribute('aria-colindex')
+    const rowIndex = focusedElement?.closest('[role="row"]')?.getAttribute('aria-rowindex')
+    const colIndex = focusedElement?.getAttribute('aria-colindex')
     expect(rowIndex).toBeDefined()
     expect(colIndex).toBeDefined()
     return { rowIndex: Number(rowIndex), colIndex: Number(colIndex) }
@@ -737,7 +741,7 @@ describe('Navigating Hightable with the keyboard', () => {
     ])('pressing "%s" moves the focus to the cell (%s, %s)', async (key, expectedRowIndex, expectedColIndex) => {
       const { user } = render(<HighTable data={data} padding={pageSize} />)
       // focus the cell (4, 3)
-      await user.keyboard('{Tab}{ArrowDown}{ArrowDown}{ArrowDown}{ArrowRight}{ArrowRight}')
+      await user.keyboard('{ArrowDown}{ArrowDown}{ArrowDown}{ArrowRight}{ArrowRight}')
       expect(getFocusCoordinates()).toEqual({ rowIndex, colIndex })
 
       await user.keyboard(key)
@@ -749,7 +753,7 @@ describe('Navigating Hightable with the keyboard', () => {
     it('the column resizer and the header cell are focusable', async () => {
       const { user } = render(<HighTable data={data} />)
       // go to the header cell (ID)
-      await user.keyboard('{Tab}{ArrowRight}')
+      await user.keyboard('{ArrowRight}')
       const cell = document.activeElement
       // Tab focuses the column resizer
       await user.keyboard('{Tab}')
@@ -766,7 +770,7 @@ describe('Navigating Hightable with the keyboard', () => {
     it('the column resizer is activated on focus, and loses focus when Escape is pressed', async () => {
       const { user } = render(<HighTable data={data} />)
       // go to the column resizer
-      await user.keyboard('{Tab}{ArrowRight}')
+      await user.keyboard('{ArrowRight}')
       const cell = document.activeElement
       await user.keyboard('{Tab}')
       // press Enter to activate the column resizer
@@ -784,7 +788,7 @@ describe('Navigating Hightable with the keyboard', () => {
     it('the column resizer changes the column width when ArrowRight or ArrowLeft are pressed', async () => {
       const { user } = render(<HighTable data={data} />)
       // go to the column resizer
-      await user.keyboard('{Tab}{ArrowRight}{Tab}')
+      await user.keyboard('{ArrowRight}{Tab}')
       const separator = document.activeElement
       if (!separator) {
         throw new Error('Separator is null')
@@ -801,7 +805,7 @@ describe('Navigating Hightable with the keyboard', () => {
     it.for(['{ }', '{Enter}'])('the column resizer autosizes the column and exits resize mode when %s is pressed', async (key) => {
       const { user } = render(<HighTable data={data} />)
       // go to the column resizer
-      await user.keyboard('{Tab}{ArrowRight}')
+      await user.keyboard('{ArrowRight}')
       const cell = document.activeElement
       await user.keyboard('{Tab}')
       const separator = document.activeElement

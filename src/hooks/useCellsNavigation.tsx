@@ -162,7 +162,7 @@ export function useCellNavigation({ ref, ariaColIndex, ariaRowIndex }: CellData)
       ref.current.focus()
       setShouldFocus?.(false)
     }
-  }, [ref, isCurrentCell, ariaColIndex, ariaRowIndex, shouldFocus, setShouldFocus])
+  }, [ref, isCurrentCell, shouldFocus, setShouldFocus])
 
   // Roving tabindex: only the current navigation cell is focusable with Tab (tabindex = 0)
   // All other cells are focusable only with javascript .focus() (tabindex = -1)
