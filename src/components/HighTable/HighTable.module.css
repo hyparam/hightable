@@ -165,6 +165,8 @@
   --header-corner-z-index: calc(var(--header-z-index) + 3);
   --header-progress-z-index: calc(var(--header-z-index) + 2);
   --cell-placeholder-z-index: 1;
+  --table-scroll-outline-z-index: calc(var(--header-z-index) + 4);
+
   --cell-horizontal-padding: 12px;
 
   --focus-border-width: 2px;
@@ -175,15 +177,17 @@
 
   .table-scroll:focus {
     outline: none;
-    border-radius: 4px;
-    border-color: var(--focus-border-color);
-    border-width: var(--focus-border-width);
-    border-style: solid;
-    & + .mock-row-label {
-      top: var(--focus-border-width);
-      left: var(--focus-border-width);
-      bottom: var(--focus-border-width);
-    }
+  }
+
+  .table-scroll:focus::after {
+    content: "";
+    outline: var(--focus-border-width) solid var(--focus-border-color);
+    position: absolute;
+    top: var(--focus-border-width);
+    left: var(--focus-border-width);
+    height: calc(100% - 2 * var(--focus-border-width));
+    width: calc(100% - 2 * var(--focus-border-width));
+    z-index: var(--table-scroll-outline-z-index);
   }
 
   table {
