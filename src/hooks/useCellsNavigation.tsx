@@ -11,6 +11,7 @@ interface CellsNavigationContextType {
   setRowIndex?: (rowIndex: number) => void // function to set the row index
   setShouldFocus?: (shouldFocus: boolean) => void // function to set the shouldFocus state
   setEnterCellsNavigation?: (enterCellsNavigation: boolean) => void // function to set the enterCellsNavigation state
+  focusFirstCell?: () => void // function to focus the first cell
 }
 
 const defaultCellsNavigationContext: CellsNavigationContextType = {
@@ -104,6 +105,13 @@ export function CellsNavigationProvider({ colCount, rowCount, rowPadding, childr
     }
   }, [])
 
+  const focusFirstCell = useCallback(() => {
+    setColIndex(defaultCellsNavigationContext.colIndex)
+    setRowIndex(defaultCellsNavigationContext.rowIndex)
+    setEnterCellsNavigation(true)
+    setShouldFocus(true)
+  }, [])
+
   const value = useMemo(() => {
     return {
       colIndex,
@@ -116,9 +124,10 @@ export function CellsNavigationProvider({ colCount, rowCount, rowPadding, childr
       setShouldFocus,
       enterCellsNavigation,
       setEnterCellsNavigation,
+      focusFirstCell,
     }
   }, [colIndex, rowIndex, onTableKeyDown, onScrollKeyDown, shouldFocus, enterCellsNavigation,
-    setEnterCellsNavigation])
+    setEnterCellsNavigation, focusFirstCell])
 
   return (
     <CellsNavigationContext.Provider value={value}>
@@ -146,14 +155,14 @@ export function useCellNavigation({ ref, ariaColIndex, ariaRowIndex }: CellData)
 
   useEffect(() => {
     // focus on the cell when needed
-    if (ref.current && isCurrentCell && document.hasFocus() && document.activeElement !== ref.current && shouldFocus) {
+    if (ref.current && isCurrentCell && document.activeElement !== ref.current && shouldFocus) {
       // scroll the cell into view (note scroll-padding-inline-start and scroll-padding-block-start are set in the CSS
       // to avoid the cell being hidden by the row and column headers)
       ref.current.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'nearest' })
       ref.current.focus()
       setShouldFocus?.(false)
     }
-  }, [ref, isCurrentCell, ariaColIndex, ariaRowIndex, shouldFocus, setShouldFocus])
+  }, [ref, isCurrentCell, shouldFocus, setShouldFocus])
 
   // Roving tabindex: only the current navigation cell is focusable with Tab (tabindex = 0)
   // All other cells are focusable only with javascript .focus() (tabindex = -1)
