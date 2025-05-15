@@ -118,7 +118,7 @@ export default function TableHeader({
         direction={orderByColumn.get(name)?.direction}
         orderByIndex={orderByColumn.get(name)?.index}
         orderBySize={orderBy?.length}
-        changeSort={getChangeSort(name)}
+        onClick={getChangeSort(name)}
         onHideColumn={getHideColumnCallback(originalIndex)}
         isHideDisabled={isHideDisabled}
         onShowAllColumns={onShowAllColumns}

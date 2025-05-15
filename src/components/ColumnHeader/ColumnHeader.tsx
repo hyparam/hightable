@@ -13,16 +13,15 @@ interface Props {
   children?: ReactNode
   dataReady?: boolean
   direction?: Direction
-  onClick?: (e: MouseEvent) => void // legacy prop - will be removed
+  onClick?: () => void
   onHideColumn?: () => void // No longer needs columnIndex
   isHideDisabled?: boolean
   onShowAllColumns?: () => void
   title?: string
-  sortable?: boolean // legacy prop - will be removed
+  sortable?: boolean
   orderByIndex?: number // index of the column in the orderBy array (0-based)
   orderBySize?: number // size of the orderBy array
   className?: string // optional class name
-  changeSort?: (options?: {direction: Direction | null}) => void // new unified sort prop
 }
 
 export default function ColumnHeader({
@@ -40,14 +39,13 @@ export default function ColumnHeader({
   className,
   children,
   title,
-  changeSort,
 }: Props) {
   const ref = useRef<HTMLTableCellElement>(null)
   const [showMenu, setShowMenu] = useState(false)
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 })
 
-  // Derive sortable from changeSort
-  const isSortable = sortable !== false && (sortable ?? changeSort !== undefined)
+  // Derive sortable from onClick
+  const isSortable = sortable !== false && (sortable ?? onClick !== undefined)
 
   // Get the column width from the context
   const { getColumnStyle, setColumnWidth, getColumnWidth } = useColumnWidth()
@@ -142,49 +140,13 @@ export default function ColumnHeader({
   }, [])
 
   // Handle header click for sorting
-  const handleHeaderClick = useCallback((e: MouseEvent) => {
-
-    if (changeSort) {
-      changeSort()
-      return
-    }
-
-    onClick?.(e)
-  }, [changeSort, onClick])
+  const handleHeaderClick = useCallback(() => {
+    onClick?.()
+  }, [onClick])
 
   const handleHideThisColumn = useCallback(() => {
     onHideColumn?.()
   }, [onHideColumn])
-
-  const handleSortAscending = useCallback(() => {
-    if (changeSort) {
-      changeSort({ direction: 'ascending' })
-    } else if (onClick) {
-      const event = {} as MouseEvent & { sortDirection: 'ascending' }
-      event.sortDirection = 'ascending'
-      onClick(event)
-    }
-  }, [changeSort, onClick])
-
-  const handleSortDescending = useCallback(() => {
-    if (changeSort) {
-      changeSort({ direction: 'descending' })
-    } else if (onClick) {
-      const event = {} as MouseEvent & { sortDirection: 'descending' }
-      event.sortDirection = 'descending'
-      onClick(event)
-    }
-  }, [changeSort, onClick])
-
-  const handleClearSort = useCallback(() => {
-    if (changeSort) {
-      changeSort({ direction: null })
-    } else if (onClick) {
-      const event = {} as MouseEvent & { sortDirection: null }
-      event.sortDirection = null
-      onClick(event)
-    }
-  }, [changeSort, onClick])
 
   function renderColumnMenu() {
     return (
@@ -195,9 +157,7 @@ export default function ColumnHeader({
         onShowAllColumns={onShowAllColumns}
         sortable={isSortable}
         direction={direction}
-        onSortAscending={handleSortAscending}
-        onSortDescending={handleSortDescending}
-        onClearSort={handleClearSort}
+        onSort={onClick}
         isVisible={showMenu}
         position={menuPosition}
         onClose={closeMenu}

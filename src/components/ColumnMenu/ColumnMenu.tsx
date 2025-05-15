@@ -10,9 +10,7 @@ interface ColumnMenuProps {
   onShowAllColumns?: () => void
   sortable?: boolean
   direction?: Direction
-  onSortAscending?: () => void
-  onSortDescending?: () => void
-  onClearSort?: () => void
+  onSort?: () => void
   isVisible?: boolean
   position: { x: number; y: number }
   onClose: () => void
@@ -25,9 +23,7 @@ export default function ColumnMenu({
   onShowAllColumns,
   sortable,
   direction,
-  onSortAscending,
-  onSortDescending,
-  onClearSort,
+  onSort,
   isVisible = false,
   position,
   onClose,
@@ -45,20 +41,10 @@ export default function ColumnMenu({
     onClose()
   }, [onShowAllColumns, onClose])
 
-  const handleSortAscending = useCallback(() => {
-    onSortAscending?.()
+  const handleSort = useCallback(() => {
+    onSort?.()
     onClose()
-  }, [onSortAscending, onClose])
-
-  const handleSortDescending = useCallback(() => {
-    onSortDescending?.()
-    onClose()
-  }, [onSortDescending, onClose])
-
-  const handleRemoveSort = useCallback(() => {
-    onClearSort?.()
-    onClose()
-  }, [onClearSort, onClose])
+  }, [onSort, onClose])
 
   useEffect(() => {
     if (isVisible) {
@@ -118,7 +104,7 @@ export default function ColumnMenu({
               role="menuitem"
               aria-haspopup="false"
               aria-checked={direction === 'ascending'}
-              onClick={handleSortAscending}
+              onClick={handleSort}
             >
               Sort ascending
             </li>
@@ -126,12 +112,12 @@ export default function ColumnMenu({
               role="menuitem"
               aria-haspopup="false"
               aria-checked={direction === 'descending'}
-              onClick={handleSortDescending}
+              onClick={handleSort}
             >
               Sort descending
             </li>
             {direction &&
-              <li role="menuitem" aria-haspopup="false" onClick={handleRemoveSort}>
+              <li role="menuitem" aria-haspopup="false" onClick={handleSort}>
                 Clear sort
               </li>
             }
