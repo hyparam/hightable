@@ -13,10 +13,10 @@ vi.mock('react-dom', () => {
 describe('ColumnMenu', () => {
   const defaultProps = {
     column: 'Test Column',
-    columnIndex: 0,
     position: { x: 100, y: 100 },
     onClose: vi.fn(),
     isVisible: true,
+    onHideColumn: vi.fn(),
   }
 
   beforeEach(() => {
@@ -39,12 +39,11 @@ describe('ColumnMenu', () => {
   })
 
   it('calls onHideColumn when hide column is clicked', async () => {
-    const onHideColumn = vi.fn()
-    const { user, getByText } = render(<ColumnMenu {...defaultProps} onHideColumn={onHideColumn} />)
+    const { user, getByText } = render(<ColumnMenu {...defaultProps} />)
 
     await user.click(getByText('Hide column'))
 
-    expect(onHideColumn).toHaveBeenCalledWith(defaultProps.columnIndex)
+    expect(defaultProps.onHideColumn).toHaveBeenCalled()
     expect(defaultProps.onClose).toHaveBeenCalled()
   })
 

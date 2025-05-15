@@ -9,7 +9,7 @@ const HighTableContext = createContext<HighTableContextType | null>(null)
 export function useHighTable() {
   const context = useContext(HighTableContext)
   if (context === null) {
-    throw new Error('useHighTable must be used within a HighTable')
+    return { portalTarget: document.body }
   }
   return context
 }

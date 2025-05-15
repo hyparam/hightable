@@ -28,9 +28,6 @@ export default function TableHeader({
   onShowAllColumns,
   hiddenColumns,
 }: TableProps) {
-  // Derive hasHiddenColumns from hiddenColumns prop
-  const hasHiddenColumns = Boolean(hiddenColumns && hiddenColumns.length > 0)
-
   const orderByColumn = useMemo(() => {
     return new Map(
       (orderBy ?? []).map(({ column, direction }, index) => [column, { direction, index }])
