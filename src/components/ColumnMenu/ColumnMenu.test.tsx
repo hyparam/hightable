@@ -17,6 +17,7 @@ describe('ColumnMenu', () => {
     onClose: vi.fn(),
     isVisible: true,
     onHideColumn: vi.fn(),
+    onSort: vi.fn(),
   }
 
   beforeEach(() => {
@@ -105,38 +106,35 @@ describe('ColumnMenu', () => {
   })
 
   it('calls onSortAscending when "Sort ascending" is clicked', async () => {
-    const onSortAscending = vi.fn()
     const { user, getByText } = render(
-      <ColumnMenu {...defaultProps} sortable={true} onSortAscending={onSortAscending} />
+      <ColumnMenu {...defaultProps} sortable={true} />
     )
 
     await user.click(getByText('Sort ascending'))
 
-    expect(onSortAscending).toHaveBeenCalled()
+    expect(defaultProps.onSort).toHaveBeenCalled()
     expect(defaultProps.onClose).toHaveBeenCalled()
   })
 
   it('calls onSortDescending when "Sort descending" is clicked', async () => {
-    const onSortDescending = vi.fn()
     const { user, getByText } = render(
-      <ColumnMenu {...defaultProps} sortable={true} onSortDescending={onSortDescending} />
+      <ColumnMenu {...defaultProps} sortable={true} />
     )
 
     await user.click(getByText('Sort descending'))
 
-    expect(onSortDescending).toHaveBeenCalled()
+    expect(defaultProps.onSort).toHaveBeenCalled()
     expect(defaultProps.onClose).toHaveBeenCalled()
   })
 
   it('calls onClearSort when "Clear sort" is clicked', async () => {
-    const onClearSort = vi.fn()
     const { user, getByText } = render(
-      <ColumnMenu {...defaultProps} sortable={true} direction="ascending" onClearSort={onClearSort} />
+      <ColumnMenu {...defaultProps} sortable={true} direction="ascending" />
     )
 
     await user.click(getByText('Clear sort'))
 
-    expect(onClearSort).toHaveBeenCalled()
+    expect(defaultProps.onSort).toHaveBeenCalled()
     expect(defaultProps.onClose).toHaveBeenCalled()
   })
 
