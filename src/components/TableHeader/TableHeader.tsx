@@ -107,6 +107,8 @@ export default function TableHeader({
     [onHideColumn]
   )
 
+  const isHideDisabled = header.length <= 1
+
   return header.map((name, visibleIndex) => {
     // Get the original index from our memoized mapping
     const originalIndex = visibleToOriginalMap.get(visibleIndex) ?? visibleIndex
@@ -121,12 +123,12 @@ export default function TableHeader({
         orderBySize={orderBy?.length}
         changeSort={getChangeSort(name)}
         onHideColumn={getHideColumnCallback(originalIndex)}
-        onShowAllColumns={hasHiddenColumns ? onShowAllColumns : undefined}
+        isHideDisabled={isHideDisabled}
+        onShowAllColumns={onShowAllColumns}
         sortable={sortable && orderBy !== undefined}
         columnName={name}
         columnIndex={originalIndex}
         className={columnClassNames[originalIndex]}
-        visibleHeader={header}
       >
         {name}
       </ColumnHeader>

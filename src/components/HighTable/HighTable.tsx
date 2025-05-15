@@ -15,6 +15,7 @@ import TableCorner from '../TableCorner/TableCorner.js'
 import TableHeader from '../TableHeader/TableHeader.js'
 import { formatRowNumber, rowError } from './HighTable.helpers.js'
 import styles from './HighTable.module.css'
+import { HighTableProvider } from './HighTableContext.js'
 
 /**
  * A slice of the (optionally sorted) rows to render as HTML.
@@ -107,12 +108,9 @@ export default function HighTable({
     !hiddenColumns.includes(index),
   [hiddenColumns])
 
-  // Handler for hiding a column - now accepts the original index directly
   const handleHideColumn = useCallback((originalIndex: number) => {
-    // Don't hide if this would be the last visible column
-    if (visibleHeader.length <= 1) return
     setHiddenColumns(prev => [...prev, originalIndex])
-  }, [visibleHeader.length])
+  }, [])
 
   // Handler for showing all columns
   const handleShowAllColumns = useCallback(() => {
@@ -432,102 +430,103 @@ export default function HighTable({
   const ariaColCount = visibleHeader.length + 1 // don't forget the selection column
   const ariaRowCount = numRows + 1 // don't forget the header row
   return <ColumnWidthProvider localStorageKey={cacheKey ? `${cacheKey}:column-widths` : undefined}>
-    <div className={`${styles.hightable} ${styled ? styles.styled : ''} ${className}`}>
-      <div className={styles.tableScroll} ref={scrollRef} role="group" aria-labelledby="caption">
-        <div style={{ height: `${scrollHeight}px` }}>
-          <table
-            aria-readonly={true}
-            aria-colcount={ariaColCount}
-            aria-rowcount={ariaRowCount}
-            aria-multiselectable={showSelectionControls}
-            ref={tableRef}
-            role='grid'
-            style={{ top: `${offsetTop}px` }}
-          >
-            <caption id="caption" hidden>Virtual-scroll table</caption>
-            <thead role="rowgroup">
-              <Row ariaRowIndex={1} >
-                <TableCorner
-                  onClick={getOnSelectAllRows()}
-                  checked={allRowsSelected}
-                  showCheckBox={showCornerSelection}
-                  style={cornerStyle}
-                  ariaColIndex={1}
-                >&nbsp;</TableCorner>
-                <TableHeader
-                  dataReady={hasCompleteRow}
-                  header={visibleHeader}
-                  orderBy={orderBy}
-                  onOrderByChange={onOrderByChange}
-                  sortable={enableOrderByInteractions}
-                  columnClassNames={visibleColumnClassNames}
-                  onHideColumn={handleHideColumn}
-                  onShowAllColumns={handleShowAllColumns}
-                  hiddenColumns={hiddenColumns}
-                />
-              </Row>
-            </thead>
-            <tbody role="rowgroup">
-              {prePadding.map((_, prePaddingIndex) => {
-                const tableIndex = offset - prePadding.length + prePaddingIndex
-                return (
-                  <Row key={tableIndex} ariaRowIndex={tableIndex + 2} >
-                    <RowHeader style={cornerStyle} ariaColIndex={1} />
-                  </Row>
-                )
-              })}
-              {slice?.rows.map((row, rowIndex) => {
-                const tableIndex = slice.offset + rowIndex
-                const inferredDataIndex = orderBy === undefined || orderBy.length === 0 ? tableIndex : undefined
-                const dataIndex = row.index ?? inferredDataIndex
-                const selected = isRowSelected(dataIndex) ?? false
-                return (
-                  <Row
-                    key={tableIndex}
-                    selected={selected}
-                    ariaRowIndex={tableIndex + 2}
-                    title={rowError(row, data.header.length)}
-                  >
-                    <RowHeader
-                      busy={dataIndex === undefined}
-                      style={cornerStyle}
-                      onClick={dataIndex === undefined ? undefined : getOnSelectRowClick({ tableIndex, dataIndex })}
-                      checked={selected}
-                      showCheckBox={showSelection}
-                      ariaColIndex={1}
-                    >{formatRowNumber(dataIndex)}</RowHeader>
-                    {visibleColumns.map(({ column, originalIndex }) => {
-                      const hasResolved = column in row.cells
-                      const value = row.cells[column]
-                      return <Cell
-                        key={originalIndex}
-                        onDoubleClick={getOnDoubleClickCell(originalIndex, dataIndex)}
-                        onMouseDown={getOnMouseDownCell(originalIndex, dataIndex)}
-                        stringify={stringify}
-                        value={value}
-                        columnIndex={originalIndex}
-                        hasResolved={hasResolved}
-                        className={columnClassNames[originalIndex]}
-                        ariaColIndex={originalIndex + 2}
-                      />
-                    })}
-                  </Row>
-                )
-              })}
-              {postPadding.map((_, postPaddingIndex) => {
-                const tableIndex = offset + rowsLength + postPaddingIndex
-                return (
-                  <Row key={tableIndex} ariaRowIndex={tableIndex + 2}>
-                    <RowHeader style={cornerStyle} ariaColIndex={1} />
-                  </Row>
-                )
-              })}
-            </tbody>
-          </table>
+    <HighTableProvider portalTarget={tableRef.current}>
+      <div ref={tableRef} className={`${styles.hightable} ${styled ? styles.styled : ''} ${className}`}>
+        <div className={styles.tableScroll} ref={scrollRef} role="group" aria-labelledby="caption">
+          <div style={{ height: `${scrollHeight}px` }}>
+            <table
+              aria-readonly={true}
+              aria-colcount={ariaColCount}
+              aria-rowcount={ariaRowCount}
+              aria-multiselectable={showSelectionControls}
+              role='grid'
+              style={{ top: `${offsetTop}px` }}
+            >
+              <caption id="caption" hidden>Virtual-scroll table</caption>
+              <thead role="rowgroup">
+                <Row ariaRowIndex={1} >
+                  <TableCorner
+                    onClick={getOnSelectAllRows()}
+                    checked={allRowsSelected}
+                    showCheckBox={showCornerSelection}
+                    style={cornerStyle}
+                    ariaColIndex={1}
+                  >&nbsp;</TableCorner>
+                  <TableHeader
+                    dataReady={hasCompleteRow}
+                    header={visibleHeader}
+                    orderBy={orderBy}
+                    onOrderByChange={onOrderByChange}
+                    sortable={enableOrderByInteractions}
+                    columnClassNames={visibleColumnClassNames}
+                    onHideColumn={handleHideColumn}
+                    onShowAllColumns={handleShowAllColumns}
+                    hiddenColumns={hiddenColumns}
+                  />
+                </Row>
+              </thead>
+              <tbody role="rowgroup">
+                {prePadding.map((_, prePaddingIndex) => {
+                  const tableIndex = offset - prePadding.length + prePaddingIndex
+                  return (
+                    <Row key={tableIndex} ariaRowIndex={tableIndex + 2} >
+                      <RowHeader style={cornerStyle} ariaColIndex={1} />
+                    </Row>
+                  )
+                })}
+                {slice?.rows.map((row, rowIndex) => {
+                  const tableIndex = slice.offset + rowIndex
+                  const inferredDataIndex = orderBy === undefined || orderBy.length === 0 ? tableIndex : undefined
+                  const dataIndex = row.index ?? inferredDataIndex
+                  const selected = isRowSelected(dataIndex) ?? false
+                  return (
+                    <Row
+                      key={tableIndex}
+                      selected={selected}
+                      ariaRowIndex={tableIndex + 2}
+                      title={rowError(row, data.header.length)}
+                    >
+                      <RowHeader
+                        busy={dataIndex === undefined}
+                        style={cornerStyle}
+                        onClick={dataIndex === undefined ? undefined : getOnSelectRowClick({ tableIndex, dataIndex })}
+                        checked={selected}
+                        showCheckBox={showSelection}
+                        ariaColIndex={1}
+                      >{formatRowNumber(dataIndex)}</RowHeader>
+                      {visibleColumns.map(({ column, originalIndex }) => {
+                        const hasResolved = column in row.cells
+                        const value = row.cells[column]
+                        return <Cell
+                          key={originalIndex}
+                          onDoubleClick={getOnDoubleClickCell(originalIndex, dataIndex)}
+                          onMouseDown={getOnMouseDownCell(originalIndex, dataIndex)}
+                          stringify={stringify}
+                          value={value}
+                          columnIndex={originalIndex}
+                          hasResolved={hasResolved}
+                          className={columnClassNames[originalIndex]}
+                          ariaColIndex={originalIndex + 2}
+                        />
+                      })}
+                    </Row>
+                  )
+                })}
+                {postPadding.map((_, postPaddingIndex) => {
+                  const tableIndex = offset + rowsLength + postPaddingIndex
+                  return (
+                    <Row key={tableIndex} ariaRowIndex={tableIndex + 2}>
+                      <RowHeader style={cornerStyle} ariaColIndex={1} />
+                    </Row>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
+        {/* puts a background behind the row labels column */}
+        <div className={styles.mockRowLabel} style={cornerStyle}>&nbsp;</div>
       </div>
-      {/* puts a background behind the row labels column */}
-      <div className={styles.mockRowLabel} style={cornerStyle}>&nbsp;</div>
-    </div>
+    </HighTableProvider>
   </ColumnWidthProvider>
 }

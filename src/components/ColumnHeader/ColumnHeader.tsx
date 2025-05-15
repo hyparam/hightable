@@ -15,13 +15,13 @@ interface Props {
   direction?: Direction
   onClick?: (e: MouseEvent) => void // legacy prop - will be removed
   onHideColumn?: () => void // No longer needs columnIndex
+  isHideDisabled?: boolean
   onShowAllColumns?: () => void
   title?: string
   sortable?: boolean // legacy prop - will be removed
   orderByIndex?: number // index of the column in the orderBy array (0-based)
   orderBySize?: number // size of the orderBy array
   className?: string // optional class name
-  visibleHeader?: string[] // list of visible column headers
   changeSort?: (options?: {direction: Direction | null}) => void // new unified sort prop
 }
 
@@ -34,12 +34,12 @@ export default function ColumnHeader({
   direction,
   onClick,
   onHideColumn,
+  isHideDisabled,
   onShowAllColumns,
   sortable,
   className,
   children,
   title,
-  visibleHeader = [],
   changeSort,
 }: Props) {
   const ref = useRef<HTMLTableCellElement>(null)
@@ -187,14 +187,12 @@ export default function ColumnHeader({
   }, [changeSort, onClick])
 
   function renderColumnMenu() {
-    const hasHiddenColumns = Boolean(onShowAllColumns)
-
     return (
       <ColumnMenu
         column={title ?? columnName}
         onHideColumn={handleHideThisColumn}
+        isHideDisabled={isHideDisabled}
         onShowAllColumns={onShowAllColumns}
-        hasHiddenColumns={hasHiddenColumns}
         sortable={isSortable}
         direction={direction}
         onSortAscending={handleSortAscending}
@@ -203,7 +201,6 @@ export default function ColumnHeader({
         isVisible={showMenu}
         position={menuPosition}
         onClose={closeMenu}
-        visibleHeader={visibleHeader}
       />
     )
   }

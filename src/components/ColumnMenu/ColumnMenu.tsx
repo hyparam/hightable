@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { Direction } from '../../helpers/sort.js'
+import { useHighTable } from '../HighTable/HighTableContext.js'
 
 interface ColumnMenuProps {
   column: string
   onHideColumn?: () => void
+  isHideDisabled?: boolean
   onShowAllColumns?: () => void
-  hasHiddenColumns?: boolean
   sortable?: boolean
   direction?: Direction
   onSortAscending?: () => void
@@ -15,14 +16,13 @@ interface ColumnMenuProps {
   isVisible?: boolean
   position: { x: number; y: number }
   onClose: () => void
-  visibleHeader?: string[]
 }
 
 export default function ColumnMenu({
   column,
   onHideColumn,
+  isHideDisabled = false,
   onShowAllColumns,
-  hasHiddenColumns = false,
   sortable,
   direction,
   onSortAscending,
@@ -31,15 +31,14 @@ export default function ColumnMenu({
   isVisible = false,
   position,
   onClose,
-  visibleHeader = [],
 }: ColumnMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null)
 
   const handleHideColumn = useCallback(() => {
-    if (visibleHeader.length <= 1) return
+    if (isHideDisabled) return
     onHideColumn?.()
     onClose()
-  }, [onHideColumn, onClose, visibleHeader.length])
+  }, [onHideColumn, onClose, isHideDisabled])
 
   const handleShowAllColumns = useCallback(() => {
     onShowAllColumns?.()
@@ -76,6 +75,8 @@ export default function ColumnMenu({
     }
   }, [isVisible, onClose])
 
+  const { portalTarget } = useHighTable()
+
   if (!isVisible) return null
 
   return createPortal(
@@ -94,16 +95,18 @@ export default function ColumnMenu({
       <div role="presentation">{column}</div>
       <hr role="separator" />
       <ul role="group" aria-label="Column actions">
-        <li
-          role="menuitem"
-          aria-haspopup="false"
-          onClick={handleHideColumn}
-          aria-disabled={visibleHeader.length <= 1}
-          style={{ opacity: visibleHeader.length <= 1 ? 0.5 : 1, cursor: visibleHeader.length <= 1 ? 'not-allowed' : 'pointer' }}
-        >
-          Hide column
-        </li>
-        {hasHiddenColumns &&
+        {onHideColumn &&
+          <li
+            role="menuitem"
+            aria-haspopup="false"
+            onClick={handleHideColumn}
+            aria-disabled={isHideDisabled}
+            style={{ opacity: isHideDisabled ? 0.5 : 1, cursor: isHideDisabled ? 'not-allowed' : 'pointer' }}
+          >
+            Hide column
+          </li>
+        }
+        {onShowAllColumns &&
           <li role="menuitem" aria-haspopup="false" onClick={handleShowAllColumns}>
             Show all columns
           </li>
@@ -136,6 +139,6 @@ export default function ColumnMenu({
         }
       </ul>
     </div>,
-    document.querySelector('.hightable') ?? document.body
+    portalTarget ?? document.body
   )
 }

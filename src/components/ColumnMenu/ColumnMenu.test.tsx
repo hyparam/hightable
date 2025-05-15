@@ -17,7 +17,6 @@ describe('ColumnMenu', () => {
     position: { x: 100, y: 100 },
     onClose: vi.fn(),
     isVisible: true,
-    visibleHeader: ['Column 1', 'Column 2', 'Column 3'],
   }
 
   beforeEach(() => {
@@ -49,17 +48,28 @@ describe('ColumnMenu', () => {
     expect(defaultProps.onClose).toHaveBeenCalled()
   })
 
-  it('disables hide column when it is the last visible column', () => {
+  it('does not render hide column option when onHideColumn is not provided', () => {
+    const { queryByText } = render(<ColumnMenu {...defaultProps} onHideColumn={undefined} />)
+    expect(queryByText('Hide column')).toBeNull()
+  })
+
+  it('disables hide column button when isHideDisabled is true', () => {
+    const onHideColumn = vi.fn()
     const { getByText } = render(
-      <ColumnMenu {...defaultProps} visibleHeader={['Last Column']} />
+      <ColumnMenu {...defaultProps} onHideColumn={onHideColumn} isHideDisabled={true} />
     )
 
     const hideColumnItem = getByText('Hide column').closest('[role="menuitem"]')
-    expect(hideColumnItem?.getAttribute('aria-disabled')).toBe('true')
+    expect(hideColumnItem).not.toBeNull()
+    const element = hideColumnItem as HTMLElement
+    expect(element.getAttribute('aria-disabled')).toBe('true')
+    expect(element.style.opacity).toBe('0.5')
+    expect(element.style.cursor).toBe('not-allowed')
   })
 
-  it('shows "Show all columns" when hasHiddenColumns is true', () => {
-    const { getByText } = render(<ColumnMenu {...defaultProps} hasHiddenColumns={true} />)
+  it('shows "Show all columns" when onShowAllColumns is provided', () => {
+    const onShowAllColumns = vi.fn()
+    const { getByText } = render(<ColumnMenu {...defaultProps} onShowAllColumns={onShowAllColumns} />)
 
     expect(getByText('Show all columns')).toBeDefined()
   })
@@ -67,7 +77,7 @@ describe('ColumnMenu', () => {
   it('calls onShowAllColumns when "Show all columns" is clicked', async () => {
     const onShowAllColumns = vi.fn()
     const { user, getByText } = render(
-      <ColumnMenu {...defaultProps} hasHiddenColumns={true} onShowAllColumns={onShowAllColumns} />
+      <ColumnMenu {...defaultProps} onShowAllColumns={onShowAllColumns} />
     )
 
     await user.click(getByText('Show all columns'))
@@ -95,39 +105,39 @@ describe('ColumnMenu', () => {
     expect(getByText('Clear sort')).toBeDefined()
   })
 
-  it('calls onSort with ascending direction when "Sort ascending" is clicked', async () => {
-    const onSort = vi.fn()
+  it('calls onSortAscending when "Sort ascending" is clicked', async () => {
+    const onSortAscending = vi.fn()
     const { user, getByText } = render(
-      <ColumnMenu {...defaultProps} sortable={true} onSort={onSort} />
+      <ColumnMenu {...defaultProps} sortable={true} onSortAscending={onSortAscending} />
     )
 
     await user.click(getByText('Sort ascending'))
 
-    expect(onSort).toHaveBeenCalledWith(defaultProps.columnIndex, 'ascending')
+    expect(onSortAscending).toHaveBeenCalled()
     expect(defaultProps.onClose).toHaveBeenCalled()
   })
 
-  it('calls onSort with descending direction when "Sort descending" is clicked', async () => {
-    const onSort = vi.fn()
+  it('calls onSortDescending when "Sort descending" is clicked', async () => {
+    const onSortDescending = vi.fn()
     const { user, getByText } = render(
-      <ColumnMenu {...defaultProps} sortable={true} onSort={onSort} />
+      <ColumnMenu {...defaultProps} sortable={true} onSortDescending={onSortDescending} />
     )
 
     await user.click(getByText('Sort descending'))
 
-    expect(onSort).toHaveBeenCalledWith(defaultProps.columnIndex, 'descending')
+    expect(onSortDescending).toHaveBeenCalled()
     expect(defaultProps.onClose).toHaveBeenCalled()
   })
 
-  it('calls onSort with null when "Clear sort" is clicked', async () => {
-    const onSort = vi.fn()
+  it('calls onClearSort when "Clear sort" is clicked', async () => {
+    const onClearSort = vi.fn()
     const { user, getByText } = render(
-      <ColumnMenu {...defaultProps} sortable={true} direction="ascending" onSort={onSort} />
+      <ColumnMenu {...defaultProps} sortable={true} direction="ascending" onClearSort={onClearSort} />
     )
 
     await user.click(getByText('Clear sort'))
 
-    expect(onSort).toHaveBeenCalledWith(defaultProps.columnIndex, null)
+    expect(onClearSort).toHaveBeenCalled()
     expect(defaultProps.onClose).toHaveBeenCalled()
   })
 
