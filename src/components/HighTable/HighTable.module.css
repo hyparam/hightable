@@ -225,12 +225,9 @@
       vertical-align: middle;
 
       &[aria-sort] {
-        padding-right: calc(var(--cell-horizontal-padding) + 12px);
+        padding-right: calc(var(--cell-horizontal-padding) + 24px);
       }
     }
-  }
-
-  th[aria-sort]::after {
   }
 
   th[data-order-by-index="0"]::after {
@@ -272,7 +269,7 @@
     align-items: center;
     justify-content: center;
     position: absolute;
-    right: 8px;
+    right: 12px;
     top: 55%;
     transform: translateY(-50%);
     width: 20px;

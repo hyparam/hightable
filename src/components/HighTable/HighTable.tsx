@@ -1,4 +1,4 @@
-import { CSSProperties, KeyboardEvent, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { CSSProperties, KeyboardEvent, MouseEvent, RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DataFrame } from '../../helpers/dataframe.js'
 import { PartialRow } from '../../helpers/row.js'
 import { Selection, areAllSelected, isSelected, toggleAll, toggleIndexInSelection, toggleRangeInSelection, toggleRangeInTable } from '../../helpers/selection.js'
@@ -48,6 +48,7 @@ interface Props {
   className?: string // additional class names for the component
   columnClassNames?: (string | undefined)[] // list of additional class names for the header and cells of each column. The index in this array corresponds to the column index in data.header
   styled?: boolean // use styled component? (default true)
+  highTableRef?: RefObject<HTMLDivElement | null>
 }
 
 const defaultPadding = 20
@@ -64,13 +65,14 @@ const ariaOffset = 2 // 1-based index, +1 for the header
  */
 export default function HighTable(props: Props) {
   const { data, cacheKey } = props
+  const highTableRef = useRef<HTMLDivElement>(null)
   const ariaColCount = data.header.length + 1 // don't forget the selection column
   const ariaRowCount = data.numRows + 1 // don't forget the header row
   return (
     <ColumnWidthProvider localStorageKey={cacheKey ? `${cacheKey}:column-widths` : undefined}>
       <CellsNavigationProvider colCount={ariaColCount} rowCount={ariaRowCount} rowPadding={props.padding ?? defaultPadding}>
         <HighTableProvider portalTarget={highTableRef.current}>
-          <HighTableInner {...props} />
+          <HighTableInner {...props} highTableRef={highTableRef} />
         </HighTableProvider>
       </CellsNavigationProvider>
     </ColumnWidthProvider>
@@ -99,6 +101,7 @@ export function HighTableInner({
   className = '',
   columnClassNames = [],
   styled = true,
+  highTableRef,
 }: Props) {
   /**
    * The component relies on the model of a virtual table which rows are ordered and only the
@@ -242,7 +245,6 @@ export function HighTableInner({
   const offsetTop = slice ? Math.max(0, slice.offset - padding) * rowHeight : 0
 
   const scrollRef = useRef<HTMLDivElement>(null)
-  const highTableRef = useRef<HTMLTableElement>(null)
   const pendingRequest = useRef(0)
 
   // invalidate when data changes so that columns will auto-resize
