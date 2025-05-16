@@ -27,7 +27,6 @@ interface Props {
   onHideColumn?: () => void
   isHideDisabled?: boolean
   onShowAllColumns?: () => void
-  title?: string
   sortable?: boolean
   orderByIndex?: number // index of the column in the orderBy array (0-based)
   orderBySize?: number // size of the orderBy array
@@ -50,7 +49,6 @@ export default function ColumnHeader({
   sortable,
   className,
   children,
-  title,
   ariaColIndex,
   ariaRowIndex,
 }: Props) {
@@ -169,7 +167,7 @@ export default function ColumnHeader({
   function renderColumnMenu() {
     return (
       <ColumnMenu
-        column={title ?? columnName}
+        columnName={columnName}
         onHideColumn={handleHideThisColumn}
         isHideDisabled={isHideDisabled}
         onShowAllColumns={onShowAllColumns}
@@ -217,7 +215,7 @@ export default function ColumnHeader({
         onContextMenu={handleContextMenu}
         style={columnStyle}
         className={className}
-        aria-label={title ?? columnName}
+        aria-label={columnName}
         onKeyDown={onKeyDown}
       >
         <span>{children}</span>

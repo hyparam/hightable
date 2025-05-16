@@ -135,7 +135,6 @@ export default function TableHeader({
         className={columnClassNames[visibleIndex]}
         ariaColIndex={ariaColIndex}
         ariaRowIndex={ariaRowIndex}
-        title={name}
       >
         {name}
       </ColumnHeader>

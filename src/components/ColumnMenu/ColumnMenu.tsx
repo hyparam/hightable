@@ -4,7 +4,7 @@ import { Direction } from '../../helpers/sort.js'
 import { useHighTable } from '../HighTable/HighTableContext.js'
 
 interface ColumnMenuProps {
-  column: string
+  columnName: string
   onHideColumn?: () => void
   isHideDisabled?: boolean
   onShowAllColumns?: () => void
@@ -17,7 +17,7 @@ interface ColumnMenuProps {
 }
 
 export default function ColumnMenu({
-  column,
+  columnName,
   onHideColumn,
   isHideDisabled = false,
   onShowAllColumns,
@@ -69,14 +69,14 @@ export default function ColumnMenu({
     <div
       ref={menuRef}
       role="menu"
-      aria-label={`Column menu for ${column}`}
+      aria-label={`Column menu for ${columnName}`}
       aria-orientation="vertical"
       style={{
         top: position.y,
         left: position.x,
       }}
     >
-      <div role="presentation">{column}</div>
+      <div role="presentation">{columnName}</div>
       <hr role="separator" />
       <ul role="group" aria-label="Column actions">
         {onHideColumn &&
