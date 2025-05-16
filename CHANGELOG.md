@@ -1,6 +1,33 @@
 # CHANGELOG
 
-## [Unreleased](https://github.com/hyparam/hightable/compare/v0.15.3...HEAD)
+## [Unreleased](https://github.com/hyparam/hightable/compare/v0.15.5...HEAD)
+
+## [0.15.5](https://github.com/hyparam/hightable/compare/v0.15.4...v0.15.5) - 2025-05-14
+
+### Fixed
+
+- avoid shifting the contents when hovering the table ([#162](https://github.com/hyparam/hightable/pull/162)).
+
+### Changed
+
+- focus the first cell when the table is mounted, instead of the table ([#163](https://github.com/hyparam/hightable/pull/163)).
+- limit column autoresize to 40rem (640px) instead of 2000px ([#161](https://github.com/hyparam/hightable/pull/161)).
+- remove red row error ([8c1585b](https://github.com/hyparam/hightable/commit/8c1585b0ad0e56b6abc8aeddb1a2924b75beb09d)).
+
+### Refactored
+
+- updated dev dependencies ([#164](https://github.com/hyparam/hightable/pull/164)).
+
+## [0.15.4](https://github.com/hyparam/hightable/compare/v0.15.3...v0.15.4) - 2025-05-10
+
+### Added
+
+- add `onKeyDownCell` prop to `HighTable` to react to key press on a table cell. For accessibility, it should be passed if onDoubleClickCell is passed ([#140](https://github.com/hyparam/hightable/pull/140)).
+- support navigation with the keyboard ([#140](https://github.com/hyparam/hightable/pull/140), [#152](https://github.com/hyparam/hightable/pull/152), [#153](https://github.com/hyparam/hightable/pull/153)).
+
+### Refactored
+
+- updated dev dependencies ([#155](https://github.com/hyparam/hightable/pull/155)).
 
 ## [0.15.3](https://github.com/hyparam/hightable/compare/v0.15.2...v0.15.3) - 2025-05-06
 

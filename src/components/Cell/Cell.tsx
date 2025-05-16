@@ -1,15 +1,18 @@
-import { MouseEvent, useMemo } from 'react'
+import { KeyboardEvent, MouseEvent, useCallback, useMemo, useRef } from 'react'
+import { useCellNavigation } from '../../hooks/useCellsNavigation.js'
 import useColumnWidth from '../../hooks/useColumnWidth.js'
 
 interface Props {
   onDoubleClick?: (event: MouseEvent) => void
   onMouseDown?: (event: MouseEvent) => void
+  onKeyDown?: (event: KeyboardEvent) => void
   stringify: (value: unknown) => string | undefined
   value: any
   columnIndex: number
   hasResolved: boolean
+  ariaColIndex: number
+  ariaRowIndex: number
   className?: string
-  ariaColIndex?: number
 }
 
 /**
@@ -20,12 +23,25 @@ interface Props {
  * @param props.columnIndex column index in the dataframe (0-based)
  * @param props.onDoubleClick double click callback
  * @param props.onMouseDown mouse down callback
+ * @param props.onKeyDown key down callback
  * @param props.stringify function to stringify the value
  * @param props.hasResolved function to get the column style
+ * @param props.ariaColIndex aria col index
+ * @param props.ariaRowIndex aria row index
  * @param props.className optional class name
- * @param props.ariaColIndex optional aria col index
  */
-export default function Cell({ onDoubleClick, onMouseDown, stringify, columnIndex, value, hasResolved, className, ariaColIndex }: Props) {
+export default function Cell({ onDoubleClick, onMouseDown, onKeyDown, stringify, columnIndex, value, hasResolved, className, ariaColIndex, ariaRowIndex }: Props) {
+  const ref = useRef<HTMLTableCellElement>(null)
+  const { tabIndex, navigateToCell } = useCellNavigation({ ref, ariaColIndex, ariaRowIndex })
+  const handleMouseDown = useCallback((event: MouseEvent) => {
+    navigateToCell()
+    onMouseDown?.(event)
+  }, [onMouseDown, navigateToCell])
+  const handleDoubleClick = useCallback((event: MouseEvent) => {
+    navigateToCell()
+    onDoubleClick?.(event)
+  }, [onDoubleClick, navigateToCell])
+
   // Get the column width from the context
   const { getColumnStyle } = useColumnWidth()
   const columnStyle = getColumnStyle?.(columnIndex)
@@ -47,11 +63,14 @@ export default function Cell({ onDoubleClick, onMouseDown, stringify, columnInde
   }, [str])
   return (
     <td
+      ref={ref}
       role="cell"
       aria-busy={!hasResolved}
       aria-colindex={ariaColIndex}
-      onDoubleClick={onDoubleClick}
-      onMouseDown={onMouseDown}
+      tabIndex={tabIndex}
+      onDoubleClick={handleDoubleClick}
+      onMouseDown={handleMouseDown}
+      onKeyDown={onKeyDown}
       style={columnStyle}
       className={className}
       title={title}>

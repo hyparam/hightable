@@ -7,6 +7,7 @@ interface TableProps {
   orderBy?: OrderBy // array of column order by clauses. If undefined, the table is unordered, the sort elements are hidden and the interactions are disabled.
   onOrderByChange?: (orderBy: OrderBy) => void // callback to call when a user interaction changes the order. The interactions are disabled if undefined.
   dataReady: boolean
+  ariaRowIndex: number // aria row index for the header
   sortable?: boolean
   columnClassNames?: (string | undefined)[] // array of class names for each column
   onHideColumn?: (columnIndex: number) => void
@@ -22,6 +23,7 @@ export default function TableHeader({
   orderBy,
   onOrderByChange,
   dataReady,
+  ariaRowIndex,
   sortable = true,
   columnClassNames = [],
   onHideColumn,
@@ -47,22 +49,19 @@ export default function TableHeader({
       return mapping
     }
 
-    // Sort hidden columns for consistent processing
-    const sortedHiddenColumns = [...hiddenColumns].sort((a, b) => a - b)
+    // Create a list of all visible indices
+    const allOriginalColumns = new Set(Array.from({ length: header.length + hiddenColumns.length }, (_, i) => i))
 
-    // For each visible index, calculate the corresponding original index
-    header.forEach((_, visibleIndex) => {
-      let hiddenBefore = 0
-      for (const hiddenIdx of sortedHiddenColumns) {
-        if (hiddenIdx <= visibleIndex + hiddenBefore) {
-          hiddenBefore++
-        }
-      }
-      mapping.set(visibleIndex, visibleIndex + hiddenBefore)
+    // Remove hidden columns
+    hiddenColumns.forEach(index => allOriginalColumns.delete(index))
+
+    // Map visible indices to original indices
+    Array.from(allOriginalColumns).sort((a, b) => a - b).forEach((originalIndex, visibleIndex) => {
+      mapping.set(visibleIndex, originalIndex)
     })
 
     return mapping
-  }, [header, hiddenColumns])
+  }, [hiddenColumns, header])
 
   // Create changeSort callbacks for each column
   const getChangeSort = useCallback(
@@ -109,6 +108,7 @@ export default function TableHeader({
   return header.map((name, visibleIndex) => {
     // Get the original index from our memoized mapping
     const originalIndex = visibleToOriginalMap.get(visibleIndex) ?? visibleIndex
+    const ariaColIndex = originalIndex + 2 // 1-based, include the row header
 
     return (
       // The ColumnHeader component width is controlled by the parent
@@ -125,7 +125,10 @@ export default function TableHeader({
         sortable={sortable && orderBy !== undefined}
         columnName={name}
         columnIndex={originalIndex}
-        className={columnClassNames[originalIndex]}
+        className={columnClassNames[visibleIndex]}
+        ariaColIndex={ariaColIndex}
+        ariaRowIndex={ariaRowIndex}
+        title={name}
       >
         {name}
       </ColumnHeader>

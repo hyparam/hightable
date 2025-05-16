@@ -1,18 +1,23 @@
 import { act, fireEvent, waitFor, within } from '@testing-library/react'
+import { UserEvent } from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { DataFrame, sortableDataFrame } from '../../helpers/dataframe.js'
 import { wrapResolved } from '../../utils/promise.js'
 import { render } from '../../utils/userEvent.js'
 import HighTable from './HighTable.js'
 
+Element.prototype.scrollIntoView = vi.fn()
+
 const data: DataFrame = {
-  header: ['ID', 'Count'],
+  header: ['ID', 'Count', 'Double', 'Triple'],
   numRows: 1000,
   rows: ({ start, end }) => Array.from({ length: end - start }, (_, index) => ({
     index: wrapResolved(index + start),
     cells: {
       ID: wrapResolved(`row ${index + start}`),
       Count: wrapResolved(1000 - start - index),
+      Double: wrapResolved((1000 - start - index) * 2),
+      Triple: wrapResolved((1000 - start - index) * 3),
     },
   })),
 }
@@ -62,7 +67,7 @@ describe('HighTable', () => {
     await waitFor(() => {
       expect(getByText('ID')).toBeDefined()
       expect(mockData.rows).toHaveBeenCalledOnce()
-      expect(mockData.rows).toHaveBeenCalledWith({ start:0, end:14, orderBy: [] })
+      expect(mockData.rows).toHaveBeenCalledWith({ start: 0, end: 14, orderBy: [] })
     })
   })
 
@@ -77,7 +82,7 @@ describe('HighTable', () => {
     if (!scrollDiv) throw new Error('Scroll container not found')
     await waitFor(() => {
       expect(mockData.rows).toHaveBeenCalledTimes(1)
-      expect(mockData.rows).toHaveBeenCalledWith({ start:0, end: 24, orderBy: [] })
+      expect(mockData.rows).toHaveBeenCalledWith({ start: 0, end: 24, orderBy: [] })
     })
 
     act(() => {
@@ -87,7 +92,7 @@ describe('HighTable', () => {
     })
 
     await waitFor(() => {
-      expect(mockData.rows).toHaveBeenCalledWith({ start:0, end: 39, orderBy: [] })
+      expect(mockData.rows).toHaveBeenCalledWith({ start: 0, end: 39, orderBy: [] })
     })
   })
 
@@ -109,6 +114,17 @@ describe('HighTable', () => {
     await user.pointer({ keys: '[MouseMiddle>]', target: cell }) // press the middle mouse button without releasing it
 
     expect(mockMiddleClick).toHaveBeenCalledWith(expect.anything(), 1, 0)
+  })
+
+  it('correctly handles key down on cell', async () => {
+    const mockKeyDown = vi.fn()
+    const { user, findByText } = render(<HighTable data={mockData} onKeyDownCell={mockKeyDown} />)
+    const cell = await findByText('Name 0')
+    cell.focus()
+
+    await user.keyboard('{Enter}')
+
+    expect(mockKeyDown).toHaveBeenCalledWith(expect.anything(), 1, 0)
   })
 
   it('displays error when data fetch fails', async () => {
@@ -137,7 +153,7 @@ describe('When sorted, HighTable', () => {
     expect(selectionCell.textContent).toBe(rowNumber)
 
     const columns = within(row).getAllByRole('cell')
-    expect(columns).toHaveLength(2)
+    expect(columns).toHaveLength(4)
     expect(columns[0]?.textContent).toBe(ID)
     expect(columns[1]?.textContent).toBe(Count)
   }
@@ -568,7 +584,7 @@ describe('HighTable localstorage', () => {
     }
     expect(header.style.maxWidth).toEqual(`${initialWidth}px`)
     expect(measureWidth).toHaveBeenCalled()
-    expect(localStorage.getItem('key:column-widths')).toEqual(JSON.stringify([initialWidth, initialWidth]))
+    expect(localStorage.getItem('key:column-widths')).toEqual(JSON.stringify([initialWidth, initialWidth, initialWidth, initialWidth]))
   })
   it('saves nothing on initialization if cacheKey is not provided', () => {
     localStorage.clear()
@@ -586,20 +602,20 @@ describe('HighTable localstorage', () => {
   it('is used to load previously saved column widths', () => {
     localStorage.clear()
     const savedWidth = initialWidth * 2
-    localStorage.setItem('key:column-widths', JSON.stringify([savedWidth, savedWidth]))
+    localStorage.setItem('key:column-widths', JSON.stringify([savedWidth, savedWidth, savedWidth, savedWidth]))
 
     const { getAllByRole } = render(<HighTable data={data} cacheKey="key" />)
     const header = getAllByRole('columnheader')[0]
     if (!header) {
       throw new Error('Header should not be null')
     }
-    expect(localStorage.getItem('key:column-widths')).toEqual(JSON.stringify([savedWidth, savedWidth]))
+    expect(localStorage.getItem('key:column-widths')).toEqual(JSON.stringify([savedWidth, savedWidth, savedWidth, savedWidth]))
     expect(header.style.maxWidth).toEqual(`${savedWidth}px`)
   })
   it('is updated if new data are loaded', () => {
     localStorage.clear()
     const savedWidth = initialWidth * 2
-    localStorage.setItem('key:column-widths', JSON.stringify([savedWidth, savedWidth]))
+    localStorage.setItem('key:column-widths', JSON.stringify([savedWidth, savedWidth, savedWidth, savedWidth]))
 
     const { getAllByRole, rerender } = render(<HighTable data={data} cacheKey="key" />)
 
@@ -612,5 +628,198 @@ describe('HighTable localstorage', () => {
     }
     expect(localStorage.getItem(`${otherKey}:column-widths`)).toEqual(JSON.stringify([initialWidth, initialWidth]))
     expect(header.style.maxWidth).toEqual(`${initialWidth}px`)
+  })
+})
+
+describe('Navigating Hightable with the keyboard', () => {
+  describe('On mount, ', () => {
+    it('the first cell is focused by default', () => {
+      render(<HighTable data={data} />)
+      const focusedElement = document.activeElement
+      expect(focusedElement?.getAttribute('aria-colindex')).toBe('1')
+      expect(focusedElement?.closest('[role="row"]')?.getAttribute('aria-rowindex')).toBe('1')
+    })
+    it('the first cell is not focused if focus prop is false, and neither is the table scroller', () => {
+      render(<HighTable data={data} focus={false} />)
+      expect(document.activeElement?.localName).toBe('body')
+    })
+    it('pressing "Shift+Tab" moves the focus to the scrollable div', async () => {
+      const { user, getByLabelText } = render(<HighTable data={data} />)
+      const scrollableDiv = getByLabelText('Virtual-scroll table')
+      await user.keyboard('{Shift>}{Tab}{/Shift}')
+      expect(document.activeElement).toBe(scrollableDiv)
+    })
+  })
+
+  describe('When the scrollable div is focused', () => {
+    async function setFocusOnScrollableDiv(user: UserEvent) {
+      await user.keyboard('{Shift>}{Tab}{/Shift}')
+    }
+    it.for(['{Tab}', '{ }', '{Enter}'])('moves the focus to the first cell when pressing "%s"', async (key) => {
+      const { user } = render(<HighTable data={data} />)
+      await setFocusOnScrollableDiv(user)
+      await user.keyboard(key)
+      const focusedElement = document.activeElement
+      expect(focusedElement?.getAttribute('aria-colindex')).toBe('1')
+      expect(focusedElement?.closest('[role="row"]')?.getAttribute('aria-rowindex')).toBe('1')
+    })
+    it.for(['{Shift>}{Tab}{/Shift}'])('moves the focus outside of the table when pressing "%s"', async (key) => {
+      const { user } = render(<HighTable data={data} />)
+      await setFocusOnScrollableDiv(user)
+      await user.keyboard(key)
+      const focusedElement = document.activeElement
+      expect(focusedElement?.localName).toBe('body')
+    })
+    it.for(['{ArrowUp}', '{ArrowDown}', '{ArrowLeft}', '{ArrowRight}'])('scroll while keeping the focus on the scrollable div when pressing "%s"', async (key) => {
+      const { user, getByLabelText } = render(<HighTable data={data} />)
+      await setFocusOnScrollableDiv(user)
+      const scrollableDiv = getByLabelText('Virtual-scroll table')
+      await user.keyboard(key)
+      expect(document.activeElement).toBe(scrollableDiv)
+    })
+    it('pressing "Tab", then "Tab", then "Shift+Tab", then "Shift+Tab" moves the focus back to the scrollable div', async () => {
+      const { user, getByLabelText } = render(<HighTable data={data} />)
+      await setFocusOnScrollableDiv(user)
+      const scrollableDiv = getByLabelText('Virtual-scroll table')
+      await user.keyboard('{Tab}')
+      expect(document.activeElement).not.toBe(scrollableDiv)
+      await user.keyboard('{Tab}')
+      expect(document.activeElement).not.toBe(scrollableDiv)
+      await user.keyboard('{Shift>}{Tab}{/Shift}')
+      expect(document.activeElement).not.toBe(scrollableDiv)
+      await user.keyboard('{Shift>}{Tab}{/Shift}')
+      expect(document.activeElement).toBe(scrollableDiv)
+    })
+  })
+
+  function getFocusCoordinates() {
+    const focusedElement = document.activeElement
+    const rowIndex = focusedElement?.closest('[role="row"]')?.getAttribute('aria-rowindex')
+    const colIndex = focusedElement?.getAttribute('aria-colindex')
+    expect(rowIndex).toBeDefined()
+    expect(colIndex).toBeDefined()
+    return { rowIndex: Number(rowIndex), colIndex: Number(colIndex) }
+  }
+
+  const rowIndex = 4
+  const colIndex = 3
+  const pageSize = 2
+  const firstRow = 1
+  // const lastRow = data.numRows + 1 // see comments below
+  const firstCol = 1
+  const lastCol = data.header.length + 1
+  describe('When the cell (4,3) is focused', () => {
+    it.each([
+      ['{ArrowRight}', rowIndex, colIndex + 1],
+      ['{Control>}{ArrowRight}{/Control}', rowIndex, lastCol],
+      ['{ArrowLeft}', rowIndex, colIndex - 1],
+      ['{Control>}{ArrowLeft}{/Control}', rowIndex, firstCol],
+      ['{ArrowUp}', rowIndex - 1, colIndex],
+      ['{Control>}{ArrowUp}{/Control}', firstRow, colIndex],
+      ['{ArrowDown}', rowIndex + 1, colIndex],
+      // ['{Control>}{ArrowDown}{/Control}', lastRow, 3], // Cannot be tested because it relies on scroll
+      ['{PageUp}', rowIndex - pageSize, colIndex],
+      ['{Shift>}{ }{/Shift}', rowIndex - pageSize, colIndex],
+      ['{PageDown}', rowIndex + pageSize, colIndex],
+      ['{ }', rowIndex + pageSize, colIndex],
+      ['{Home}', rowIndex, firstCol],
+      ['{Control>}{Home}{/Control}', firstRow, firstCol],
+      ['{End}', rowIndex, lastCol],
+      // ['{Control>}{End}{/Control}', lastRow, lastCol], // Cannot be tested because it relies on scroll
+
+      // stop at the borders
+      ['{ArrowRight}{ArrowRight}{ArrowRight}{ArrowRight}{ArrowRight}{ArrowRight}{ArrowRight}', rowIndex, lastCol],
+      ['{ArrowLeft}{ArrowLeft}{ArrowLeft}{ArrowLeft}{ArrowLeft}{ArrowLeft}{ArrowLeft}', rowIndex, firstCol],
+      ['{ArrowUp}{ArrowUp}{ArrowUp}{ArrowUp}', firstRow, colIndex],
+      // don't test ArrowDown because it relies on scroll
+      ['{PageUp}{PageUp}{PageUp}{PageUp}', firstRow, colIndex],
+      // don't test PageDown because it relies on scroll
+      ['{Home}{Home}{Home}{Home}', rowIndex, firstCol],
+      ['{End}{End}{End}{End}', rowIndex, lastCol],
+      ['{Control>}{Home}{Home}{Home}{Home}{/Control}', firstRow, firstCol],
+      // ['{Control>}{End}{End}{End}{End}{/Control}', lastRow, lastCol], // Cannot be tested because it relies on scroll
+    ])('pressing "%s" moves the focus to the cell (%s, %s)', async (key, expectedRowIndex, expectedColIndex) => {
+      const { user } = render(<HighTable data={data} padding={pageSize} />)
+      // focus the cell (4, 3)
+      await user.keyboard('{ArrowDown}{ArrowDown}{ArrowDown}{ArrowRight}{ArrowRight}')
+      expect(getFocusCoordinates()).toEqual({ rowIndex, colIndex })
+
+      await user.keyboard(key)
+      expect(getFocusCoordinates()).toEqual({ rowIndex: expectedRowIndex, colIndex: expectedColIndex })
+    })
+  })
+
+  describe('When a header cell is focused', () => {
+    it('the column resizer and the header cell are focusable', async () => {
+      const { user } = render(<HighTable data={data} />)
+      // go to the header cell (ID)
+      await user.keyboard('{ArrowRight}')
+      const cell = document.activeElement
+      // Tab focuses the column resizer
+      await user.keyboard('{Tab}')
+      const focusedElement = document.activeElement
+      if (!focusedElement) {
+        throw new Error('Focused element not found')
+      }
+      expect(focusedElement.getAttribute('role')).toBe('separator')
+      // Shift+Tab focuses the header cell again
+      await user.keyboard('{Shift>}{Tab}{/Shift}')
+      expect(document.activeElement).toBe(cell)
+    })
+
+    it('the column resizer is activated on focus, and loses focus when Escape is pressed', async () => {
+      const { user } = render(<HighTable data={data} />)
+      // go to the column resizer
+      await user.keyboard('{ArrowRight}')
+      const cell = document.activeElement
+      await user.keyboard('{Tab}')
+      // press Enter to activate the column resizer
+      const separator = document.activeElement
+      if (!separator) {
+        throw new Error('Separator is null')
+      }
+      expect(separator.getAttribute('aria-busy')).toBe('true')
+      // escape to deactivate the column resizer
+      await user.keyboard('{Escape}')
+      expect(separator.getAttribute('aria-busy')).toBe('false')
+      expect(document.activeElement).toBe(cell)
+    })
+
+    it('the column resizer changes the column width when ArrowRight or ArrowLeft are pressed', async () => {
+      const { user } = render(<HighTable data={data} />)
+      // go to the column resizer
+      await user.keyboard('{ArrowRight}{Tab}')
+      const separator = document.activeElement
+      if (!separator) {
+        throw new Error('Separator is null')
+      }
+      const value = separator.getAttribute('aria-valuenow')
+      // the column measurement is mocked
+      expect(value).toBe(initialWidth.toString())
+      await user.keyboard('{ArrowRight}')
+      expect(separator.getAttribute('aria-valuenow')).toBe((initialWidth + 10).toString())
+      await user.keyboard('{ArrowLeft}{ArrowLeft}{ArrowLeft}')
+      expect(separator.getAttribute('aria-valuenow')).toBe((initialWidth - 20).toString())
+    })
+
+    it.for(['{ }', '{Enter}'])('the column resizer autosizes the column and exits resize mode when %s is pressed', async (key) => {
+      const { user } = render(<HighTable data={data} />)
+      // go to the column resizer
+      await user.keyboard('{ArrowRight}')
+      const cell = document.activeElement
+      await user.keyboard('{Tab}')
+      const separator = document.activeElement
+      if (!separator) {
+        throw new Error('Separator is null')
+      }
+      const value = separator.getAttribute('aria-valuenow')
+      // the column measurement is mocked
+      expect(value).toBe(initialWidth.toString())
+      await user.keyboard('{ArrowRight}')
+      expect(separator.getAttribute('aria-valuenow')).toBe((initialWidth + 10).toString())
+      await user.keyboard(key)
+      expect(separator.getAttribute('aria-valuenow')).toBe(initialWidth.toString())
+      expect(document.activeElement).toBe(cell)
+    })
   })
 })
