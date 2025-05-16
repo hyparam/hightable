@@ -251,6 +251,7 @@ export default memo(ColumnHeader, (prevProps, nextProps) => {
     prevProps.className === nextProps.className &&
     prevProps.ariaColIndex === nextProps.ariaColIndex &&
     prevProps.ariaRowIndex === nextProps.ariaRowIndex &&
+    prevProps.children === nextProps.children &&
     // Compare function references - if they're the same instance we don't need to re-render
     prevProps.onClick === nextProps.onClick &&
     prevProps.onHideColumn === nextProps.onHideColumn &&
