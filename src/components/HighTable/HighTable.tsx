@@ -471,6 +471,7 @@ export function HighTableInner({
   const ariaRowCount = numRows + 1 // don't forget the header row
   return (
     <div className={`${styles.hightable} ${styled ? styles.styled : ''} ${className}`}>
+      <div className={styles.topBorder} role="presentation"></div>
       <div className={styles.tableScroll} ref={scrollRef} role="group" aria-labelledby="caption" style={tableScrollStyle} onKeyDown={restrictedOnScrollKeyDown} tabIndex={0}>
         <div style={{ height: `${scrollHeight}px` }}>
           <table
