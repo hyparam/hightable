@@ -127,6 +127,8 @@ describe('ColumnHeader', () => {
                 columnName="test"
                 columnIndex={0}
                 onClick={onClick}
+                ariaColIndex={1}
+                ariaRowIndex={1}
               />
             </tr>
           </thead>
