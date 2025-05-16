@@ -12,7 +12,7 @@ vi.mock('react-dom', () => {
 
 describe('ColumnMenu', () => {
   const defaultProps = {
-    column: 'Test Column',
+    columnName: 'Test Column',
     position: { x: 100, y: 100 },
     onClose: vi.fn(),
     isVisible: true,
