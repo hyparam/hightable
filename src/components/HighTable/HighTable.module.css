@@ -188,6 +188,7 @@
     height: calc(100% - 2 * var(--focus-border-width));
     width: calc(100% - 2 * var(--focus-border-width));
     z-index: var(--table-scroll-outline-z-index);
+    pointer-events: none;
   }
 
   table {
