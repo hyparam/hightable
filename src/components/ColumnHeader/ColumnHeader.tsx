@@ -2,6 +2,7 @@ import {
   KeyboardEvent,
   MouseEvent,
   ReactNode,
+  memo,
   useCallback,
   useEffect,
   useMemo,
@@ -35,7 +36,7 @@ interface Props {
   className?: string // optional class name
 }
 
-export default function ColumnHeader({
+function ColumnHeader({
   orderByIndex,
   orderBySize,
   columnIndex,
@@ -233,3 +234,25 @@ export default function ColumnHeader({
     </>
   )
 }
+
+// Export with memo to prevent unnecessary re-renders
+export default memo(ColumnHeader, (prevProps, nextProps) => {
+  // Return true if the component should NOT re-render (props are equal)
+  return (
+    prevProps.columnIndex === nextProps.columnIndex &&
+    prevProps.columnName === nextProps.columnName &&
+    prevProps.dataReady === nextProps.dataReady &&
+    prevProps.direction === nextProps.direction &&
+    prevProps.orderByIndex === nextProps.orderByIndex &&
+    prevProps.orderBySize === nextProps.orderBySize &&
+    prevProps.sortable === nextProps.sortable &&
+    prevProps.isHideDisabled === nextProps.isHideDisabled &&
+    prevProps.className === nextProps.className &&
+    prevProps.ariaColIndex === nextProps.ariaColIndex &&
+    prevProps.ariaRowIndex === nextProps.ariaRowIndex &&
+    // Compare function references - if they're the same instance we don't need to re-render
+    prevProps.onClick === nextProps.onClick &&
+    prevProps.onHideColumn === nextProps.onHideColumn &&
+    prevProps.onShowAllColumns === nextProps.onShowAllColumns
+  )
+})
