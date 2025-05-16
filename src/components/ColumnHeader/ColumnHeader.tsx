@@ -136,15 +136,16 @@ function ColumnHeader({
 
   // Close menu when clicking outside
   useEffect(() => {
-    if (showMenu) {
-      function handleClickOutside() {
-        setShowMenu(false)
-      }
+    function handleClickOutside() {
+      setShowMenu(false)
+    }
 
+    if (showMenu) {
       document.addEventListener('click', handleClickOutside)
-      return () => {
-        document.removeEventListener('click', handleClickOutside)
-      }
+    }
+
+    return () => {
+      document.removeEventListener('click', handleClickOutside)
     }
   }, [showMenu])
 
