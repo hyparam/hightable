@@ -39,7 +39,7 @@ describe('ColumnHeader', () => {
     const content = 'test'
     const { getByRole } = render(<table><thead><tr><ColumnHeader columnName="test" {...defaultProps}>{content}</ColumnHeader></tr></thead></table>)
     const element = getByRole('columnheader')
-    expect(element.textContent).toEqual(content)
+    expect(element.textContent).toEqual(content + '⋮')
     expect(measureWidth).not.toHaveBeenCalled()
   })
 
@@ -114,6 +114,32 @@ describe('ColumnHeader', () => {
     ])
 
     expect(header.style.maxWidth).toEqual(`${savedWidth + delta}px`)
+  })
+
+  it('stops event propagation when menu button is clicked', async () => {
+    const onClick = vi.fn()
+    const { user, getByRole } = render(
+      <ColumnWidthProvider localStorageKey={cacheKey}>
+        <table>
+          <thead>
+            <tr>
+              <ColumnHeader
+                columnName="test"
+                columnIndex={0}
+                onClick={onClick}
+                ariaColIndex={1}
+                ariaRowIndex={1}
+              />
+            </tr>
+          </thead>
+        </table>
+      </ColumnWidthProvider>
+    )
+
+    const button = getByRole('button')
+    await user.click(button)
+
+    expect(onClick).not.toHaveBeenCalled()
   })
 
   it('reloads column width when localStorageKey changes', () => {

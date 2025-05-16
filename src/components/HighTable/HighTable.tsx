@@ -1,4 +1,4 @@
-import { CSSProperties, KeyboardEvent, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { CSSProperties, KeyboardEvent, MouseEvent, RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DataFrame } from '../../helpers/dataframe.js'
 import { PartialRow } from '../../helpers/row.js'
 import { Selection, areAllSelected, isSelected, toggleAll, toggleIndexInSelection, toggleRangeInSelection, toggleRangeInTable } from '../../helpers/selection.js'
@@ -16,6 +16,7 @@ import TableCorner from '../TableCorner/TableCorner.js'
 import TableHeader from '../TableHeader/TableHeader.js'
 import { formatRowNumber, rowError } from './HighTable.helpers.js'
 import styles from './HighTable.module.css'
+import { HighTableProvider } from './HighTableContext.js'
 
 /**
  * A slice of the (optionally sorted) rows to render as HTML.
@@ -47,6 +48,7 @@ interface Props {
   className?: string // additional class names for the component
   columnClassNames?: (string | undefined)[] // list of additional class names for the header and cells of each column. The index in this array corresponds to the column index in data.header
   styled?: boolean // use styled component? (default true)
+  highTableRef?: RefObject<HTMLDivElement | null>
 }
 
 const defaultPadding = 20
@@ -63,12 +65,15 @@ const ariaOffset = 2 // 1-based index, +1 for the header
  */
 export default function HighTable(props: Props) {
   const { data, cacheKey } = props
+  const highTableRef = useRef<HTMLDivElement>(null)
   const ariaColCount = data.header.length + 1 // don't forget the selection column
   const ariaRowCount = data.numRows + 1 // don't forget the header row
   return (
     <ColumnWidthProvider localStorageKey={cacheKey ? `${cacheKey}:column-widths` : undefined}>
       <CellsNavigationProvider colCount={ariaColCount} rowCount={ariaRowCount} rowPadding={props.padding ?? defaultPadding}>
-        <HighTableInner {...props} />
+        <HighTableProvider portalTarget={highTableRef.current}>
+          <HighTableInner {...props} highTableRef={highTableRef} />
+        </HighTableProvider>
       </CellsNavigationProvider>
     </ColumnWidthProvider>
   )
@@ -96,6 +101,7 @@ export function HighTableInner({
   className = '',
   columnClassNames = [],
   styled = true,
+  highTableRef,
 }: Props) {
   /**
    * The component relies on the model of a virtual table which rows are ordered and only the
@@ -120,6 +126,27 @@ export function HighTableInner({
   const { enterCellsNavigation, setEnterCellsNavigation, onTableKeyDown, onScrollKeyDown, rowIndex, colIndex, focusFirstCell } = useCellsNavigation()
   const [lastCellPosition, setLastCellPosition] = useState({ rowIndex, colIndex })
   const [numRows, setNumRows] = useState(data.numRows)
+
+  // Add state for tracking hidden columns
+  const [hiddenColumns, setHiddenColumns] = useState<number[]>([])
+
+  // Create a filtered header based on hidden columns
+  const visibleHeader = useMemo(() =>
+    data.header.filter((_, index) => !hiddenColumns.includes(index)),
+  [data.header, hiddenColumns])
+
+  const isColumnVisible = useCallback((index: number) =>
+    !hiddenColumns.includes(index),
+  [hiddenColumns])
+
+  const handleHideColumn = useCallback((originalIndex: number) => {
+    setHiddenColumns(prev => [...prev, originalIndex])
+  }, [])
+
+  // Handler for showing all columns
+  const handleShowAllColumns = useCallback(() => {
+    setHiddenColumns([])
+  }, [])
 
   // TODO(SL): remove this state and only rely on the data frame for these operations?
   // ie. cache the previous sort indexes in the data frame itself
@@ -464,13 +491,30 @@ export function HighTableInner({
     onScrollKeyDown?.(event)
   }, [onScrollKeyDown])
 
+  // We use map/filter/map to preserve original column indexes after filtering:
+  // 1. First map: Annotate each column with its original index
+  // 2. Filter: Remove hidden columns while keeping original index information
+  // 3. During render: Use the preserved originalIndex to access properties that
+  //    depend on the column's position in the original array (CSS classes, event handlers, etc.)
+  const visibleColumns = useMemo(
+    () =>
+      data.header
+        .map((column, index) => ({ column, originalIndex: index }))
+        .filter(({ originalIndex }) => isColumnVisible(originalIndex)),
+    [data.header, isColumnVisible]
+  )
+
+  const visibleColumnClassNames = useMemo(() =>
+    columnClassNames.filter((_, index) => isColumnVisible(index))
+  , [columnClassNames, isColumnVisible])
+
   // don't render table if header is empty
   if (!data.header.length) return
 
-  const ariaColCount = data.header.length + 1 // don't forget the selection column
+  const ariaColCount = visibleHeader.length + 1 // don't forget the selection column
   const ariaRowCount = numRows + 1 // don't forget the header row
   return (
-    <div className={`${styles.hightable} ${styled ? styles.styled : ''} ${className}`}>
+    <div ref={highTableRef} className={`${styles.hightable} ${styled ? styles.styled : ''} ${className}`}>
       <div className={styles.tableScroll} ref={scrollRef} role="group" aria-labelledby="caption" style={tableScrollStyle} onKeyDown={restrictedOnScrollKeyDown} tabIndex={0}>
         <div style={{ height: `${scrollHeight}px` }}>
           <table
@@ -495,12 +539,15 @@ export function HighTableInner({
                 >&nbsp;</TableCorner>
                 <TableHeader
                   dataReady={hasCompleteRow}
-                  header={data.header}
+                  header={visibleHeader}
                   orderBy={orderBy}
                   onOrderByChange={onOrderByChange}
                   sortable={enableOrderByInteractions}
-                  columnClassNames={columnClassNames}
+                  columnClassNames={visibleColumnClassNames}
                   ariaRowIndex={1}
+                  onHideColumn={handleHideColumn}
+                  onShowAllColumns={handleShowAllColumns}
+                  hiddenColumns={hiddenColumns}
                 />
               </Row>
             </thead>
@@ -536,21 +583,21 @@ export function HighTableInner({
                       ariaColIndex={1}
                       ariaRowIndex={ariaRowIndex}
                     >{formatRowNumber(dataIndex)}</RowHeader>
-                    {data.header.map((column, columnIndex) => {
+                    {visibleColumns.map(({ column, originalIndex }) => {
                       // Note: the resolved cell value can be undefined
                       const hasResolved = column in row.cells
                       const value = row.cells[column]
                       return <Cell
-                        key={columnIndex}
-                        onDoubleClick={getOnDoubleClickCell(columnIndex, dataIndex)}
-                        onMouseDown={getOnMouseDownCell(columnIndex, dataIndex)}
-                        onKeyDown={getOnKeyDownCell(columnIndex, dataIndex)}
+                        key={originalIndex}
+                        onDoubleClick={getOnDoubleClickCell(originalIndex, dataIndex)}
+                        onMouseDown={getOnMouseDownCell(originalIndex, dataIndex)}
+                        onKeyDown={getOnKeyDownCell(originalIndex, dataIndex)}
                         stringify={stringify}
                         value={value}
-                        columnIndex={columnIndex}
+                        columnIndex={originalIndex}
                         hasResolved={hasResolved}
-                        className={columnClassNames[columnIndex]}
-                        ariaColIndex={columnIndex + ariaOffset}
+                        className={columnClassNames[originalIndex]}
+                        ariaColIndex={originalIndex + ariaOffset}
                         ariaRowIndex={ariaRowIndex}
                       />
                     })}
@@ -569,6 +616,8 @@ export function HighTableInner({
             </tbody>
           </table>
         </div>
+        {/* puts a background behind the row labels column */}
+        <div className={styles.mockRowLabel} style={cornerStyle}>&nbsp;</div>
       </div>
       {/* puts a background behind the row labels column */}
       <div className={styles.mockRowLabel} style={cornerStyle}>&nbsp;</div>

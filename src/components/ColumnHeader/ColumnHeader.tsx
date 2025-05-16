@@ -1,10 +1,22 @@
-import { KeyboardEvent, ReactNode, useCallback, useEffect, useMemo, useRef } from 'react'
+import {
+  KeyboardEvent,
+  MouseEvent,
+  ReactNode,
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import { flushSync } from 'react-dom'
 import { Direction } from '../../helpers/sort.js'
 import { measureWidth } from '../../helpers/width.js'
 import { useCellNavigation } from '../../hooks/useCellsNavigation.js'
 import useColumnWidth from '../../hooks/useColumnWidth.js'
 import ColumnResizer from '../ColumnResizer/ColumnResizer.js'
+import ColumnMenu from '../ColumnMenu/ColumnMenu.js'
+import ColumnMenuButton from '../ColumnMenuButton/ColumnMenuButton.js'
 
 interface Props {
   columnIndex: number // index of the column in the dataframe (0-based)
@@ -13,6 +25,9 @@ interface Props {
   dataReady?: boolean
   direction?: Direction
   onClick?: () => void
+  onHideColumn?: () => void
+  isHideDisabled?: boolean
+  onShowAllColumns?: () => void
   sortable?: boolean
   orderByIndex?: number // index of the column in the orderBy array (0-based)
   orderBySize?: number // size of the orderBy array
@@ -21,9 +36,34 @@ interface Props {
   className?: string // optional class name
 }
 
-export default function ColumnHeader({ columnIndex, columnName, dataReady, direction, onClick, sortable, orderByIndex, orderBySize, ariaColIndex, ariaRowIndex, className, children }: Props) {
+function ColumnHeader({
+  orderByIndex,
+  orderBySize,
+  columnIndex,
+  columnName,
+  dataReady,
+  direction,
+  onClick,
+  onHideColumn,
+  isHideDisabled,
+  onShowAllColumns,
+  sortable,
+  className,
+  children,
+  ariaColIndex,
+  ariaRowIndex,
+}: Props) {
   const ref = useRef<HTMLTableCellElement>(null)
-  const { tabIndex, navigateToCell } = useCellNavigation({ ref, ariaColIndex, ariaRowIndex })
+  const [showMenu, setShowMenu] = useState(false)
+  const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 })
+
+  // Derive sortable from onClick
+  const isSortable = sortable !== false && (sortable ?? onClick !== undefined)
+  const { tabIndex, navigateToCell } = useCellNavigation({
+    ref,
+    ariaColIndex,
+    ariaRowIndex,
+  })
   const handleClick = useCallback(() => {
     navigateToCell()
     onClick?.()
@@ -33,9 +73,12 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
   const { getColumnStyle, setColumnWidth, getColumnWidth } = useColumnWidth()
   const columnStyle = getColumnStyle?.(columnIndex)
   const width = getColumnWidth?.(columnIndex)
-  const setWidth = useCallback((nextWidth: number | undefined) => {
-    setColumnWidth?.({ columnIndex, width: nextWidth })
-  }, [setColumnWidth, columnIndex])
+  const setWidth = useCallback(
+    (nextWidth: number | undefined) => {
+      setColumnWidth?.({ columnIndex, width: nextWidth })
+    },
+    [setColumnWidth, columnIndex]
+  )
 
   // Measure default column width when data is ready, if no width is set
   useEffect(() => {
@@ -65,7 +108,7 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
   }, [setWidth])
 
   const description = useMemo(() => {
-    if (!sortable) {
+    if (!isSortable) {
       return `The column ${columnName} cannot be sorted`
     } else if (orderByIndex !== undefined && orderByIndex > 0) {
       return `Press to sort by ${columnName} in ascending order`
@@ -76,46 +119,142 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
     } else {
       return `Press to sort by ${columnName} in ascending order`
     }
-  }, [sortable, columnName, direction, orderByIndex])
+  }, [isSortable, columnName, direction, orderByIndex])
 
-  const onKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.target !== ref.current) {
-      // only handle keyboard events when the header is focused
-      return
+  const handleContextMenu = useCallback((e: MouseEvent) => {
+    e.preventDefault()
+    setMenuPosition({
+      x: e.clientX,
+      y: e.clientY,
+    })
+    setShowMenu(true)
+  }, [])
+
+  const closeMenu = useCallback(() => {
+    setShowMenu(false)
+  }, [])
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    function handleClickOutside() {
+      setShowMenu(false)
     }
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault()
-      e.stopPropagation()
-      onClick?.()
+
+    if (showMenu) {
+      document.addEventListener('click', handleClickOutside)
     }
-  }, [onClick])
+
+    return () => {
+      document.removeEventListener('click', handleClickOutside)
+    }
+  }, [showMenu])
+
+  // Handle menu button click
+  const handleMenuButtonClick = useCallback((e: MouseEvent) => {
+    e.stopPropagation()
+    const rect = ref.current?.getBoundingClientRect()
+    if (rect) {
+      setMenuPosition({
+        x: e.clientX,
+        y: rect.bottom,
+      })
+      setShowMenu(true)
+    }
+  }, [])
+
+  const handleHideThisColumn = useCallback(() => {
+    onHideColumn?.()
+  }, [onHideColumn])
+
+  function renderColumnMenu() {
+    return (
+      <ColumnMenu
+        columnName={columnName}
+        onHideColumn={handleHideThisColumn}
+        isHideDisabled={isHideDisabled}
+        onShowAllColumns={onShowAllColumns}
+        sortable={isSortable}
+        direction={direction}
+        onSort={onClick}
+        isVisible={showMenu}
+        position={menuPosition}
+        onClose={closeMenu}
+      />
+    )
+  }
+
+  const onKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.target !== ref.current) {
+        // only handle keyboard events when the header is focused
+        return
+      }
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault()
+        e.stopPropagation()
+        onClick?.()
+      }
+    },
+    [onClick]
+  )
 
   return (
-    <th
-      ref={ref}
-      scope="col"
-      role="columnheader"
-      aria-sort={direction ?? (sortable ? 'none' : undefined)}
-      data-order-by-index={orderBySize !== undefined ? orderByIndex : undefined}
-      data-order-by-size={orderBySize}
-      aria-label={columnName}
-      aria-description={description}
-      aria-colindex={ariaColIndex}
-      tabIndex={tabIndex}
-      title={description}
-      onClick={handleClick}
-      onKeyDown={onKeyDown}
-      style={columnStyle}
-      className={className}
-    >
-      {children}
-      <ColumnResizer
-        setWidth={setWidth}
-        onDoubleClick={autoResize}
-        width={width}
+    <>
+      <th
+        ref={ref}
+        scope='col'
+        role='columnheader'
+        aria-sort={direction ?? (isSortable ? 'none' : undefined)}
+        data-order-by-index={
+          orderBySize !== undefined ? orderByIndex : undefined
+        }
+        data-order-by-size={orderBySize}
+        aria-description={description}
+        aria-colindex={ariaColIndex}
         tabIndex={tabIndex}
-        navigateToCell={navigateToCell}
-      />
-    </th>
+        title={description}
+        onClick={handleClick}
+        onContextMenu={handleContextMenu}
+        style={columnStyle}
+        className={className}
+        aria-label={columnName}
+        onKeyDown={onKeyDown}
+      >
+        <span>{children}</span>
+        <ColumnResizer
+          setWidth={setWidth}
+          onDoubleClick={autoResize}
+          width={width}
+          tabIndex={tabIndex}
+          navigateToCell={navigateToCell}
+        />
+        <ColumnMenuButton onClick={handleMenuButtonClick} />
+      </th>
+      {/* ColumnMenu is rendered via portal to document.body */}
+      {renderColumnMenu()}
+    </>
   )
 }
+
+// Export with memo to prevent unnecessary re-renders
+export default memo(ColumnHeader, (prevProps, nextProps) => {
+  // Return true if the component should NOT re-render (props are equal)
+  return (
+    prevProps.columnIndex === nextProps.columnIndex &&
+    prevProps.columnName === nextProps.columnName &&
+    prevProps.dataReady === nextProps.dataReady &&
+    prevProps.direction === nextProps.direction &&
+    prevProps.orderByIndex === nextProps.orderByIndex &&
+    prevProps.orderBySize === nextProps.orderBySize &&
+    prevProps.sortable === nextProps.sortable &&
+    prevProps.isHideDisabled === nextProps.isHideDisabled &&
+    prevProps.className === nextProps.className &&
+    prevProps.ariaColIndex === nextProps.ariaColIndex &&
+    prevProps.ariaRowIndex === nextProps.ariaRowIndex &&
+    prevProps.children === nextProps.children &&
+    // Compare function references - if they're the same instance we don't need to re-render
+    prevProps.onClick === nextProps.onClick &&
+    prevProps.onHideColumn === nextProps.onHideColumn &&
+    prevProps.onShowAllColumns === nextProps.onShowAllColumns
+  )
+})

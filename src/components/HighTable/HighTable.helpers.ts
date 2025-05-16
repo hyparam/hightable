@@ -9,9 +9,11 @@ export function formatRowNumber(rowIndex?: number): string {
 /**
  * Validate row length
  */
-export function rowError(row: PartialRow, length: number): string | undefined {
+export function rowError(row: PartialRow, headerLength: number): string | undefined {
+  // The row.cells object contains all cells, including those for hidden columns
   const numKeys = Object.keys(row.cells).length
-  if (numKeys > 0 && numKeys !== length) {
-    return `Row ${formatRowNumber(row.index)} length ${numKeys} does not match header length ${length}`
+
+  if (numKeys > 0 && numKeys !== headerLength) {
+    return `Row ${formatRowNumber(row.index)} length ${numKeys} does not match header length ${headerLength}`
   }
 }
