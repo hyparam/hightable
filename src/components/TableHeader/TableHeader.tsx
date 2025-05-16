@@ -1,8 +1,8 @@
 import { useCallback, useMemo } from 'react'
-import { Direction, OrderBy, partitionOrderBy, toggleColumn } from '../../helpers/sort.js'
-import ColumnHeader from '../ColumnHeader/ColumnHeader.js'
+import { Direction, OrderBy, partitionOrderBy, toggleColumn } from '../../helpers/sort'
+import ColumnHeader from '../ColumnHeader/ColumnHeader'
 
-interface TableProps {
+interface TableHeaderProps {
   header: string[]
   orderBy?: OrderBy // array of column order by clauses. If undefined, the table is unordered, the sort elements are hidden and the interactions are disabled.
   onOrderByChange?: (orderBy: OrderBy) => void // callback to call when a user interaction changes the order. The interactions are disabled if undefined.
@@ -29,16 +29,21 @@ export default function TableHeader({
   onHideColumn,
   onShowAllColumns,
   hiddenColumns,
-}: TableProps) {
-  const orderByColumn = useMemo(() => {
-    return new Map(
-      (orderBy ?? []).map(({ column, direction }, index) => [column, { direction, index }])
-    )
-  }, [orderBy])
+}: TableHeaderProps) {
+  // Map of column names to their sort direction and index in the orderBy array
+  const orderByColumn = useMemo(
+    () =>
+      new Map(
+        (orderBy ?? []).map(({ column, direction }, index) => [
+          column,
+          { direction, index },
+        ])
+      ),
+    [orderBy]
+  )
 
   // Memoize the mapping from visible indices to original indices
   const visibleToOriginalMap = useMemo(() => {
-    // Create a mapping function that converts visible indices to original indices
     const mapping = new Map<number, number>()
 
     // Check if there are no hidden columns - this is an optimization path
@@ -49,16 +54,20 @@ export default function TableHeader({
       return mapping
     }
 
-    // Create a list of all visible indices
-    const allOriginalColumns = new Set(Array.from({ length: header.length + hiddenColumns.length }, (_, i) => i))
+    // Create a list of all original column indices
+    const allOriginalColumns = new Set(
+      Array.from({ length: header.length + hiddenColumns.length }, (_, i) => i)
+    )
 
     // Remove hidden columns
     hiddenColumns.forEach(index => allOriginalColumns.delete(index))
 
     // Map visible indices to original indices
-    Array.from(allOriginalColumns).sort((a, b) => a - b).forEach((originalIndex, visibleIndex) => {
-      mapping.set(visibleIndex, originalIndex)
-    })
+    Array.from(allOriginalColumns)
+      .sort((a, b) => a - b)
+      .forEach((originalIndex, visibleIndex) => {
+        mapping.set(visibleIndex, originalIndex)
+      })
 
     return mapping
   }, [hiddenColumns, header])
@@ -66,7 +75,6 @@ export default function TableHeader({
   // Create changeSort callbacks for each column
   const getChangeSort = useCallback(
     (columnName: string) => {
-      // If sorting is disabled or orderBy/onOrderByChange are not provided, return undefined
       if (!orderBy || !onOrderByChange) return undefined
 
       return (options?: { direction: Direction | null }) => {
@@ -111,7 +119,6 @@ export default function TableHeader({
     const ariaColIndex = originalIndex + 2 // 1-based, include the row header
 
     return (
-      // The ColumnHeader component width is controlled by the parent
       <ColumnHeader
         key={originalIndex}
         dataReady={dataReady}

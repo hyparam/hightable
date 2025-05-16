@@ -24,7 +24,7 @@ interface Props {
   dataReady?: boolean
   direction?: Direction
   onClick?: () => void
-  onHideColumn?: () => void // No longer needs columnIndex
+  onHideColumn?: () => void
   isHideDisabled?: boolean
   onShowAllColumns?: () => void
   title?: string
