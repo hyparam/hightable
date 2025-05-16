@@ -215,7 +215,7 @@ export default function ColumnHeader({
         title={description}
         onClick={handleClick}
         onContextMenu={handleContextMenu}
-        style={{ ...columnStyle, position: 'relative' }}
+        style={columnStyle}
         className={className}
         aria-label={title ?? columnName}
         onKeyDown={onKeyDown}
