@@ -221,7 +221,6 @@ export default function ColumnHeader({
         onKeyDown={onKeyDown}
       >
         <span>{children}</span>
-        <ColumnMenuButton onClick={handleMenuButtonClick} />
         <ColumnResizer
           setWidth={setWidth}
           onDoubleClick={autoResize}
@@ -229,6 +228,7 @@ export default function ColumnHeader({
           tabIndex={tabIndex}
           navigateToCell={navigateToCell}
         />
+        <ColumnMenuButton onClick={handleMenuButtonClick} />
       </th>
       {/* ColumnMenu is rendered via portal to document.body */}
       {renderColumnMenu()}

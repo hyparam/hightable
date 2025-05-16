@@ -10,7 +10,7 @@ export default function ColumnMenuButton({ onClick }: ColumnMenuButtonProps) {
       onClick={onClick}
       aria-label="Column options"
       role="button"
-      tabIndex={0}
+      tabIndex={-1}
     >
       <span>⋮</span>
     </div>
