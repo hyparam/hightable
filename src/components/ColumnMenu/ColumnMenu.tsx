@@ -72,10 +72,8 @@ export default function ColumnMenu({
       aria-label={`Column menu for ${column}`}
       aria-orientation="vertical"
       style={{
-        position: 'fixed',
         top: position.y,
         left: position.x,
-        zIndex: 9999,
       }}
     >
       <div role="presentation">{column}</div>
