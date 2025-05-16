@@ -34,6 +34,10 @@ const otherData: DataFrame = {
   })),
 }
 
+async function setFocusOnScrollableDiv(user: UserEvent) {
+  await user.keyboard('{Shift>}{Tab}{/Shift}')
+}
+
 describe('HighTable', () => {
   const mockData = {
     header: ['ID', 'Name', 'Age'],
@@ -652,9 +656,6 @@ describe('Navigating Hightable with the keyboard', () => {
   })
 
   describe('When the scrollable div is focused', () => {
-    async function setFocusOnScrollableDiv(user: UserEvent) {
-      await user.keyboard('{Shift>}{Tab}{/Shift}')
-    }
     it.for(['{Tab}', '{ }', '{Enter}'])('moves the focus to the first cell when pressing "%s"', async (key) => {
       const { user } = render(<HighTable data={data} />)
       await setFocusOnScrollableDiv(user)
@@ -821,5 +822,19 @@ describe('Navigating Hightable with the keyboard', () => {
       expect(separator.getAttribute('aria-valuenow')).toBe(initialWidth.toString())
       expect(document.activeElement).toBe(cell)
     })
+  })
+})
+
+describe('When the table scroller is focused', () => {
+  it('clicking on a cell moves the focus to the cell', async () => {
+    // https://github.com/hyparam/hightable/issues/167
+    // note that this does not test the CSS, which was the cause of the bug ("pointer-events: none;" was needed)
+    const { user, getByLabelText, findByRole } = render(<HighTable data={data} />)
+    await setFocusOnScrollableDiv(user)
+    const scrollableDiv = getByLabelText('Virtual-scroll table')
+    expect(document.activeElement).toBe(scrollableDiv)
+    const cell = await findByRole('cell', { name: 'row 0' })
+    await user.click(cell)
+    expect(document.activeElement).toBe(cell)
   })
 })
