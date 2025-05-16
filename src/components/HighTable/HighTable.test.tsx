@@ -81,9 +81,8 @@ describe('HighTable', () => {
   })
 
   it('handles scroll to load more rows', async () => {
-    const { container } = render(<HighTable className="myclass" data={mockData} />)
-    const scrollDiv = container.querySelector('.myclass > div') // brittle selector, be careful
-    if (!scrollDiv) throw new Error('Scroll container not found')
+    const { getByLabelText } = render(<HighTable className="myclass" data={mockData} />)
+    const scrollDiv = getByLabelText('Virtual-scroll table')
     await waitFor(() => {
       expect(mockData.rows).toHaveBeenCalledTimes(1)
       expect(mockData.rows).toHaveBeenCalledWith({ start: 0, end: 24, orderBy: [] })
