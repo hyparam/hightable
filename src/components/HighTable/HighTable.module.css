@@ -63,6 +63,36 @@
     content: "▾";
   }
 
+  /* column menu */
+  div[role="menu"] {
+    background-color: white;
+    border: 1px solid #c9c9c9;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    min-width: 150px;
+    font-size: 14px;
+    color: #444;
+    position: fixed;
+  }
+  
+  div[role="menu"] > [role="presentation"] {
+    padding: 8px 12px;
+    font-weight: bold;
+    color: #444;
+    background-color: #f1f1f3;
+    border-top-left-radius: 4px;
+  }
+  
+  div[role="menu"] > [role="menuitem"] {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 8px 12px;
+    border: none;
+    background: none;
+    cursor: pointer;
+  }
+
   /* column menu button */
   th > div[role="button"] {
     display: inline-flex;

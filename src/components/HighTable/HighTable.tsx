@@ -1,4 +1,4 @@
-import { CSSProperties, KeyboardEvent, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { CSSProperties, KeyboardEvent, MouseEvent, RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DataFrame } from '../../helpers/dataframe.js'
 import { PartialRow } from '../../helpers/row.js'
 import { Selection, areAllSelected, isSelected, toggleAll, toggleIndexInSelection, toggleRangeInSelection, toggleRangeInTable } from '../../helpers/selection.js'
@@ -16,6 +16,7 @@ import TableCorner from '../TableCorner/TableCorner.js'
 import TableHeader from '../TableHeader/TableHeader.js'
 import { formatRowNumber, rowError } from './HighTable.helpers.js'
 import styles from './HighTable.module.css'
+import { PortalContainerProvider } from '../../hooks/usePortalContainer.js'
 
 /**
  * A slice of the (optionally sorted) rows to render as HTML.
@@ -47,6 +48,7 @@ interface Props {
   className?: string // additional class names for the component
   columnClassNames?: (string | undefined)[] // list of additional class names for the header and cells of each column. The index in this array corresponds to the column index in data.header
   styled?: boolean // use styled component? (default true)
+  containerRef?: RefObject<HTMLDivElement | null>
 }
 
 const defaultPadding = 20
@@ -62,15 +64,18 @@ const ariaOffset = 2 // 1-based index, +1 for the header
  * onSelectionChange: the callback to call when the selection changes. If undefined, the component selection is read-only if controlled (selection is set), or disabled if not.
  */
 export default function HighTable(props: Props) {
+  const containerRef = useRef<HTMLDivElement>(null)
   const { data, cacheKey } = props
   const ariaColCount = data.header.length + 1 // don't forget the selection column
   const ariaRowCount = data.numRows + 1 // don't forget the header row
   return (
-    <ColumnWidthProvider localStorageKey={cacheKey ? `${cacheKey}:column-widths` : undefined}>
-      <CellsNavigationProvider colCount={ariaColCount} rowCount={ariaRowCount} rowPadding={props.padding ?? defaultPadding}>
-        <HighTableInner {...props} />
-      </CellsNavigationProvider>
-    </ColumnWidthProvider>
+    <PortalContainerProvider containerRef={containerRef}>
+      <ColumnWidthProvider localStorageKey={cacheKey ? `${cacheKey}:column-widths` : undefined}>
+        <CellsNavigationProvider colCount={ariaColCount} rowCount={ariaRowCount} rowPadding={props.padding ?? defaultPadding}>
+          <HighTableInner {...props} containerRef={containerRef} />
+        </CellsNavigationProvider>
+      </ColumnWidthProvider>
+    </PortalContainerProvider>
   )
 }
 
@@ -96,6 +101,7 @@ export function HighTableInner({
   className = '',
   columnClassNames = [],
   styled = true,
+  containerRef,
 }: Props) {
   /**
    * The component relies on the model of a virtual table which rows are ordered and only the
@@ -470,7 +476,7 @@ export function HighTableInner({
   const ariaColCount = data.header.length + 1 // don't forget the selection column
   const ariaRowCount = numRows + 1 // don't forget the header row
   return (
-    <div className={`${styles.hightable} ${styled ? styles.styled : ''} ${className}`}>
+    <div ref={containerRef} className={`${styles.hightable} ${styled ? styles.styled : ''} ${className}`}>
       <div className={styles.tableScroll} ref={scrollRef} role="group" aria-labelledby="caption" style={tableScrollStyle} onKeyDown={restrictedOnScrollKeyDown} tabIndex={0}>
         <div style={{ height: `${scrollHeight}px` }}>
           <table

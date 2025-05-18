@@ -1,5 +1,6 @@
 import { createPortal } from 'react-dom'
 import { Direction } from '../../helpers/sort'
+import { usePortalContainer } from '../../hooks/usePortalContainer'
 import { useCallback } from 'react'
 
 interface ColumnMenuProps {
@@ -12,7 +13,6 @@ interface ColumnMenuProps {
   direction?: Direction
   sortable?: boolean
   onClick?: () => void
-  refPortalContainer: HTMLElement | null
 }
 
 export default function ColumnMenu({
@@ -22,12 +22,24 @@ export default function ColumnMenu({
   direction,
   sortable,
   onClick,
-  refPortalContainer,
 }: ColumnMenuProps) {
+  const { containerRef } = usePortalContainer()
   const { top, left } = position
-  const isSorted = direction === 'ascending' || direction === 'descending'
 
-  if (!isVisible || !refPortalContainer) {
+  const getSortDirection = useCallback(() => {
+    if (!sortable) return null
+
+    switch (direction) {
+    case 'ascending':
+      return 'Ascending'
+    case 'descending':
+      return 'Descending'
+    default:
+      return 'Sort'
+    }
+  }, [direction, sortable])
+
+  if (!isVisible) {
     return null
   }
 
@@ -35,24 +47,14 @@ export default function ColumnMenu({
     <div role='menu' style={{ top, left }}>
       <div role='presentation'>{columnName}</div>
       <hr role='separator' />
-      {sortable && (
+      {sortable &&
         <>
           <button role='menuitem' onClick={onClick}>
-            {direction === 'ascending' ? '✓ ' : ''}Sort ascending
+            {getSortDirection()}
           </button>
-
-          <button role='menuitem' onClick={onClick}>
-            {direction === 'descending' ? '✓ ' : ''}Sort descending
-          </button>
-
-          {isSorted && (
-            <button role='menuitem' onClick={onClick}>
-              Clear sort
-            </button>
-          )}
         </>
-      )}
+      }
     </div>,
-    refPortalContainer
+    containerRef.current ?? document.body
   )
 }
