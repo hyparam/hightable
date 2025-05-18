@@ -1,7 +1,7 @@
 import { createPortal } from 'react-dom'
 import { Direction } from '../../helpers/sort'
 import { usePortalContainer } from '../../hooks/usePortalContainer'
-import { KeyboardEvent, useCallback, useEffect, useRef } from 'react'
+import { KeyboardEvent, RefObject, useCallback, useEffect, useRef } from 'react'
 
 interface ColumnMenuProps {
   columnName: string
@@ -15,6 +15,7 @@ interface ColumnMenuProps {
   onClick?: () => void
   columnIndex: number
   onToggleColumnMenu?: (columnIndex: number) => void
+  buttonRef?: RefObject<HTMLDivElement | null>
 }
 
 export default function ColumnMenu({
@@ -26,6 +27,7 @@ export default function ColumnMenu({
   onClick,
   columnIndex,
   onToggleColumnMenu,
+  buttonRef,
 }: ColumnMenuProps) {
   const { containerRef } = usePortalContainer()
   const { top, left } = position
@@ -57,13 +59,9 @@ export default function ColumnMenu({
         e.preventDefault()
         e.stopPropagation()
         onToggleColumnMenu?.(columnIndex)
-        const headers = document.querySelectorAll('th[role="columnheader"]')
-        const targetHeader = headers[columnIndex]
-        if (targetHeader) {
-          const columnButton = targetHeader.querySelector('div[role="button"]')
-          if (columnButton instanceof HTMLElement) {
-            columnButton.focus()
-          }
+
+        if (buttonRef?.current) {
+          buttonRef.current.focus()
         }
       } else if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault()
@@ -71,7 +69,7 @@ export default function ColumnMenu({
         onClick?.()
       }
     },
-    [onClick, columnIndex, onToggleColumnMenu]
+    [onClick, columnIndex, onToggleColumnMenu, buttonRef]
   )
 
   if (!isVisible) {

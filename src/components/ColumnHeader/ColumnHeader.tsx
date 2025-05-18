@@ -28,6 +28,7 @@ interface Props {
 export default function ColumnHeader({ columnIndex, columnName, dataReady, direction, onClick, sortable, orderByIndex, orderBySize, ariaColIndex, ariaRowIndex, className, children, isColumnMenuOpen, onToggleColumnMenu }: Props) {
   const [position, setPosition] = useState({ left: 0, top: 0 })
   const ref = useRef<HTMLTableCellElement>(null)
+  const buttonRef = useRef<HTMLDivElement>(null)
   const { tabIndex, navigateToCell } = useCellNavigation({ ref, ariaColIndex, ariaRowIndex })
   const handleClick = useCallback(() => {
     navigateToCell()
@@ -128,7 +129,7 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
       className={className}
     >
       {children}
-      {sortable && <ColumnMenuButton onClick={handleColumnMenuClick} />}
+      {sortable && <ColumnMenuButton onClick={handleColumnMenuClick} buttonRef={buttonRef} />}
       <ColumnResizer
         setWidth={setWidth}
         onDoubleClick={autoResize}
@@ -145,6 +146,7 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
         onClick={onClick}
         columnIndex={columnIndex}
         onToggleColumnMenu={onToggleColumnMenu}
+        buttonRef={buttonRef}
       />
     </th>
   )
