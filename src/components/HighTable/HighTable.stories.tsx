@@ -133,6 +133,12 @@ export const Default: Story = {
     data,
   },
 }
+export const Unstyled: Story = {
+  args: {
+    data,
+    styled: false,
+  },
+}
 export const Placeholders: Story = {
   args: {
     data: delayedData,

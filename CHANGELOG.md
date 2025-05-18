@@ -1,6 +1,20 @@
 # CHANGELOG
 
-## [Unreleased](https://github.com/hyparam/hightable/compare/v0.15.5...HEAD)
+## [Unreleased](https://github.com/hyparam/hightable/compare/v0.15.6...HEAD)
+
+## [0.15.6](https://github.com/hyparam/hightable/compare/v0.15.5...v0.15.6) - 2025-05-16
+
+### Added
+
+- added a top border element to HighTable ([#170](https://github.com/hyparam/hightable/pull/170)).
+
+### Fixed
+
+- clicking a cell when the table scroller is focused selects the cell ([#169](https://github.com/hyparam/hightable/pull/169)).
+
+### Refactored
+
+- updated dev dependencies ([#172](https://github.com/hyparam/hightable/pull/172)).
 
 ## [0.15.5](https://github.com/hyparam/hightable/compare/v0.15.4...v0.15.5) - 2025-05-14
 
