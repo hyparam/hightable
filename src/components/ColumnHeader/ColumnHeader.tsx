@@ -142,7 +142,7 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
         isVisible={isColumnMenuOpen}
         position={position}
         direction={direction}
-        sortable={sortable ?? false}
+        sortable={sortable}
         onClick={onClick}
         columnIndex={columnIndex}
         onToggleColumnMenu={onToggleColumnMenu}
