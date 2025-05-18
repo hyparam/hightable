@@ -14,7 +14,7 @@ interface ColumnMenuProps {
   sortable?: boolean
   onClick?: () => void
   columnIndex: number
-  onToggleColumnMenu?: (columnIndex: number) => void
+  onToggleColumnMenu: (columnIndex: number) => void
   buttonRef?: RefObject<HTMLDivElement | null>
 }
 
@@ -58,7 +58,7 @@ export default function ColumnMenu({
       if (e.key === 'Escape') {
         e.preventDefault()
         e.stopPropagation()
-        onToggleColumnMenu?.(columnIndex)
+        onToggleColumnMenu(columnIndex)
 
         if (buttonRef?.current) {
           buttonRef.current.focus()
@@ -84,6 +84,7 @@ export default function ColumnMenu({
       tabIndex={-1}
       aria-label={`${columnName} column menu`}
       onKeyDown={handleKeyDown}
+      aria-expanded={isVisible}
     >
       <div role='presentation'>{columnName}</div>
       <hr role='separator' />
@@ -94,6 +95,7 @@ export default function ColumnMenu({
             onClick={onClick}
             tabIndex={0}
             aria-label={`${getSortDirection()} ${columnName}`}
+            aria-haspopup='false'
           >
             {getSortDirection()}
           </button>

@@ -108,7 +108,7 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
       })
     }
     onToggleColumnMenu(columnIndex)
-  }, [columnIndex, onToggleColumnMenu])
+  }, [columnIndex, onToggleColumnMenu, ref])
 
   return (
     <th

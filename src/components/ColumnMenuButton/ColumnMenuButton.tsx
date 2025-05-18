@@ -1,11 +1,20 @@
-import { KeyboardEvent, MouseEvent, RefObject, useCallback, useRef } from 'react'
+import {
+  KeyboardEvent,
+  MouseEvent,
+  RefObject,
+  useCallback,
+  useRef,
+} from 'react'
 
 interface ColumnMenuButtonProps {
   onClick?: (e: MouseEvent) => void
   buttonRef?: RefObject<HTMLDivElement | null>
 }
 
-export default function ColumnMenuButton({ onClick, buttonRef }: ColumnMenuButtonProps) {
+export default function ColumnMenuButton({
+  onClick,
+  buttonRef,
+}: ColumnMenuButtonProps) {
   const internalRef = useRef<HTMLDivElement>(null)
   const ref = buttonRef ?? internalRef
 
