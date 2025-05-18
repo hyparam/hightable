@@ -49,12 +49,17 @@
   /* sortable */
   thead th[aria-sort] {
     cursor: pointer;
+    padding-right: calc(var(--cell-horizontal-padding) + 48px);
   }
   th[aria-sort="ascending"]::after,
   th[aria-sort="descending"]::after {
-    position: absolute;
-    right: 0;
-    top: 0;
+    position: relative;
+    display: inline-block;
+    margin-left: 20px;
+    font-size: 0.875em;
+    font-weight: bold;
+    line-height: 1;
+    vertical-align: text-top;
   }
   th[aria-sort="ascending"]::after {
     content: "▴";
@@ -100,7 +105,7 @@
     justify-content: center;
     position: absolute;
     right: 12px;
-    top: 55%;
+    top: 50%;
     transform: translateY(-50%);
     width: 20px;
     height: 20px;
@@ -118,7 +123,7 @@
   }
 
   th > div[role="button"] > span {
-    font-size: 16px;
+    font-size: 1rem;
     line-height: 1;
     color: #444;
     font-weight: bold;
@@ -277,7 +282,7 @@
 
       /* sorting is enabled - add space for the sort caret */
       &[aria-sort] {
-        padding-right: calc(var(--cell-horizontal-padding) + 12px);
+        padding-right: calc(var(--cell-horizontal-padding) + 24px);
       }
     }
   }
