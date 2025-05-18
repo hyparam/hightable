@@ -1,9 +1,11 @@
-import { KeyboardEvent, ReactNode, useCallback, useEffect, useMemo, useRef } from 'react'
+import { KeyboardEvent, MouseEvent, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { Direction } from '../../helpers/sort.js'
 import { measureWidth } from '../../helpers/width.js'
 import { useCellNavigation } from '../../hooks/useCellsNavigation.js'
 import useColumnWidth from '../../hooks/useColumnWidth.js'
+import ColumnMenu from '../ColumnMenu/ColumnMenu.js'
+import ColumnMenuButton from '../ColumnMenuButton/ColumnMenuButton.js'
 import ColumnResizer from '../ColumnResizer/ColumnResizer.js'
 
 interface Props {
@@ -19,9 +21,12 @@ interface Props {
   ariaColIndex: number // aria col index for the header
   ariaRowIndex: number // aria row index for the header
   className?: string // optional class name
+  isColumnMenuOpen: boolean
+  onToggleColumnMenu: (columnIndex: number) => void
 }
 
-export default function ColumnHeader({ columnIndex, columnName, dataReady, direction, onClick, sortable, orderByIndex, orderBySize, ariaColIndex, ariaRowIndex, className, children }: Props) {
+export default function ColumnHeader({ columnIndex, columnName, dataReady, direction, onClick, sortable, orderByIndex, orderBySize, ariaColIndex, ariaRowIndex, className, children, isColumnMenuOpen, onToggleColumnMenu }: Props) {
+  const [position, setPosition] = useState({ left: 0, top: 0 })
   const ref = useRef<HTMLTableCellElement>(null)
   const { tabIndex, navigateToCell } = useCellNavigation({ ref, ariaColIndex, ariaRowIndex })
   const handleClick = useCallback(() => {
@@ -90,6 +95,18 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
     }
   }, [onClick])
 
+  const handleColumnMenuClick = useCallback((e: MouseEvent) => {
+    e.stopPropagation()
+    const rect = ref.current?.getBoundingClientRect()
+    if (rect) {
+      setPosition({
+        left: e.clientX,
+        top: rect.bottom,
+      })
+    }
+    onToggleColumnMenu(columnIndex)
+  }, [columnIndex, onToggleColumnMenu])
+
   return (
     <th
       ref={ref}
@@ -116,6 +133,8 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
         tabIndex={tabIndex}
         navigateToCell={navigateToCell}
       />
+      <ColumnMenuButton onClick={handleColumnMenuClick} />
+      <ColumnMenu columnName={columnName} isVisible={isColumnMenuOpen} position={position} />
     </th>
   )
 }

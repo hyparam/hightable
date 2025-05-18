@@ -63,6 +63,37 @@
     content: "▾";
   }
 
+  /* column menu button */
+  th > div[role="button"] {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    right: 12px;
+    top: 55%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    border-radius: 3px;
+    background-color: #f1f1f3;
+    z-index: 10;
+  }
+
+  th:hover > div[role="button"] {
+    background-color: #dbdbe5;
+    opacity: 1;
+  }
+
+  th > div[role="button"] > span {
+    font-size: 16px;
+    line-height: 1;
+    color: #444;
+    font-weight: bold;
+  }
+
   /* column resize */
   thead [role="separator"] {
     position: absolute;
