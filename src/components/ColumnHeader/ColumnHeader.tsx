@@ -98,9 +98,11 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
   const handleColumnMenuClick = useCallback((e: MouseEvent) => {
     e.stopPropagation()
     const rect = ref.current?.getBoundingClientRect()
+    const buttonRect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+
     if (rect) {
       setPosition({
-        left: e.clientX,
+        left: buttonRect.left,
         top: rect.bottom,
       })
     }
