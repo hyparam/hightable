@@ -134,7 +134,7 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
         navigateToCell={navigateToCell}
       />
       <ColumnMenuButton onClick={handleColumnMenuClick} />
-      <ColumnMenu columnName={columnName} isVisible={isColumnMenuOpen} position={position} />
+      <ColumnMenu columnName={columnName} isVisible={isColumnMenuOpen} position={position} direction={direction} sortable={sortable ?? false} onClick={onClick} />
     </th>
   )
 }
