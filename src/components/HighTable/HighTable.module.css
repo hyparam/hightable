@@ -43,6 +43,7 @@
       user-select: none;
       top: 0;
       z-index: var(--header-z-index, auto);
+      overflow: auto;
     }
   }
 
@@ -55,7 +56,7 @@
   th[aria-sort="descending"]::after {
     position: relative;
     display: inline-block;
-    margin-left: 20px;
+    margin-left: 24px;
     font-size: 0.875em;
     font-weight: bold;
     line-height: 1;
