@@ -13,6 +13,8 @@ interface ColumnMenuProps {
   direction?: Direction
   sortable?: boolean
   onClick?: () => void
+  columnIndex: number
+  onToggleColumnMenu?: (columnIndex: number) => void
 }
 
 export default function ColumnMenu({
@@ -22,6 +24,8 @@ export default function ColumnMenu({
   direction,
   sortable,
   onClick,
+  columnIndex,
+  onToggleColumnMenu,
 }: ColumnMenuProps) {
   const { containerRef } = usePortalContainer()
   const { top, left } = position
@@ -52,12 +56,14 @@ export default function ColumnMenu({
       if (e.key === 'Escape') {
         e.preventDefault()
         e.stopPropagation()
-        const columnButton =
-          document.activeElement?.parentElement?.querySelector(
-            'div[role="button"]'
-          )
-        if (columnButton instanceof HTMLElement) {
-          columnButton.focus()
+        onToggleColumnMenu?.(columnIndex)
+        const headers = document.querySelectorAll('th[role="columnheader"]')
+        const targetHeader = headers[columnIndex]
+        if (targetHeader) {
+          const columnButton = targetHeader.querySelector('div[role="button"]')
+          if (columnButton instanceof HTMLElement) {
+            columnButton.focus()
+          }
         }
       } else if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault()
@@ -65,7 +71,7 @@ export default function ColumnMenu({
         onClick?.()
       }
     },
-    [onClick]
+    [onClick, columnIndex, onToggleColumnMenu]
   )
 
   if (!isVisible) {

@@ -143,6 +143,8 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
         direction={direction}
         sortable={sortable ?? false}
         onClick={onClick}
+        columnIndex={columnIndex}
+        onToggleColumnMenu={onToggleColumnMenu}
       />
     </th>
   )
