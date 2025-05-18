@@ -1,7 +1,7 @@
 import { createPortal } from 'react-dom'
 import { Direction } from '../../helpers/sort'
 import { usePortalContainer } from '../../hooks/usePortalContainer'
-import { useCallback } from 'react'
+import { KeyboardEvent, useCallback, useEffect, useRef } from 'react'
 
 interface ColumnMenuProps {
   columnName: string
@@ -25,6 +25,7 @@ export default function ColumnMenu({
 }: ColumnMenuProps) {
   const { containerRef } = usePortalContainer()
   const { top, left } = position
+  const menuRef = useRef<HTMLDivElement>(null)
 
   const getSortDirection = useCallback(() => {
     if (!sortable) return null
@@ -39,17 +40,57 @@ export default function ColumnMenu({
     }
   }, [direction, sortable])
 
+  // Focus the menu when it becomes visible
+  useEffect(() => {
+    if (isVisible && menuRef.current) {
+      menuRef.current.focus()
+    }
+  }, [isVisible])
+
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        e.stopPropagation()
+        const columnButton =
+          document.activeElement?.parentElement?.querySelector(
+            'div[role="button"]'
+          )
+        if (columnButton instanceof HTMLElement) {
+          columnButton.focus()
+        }
+      } else if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault()
+        e.stopPropagation()
+        onClick?.()
+      }
+    },
+    [onClick]
+  )
+
   if (!isVisible) {
     return null
   }
 
   return createPortal(
-    <div role='menu' style={{ top, left }}>
+    <div
+      role='menu'
+      style={{ top, left }}
+      ref={menuRef}
+      tabIndex={-1}
+      aria-label={`${columnName} column menu`}
+      onKeyDown={handleKeyDown}
+    >
       <div role='presentation'>{columnName}</div>
       <hr role='separator' />
       {sortable &&
         <>
-          <button role='menuitem' onClick={onClick}>
+          <button
+            role='menuitem'
+            onClick={onClick}
+            tabIndex={0}
+            aria-label={`${getSortDirection()} ${columnName}`}
+          >
             {getSortDirection()}
           </button>
         </>

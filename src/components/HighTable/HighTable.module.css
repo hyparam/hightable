@@ -118,7 +118,9 @@
     z-index: 10;
   }
 
-  th:hover > div[role="button"] {
+  th:hover > div[role="button"],
+  th > div[role="button"]:focus,
+  th > div[role="button"]:focus-visible {
     background-color: #dbdbe5;
     opacity: 1;
   }

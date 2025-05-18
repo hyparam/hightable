@@ -126,6 +126,7 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
       className={className}
     >
       {children}
+      {sortable && <ColumnMenuButton onClick={handleColumnMenuClick} />}
       <ColumnResizer
         setWidth={setWidth}
         onDoubleClick={autoResize}
@@ -133,8 +134,14 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
         tabIndex={tabIndex}
         navigateToCell={navigateToCell}
       />
-      {sortable && <ColumnMenuButton onClick={handleColumnMenuClick} />}
-      <ColumnMenu columnName={columnName} isVisible={isColumnMenuOpen} position={position} direction={direction} sortable={sortable ?? false} onClick={onClick} />
+      <ColumnMenu
+        columnName={columnName}
+        isVisible={isColumnMenuOpen}
+        position={position}
+        direction={direction}
+        sortable={sortable ?? false}
+        onClick={onClick}
+      />
     </th>
   )
 }
