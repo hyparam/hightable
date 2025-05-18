@@ -58,10 +58,8 @@
     position: relative;
     display: inline-block;
     margin-left: 24px;
-    font-size: 0.875em;
-    font-weight: bold;
-    line-height: 1;
-    vertical-align: text-top;
+    vertical-align: text-bottom;
+    transform: translateY(-2px);
   }
   th[aria-sort="ascending"]::after {
     content: "▴";
