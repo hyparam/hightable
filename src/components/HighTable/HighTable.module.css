@@ -44,24 +44,91 @@
       user-select: none;
       top: 0;
       z-index: var(--header-z-index, auto);
+      overflow: auto;
     }
   }
 
   /* sortable */
   thead th[aria-sort] {
     cursor: pointer;
+    padding-right: calc(var(--cell-horizontal-padding) + 48px);
   }
   th[aria-sort="ascending"]::after,
   th[aria-sort="descending"]::after {
-    position: absolute;
-    right: 0;
-    top: 0;
+    position: relative;
+    display: inline-block;
+    margin-left: 24px;
+    vertical-align: text-bottom;
+    transform: translateY(-2px);
   }
   th[aria-sort="ascending"]::after {
     content: "▴";
   }
   th[aria-sort="descending"]::after {
     content: "▾";
+  }
+
+  /* column menu */
+  div[role="menu"] {
+    background-color: white;
+    border: 1px solid #c9c9c9;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    min-width: 150px;
+    font-size: 14px;
+    color: #444;
+    position: fixed;
+  }
+  
+  div[role="menu"] > [role="presentation"] {
+    padding: 8px 12px;
+    font-weight: bold;
+    color: #444;
+    background-color: #f1f1f3;
+    border-top-left-radius: 4px;
+  }
+  
+  div[role="menu"] > [role="menuitem"] {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 8px 12px;
+    border: none;
+    background: none;
+    cursor: pointer;
+  }
+
+  /* column menu button */
+  th > div[role="button"] {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    border-radius: 3px;
+    background-color: #f1f1f3;
+    z-index: 10;
+  }
+
+  th:hover > div[role="button"],
+  th > div[role="button"]:focus,
+  th > div[role="button"]:focus-visible {
+    background-color: #dbdbe5;
+    opacity: 1;
+  }
+
+  th > div[role="button"] > span {
+    font-size: 1rem;
+    line-height: 1;
+    color: #444;
+    font-weight: bold;
   }
 
   /* column resize */
@@ -225,7 +292,7 @@
 
       /* sorting is enabled - add space for the sort caret */
       &[aria-sort] {
-        padding-right: calc(var(--cell-horizontal-padding) + 12px);
+        padding-right: calc(var(--cell-horizontal-padding) + 24px);
       }
     }
   }

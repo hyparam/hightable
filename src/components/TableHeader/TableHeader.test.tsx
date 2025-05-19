@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { within } from '@testing-library/react'
 import { render } from '../../utils/userEvent.js'
 import TableHeader from './TableHeader.js'
 
@@ -95,4 +96,94 @@ describe('TableHeader', () => {
     expect(onOrderByChange).toHaveBeenCalledWith([{ column: 'Address', direction: 'ascending' }, { column: 'Age', direction: 'ascending' }])
   })
 
+  describe('Column Menu', () => {
+    it('toggles column menu when menu button is clicked', async () => {
+      const { user, getByRole } = render(<table><thead><tr>
+        <TableHeader
+          header={header}
+          dataReady={dataReady}
+          ariaRowIndex={1}
+          sortable={true}
+        />
+      </tr></thead></table>)
+
+      const nameHeader = getByRole('columnheader', { name: 'Name' })
+      const menuButton = within(nameHeader).getByRole('button', { name: 'Column Menu Button' })
+      await user.click(menuButton)
+
+      expect(getByRole('menu')).toBeDefined()
+      expect(getByRole('menu').getAttribute('aria-label')).toBe('Name column menu')
+    })
+
+    it('closes column menu when clicking menu button again', async () => {
+      const { user, getByRole, queryByRole } = render(<table><thead><tr>
+        <TableHeader
+          header={header}
+          dataReady={dataReady}
+          ariaRowIndex={1}
+          sortable={true}
+        />
+      </tr></thead></table>)
+
+      const nameHeader = getByRole('columnheader', { name: 'Name' })
+      const menuButton = within(nameHeader).getByRole('button', { name: 'Column Menu Button' })
+      await user.click(menuButton)
+      expect(getByRole('menu')).toBeDefined()
+
+      await user.click(menuButton)
+      expect(queryByRole('menu')).toBeNull()
+    })
+
+    it('shows sort options in menu when column is sortable', async () => {
+      const { user, getByRole } = render(<table><thead><tr>
+        <TableHeader
+          header={header}
+          dataReady={dataReady}
+          ariaRowIndex={1}
+          sortable={true}
+        />
+      </tr></thead></table>)
+
+      const nameHeader = getByRole('columnheader', { name: 'Name' })
+      const menuButton = within(nameHeader).getByRole('button', { name: 'Column Menu Button' })
+      await user.click(menuButton)
+
+      const menu = getByRole('menu')
+      const sortButton = within(menu).getByRole('menuitem')
+      expect(sortButton).toBeDefined()
+      expect(sortButton.textContent).toBe('Sort')
+    })
+
+    it('updates sort direction text in menu based on current sort', async () => {
+      const { user, getByRole, rerender } = render(<table><thead><tr>
+        <TableHeader
+          header={header}
+          dataReady={dataReady}
+          ariaRowIndex={1}
+          sortable={true}
+          orderBy={[{ column: 'Name', direction: 'ascending' }]}
+        />
+      </tr></thead></table>)
+
+      const nameHeader = getByRole('columnheader', { name: 'Name' })
+      const menuButton = within(nameHeader).getByRole('button', { name: 'Column Menu Button' })
+      await user.click(menuButton)
+
+      const menu = getByRole('menu')
+      const sortButton = within(menu).getByRole('menuitem')
+      expect(sortButton.textContent).toBe('Ascending')
+
+      rerender(<table><thead><tr>
+        <TableHeader
+          header={header}
+          dataReady={dataReady}
+          ariaRowIndex={1}
+          sortable={true}
+          orderBy={[{ column: 'Name', direction: 'descending' }]}
+        />
+      </tr></thead></table>)
+
+      expect(sortButton.textContent).toBe('Descending')
+    })
+  })
 })

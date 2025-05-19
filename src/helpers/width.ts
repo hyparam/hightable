@@ -13,5 +13,5 @@ export function measureWidth(element: HTMLTableCellElement): number {
   const style = window.getComputedStyle(element)
   const horizontalPadding = parseInt(style.paddingLeft) + parseInt(style.paddingRight)
   // add 1px to avoid rounding errors, since offsetWidth always returns an integer
-  return element.offsetWidth - horizontalPadding + 1
+  return element.offsetWidth - horizontalPadding + 24
 }

@@ -1,0 +1,107 @@
+import { createPortal } from 'react-dom'
+import { Direction } from '../../helpers/sort'
+import { usePortalContainer } from '../../hooks/usePortalContainer'
+import { KeyboardEvent, RefObject, useCallback, useEffect, useRef } from 'react'
+
+interface ColumnMenuProps {
+  columnName: string
+  isVisible: boolean
+  position: {
+    left: number
+    top: number
+  }
+  direction?: Direction
+  sortable?: boolean
+  onClick?: () => void
+  columnIndex: number
+  onToggleColumnMenu: (columnIndex: number) => void
+  buttonRef?: RefObject<HTMLDivElement | null>
+}
+
+export default function ColumnMenu({
+  columnName,
+  isVisible,
+  position,
+  direction,
+  sortable,
+  onClick,
+  columnIndex,
+  onToggleColumnMenu,
+  buttonRef,
+}: ColumnMenuProps) {
+  const { containerRef } = usePortalContainer()
+  const { top, left } = position
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  const getSortDirection = useCallback(() => {
+    if (!sortable) return null
+
+    switch (direction) {
+    case 'ascending':
+      return 'Ascending'
+    case 'descending':
+      return 'Descending'
+    default:
+      return 'Sort'
+    }
+  }, [direction, sortable])
+
+  // Focus the menu when it becomes visible
+  useEffect(() => {
+    if (isVisible && menuRef.current) {
+      menuRef.current.focus()
+    }
+  }, [isVisible])
+
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        e.stopPropagation()
+        onToggleColumnMenu(columnIndex)
+
+        if (buttonRef?.current) {
+          buttonRef.current.focus()
+        }
+      } else if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault()
+        e.stopPropagation()
+        onClick?.()
+      }
+    },
+    [onClick, columnIndex, onToggleColumnMenu, buttonRef]
+  )
+
+  if (!isVisible) {
+    return null
+  }
+
+  return createPortal(
+    <div
+      role='menu'
+      style={{ top, left }}
+      ref={menuRef}
+      tabIndex={-1}
+      aria-label={`${columnName} column menu`}
+      onKeyDown={handleKeyDown}
+      aria-expanded={isVisible}
+    >
+      <div role='presentation'>{columnName}</div>
+      <hr role='separator' />
+      {sortable &&
+        <>
+          <button
+            role='menuitem'
+            onClick={onClick}
+            tabIndex={0}
+            aria-label={`${getSortDirection()} ${columnName}`}
+            aria-haspopup='false'
+          >
+            {getSortDirection()}
+          </button>
+        </>
+      }
+    </div>,
+    containerRef.current ?? document.body
+  )
+}

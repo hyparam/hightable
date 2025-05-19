@@ -26,6 +26,8 @@ const defaultProps = {
   columnIndex: 0,
   ariaColIndex: 1,
   ariaRowIndex: 1,
+  isColumnMenuOpen: false,
+  onToggleColumnMenu: vi.fn(),
 }
 
 describe('ColumnHeader', () => {
