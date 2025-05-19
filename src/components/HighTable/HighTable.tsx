@@ -148,10 +148,9 @@ export function HighTableInner({
     defaultValue: { ranges: [], anchor: undefined },
     disabled: isSelectionDisabled,
   })
-  const enableSelectionInteractions = onSelectionChange !== undefined
 
   const showSelection = selection !== undefined
-  const showSelectionControls = showSelection && enableSelectionInteractions
+  const showSelectionControls = showSelection && onSelectionChange !== undefined
   const showCornerSelection = showSelectionControls || showSelection && areAllSelected({ ranges: selection.ranges, length: numRows })
   const getOnSelectAllRows = useCallback(() => {
     if (!selection) return
