@@ -8,7 +8,6 @@ interface TableProps {
   onOrderByChange?: (orderBy: OrderBy) => void // callback to call when a user interaction changes the order. The interactions are disabled if undefined.
   dataReady: boolean
   ariaRowIndex: number // aria row index for the header
-  sortable?: boolean
   columnClassNames?: (string | undefined)[] // array of class names for each column
 }
 
@@ -16,7 +15,7 @@ interface TableProps {
  * Render a header for a table.
  */
 export default function TableHeader({
-  header, orderBy, onOrderByChange, dataReady, ariaRowIndex, sortable = true, columnClassNames = [],
+  header, orderBy, onOrderByChange, dataReady, ariaRowIndex, columnClassNames = [],
 }: TableProps) {
   // Function to handle click for changing orderBy
   const getOnOrderByClick = useCallback((columnHeader: string) => {
@@ -44,7 +43,6 @@ export default function TableHeader({
         orderByIndex={orderByColumn.get(name)?.index}
         orderBySize={orderBy?.length}
         onClick={getOnOrderByClick(name)}
-        sortable={sortable}
         columnName={name}
         columnIndex={columnIndex}
         className={columnClassNames[columnIndex]}

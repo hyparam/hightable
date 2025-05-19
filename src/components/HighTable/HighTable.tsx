@@ -135,8 +135,6 @@ export function HighTableInner({
     defaultValue: [],
     disabled: !data.sortable,
   })
-  // TODO: move this test where it belongs
-  const enableOrderByInteractions = onOrderByChange !== undefined
 
   // Selection is disabled if the parent passed no props
   const isSelectionDisabled = propSelection === undefined && propOnSelectionChange === undefined
@@ -500,7 +498,6 @@ export function HighTableInner({
                   header={data.header}
                   orderBy={orderBy}
                   onOrderByChange={onOrderByChange}
-                  sortable={enableOrderByInteractions}
                   columnClassNames={columnClassNames}
                   ariaRowIndex={1}
                 />
