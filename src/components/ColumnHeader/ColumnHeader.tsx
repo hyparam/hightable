@@ -3,7 +3,7 @@ import { flushSync } from 'react-dom'
 import { Direction } from '../../helpers/sort.js'
 import { measureWidth } from '../../helpers/width.js'
 import { useCellNavigation } from '../../hooks/useCellsNavigation.js'
-import useColumnWidth from '../../hooks/useColumnWidth.js'
+import { useColumnWidth } from '../../hooks/useColumnWidth.js'
 import ColumnResizer from '../ColumnResizer/ColumnResizer.js'
 
 interface Props {

@@ -1,6 +1,6 @@
 import { KeyboardEvent, MouseEvent, useCallback, useMemo, useRef } from 'react'
 import { useCellNavigation } from '../../hooks/useCellsNavigation.js'
-import useColumnWidth from '../../hooks/useColumnWidth.js'
+import { useColumnWidth } from '../../hooks/useColumnWidth.js'
 
 interface Props {
   onDoubleClick?: (event: MouseEvent) => void
