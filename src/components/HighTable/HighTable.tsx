@@ -1,13 +1,13 @@
 import { CSSProperties, KeyboardEvent, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DataFrame } from '../../helpers/dataframe.js'
 import { PartialRow } from '../../helpers/row.js'
-import { Selection, areAllSelected, getDefaultSelection, isSelected, toggleAll, toggleIndexInSelection, toggleRangeInSelection, toggleRangeInTable } from '../../helpers/selection.js'
+import { Selection, areAllSelected, isSelected, toggleAll, toggleIndexInSelection, toggleRangeInSelection, toggleRangeInTable } from '../../helpers/selection.js'
 import { OrderBy, areEqualOrderBy } from '../../helpers/sort.js'
 import { leftCellStyle } from '../../helpers/width.js'
 import { CellsNavigationProvider, useCellsNavigation } from '../../hooks/useCellsNavigation.js'
 import { ColumnWidthProvider } from '../../hooks/useColumnWidth.js'
-import { useInputState } from '../../hooks/useInputState.js'
 import { OrderByProvider, useOrderBy } from '../../hooks/useOrderBy.js'
+import { SelectionProvider, useSelection } from '../../hooks/useSelection.js'
 import { stringify as stringifyDefault } from '../../utils/stringify.js'
 import { throttle } from '../../utils/throttle.js'
 import Cell from '../Cell/Cell.js'
@@ -63,21 +63,24 @@ const ariaOffset = 2 // 1-based index, +1 for the header
  * onSelectionChange: the callback to call when the selection changes. If undefined, the component selection is read-only if controlled (selection is set), or disabled if not.
  */
 export default function HighTable(props: Props) {
-  const { data, cacheKey, orderBy, onOrderByChange } = props
+  const { data, cacheKey, orderBy, onOrderByChange, selection, onSelectionChange } = props
   const ariaColCount = data.header.length + 1 // don't forget the selection column
   const ariaRowCount = data.numRows + 1 // don't forget the header row
   return (
     <OrderByProvider orderBy={orderBy} onOrderByChange={onOrderByChange} disabled={!data.sortable}>
-      <ColumnWidthProvider localStorageKey={cacheKey ? `${cacheKey}:column-widths` : undefined}>
-        <CellsNavigationProvider colCount={ariaColCount} rowCount={ariaRowCount} rowPadding={props.padding ?? defaultPadding}>
-          <HighTableInner {...props} />
-        </CellsNavigationProvider>
-      </ColumnWidthProvider>
+      <SelectionProvider selection={selection} onSelectionChange={onSelectionChange}>
+        <ColumnWidthProvider localStorageKey={cacheKey ? `${cacheKey}:column-widths` : undefined}>
+          <CellsNavigationProvider colCount={ariaColCount} rowCount={ariaRowCount} rowPadding={props.padding ?? defaultPadding}>
+            {/* TODO: pass props explicitly  */}
+            <HighTableInner {...props} />
+          </CellsNavigationProvider>
+        </ColumnWidthProvider>
+      </SelectionProvider>
     </OrderByProvider>
   )
 }
 
-type PropsInner = Omit<Props, 'orderBy' | 'onOrderByChange'>
+type PropsInner = Omit<Props, 'orderBy' | 'onOrderByChange' | 'selection' | 'onSelectionChange'>
 
 /**
  * The main purpose of extracting HighTableInner from HighTable is to
@@ -89,8 +92,6 @@ export function HighTableInner({
   overscan = defaultOverscan,
   padding = defaultPadding,
   focus = true,
-  selection: propSelection,
-  onSelectionChange: propOnSelectionChange,
   onDoubleClickCell,
   onMouseDownCell,
   onKeyDownCell,
@@ -131,18 +132,7 @@ export function HighTableInner({
   // Sorting is disabled if the data is not sortable
   const { orderBy, onOrderByChange } = useOrderBy()
 
-  // Selection is disabled if the parent passed no props
-  const isSelectionDisabled = propSelection === undefined && propOnSelectionChange === undefined
-  const {
-    value: selection,
-    onChange: onSelectionChange,
-    resetTo: resetSelectionTo,
-  } = useInputState<Selection>({
-    value: propSelection,
-    onChange: propOnSelectionChange,
-    defaultValue: getDefaultSelection(),
-    disabled: isSelectionDisabled,
-  })
+  const { selection, onSelectionChange, resetSelection } = useSelection()
 
   const showSelection = selection !== undefined
   const showSelectionControls = showSelection && onSelectionChange !== undefined
@@ -222,7 +212,7 @@ export function HighTableInner({
     // delete the cached sort indexes
     setRanksMap(new Map())
     // if uncontrolled, reset the selection (if controlled, it's the responsibility of the parent to do it)
-    resetSelectionTo?.(getDefaultSelection())
+    resetSelection?.()
     // reset the number of rows
     setNumRows(data.numRows)
   }
