@@ -145,7 +145,6 @@ export function HighTableInner({
   const { selection, onSelectionChange } = useSelection()
 
   const showSelection = selection !== undefined
-  const showSelectionControls = showSelection && onSelectionChange !== undefined
   const getOnSelectAllRows = useCallback(() => {
     if (!selection) return
     const { ranges } = selection
@@ -453,7 +452,7 @@ export function HighTableInner({
             aria-readonly={true}
             aria-colcount={ariaColCount}
             aria-rowcount={ariaRowCount}
-            aria-multiselectable={showSelectionControls}
+            aria-multiselectable={showSelection}
             role='grid'
             style={{ top: `${offsetTop}px` }}
             onKeyDown={onTableKeyDown}
