@@ -7,6 +7,7 @@ import { leftCellStyle } from '../../helpers/width.js'
 import { CellsNavigationProvider, useCellsNavigation } from '../../hooks/useCellsNavigation.js'
 import { ColumnWidthProvider } from '../../hooks/useColumnWidth.js'
 import { useInputState } from '../../hooks/useInputState.js'
+import { OrderByProvider, useOrderBy } from '../../hooks/useOrderBy.js'
 import { stringify as stringifyDefault } from '../../utils/stringify.js'
 import { throttle } from '../../utils/throttle.js'
 import Cell from '../Cell/Cell.js'
@@ -62,17 +63,21 @@ const ariaOffset = 2 // 1-based index, +1 for the header
  * onSelectionChange: the callback to call when the selection changes. If undefined, the component selection is read-only if controlled (selection is set), or disabled if not.
  */
 export default function HighTable(props: Props) {
-  const { data, cacheKey } = props
+  const { data, cacheKey, orderBy, onOrderByChange } = props
   const ariaColCount = data.header.length + 1 // don't forget the selection column
   const ariaRowCount = data.numRows + 1 // don't forget the header row
   return (
-    <ColumnWidthProvider localStorageKey={cacheKey ? `${cacheKey}:column-widths` : undefined}>
-      <CellsNavigationProvider colCount={ariaColCount} rowCount={ariaRowCount} rowPadding={props.padding ?? defaultPadding}>
-        <HighTableInner {...props} />
-      </CellsNavigationProvider>
-    </ColumnWidthProvider>
+    <OrderByProvider orderBy={orderBy} onOrderByChange={onOrderByChange} disabled={!data.sortable}>
+      <ColumnWidthProvider localStorageKey={cacheKey ? `${cacheKey}:column-widths` : undefined}>
+        <CellsNavigationProvider colCount={ariaColCount} rowCount={ariaRowCount} rowPadding={props.padding ?? defaultPadding}>
+          <HighTableInner {...props} />
+        </CellsNavigationProvider>
+      </ColumnWidthProvider>
+    </OrderByProvider>
   )
 }
+
+type PropsInner = Omit<Props, 'orderBy' | 'onOrderByChange'>
 
 /**
  * The main purpose of extracting HighTableInner from HighTable is to
@@ -84,8 +89,6 @@ export function HighTableInner({
   overscan = defaultOverscan,
   padding = defaultPadding,
   focus = true,
-  orderBy: propOrderBy,
-  onOrderByChange: propOnOrderByChange,
   selection: propSelection,
   onSelectionChange: propOnSelectionChange,
   onDoubleClickCell,
@@ -96,7 +99,7 @@ export function HighTableInner({
   className = '',
   columnClassNames = [],
   styled = true,
-}: Props) {
+}: PropsInner) {
   /**
    * The component relies on the model of a virtual table which rows are ordered and only the
    * visible rows are fetched (slice) and rendered as HTML <tr> elements.
@@ -126,15 +129,7 @@ export function HighTableInner({
   const [ranksMap, setRanksMap] = useState<Map<string, Promise<number[]>>>(() => new Map())
 
   // Sorting is disabled if the data is not sortable
-  const {
-    value: orderBy,
-    onChange: onOrderByChange,
-  } = useInputState<OrderBy>({
-    value: propOrderBy,
-    onChange: propOnOrderByChange,
-    defaultValue: [],
-    disabled: !data.sortable,
-  })
+  const { orderBy, onOrderByChange } = useOrderBy()
 
   // Selection is disabled if the parent passed no props
   const isSelectionDisabled = propSelection === undefined && propOnSelectionChange === undefined
