@@ -78,9 +78,9 @@ export function CellsNavigationProvider({ colCount, rowCount, rowPadding, childr
         setRowIndex(rowCount)
       }
       setColIndex(colCount)
-    } else if (key === 'PageDown' || key === ' ' && !event.shiftKey) {
+    } else if (key === 'PageDown') {
       setRowIndex((prev) => prev + rowPadding <= rowCount ? prev + rowPadding : rowCount )
-    } else if (key === 'PageUp' || key === ' ' && event.shiftKey ) {
+    } else if (key === 'PageUp') {
       setRowIndex((prev) => prev - rowPadding >= 1 ? prev - rowPadding : 1)
     } else {
       // if the key is not one of the above, do not handle it
