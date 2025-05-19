@@ -1,7 +1,7 @@
 import { CSSProperties, KeyboardEvent, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DataFrame } from '../../helpers/dataframe.js'
 import { PartialRow } from '../../helpers/row.js'
-import { Selection, areAllSelected, isSelected, toggleAll, toggleIndexInSelection, toggleRangeInSelection, toggleRangeInTable } from '../../helpers/selection.js'
+import { Selection, areAllSelected, isSelected, toggleIndexInSelection, toggleRangeInSelection, toggleRangeInTable } from '../../helpers/selection.js'
 import { OrderBy, areEqualOrderBy } from '../../helpers/sort.js'
 import { leftCellStyle } from '../../helpers/width.js'
 import { CellsNavigationProvider, useCellsNavigation } from '../../hooks/useCellsNavigation.js'
@@ -142,18 +142,7 @@ export function HighTableInner({
   const [ranksMap, setRanksMap] = useState<Map<string, Promise<number[]>>>(() => new Map())
 
   const { orderBy, onOrderByChange } = useOrderBy()
-  const { selection, onSelectionChange } = useSelection()
-
-  const getOnSelectAllRows = useCallback(() => {
-    if (!selection || !onSelectionChange) return
-    const { ranges } = selection
-    return () => {
-      onSelectionChange({
-        ranges: toggleAll({ ranges, length: numRows }),
-        anchor: undefined,
-      })
-    }
-  }, [onSelectionChange, numRows, selection])
+  const { selection, onSelectionChange, toggleAllRows } = useSelection({ numRows })
 
   const pendingSelectionRequest = useRef(0)
   const getOnSelectRowClick = useCallback(({ tableIndex, dataIndex }: {tableIndex: number, dataIndex: number | undefined}) => {
@@ -462,7 +451,7 @@ export function HighTableInner({
             <thead role="rowgroup">
               <Row ariaRowIndex={1} >
                 <TableCorner
-                  onClick={getOnSelectAllRows()}
+                  onClick={toggleAllRows}
                   checked={allRowsSelected}
                   style={cornerStyle}
                   ariaColIndex={1}

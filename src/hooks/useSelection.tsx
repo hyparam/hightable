@@ -1,5 +1,5 @@
-import { ReactNode, createContext, useContext } from 'react'
-import { Selection, getDefaultSelection } from '../helpers/selection.js'
+import { ReactNode, createContext, useCallback, useContext } from 'react'
+import { Selection, getDefaultSelection, toggleAll } from '../helpers/selection.js'
 import { useInputState } from './useInputState.js'
 
 interface SelectionContextType {
@@ -33,6 +33,27 @@ export function SelectionProvider({ children, selection, onSelectionChange }: Se
   )
 }
 
-export function useSelection() {
-  return useContext(SelectionContext)
+type HighTableSelection = SelectionContextType & {
+  toggleAllRows?: () => void // callback to call when the user clicks on the "select all" checkbox. The selection is expressed as data indexes (not as indexes in the table). The interactions are disabled if undefined.
+}
+
+export function useSelection({ numRows }: {numRows: number}): HighTableSelection {
+  const { selection, onSelectionChange } = useContext(SelectionContext)
+
+  const getToggleAllRows = useCallback(() => {
+    if (!selection || !onSelectionChange) return
+    const { ranges } = selection
+    return () => {
+      onSelectionChange({
+        ranges: toggleAll({ ranges, length: numRows }),
+        anchor: undefined,
+      })
+    }
+  }, [onSelectionChange, numRows, selection])
+
+  return {
+    selection,
+    onSelectionChange,
+    toggleAllRows: getToggleAllRows(),
+  }
 }
