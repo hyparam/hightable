@@ -19,6 +19,10 @@ export interface Selection {
   anchor?: number // anchor row used as a reference for shift+click selection.
 }
 
+export function getDefaultSelection() {
+  return { ranges: [], anchor: undefined }
+}
+
 export function isValidIndex(index: number): boolean {
   return Number.isInteger(index) && index >= 0
 }

@@ -1,7 +1,7 @@
 import { CSSProperties, KeyboardEvent, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DataFrame } from '../../helpers/dataframe.js'
 import { PartialRow } from '../../helpers/row.js'
-import { Selection, areAllSelected, isSelected, toggleAll, toggleIndexInSelection, toggleRangeInSelection, toggleRangeInTable } from '../../helpers/selection.js'
+import { Selection, areAllSelected, getDefaultSelection, isSelected, toggleAll, toggleIndexInSelection, toggleRangeInSelection, toggleRangeInTable } from '../../helpers/selection.js'
 import { OrderBy, areEqualOrderBy } from '../../helpers/sort.js'
 import { leftCellStyle } from '../../helpers/width.js'
 import { CellsNavigationProvider, useCellsNavigation } from '../../hooks/useCellsNavigation.js'
@@ -129,7 +129,6 @@ export function HighTableInner({
   const {
     value: orderBy,
     onChange: onOrderByChange,
-    enableInteractions: enableOrderByInteractions,
   } = useInputState<OrderBy>({
     value: propOrderBy,
     onChange: propOnOrderByChange,
@@ -142,22 +141,21 @@ export function HighTableInner({
   const {
     value: selection,
     onChange: onSelectionChange,
-    enableInteractions: enableSelectionInteractions,
-    isControlled: isSelectionControlled,
+    resetTo: resetSelectionTo,
   } = useInputState<Selection>({
     value: propSelection,
     onChange: propOnSelectionChange,
-    defaultValue: { ranges: [], anchor: undefined },
+    defaultValue: getDefaultSelection(),
     disabled: isSelectionDisabled,
   })
 
   const showSelection = selection !== undefined
-  const showSelectionControls = showSelection && enableSelectionInteractions
+  const showSelectionControls = showSelection && onSelectionChange !== undefined
   const showCornerSelection = showSelectionControls || showSelection && areAllSelected({ ranges: selection.ranges, length: numRows })
   const getOnSelectAllRows = useCallback(() => {
     if (!selection) return
     const { ranges } = selection
-    return () => { onSelectionChange({
+    return () => { onSelectionChange?.({
       ranges: toggleAll({ ranges, length: numRows }),
       anchor: undefined,
     }) }
@@ -172,13 +170,13 @@ export function HighTableInner({
 
       if (!useAnchor) {
         // single row toggle
-        onSelectionChange(toggleIndexInSelection({ selection, index: dataIndex }))
+        onSelectionChange?.(toggleIndexInSelection({ selection, index: dataIndex }))
         return
       }
 
       if (!orderBy || orderBy.length === 0) {
         // no sorting, toggle the range
-        onSelectionChange(toggleRangeInSelection({ selection, index: dataIndex }))
+        onSelectionChange?.(toggleRangeInSelection({ selection, index: dataIndex }))
         return
       }
 
@@ -194,7 +192,7 @@ export function HighTableInner({
       })
       if (requestId === pendingSelectionRequest.current) {
         // only update the selection if the request is still the last one
-        onSelectionChange(newSelection)
+        onSelectionChange?.(newSelection)
       }
     }
     return (event: MouseEvent): void => {
@@ -229,9 +227,7 @@ export function HighTableInner({
     // delete the cached sort indexes
     setRanksMap(new Map())
     // if uncontrolled, reset the selection (if controlled, it's the responsibility of the parent to do it)
-    if (!isSelectionControlled) {
-      onSelectionChange({ ranges: [], anchor: undefined })
-    }
+    resetSelectionTo?.(getDefaultSelection())
     // reset the number of rows
     setNumRows(data.numRows)
   }
@@ -499,7 +495,6 @@ export function HighTableInner({
                   header={data.header}
                   orderBy={orderBy}
                   onOrderByChange={onOrderByChange}
-                  sortable={enableOrderByInteractions}
                   columnClassNames={columnClassNames}
                   ariaRowIndex={1}
                 />

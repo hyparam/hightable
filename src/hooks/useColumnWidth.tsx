@@ -82,6 +82,6 @@ export function ColumnWidthProvider({ children, localStorageKey }: ColumnWidthPr
   )
 }
 
-export default function useColumnWidth() {
+export function useColumnWidth() {
   return useContext(ColumnWidthContext)
 }
