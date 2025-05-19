@@ -146,7 +146,6 @@ export function HighTableInner({
 
   const showSelection = selection !== undefined
   const showSelectionControls = showSelection && onSelectionChange !== undefined
-  const showCornerSelection = showSelectionControls || showSelection && areAllSelected({ ranges: selection.ranges, length: numRows })
   const getOnSelectAllRows = useCallback(() => {
     if (!selection) return
     const { ranges } = selection
@@ -465,7 +464,7 @@ export function HighTableInner({
                 <TableCorner
                   onClick={getOnSelectAllRows()}
                   checked={allRowsSelected}
-                  showCheckBox={showCornerSelection}
+                  showCheckBox={showSelection}
                   style={cornerStyle}
                   ariaColIndex={1}
                   ariaRowIndex={1}
