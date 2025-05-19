@@ -397,11 +397,11 @@ describe('in controlled selection state, read-only (selection prop), ', () => {
     expect(getAllByRole('row', { selected: true })).toHaveLength(1)
   })
 
-  it('the table is not marked as multiselectable', () => {
+  it('the table is marked as multiselectable', () => {
     const selection = { ranges: [] }
     const { getByRole } = render(<HighTable data={data} selection={selection}/>)
     const table = getByRole('grid')
-    expect(table.getAttribute('aria-multiselectable')).toBe('false')
+    expect(table.getAttribute('aria-multiselectable')).toBe('true')
   })
 
   it('HighTable shows the new selection if updated', async () => {
