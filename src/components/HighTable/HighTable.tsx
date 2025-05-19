@@ -129,20 +129,20 @@ export function HighTableInner({
   const {
     value: orderBy,
     onChange: onOrderByChange,
-    enableInteractions: enableOrderByInteractions,
   } = useInputState<OrderBy>({
     value: propOrderBy,
     onChange: propOnOrderByChange,
     defaultValue: [],
     disabled: !data.sortable,
   })
+  // TODO: move this test where it belongs
+  const enableOrderByInteractions = onOrderByChange !== undefined
 
   // Selection is disabled if the parent passed no props
   const isSelectionDisabled = propSelection === undefined && propOnSelectionChange === undefined
   const {
     value: selection,
     onChange: onSelectionChange,
-    enableInteractions: enableSelectionInteractions,
     isControlled: isSelectionControlled,
   } = useInputState<Selection>({
     value: propSelection,
@@ -150,6 +150,7 @@ export function HighTableInner({
     defaultValue: { ranges: [], anchor: undefined },
     disabled: isSelectionDisabled,
   })
+  const enableSelectionInteractions = onSelectionChange !== undefined
 
   const showSelection = selection !== undefined
   const showSelectionControls = showSelection && enableSelectionInteractions
@@ -157,7 +158,7 @@ export function HighTableInner({
   const getOnSelectAllRows = useCallback(() => {
     if (!selection) return
     const { ranges } = selection
-    return () => { onSelectionChange({
+    return () => { onSelectionChange?.({
       ranges: toggleAll({ ranges, length: numRows }),
       anchor: undefined,
     }) }
@@ -172,13 +173,13 @@ export function HighTableInner({
 
       if (!useAnchor) {
         // single row toggle
-        onSelectionChange(toggleIndexInSelection({ selection, index: dataIndex }))
+        onSelectionChange?.(toggleIndexInSelection({ selection, index: dataIndex }))
         return
       }
 
       if (!orderBy || orderBy.length === 0) {
         // no sorting, toggle the range
-        onSelectionChange(toggleRangeInSelection({ selection, index: dataIndex }))
+        onSelectionChange?.(toggleRangeInSelection({ selection, index: dataIndex }))
         return
       }
 
@@ -194,7 +195,7 @@ export function HighTableInner({
       })
       if (requestId === pendingSelectionRequest.current) {
         // only update the selection if the request is still the last one
-        onSelectionChange(newSelection)
+        onSelectionChange?.(newSelection)
       }
     }
     return (event: MouseEvent): void => {
@@ -230,7 +231,7 @@ export function HighTableInner({
     setRanksMap(new Map())
     // if uncontrolled, reset the selection (if controlled, it's the responsibility of the parent to do it)
     if (!isSelectionControlled) {
-      onSelectionChange({ ranges: [], anchor: undefined })
+      onSelectionChange?.({ ranges: [], anchor: undefined })
     }
     // reset the number of rows
     setNumRows(data.numRows)
