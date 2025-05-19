@@ -1,7 +1,7 @@
 import { CSSProperties, KeyboardEvent, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DataFrame } from '../../helpers/dataframe.js'
 import { PartialRow } from '../../helpers/row.js'
-import { Selection, areAllSelected, isSelected, toggleAll, toggleIndexInSelection, toggleRangeInSelection, toggleRangeInTable } from '../../helpers/selection.js'
+import { Selection, areAllSelected, getDefaultSelection, isSelected, toggleAll, toggleIndexInSelection, toggleRangeInSelection, toggleRangeInTable } from '../../helpers/selection.js'
 import { OrderBy, areEqualOrderBy } from '../../helpers/sort.js'
 import { leftCellStyle } from '../../helpers/width.js'
 import { CellsNavigationProvider, useCellsNavigation } from '../../hooks/useCellsNavigation.js'
@@ -141,11 +141,11 @@ export function HighTableInner({
   const {
     value: selection,
     onChange: onSelectionChange,
-    isControlled: isSelectionControlled,
+    resetTo: resetSelectionTo,
   } = useInputState<Selection>({
     value: propSelection,
     onChange: propOnSelectionChange,
-    defaultValue: { ranges: [], anchor: undefined },
+    defaultValue: getDefaultSelection(),
     disabled: isSelectionDisabled,
   })
 
@@ -227,9 +227,7 @@ export function HighTableInner({
     // delete the cached sort indexes
     setRanksMap(new Map())
     // if uncontrolled, reset the selection (if controlled, it's the responsibility of the parent to do it)
-    if (!isSelectionControlled) {
-      onSelectionChange?.({ ranges: [], anchor: undefined })
-    }
+    resetSelectionTo?.(getDefaultSelection())
     // reset the number of rows
     setNumRows(data.numRows)
   }

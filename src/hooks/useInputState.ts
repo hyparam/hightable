@@ -19,12 +19,12 @@ interface UseInputStateProps<T> {
  *
  * @param value the current input value
  * @param onChange the callback to call when the input changes. undefined if the input cannot be changed by the user.
- * @param isControlled true if the input value is controlled by the parent
+ * @param resetTo the function to call to reset the local state to the default value. undefined if the input is controlled.
  */
 interface UseInputStateResult<T> {
-  value: T | undefined
-  onChange: ((value: T) => void) | undefined
-  isControlled: boolean
+  value?: T
+  onChange?: ((value: T) => void)
+  resetTo?: ((value: T) => void) // reset the local state
 }
 
 /**
@@ -40,17 +40,19 @@ interface UseInputStateResult<T> {
  */
 export function useInputState<T>({ value, onChange, defaultValue, disabled }: UseInputStateProps<T>): UseInputStateResult<T> {
   const [initialValue] = useState<T | undefined>(value)
-  const [initialDisabled] = useState<boolean>(disabled ?? false)
+  const [isControlled] = useState<boolean>(value !== undefined)
+  const [isDisabled] = useState<boolean>(disabled ?? false)
+
+  // for uncontrolled inputs
   const [localValue, setLocalValue] = useState<T | undefined>(defaultValue)
   const uncontrolledOnChange = useCallback((selection: T) => {
     onChange?.(selection)
     setLocalValue(selection)
   }, [onChange])
-  const isControlled = initialValue !== undefined
 
   // disabled
-  if (initialDisabled) {
-    return { value: undefined, onChange: undefined, isControlled }
+  if (isDisabled) {
+    return {}
   }
 
   // The input is forever in one of these two modes:
@@ -64,7 +66,7 @@ export function useInputState<T>({ value, onChange, defaultValue, disabled }: Us
       value: value ?? initialValue,
       // read-only if onChange is undefined
       onChange,
-      isControlled,
+      // no resetTo function
     }
   }
 
@@ -72,6 +74,6 @@ export function useInputState<T>({ value, onChange, defaultValue, disabled }: Us
   if (value !== undefined) {
     console.warn('The value is uncontrolled (it only has a local state) because the property was initially undefined. It cannot be set to a value now and is ignored.')
   }
-  return { value: localValue, onChange: uncontrolledOnChange, isControlled }
+  return { value: localValue, onChange: uncontrolledOnChange, resetTo: uncontrolledOnChange }
 
 }
