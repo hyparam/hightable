@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react'
 import { useState } from 'react'
 import { DataFrame, sortableDataFrame } from '../../helpers/dataframe.js'
 import { rowCache } from '../../helpers/rowCache.js'
+import { Selection } from '../../helpers/selection.js'
 import { OrderBy } from '../../helpers/sort.js'
 import { wrapPromise, wrapResolved } from '../../utils/promise.js'
 import HighTable from './HighTable.js'
@@ -187,5 +188,41 @@ export const FilteredRows: Story = {
 export const LongStrings: Story = {
   args: {
     data: longStringsData,
+  },
+}
+export const RowsSelection: Story = {
+  render: (args) => {
+    const [selection, onSelectionChange] = useState<Selection>({
+      ranges: [{ start: 1, end: 3 }, { start: 5, end: 7 }],
+      anchor: 5,
+    })
+    return (
+      <HighTable
+        {...args}
+        selection={selection}
+        onSelectionChange={onSelectionChange}
+      />
+    )
+  },
+  args: {
+    data: sortableData,
+  },
+}
+
+export const ReadOnlySelection: Story = {
+  render: (args) => {
+    const selection = {
+      ranges: [{ start: 1, end: 3 }, { start: 5, end: 7 }],
+      anchor: 5,
+    }
+    return (
+      <HighTable
+        {...args}
+        selection={selection}
+      />
+    )
+  },
+  args: {
+    data: sortableData,
   },
 }

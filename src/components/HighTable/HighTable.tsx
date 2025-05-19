@@ -144,16 +144,15 @@ export function HighTableInner({
   const { orderBy, onOrderByChange } = useOrderBy()
   const { selection, onSelectionChange } = useSelection()
 
-  const showSelection = selection !== undefined
-  const showSelectionControls = showSelection && onSelectionChange !== undefined
-  const showCornerSelection = showSelectionControls || showSelection && areAllSelected({ ranges: selection.ranges, length: numRows })
   const getOnSelectAllRows = useCallback(() => {
-    if (!selection) return
+    if (!selection || !onSelectionChange) return
     const { ranges } = selection
-    return () => { onSelectionChange?.({
-      ranges: toggleAll({ ranges, length: numRows }),
-      anchor: undefined,
-    }) }
+    return () => {
+      onSelectionChange({
+        ranges: toggleAll({ ranges, length: numRows }),
+        anchor: undefined,
+      })
+    }
   }, [onSelectionChange, numRows, selection])
 
   const pendingSelectionRequest = useRef(0)
@@ -454,7 +453,7 @@ export function HighTableInner({
             aria-readonly={true}
             aria-colcount={ariaColCount}
             aria-rowcount={ariaRowCount}
-            aria-multiselectable={showSelection}
+            aria-multiselectable={selection !== undefined}
             role='grid'
             style={{ top: `${offsetTop}px` }}
             onKeyDown={onTableKeyDown}
@@ -465,7 +464,6 @@ export function HighTableInner({
                 <TableCorner
                   onClick={getOnSelectAllRows()}
                   checked={allRowsSelected}
-                  showCheckBox={showCornerSelection}
                   style={cornerStyle}
                   ariaColIndex={1}
                   ariaRowIndex={1}
@@ -508,7 +506,7 @@ export function HighTableInner({
                       style={cornerStyle}
                       onClick={getOnSelectRowClick({ tableIndex, dataIndex })}
                       checked={selected}
-                      showCheckBox={showSelection}
+                      showCheckBox={selection !== undefined}
                       ariaColIndex={1}
                       ariaRowIndex={ariaRowIndex}
                     >{formatRowNumber(dataIndex)}</RowHeader>

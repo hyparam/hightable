@@ -5,19 +5,19 @@ interface Props {
   checked?: boolean
   children?: ReactNode
   onClick?: (event: MouseEvent) => void
-  showCheckBox?: boolean
   style?: CSSProperties
   ariaColIndex: number
   ariaRowIndex: number
 }
 
-export default function TableCorner({ children, checked, onClick, showCheckBox, style, ariaColIndex, ariaRowIndex }: Props) {
+export default function TableCorner({ children, checked, onClick, style, ariaColIndex, ariaRowIndex }: Props) {
   const ref = useRef<HTMLTableCellElement>(null)
   const { tabIndex, navigateToCell } = useCellNavigation({ ref, ariaColIndex, ariaRowIndex })
   const handleClick = useCallback((event: MouseEvent) => {
     navigateToCell()
     onClick?.(event)
   }, [onClick, navigateToCell])
+  const showCheckBox = onClick !== undefined || checked !== undefined
 
   return (
     <td
