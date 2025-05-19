@@ -141,9 +141,7 @@ export function HighTableInner({
   // ie. cache the previous sort indexes in the data frame itself
   const [ranksMap, setRanksMap] = useState<Map<string, Promise<number[]>>>(() => new Map())
 
-  // Sorting is disabled if the data is not sortable
   const { orderBy, onOrderByChange } = useOrderBy()
-
   const { selection, onSelectionChange } = useSelection()
 
   const showSelection = selection !== undefined
@@ -159,10 +157,9 @@ export function HighTableInner({
   }, [onSelectionChange, numRows, selection])
 
   const pendingSelectionRequest = useRef(0)
-  const getOnSelectRowClick = useCallback(({ tableIndex, dataIndex }: {tableIndex: number, dataIndex: number}) => {
-    if (!selection) return
-    async function onSelectRowClick(event: MouseEvent) {
-      if (!selection) return
+  const getOnSelectRowClick = useCallback(({ tableIndex, dataIndex }: {tableIndex: number, dataIndex: number | undefined}) => {
+    if (!selection || dataIndex === undefined) return
+    async function onSelectRowClick(event: MouseEvent, selection: Selection, dataIndex: number) {
       const useAnchor = event.shiftKey && selection.anchor !== undefined
 
       if (!useAnchor) {
@@ -193,7 +190,7 @@ export function HighTableInner({
       }
     }
     return (event: MouseEvent): void => {
-      void onSelectRowClick(event)
+      void onSelectRowClick(event, selection, dataIndex)
     }
   }, [data, onSelectionChange, orderBy, ranksMap, selection])
   const allRowsSelected = useMemo(() => {
@@ -509,7 +506,7 @@ export function HighTableInner({
                     <RowHeader
                       busy={dataIndex === undefined}
                       style={cornerStyle}
-                      onClick={dataIndex === undefined ? undefined : getOnSelectRowClick({ tableIndex, dataIndex })}
+                      onClick={getOnSelectRowClick({ tableIndex, dataIndex })}
                       checked={selected}
                       showCheckBox={showSelection}
                       ariaColIndex={1}
