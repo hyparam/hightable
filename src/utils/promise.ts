@@ -39,13 +39,17 @@ export function wrapResolved<T>(value: T): WrappedPromise<T> {
 export function resolvablePromise<T>(): ResolvablePromise<T> {
   let resolve: (value: T) => void
   let reject: (reason?: any) => void
-  const promise = wrapPromise(new Promise<T>((res, rej) => {
+  const promise = new Promise<T>((res, rej) => {
     resolve = res
     reject = rej
-  })) as ResolvablePromise<T>
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  promise.resolve = resolve!
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  promise.reject = reject!
+  }) as ResolvablePromise<T> & WrappedPromise<T>
+  promise.resolve = result => {
+    promise.resolved = result
+    resolve(result)
+  }
+  promise.reject = error => {
+    promise.rejected = error
+    reject(error)
+  }
   return promise
 }
