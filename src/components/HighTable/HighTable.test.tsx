@@ -719,9 +719,9 @@ describe('Navigating Hightable with the keyboard', () => {
       ['{ArrowDown}', rowIndex + 1, colIndex],
       // ['{Control>}{ArrowDown}{/Control}', lastRow, 3], // Cannot be tested because it relies on scroll
       ['{PageUp}', rowIndex - pageSize, colIndex],
-      ['{Shift>}{ }{/Shift}', rowIndex - pageSize, colIndex],
+      ['{Shift>}{ }{/Shift}', rowIndex, colIndex], // no op
       ['{PageDown}', rowIndex + pageSize, colIndex],
-      ['{ }', rowIndex + pageSize, colIndex],
+      ['{ }', rowIndex, colIndex], // no op
       ['{Home}', rowIndex, firstCol],
       ['{Control>}{Home}{/Control}', firstRow, firstCol],
       ['{End}', rowIndex, lastCol],
