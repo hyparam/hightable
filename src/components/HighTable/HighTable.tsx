@@ -144,7 +144,7 @@ export function HighTableInner({
   // Sorting is disabled if the data is not sortable
   const { orderBy, onOrderByChange } = useOrderBy()
 
-  const { selection, onSelectionChange, resetSelection } = useSelection()
+  const { selection, onSelectionChange } = useSelection()
 
   const showSelection = selection !== undefined
   const showSelectionControls = showSelection && onSelectionChange !== undefined
