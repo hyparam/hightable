@@ -42,10 +42,9 @@ export function useSelection({ numRows }: {numRows: number}): HighTableSelection
 
   const getToggleAllRows = useCallback(() => {
     if (!selection || !onSelectionChange) return
-    const { ranges } = selection
     return () => {
       onSelectionChange({
-        ranges: toggleAll({ ranges, length: numRows }),
+        ranges: toggleAll({ ranges: selection.ranges, length: numRows }),
         anchor: undefined,
       })
     }

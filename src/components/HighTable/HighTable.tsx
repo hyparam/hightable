@@ -184,15 +184,12 @@ export function HighTableInner({
     }
   }, [data, onSelectionChange, orderBy, ranksMap, selection])
   const allRowsSelected = useMemo(() => {
-    if (!selection) return false
-    const { ranges } = selection
-    return areAllSelected({ ranges, length: numRows })
+    if (!selection) return undefined
+    return areAllSelected({ ranges: selection.ranges, length: numRows })
   }, [selection, numRows])
   const isRowSelected = useCallback((dataIndex: number | undefined) => {
-    if (!selection) return undefined
-    if (dataIndex === undefined) return undefined
-    const { ranges } = selection
-    return isSelected({ ranges, index: dataIndex })
+    if (!selection || dataIndex === undefined) return undefined
+    return isSelected({ ranges: selection.ranges, index: dataIndex })
   }, [selection])
 
   // total scrollable height

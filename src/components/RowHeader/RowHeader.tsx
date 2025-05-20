@@ -12,7 +12,7 @@ interface Props {
   ariaRowIndex: number
 }
 
-export default function RowHeader({ children, checked, onClick, showCheckBox, style, busy, ariaColIndex, ariaRowIndex }: Props) {
+export default function RowHeader({ children, checked, onClick, style, busy, ariaColIndex, ariaRowIndex }: Props) {
   const ref = useRef<HTMLTableCellElement>(null)
   const { tabIndex, navigateToCell } = useCellNavigation({ ref, ariaColIndex, ariaRowIndex })
   const handleClick = useCallback((event: MouseEvent) => {
@@ -20,7 +20,6 @@ export default function RowHeader({ children, checked, onClick, showCheckBox, st
     onClick?.(event)
   }, [onClick, navigateToCell])
 
-  const disabled = !onClick
   return (
     <th
       ref={ref}
@@ -29,11 +28,16 @@ export default function RowHeader({ children, checked, onClick, showCheckBox, st
       style={style}
       onClick={handleClick}
       aria-busy={busy}
+      aria-checked={checked}
       aria-colindex={ariaColIndex}
+      aria-disabled={onClick === undefined}
       tabIndex={tabIndex}
     >
       <span>{children}</span>
-      { showCheckBox && <input type='checkbox' disabled={disabled} checked={checked} /> }
+      {
+        // TODO: use an icon instead of a checkbox
+        checked !== undefined && <input type='checkbox' disabled={true} checked={checked} role="presentation" />
+      }
     </th>
   )
 }

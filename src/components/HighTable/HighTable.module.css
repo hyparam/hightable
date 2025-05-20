@@ -77,70 +77,62 @@
   }
 
   /* row numbers */
-  tbody [role="rowheader"] {
+  [role="rowheader"] {
     position: sticky;
     left: 0;
     user-select: none;
     min-width: 48px;
     max-width: none;
     width: 48px;
-    cursor: pointer;
     z-index: var(--header-z-index, auto);
-  }
-  tbody [role="rowheader"] span {
-    display: inline;
-  }
-  tbody [role="rowheader"] input {
-    display: none;
-  }
-  /* for selected rows, replace row numbers with checkboxes */
-  tr[aria-selected="true"] [role="rowheader"] span {
-    display: none;
-  }
-  tr[aria-selected="true"] [role="rowheader"] input {
-    display: inline;
-  }
-  /* if selectable, show checkboxes on hover (and focus) */
-  table[aria-multiselectable="true"] tbody [role="rowheader"]:hover span,
-  table[aria-multiselectable="true"] tbody [role="rowheader"]:focus span {
-    display: none;
-  }
-  table[aria-multiselectable="true"] tbody [role="rowheader"]:hover input,
-  table[aria-multiselectable="true"] tbody [role="rowheader"]:focus input {
-    display: inline;
-    cursor: pointer;
   }
 
   /* table corner */
   /* TODO: find a better selector for the table corner */
   thead td:first-child {
     position: sticky;
-    cursor: default;
     min-width: 48px;
     max-width: none;
     width: 48px;
     top: 0;
     left: 0;
     z-index: var(--header-corner-z-index, auto);
+
+    &[aria-disabled="false"] {
+      background: transparent; /* redundant with td:first-child, but allows to force the background if it has been overridden with a logo */
+    }
   }
-  /* replace corner with checkbox if selection is enabled (read-only or not) */
-  thead td:first-child input {
-    display: none;
-    margin: 0 auto;
-  }
-  thead td:first-child[aria-disabled="false"] {
-    background: transparent; /* redundant with td:first-child, but allows to force the background if it has been overridden with a logo */
-  }
-  thead td:first-child[aria-disabled="false"] span {
-    display: none;
-  }
-  thead td:first-child[aria-disabled="false"] input {
-    display: block;
-  }
-  /* if selectable, show pointer cursor on checkbox */
-  table[aria-multiselectable="true"] thead td:first-child,
-  table[aria-multiselectable="true"] thead td:first-child input {
-    cursor: pointer;
+
+  /* checkboxes */
+  thead td:first-child,
+  [role="rowheader"] {
+    --row-number-display: inline;
+    --checkbox-display: none;
+
+    span {
+      display: var(--row-number-display);
+    }
+    input {
+      display: var(--checkbox-display);
+      pointer-events: none;
+      margin: auto;
+    }
+
+    /* for selected rows, hide the row numbers and show the checkboxes */
+    &[aria-checked="true"] {
+      --row-number-display: none;
+      --checkbox-display: block;
+    }
+
+    /* if selectable, change the cursor, and show the checkboxes on hover/focus */
+    &[aria-disabled="false"] {
+      cursor: pointer;
+
+      &:is(:focus, :hover) {
+        --row-number-display: none;
+        --checkbox-display: block;
+      }
+    }
   }
 
   /* mock row numbers */
@@ -169,7 +161,7 @@
   --table-scroll-outline-z-index: calc(var(--header-z-index) + 4);
 
   --top-border-height: 2px;
-  --cell-horizontal-padding: 12px;
+  --cell-horizontal-padding: 10px;
 
   --top-border-color: #706fb1;
   --focus-border-width: 2px;
@@ -317,7 +309,6 @@
     border-right: 1px solid #ccc;
     box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.2);
     min-width: 32px;
-    width: 32px;
   }
   thead td:first-child[aria-disabled="false"] {
     background: #f9f4ff; /* redundant with td:first-child, but allows to force the background if it has been overridden with a logo */
