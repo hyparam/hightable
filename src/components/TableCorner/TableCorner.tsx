@@ -31,7 +31,7 @@ export default function TableCorner({ children, checked, onClick, style, ariaCol
       tabIndex={tabIndex}
     >
       <span>{children}</span>
-      { showCheckBox && <input type='checkbox' disabled={disabled} checked={checked} readOnly /> }
+      { showCheckBox && <input type='checkbox' disabled={disabled} checked={checked} /> }
     </td>
   )
 }

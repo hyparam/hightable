@@ -33,7 +33,7 @@ export default function RowHeader({ children, checked, onClick, showCheckBox, st
       tabIndex={tabIndex}
     >
       <span>{children}</span>
-      { showCheckBox && <input type='checkbox' disabled={disabled} checked={checked} readOnly /> }
+      { showCheckBox && <input type='checkbox' disabled={disabled} checked={checked} /> }
     </th>
   )
 }
