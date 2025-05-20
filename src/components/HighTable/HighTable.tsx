@@ -79,11 +79,11 @@ function HighTableData(props: PropsData) {
   const ariaColCount = data.header.length + 1 // don't forget the selection column
   const ariaRowCount = data.numRows + 1 // don't forget the header row
   return (
+    /* important: key={key} ensures the local state is recreated if the data has changed */
     <OrderByProvider key={key} orderBy={orderBy} onOrderByChange={onOrderByChange} disabled={!data.sortable}>
       <SelectionProvider selection={selection} onSelectionChange={onSelectionChange}>
         <ColumnWidthProvider localStorageKey={cacheKey ? `${cacheKey}:column-widths` : undefined}>
           <CellsNavigationProvider colCount={ariaColCount} rowCount={ariaRowCount} rowPadding={props.padding ?? defaultPadding}>
-            {/* TODO: pass props explicitly  */}
             <HighTableInner {...props} />
           </CellsNavigationProvider>
         </ColumnWidthProvider>
