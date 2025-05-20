@@ -204,7 +204,10 @@ export function HighTableInner({
   const pendingRequest = useRef(0)
 
   // invalidate when data changes so that columns will auto-resize
-  if (slice && data !== slice.data) {
+  useEffect(() => {
+    if (!slice || data === slice.data) {
+      return
+    }
     // delete the slice
     setSlice(undefined)
     // reset the flag, the column widths will be recalculated
@@ -215,7 +218,7 @@ export function HighTableInner({
     resetSelection?.()
     // reset the number of rows
     setNumRows(data.numRows)
-  }
+  }, [data, slice, resetSelection])
 
   // scroll vertically to the focused cell if needed
   useEffect(() => {
