@@ -146,19 +146,24 @@ export function HighTableInner({
 
   const pendingSelectionRequest = useRef(0)
   const getOnSelectRowClick = useCallback(({ tableIndex, dataIndex }: {tableIndex: number, dataIndex: number | undefined}) => {
-    if (!selection || dataIndex === undefined) return
-    async function onSelectRowClick(event: MouseEvent, selection: Selection, dataIndex: number) {
+    if (selection && onSelectionChange && dataIndex !== undefined) {
+      return (event: MouseEvent): void => {
+        void onSelectRowClick(event, selection, onSelectionChange, dataIndex)
+      }
+    }
+
+    async function onSelectRowClick(event: MouseEvent, selection: Selection, onSelectionChange: (selection: Selection) => void, dataIndex: number) {
       const useAnchor = event.shiftKey && selection.anchor !== undefined
 
       if (!useAnchor) {
         // single row toggle
-        onSelectionChange?.(toggleIndexInSelection({ selection, index: dataIndex }))
+        onSelectionChange(toggleIndexInSelection({ selection, index: dataIndex }))
         return
       }
 
       if (!orderBy || orderBy.length === 0) {
         // no sorting, toggle the range
-        onSelectionChange?.(toggleRangeInSelection({ selection, index: dataIndex }))
+        onSelectionChange(toggleRangeInSelection({ selection, index: dataIndex }))
         return
       }
 
@@ -174,11 +179,8 @@ export function HighTableInner({
       })
       if (requestId === pendingSelectionRequest.current) {
         // only update the selection if the request is still the last one
-        onSelectionChange?.(newSelection)
+        onSelectionChange(newSelection)
       }
-    }
-    return (event: MouseEvent): void => {
-      void onSelectRowClick(event, selection, dataIndex)
     }
   }, [data, onSelectionChange, orderBy, ranksMap, selection])
   const allRowsSelected = useMemo(() => {
