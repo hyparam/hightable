@@ -1,7 +1,7 @@
 import { CSSProperties, KeyboardEvent, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DataFrame } from '../../helpers/dataframe.js'
 import { PartialRow } from '../../helpers/row.js'
-import { Selection, areAllSelected, isSelected, toggleAll, toggleIndexInSelection, toggleRangeInSelection, toggleRangeInTable } from '../../helpers/selection.js'
+import { Selection, areAllSelected, isSelected, toggleIndexInSelection, toggleRangeInSelection, toggleRangeInTable } from '../../helpers/selection.js'
 import { OrderBy, areEqualOrderBy } from '../../helpers/sort.js'
 import { leftCellStyle } from '../../helpers/width.js'
 import { CellsNavigationProvider, useCellsNavigation } from '../../hooks/useCellsNavigation.js'
@@ -79,11 +79,11 @@ function HighTableData(props: PropsData) {
   const ariaColCount = data.header.length + 1 // don't forget the selection column
   const ariaRowCount = data.numRows + 1 // don't forget the header row
   return (
+    /* important: key={key} ensures the local state is recreated if the data has changed */
     <OrderByProvider key={key} orderBy={orderBy} onOrderByChange={onOrderByChange} disabled={!data.sortable}>
       <SelectionProvider selection={selection} onSelectionChange={onSelectionChange}>
         <ColumnWidthProvider localStorageKey={cacheKey ? `${cacheKey}:column-widths` : undefined}>
           <CellsNavigationProvider colCount={ariaColCount} rowCount={ariaRowCount} rowPadding={props.padding ?? defaultPadding}>
-            {/* TODO: pass props explicitly  */}
             <HighTableInner {...props} />
           </CellsNavigationProvider>
         </ColumnWidthProvider>
@@ -141,39 +141,29 @@ export function HighTableInner({
   // ie. cache the previous sort indexes in the data frame itself
   const [ranksMap, setRanksMap] = useState<Map<string, Promise<number[]>>>(() => new Map())
 
-  // Sorting is disabled if the data is not sortable
   const { orderBy, onOrderByChange } = useOrderBy()
-
-  const { selection, onSelectionChange } = useSelection()
-
-  const showSelection = selection !== undefined
-  const showSelectionControls = showSelection && onSelectionChange !== undefined
-  const showCornerSelection = showSelectionControls || showSelection && areAllSelected({ ranges: selection.ranges, length: numRows })
-  const getOnSelectAllRows = useCallback(() => {
-    if (!selection) return
-    const { ranges } = selection
-    return () => { onSelectionChange?.({
-      ranges: toggleAll({ ranges, length: numRows }),
-      anchor: undefined,
-    }) }
-  }, [onSelectionChange, numRows, selection])
+  const { selection, onSelectionChange, toggleAllRows } = useSelection({ numRows })
 
   const pendingSelectionRequest = useRef(0)
-  const getOnSelectRowClick = useCallback(({ tableIndex, dataIndex }: {tableIndex: number, dataIndex: number}) => {
-    if (!selection) return
-    async function onSelectRowClick(event: MouseEvent) {
-      if (!selection) return
+  const getOnSelectRowClick = useCallback(({ tableIndex, dataIndex }: {tableIndex: number, dataIndex: number | undefined}) => {
+    if (selection && onSelectionChange && dataIndex !== undefined) {
+      return (event: MouseEvent): void => {
+        void onSelectRowClick(event, selection, onSelectionChange, dataIndex)
+      }
+    }
+
+    async function onSelectRowClick(event: MouseEvent, selection: Selection, onSelectionChange: (selection: Selection) => void, dataIndex: number) {
       const useAnchor = event.shiftKey && selection.anchor !== undefined
 
       if (!useAnchor) {
         // single row toggle
-        onSelectionChange?.(toggleIndexInSelection({ selection, index: dataIndex }))
+        onSelectionChange(toggleIndexInSelection({ selection, index: dataIndex }))
         return
       }
 
       if (!orderBy || orderBy.length === 0) {
         // no sorting, toggle the range
-        onSelectionChange?.(toggleRangeInSelection({ selection, index: dataIndex }))
+        onSelectionChange(toggleRangeInSelection({ selection, index: dataIndex }))
         return
       }
 
@@ -189,23 +179,17 @@ export function HighTableInner({
       })
       if (requestId === pendingSelectionRequest.current) {
         // only update the selection if the request is still the last one
-        onSelectionChange?.(newSelection)
+        onSelectionChange(newSelection)
       }
-    }
-    return (event: MouseEvent): void => {
-      void onSelectRowClick(event)
     }
   }, [data, onSelectionChange, orderBy, ranksMap, selection])
   const allRowsSelected = useMemo(() => {
-    if (!selection) return false
-    const { ranges } = selection
-    return areAllSelected({ ranges, length: numRows })
+    if (!selection) return undefined
+    return areAllSelected({ ranges: selection.ranges, length: numRows })
   }, [selection, numRows])
   const isRowSelected = useCallback((dataIndex: number | undefined) => {
-    if (!selection) return undefined
-    if (dataIndex === undefined) return undefined
-    const { ranges } = selection
-    return isSelected({ ranges, index: dataIndex })
+    if (!selection || dataIndex === undefined) return undefined
+    return isSelected({ ranges: selection.ranges, index: dataIndex })
   }, [selection])
 
   // total scrollable height
@@ -457,7 +441,7 @@ export function HighTableInner({
             aria-readonly={true}
             aria-colcount={ariaColCount}
             aria-rowcount={ariaRowCount}
-            aria-multiselectable={showSelectionControls}
+            aria-multiselectable={selection !== undefined}
             role='grid'
             style={{ top: `${offsetTop}px` }}
             onKeyDown={onTableKeyDown}
@@ -466,9 +450,8 @@ export function HighTableInner({
             <thead role="rowgroup">
               <Row ariaRowIndex={1} >
                 <TableCorner
-                  onClick={getOnSelectAllRows()}
+                  onClick={toggleAllRows}
                   checked={allRowsSelected}
-                  showCheckBox={showCornerSelection}
                   style={cornerStyle}
                   ariaColIndex={1}
                   ariaRowIndex={1}
@@ -509,9 +492,9 @@ export function HighTableInner({
                     <RowHeader
                       busy={dataIndex === undefined}
                       style={cornerStyle}
-                      onClick={dataIndex === undefined ? undefined : getOnSelectRowClick({ tableIndex, dataIndex })}
+                      onClick={getOnSelectRowClick({ tableIndex, dataIndex })}
                       checked={selected}
-                      showCheckBox={showSelection}
+                      showCheckBox={selection !== undefined}
                       ariaColIndex={1}
                       ariaRowIndex={ariaRowIndex}
                     >{formatRowNumber(dataIndex)}</RowHeader>

@@ -1,5 +1,5 @@
-import { ReactNode, createContext, useContext } from 'react'
-import { Selection, getDefaultSelection } from '../helpers/selection.js'
+import { ReactNode, createContext, useCallback, useContext } from 'react'
+import { Selection, getDefaultSelection, toggleAll } from '../helpers/selection.js'
 import { useInputState } from './useInputState.js'
 
 interface SelectionContextType {
@@ -33,6 +33,26 @@ export function SelectionProvider({ children, selection, onSelectionChange }: Se
   )
 }
 
-export function useSelection() {
-  return useContext(SelectionContext)
+type HighTableSelection = SelectionContextType & {
+  toggleAllRows?: () => void // toggle all rows in the table. undefined if the selection or the onSelectionChange callback are not defined.
+}
+
+export function useSelection({ numRows }: {numRows: number}): HighTableSelection {
+  const { selection, onSelectionChange } = useContext(SelectionContext)
+
+  const getToggleAllRows = useCallback(() => {
+    if (!selection || !onSelectionChange) return
+    return () => {
+      onSelectionChange({
+        ranges: toggleAll({ ranges: selection.ranges, length: numRows }),
+        anchor: undefined,
+      })
+    }
+  }, [onSelectionChange, numRows, selection])
+
+  return {
+    selection,
+    onSelectionChange,
+    toggleAllRows: getToggleAllRows(),
+  }
 }
