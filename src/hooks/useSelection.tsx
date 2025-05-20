@@ -34,7 +34,7 @@ export function SelectionProvider({ children, selection, onSelectionChange }: Se
 }
 
 type HighTableSelection = SelectionContextType & {
-  toggleAllRows?: () => void // callback to call when the user clicks on the "select all" checkbox. The selection is expressed as data indexes (not as indexes in the table). The interactions are disabled if undefined.
+  toggleAllRows?: () => void // toggle all rows in the table. undefined if the selection or the onSelectionChange callback are not defined.
 }
 
 export function useSelection({ numRows }: {numRows: number}): HighTableSelection {

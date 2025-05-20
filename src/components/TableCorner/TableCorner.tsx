@@ -17,7 +17,9 @@ export default function TableCorner({ children, checked, onClick, style, ariaCol
     navigateToCell()
     onClick?.(event)
   }, [onClick, navigateToCell])
-  const showCheckBox = onClick !== undefined || checked !== undefined
+  // show the checkbox if it has a value, or if a click callback is provided
+  const disabled = !onClick
+  const showCheckBox = !disabled || checked !== undefined
 
   return (
     <td
@@ -29,7 +31,7 @@ export default function TableCorner({ children, checked, onClick, style, ariaCol
       tabIndex={tabIndex}
     >
       <span>{children}</span>
-      { showCheckBox && <input type='checkbox' checked={checked} readOnly /> }
+      { showCheckBox && <input type='checkbox' disabled={disabled} checked={checked} readOnly /> }
     </td>
   )
 }
