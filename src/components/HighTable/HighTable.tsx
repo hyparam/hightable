@@ -6,6 +6,7 @@ import { OrderBy, areEqualOrderBy } from '../../helpers/sort.js'
 import { leftCellStyle } from '../../helpers/width.js'
 import { CellsNavigationProvider, useCellsNavigation } from '../../hooks/useCellsNavigation.js'
 import { ColumnWidthProvider } from '../../hooks/useColumnWidth.js'
+import { DataProvider, useData } from '../../hooks/useData.js'
 import { OrderByProvider, useOrderBy } from '../../hooks/useOrderBy.js'
 import { SelectionProvider, useSelection } from '../../hooks/useSelection.js'
 import { stringify as stringifyDefault } from '../../utils/stringify.js'
@@ -63,11 +64,22 @@ const ariaOffset = 2 // 1-based index, +1 for the header
  * onSelectionChange: the callback to call when the selection changes. If undefined, the component selection is read-only if controlled (selection is set), or disabled if not.
  */
 export default function HighTable(props: Props) {
-  const { data, cacheKey, orderBy, onOrderByChange, selection, onSelectionChange } = props
+  return (
+    <DataProvider data={props.data}>
+      <HighTableData {...props} />
+    </DataProvider>
+  )
+}
+
+type PropsData = Omit<Props, 'data'>
+
+function HighTableData(props: PropsData) {
+  const { data, key } = useData()
+  const { cacheKey, orderBy, onOrderByChange, selection, onSelectionChange } = props
   const ariaColCount = data.header.length + 1 // don't forget the selection column
   const ariaRowCount = data.numRows + 1 // don't forget the header row
   return (
-    <OrderByProvider orderBy={orderBy} onOrderByChange={onOrderByChange} disabled={!data.sortable}>
+    <OrderByProvider key={key} orderBy={orderBy} onOrderByChange={onOrderByChange} disabled={!data.sortable}>
       <SelectionProvider selection={selection} onSelectionChange={onSelectionChange}>
         <ColumnWidthProvider localStorageKey={cacheKey ? `${cacheKey}:column-widths` : undefined}>
           <CellsNavigationProvider colCount={ariaColCount} rowCount={ariaRowCount} rowPadding={props.padding ?? defaultPadding}>
@@ -80,7 +92,7 @@ export default function HighTable(props: Props) {
   )
 }
 
-type PropsInner = Omit<Props, 'orderBy' | 'onOrderByChange' | 'selection' | 'onSelectionChange'>
+type PropsInner = Omit<PropsData, 'orderBy' | 'onOrderByChange' | 'selection' | 'onSelectionChange'>
 
 /**
  * The main purpose of extracting HighTableInner from HighTable is to
@@ -88,7 +100,6 @@ type PropsInner = Omit<Props, 'orderBy' | 'onOrderByChange' | 'selection' | 'onS
  * remove the need to reindent the code if adding a new context provide.
  */
 export function HighTableInner({
-  data,
   overscan = defaultOverscan,
   padding = defaultPadding,
   focus = true,
@@ -118,6 +129,7 @@ export function HighTableInner({
    * - data.rows(tableIndex, tableIndex + 1, orderBy)
    */
 
+  const { data } = useData()
   const [slice, setSlice] = useState<Slice | undefined>(undefined)
   const [rowsRange, setRowsRange] = useState({ start: 0, end: 0 })
   const [hasCompleteRow, setHasCompleteRow] = useState(false)
@@ -132,7 +144,7 @@ export function HighTableInner({
   // Sorting is disabled if the data is not sortable
   const { orderBy, onOrderByChange } = useOrderBy()
 
-  const { selection, onSelectionChange, resetSelection } = useSelection()
+  const { selection, onSelectionChange } = useSelection()
 
   const showSelection = selection !== undefined
   const showSelectionControls = showSelection && onSelectionChange !== undefined
@@ -202,20 +214,6 @@ export function HighTableInner({
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const pendingRequest = useRef(0)
-
-  // invalidate when data changes so that columns will auto-resize
-  if (slice && data !== slice.data) {
-    // delete the slice
-    setSlice(undefined)
-    // reset the flag, the column widths will be recalculated
-    setHasCompleteRow(false)
-    // delete the cached sort indexes
-    setRanksMap(new Map())
-    // if uncontrolled, reset the selection (if controlled, it's the responsibility of the parent to do it)
-    resetSelection?.()
-    // reset the number of rows
-    setNumRows(data.numRows)
-  }
 
   // scroll vertically to the focused cell if needed
   useEffect(() => {
