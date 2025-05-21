@@ -145,15 +145,15 @@ export function HighTableInner({
   const { selection, onSelectionChange, toggleAllRows } = useSelection({ numRows })
 
   const pendingSelectionRequest = useRef(0)
-  const getOnSelectRowClick = useCallback(({ tableIndex, dataIndex }: {tableIndex: number, dataIndex: number | undefined}) => {
+  const getOnCheckboxPress = useCallback(({ tableIndex, dataIndex }: {tableIndex: number, dataIndex: number | undefined}) => {
     if (selection && onSelectionChange && dataIndex !== undefined) {
-      return (event: MouseEvent): void => {
-        void onSelectRowClick(event, selection, onSelectionChange, dataIndex)
+      return (shiftKey: boolean): void => {
+        void onSelectRowClick(shiftKey, selection, onSelectionChange, dataIndex)
       }
     }
 
-    async function onSelectRowClick(event: MouseEvent, selection: Selection, onSelectionChange: (selection: Selection) => void, dataIndex: number) {
-      const useAnchor = event.shiftKey && selection.anchor !== undefined
+    async function onSelectRowClick(shiftKey: boolean, selection: Selection, onSelectionChange: (selection: Selection) => void, dataIndex: number) {
+      const useAnchor = shiftKey && selection.anchor !== undefined
 
       if (!useAnchor) {
         // single row toggle
@@ -450,7 +450,7 @@ export function HighTableInner({
             <thead role="rowgroup">
               <Row ariaRowIndex={1} >
                 <TableCorner
-                  onClick={toggleAllRows}
+                  onCheckboxPress={toggleAllRows}
                   checked={allRowsSelected}
                   style={cornerStyle}
                   ariaColIndex={1}
@@ -492,7 +492,7 @@ export function HighTableInner({
                     <RowHeader
                       busy={dataIndex === undefined}
                       style={cornerStyle}
-                      onClick={getOnSelectRowClick({ tableIndex, dataIndex })}
+                      onCheckboxPress={getOnCheckboxPress({ tableIndex, dataIndex })}
                       checked={selected}
                       showCheckBox={selection !== undefined}
                       ariaColIndex={1}
