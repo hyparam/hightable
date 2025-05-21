@@ -1,7 +1,7 @@
-import { ReactNode, RefObject, createContext, useContext } from 'react'
+import { ReactNode, RefObject, createContext, useContext, useRef } from 'react'
 
 interface PortalContainerContextType {
-  containerRef: RefObject<HTMLDivElement |null>
+  containerRef: RefObject<HTMLDivElement | null>
 }
 
 const PortalContainerContext = createContext<PortalContainerContextType>({
@@ -9,14 +9,13 @@ const PortalContainerContext = createContext<PortalContainerContextType>({
 })
 
 interface PortalContainerProviderProps {
-  containerRef: RefObject<HTMLDivElement | null>
   children: ReactNode
 }
 
 export function PortalContainerProvider({
-  containerRef,
   children,
 }: PortalContainerProviderProps) {
+  const containerRef = useRef<HTMLDivElement | null>(null)
   return (
     <PortalContainerContext.Provider value={{ containerRef }}>
       {children}

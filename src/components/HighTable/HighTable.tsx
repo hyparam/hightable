@@ -16,7 +16,7 @@ import TableCorner from '../TableCorner/TableCorner.js'
 import TableHeader from '../TableHeader/TableHeader.js'
 import { formatRowNumber, rowError } from './HighTable.helpers.js'
 import styles from './HighTable.module.css'
-import { PortalContainerProvider } from '../../hooks/usePortalContainer.js'
+import { PortalContainerProvider, usePortalContainer } from '../../hooks/usePortalContainer.js'
 
 /**
  * A slice of the (optionally sorted) rows to render as HTML.
@@ -48,7 +48,6 @@ interface Props {
   className?: string // additional class names for the component
   columnClassNames?: (string | undefined)[] // list of additional class names for the header and cells of each column. The index in this array corresponds to the column index in data.header
   styled?: boolean // use styled component? (default true)
-  containerRef?: RefObject<HTMLDivElement | null>
 }
 
 const defaultPadding = 20
@@ -64,7 +63,6 @@ const ariaOffset = 2 // 1-based index, +1 for the header
  * onSelectionChange: the callback to call when the selection changes. If undefined, the component selection is read-only if controlled (selection is set), or disabled if not.
  */
 export default function HighTable(props: Props) {
-  const containerRef = useRef<HTMLDivElement>(null)
   const { data, cacheKey } = props
   const ariaColCount = data.header.length + 1 // don't forget the selection column
   const ariaRowCount = data.numRows + 1 // don't forget the header row
@@ -125,6 +123,7 @@ export function HighTableInner({
   const { enterCellsNavigation, setEnterCellsNavigation, onTableKeyDown, onScrollKeyDown, rowIndex, colIndex, focusFirstCell } = useCellsNavigation()
   const [lastCellPosition, setLastCellPosition] = useState({ rowIndex, colIndex })
   const [numRows, setNumRows] = useState(data.numRows)
+  const { containerRef } = usePortalContainer()
 
   // TODO(SL): remove this state and only rely on the data frame for these operations?
   // ie. cache the previous sort indexes in the data frame itself
