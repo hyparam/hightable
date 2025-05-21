@@ -12,11 +12,6 @@ describe('in controlled mode (value is defined), ', () => {
     vi.clearAllMocks()
   })
 
-  it('the input is controlled', () => {
-    const { result } = renderHook(() => useInputState({ value, onChange }))
-    expect(result.current.resetTo).toBeUndefined()
-  })
-
   it('the interactions are enabled', () => {
     const { result } = renderHook(() => useInputState({ value, onChange }))
     expect(result.current.onChange).toBeDefined()
@@ -45,7 +40,6 @@ describe('in controlled mode (value is defined), ', () => {
     const { result } = renderHook(() => useInputState({ value, onChange, disabled: true }))
     expect(result.current.value).toBeUndefined()
     expect(result.current.onChange).toBeUndefined()
-    expect(result.current.resetTo).toBeUndefined()
   })
 
   it('the prop value cannot be set to undefined afterwards', () => {
@@ -66,11 +60,6 @@ describe('in uncontrolled mode (value is undefined), ', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-  })
-
-  it('the input is uncontrolled', () => {
-    const { result } = renderHook(() => useInputState({ onChange }))
-    expect(result.current.resetTo).toBeDefined()
   })
 
   it('the interactions are enabled', () => {
@@ -101,7 +90,6 @@ describe('in uncontrolled mode (value is undefined), ', () => {
     const { result } = renderHook(() => useInputState({ onChange, disabled: true }))
     expect(result.current.value).toBe(undefined)
     expect(result.current.onChange).toBeUndefined()
-    expect(result.current.resetTo).toBeUndefined()
   })
 
   it('the prop value cannot be defined afterwards', () => {
@@ -111,17 +99,5 @@ describe('in uncontrolled mode (value is undefined), ', () => {
     })
     expect(onChange).not.toHaveBeenCalled()
     expect(result.current.value).toBe(undefined)
-  })
-
-  it ('the resetTo function resets the local state to the default value', () => {
-    const { result } = renderHook(() => useInputState({ onChange, defaultValue }))
-    act(() => {
-      result.current.onChange?.(newValue)
-    })
-    expect(result.current.value).toBe(newValue)
-    act(() => {
-      result.current.resetTo?.(defaultValue)
-    })
-    expect(result.current.value).toBe(defaultValue)
   })
 })
