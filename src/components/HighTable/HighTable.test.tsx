@@ -767,7 +767,7 @@ describe('Navigating Hightable with the keyboard', () => {
       render(<HighTable data={data} />)
       const focusedElement = document.activeElement
       expect(focusedElement?.getAttribute('aria-colindex')).toBe('1')
-      expect(focusedElement?.closest('[role="row"]')?.getAttribute('aria-rowindex')).toBe('1')
+      expect(focusedElement?.getAttribute('aria-rowindex')).toBe('1')
     })
     it('the first cell is not focused if focus prop is false, and neither is the table scroller', () => {
       render(<HighTable data={data} focus={false} />)
@@ -788,7 +788,7 @@ describe('Navigating Hightable with the keyboard', () => {
       await user.keyboard(key)
       const focusedElement = document.activeElement
       expect(focusedElement?.getAttribute('aria-colindex')).toBe('1')
-      expect(focusedElement?.closest('[role="row"]')?.getAttribute('aria-rowindex')).toBe('1')
+      expect(focusedElement?.getAttribute('aria-rowindex')).toBe('1')
     })
     it.for(['{Shift>}{Tab}{/Shift}'])('moves the focus outside of the table when pressing "%s"', async (key) => {
       const { user } = render(<HighTable data={data} />)
@@ -821,7 +821,7 @@ describe('Navigating Hightable with the keyboard', () => {
 
   function getFocusCoordinates() {
     const focusedElement = document.activeElement
-    const rowIndex = focusedElement?.closest('[role="row"]')?.getAttribute('aria-rowindex')
+    const rowIndex = focusedElement?.getAttribute('aria-rowindex')
     const colIndex = focusedElement?.getAttribute('aria-colindex')
     expect(rowIndex).toBeDefined()
     expect(colIndex).toBeDefined()
