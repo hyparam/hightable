@@ -1,10 +1,11 @@
-import { ReactNode, createContext, useCallback, useContext } from 'react'
+import { KeyboardEvent, ReactNode, createContext, useCallback, useContext } from 'react'
 import { Selection, getDefaultSelection, toggleAll } from '../helpers/selection.js'
 import { useInputState } from './useInputState.js'
 
 interface SelectionContextType {
   selection?: Selection // selection and anchor rows, expressed as data indexes (not as indexes in the table). If undefined, the selection is hidden and the interactions are disabled.
   onSelectionChange?: (selection: Selection) => void // callback to call when a user interaction changes the selection. The selection is expressed as data indexes (not as indexes in the table). The interactions are disabled if undefined.
+  onTableKeyDown?: (event: KeyboardEvent, numRows: number) => void // callback to call when a key is pressed on the table. The event is passed as an argument as well as the number of rows
 }
 
 export const SelectionContext = createContext<SelectionContextType>({})
@@ -23,10 +24,31 @@ export function SelectionProvider({ children, selection, onSelectionChange }: Se
     disabled: selection === undefined && onSelectionChange === undefined,
   })
 
+  const onTableKeyDown = useCallback((event: KeyboardEvent, numRows: number) => {
+    // TODO: move numRows to the Provider props?
+    const { key } = event
+
+    if (key === 'Escape') {
+      // if the user presses Escape, we want to clear the selection
+      onSelectionChange?.(getDefaultSelection())
+    } else if (key === 'a' && (event.ctrlKey || event.metaKey)) {
+      // if the user presses Ctrl+A, we want to select all rows
+      event.preventDefault()
+      // only select if selection is enabled, but prevent the default behavior in all cases for consistency
+      if (state.value) {
+        onSelectionChange?.({
+          ranges: toggleAll({ ranges: state.value.ranges, length: numRows }),
+          anchor: undefined,
+        })
+      }
+    }
+  }, [onSelectionChange, state.value])
+
   return (
     <SelectionContext.Provider value={{
       selection: state.value,
       onSelectionChange: state.onChange,
+      onTableKeyDown,
     }}>
       {children}
     </SelectionContext.Provider>
@@ -38,7 +60,8 @@ type HighTableSelection = SelectionContextType & {
 }
 
 export function useSelection({ numRows }: {numRows: number}): HighTableSelection {
-  const { selection, onSelectionChange } = useContext(SelectionContext)
+  const context = useContext(SelectionContext)
+  const { selection, onSelectionChange } = context
 
   const getToggleAllRows = useCallback(() => {
     if (!selection || !onSelectionChange) return
@@ -51,8 +74,7 @@ export function useSelection({ numRows }: {numRows: number}): HighTableSelection
   }, [onSelectionChange, numRows, selection])
 
   return {
-    selection,
-    onSelectionChange,
+    ...context,
     toggleAllRows: getToggleAllRows(),
   }
 }

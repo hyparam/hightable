@@ -133,7 +133,7 @@ export function HighTableInner({
   const [slice, setSlice] = useState<Slice | undefined>(undefined)
   const [rowsRange, setRowsRange] = useState({ start: 0, end: 0 })
   const [hasCompleteRow, setHasCompleteRow] = useState(false)
-  const { enterCellsNavigation, setEnterCellsNavigation, onTableKeyDown, onScrollKeyDown, rowIndex, colIndex, focusFirstCell } = useCellsNavigation()
+  const { enterCellsNavigation, setEnterCellsNavigation, onTableKeyDown: onNavigationTableKeyDown, onScrollKeyDown, rowIndex, colIndex, focusFirstCell } = useCellsNavigation()
   const [lastCellPosition, setLastCellPosition] = useState({ rowIndex, colIndex })
   const [numRows, setNumRows] = useState(data.numRows)
 
@@ -142,7 +142,12 @@ export function HighTableInner({
   const [ranksMap, setRanksMap] = useState<Map<string, Promise<number[]>>>(() => new Map())
 
   const { orderBy, onOrderByChange } = useOrderBy()
-  const { selection, onSelectionChange, toggleAllRows } = useSelection({ numRows })
+  const { selection, onSelectionChange, toggleAllRows, onTableKeyDown: onSelectionTableKeyDown } = useSelection({ numRows })
+
+  const onTableKeyDown = useCallback((event: KeyboardEvent) => {
+    onNavigationTableKeyDown?.(event)
+    onSelectionTableKeyDown?.(event, numRows)
+  }, [onNavigationTableKeyDown, onSelectionTableKeyDown, numRows])
 
   const pendingSelectionRequest = useRef(0)
   const getOnCheckboxPress = useCallback(({ tableIndex, dataIndex }: {tableIndex: number, dataIndex: number | undefined}) => {
