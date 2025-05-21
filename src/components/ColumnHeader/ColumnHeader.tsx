@@ -100,6 +100,7 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
       data-order-by-size={orderBySize}
       aria-label={columnName}
       aria-description={description}
+      aria-rowindex={ariaRowIndex}
       aria-colindex={ariaColIndex}
       tabIndex={tabIndex}
       title={description}
