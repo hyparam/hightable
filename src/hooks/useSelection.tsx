@@ -30,19 +30,16 @@ export function SelectionProvider({ children, selection, onSelectionChange }: Se
 
     if (key === 'Escape') {
       // if the user presses Escape, we want to clear the selection
-      onSelectionChange?.(getDefaultSelection())
+      state.onChange?.(getDefaultSelection())
     } else if (key === 'a' && (event.ctrlKey || event.metaKey)) {
       // if the user presses Ctrl+A, we want to select all rows
       event.preventDefault()
       // only select if selection is enabled, but prevent the default behavior in all cases for consistency
       if (state.value) {
-        onSelectionChange?.({
-          ranges: toggleAll({ ranges: state.value.ranges, length: numRows }),
-          anchor: undefined,
-        })
+        state.onChange?.({ ranges: toggleAll({ ranges: state.value.ranges, length: numRows }) })
       }
     }
-  }, [onSelectionChange, state.value])
+  }, [state])
 
   return (
     <SelectionContext.Provider value={{
