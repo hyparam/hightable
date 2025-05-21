@@ -1,32 +1,40 @@
-import { CSSProperties, MouseEvent, ReactNode, useCallback, useRef } from 'react'
+import { CSSProperties, KeyboardEvent, ReactNode, useCallback, useRef } from 'react'
 import { useCellNavigation } from '../../hooks/useCellsNavigation'
 
 interface Props {
   checked?: boolean
   children?: ReactNode
-  onClick?: (event: MouseEvent) => void
+  onCheckboxPress?: () => void
   style?: CSSProperties
   ariaColIndex: number
   ariaRowIndex: number
 }
 
-export default function TableCorner({ children, checked, onClick, style, ariaColIndex, ariaRowIndex }: Props) {
+export default function TableCorner({ children, checked, onCheckboxPress, style, ariaColIndex, ariaRowIndex }: Props) {
   const ref = useRef<HTMLTableCellElement>(null)
   const { tabIndex, navigateToCell } = useCellNavigation({ ref, ariaColIndex, ariaRowIndex })
-  const handleClick = useCallback((event: MouseEvent) => {
+  const handleClick = useCallback(() => {
     navigateToCell()
-    onClick?.(event)
-  }, [onClick, navigateToCell])
-  // show the checkbox if it has a value, or if a click callback is provided
+    onCheckboxPress?.()
+  }, [onCheckboxPress, navigateToCell])
+  const handleKeyDown = useCallback((event: KeyboardEvent) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault()
+      // TODO: let the event propagate?
+      event.stopPropagation()
+      onCheckboxPress?.()
+    }
+  }, [onCheckboxPress])
 
   return (
     <td
       ref={ref}
       style={style}
       onClick={handleClick}
+      onKeyDown={handleKeyDown}
       aria-checked={checked}
       aria-colindex={ariaColIndex}
-      aria-disabled={onClick === undefined}
+      aria-disabled={onCheckboxPress === undefined}
       tabIndex={tabIndex}
     >
       <span>{children}</span>

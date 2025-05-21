@@ -323,7 +323,11 @@ describe('in controlled selection state (selection and onSelection props), ', ()
     expect(onSelectionChange).not.toHaveBeenCalled()
   })
 
-  it('click on a row number cell calls onSelection with the row selected, but changing nothing to the DOM', async () => {
+  it.for([
+    { 'kind': 'click' },
+    { 'kind': 'press', 'key': 'Enter' },
+    { 'kind': 'press', 'key': ' ' },
+  ])('click or press Enter/Space on a row number cell calls onSelection with the row selected, but changing nothing to the DOM', async ({ kind, key }) => {
     const start = 2
     const selection = { ranges: [] }
     const onSelectionChange = vi.fn()
@@ -337,13 +341,27 @@ describe('in controlled selection state (selection and onSelection props), ', ()
     expect(rowHeader).not.toBeNull()
 
     if (!rowHeader) throw new Error('rowHeader is null')
-    await user.click(rowHeader)
+
+    if (kind === 'click') {
+      await user.click(rowHeader)
+    } else {
+      // move the focus to the row header
+      await user.click(cell)
+      await user.keyboard('{Home}')
+      expect(document.activeElement).toBe(rowHeader)
+      // press the key
+      await user.keyboard(`{${key}}`)
+    }
 
     expect(onSelectionChange).toHaveBeenCalledWith({ ranges: [{ start, end: start + 1 }], anchor: start })
     expect(queryByRole('row', { selected: true })).toBeNull()
   })
 
-  it('click on a selected row number cell calls unselects the row', async () => {
+  it.for([
+    { 'kind': 'click' },
+    { 'kind': 'press', 'key': 'Enter' },
+    { 'kind': 'press', 'key': ' ' },
+  ])('click or press Enter/Space on a selected row number cell calls unselects the row', async ({ kind, key }) => {
     const start = 2
     const selection = { ranges: [{ start, end: start + 1 }], anchor: start }
     const onSelectionChange = vi.fn()
@@ -356,7 +374,18 @@ describe('in controlled selection state (selection and onSelection props), ', ()
     expect(rowHeader).not.toBeNull()
     if (!rowHeader) throw new Error('rowHeader is null')
 
-    await user.click(rowHeader)
+    if (kind === 'click') {
+      await user.click(rowHeader)
+    } else {
+      // move the focus to the row header
+      const dataCell = row.querySelector('td')
+      if (!dataCell) throw new Error('dataCell is null')
+      await user.click(dataCell)
+      await user.keyboard('{Home}')
+      expect(document.activeElement).toBe(rowHeader)
+      // press the key
+      await user.keyboard(`{${key}}`)
+    }
 
     expect(onSelectionChange).toHaveBeenCalledWith({ ranges: [], anchor: start })
   })
@@ -439,7 +468,11 @@ describe('in controlled selection state, read-only (selection prop), ', () => {
     expect(otherRow?.getAttribute('aria-rowindex')).toBe(`${start + 2}`)
   })
 
-  it('click on a row number cell does nothing', async () => {
+  it.for([
+    { 'kind': 'click' },
+    { 'kind': 'press', 'key': 'Enter' },
+    { 'kind': 'press', 'key': ' ' },
+  ])('click or press Enter/Space on a row number cell does nothing', async ({ kind, key }) => {
     const selection = { ranges: [] }
     const { user, findByRole, queryByRole } = render(<HighTable data={data} selection={selection}/>)
     // await because we have to wait for the data to be fetched first
@@ -447,12 +480,21 @@ describe('in controlled selection state, read-only (selection prop), ', () => {
 
     const rowHeader = cell.closest('[role="row"]')?.querySelector('[role="rowheader"]')
     expect(rowHeader).not.toBeNull()
-    await act(async () => {
-      if (!rowHeader) {
-        throw new Error('rowHeader should be defined')
-      }
+    if (!rowHeader) {
+      throw new Error('rowHeader should be defined')
+    }
+
+    if (kind === 'click') {
       await user.click(rowHeader)
-    })
+    } else {
+      // move the focus to the row header
+      await user.click(cell)
+      await user.keyboard('{Home}')
+      expect(document.activeElement).toBe(rowHeader)
+      // press the key
+      await user.keyboard(`{${key}}`)
+    }
+
     expect(queryByRole('row', { selected: true })).toBeNull()
   })
 })
@@ -478,7 +520,11 @@ describe('in uncontrolled selection state (onSelection prop), ', () => {
     expect(table.getAttribute('aria-multiselectable')).toBe('true')
   })
 
-  it('click on a row number cell calls onSelection with the row selected, and changes the DOM to select the row', async () => {
+  it.for([
+    { 'kind': 'click' },
+    { 'kind': 'press', 'key': 'Enter' },
+    { 'kind': 'press', 'key': ' ' },
+  ])('Click or press Escape or Enter on a row number cell calls onSelection with the row selected, and changes the DOM to select the row', async ({ kind, key }) => {
     const start = 2
     const onSelectionChange = vi.fn()
     const { user, findByRole, queryByRole } = render(<HighTable data={data} onSelectionChange={onSelectionChange}/>)
@@ -489,9 +535,18 @@ describe('in uncontrolled selection state (onSelection prop), ', () => {
 
     const rowHeader = cell.closest('[role="row"]')?.querySelector('[role="rowheader"]')
     expect(rowHeader).not.toBeNull()
-
     if (!rowHeader) throw new Error('rowHeader is null')
-    await user.click(rowHeader)
+
+    if (kind === 'click') {
+      await user.click(rowHeader)
+    } else {
+      // move the focus to the row header
+      await user.click(cell)
+      await user.keyboard('{Home}')
+      expect(document.activeElement).toBe(rowHeader)
+      // press the key
+      await user.keyboard(`{${key}}`)
+    }
 
     expect(onSelectionChange).toHaveBeenCalledWith({ ranges: [{ start, end: start + 1 }], anchor: start })
     expect(queryByRole('row', { selected: true })?.getAttribute('aria-rowindex')).toBe(`${start + 2}`)
@@ -556,7 +611,11 @@ describe('in disabled selection state (neither selection nor onSelection props),
     expect(table.getAttribute('aria-multiselectable')).toBe('false')
   })
 
-  it('click on a row number cell does nothing', async () => {
+  it.for([
+    { 'kind': 'click' },
+    { 'kind': 'press', 'key': 'Enter' },
+    { 'kind': 'press', 'key': ' ' },
+  ])('click, or press Enter/Space, on a row number cell does nothing', async ({ kind, key }) => {
     const { user, findByRole, queryByRole } = render(<HighTable data={data}/>)
     // await because we have to wait for the data to be fetched first
     const cell = await findByRole('cell', { name: 'row 2' })
@@ -565,7 +624,16 @@ describe('in disabled selection state (neither selection nor onSelection props),
     expect(rowHeader).not.toBeNull()
     if (!rowHeader) throw new Error('rowHeader is null')
 
-    await user.click(rowHeader)
+    if (kind === 'click') {
+      await user.click(rowHeader)
+    } else {
+      // move the focus to the row header
+      await user.click(cell)
+      await user.keyboard('{Home}')
+      expect(document.activeElement).toBe(rowHeader)
+      // press the key
+      await user.keyboard(`{${key}}`)
+    }
 
     expect(queryByRole('row', { selected: true })).toBeNull()
   })
