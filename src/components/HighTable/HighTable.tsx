@@ -69,10 +69,10 @@ export default function HighTable(props: Props) {
   const ariaColCount = data.header.length + 1 // don't forget the selection column
   const ariaRowCount = data.numRows + 1 // don't forget the header row
   return (
-    <PortalContainerProvider containerRef={containerRef}>
+    <PortalContainerProvider>
       <ColumnWidthProvider localStorageKey={cacheKey ? `${cacheKey}:column-widths` : undefined}>
         <CellsNavigationProvider colCount={ariaColCount} rowCount={ariaRowCount} rowPadding={props.padding ?? defaultPadding}>
-          <HighTableInner {...props} containerRef={containerRef} />
+          <HighTableInner {...props} />
         </CellsNavigationProvider>
       </ColumnWidthProvider>
     </PortalContainerProvider>
@@ -101,7 +101,6 @@ export function HighTableInner({
   className = '',
   columnClassNames = [],
   styled = true,
-  containerRef,
 }: Props) {
   /**
    * The component relies on the model of a virtual table which rows are ordered and only the
