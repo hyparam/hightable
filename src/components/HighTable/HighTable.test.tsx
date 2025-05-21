@@ -37,6 +37,9 @@ const otherData: DataFrame = {
 async function setFocusOnScrollableDiv(user: UserEvent) {
   await user.keyboard('{Shift>}{Tab}{/Shift}')
 }
+async function setFocusOnCellCol3Row3(user: UserEvent) {
+  await user.keyboard('{Right}{Right}{Down}{Down}')
+}
 
 describe('HighTable', () => {
   const mockData = {
@@ -597,6 +600,60 @@ describe('in uncontrolled selection state (onSelection prop), ', () => {
     // no need to await because the data is already fetched
     expect(queryByRole('row', { selected: true })).toBeNull()
     expect(console.warn).toHaveBeenNthCalledWith(1, expect.stringMatching(/cannot be set to a value/))
+  })
+
+  it.for(['Control', 'Meta'])('%s+A selects all the rows', async (ctrlKey) => {
+    const onSelectionChange = vi.fn()
+    console.warn = vi.fn()
+
+    const { user, queryAllByRole, findByRole } = render(<HighTable data={data} onSelectionChange={onSelectionChange}/>)
+    // await because we have to wait for the data to be fetched first
+    await findByRole('cell', { name: 'row 2' })
+
+    // no selected rows
+    expect(queryAllByRole('row', { selected: true }).length).toBe(0)
+
+    // move the focus to a cell
+    await setFocusOnCellCol3Row3(user)
+    // press ctrlKey+A
+    await user.keyboard(`{${ctrlKey}>}a{/${ctrlKey}}`)
+
+    // all the rows are selected
+    expect(onSelectionChange).toHaveBeenCalledWith({ ranges: [{ start: 0, end: data.numRows }] })
+    expect(queryAllByRole('row', { selected: true }).length).toBeGreaterThan(10)
+
+    // press ctrlKey+A again
+    await user.keyboard(`{${ctrlKey}>}a{/${ctrlKey}}`)
+
+    // no selected rows
+    expect(queryAllByRole('row', { selected: true }).length).toBe(0)
+    expect(onSelectionChange).toHaveBeenCalledWith({ ranges: [] })
+  })
+
+  it('pressing Escape unselects the rows', async () => {
+    const onSelectionChange = vi.fn()
+
+    const { user, queryAllByRole, findByRole } = render(<HighTable data={data} onSelectionChange={onSelectionChange}/>)
+    // await because we have to wait for the data to be fetched first
+    await findByRole('cell', { name: 'row 2' })
+
+    // no selected rows
+    expect(queryAllByRole('row', { selected: true }).length).toBe(0)
+
+    // move the focus to a cell
+    await setFocusOnCellCol3Row3(user)
+    // select all the rows
+    await user.keyboard('{Control>}{a}{/Control}')
+    // all the rows are selected
+    expect(onSelectionChange).toHaveBeenCalledWith({ ranges: [{ start: 0, end: data.numRows }] })
+    expect(queryAllByRole('row', { selected: true }).length).toBeGreaterThan(10)
+
+    // press Escape
+    await user.keyboard('{Escape}')
+
+    // no row is selected
+    expect(onSelectionChange).toHaveBeenCalledWith({ ranges: [] })
+    expect(queryAllByRole('row', { selected: true }).length).toBe(0)
   })
 })
 

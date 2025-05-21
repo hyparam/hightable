@@ -19,12 +19,10 @@ interface UseInputStateProps<T> {
  *
  * @param value the current input value
  * @param onChange the callback to call when the input changes. undefined if the input cannot be changed by the user.
- * @param resetTo the function to call to reset the local state to the default value. undefined if the input is controlled.
  */
 interface UseInputStateResult<T> {
   value?: T
   onChange?: ((value: T) => void)
-  resetTo?: ((value: T) => void) // reset the local state
 }
 
 /**
@@ -66,7 +64,6 @@ export function useInputState<T>({ value, onChange, defaultValue, disabled }: Us
       value: value ?? initialValue,
       // read-only if onChange is undefined
       onChange,
-      // no resetTo function
     }
   }
 
@@ -74,6 +71,6 @@ export function useInputState<T>({ value, onChange, defaultValue, disabled }: Us
   if (value !== undefined) {
     console.warn('The value is uncontrolled (it only has a local state) because the property was initially undefined. It cannot be set to a value now and is ignored.')
   }
-  return { value: localValue, onChange: uncontrolledOnChange, resetTo: uncontrolledOnChange }
+  return { value: localValue, onChange: uncontrolledOnChange }
 
 }
