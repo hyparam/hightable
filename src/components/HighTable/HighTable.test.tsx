@@ -655,6 +655,48 @@ describe('in uncontrolled selection state (onSelection prop), ', () => {
     expect(onSelectionChange).toHaveBeenCalledWith({ ranges: [] })
     expect(queryAllByRole('row', { selected: true }).length).toBe(0)
   })
+
+  it('pressing Shift+Space on a cell toggles the row, and does not take the anchor into account (does not expand the selection)', async () => {
+    const onSelectionChange = vi.fn()
+
+    const { user, queryAllByRole, findByRole } = render(<HighTable data={data} onSelectionChange={onSelectionChange}/>)
+    // await because we have to wait for the data to be fetched first
+    await findByRole('cell', { name: 'row 2' })
+
+    // no selected rows
+    expect(queryAllByRole('row', { selected: true }).length).toBe(0)
+
+    // move the focus to a cell
+    await setFocusOnCellCol3Row3(user)
+    const dataIndex = 1 // aria-rowindex = 3 -> dataIndex = 1 (0-based, and the header row is not counted)
+
+    // Shift+Space selects the row
+    await user.keyboard('{Shift>} {/Shift}')
+    expect(onSelectionChange).toHaveBeenCalledWith({ ranges: [{ start: dataIndex, end: dataIndex + 1 }], anchor: dataIndex })
+    onSelectionChange.mockClear()
+    const selectedRows = queryAllByRole('row', { selected: true })
+    expect(selectedRows.length).toBe(1)
+    expect(selectedRows[0]?.getAttribute('aria-rowindex')).toBe('3')
+
+    // Move two rows down, and Shift+Space selects the new row, and does not expands the selection
+    await user.keyboard('{ArrowDown}{ArrowDown}')
+    const newDataIndex = 3 // aria-rowindex = 5 -> dataIndex = 3 (0-based, and the header row is not counted)
+    await user.keyboard('{Shift>} {/Shift}')
+    expect(onSelectionChange).toHaveBeenCalledWith({ ranges: [{ start: dataIndex, end: dataIndex + 1 }, { start: newDataIndex, end: newDataIndex + 1 }], anchor: newDataIndex })
+    onSelectionChange.mockClear()
+    const selectedRows2 = queryAllByRole('row', { selected: true })
+    expect(selectedRows2.length).toBe(2)
+    expect(selectedRows2[0]?.getAttribute('aria-rowindex')).toBe('3')
+    expect(selectedRows2[1]?.getAttribute('aria-rowindex')).toBe('5')
+
+    // Shift+Space again unselects the row
+    await user.keyboard('{Shift>} {/Shift}')
+    expect(onSelectionChange).toHaveBeenCalledWith({ ranges: [{ start: dataIndex, end: dataIndex + 1 }], anchor: newDataIndex })
+    onSelectionChange.mockClear()
+    const selectedRows3 = queryAllByRole('row', { selected: true })
+    expect(selectedRows3.length).toBe(1)
+    expect(selectedRows3[0]?.getAttribute('aria-rowindex')).toBe('3')
+  })
 })
 
 describe('in disabled selection state (neither selection nor onSelection props), ', () => {

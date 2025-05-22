@@ -50,7 +50,7 @@ export function SelectionProvider({ children, selection, onSelectionChange }: Se
         return
       }
       event.preventDefault()
-      state.onChange({ ranges: toggleIndex({ ranges: state.value.ranges, index }) })
+      state.onChange({ ranges: toggleIndex({ ranges: state.value.ranges, index }), anchor: index })
     }
   }, [state])
 
