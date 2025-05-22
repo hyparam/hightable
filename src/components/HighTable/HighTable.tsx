@@ -485,7 +485,7 @@ export function HighTableInner({
                 const tableIndex = slice.offset + sliceIndex
                 const inferredDataIndex = orderBy === undefined || orderBy.length === 0 ? tableIndex : undefined
                 const dataIndex = row.index ?? inferredDataIndex
-                const selected = isRowSelected(dataIndex) ?? false
+                const selected = isRowSelected(dataIndex)
                 const ariaRowIndex = tableIndex + ariaOffset
                 return (
                   <Row
