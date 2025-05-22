@@ -1,4 +1,4 @@
-import { CSSProperties, KeyboardEvent, ReactNode, useCallback, useRef } from 'react'
+import { CSSProperties, ChangeEvent, KeyboardEvent, ReactNode, useCallback, useRef } from 'react'
 import { useCellNavigation } from '../../hooks/useCellsNavigation'
 
 interface Props {
@@ -25,6 +25,9 @@ export default function TableCorner({ children, checked, onCheckboxPress, style,
       onCheckboxPress?.()
     }
   }, [onCheckboxPress])
+  const showCheckBox = checked !== undefined
+  const disabledCheckbox = onCheckboxPress === undefined
+  const onChange = useCallback((e: ChangeEvent) => {e.preventDefault()}, [])
 
   return (
     <td
@@ -35,13 +38,22 @@ export default function TableCorner({ children, checked, onCheckboxPress, style,
       aria-checked={checked}
       aria-rowindex={ariaRowIndex}
       aria-colindex={ariaColIndex}
-      aria-disabled={onCheckboxPress === undefined}
+      aria-disabled={disabledCheckbox}
       tabIndex={tabIndex}
     >
-      <span>{children}</span>
       {
-        // TODO: use an icon instead of a checkbox
-        checked !== undefined && <input type='checkbox' disabled={true} checked={checked} role="presentation" />
+        showCheckBox ?
+          <input
+            type='checkbox'
+            onChange={onChange}
+            readOnly={disabledCheckbox}
+            disabled={disabledCheckbox}
+            checked={checked}
+            role="presentation"
+            tabIndex={-1}
+          />
+          :
+          <span>{children}</span>
       }
     </td>
   )
