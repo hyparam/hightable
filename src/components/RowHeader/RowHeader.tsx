@@ -38,6 +38,7 @@ export default function RowHeader({ children, checked, onCheckboxPress, style, b
       onKeyDown={handleKeyDown}
       aria-busy={busy}
       aria-checked={checked}
+      aria-rowindex={ariaRowIndex}
       aria-colindex={ariaColIndex}
       aria-disabled={onCheckboxPress === undefined}
       tabIndex={tabIndex}

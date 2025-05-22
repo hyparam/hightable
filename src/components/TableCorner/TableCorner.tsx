@@ -33,6 +33,7 @@ export default function TableCorner({ children, checked, onCheckboxPress, style,
       onClick={handleClick}
       onKeyDown={handleKeyDown}
       aria-checked={checked}
+      aria-rowindex={ariaRowIndex}
       aria-colindex={ariaColIndex}
       aria-disabled={onCheckboxPress === undefined}
       tabIndex={tabIndex}

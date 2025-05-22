@@ -66,6 +66,7 @@ export default function Cell({ onDoubleClick, onMouseDown, onKeyDown, stringify,
       ref={ref}
       role="cell"
       aria-busy={!hasResolved}
+      aria-rowindex={ariaRowIndex}
       aria-colindex={ariaColIndex}
       tabIndex={tabIndex}
       onDoubleClick={handleDoubleClick}
