@@ -1,5 +1,5 @@
 import { KeyboardEvent, ReactNode, createContext, useCallback, useContext } from 'react'
-import { Selection, getDefaultSelection, toggleAll } from '../helpers/selection.js'
+import { Selection, getDefaultSelection, toggleAll, toggleIndex } from '../helpers/selection.js'
 import { useInputState } from './useInputState.js'
 
 interface SelectionContextType {
@@ -26,7 +26,7 @@ export function SelectionProvider({ children, selection, onSelectionChange }: Se
 
   const onTableKeyDown = useCallback((event: KeyboardEvent, numRows: number) => {
     // TODO: move numRows to the Provider props?
-    const { key } = event
+    const { key, shiftKey } = event
 
     if (key === 'Escape') {
       // if the user presses Escape, we want to clear the selection
@@ -38,6 +38,19 @@ export function SelectionProvider({ children, selection, onSelectionChange }: Se
       if (state.value) {
         state.onChange?.({ ranges: toggleAll({ ranges: state.value.ranges, length: numRows }) })
       }
+    } else if (key === ' ' && shiftKey) {
+      // if the user presses Shift+Space, we want to toggle the current row in the selection
+      const { target } = event
+      if (!state.value || !state.onChange || !(target instanceof HTMLTableCellElement)) {
+        return
+      }
+      const index = Number(target.getAttribute('data-rowindex'))
+      const isDataCell = target.getAttribute('role') === 'cell' // the row header cells are handled by the RowHeader component
+      if (!isDataCell || isNaN(index) || !Number.isInteger(index) || index < 0 || index >= numRows) {
+        return
+      }
+      event.preventDefault()
+      state.onChange({ ranges: toggleIndex({ ranges: state.value.ranges, index }) })
     }
   }, [state])
 

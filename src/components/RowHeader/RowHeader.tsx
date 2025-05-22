@@ -10,9 +10,10 @@ interface Props {
   style?: CSSProperties
   ariaColIndex: number
   ariaRowIndex: number
+  dataRowIndex?: number // optional, index of the row in the dataframe (0-based)
 }
 
-export default function RowHeader({ children, checked, onCheckboxPress, style, busy, ariaColIndex, ariaRowIndex }: Props) {
+export default function RowHeader({ children, checked, onCheckboxPress, style, busy, ariaColIndex, ariaRowIndex, dataRowIndex }: Props) {
   const ref = useRef<HTMLTableCellElement>(null)
   const { tabIndex, navigateToCell } = useCellNavigation({ ref, ariaColIndex, ariaRowIndex })
   const handleClick = useCallback((event: MouseEvent) => {
@@ -42,6 +43,7 @@ export default function RowHeader({ children, checked, onCheckboxPress, style, b
       aria-colindex={ariaColIndex}
       aria-disabled={onCheckboxPress === undefined}
       tabIndex={tabIndex}
+      data-rowindex={dataRowIndex}
     >
       <span>{children}</span>
       {
