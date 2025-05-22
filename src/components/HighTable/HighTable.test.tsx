@@ -410,7 +410,7 @@ describe('in controlled selection state (selection and onSelection props), ', ()
     await user.keyboard('[ShiftLeft>]') // Press Shift (without releasing it)
     await user.click(otherRowHeader) // Perform a click with `shiftKey: true`
 
-    expect(onSelectionChange).toHaveBeenCalledWith({ ranges: [{ start: start, end: other + 1 }], anchor: start })
+    expect(onSelectionChange).toHaveBeenCalledWith({ ranges: [{ start: start, end: other + 1 }], anchor: other })
   })
 })
 
