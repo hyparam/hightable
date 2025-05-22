@@ -193,8 +193,8 @@ describe('extendFromAnchor', () => {
   test('does nothing if the anchor is undefined', () => {
     expect(extendFromAnchor({ ranges: [{ start: 0, end: 1 }], index: 1 })).toEqual([{ start: 0, end: 1 }])
   })
-  test('does nothing if the anchor and the index are the same', () => {
-    expect(extendFromAnchor({ ranges: [{ start: 0, end: 1 }], anchor: 0, index: 0 })).toEqual([{ start: 0, end: 1 }])
+  test('toggles the row if the anchor and the index are the same', () => {
+    expect(extendFromAnchor({ ranges: [{ start: 0, end: 1 }], anchor: 0, index: 0 })).toEqual([])
   })
   test('should throw an error if the anchor or the index are invalid', () => {
     expect(() => extendFromAnchor({ ranges: [], anchor: -1, index: 0 })).toThrow('Invalid anchor')
@@ -339,7 +339,7 @@ describe('toggleRangeInSelection', () => {
   it('should extend the selection on unsorted rows', () => {
     expect(
       toggleRangeInSelection({ index: 0, selection: { ranges: [{ start: 2, end: 5 }], anchor: 4 } })
-    ).toEqual({ ranges: [{ start: 0, end: 5 }], anchor: 4 })
+    ).toEqual({ ranges: [{ start: 0, end: 5 }], anchor: 0 })
   })
 })
 
@@ -396,10 +396,12 @@ describe('toggleRangeInTable', () => {
      * extend to Charlie (index 0) using tableIndex: 2
      *
      * new selection: indexes=1,2,0 (Alice, Bob, Charlie)
+     *
+     * the new anchor is the data index of tableIndex 2, which is 0
      */
     await expect(
       toggleRangeInTable(props)
-    ).resolves.toEqual({ ranges: [{ start: 0, end: 3 }], anchor: 1 })
+    ).resolves.toEqual({ ranges: [{ start: 0, end: 3 }], anchor: 0 })
   })
   it('should extend the selection (descending order)', async () => {
     /**
@@ -414,10 +416,12 @@ describe('toggleRangeInTable', () => {
      * extend to Bob (index 2) using tableIndex=2
      *
      * new selection: indexes=1,2 (Alice, Bob)
+     *
+     * the new anchor is the data index of tableIndex 2, which is 2
      */
     await expect(
       toggleRangeInTable({ ...props, orderBy: [{ column: 'name', direction: 'descending' }] })
-    ).resolves.toEqual({ ranges: [{ start: 1, end: 3 }], anchor: 1 })
+    ).resolves.toEqual({ ranges: [{ start: 1, end: 3 }], anchor: 2 })
   })
   it('should call setRanksMap if new ranks are computed', async () => {
     let cachedRanksMap = new Map<string, Promise<number[]>>()
@@ -441,11 +445,13 @@ describe('toggleRangeInTable', () => {
      * extend to Charlie (index 0) using tableIndex=2
      *
      * new selection: indexes=0,1 (Charlie, Alice)
+     *
+     * the new anchor is the data index of tableIndex 2, which is 0
      */
     const wrongButTrustedRanksMap = new Map([['name', Promise.resolve(ageRanks)]])
     await expect(
       toggleRangeInTable({ ...props, ranksMap: wrongButTrustedRanksMap })
-    ).resolves.toEqual({ ranges: [{ start: 0, end: 2 }], anchor: 1 })
+    ).resolves.toEqual({ ranges: [{ start: 0, end: 2 }], anchor: 0 })
   })
   it('should not call setRanksMap if all ranks are provided', async () => {
     const setRanksMap = vi.fn()

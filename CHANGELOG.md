@@ -2,6 +2,11 @@
 
 ## [Unreleased](https://github.com/hyparam/hightable/compare/v0.15.6...HEAD)
 
+### Changed
+
+- **Breaking** when the selection is expanded (shift+click), the new anchor is the clicked cell (before, anchor was unchanged).
+- **Breaking** when the selection is expanded (shift+click), if the clicked cell is the anchor, the row is toggled (before, it was a no-op).
+
 ## [0.15.6](https://github.com/hyparam/hightable/compare/v0.15.5...v0.15.6) - 2025-05-16
 
 ### Added

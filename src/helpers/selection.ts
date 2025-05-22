@@ -198,6 +198,15 @@ export function unselectRange({ ranges, range }: { ranges: Ranges, range: Range 
  * Extend selection state from anchor to index (selecting or unselecting the range).
  * Both bounds are inclusive.
  * It will handle the shift+click behavior. anchor is the first index clicked, index is the last index clicked.
+ *
+ * If anchor is equal to index, the row is toggled instead.
+ *
+ * @param {Object} params
+ * @param {Ranges} params.ranges - The current selection ranges.
+ * @param {number} params.anchor - The anchor index (inclusive).
+ * @param {number} params.index - The index to extend the selection to (inclusive).
+ *
+ * @returns {Ranges} The new selection ranges.
  */
 export function extendFromAnchor({ ranges, anchor, index }: { ranges: Ranges, anchor?: number, index: number }): Ranges {
   if (!areValidRanges(ranges)) {
@@ -214,8 +223,8 @@ export function extendFromAnchor({ ranges, anchor, index }: { ranges: Ranges, an
     throw new Error('Invalid index')
   }
   if (anchor === index) {
-    // no operation
-    return ranges
+    // no range to extend, toggle the index
+    return toggleIndex({ ranges, index })
   }
   const range = anchor < index ? { start: anchor, end: index + 1 } : { start: index, end: anchor + 1 }
   if (!isValidRange(range)) {
@@ -238,12 +247,35 @@ export function toggleIndex({ ranges, index }: { ranges: Ranges, index: number }
   return isSelected({ ranges, index }) ? unselectRange({ ranges, range }) : selectRange({ ranges, range })
 }
 
+/**
+ * Toggle the selection state of a single index.
+ *
+ * The anchor is updated to the index.
+ *
+ * @param {Object} params
+ * @param {Selection} params.selection - The current selection state.
+ * @param {number} params.index - The index to toggle.
+ *
+ * @returns {Selection} The new selection state.
+ */
 export function toggleIndexInSelection({ selection, index }: { selection: Selection, index: number }): Selection {
   return { ranges: toggleIndex({ ranges: selection.ranges, index }), anchor: index }
 }
 
+/**
+ * Extend the selection state from the anchor to the index (selecting or unselecting the range).
+ * Both bounds are inclusive.
+ *
+ * The anchor is updated to the index.
+ *
+ * @param {Object} params
+ * @param {Selection} params.selection - The current selection state.
+ * @param {number} params.index - The index to toggle.
+ *
+ * @returns {Selection} The new selection state.
+ */
 export function toggleRangeInSelection({ selection, index }: { selection: Selection, index: number }): Selection {
-  return { ranges: extendFromAnchor({ ranges: selection.ranges, anchor: selection.anchor, index }), anchor: selection.anchor }
+  return { ranges: extendFromAnchor({ ranges: selection.ranges, anchor: selection.anchor, index }), anchor: index }
 }
 
 /**
@@ -327,12 +359,15 @@ export function convertSelection({ selection, permutationIndexes }: { selection:
 }
 
 /**
- * Compute the new selection state after a shift-click (range toggle) on the row with the given table index
+ * Compute the new selection state after a shift-click (range toggle) on the row with the given table index,
  * when the rows are sorted.
  *
  * The selection is extended from the anchor to the index. This
  * range is done in the visual space of the user, ie: between the rows as they appear in the table.
- * As the rows are sorted, the indexes are converted from data domain to table domain and vice versa,
+ *
+ * The new anchor is the row with the given table index.
+ *
+ * If the rows are sorted, the indexes are converted from data domain to table domain and vice versa,
  * which requires the sort index of the data frame. If not available, it must be computed, which is
  * an async operation that can be expensive.
  *
@@ -378,7 +413,8 @@ export async function toggleRangeInTable({
   const tableIndexes = invertPermutationIndexes(dataIndexes)
   const tableSelection = convertSelection({ selection, permutationIndexes: tableIndexes })
   const { ranges, anchor } = tableSelection
-  const newTableSelection = { ranges: extendFromAnchor({ ranges, anchor, index: tableIndex }), anchor }
+  const newAnchor = tableIndex
+  const newTableSelection = { ranges: extendFromAnchor({ ranges, anchor, index: tableIndex }), anchor: newAnchor }
   const newDataSelection = convertSelection({ selection: newTableSelection, permutationIndexes: dataIndexes })
   return newDataSelection
 }
