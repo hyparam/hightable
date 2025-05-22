@@ -12,6 +12,7 @@ interface Props {
   hasResolved: boolean
   ariaColIndex: number
   ariaRowIndex: number
+  dataRowIndex?: number
   className?: string
 }
 
@@ -28,9 +29,10 @@ interface Props {
  * @param props.hasResolved function to get the column style
  * @param props.ariaColIndex aria col index
  * @param props.ariaRowIndex aria row index
+ * @param props.dataRowIndex optional, index of the row in the dataframe (0-based)
  * @param props.className optional class name
  */
-export default function Cell({ onDoubleClick, onMouseDown, onKeyDown, stringify, columnIndex, value, hasResolved, className, ariaColIndex, ariaRowIndex }: Props) {
+export default function Cell({ onDoubleClick, onMouseDown, onKeyDown, stringify, columnIndex, value, hasResolved, className, ariaColIndex, ariaRowIndex, dataRowIndex }: Props) {
   const ref = useRef<HTMLTableCellElement>(null)
   const { tabIndex, navigateToCell } = useCellNavigation({ ref, ariaColIndex, ariaRowIndex })
   const handleMouseDown = useCallback((event: MouseEvent) => {
@@ -68,6 +70,7 @@ export default function Cell({ onDoubleClick, onMouseDown, onKeyDown, stringify,
       aria-busy={!hasResolved}
       aria-rowindex={ariaRowIndex}
       aria-colindex={ariaColIndex}
+      data-rowindex={dataRowIndex}
       tabIndex={tabIndex}
       onDoubleClick={handleDoubleClick}
       onMouseDown={handleMouseDown}

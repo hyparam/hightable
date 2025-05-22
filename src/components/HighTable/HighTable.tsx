@@ -502,6 +502,7 @@ export function HighTableInner({
                       showCheckBox={selection !== undefined}
                       ariaColIndex={1}
                       ariaRowIndex={ariaRowIndex}
+                      dataRowIndex={dataIndex}
                     >{formatRowNumber(dataIndex)}</RowHeader>
                     {data.header.map((column, columnIndex) => {
                       // Note: the resolved cell value can be undefined
@@ -519,6 +520,7 @@ export function HighTableInner({
                         className={columnClassNames[columnIndex]}
                         ariaColIndex={columnIndex + ariaOffset}
                         ariaRowIndex={ariaRowIndex}
+                        dataRowIndex={dataIndex}
                       />
                     })}
                   </Row>
