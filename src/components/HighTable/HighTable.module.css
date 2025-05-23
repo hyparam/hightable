@@ -48,20 +48,21 @@
   }
 
   /* sortable */
-  thead th[aria-sort] {
+  th[aria-sort] {
     cursor: pointer;
-  }
-  th[aria-sort="ascending"]::after,
-  th[aria-sort="descending"]::after {
-    position: absolute;
-    right: 0;
-    top: 0;
-  }
-  th[aria-sort="ascending"]::after {
-    content: "▴";
-  }
-  th[aria-sort="descending"]::after {
-    content: "▾";
+
+    &::after {
+      content: "⇅";
+      position: absolute;
+      right: 0;
+      top: 0;
+    }
+    &[aria-sort="ascending"]::after {
+      content: "⭡";
+    }
+    &[aria-sort="descending"]::after {
+      content: "⭣";
+    }
   }
 
   /* column resize */
@@ -215,19 +216,22 @@
       padding-top: 4px;
       padding-bottom: 4px;
 
-      /* sorting is enabled - add space for the sort caret */
+      /* sorting is enabled - add space for the sort arrow */
       &[aria-sort] {
-        padding-right: calc(var(--cell-horizontal-padding) + 12px);
+        padding-right: calc(var(--cell-horizontal-padding) + 2rem);
       }
     }
   }
 
   th[aria-sort]::after {
-    right: 12px;
+    right: var(--cell-horizontal-padding);
     top: 4px;
     padding-left: 2px;
     background: none;
     color: #d5d4d6;
+    display: block;
+    width: 2rem;
+    text-align: center;
   }
 
   th[data-order-by-index="0"]::after {
