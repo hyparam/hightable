@@ -3,7 +3,7 @@ import { DataFrame } from '../../helpers/dataframe.js'
 import { PartialRow } from '../../helpers/row.js'
 import { Selection, areAllSelected, isSelected, toggleIndexInSelection, toggleRangeInSelection, toggleRangeInTable } from '../../helpers/selection.js'
 import { OrderBy, areEqualOrderBy } from '../../helpers/sort.js'
-import { leftCellStyle } from '../../helpers/width.js'
+import { cellStyle } from '../../helpers/width.js'
 import { CellsNavigationProvider, useCellsNavigation } from '../../hooks/useCellsNavigation.js'
 import { ColumnWidthProvider, useColumnWidth } from '../../hooks/useColumnWidth.js'
 import { DataProvider, useData } from '../../hooks/useData.js'
@@ -432,7 +432,7 @@ export function HighTableInner({
     return Math.ceil(Math.log10(numRows + 1)) * 4 + 22
   }, [numRows])
   const cornerStyle = useMemo(() => {
-    return leftCellStyle(rowHeaderWidth)
+    return cellStyle(rowHeaderWidth)
   }, [rowHeaderWidth])
   const tableScrollStyle = useMemo(() => {
     return {
