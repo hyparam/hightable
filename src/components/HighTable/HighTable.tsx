@@ -83,7 +83,7 @@ function HighTableData(props: PropsData) {
     /* important: key={key} ensures the local state is recreated if the data has changed */
     <OrderByProvider key={key} orderBy={orderBy} onOrderByChange={onOrderByChange} disabled={!data.sortable}>
       <SelectionProvider selection={selection} onSelectionChange={onSelectionChange}>
-        <ColumnWidthProvider localStorageKey={cacheKey ? `${cacheKey}${columnWidthsSuffix}` : undefined}>
+        <ColumnWidthProvider key={key} localStorageKey={cacheKey ? `${cacheKey}${columnWidthsSuffix}` : undefined} numColumns={data.header.length}>
           <CellsNavigationProvider colCount={ariaColCount} rowCount={ariaRowCount} rowPadding={props.padding ?? defaultPadding}>
             <HighTableInner {...props} />
           </CellsNavigationProvider>
@@ -203,6 +203,7 @@ export function HighTableInner({
   const scrollHeight = (numRows + 1) * rowHeight
   const offsetTop = slice ? Math.max(0, slice.offset - padding) * rowHeight : 0
 
+  const tableCornerRef = useRef<Pick<HTMLTableCellElement, 'offsetWidth'>>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const pendingRequest = useRef(0)
 
@@ -267,9 +268,9 @@ export function HighTableInner({
      * Report the scroller width
      */
     function reportWidth() {
-      if (scrollRef.current) {
-        // we set the client width, because we're interested in the content area
-        setAvailableWidth?.(scrollRef.current.clientWidth)
+      if (scrollRef.current && tableCornerRef.current) {
+        // we use the scrollRef client width, because we're interested in the content area
+        setAvailableWidth?.(scrollRef.current.clientWidth - tableCornerRef.current.offsetWidth)
       }
     }
 
@@ -475,6 +476,7 @@ export function HighTableInner({
                   style={cornerStyle}
                   ariaColIndex={1}
                   ariaRowIndex={1}
+                  ref={tableCornerRef}
                 >&nbsp;</TableCorner>
                 <TableHeader
                   dataReady={hasCompleteRow}

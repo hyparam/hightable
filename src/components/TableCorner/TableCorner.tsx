@@ -1,4 +1,4 @@
-import { CSSProperties, ChangeEvent, KeyboardEvent, ReactNode, useCallback, useRef } from 'react'
+import { CSSProperties, ChangeEvent, ForwardedRef, KeyboardEvent, ReactNode, forwardRef, useCallback, useImperativeHandle, useRef } from 'react'
 import { useCellNavigation } from '../../hooks/useCellsNavigation'
 
 interface Props {
@@ -10,9 +10,16 @@ interface Props {
   ariaRowIndex: number
 }
 
-export default function TableCorner({ children, checked, onCheckboxPress, style, ariaColIndex, ariaRowIndex }: Props) {
-  const ref = useRef<HTMLTableCellElement>(null)
-  const { tabIndex, navigateToCell } = useCellNavigation({ ref, ariaColIndex, ariaRowIndex })
+function TableCorner({ children, checked, onCheckboxPress, style, ariaColIndex, ariaRowIndex }: Props, ref: ForwardedRef<Pick<HTMLTableCellElement, 'offsetWidth'>>) {
+  const cellRef = useRef<HTMLTableCellElement>(null)
+  useImperativeHandle(ref, () => {
+    return {
+      get offsetWidth() {
+        return cellRef.current?.offsetWidth ?? 0
+      },
+    }
+  }, [])
+  const { tabIndex, navigateToCell } = useCellNavigation({ ref: cellRef, ariaColIndex, ariaRowIndex })
   const handleClick = useCallback(() => {
     navigateToCell()
     onCheckboxPress?.()
@@ -31,7 +38,7 @@ export default function TableCorner({ children, checked, onCheckboxPress, style,
 
   return (
     <td
-      ref={ref}
+      ref={cellRef}
       style={style}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
@@ -58,3 +65,5 @@ export default function TableCorner({ children, checked, onCheckboxPress, style,
     </td>
   )
 }
+
+export default forwardRef(TableCorner)

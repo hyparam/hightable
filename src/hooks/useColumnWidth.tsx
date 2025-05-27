@@ -18,21 +18,32 @@ export const ColumnWidthContext = createContext<ColumnWidthContextType>({})
 
 interface ColumnWidthProviderProps {
   localStorageKey?: string // optional key to use for local storage (no local storage if not provided)
+  numColumns: number // number of columns (used to initialize the widths array, and compute the widths)
   children: ReactNode
 }
 
 // in local storage, uninitialized values are stored as null, not as undefined
 type StoredWidths = (number | undefined | null)[]
 
-export function ColumnWidthProvider({ children, localStorageKey }: ColumnWidthProviderProps) {
+export function ColumnWidthProvider({ children, localStorageKey, numColumns }: ColumnWidthProviderProps) {
   // An array of column widths
   // The index is the column rank in the header (0-based)
   // The array is uninitialized so that we don't have to know the number of columns in advance
-  const [widths, setWidths] = useLocalStorageState<StoredWidths>({ key: localStorageKey })
-  const [, setAvailableWidth] = useState<number | undefined>(undefined)
+  const [storedWidths, setStoredWidths] = useLocalStorageState<StoredWidths>({ key: localStorageKey })
+  const [availableWidth, setAvailableWidth] = useState<number | undefined>(undefined)
+
+  const computedWidths = useMemo(() => {
+    if (storedWidths && storedWidths.length === numColumns) {
+      return storedWidths
+    }
+    if (availableWidth !== undefined && availableWidth > 0) {
+      return Array<number>(numColumns).fill(Math.floor(availableWidth / numColumns))
+    }
+    return []
+  }, [storedWidths, numColumns, availableWidth])
 
   const getColumnWidth = useCallback((columnIndex: number) => {
-    const width = widths?.[columnIndex]
+    const width = computedWidths?.[columnIndex]
     if (width === undefined || width === null) {
       return undefined
     }
@@ -42,23 +53,23 @@ export function ColumnWidthProvider({ children, localStorageKey }: ColumnWidthPr
       return undefined
     }
     return width
-  }, [widths])
+  }, [computedWidths])
 
   const getColumnStyle = useCallback((columnIndex: number) => {
     return cellStyle(getColumnWidth(columnIndex))
   }, [getColumnWidth])
 
   const setColumnWidth = useCallback(({ columnIndex, width }: WidthSetterOptions) => {
-    setWidths(widths => {
+    setStoredWidths(currentWidths => {
       if (width !== undefined && (isNaN(width) || width < 0)) {
         // TODO(SL): add a warning if the width seems too big?
         throw new Error(`Invalid column width: ${width}`)
       }
-      if (widths?.[columnIndex] === width) {
+      if (currentWidths?.[columnIndex] === width) {
         // no change (avoid useless re-renders)
-        return widths
+        return currentWidths
       }
-      const next = [...widths ?? []]
+      const next = [...currentWidths ?? []]
       if (width === undefined) {
         next[columnIndex] = undefined
       } else {
@@ -67,7 +78,7 @@ export function ColumnWidthProvider({ children, localStorageKey }: ColumnWidthPr
       }
       return next
     })
-  }, [setWidths])
+  }, [setStoredWidths])
 
   const value = useMemo(() => {
     return {
