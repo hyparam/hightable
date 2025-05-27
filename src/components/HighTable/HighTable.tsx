@@ -54,6 +54,7 @@ interface Props {
 const defaultPadding = 20
 const defaultOverscan = 20
 const ariaOffset = 2 // 1-based index, +1 for the header
+export const columnWidthsSuffix = ':columns:widths' // suffix used to store the column widths in local storage
 
 /**
  * Render a table with streaming rows on demand from a DataFrame.
@@ -82,7 +83,7 @@ function HighTableData(props: PropsData) {
     /* important: key={key} ensures the local state is recreated if the data has changed */
     <OrderByProvider key={key} orderBy={orderBy} onOrderByChange={onOrderByChange} disabled={!data.sortable}>
       <SelectionProvider selection={selection} onSelectionChange={onSelectionChange}>
-        <ColumnWidthProvider localStorageKey={cacheKey ? `${cacheKey}:column-widths` : undefined}>
+        <ColumnWidthProvider localStorageKey={cacheKey ? `${cacheKey}${columnWidthsSuffix}` : undefined}>
           <CellsNavigationProvider colCount={ariaColCount} rowCount={ariaRowCount} rowPadding={props.padding ?? defaultPadding}>
             <HighTableInner {...props} />
           </CellsNavigationProvider>
