@@ -5,7 +5,7 @@ import { Selection, areAllSelected, isSelected, toggleIndexInSelection, toggleRa
 import { OrderBy, areEqualOrderBy } from '../../helpers/sort.js'
 import { leftCellStyle } from '../../helpers/width.js'
 import { CellsNavigationProvider, useCellsNavigation } from '../../hooks/useCellsNavigation.js'
-import { ColumnWidthProvider } from '../../hooks/useColumnWidth.js'
+import { ColumnWidthProvider, useColumnWidth } from '../../hooks/useColumnWidth.js'
 import { DataProvider, useData } from '../../hooks/useData.js'
 import { OrderByProvider, useOrderBy } from '../../hooks/useOrderBy.js'
 import { SelectionProvider, useSelection } from '../../hooks/useSelection.js'
@@ -137,6 +137,7 @@ export function HighTableInner({
   const { enterCellsNavigation, setEnterCellsNavigation, onTableKeyDown: onNavigationTableKeyDown, onScrollKeyDown, rowIndex, colIndex, focusFirstCell } = useCellsNavigation()
   const [lastCellPosition, setLastCellPosition] = useState({ rowIndex, colIndex })
   const [numRows, setNumRows] = useState(data.numRows)
+  const { setAvailableWidth } = useColumnWidth()
 
   // TODO(SL): remove this state and only rely on the data frame for these operations?
   // ie. cache the previous sort indexes in the data frame itself
@@ -242,7 +243,6 @@ export function HighTableInner({
     /**
      * Compute the dimensions based on the current scroll position.
      */
-
     function handleScroll() {
       // view window height (0 is not allowed - the syntax is verbose, but makes it clear)
       const currentClientHeight = scrollRef.current?.clientHeight
@@ -262,19 +262,33 @@ export function HighTableInner({
 
       setRowsRange({ start, end })
     }
+
+    /**
+     * Report the scroller width
+     */
+    function reportWidth() {
+      if (scrollRef.current) {
+        // we set the client width, because we're interested in the content area
+        setAvailableWidth?.(scrollRef.current.clientWidth)
+      }
+    }
+
     // run once
     handleScroll()
+    reportWidth()
 
-    // scroll listeners
+    // listeners
     const scroller = scrollRef.current
     scroller?.addEventListener('scroll', handleScroll)
     window.addEventListener('resize', handleScroll)
+    window.addEventListener('resize', reportWidth)
 
     return () => {
       scroller?.removeEventListener('scroll', handleScroll)
       window.removeEventListener('resize', handleScroll)
+      window.removeEventListener('resize', reportWidth)
     }
-  }, [numRows, overscan, padding, scrollHeight])
+  }, [numRows, overscan, padding, scrollHeight, setAvailableWidth])
 
   // fetch rows
   useEffect(() => {

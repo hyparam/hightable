@@ -1,4 +1,4 @@
-import { CSSProperties, ReactNode, createContext, useCallback, useContext, useMemo } from 'react'
+import { CSSProperties, ReactNode, createContext, useCallback, useContext, useMemo, useState } from 'react'
 import { cellStyle } from '../helpers/width.js'
 import { useLocalStorageState } from '../hooks/useLocalStorageState.js'
 
@@ -11,6 +11,7 @@ interface ColumnWidthContextType {
   getColumnWidth?: (columnIndex: number) => number | undefined
   getColumnStyle?: (columnIndex: number) => CSSProperties
   setColumnWidth?: (options: WidthSetterOptions) => void
+  setAvailableWidth?: (width: number | undefined) => void // used to set the width of the wrapper element
 }
 
 export const ColumnWidthContext = createContext<ColumnWidthContextType>({})
@@ -28,6 +29,7 @@ export function ColumnWidthProvider({ children, localStorageKey }: ColumnWidthPr
   // The index is the column rank in the header (0-based)
   // The array is uninitialized so that we don't have to know the number of columns in advance
   const [widths, setWidths] = useLocalStorageState<StoredWidths>({ key: localStorageKey })
+  const [, setAvailableWidth] = useState<number | undefined>(undefined)
 
   const getColumnWidth = useCallback((columnIndex: number) => {
     const width = widths?.[columnIndex]
@@ -72,8 +74,9 @@ export function ColumnWidthProvider({ children, localStorageKey }: ColumnWidthPr
       getColumnWidth,
       getColumnStyle,
       setColumnWidth,
+      setAvailableWidth,
     }
-  }, [getColumnWidth, getColumnStyle, setColumnWidth])
+  }, [getColumnWidth, getColumnStyle, setColumnWidth, setAvailableWidth])
 
   return (
     <ColumnWidthContext.Provider value={value}>
