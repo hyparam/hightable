@@ -154,9 +154,8 @@ function adjustWidths({
   //
   // If we succeed in reducing below the target width, we add the remaining space to all the widths equally
 
-  const roundingErrorMargin = numColumns // 1px per column
   const fixedColumnsWidth = fixedColumnWidths.reduce((acc, { width }) => acc + width, 0)
-  const targetWidth = availableWidth - roundingErrorMargin - fixedColumnsWidth
+  const targetWidth = availableWidth - fixedColumnsWidth
   let i = 0
   while (orderedWidthGroups.length > 0 && i < 100) {
     // safeguard against infinite loop
@@ -206,14 +205,23 @@ function adjustWidths({
   // Build the final widths array
   const widths = new Array<number | undefined>(numColumns).fill(undefined)
   // fill with the adjusted widths
+  let lastIndex = undefined
+  let remainingWidth = targetWidth
   for (const { width, indexes } of orderedWidthGroups) {
     for (const index of indexes) {
       if (widths[index] !== undefined) {
         throw new Error(`Duplicate index ${index} in widths array.`)
       }
       widths[index] = width
+      lastIndex = index
+      remainingWidth -= width
     }
   }
+  // add the missing pixels to the last column
+  if (lastIndex !== undefined && remainingWidth > 0) {
+    widths[lastIndex] = (widths[lastIndex] ?? 0) + remainingWidth
+  }
+
   // fill with the fixed widths
   for (const { width, index } of fixedColumnWidths) {
     if (widths[index] !== undefined) {
