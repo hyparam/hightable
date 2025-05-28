@@ -58,12 +58,9 @@ export function ColumnWidthProvider({ children, localStorageKey, numColumns, min
 
   const setFixedColumnWidth = useCallback(({ columnIndex, width }: WidthSetterOptions) => {
     setFixedWidths(currentWidths => {
-      if (width !== undefined && (isNaN(width) || width < 0)) {
-        // TODO(SL): add a warning if the width seems too big?
-        throw new Error(`Invalid column width: ${width}`)
-      }
-      if (currentWidths?.[columnIndex] === width) {
-        // no change (avoid useless re-renders)
+      const isInvalid = width !== undefined && (isNaN(width) || width < 0)
+      const isUnchanged = currentWidths?.[columnIndex] === width
+      if (isInvalid || isUnchanged) {
         return currentWidths
       }
       const next = [...currentWidths ?? []]
@@ -78,16 +75,13 @@ export function ColumnWidthProvider({ children, localStorageKey, numColumns, min
   }, [setFixedWidths])
 
   const setMeasuredColumnWidth = useCallback(({ columnIndex, width }: WidthSetterOptions) => {
-    if (width !== undefined && (isNaN(width) || width < 0)) {
-      // TODO(SL): add a warning if the width seems too big?
-      throw new Error(`Invalid column width: ${width}`)
-    }
     // Remove the fixed width, if any
     setFixedColumnWidth({ columnIndex, width: undefined })
     // Set the measure width
     setMeasuredWidths(currentWidths => {
-      if (currentWidths[columnIndex] === width) {
-        // no change (avoid useless re-renders)
+      const isInvalid = width !== undefined && (isNaN(width) || width < 0)
+      const isUnchanged = currentWidths[columnIndex] === width
+      if (isInvalid || isUnchanged) {
         return currentWidths
       }
       const next = [...currentWidths]
