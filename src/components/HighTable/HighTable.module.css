@@ -219,6 +219,18 @@
       &[aria-sort] {
         padding-right: calc(var(--cell-horizontal-padding) + 2rem);
       }
+
+      &[data-fixed-width="true"]::before {
+        /* fixed width columns - show a detail*/
+        position: absolute;
+        right: var(--cell-horizontal-padding);
+        top: 4px;
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background-color: var(--top-border-color);
+        content: "";
+      }
     }
   }
 

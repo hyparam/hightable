@@ -30,8 +30,9 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
   const sortable = !!onClick // if onClick is defined, the column is sortable
 
   // Get the column width from the context
-  const { getColumnStyle, setFixedColumnWidth, getColumnWidth, setMeasuredColumnWidth } = useColumnWidth()
+  const { getColumnStyle, isFixedColumn, setFixedColumnWidth, getColumnWidth, setMeasuredColumnWidth } = useColumnWidth()
   const columnStyle = getColumnStyle?.(columnIndex)
+  const dataFixedWidth = isFixedColumn?.(columnIndex) === true ? true : undefined
   const width = getColumnWidth?.(columnIndex)
   const setFixedWidth = useCallback((nextWidth: number | undefined) => {
     setFixedColumnWidth?.({ columnIndex, width: nextWidth })
@@ -111,6 +112,7 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
       onKeyDown={onKeyDown}
       style={columnStyle}
       className={className}
+      data-fixed-width={dataFixedWidth}
     >
       {children}
       <ColumnResizer

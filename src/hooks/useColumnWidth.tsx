@@ -1,5 +1,5 @@
 import { CSSProperties, ReactNode, createContext, useCallback, useContext, useMemo, useState } from 'react'
-import { cellStyle, computeWidths } from '../helpers/width.js'
+import { cellStyle, computeColumnWidths } from '../helpers/width.js'
 import { useLocalStorageState } from '../hooks/useLocalStorageState.js'
 
 interface WidthSetterOptions {
@@ -10,6 +10,7 @@ interface WidthSetterOptions {
 interface ColumnWidthContextType {
   getColumnWidth?: (columnIndex: number) => number | undefined
   getColumnStyle?: (columnIndex: number) => CSSProperties
+  isFixedColumn?: (columnIndex: number) => boolean // returns true if the column has a fixed width
   setAvailableWidth?: (width: number | undefined) => void // used to set the width of the wrapper element
   setFixedColumnWidth?: (options: WidthSetterOptions) => void // used to set a fixed width for a column (will be stored and overrides the auto width)
   setMeasuredColumnWidth?: (options: WidthSetterOptions) => void // used to set the width of a column based on its measured width
@@ -35,26 +36,21 @@ export function ColumnWidthProvider({ children, localStorageKey, numColumns, min
   const [measuredWidths, setMeasuredWidths] = useState<StoredWidths>([])
   const [availableWidth, setAvailableWidth] = useState<number | undefined>(undefined)
 
-  const computedWidths = useMemo(() => {
-    return computeWidths({ fixedWidths, measuredWidths, numColumns, minWidth, availableWidth })
+  const computedColumnWidths = useMemo(() => {
+    return computeColumnWidths({ fixedWidths, measuredWidths, numColumns, minWidth, availableWidth })
   }, [fixedWidths, measuredWidths, numColumns, minWidth, availableWidth])
 
   const getColumnWidth = useCallback((columnIndex: number) => {
-    const width = computedWidths[columnIndex]
-    if (width === undefined) {
-      return undefined
-    }
-    if (isNaN(width) || width < 0) {
-      // TODO(SL): add a warning if the width seems too big?
-      console.warn(`Invalid column width for column index ${columnIndex}: ${width}. Ignoring it.`)
-      return undefined
-    }
-    return width
-  }, [computedWidths])
+    return computedColumnWidths[columnIndex]?.width
+  }, [computedColumnWidths])
 
   const getColumnStyle = useCallback((columnIndex: number) => {
     return cellStyle(getColumnWidth(columnIndex))
   }, [getColumnWidth])
+
+  const isFixedColumn = useCallback((columnIndex: number) => {
+    return computedColumnWidths[columnIndex]?.status === 'fixed'
+  }, [computedColumnWidths])
 
   const setFixedColumnWidth = useCallback(({ columnIndex, width }: WidthSetterOptions) => {
     setFixedWidths(currentWidths => {
@@ -99,11 +95,12 @@ export function ColumnWidthProvider({ children, localStorageKey, numColumns, min
     return {
       getColumnWidth,
       getColumnStyle,
+      isFixedColumn,
       setAvailableWidth,
       setFixedColumnWidth,
       setMeasuredColumnWidth,
     }
-  }, [getColumnWidth, getColumnStyle, setAvailableWidth, setFixedColumnWidth, setMeasuredColumnWidth])
+  }, [getColumnWidth, getColumnStyle, isFixedColumn, setAvailableWidth, setFixedColumnWidth, setMeasuredColumnWidth])
 
   return (
     <ColumnWidthContext.Provider value={value}>
