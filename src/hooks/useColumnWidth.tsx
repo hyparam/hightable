@@ -77,7 +77,7 @@ export function ColumnWidthProvider({ children, localStorageKey, numColumns, min
   const setMeasuredColumnWidth = useCallback(({ columnIndex, width }: WidthSetterOptions) => {
     // Remove the fixed width, if any
     setFixedColumnWidth({ columnIndex, width: undefined })
-    // Set the measure width
+    // Set the measured width
     setMeasuredWidths(currentWidths => {
       const isInvalid = width !== undefined && (isNaN(width) || width < 0)
       const isUnchanged = currentWidths[columnIndex] === width

@@ -233,7 +233,7 @@ function adjustWidths({
   for (let i = 0; i < numColumns; i++) {
     const width = widths[i]
     if (width === undefined) {
-      throw new Error(`Width for column ${i} is undefined.`)
+      continue // this is a missing width, which is fine
     }
     if (!isValidWidth(width)) {
       throw new Error(`Invalid width for column ${i}: ${width}.`)
@@ -265,17 +265,21 @@ export function computeWidths({
   const measuredColumnWidths = columnWidths.filter(isMeasuredWidth)
   const missingColumnWidths = columnWidths.filter(isMissingWidth)
 
-  if (missingColumnWidths.length > 0 || measuredColumnWidths.length === 0 || !isValidWidth(availableWidth)) {
-    // some missing column widths, or all are fixed, or availableWidth is invalid: nothing to adjust
+  if (measuredColumnWidths.length === 0 || !isValidWidth(availableWidth)) {
+    // no measured columns, or availableWidth is invalid: nothing to adjust
     // Return the fixed widths if any, undefined width for the other columns
     return toFixedWidths(columnWidths)
   }
 
+  const validMinWidth = Math.floor(isValidWidth(minWidth) ? minWidth : 0)
+  // apply the minWidth to every missing column width in the calculation
+  // the missing columns will still be undefined in the final result
+  const adjustedAvailableWidth = availableWidth - missingColumnWidths.length * validMinWidth
   return adjustWidths({
     fixedColumnWidths,
     measuredColumnWidths,
     numColumns,
-    minWidth,
-    availableWidth,
+    minWidth: validMinWidth,
+    availableWidth: adjustedAvailableWidth,
   })
 }
