@@ -155,17 +155,24 @@ export function useCellNavigation({ ref, ariaColIndex, ariaRowIndex }: CellData)
 
   // Check if the cell is the current navigation cell
   const isCurrentCell = ariaColIndex === colIndex && ariaRowIndex === rowIndex
+  const isHeaderCell = ariaRowIndex === 1 || ariaColIndex === 1
 
   useEffect(() => {
     // focus on the cell when needed
     if (ref.current && isCurrentCell && shouldFocus) {
-      // scroll the cell into view (note scroll-padding-inline-start and scroll-padding-block-start are set in the CSS
-      // to avoid the cell being hidden by the row and column headers)
-      ref.current.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'nearest' })
+      if (!isHeaderCell) {
+        // scroll the cell into view
+        //
+        // scroll-padding-inline-start and scroll-padding-block-start are set in the CSS
+        // to avoid the cell being hidden by the row and column headers
+        //
+        // not applied for header cells, as they are always visible, and it was causing jumps when resizing a column
+        ref.current.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'nearest' })
+      }
       ref.current.focus()
       setShouldFocus?.(false)
     }
-  }, [ref, isCurrentCell, shouldFocus, setShouldFocus])
+  }, [ref, isCurrentCell, isHeaderCell, shouldFocus, setShouldFocus])
 
   // Roving tabindex: only the current navigation cell is focusable with Tab (tabindex = 0)
   // All other cells are focusable only with javascript .focus() (tabindex = -1)
