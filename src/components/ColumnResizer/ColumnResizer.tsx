@@ -9,8 +9,8 @@ interface Props {
 }
 
 const keyboardShiftWidth = 10
-const minWidth = 1
 
+// TODO: add aria-minwidth and aria-maxwidth?
 export default function ColumnResizer({ onDoubleClick, setWidth, width, tabIndex, navigateToCell }: Props) {
   const [resizeClientX, setResizeClientX] = useState<number | undefined>(undefined)
   const [activeKeyboard, setActiveKeyboard] = useState<boolean>(false)
@@ -39,7 +39,7 @@ export default function ColumnResizer({ onDoubleClick, setWidth, width, tabIndex
     if (resizeClientX !== undefined) {
       function updateResizeWidth(clientX: number) {
         return function(event: globalThis.MouseEvent) {
-          setWidth?.(Math.max(1, event.clientX - clientX))
+          setWidth?.(event.clientX - clientX)
         }
       }
       const listener = updateResizeWidth(resizeClientX)
@@ -55,7 +55,7 @@ export default function ColumnResizer({ onDoubleClick, setWidth, width, tabIndex
     if (resizeClientX !== undefined) {
       function stopResizing(clientX: number) {
         return function(event: globalThis.MouseEvent) {
-          setWidth?.(Math.max(1, event.clientX - clientX))
+          setWidth?.(event.clientX - clientX)
           setResizeClientX(undefined)
         }
       }
@@ -105,9 +105,9 @@ export default function ColumnResizer({ onDoubleClick, setWidth, width, tabIndex
       return
     }
     if (e.key === 'ArrowRight') {
-      setWidth?.(Math.max(minWidth, width + keyboardShiftWidth))
+      setWidth?.(width + keyboardShiftWidth)
     } else if (e.key === 'ArrowLeft') {
-      setWidth?.(Math.max(minWidth, width - keyboardShiftWidth))
+      setWidth?.(width - keyboardShiftWidth)
     }
   }, [handleDoubleClick, resizeClientX, setWidth, width, activeKeyboard, navigateToCell])
 
@@ -125,7 +125,6 @@ export default function ColumnResizer({ onDoubleClick, setWidth, width, tabIndex
       role="separator"
       aria-orientation="vertical"
       aria-busy={ariaBusy}
-      aria-valuemin={minWidth}
       aria-valuenow={width}
       aria-valuetext={ariaValueText}
       // TODO: use aria-labelledby and aria-describedby to allow translation

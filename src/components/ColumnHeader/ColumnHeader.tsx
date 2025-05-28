@@ -1,7 +1,7 @@
 import { KeyboardEvent, ReactNode, useCallback, useEffect, useMemo, useRef } from 'react'
 import { flushSync } from 'react-dom'
 import { Direction } from '../../helpers/sort.js'
-import { measureWidth } from '../../helpers/width.js'
+import { measureOffsetWidth } from '../../helpers/width.js'
 import { useCellNavigation } from '../../hooks/useCellsNavigation.js'
 import { useColumnWidth } from '../../hooks/useColumnWidth.js'
 import ColumnResizer from '../ColumnResizer/ColumnResizer.js'
@@ -30,39 +30,42 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
   const sortable = !!onClick // if onClick is defined, the column is sortable
 
   // Get the column width from the context
-  const { getColumnStyle, setColumnWidth, getColumnWidth } = useColumnWidth()
+  const { getColumnStyle, setFixedColumnWidth, getColumnWidth, setMeasuredColumnWidth } = useColumnWidth()
   const columnStyle = getColumnStyle?.(columnIndex)
   const width = getColumnWidth?.(columnIndex)
-  const setWidth = useCallback((nextWidth: number | undefined) => {
-    setColumnWidth?.({ columnIndex, width: nextWidth })
-  }, [setColumnWidth, columnIndex])
+  const setFixedWidth = useCallback((nextWidth: number | undefined) => {
+    setFixedColumnWidth?.({ columnIndex, width: nextWidth })
+  }, [setFixedColumnWidth, columnIndex])
+  const setMeasuredWidth = useCallback((nextWidth: number | undefined) => {
+    setMeasuredColumnWidth?.({ columnIndex, width: nextWidth })
+  }, [setMeasuredColumnWidth, columnIndex])
 
   // Measure default column width when data is ready, if no width is set
   useEffect(() => {
     const element = ref.current
     if (dataReady && element && width === undefined) {
-      const nextWidth = measureWidth(element)
+      const nextWidth = measureOffsetWidth(element)
       if (!isNaN(nextWidth)) {
         // should not happen in the browser (but fails in unit tests)
-        setWidth(nextWidth)
+        setMeasuredWidth(nextWidth)
       }
     }
-  }, [dataReady, setWidth, width])
+  }, [dataReady, setMeasuredWidth, width])
 
   const autoResize = useCallback(() => {
     const element = ref.current
     if (element) {
       // Remove the width, let it size naturally, and then measure it
       flushSync(() => {
-        setWidth(undefined)
+        setMeasuredWidth(undefined)
       })
-      const nextWidth = measureWidth(element)
+      const nextWidth = measureOffsetWidth(element)
       if (!isNaN(nextWidth)) {
         // should not happen in the browser (but fails in unit tests)
-        setWidth(nextWidth)
+        setMeasuredWidth(nextWidth)
       }
     }
-  }, [setWidth])
+  }, [setMeasuredWidth])
 
   const description = useMemo(() => {
     if (!sortable) {
@@ -111,7 +114,7 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
     >
       {children}
       <ColumnResizer
-        setWidth={setWidth}
+        setWidth={setFixedWidth}
         onDoubleClick={autoResize}
         width={width}
         tabIndex={tabIndex}

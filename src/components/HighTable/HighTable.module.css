@@ -243,7 +243,8 @@
     border-bottom: 1px solid #ddd;
     border-right: 1px solid #ddd;
     height: 32px;
-    max-width: 40rem; /* prevent columns expanding - limits the initial and autoresized width */
+    /* prevent columns expanding - limits the initial and autoresized width */
+    max-width: 120rem;
     padding: 4px var(--cell-horizontal-padding);
     text-align: left;
     text-overflow: ellipsis;
