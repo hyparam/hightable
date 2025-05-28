@@ -3,7 +3,7 @@ import { DataFrame } from '../../helpers/dataframe.js'
 import { PartialRow } from '../../helpers/row.js'
 import { Selection, areAllSelected, isSelected, toggleIndexInSelection, toggleRangeInSelection, toggleRangeInTable } from '../../helpers/selection.js'
 import { OrderBy, areEqualOrderBy } from '../../helpers/sort.js'
-import { cellStyle } from '../../helpers/width.js'
+import { cellStyle, measureClientWidth, measureOffsetWidth } from '../../helpers/width.js'
 import { CellsNavigationProvider, useCellsNavigation } from '../../hooks/useCellsNavigation.js'
 import { ColumnWidthProvider, useColumnWidth } from '../../hooks/useColumnWidth.js'
 import { DataProvider, useData } from '../../hooks/useData.js'
@@ -30,6 +30,7 @@ interface Slice {
 }
 
 const rowHeight = 33 // row height px
+const minWidth = 50 // minimum width of a cell in px, used to compute the column widths
 
 interface Props {
   data: DataFrame
@@ -83,7 +84,7 @@ function HighTableData(props: PropsData) {
     /* important: key={key} ensures the local state is recreated if the data has changed */
     <OrderByProvider key={key} orderBy={orderBy} onOrderByChange={onOrderByChange} disabled={!data.sortable}>
       <SelectionProvider selection={selection} onSelectionChange={onSelectionChange}>
-        <ColumnWidthProvider key={key} localStorageKey={cacheKey ? `${cacheKey}${columnWidthsSuffix}` : undefined} numColumns={data.header.length}>
+        <ColumnWidthProvider key={key} localStorageKey={cacheKey ? `${cacheKey}${columnWidthsSuffix}` : undefined} numColumns={data.header.length} minWidth={minWidth}>
           <CellsNavigationProvider colCount={ariaColCount} rowCount={ariaRowCount} rowPadding={props.padding ?? defaultPadding}>
             <HighTableInner {...props} />
           </CellsNavigationProvider>
@@ -270,7 +271,9 @@ export function HighTableInner({
     function reportWidth() {
       if (scrollRef.current && tableCornerRef.current) {
         // we use the scrollRef client width, because we're interested in the content area
-        setAvailableWidth?.(scrollRef.current.clientWidth - tableCornerRef.current.offsetWidth)
+        const tableWidth = measureClientWidth(scrollRef.current)
+        const leftColumnWidth = measureOffsetWidth(tableCornerRef.current)
+        setAvailableWidth?.(tableWidth - leftColumnWidth)
       }
     }
 

@@ -738,37 +738,29 @@ describe('in disabled selection state (neither selection nor onSelection props),
   })
 })
 
-const initialWidth = 42
-const measureWidth = vi.fn(() => initialWidth)
+const initialWidth = 62 // initial width of the columns, in pixels, above the default minimal width of 50px
+const measureOffsetWidth = vi.fn(() => initialWidth)
+const measureClientWidth = vi.fn(() => 1000) // used to get the width of the table - let's give space
 const keyItem = `key${columnWidthsSuffix}`
 const undefinedItem = `undefined${columnWidthsSuffix}`
 vi.mock(import('../../helpers/width.js'), async (importOriginal ) => {
   const actual = await importOriginal()
   return {
     ...actual,
-    measureWidth: () => measureWidth(),
+    measureOffsetWidth: () => measureOffsetWidth(),
+    measureClientWidth: () => measureClientWidth(),
   }})
 describe('HighTable localstorage', () => {
-  it('saves the autosized column widths on initialization, if not saved before', () => {
+  it('does not save the autosized column widths', () => {
     localStorage.clear()
-    const { getAllByRole } = render(<HighTable data={data} cacheKey="key" />)
-    const header = getAllByRole('columnheader')[0]
-    if (!header) {
-      throw new Error('Header should not be null')
-    }
-    expect(header.style.maxWidth).toEqual(`${initialWidth}px`)
-    expect(measureWidth).toHaveBeenCalled()
-    expect(localStorage.getItem(keyItem)).toEqual(JSON.stringify([initialWidth, initialWidth, initialWidth, initialWidth]))
+    render(<HighTable data={data} cacheKey="key" />)
+    expect(measureClientWidth).toHaveBeenCalled()
+    expect(localStorage.getItem(keyItem)).toEqual(null)
   })
   it('saves nothing on initialization if cacheKey is not provided', () => {
     localStorage.clear()
-    const { getAllByRole } = render(<HighTable data={data} />)
-    const header = getAllByRole('columnheader')[0]
-    if (!header) {
-      throw new Error('Header should not be null')
-    }
-    expect(header.style.maxWidth).toEqual(`${initialWidth}px`)
-    expect(measureWidth).toHaveBeenCalled()
+    render(<HighTable data={data} />)
+    expect(measureClientWidth).toHaveBeenCalled()
     expect(localStorage.getItem(keyItem)).toBeNull()
     expect(localStorage.getItem(undefinedItem)).toBeNull()
     expect(localStorage.length).toBe(0)
@@ -786,7 +778,7 @@ describe('HighTable localstorage', () => {
     expect(localStorage.getItem(keyItem)).toEqual(JSON.stringify([savedWidth, savedWidth, savedWidth, savedWidth]))
     expect(header.style.maxWidth).toEqual(`${savedWidth}px`)
   })
-  it('is updated if new data are loaded', () => {
+  it('is not used or updated if new data are loaded', () => {
     localStorage.clear()
     const savedWidth = initialWidth * 2
     localStorage.setItem(keyItem, JSON.stringify([savedWidth, savedWidth, savedWidth, savedWidth]))
@@ -800,8 +792,8 @@ describe('HighTable localstorage', () => {
     if (!header) {
       throw new Error('Header should not be null')
     }
-    expect(localStorage.getItem(`${otherKey}${columnWidthsSuffix}`)).toEqual(JSON.stringify([initialWidth, initialWidth]))
-    expect(header.style.maxWidth).toEqual(`${initialWidth}px`)
+    expect(localStorage.getItem(`${otherKey}${columnWidthsSuffix}`)).toEqual(null)
+    expect(header.style.maxWidth).not.toEqual(`${savedWidth}px`)
   })
 })
 
@@ -965,12 +957,14 @@ describe('Navigating Hightable with the keyboard', () => {
         throw new Error('Separator is null')
       }
       const value = separator.getAttribute('aria-valuenow')
+      if (value === null) {
+        throw new Error('aria-valuenow should not be null')
+      }
       // the column measurement is mocked
-      expect(value).toBe(initialWidth.toString())
       await user.keyboard('{ArrowRight}')
-      expect(separator.getAttribute('aria-valuenow')).toBe((initialWidth + 10).toString())
+      expect(separator.getAttribute('aria-valuenow')).toBe((+value + 10).toString())
       await user.keyboard('{ArrowLeft}{ArrowLeft}{ArrowLeft}')
-      expect(separator.getAttribute('aria-valuenow')).toBe((initialWidth - 20).toString())
+      expect(separator.getAttribute('aria-valuenow')).toBe((+value - 20).toString())
     })
 
     it.for(['{ }', '{Enter}'])('the column resizer autosizes the column and exits resize mode when %s is pressed', async (key) => {
@@ -984,12 +978,13 @@ describe('Navigating Hightable with the keyboard', () => {
         throw new Error('Separator is null')
       }
       const value = separator.getAttribute('aria-valuenow')
-      // the column measurement is mocked
-      expect(value).toBe(initialWidth.toString())
+      if (value === null) {
+        throw new Error('aria-valuenow should not be null')
+      }
       await user.keyboard('{ArrowRight}')
-      expect(separator.getAttribute('aria-valuenow')).toBe((initialWidth + 10).toString())
+      expect(separator.getAttribute('aria-valuenow')).toBe((+value + 10).toString())
       await user.keyboard(key)
-      expect(separator.getAttribute('aria-valuenow')).toBe(initialWidth.toString())
+      expect(separator.getAttribute('aria-valuenow')).toBe(value)
       expect(document.activeElement).toBe(cell)
     })
   })
