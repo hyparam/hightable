@@ -106,8 +106,13 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
         top: rect.bottom,
       })
     }
-    setIsOpen((current) => !current)
-  }, [ref])
+    setIsOpen((current) => {
+      if (current) {
+        navigateToCell()
+      }
+      return !current
+    })
+  }, [ref, navigateToCell])
 
   const handleToggle = useCallback(() => {
     setIsOpen((current) => !current)
