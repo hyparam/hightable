@@ -8,6 +8,7 @@ import {
   useCallback,
   useEffect,
   useRef,
+  useState,
 } from 'react'
 
 function getSortDirection(direction?: Direction, sortable?: boolean) {
@@ -21,6 +22,34 @@ function getSortDirection(direction?: Direction, sortable?: boolean) {
   default:
     return 'Sort'
   }
+}
+
+interface MenuItemProps {
+  onClick?: () => void
+  label: string
+  columnName: string
+}
+
+function MenuItem({ onClick, label, columnName }: MenuItemProps) {
+  return (
+    <button
+      role='menuitem'
+      onClick={onClick}
+      tabIndex={0}
+      aria-label={`${label} ${columnName}`}
+      aria-haspopup='false'
+    >
+      {label}
+    </button>
+  )
+}
+
+interface OverlayProps {
+  onClick: (e: MouseEvent<HTMLDivElement>) => void
+}
+
+function Overlay({ onClick }: OverlayProps) {
+  return <div role='presentation' onClick={onClick} />
 }
 
 interface ColumnMenuProps {
@@ -53,20 +82,25 @@ export default function ColumnMenu({
   const { top, left } = position
   const menuRef = useRef<HTMLDivElement>(null)
   const labelId = useRef(`column-menu-label-${columnIndex}`).current
+  const [isScrollLocked, setIsScrollLocked] = useState(false)
 
-  // Prevent scrolling when menu is open
+  // Handle scroll lock using React state
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !isScrollLocked) {
       document.body.style.overflow = 'hidden'
-    } else {
+      setIsScrollLocked(true)
+    } else if (!isOpen && isScrollLocked) {
       document.body.style.overflow = ''
+      setIsScrollLocked(false)
     }
     return () => {
-      document.body.style.overflow = ''
+      if (isScrollLocked) {
+        document.body.style.overflow = ''
+      }
     }
-  }, [isOpen])
+  }, [isOpen, isScrollLocked])
 
-  // Focus the menu when it becomes visible
+  // Focus management
   useEffect(() => {
     if (isOpen && menuRef.current) {
       menuRef.current.focus()
@@ -75,18 +109,19 @@ export default function ColumnMenu({
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLDivElement>) => {
-      if (e.key === 'Escape') {
+      switch (e.key) {
+      case 'Escape':
         e.preventDefault()
         e.stopPropagation()
         onToggle(columnIndex)
-
-        if (buttonRef?.current) {
-          buttonRef.current.focus()
-        }
-      } else if (e.key === 'Enter' || e.key === ' ') {
+        buttonRef?.current?.focus()
+        break
+      case 'Enter':
+      case ' ':
         e.preventDefault()
         e.stopPropagation()
         onClick?.()
+        break
       }
     },
     [columnIndex, onToggle, buttonRef, onClick]
@@ -109,7 +144,7 @@ export default function ColumnMenu({
 
   return createPortal(
     <>
-      <div role='presentation' onClick={handleOverlayClick} />
+      <Overlay onClick={handleOverlayClick} />
       <div
         role='menu'
         style={{ top, left }}
@@ -122,17 +157,13 @@ export default function ColumnMenu({
       >
         <div role='presentation' id={labelId}>{columnName}</div>
         <hr role='separator' />
-        {sortable &&
-          <button
-            role='menuitem'
+        {sortable && sortDirection && (
+          <MenuItem
             onClick={onClick}
-            tabIndex={0}
-            aria-label={`${sortDirection} ${columnName}`}
-            aria-haspopup='false'
-          >
-            {sortDirection}
-          </button>
-        }
+            label={sortDirection}
+            columnName={columnName}
+          />
+        )}
       </div>
     </>,
     containerRef.current ?? document.body
