@@ -78,6 +78,18 @@
     font-size: 14px;
     color: #444;
     position: fixed;
+    z-index: 1001;
+  }
+
+  /* menu overlay */
+  div[role="presentation"]:has(+ div[role="menu"]) {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1000;
+    background-color: transparent;
   }
   
   div[role="menu"] > [role="presentation"] {
@@ -86,6 +98,7 @@
     color: #444;
     background-color: #f1f1f3;
     border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
   }
   
   div[role="menu"] > [role="menuitem"] {
@@ -96,6 +109,15 @@
     border: none;
     background: none;
     cursor: pointer;
+  }
+
+  div[role="menu"] > [role="menuitem"]:hover {
+    background-color: #f1f1f3;
+  }
+
+  div[role="menu"] > [role="separator"] {
+    border: none;
+    border-top: 1px solid #e0e0e0;
   }
 
   /* column menu button */

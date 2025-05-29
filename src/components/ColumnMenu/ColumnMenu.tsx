@@ -1,7 +1,27 @@
 import { createPortal } from 'react-dom'
 import { Direction } from '../../helpers/sort'
 import { usePortalContainer } from '../../hooks/usePortalContainer'
-import { KeyboardEvent, RefObject, useCallback, useEffect, useRef } from 'react'
+import {
+  KeyboardEvent,
+  MouseEvent,
+  RefObject,
+  useCallback,
+  useEffect,
+  useRef,
+} from 'react'
+
+function getSortDirection(direction?: Direction, sortable?: boolean) {
+  if (!sortable) return null
+
+  switch (direction) {
+  case 'ascending':
+    return 'Ascending'
+  case 'descending':
+    return 'Descending'
+  default:
+    return 'Sort'
+  }
+}
 
 interface ColumnMenuProps {
   columnName: string
@@ -32,19 +52,19 @@ export default function ColumnMenu({
   const { containerRef } = usePortalContainer()
   const { top, left } = position
   const menuRef = useRef<HTMLDivElement>(null)
+  const labelId = useRef(`column-menu-label-${columnIndex}`).current
 
-  const getSortDirection = useCallback(() => {
-    if (!sortable) return null
-
-    switch (direction) {
-    case 'ascending':
-      return 'Ascending'
-    case 'descending':
-      return 'Descending'
-    default:
-      return 'Sort'
+  // Prevent scrolling when menu is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
     }
-  }, [direction, sortable])
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [isOpen])
 
   // Focus the menu when it becomes visible
   useEffect(() => {
@@ -54,7 +74,7 @@ export default function ColumnMenu({
   }, [isOpen])
 
   const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
+    (e: KeyboardEvent<HTMLDivElement>) => {
       if (e.key === 'Escape') {
         e.preventDefault()
         e.stopPropagation()
@@ -69,39 +89,52 @@ export default function ColumnMenu({
         onClick?.()
       }
     },
-    [onClick, columnIndex, onToggle, buttonRef]
+    [columnIndex, onToggle, buttonRef, onClick]
+  )
+
+  const handleOverlayClick = useCallback(
+    (e: MouseEvent<HTMLDivElement>) => {
+      e.preventDefault()
+      e.stopPropagation()
+      onToggle(columnIndex)
+    },
+    [columnIndex, onToggle]
   )
 
   if (!isOpen) {
     return null
   }
 
+  const sortDirection = getSortDirection(direction, sortable)
+
   return createPortal(
-    <div
-      role='menu'
-      style={{ top, left }}
-      ref={menuRef}
-      tabIndex={-1}
-      aria-label={`${columnName} column menu`}
-      onKeyDown={handleKeyDown}
-      aria-expanded={isOpen}
-    >
-      <div role='presentation'>{columnName}</div>
-      <hr role='separator' />
-      {sortable &&
-        <>
+    <>
+      <div role='presentation' onClick={handleOverlayClick} />
+      <div
+        role='menu'
+        style={{ top, left }}
+        ref={menuRef}
+        tabIndex={-1}
+        aria-labelledby={labelId}
+        aria-orientation='vertical'
+        onKeyDown={handleKeyDown}
+        aria-expanded={isOpen}
+      >
+        <div role='presentation' id={labelId}>{columnName}</div>
+        <hr role='separator' />
+        {sortable &&
           <button
             role='menuitem'
             onClick={onClick}
             tabIndex={0}
-            aria-label={`${getSortDirection()} ${columnName}`}
+            aria-label={`${sortDirection} ${columnName}`}
             aria-haspopup='false'
           >
-            {getSortDirection()}
+            {sortDirection}
           </button>
-        </>
-      }
-    </div>,
+        }
+      </div>
+    </>,
     containerRef.current ?? document.body
   )
 }
