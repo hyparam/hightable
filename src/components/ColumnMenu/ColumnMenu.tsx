@@ -4,7 +4,6 @@ import { usePortalContainer } from '../../hooks/usePortalContainer'
 import {
   KeyboardEvent,
   MouseEvent,
-  RefObject,
   useCallback,
   useEffect,
   useRef,
@@ -64,7 +63,6 @@ interface ColumnMenuProps {
   onClick?: () => void
   columnIndex: number
   onToggle: (columnIndex: number) => void
-  buttonRef?: RefObject<HTMLDivElement | null>
 }
 
 export default function ColumnMenu({
@@ -76,7 +74,6 @@ export default function ColumnMenu({
   onClick,
   columnIndex,
   onToggle,
-  buttonRef,
 }: ColumnMenuProps) {
   const { containerRef } = usePortalContainer()
   const { top, left } = position
@@ -209,13 +206,13 @@ export default function ColumnMenu({
       >
         <div role='presentation' id={labelId}>{columnName}</div>
         <hr role='separator' />
-        {sortable && sortDirection && (
+        {sortable && sortDirection &&
           <MenuItem
             onClick={onClick}
             label={sortDirection}
             columnName={columnName}
           />
-        )}
+        }
       </div>
     </>,
     containerRef.current ?? document.body

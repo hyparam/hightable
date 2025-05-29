@@ -155,7 +155,6 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
         onClick={onClick}
         columnIndex={columnIndex}
         onToggle={handleToggle}
-        buttonRef={buttonRef}
       />
     </th>
   )
