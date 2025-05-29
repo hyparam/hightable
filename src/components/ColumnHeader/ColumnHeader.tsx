@@ -21,12 +21,11 @@ interface Props {
   ariaColIndex: number // aria col index for the header
   ariaRowIndex: number // aria row index for the header
   className?: string // optional class name
-  isColumnMenuOpen: boolean
-  onToggleColumnMenu: (columnIndex: number) => void
 }
 
-export default function ColumnHeader({ columnIndex, columnName, dataReady, direction, onClick, sortable, orderByIndex, orderBySize, ariaColIndex, ariaRowIndex, className, children, isColumnMenuOpen, onToggleColumnMenu }: Props) {
+export default function ColumnHeader({ columnIndex, columnName, dataReady, direction, onClick, sortable, orderByIndex, orderBySize, ariaColIndex, ariaRowIndex, className, children }: Props) {
   const [position, setPosition] = useState({ left: 0, top: 0 })
+  const [isOpen, setIsOpen] = useState(false)
   const ref = useRef<HTMLTableCellElement>(null)
   const buttonRef = useRef<HTMLDivElement>(null)
   const { tabIndex, navigateToCell } = useCellNavigation({ ref, ariaColIndex, ariaRowIndex })
@@ -107,8 +106,12 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
         top: rect.bottom,
       })
     }
-    onToggleColumnMenu(columnIndex)
-  }, [columnIndex, onToggleColumnMenu, ref])
+    setIsOpen((current) => !current)
+  }, [ref])
+
+  const handleToggle = useCallback(() => {
+    setIsOpen((current) => !current)
+  }, [])
 
   return (
     <th
@@ -139,13 +142,13 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
       />
       <ColumnMenu
         columnName={columnName}
-        isVisible={isColumnMenuOpen}
+        isOpen={isOpen}
         position={position}
         direction={direction}
         sortable={sortable}
         onClick={onClick}
         columnIndex={columnIndex}
-        onToggleColumnMenu={onToggleColumnMenu}
+        onToggle={handleToggle}
         buttonRef={buttonRef}
       />
     </th>

@@ -18,7 +18,6 @@ interface TableProps {
 export default function TableHeader({
   header, orderBy, onOrderByChange, dataReady, ariaRowIndex, sortable = true, columnClassNames = [],
 }: TableProps) {
-  const [openColumnMenuIndex, setOpenColumnMenuIndex] = useState<number | null>(null)
   // Function to handle click for changing orderBy
   const getOnOrderByClick = useCallback((columnHeader: string) => {
     if (!onOrderByChange || !orderBy) return undefined
@@ -30,12 +29,6 @@ export default function TableHeader({
   const orderByColumn = useMemo(() => {
     return new Map((orderBy ?? []).map(({ column, direction }, index) => [column, { direction, index }]))
   }, [orderBy])
-
-  const handleToggleColumnMenu = useCallback((columnIndex: number) => {
-    setOpenColumnMenuIndex((current) =>
-      current === columnIndex ? null : columnIndex
-    )
-  }, [])
 
   return header.map((name, columnIndex) => {
     // Note: columnIndex is the index of the column in the dataframe header
@@ -57,8 +50,6 @@ export default function TableHeader({
         className={columnClassNames[columnIndex]}
         ariaColIndex={ariaColIndex}
         ariaRowIndex={ariaRowIndex}
-        isColumnMenuOpen={openColumnMenuIndex === columnIndex}
-        onToggleColumnMenu={handleToggleColumnMenu}
       >
         {name}
       </ColumnHeader>

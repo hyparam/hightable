@@ -5,7 +5,7 @@ import { KeyboardEvent, RefObject, useCallback, useEffect, useRef } from 'react'
 
 interface ColumnMenuProps {
   columnName: string
-  isVisible: boolean
+  isOpen: boolean
   position: {
     left: number
     top: number
@@ -14,19 +14,19 @@ interface ColumnMenuProps {
   sortable?: boolean
   onClick?: () => void
   columnIndex: number
-  onToggleColumnMenu: (columnIndex: number) => void
+  onToggle: (columnIndex: number) => void
   buttonRef?: RefObject<HTMLDivElement | null>
 }
 
 export default function ColumnMenu({
   columnName,
-  isVisible,
+  isOpen,
   position,
   direction,
   sortable,
   onClick,
   columnIndex,
-  onToggleColumnMenu,
+  onToggle,
   buttonRef,
 }: ColumnMenuProps) {
   const { containerRef } = usePortalContainer()
@@ -48,17 +48,17 @@ export default function ColumnMenu({
 
   // Focus the menu when it becomes visible
   useEffect(() => {
-    if (isVisible && menuRef.current) {
+    if (isOpen && menuRef.current) {
       menuRef.current.focus()
     }
-  }, [isVisible])
+  }, [isOpen])
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.preventDefault()
         e.stopPropagation()
-        onToggleColumnMenu(columnIndex)
+        onToggle(columnIndex)
 
         if (buttonRef?.current) {
           buttonRef.current.focus()
@@ -69,10 +69,10 @@ export default function ColumnMenu({
         onClick?.()
       }
     },
-    [onClick, columnIndex, onToggleColumnMenu, buttonRef]
+    [onClick, columnIndex, onToggle, buttonRef]
   )
 
-  if (!isVisible) {
+  if (!isOpen) {
     return null
   }
 
@@ -84,7 +84,7 @@ export default function ColumnMenu({
       tabIndex={-1}
       aria-label={`${columnName} column menu`}
       onKeyDown={handleKeyDown}
-      aria-expanded={isVisible}
+      aria-expanded={isOpen}
     >
       <div role='presentation'>{columnName}</div>
       <hr role='separator' />
