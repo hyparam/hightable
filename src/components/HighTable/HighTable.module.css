@@ -158,7 +158,7 @@
     outline-style: solid;
     outline-color: var(--focus-border-color);
     outline-width: 1px;
-    background-color: var(--focusable-background-color);
+    background-color: #dbdbe5;
   }
 
   th > div[role="button"] > span {

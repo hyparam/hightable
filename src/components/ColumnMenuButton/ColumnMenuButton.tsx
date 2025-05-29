@@ -9,11 +9,13 @@ import {
 interface ColumnMenuButtonProps {
   onClick?: (e: MouseEvent) => void
   buttonRef?: RefObject<HTMLDivElement | null>
+  tabIndex?: number
 }
 
 export default function ColumnMenuButton({
   onClick,
   buttonRef,
+  tabIndex = 0,
 }: ColumnMenuButtonProps) {
   const internalRef = useRef<HTMLDivElement>(null)
   const ref = buttonRef ?? internalRef
@@ -49,7 +51,7 @@ export default function ColumnMenuButton({
       onKeyDown={handleKeyDown}
       aria-label='Column Menu Button'
       role='button'
-      tabIndex={0}
+      tabIndex={tabIndex}
     >
       <span>⋮</span>
     </div>

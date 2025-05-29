@@ -137,7 +137,7 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
       className={className}
     >
       {children}
-      {sortable && <ColumnMenuButton onClick={handleColumnMenuClick} buttonRef={buttonRef} />}
+      {sortable && <ColumnMenuButton onClick={handleColumnMenuClick} buttonRef={buttonRef} tabIndex={tabIndex} />}
       <ColumnResizer
         setWidth={setWidth}
         onDoubleClick={autoResize}
