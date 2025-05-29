@@ -83,6 +83,7 @@ export default function ColumnMenu({
   const menuRef = useRef<HTMLDivElement>(null)
   const labelId = useRef(`column-menu-label-${columnIndex}`).current
   const [isScrollLocked, setIsScrollLocked] = useState(false)
+  const previousFocusRef = useRef<HTMLElement | null>(null)
 
   // Handle scroll lock using React state
   useEffect(() => {
@@ -102,8 +103,21 @@ export default function ColumnMenu({
 
   // Focus management
   useEffect(() => {
-    if (isOpen && menuRef.current) {
-      menuRef.current.focus()
+    if (isOpen) {
+      // Store the previously focused element
+      previousFocusRef.current = document.activeElement as HTMLElement
+      // Focus the first focusable element in the menu
+      const focusableElements = menuRef.current?.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      )
+      if (focusableElements?.length) {
+        const firstElement = focusableElements[0] as HTMLElement
+        firstElement.focus()
+      }
+    } else if (previousFocusRef.current) {
+      // Restore focus when closing
+      previousFocusRef.current.focus()
+      previousFocusRef.current = null
     }
   }, [isOpen])
 
@@ -114,7 +128,6 @@ export default function ColumnMenu({
         e.preventDefault()
         e.stopPropagation()
         onToggle(columnIndex)
-        buttonRef?.current?.focus()
         break
       case 'Enter':
       case ' ':
@@ -122,9 +135,48 @@ export default function ColumnMenu({
         e.stopPropagation()
         onClick?.()
         break
+      case 'ArrowUp':
+      case 'ArrowDown':
+      case 'ArrowLeft':
+      case 'ArrowRight':
+      case 'Tab': {
+        e.preventDefault()
+        e.stopPropagation()
+        const focusableElements = menuRef.current?.querySelectorAll(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        )
+        if (!focusableElements?.length) return
+
+        const { activeElement } = document
+        if (!activeElement) return
+        const currentIndex = Array.from(focusableElements).indexOf(activeElement)
+
+        let nextIndex = currentIndex
+        switch (e.key) {
+        case 'ArrowUp':
+        case 'ArrowLeft':
+        case 'Tab':
+          if (e.shiftKey || e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+            nextIndex = currentIndex <= 0 ? focusableElements.length - 1 : currentIndex - 1
+          } else {
+            nextIndex = currentIndex >= focusableElements.length - 1 ? 0 : currentIndex + 1
+          }
+          break
+        case 'ArrowDown':
+        case 'ArrowRight':
+          nextIndex = currentIndex >= focusableElements.length - 1 ? 0 : currentIndex + 1
+          break
+        }
+
+        const nextElement = focusableElements[nextIndex]
+        if (nextElement instanceof HTMLElement) {
+          nextElement.focus()
+        }
+        break
+      }
       }
     },
-    [columnIndex, onToggle, buttonRef, onClick]
+    [columnIndex, onToggle, onClick]
   )
 
   const handleOverlayClick = useCallback(

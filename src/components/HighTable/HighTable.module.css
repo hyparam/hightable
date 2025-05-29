@@ -81,6 +81,14 @@
     z-index: 1001;
   }
 
+  div[role="menu"]:focus,
+  div[role="menu"] > [role="menuitem"]:focus {
+    outline-style: solid;
+    outline-color: var(--focus-border-color);
+    outline-width: 1px;
+    background-color: var(--focusable-background-color);
+  }
+
   /* menu overlay */
   div[role="presentation"]:has(+ div[role="menu"]) {
     position: fixed;
@@ -144,6 +152,13 @@
   th > div[role="button"]:focus-visible {
     background-color: #dbdbe5;
     opacity: 1;
+  }
+
+  th > div[role="button"]:focus {
+    outline-style: solid;
+    outline-color: var(--focus-border-color);
+    outline-width: 1px;
+    background-color: var(--focusable-background-color);
   }
 
   th > div[role="button"] > span {
