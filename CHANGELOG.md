@@ -1,6 +1,34 @@
 # CHANGELOG
 
-## [Unreleased](https://github.com/hyparam/hightable/compare/v0.15.6...HEAD)
+## [Unreleased](https://github.com/hyparam/hightable/compare/v0.16.0...HEAD)
+
+## [0.15.6](https://github.com/hyparam/hightable/compare/v0.15.6...v0.16.0) - 2025-05-23
+
+### Added
+
+- support for selecting rows with the keyboard: Space/Enter on checkboxes, Escape to unselect, Ctrl/Meta+a to select/deselect all, select a row with Shift+Space on any cell of the row ([#183](https://github.com/hyparam/hightable/pull/183), [#184](https://github.com/hyparam/hightable/pull/184), [#187](https://github.com/hyparam/hightable/pull/187)).
+
+### Changed
+
+- **Breaking** when the selection is expanded (shift+click), the new anchor is the clicked cell (before, anchor was unchanged) ([#186](https://github.com/hyparam/hightable/pull/186)).
+- **Breaking** when the selection is expanded (shift+click), if the clicked cell is the anchor, the row is toggled (before, it was a no-op) ([#186](https://github.com/hyparam/hightable/pull/186)).
+- **Breaking** remove the ability to navigate with Space / Shift+Space, which was a shortcut for PageUp/PageDown ([#176](https://github.com/hyparam/hightable/pull/176)).
+- Faster resolvablePromise by skipping wrapPromise ([#175](https://github.com/hyparam/hightable/pull/175)).
+- Restore color to the checkboxes when actionable ([#189](https://github.com/hyparam/hightable/pull/189)).
+- Change sort arrows style and an icon (two arrows) when unsorted ([#193](https://github.com/hyparam/hightable/pull/193)).
+
+### Fixed
+
+- fix an issue when focusing a header cell after focusing the table ([#191](https://github.com/hyparam/hightable/pull/191)).
+
+### Refactored
+
+- add `asyncRows` tests ([fb4438b](https://github.com/hyparam/hightable/commit/fb4438b8385ae61ff5bd9c5c8ee24b5342c79b4b)).
+- exclude stories from tests ([fb4438b](https://github.com/hyparam/hightable/commit/fb4438b8385ae61ff5bd9c5c8ee24b5342c79b4b)).
+- updated dev dependencies ([#192](https://github.com/hyparam/hightable/pull/192), [#194](https://github.com/hyparam/hightable/pull/194)).
+- removed unneeded variable `enableInteractions` ([#177](https://github.com/hyparam/hightable/pull/177)).
+- use a context for data, orderBy and selection ([#178](https://github.com/hyparam/hightable/pull/178), [#179](https://github.com/hyparam/hightable/pull/179), [#180](https://github.com/hyparam/hightable/pull/180), [#182](https://github.com/hyparam/hightable/pull/182)).
+- add the optional attribute `aria-rowindex` to the cells ([#185](https://github.com/hyparam/hightable/pull/185)).
 
 ## [0.15.6](https://github.com/hyparam/hightable/compare/v0.15.5...v0.15.6) - 2025-05-16
 

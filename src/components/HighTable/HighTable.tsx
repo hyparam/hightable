@@ -1,12 +1,14 @@
 import { CSSProperties, KeyboardEvent, MouseEvent, RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DataFrame } from '../../helpers/dataframe.js'
 import { PartialRow } from '../../helpers/row.js'
-import { Selection, areAllSelected, isSelected, toggleAll, toggleIndexInSelection, toggleRangeInSelection, toggleRangeInTable } from '../../helpers/selection.js'
+import { Selection, areAllSelected, isSelected, toggleIndexInSelection, toggleRangeInSelection, toggleRangeInTable } from '../../helpers/selection.js'
 import { OrderBy, areEqualOrderBy } from '../../helpers/sort.js'
 import { leftCellStyle } from '../../helpers/width.js'
 import { CellsNavigationProvider, useCellsNavigation } from '../../hooks/useCellsNavigation.js'
 import { ColumnWidthProvider } from '../../hooks/useColumnWidth.js'
-import { useInputState } from '../../hooks/useInputState.js'
+import { DataProvider, useData } from '../../hooks/useData.js'
+import { OrderByProvider, useOrderBy } from '../../hooks/useOrderBy.js'
+import { SelectionProvider, useSelection } from '../../hooks/useSelection.js'
 import { stringify as stringifyDefault } from '../../utils/stringify.js'
 import { throttle } from '../../utils/throttle.js'
 import Cell from '../Cell/Cell.js'
@@ -53,6 +55,7 @@ interface Props {
 const defaultPadding = 20
 const defaultOverscan = 20
 const ariaOffset = 2 // 1-based index, +1 for the header
+export const columnWidthsSuffix = ':columns:widths' // suffix used to store the column widths in local storage
 
 /**
  * Render a table with streaming rows on demand from a DataFrame.
@@ -63,19 +66,37 @@ const ariaOffset = 2 // 1-based index, +1 for the header
  * onSelectionChange: the callback to call when the selection changes. If undefined, the component selection is read-only if controlled (selection is set), or disabled if not.
  */
 export default function HighTable(props: Props) {
-  const { data, cacheKey } = props
+  return (
+    <DataProvider data={props.data}>
+      <HighTableData {...props} />
+    </DataProvider>
+  )
+}
+
+type PropsData = Omit<Props, 'data'>
+
+function HighTableData(props: PropsData) {
+  const { data, key } = useData()
+  const { cacheKey, orderBy, onOrderByChange, selection, onSelectionChange } = props
   const ariaColCount = data.header.length + 1 // don't forget the selection column
   const ariaRowCount = data.numRows + 1 // don't forget the header row
   return (
-    <PortalContainerProvider>
-      <ColumnWidthProvider localStorageKey={cacheKey ? `${cacheKey}:column-widths` : undefined}>
-        <CellsNavigationProvider colCount={ariaColCount} rowCount={ariaRowCount} rowPadding={props.padding ?? defaultPadding}>
-          <HighTableInner {...props} />
-        </CellsNavigationProvider>
-      </ColumnWidthProvider>
-    </PortalContainerProvider>
+    /* important: key={key} ensures the local state is recreated if the data has changed */
+    <OrderByProvider key={key} orderBy={orderBy} onOrderByChange={onOrderByChange} disabled={!data.sortable}>
+      <SelectionProvider selection={selection} onSelectionChange={onSelectionChange}>
+        <PortalContainerProvider>
+          <ColumnWidthProvider localStorageKey={cacheKey ? `${cacheKey}${columnWidthsSuffix}` : undefined}>
+            <CellsNavigationProvider colCount={ariaColCount} rowCount={ariaRowCount} rowPadding={props.padding ?? defaultPadding}>
+              <HighTableInner {...props} />
+            </CellsNavigationProvider>
+          </ColumnWidthProvider>
+        </PortalContainerProvider>
+      </SelectionProvider>
+    </OrderByProvider>
   )
 }
+
+type PropsInner = Omit<PropsData, 'orderBy' | 'onOrderByChange' | 'selection' | 'onSelectionChange'>
 
 /**
  * The main purpose of extracting HighTableInner from HighTable is to
@@ -83,14 +104,9 @@ export default function HighTable(props: Props) {
  * remove the need to reindent the code if adding a new context provide.
  */
 export function HighTableInner({
-  data,
   overscan = defaultOverscan,
   padding = defaultPadding,
   focus = true,
-  orderBy: propOrderBy,
-  onOrderByChange: propOnOrderByChange,
-  selection: propSelection,
-  onSelectionChange: propOnSelectionChange,
   onDoubleClickCell,
   onMouseDownCell,
   onKeyDownCell,
@@ -99,7 +115,7 @@ export function HighTableInner({
   className = '',
   columnClassNames = [],
   styled = true,
-}: Props) {
+}: PropsInner) {
   /**
    * The component relies on the model of a virtual table which rows are ordered and only the
    * visible rows are fetched (slice) and rendered as HTML <tr> elements.
@@ -117,10 +133,11 @@ export function HighTableInner({
    * - data.rows(tableIndex, tableIndex + 1, orderBy)
    */
 
+  const { data } = useData()
   const [slice, setSlice] = useState<Slice | undefined>(undefined)
   const [rowsRange, setRowsRange] = useState({ start: 0, end: 0 })
   const [hasCompleteRow, setHasCompleteRow] = useState(false)
-  const { enterCellsNavigation, setEnterCellsNavigation, onTableKeyDown, onScrollKeyDown, rowIndex, colIndex, focusFirstCell } = useCellsNavigation()
+  const { enterCellsNavigation, setEnterCellsNavigation, onTableKeyDown: onNavigationTableKeyDown, onScrollKeyDown, rowIndex, colIndex, focusFirstCell } = useCellsNavigation()
   const [lastCellPosition, setLastCellPosition] = useState({ rowIndex, colIndex })
   const [numRows, setNumRows] = useState(data.numRows)
   const { containerRef } = usePortalContainer()
@@ -129,50 +146,24 @@ export function HighTableInner({
   // ie. cache the previous sort indexes in the data frame itself
   const [ranksMap, setRanksMap] = useState<Map<string, Promise<number[]>>>(() => new Map())
 
-  // Sorting is disabled if the data is not sortable
-  const {
-    value: orderBy,
-    onChange: onOrderByChange,
-    enableInteractions: enableOrderByInteractions,
-  } = useInputState<OrderBy>({
-    value: propOrderBy,
-    onChange: propOnOrderByChange,
-    defaultValue: [],
-    disabled: !data.sortable,
-  })
+  const { orderBy, onOrderByChange } = useOrderBy()
+  const { selection, onSelectionChange, toggleAllRows, onTableKeyDown: onSelectionTableKeyDown } = useSelection({ numRows })
 
-  // Selection is disabled if the parent passed no props
-  const isSelectionDisabled = propSelection === undefined && propOnSelectionChange === undefined
-  const {
-    value: selection,
-    onChange: onSelectionChange,
-    enableInteractions: enableSelectionInteractions,
-    isControlled: isSelectionControlled,
-  } = useInputState<Selection>({
-    value: propSelection,
-    onChange: propOnSelectionChange,
-    defaultValue: { ranges: [], anchor: undefined },
-    disabled: isSelectionDisabled,
-  })
-
-  const showSelection = selection !== undefined
-  const showSelectionControls = showSelection && enableSelectionInteractions
-  const showCornerSelection = showSelectionControls || showSelection && areAllSelected({ ranges: selection.ranges, length: numRows })
-  const getOnSelectAllRows = useCallback(() => {
-    if (!selection) return
-    const { ranges } = selection
-    return () => { onSelectionChange({
-      ranges: toggleAll({ ranges, length: numRows }),
-      anchor: undefined,
-    }) }
-  }, [onSelectionChange, numRows, selection])
+  const onTableKeyDown = useCallback((event: KeyboardEvent) => {
+    onNavigationTableKeyDown?.(event)
+    onSelectionTableKeyDown?.(event, numRows)
+  }, [onNavigationTableKeyDown, onSelectionTableKeyDown, numRows])
 
   const pendingSelectionRequest = useRef(0)
-  const getOnSelectRowClick = useCallback(({ tableIndex, dataIndex }: {tableIndex: number, dataIndex: number}) => {
-    if (!selection) return
-    async function onSelectRowClick(event: MouseEvent) {
-      if (!selection) return
-      const useAnchor = event.shiftKey && selection.anchor !== undefined
+  const getOnCheckboxPress = useCallback(({ tableIndex, dataIndex }: {tableIndex: number, dataIndex: number | undefined}) => {
+    if (selection && onSelectionChange && dataIndex !== undefined) {
+      return (shiftKey: boolean): void => {
+        void onSelectRowClick(shiftKey, selection, onSelectionChange, dataIndex)
+      }
+    }
+
+    async function onSelectRowClick(shiftKey: boolean, selection: Selection, onSelectionChange: (selection: Selection) => void, dataIndex: number) {
+      const useAnchor = shiftKey && selection.anchor !== undefined
 
       if (!useAnchor) {
         // single row toggle
@@ -201,20 +192,14 @@ export function HighTableInner({
         onSelectionChange(newSelection)
       }
     }
-    return (event: MouseEvent): void => {
-      void onSelectRowClick(event)
-    }
   }, [data, onSelectionChange, orderBy, ranksMap, selection])
   const allRowsSelected = useMemo(() => {
-    if (!selection) return false
-    const { ranges } = selection
-    return areAllSelected({ ranges, length: numRows })
+    if (!selection) return undefined
+    return areAllSelected({ ranges: selection.ranges, length: numRows })
   }, [selection, numRows])
   const isRowSelected = useCallback((dataIndex: number | undefined) => {
-    if (!selection) return undefined
-    if (dataIndex === undefined) return undefined
-    const { ranges } = selection
-    return isSelected({ ranges, index: dataIndex })
+    if (!selection || dataIndex === undefined) return undefined
+    return isSelected({ ranges: selection.ranges, index: dataIndex })
   }, [selection])
 
   // total scrollable height
@@ -223,22 +208,6 @@ export function HighTableInner({
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const pendingRequest = useRef(0)
-
-  // invalidate when data changes so that columns will auto-resize
-  if (slice && data !== slice.data) {
-    // delete the slice
-    setSlice(undefined)
-    // reset the flag, the column widths will be recalculated
-    setHasCompleteRow(false)
-    // delete the cached sort indexes
-    setRanksMap(new Map())
-    // if uncontrolled, reset the selection (if controlled, it's the responsibility of the parent to do it)
-    if (!isSelectionControlled) {
-      onSelectionChange({ ranges: [], anchor: undefined })
-    }
-    // reset the number of rows
-    setNumRows(data.numRows)
-  }
 
   // scroll vertically to the focused cell if needed
   useEffect(() => {
@@ -482,7 +451,7 @@ export function HighTableInner({
             aria-readonly={true}
             aria-colcount={ariaColCount}
             aria-rowcount={ariaRowCount}
-            aria-multiselectable={showSelectionControls}
+            aria-multiselectable={selection !== undefined}
             role='grid'
             style={{ top: `${offsetTop}px` }}
             onKeyDown={onTableKeyDown}
@@ -491,9 +460,8 @@ export function HighTableInner({
             <thead role="rowgroup">
               <Row ariaRowIndex={1} >
                 <TableCorner
-                  onClick={getOnSelectAllRows()}
+                  onCheckboxPress={toggleAllRows}
                   checked={allRowsSelected}
-                  showCheckBox={showCornerSelection}
                   style={cornerStyle}
                   ariaColIndex={1}
                   ariaRowIndex={1}
@@ -503,7 +471,6 @@ export function HighTableInner({
                   header={data.header}
                   orderBy={orderBy}
                   onOrderByChange={onOrderByChange}
-                  sortable={enableOrderByInteractions}
                   columnClassNames={columnClassNames}
                   ariaRowIndex={1}
                 />
@@ -523,7 +490,7 @@ export function HighTableInner({
                 const tableIndex = slice.offset + sliceIndex
                 const inferredDataIndex = orderBy === undefined || orderBy.length === 0 ? tableIndex : undefined
                 const dataIndex = row.index ?? inferredDataIndex
-                const selected = isRowSelected(dataIndex) ?? false
+                const selected = isRowSelected(dataIndex)
                 const ariaRowIndex = tableIndex + ariaOffset
                 return (
                   <Row
@@ -535,11 +502,12 @@ export function HighTableInner({
                     <RowHeader
                       busy={dataIndex === undefined}
                       style={cornerStyle}
-                      onClick={dataIndex === undefined ? undefined : getOnSelectRowClick({ tableIndex, dataIndex })}
+                      onCheckboxPress={getOnCheckboxPress({ tableIndex, dataIndex })}
                       checked={selected}
-                      showCheckBox={showSelection}
+                      showCheckBox={selection !== undefined}
                       ariaColIndex={1}
                       ariaRowIndex={ariaRowIndex}
+                      dataRowIndex={dataIndex}
                     >{formatRowNumber(dataIndex)}</RowHeader>
                     {data.header.map((column, columnIndex) => {
                       // Note: the resolved cell value can be undefined
@@ -557,6 +525,7 @@ export function HighTableInner({
                         className={columnClassNames[columnIndex]}
                         ariaColIndex={columnIndex + ariaOffset}
                         ariaRowIndex={ariaRowIndex}
+                        dataRowIndex={dataIndex}
                       />
                     })}
                   </Row>

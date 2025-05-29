@@ -72,7 +72,7 @@ describe('ColumnHeader', () => {
     expect(header.style.maxWidth).toEqual(`${savedWidth}px`)
   })
 
-  it('handles double click to auto resize', async () => {
+  it('handles double click on resize handle to auto resize', async () => {
     // Set the initial width
     const savedWidth = 42
     localStorage.setItem(cacheKey, JSON.stringify([savedWidth]))
@@ -86,12 +86,14 @@ describe('ColumnHeader', () => {
     expect(header.style.maxWidth).toEqual(`${savedWidth}px`)
     expect(measureWidth).toHaveBeenCalledTimes(0)
     await user.dblClick(resizeHandle)
-    // the width is set to undefined, and should then be measured, but the measurement can only run in a browser, so it remains undefined here
-    expect(header.style.maxWidth).toEqual('')
+    // the width is set to undefined, and should then be measured,
+    // but the measurement (.offsetWidth) can only run in a browser,
+    // so its value is 0 + the 1px offset added to avoid rounding errors
+    expect(header.style.maxWidth).toEqual('1px')
     expect(measureWidth).toHaveBeenCalledTimes(1)
   })
 
-  it('handles mouse click and drag to resize', async () => {
+  it('handles mouse click and drag on resize handle to resize', async () => {
     // Set the initial width
     const savedWidth = 42
     localStorage.setItem(cacheKey, JSON.stringify([savedWidth]))

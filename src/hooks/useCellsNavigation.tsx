@@ -44,46 +44,49 @@ export function CellsNavigationProvider({ colCount, rowCount, rowPadding, childr
 
   const onTableKeyDown = useCallback((event: KeyboardEvent) => {
     const { key } = event
+    const ctrl = event.ctrlKey || event.metaKey
     if (key === 'ArrowRight') {
-      if (event.ctrlKey) {
+      if (ctrl) {
         setColIndex(colCount)
       } else {
         setColIndex((prev) => prev < colCount ? prev + 1 : prev)
       }
     } else if (key === 'ArrowLeft') {
-      if (event.ctrlKey) {
+      if (ctrl) {
         setColIndex(1)
       } else {
         setColIndex((prev) => prev > 1 ? prev - 1 : prev)
       }
     } else if (key === 'ArrowDown') {
-      if (event.ctrlKey) {
+      if (ctrl) {
         setRowIndex(rowCount)
       } else {
         setRowIndex((prev) => prev < rowCount ? prev + 1 : prev)
       }
     } else if (key === 'ArrowUp') {
-      if (event.ctrlKey) {
+      if (ctrl) {
         setRowIndex(1)
       } else {
         setRowIndex((prev) => prev > 1 ? prev - 1 : prev)
       }
     } else if (key === 'Home') {
-      if (event.ctrlKey) {
+      if (ctrl) {
         setRowIndex(1)
       }
       setColIndex(1)
     } else if (key === 'End') {
-      if (event.ctrlKey) {
+      if (ctrl) {
         setRowIndex(rowCount)
       }
       setColIndex(colCount)
-    } else if (key === 'PageDown' || key === ' ' && !event.shiftKey) {
+    } else if (key === 'PageDown') {
       setRowIndex((prev) => prev + rowPadding <= rowCount ? prev + rowPadding : rowCount )
-    } else if (key === 'PageUp' || key === ' ' && event.shiftKey ) {
+    } else if (key === 'PageUp') {
       setRowIndex((prev) => prev - rowPadding >= 1 ? prev - rowPadding : 1)
-    } else {
+    } else if (key !== ' ') {
       // if the key is not one of the above, do not handle it
+      // special case: no action is associated with the Space key, but it's captured
+      // anyway to prevent the default action (scrolling the page) and stay in navigation mode
       return
     }
     // avoid scrolling the table when the user is navigating with the keyboard
@@ -155,7 +158,7 @@ export function useCellNavigation({ ref, ariaColIndex, ariaRowIndex }: CellData)
 
   useEffect(() => {
     // focus on the cell when needed
-    if (ref.current && isCurrentCell && document.activeElement !== ref.current && shouldFocus) {
+    if (ref.current && isCurrentCell && shouldFocus) {
       // scroll the cell into view (note scroll-padding-inline-start and scroll-padding-block-start are set in the CSS
       // to avoid the cell being hidden by the row and column headers)
       ref.current.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'nearest' })
