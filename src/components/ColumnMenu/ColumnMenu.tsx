@@ -104,7 +104,9 @@ export default function ColumnMenu({
       case ' ':
         e.preventDefault()
         e.stopPropagation()
-        onClick?.()
+        if (sortable) {
+          onClick?.()
+        }
         break
       case 'ArrowUp':
       case 'ArrowLeft':
@@ -129,7 +131,7 @@ export default function ColumnMenu({
         break
       }
     },
-    [navigateFocus, onToggle, columnIndex, onClick]
+    [navigateFocus, onToggle, columnIndex, onClick, sortable]
   )
 
   const handleOverlayClick = useCallback(

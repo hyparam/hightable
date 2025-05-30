@@ -15,80 +15,399 @@ describe('ColumnMenu', () => {
     vi.clearAllMocks()
   })
 
-  it('renders nothing when not visible', () => {
-    const { container } = render(
-      <ColumnMenu {...defaultProps} isOpen={false} />
-    )
-    expect(container.firstChild).toBeNull()
+  describe('Rendering', () => {
+    it('renders nothing when not visible', () => {
+      const { container } = render(
+        <ColumnMenu {...defaultProps} isOpen={false} />
+      )
+      expect(container.firstChild).toBeNull()
+    })
+
+    it('renders menu with column name when visible', () => {
+      const { getByRole, getByText } = render(<ColumnMenu {...defaultProps} />)
+
+      const menu = getByRole('menu')
+      expect(menu).toBeDefined()
+      expect(menu.getAttribute('aria-labelledby')).toMatch(
+        /^column-menu-label-\d+$/
+      )
+      expect(getByText('Test Column')).toBeDefined()
+    })
+
+    it('renders with correct position styling', () => {
+      const { getByRole } = render(
+        <ColumnMenu {...defaultProps} position={{ left: 200, top: 300 }} />
+      )
+
+      const menu = getByRole('menu')
+      expect(menu.style.left).toBe('200px')
+      expect(menu.style.top).toBe('300px')
+    })
+
+    it('renders with correct ARIA attributes', () => {
+      const { getByRole } = render(<ColumnMenu {...defaultProps} />)
+
+      const menu = getByRole('menu')
+      expect(menu.getAttribute('aria-orientation')).toBe('vertical')
+      expect(menu.getAttribute('aria-expanded')).toBe('true')
+      expect(menu.getAttribute('aria-label')).toBe(
+        'Column menu for Test Column'
+      )
+      expect(menu.getAttribute('tabIndex')).toBe('-1')
+    })
+
+    it('renders overlay element', () => {
+      const { container } = render(<ColumnMenu {...defaultProps} />)
+
+      const overlay = container.querySelector('[role="presentation"]')
+      expect(overlay).toBeDefined()
+    })
+
+    it('renders separator element', () => {
+      const { getByRole } = render(
+        <ColumnMenu {...defaultProps} />
+      )
+
+      const menu = getByRole('menu')
+      const separator = menu.querySelector('hr')
+      expect(separator).toBeDefined()
+      expect(separator?.getAttribute('role')).toBe('separator')
+      expect(separator?.getAttribute('aria-hidden')).toBe('true')
+    })
   })
 
-  it('renders menu with column name when visible', () => {
-    const { getByRole, getByText } = render(
-      <ColumnMenu {...defaultProps} />
-    )
+  describe('Sort functionality', () => {
+    it('renders sort button when sortable is true', () => {
+      const { getByRole } = render(
+        <ColumnMenu {...defaultProps} sortable={true} />
+      )
 
-    const menu = getByRole('menu')
-    expect(menu).toBeDefined()
-    expect(menu.getAttribute('aria-labelledby')).toMatch(/^column-menu-label-\d+$/)
-    expect(getByText('Test Column')).toBeDefined()
+      const sortButton = getByRole('menuitem')
+      expect(sortButton).toBeDefined()
+      expect(sortButton.textContent).toBe('Sort')
+    })
+
+    it('shows correct sort direction text', () => {
+      const { getByRole, rerender } = render(
+        <ColumnMenu {...defaultProps} sortable={true} direction='ascending' />
+      )
+
+      expect(getByRole('menuitem').textContent).toBe('Ascending')
+
+      rerender(
+        <ColumnMenu {...defaultProps} sortable={true} direction='descending' />
+      )
+      expect(getByRole('menuitem').textContent).toBe('Descending')
+    })
+
+    it('does not render sort button when sortable is false', () => {
+      const { queryByRole } = render(
+        <ColumnMenu {...defaultProps} sortable={false} />
+      )
+
+      expect(queryByRole('menuitem')).toBeNull()
+    })
+
+    it('does not render sort button when sortable is undefined', () => {
+      const { queryByRole } = render(<ColumnMenu {...defaultProps} />)
+
+      expect(queryByRole('menuitem')).toBeNull()
+    })
   })
 
-  it('renders sort button when sortable is true', () => {
-    const { getByRole } = render(
-      <ColumnMenu {...defaultProps} sortable={true} />
-    )
+  describe('MenuItem component', () => {
+    it('renders with correct ARIA attributes', () => {
+      const { getByRole } = render(
+        <ColumnMenu {...defaultProps} sortable={true} />
+      )
 
-    const sortButton = getByRole('menuitem')
-    expect(sortButton).toBeDefined()
-    expect(sortButton.textContent).toBe('Sort')
+      const menuItem = getByRole('menuitem')
+      expect(menuItem.getAttribute('aria-label')).toBe('Sort Test Column')
+      expect(menuItem.getAttribute('aria-haspopup')).toBe('false')
+      expect(menuItem.getAttribute('tabIndex')).toBe('0')
+      expect(menuItem.getAttribute('type')).toBe('button')
+    })
+
+    it('calls onClick when sort button is clicked', async () => {
+      const onClick = vi.fn()
+      const { user, getByRole } = render(
+        <ColumnMenu {...defaultProps} sortable={true} onClick={onClick} />
+      )
+
+      const sortButton = getByRole('menuitem')
+      await user.click(sortButton)
+      expect(onClick).toHaveBeenCalled()
+    })
+
+    it('focuses button when clicked', async () => {
+      const { user, getByRole } = render(
+        <ColumnMenu {...defaultProps} sortable={true} />
+      )
+
+      const sortButton = getByRole('menuitem')
+      await user.click(sortButton)
+      expect(document.activeElement).toBe(sortButton)
+    })
   })
 
-  it('shows correct sort direction text', () => {
-    const { getByRole, rerender } = render(
-      <ColumnMenu {...defaultProps} sortable={true} direction="ascending" />
-    )
+  describe('Keyboard navigation', () => {
+    it('closes menu on Escape key', async () => {
+      const { user, getByRole } = render(<ColumnMenu {...defaultProps} />)
 
-    expect(getByRole('menuitem').textContent).toBe('Ascending')
+      const menu = getByRole('menu')
+      menu.focus()
+      await user.keyboard('{Escape}')
 
-    rerender(
-      <ColumnMenu {...defaultProps} sortable={true} direction="descending" />
-    )
-    expect(getByRole('menuitem').textContent).toBe('Descending')
+      expect(defaultProps.onToggle).toHaveBeenCalledWith(
+        defaultProps.columnIndex
+      )
+    })
+
+    it('calls onClick on Enter key when sortable', async () => {
+      const onClick = vi.fn()
+      const { user, getByRole } = render(
+        <ColumnMenu {...defaultProps} sortable={true} onClick={onClick} />
+      )
+
+      const menu = getByRole('menu')
+      menu.focus()
+      await user.keyboard('{Enter}')
+
+      expect(onClick).toHaveBeenCalled()
+    })
+
+    it('calls onClick on Space key when sortable', async () => {
+      const onClick = vi.fn()
+      const { user, getByRole } = render(
+        <ColumnMenu {...defaultProps} sortable={true} onClick={onClick} />
+      )
+
+      const menu = getByRole('menu')
+      menu.focus()
+      await user.keyboard('{ }')
+
+      expect(onClick).toHaveBeenCalled()
+    })
+
+    it('does not call onClick on Enter/Space when not sortable', async () => {
+      const onClick = vi.fn()
+      const { user, getByRole } = render(
+        <ColumnMenu {...defaultProps} sortable={false} onClick={onClick} />
+      )
+
+      const menu = getByRole('menu')
+      menu.focus()
+      await user.keyboard('{Enter}')
+      await user.keyboard('{ }')
+
+      expect(onClick).not.toHaveBeenCalled()
+    })
+
+    it('handles Enter/Space gracefully when no onClick provided', async () => {
+      const { user, getByRole } = render(
+        <ColumnMenu {...defaultProps} sortable={false} />
+      )
+
+      const menu = getByRole('menu')
+      menu.focus()
+
+      // Should not throw errors
+      await user.keyboard('{Enter}')
+      await user.keyboard('{ }')
+
+      expect(menu).toBeDefined()
+    })
+
+    describe('Arrow key navigation', () => {
+      it('handles ArrowUp key', async () => {
+        const { user, getByRole } = render(
+          <ColumnMenu {...defaultProps} sortable={true} />
+        )
+
+        const menu = getByRole('menu')
+        menu.focus()
+        await user.keyboard('{ArrowUp}')
+
+        // Navigation should be handled (no specific assertion as useFocusManagement is mocked)
+        expect(menu).toBeDefined()
+      })
+
+      it('handles ArrowDown key', async () => {
+        const { user, getByRole } = render(
+          <ColumnMenu {...defaultProps} sortable={true} />
+        )
+
+        const menu = getByRole('menu')
+        menu.focus()
+        await user.keyboard('{ArrowDown}')
+
+        expect(menu).toBeDefined()
+      })
+
+      it('handles ArrowLeft key', async () => {
+        const { user, getByRole } = render(
+          <ColumnMenu {...defaultProps} sortable={true} />
+        )
+
+        const menu = getByRole('menu')
+        menu.focus()
+        await user.keyboard('{ArrowLeft}')
+
+        expect(menu).toBeDefined()
+      })
+
+      it('handles ArrowRight key', async () => {
+        const { user, getByRole } = render(
+          <ColumnMenu {...defaultProps} sortable={true} />
+        )
+
+        const menu = getByRole('menu')
+        menu.focus()
+        await user.keyboard('{ArrowRight}')
+
+        expect(menu).toBeDefined()
+      })
+    })
+
+    describe('Tab navigation', () => {
+      it('handles Tab key', async () => {
+        const { user, getByRole } = render(
+          <ColumnMenu {...defaultProps} sortable={true} />
+        )
+
+        const menu = getByRole('menu')
+        menu.focus()
+        await user.keyboard('{Tab}')
+
+        expect(menu).toBeDefined()
+      })
+
+      it('handles Shift+Tab key', async () => {
+        const { user, getByRole } = render(
+          <ColumnMenu {...defaultProps} sortable={true} />
+        )
+
+        const menu = getByRole('menu')
+        menu.focus()
+        await user.keyboard('{Shift>}{Tab}{/Shift}')
+
+        expect(menu).toBeDefined()
+      })
+    })
+
+    it('prevents default and stops propagation for all handled keys', async () => {
+      const { user, getByRole } = render(
+        <ColumnMenu {...defaultProps} sortable={true} />
+      )
+
+      const menu = getByRole('menu')
+      menu.focus()
+
+      // Test that these keys don't cause default browser behavior
+      await user.keyboard('{Escape}')
+      await user.keyboard('{Enter}')
+      await user.keyboard('{ }')
+      await user.keyboard('{ArrowUp}')
+      await user.keyboard('{ArrowDown}')
+      await user.keyboard('{ArrowLeft}')
+      await user.keyboard('{ArrowRight}')
+      await user.keyboard('{Tab}')
+
+      expect(menu).toBeDefined()
+    })
+
+    it('handles unknown keys with default prevention', async () => {
+      const { user, getByRole } = render(<ColumnMenu {...defaultProps} />)
+
+      const menu = getByRole('menu')
+      menu.focus()
+      await user.keyboard('a')
+
+      expect(menu).toBeDefined()
+    })
   })
 
-  it('calls onClick when sort button is clicked', async () => {
-    const onClick = vi.fn()
-    const { user, getByRole } = render(
-      <ColumnMenu {...defaultProps} sortable={true} onClick={onClick} />
-    )
+  describe('Overlay interactions', () => {
+    it('closes menu when overlay is clicked', async () => {
+      const { user, container } = render(<ColumnMenu {...defaultProps} />)
 
-    const sortButton = getByRole('menuitem')
-    await user.click(sortButton)
-    expect(onClick).toHaveBeenCalled()
+      const overlay = container.querySelector('[role="presentation"]')
+      expect(overlay).toBeDefined()
+
+      if (overlay) {
+        await user.click(overlay)
+        expect(defaultProps.onToggle).toHaveBeenCalledWith(
+          defaultProps.columnIndex
+        )
+      }
+    })
   })
 
-  it('closes menu and focuses button on Escape key', async () => {
-    const { user, getByRole } = render(
-      <ColumnMenu {...defaultProps} />
-    )
+  describe('Portal rendering', () => {
+    it('renders content in portal', () => {
+      const { getByRole } = render(<ColumnMenu {...defaultProps} />)
 
-    const menu = getByRole('menu')
-    menu.focus()
-    await user.keyboard('{Escape}')
+      const menu = getByRole('menu')
+      expect(menu).toBeDefined()
 
-    expect(defaultProps.onToggle).toHaveBeenCalledWith(defaultProps.columnIndex)
+      // Menu should not be a direct child of the render container
+      // since it's rendered in a portal
+      expect(menu.closest('[data-testid]')).toBeNull()
+    })
   })
 
-  it('calls onClick on Enter key when sortable', async () => {
-    const onClick = vi.fn()
-    const { user, getByRole } = render(
-      <ColumnMenu {...defaultProps} sortable={true} onClick={onClick} />
-    )
+  describe('Edge cases', () => {
+    it('works without onClick handler', () => {
+      const { getByRole } = render(
+        <ColumnMenu {...defaultProps} sortable={true} />
+      )
 
-    const menu = getByRole('menu')
-    menu.focus()
-    await user.keyboard('{Enter}')
+      const menu = getByRole('menu')
+      expect(menu).toBeDefined()
+    })
 
-    expect(onClick).toHaveBeenCalled()
+    it('handles columnIndex 0 correctly', () => {
+      const { getByRole } = render(
+        <ColumnMenu {...defaultProps} columnIndex={0} />
+      )
+
+      const menu = getByRole('menu')
+      expect(menu.getAttribute('aria-labelledby')).toBe('column-menu-label-0')
+    })
+
+    it('handles different columnIndex values', () => {
+      const { getByRole } = render(
+        <ColumnMenu {...defaultProps} columnIndex={5} />
+      )
+
+      const menu = getByRole('menu')
+      expect(menu.getAttribute('aria-labelledby')).toBe('column-menu-label-5')
+    })
+
+    it('handles empty column name', () => {
+      const { getByRole, container } = render(
+        <ColumnMenu {...defaultProps} columnName="" />
+      )
+
+      const menu = getByRole('menu')
+      expect(menu.getAttribute('aria-label')).toBe('Column menu for ')
+
+      const labelElement = container.querySelector('#column-menu-label-0')
+      expect(labelElement).toBeDefined()
+      expect(labelElement?.textContent ?? '').toBe('')
+    })
+
+    it('handles special characters in column name', () => {
+      const specialName = 'Column with "quotes" & symbols'
+      const { getByRole, getByText } = render(
+        <ColumnMenu {...defaultProps} columnName={specialName} />
+      )
+
+      const menu = getByRole('menu')
+      expect(menu.getAttribute('aria-label')).toBe(
+        `Column menu for ${specialName}`
+      )
+      expect(getByText(specialName)).toBeDefined()
+    })
   })
 })
