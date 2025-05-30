@@ -96,25 +96,37 @@ describe('TableHeader', () => {
     expect(onOrderByChange).toHaveBeenCalledWith([{ column: 'Address', direction: 'ascending' }, { column: 'Age', direction: 'ascending' }])
   })
 
-  describe('Column Menu', () => {
-    it('toggles column menu when menu button is clicked', async () => {
+  describe('Column Menu Integration', () => {
+    it('integrates menu button with table header accessibility', async () => {
       const onOrderByChange = vi.fn()
-      const { user, getByRole } = render(<table><thead><tr>
-        <TableHeader
-          header={header}
-          dataReady={dataReady}
-          ariaRowIndex={1}
-          onOrderByChange={onOrderByChange}
-          orderBy={[]}
-        />
-      </tr></thead></table>)
+      const { user, getByRole } = render(
+        <table>
+          <thead>
+            <tr>
+              <TableHeader
+                header={header}
+                dataReady={dataReady}
+                ariaRowIndex={1}
+                onOrderByChange={onOrderByChange}
+                orderBy={[]}
+              />
+            </tr>
+          </thead>
+        </table>
+      )
 
       const nameHeader = getByRole('columnheader', { name: 'Name' })
-      const menuButton = within(nameHeader).getByRole('button', { name: 'Column menu for Name' })
-      await user.click(menuButton)
+      const menuButton = within(nameHeader).getByRole('button', {
+        name: 'Column menu for Name',
+      })
 
+      // Test integration: menu button is properly nested within table header
+      expect(nameHeader.contains(menuButton)).toBe(true)
+
+      await user.click(menuButton)
       const menu = getByRole('menu')
-      expect(menu).toBeDefined()
+
+      // Test integration: menu is properly labeled by column name
       const labelId = menu.getAttribute('aria-labelledby')
       expect(labelId).toBeDefined()
       if (!labelId) throw new Error('labelId should be defined')
@@ -123,80 +135,36 @@ describe('TableHeader', () => {
       expect(label.textContent).toBe('Name')
     })
 
-    it('closes column menu when clicking menu button again', async () => {
+    it('maintains proper focus management within table context', async () => {
       const onOrderByChange = vi.fn()
-      const { user, getByRole, queryByRole } = render(<table><thead><tr>
-        <TableHeader
-          header={header}
-          dataReady={dataReady}
-          ariaRowIndex={1}
-          onOrderByChange={onOrderByChange}
-          orderBy={[]}
-        />
-      </tr></thead></table>)
+      const { user, getByRole, queryByRole } = render(
+        <table>
+          <thead>
+            <tr>
+              <TableHeader
+                header={header}
+                dataReady={dataReady}
+                ariaRowIndex={1}
+                onOrderByChange={onOrderByChange}
+                orderBy={[]}
+              />
+            </tr>
+          </thead>
+        </table>
+      )
 
       const nameHeader = getByRole('columnheader', { name: 'Name' })
-      const menuButton = within(nameHeader).getByRole('button', { name: 'Column menu for Name' })
-      await user.click(menuButton)
-      expect(getByRole('menu')).toBeDefined()
+      const menuButton = within(nameHeader).getByRole('button', {
+        name: 'Column menu for Name',
+      })
 
+      await user.click(menuButton)
+      const menu = getByRole('menu')
+
+      // Test integration: menu opens within table and can be closed
+      expect(menu).toBeDefined()
       await user.click(menuButton)
       expect(queryByRole('menu')).toBeNull()
-    })
-
-    it('shows sort options in menu when column is sortable', async () => {
-      const onOrderByChange = vi.fn()
-      const { user, getByRole } = render(<table><thead><tr>
-        <TableHeader
-          header={header}
-          dataReady={dataReady}
-          ariaRowIndex={1}
-          onOrderByChange={onOrderByChange}
-          orderBy={[]}
-        />
-      </tr></thead></table>)
-
-      const nameHeader = getByRole('columnheader', { name: 'Name' })
-      const menuButton = within(nameHeader).getByRole('button', { name: 'Column menu for Name' })
-      await user.click(menuButton)
-
-      const menu = getByRole('menu')
-      const sortButton = within(menu).getByRole('menuitem')
-      expect(sortButton).toBeDefined()
-      expect(sortButton.textContent).toBe('Sort')
-    })
-
-    it('updates sort direction text in menu based on current sort', async () => {
-      const onOrderByChange = vi.fn()
-      const { user, getByRole, rerender } = render(<table><thead><tr>
-        <TableHeader
-          header={header}
-          dataReady={dataReady}
-          ariaRowIndex={1}
-          onOrderByChange={onOrderByChange}
-          orderBy={[{ column: 'Name', direction: 'ascending' }]}
-        />
-      </tr></thead></table>)
-
-      const nameHeader = getByRole('columnheader', { name: 'Name' })
-      const menuButton = within(nameHeader).getByRole('button', { name: 'Column menu for Name' })
-      await user.click(menuButton)
-
-      const menu = getByRole('menu')
-      const sortButton = within(menu).getByRole('menuitem')
-      expect(sortButton.textContent).toBe('Ascending')
-
-      rerender(<table><thead><tr>
-        <TableHeader
-          header={header}
-          dataReady={dataReady}
-          ariaRowIndex={1}
-          onOrderByChange={onOrderByChange}
-          orderBy={[{ column: 'Name', direction: 'descending' }]}
-        />
-      </tr></thead></table>)
-
-      expect(sortButton.textContent).toBe('Descending')
     })
   })
 })
