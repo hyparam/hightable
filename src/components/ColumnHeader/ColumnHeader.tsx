@@ -121,6 +121,7 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
         <ColumnMenuButton
           ref={buttonRef}
           onClick={handleMenuClick}
+          onEscape={navigateToCell}
           tabIndex={tabIndex}
           isExpanded={isOpen}
           menuId={menuId}
