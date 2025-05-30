@@ -5,10 +5,10 @@ import ColumnMenu from './ColumnMenu.js'
 describe('ColumnMenu', () => {
   const defaultProps = {
     columnName: 'Test Column',
-    isVisible: true,
+    isOpen: true,
     position: { left: 100, top: 100 },
     columnIndex: 0,
-    onToggleColumnMenu: vi.fn(),
+    onToggle: vi.fn(),
   }
 
   beforeEach(() => {
@@ -17,7 +17,7 @@ describe('ColumnMenu', () => {
 
   it('renders nothing when not visible', () => {
     const { container } = render(
-      <ColumnMenu {...defaultProps} isVisible={false} />
+      <ColumnMenu {...defaultProps} isOpen={false} />
     )
     expect(container.firstChild).toBeNull()
   })
@@ -29,7 +29,7 @@ describe('ColumnMenu', () => {
 
     const menu = getByRole('menu')
     expect(menu).toBeDefined()
-    expect(menu.getAttribute('aria-label')).toBe('Test Column column menu')
+    expect(menu.getAttribute('aria-labelledby')).toMatch(/^column-menu-label-\d+$/)
     expect(getByText('Test Column')).toBeDefined()
   })
 
@@ -68,16 +68,15 @@ describe('ColumnMenu', () => {
   })
 
   it('closes menu and focuses button on Escape key', async () => {
-    const buttonRef = { current: document.createElement('div') }
     const { user, getByRole } = render(
-      <ColumnMenu {...defaultProps} buttonRef={buttonRef} />
+      <ColumnMenu {...defaultProps} />
     )
 
     const menu = getByRole('menu')
     menu.focus()
     await user.keyboard('{Escape}')
 
-    expect(defaultProps.onToggleColumnMenu).toHaveBeenCalledWith(defaultProps.columnIndex)
+    expect(defaultProps.onToggle).toHaveBeenCalledWith(defaultProps.columnIndex)
   })
 
   it('calls onClick on Enter key when sortable', async () => {

@@ -98,12 +98,14 @@ describe('TableHeader', () => {
 
   describe('Column Menu', () => {
     it('toggles column menu when menu button is clicked', async () => {
+      const onOrderByChange = vi.fn()
       const { user, getByRole } = render(<table><thead><tr>
         <TableHeader
           header={header}
           dataReady={dataReady}
           ariaRowIndex={1}
-          sortable={true}
+          onOrderByChange={onOrderByChange}
+          orderBy={[]}
         />
       </tr></thead></table>)
 
@@ -111,17 +113,25 @@ describe('TableHeader', () => {
       const menuButton = within(nameHeader).getByRole('button', { name: 'Column Menu Button' })
       await user.click(menuButton)
 
-      expect(getByRole('menu')).toBeDefined()
-      expect(getByRole('menu').getAttribute('aria-label')).toBe('Name column menu')
+      const menu = getByRole('menu')
+      expect(menu).toBeDefined()
+      const labelId = menu.getAttribute('aria-labelledby')
+      expect(labelId).toBeDefined()
+      if (!labelId) throw new Error('labelId should be defined')
+      const label = document.getElementById(labelId)
+      if (!label) throw new Error('label element should exist')
+      expect(label.textContent).toBe('Name')
     })
 
     it('closes column menu when clicking menu button again', async () => {
+      const onOrderByChange = vi.fn()
       const { user, getByRole, queryByRole } = render(<table><thead><tr>
         <TableHeader
           header={header}
           dataReady={dataReady}
           ariaRowIndex={1}
-          sortable={true}
+          onOrderByChange={onOrderByChange}
+          orderBy={[]}
         />
       </tr></thead></table>)
 
@@ -135,12 +145,14 @@ describe('TableHeader', () => {
     })
 
     it('shows sort options in menu when column is sortable', async () => {
+      const onOrderByChange = vi.fn()
       const { user, getByRole } = render(<table><thead><tr>
         <TableHeader
           header={header}
           dataReady={dataReady}
           ariaRowIndex={1}
-          sortable={true}
+          onOrderByChange={onOrderByChange}
+          orderBy={[]}
         />
       </tr></thead></table>)
 
@@ -155,12 +167,13 @@ describe('TableHeader', () => {
     })
 
     it('updates sort direction text in menu based on current sort', async () => {
+      const onOrderByChange = vi.fn()
       const { user, getByRole, rerender } = render(<table><thead><tr>
         <TableHeader
           header={header}
           dataReady={dataReady}
           ariaRowIndex={1}
-          sortable={true}
+          onOrderByChange={onOrderByChange}
           orderBy={[{ column: 'Name', direction: 'ascending' }]}
         />
       </tr></thead></table>)
@@ -178,7 +191,7 @@ describe('TableHeader', () => {
           header={header}
           dataReady={dataReady}
           ariaRowIndex={1}
-          sortable={true}
+          onOrderByChange={onOrderByChange}
           orderBy={[{ column: 'Name', direction: 'descending' }]}
         />
       </tr></thead></table>)
