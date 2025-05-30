@@ -83,7 +83,8 @@
   div[role="menu"] > [role="menuitem"]:focus {
     outline-style: solid;
     outline-color: var(--focus-border-color);
-    outline-width: 1px;
+    outline-width: var(--focus-border-width);
+    outline-offset: -2px;
     background-color: var(--focusable-background-color);
   }
 
@@ -155,7 +156,8 @@
   th > div[role="button"]:focus {
     outline-style: solid;
     outline-color: var(--focus-border-color);
-    outline-width: 1px;
+    outline-width: var(--focus-border-width);
+    outline-offset: -2px;
     background-color: #dbdbe5;
   }
 
