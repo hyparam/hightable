@@ -64,9 +64,7 @@ describe('ColumnMenu', () => {
     })
 
     it('renders separator element', () => {
-      const { getByRole } = render(
-        <ColumnMenu {...defaultProps} />
-      )
+      const { getByRole } = render(<ColumnMenu {...defaultProps} />)
 
       const menu = getByRole('menu')
       const separator = menu.querySelector('hr')
@@ -386,7 +384,7 @@ describe('ColumnMenu', () => {
 
     it('handles empty column name', () => {
       const { getByRole, container } = render(
-        <ColumnMenu {...defaultProps} columnName="" />
+        <ColumnMenu {...defaultProps} columnName='' />
       )
 
       const menu = getByRole('menu')
