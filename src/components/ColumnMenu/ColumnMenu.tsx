@@ -30,10 +30,18 @@ interface MenuItemProps {
 }
 
 function MenuItem({ onClick, label, columnName }: MenuItemProps) {
+  const handleClick = useCallback((e: MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    // Focus the button when clicked
+    e.currentTarget.focus()
+    onClick?.()
+  }, [onClick])
+
   return (
     <button
       role='menuitem'
-      onClick={onClick}
+      onClick={handleClick}
       tabIndex={0}
       aria-label={`${label} ${columnName}`}
       aria-haspopup='false'
@@ -82,7 +90,7 @@ export default function ColumnMenu({
   const [isScrollLocked, setIsScrollLocked] = useState(false)
   const previousFocusRef = useRef<HTMLElement | null>(null)
 
-  // Handle scroll lock using React state
+  // Handle scroll lock
   useEffect(() => {
     if (isOpen && !isScrollLocked) {
       document.body.style.overflow = 'hidden'
@@ -109,7 +117,10 @@ export default function ColumnMenu({
       )
       if (focusableElements?.length) {
         const firstElement = focusableElements[0] as HTMLElement
-        firstElement.focus()
+        // Use requestAnimationFrame to ensure the menu is rendered before focusing
+        requestAnimationFrame(() => {
+          firstElement.focus()
+        })
       }
     } else if (previousFocusRef.current) {
       // Restore focus when closing
@@ -171,6 +182,11 @@ export default function ColumnMenu({
         }
         break
       }
+      default:
+        // Prevent any other key from propagating to the table
+        e.preventDefault()
+        e.stopPropagation()
+        break
       }
     },
     [columnIndex, onToggle, onClick]

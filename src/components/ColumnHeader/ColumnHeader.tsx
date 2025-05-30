@@ -106,12 +106,10 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
         top: rect.bottom,
       })
     }
-    setIsOpen((current) => {
-      if (current) {
-        navigateToCell()
-      }
-      return !current
-    })
+    // First navigate to the cell
+    navigateToCell()
+    // Then open the menu
+    setIsOpen((current) => !current)
   }, [ref, navigateToCell])
 
   const handleToggle = useCallback(() => {
