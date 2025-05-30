@@ -1,4 +1,4 @@
-import { KeyboardEvent, MouseEvent, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { KeyboardEvent, ReactNode, useCallback, useEffect, useMemo, useRef } from 'react'
 import { flushSync } from 'react-dom'
 import { Direction } from '../../helpers/sort.js'
 import { measureWidth } from '../../helpers/width.js'
@@ -7,6 +7,7 @@ import ColumnMenu from '../ColumnMenu/ColumnMenu.js'
 import ColumnMenuButton from '../ColumnMenuButton/ColumnMenuButton.js'
 import { useColumnWidth } from '../../hooks/useColumnWidth.js'
 import ColumnResizer from '../ColumnResizer/ColumnResizer.js'
+import { useColumnMenu } from '../../hooks/useColumnMenu.js'
 
 interface Props {
   columnIndex: number // index of the column in the dataframe (0-based)
@@ -23,17 +24,16 @@ interface Props {
 }
 
 export default function ColumnHeader({ columnIndex, columnName, dataReady, direction, onClick, orderByIndex, orderBySize, ariaColIndex, ariaRowIndex, className, children }: Props) {
-  const [position, setPosition] = useState({ left: 0, top: 0 })
-  const [isOpen, setIsOpen] = useState(false)
   const ref = useRef<HTMLTableCellElement>(null)
   const buttonRef = useRef<HTMLDivElement>(null)
   const { tabIndex, navigateToCell } = useCellNavigation({ ref, ariaColIndex, ariaRowIndex })
+  const { isOpen, position, menuId, handleToggle, handleMenuClick } =
+    useColumnMenu(columnIndex, ref, navigateToCell)
   const handleClick = useCallback(() => {
     navigateToCell()
     onClick?.()
   }, [onClick, navigateToCell])
   const sortable = !!onClick // if onClick is defined, the column is sortable
-  const menuId = `column-menu-label-${columnIndex}`
 
   // Get the column width from the context
   const { getColumnStyle, setColumnWidth, getColumnWidth } = useColumnWidth()
@@ -96,27 +96,6 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
     }
   }, [onClick])
 
-  const handleColumnMenuClick = useCallback((e: MouseEvent | KeyboardEvent) => {
-    e.stopPropagation()
-    const rect = ref.current?.getBoundingClientRect()
-    const buttonRect = (e.currentTarget as HTMLElement).getBoundingClientRect()
-
-    if (rect) {
-      setPosition({
-        left: buttonRect.left,
-        top: rect.bottom,
-      })
-    }
-    // First navigate to the cell
-    navigateToCell()
-    // Then open the menu
-    setIsOpen((current) => !current)
-  }, [ref, navigateToCell])
-
-  const handleToggle = useCallback(() => {
-    setIsOpen((current) => !current)
-  }, [])
-
   return (
     <th
       ref={ref}
@@ -141,7 +120,7 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
       {sortable &&
         <ColumnMenuButton
           ref={buttonRef}
-          onClick={handleColumnMenuClick}
+          onClick={handleMenuClick}
           tabIndex={tabIndex}
           isExpanded={isOpen}
           menuId={menuId}
