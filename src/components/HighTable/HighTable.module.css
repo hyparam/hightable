@@ -148,7 +148,8 @@
 
   th:hover > div[role="button"],
   th > div[role="button"]:focus,
-  th > div[role="button"]:focus-visible {
+  th > div[role="button"]:focus-visible,
+  th[aria-expanded="true"] > div[role="button"] {
     background-color: #dbdbe5;
     opacity: 1;
   }
@@ -326,7 +327,7 @@
   }
 
   th[aria-sort]::after {
-    right: var(--cell-horizontal-padding);
+    right: calc(var(--cell-horizontal-padding) + 2rem);
     top: 4px;
     padding-left: 2px;
     background: none;

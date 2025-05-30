@@ -128,6 +128,7 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
       aria-description={description}
       aria-rowindex={ariaRowIndex}
       aria-colindex={ariaColIndex}
+      aria-expanded={isOpen}
       tabIndex={tabIndex}
       title={description}
       onClick={handleClick}
