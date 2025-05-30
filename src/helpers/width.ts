@@ -10,5 +10,5 @@ export function leftCellStyle(minWidth: number | undefined) {
 
 export function measureWidth(element: HTMLTableCellElement): number {
   // add 1px to avoid rounding errors, since offsetWidth always returns an integer
-  return element.offsetWidth + 1
+  return element.offsetWidth + 24
 }
