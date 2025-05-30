@@ -110,7 +110,7 @@ describe('TableHeader', () => {
       </tr></thead></table>)
 
       const nameHeader = getByRole('columnheader', { name: 'Name' })
-      const menuButton = within(nameHeader).getByRole('button', { name: 'Column Menu Button' })
+      const menuButton = within(nameHeader).getByRole('button', { name: 'Column menu for Name' })
       await user.click(menuButton)
 
       const menu = getByRole('menu')
@@ -136,7 +136,7 @@ describe('TableHeader', () => {
       </tr></thead></table>)
 
       const nameHeader = getByRole('columnheader', { name: 'Name' })
-      const menuButton = within(nameHeader).getByRole('button', { name: 'Column Menu Button' })
+      const menuButton = within(nameHeader).getByRole('button', { name: 'Column menu for Name' })
       await user.click(menuButton)
       expect(getByRole('menu')).toBeDefined()
 
@@ -157,7 +157,7 @@ describe('TableHeader', () => {
       </tr></thead></table>)
 
       const nameHeader = getByRole('columnheader', { name: 'Name' })
-      const menuButton = within(nameHeader).getByRole('button', { name: 'Column Menu Button' })
+      const menuButton = within(nameHeader).getByRole('button', { name: 'Column menu for Name' })
       await user.click(menuButton)
 
       const menu = getByRole('menu')
@@ -179,7 +179,7 @@ describe('TableHeader', () => {
       </tr></thead></table>)
 
       const nameHeader = getByRole('columnheader', { name: 'Name' })
-      const menuButton = within(nameHeader).getByRole('button', { name: 'Column Menu Button' })
+      const menuButton = within(nameHeader).getByRole('button', { name: 'Column menu for Name' })
       await user.click(menuButton)
 
       const menu = getByRole('menu')

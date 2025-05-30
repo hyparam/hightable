@@ -89,7 +89,7 @@ describe('ColumnHeader', () => {
     // the width is set to undefined, and should then be measured,
     // but the measurement (.offsetWidth) can only run in a browser,
     // so its value is 0 + the 1px offset added to avoid rounding errors
-    expect(header.style.maxWidth).toEqual('1px')
+    expect(header.style.maxWidth).toEqual('24px')
     expect(measureWidth).toHaveBeenCalledTimes(1)
   })
 
