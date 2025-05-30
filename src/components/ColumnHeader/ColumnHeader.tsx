@@ -33,6 +33,7 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
     onClick?.()
   }, [onClick, navigateToCell])
   const sortable = !!onClick // if onClick is defined, the column is sortable
+  const menuId = `column-menu-label-${columnIndex}`
 
   // Get the column width from the context
   const { getColumnStyle, setColumnWidth, getColumnWidth } = useColumnWidth()
@@ -95,7 +96,7 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
     }
   }, [onClick])
 
-  const handleColumnMenuClick = useCallback((e: MouseEvent) => {
+  const handleColumnMenuClick = useCallback((e: MouseEvent | KeyboardEvent) => {
     e.stopPropagation()
     const rect = ref.current?.getBoundingClientRect()
     const buttonRect = (e.currentTarget as HTMLElement).getBoundingClientRect()
@@ -137,7 +138,16 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
       className={className}
     >
       {children}
-      {sortable && <ColumnMenuButton onClick={handleColumnMenuClick} buttonRef={buttonRef} tabIndex={tabIndex} />}
+      {sortable &&
+        <ColumnMenuButton
+          ref={buttonRef}
+          onClick={handleColumnMenuClick}
+          tabIndex={tabIndex}
+          isExpanded={isOpen}
+          menuId={menuId}
+          aria-label={`Column menu for ${columnName}`}
+        />
+      }
       <ColumnResizer
         setWidth={setWidth}
         onDoubleClick={autoResize}

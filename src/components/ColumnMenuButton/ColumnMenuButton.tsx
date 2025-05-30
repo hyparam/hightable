@@ -1,59 +1,67 @@
-import {
-  KeyboardEvent,
-  MouseEvent,
-  RefObject,
-  useCallback,
-  useRef,
-} from 'react'
+import { KeyboardEvent, MouseEvent, ReactNode, forwardRef, useCallback } from 'react'
 
 interface ColumnMenuButtonProps {
-  onClick?: (e: MouseEvent) => void
-  buttonRef?: RefObject<HTMLDivElement | null>
+  onClick?: (e: MouseEvent | KeyboardEvent) => void
   tabIndex?: number
+  isExpanded?: boolean
+  menuId?: string
+  disabled?: boolean
+  'aria-label'?: string
+  icon?: ReactNode
 }
 
-export default function ColumnMenuButton({
-  onClick,
-  buttonRef,
-  tabIndex = 0,
-}: ColumnMenuButtonProps) {
-  const internalRef = useRef<HTMLDivElement>(null)
-  const ref = buttonRef ?? internalRef
-
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault()
-        e.stopPropagation()
-
-        // Create a synthetic mouse event with position information from the button
-        if (ref.current && onClick) {
-          const rect = ref.current.getBoundingClientRect()
-          const syntheticEvent = {
-            ...e,
-            clientX: rect.left + rect.width / 2,
-            stopPropagation: () => {
-              e.stopPropagation()
-            },
-          } as unknown as MouseEvent
-
-          onClick(syntheticEvent)
-        }
-      }
+const ColumnMenuButton = forwardRef<HTMLDivElement, ColumnMenuButtonProps>(
+  (
+    {
+      onClick,
+      tabIndex = 0,
+      isExpanded = false,
+      menuId,
+      disabled = false,
+      'aria-label': ariaLabel = 'Column menu',
+      icon = <span aria-hidden='true'>⋮</span>,
     },
-    [onClick, ref]
-  )
+    ref
+  ) => {
+    const handleKeyDown = useCallback(
+      (e: KeyboardEvent) => {
+        if ((e.key === 'Enter' || e.key === ' ') && !disabled) {
+          e.preventDefault()
+          e.stopPropagation()
+          onClick?.(e)
+        }
+      },
+      [onClick, disabled]
+    )
 
-  return (
-    <div
-      ref={ref}
-      onClick={onClick}
-      onKeyDown={handleKeyDown}
-      aria-label='Column Menu Button'
-      role='button'
-      tabIndex={tabIndex}
-    >
-      <span>⋮</span>
-    </div>
-  )
-}
+    const handleClick = useCallback(
+      (e: MouseEvent) => {
+        if (!disabled) {
+          onClick?.(e)
+        }
+      },
+      [onClick, disabled]
+    )
+
+    return (
+      <div
+        ref={ref}
+        onClick={handleClick}
+        onKeyDown={handleKeyDown}
+        aria-label={ariaLabel}
+        aria-haspopup='menu'
+        aria-expanded={isExpanded}
+        aria-controls={menuId}
+        aria-disabled={disabled}
+        role='button'
+        tabIndex={disabled ? -1 : tabIndex}
+      >
+        {icon}
+      </div>
+    )
+  }
+)
+
+ColumnMenuButton.displayName = 'ColumnMenuButton'
+
+export default ColumnMenuButton
