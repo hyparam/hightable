@@ -9,6 +9,9 @@ import {
   useRef,
   useState,
 } from 'react'
+import { useScrollLock } from '../../hooks/useScrollLock'
+
+const FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
 
 function getSortDirection(direction?: Direction, sortable?: boolean) {
   if (!sortable) return null
@@ -87,24 +90,9 @@ export default function ColumnMenu({
   const { top, left } = position
   const menuRef = useRef<HTMLDivElement>(null)
   const labelId = useRef(`column-menu-label-${columnIndex}`).current
-  const [isScrollLocked, setIsScrollLocked] = useState(false)
   const previousFocusRef = useRef<HTMLElement | null>(null)
 
-  // Handle scroll lock
-  useEffect(() => {
-    if (isOpen && !isScrollLocked) {
-      document.body.style.overflow = 'hidden'
-      setIsScrollLocked(true)
-    } else if (!isOpen && isScrollLocked) {
-      document.body.style.overflow = ''
-      setIsScrollLocked(false)
-    }
-    return () => {
-      if (isScrollLocked) {
-        document.body.style.overflow = ''
-      }
-    }
-  }, [isOpen, isScrollLocked])
+  useScrollLock(isOpen)
 
   // Focus management
   useEffect(() => {
@@ -112,9 +100,7 @@ export default function ColumnMenu({
       // Store the previously focused element
       previousFocusRef.current = document.activeElement as HTMLElement
       // Focus the first focusable element in the menu
-      const focusableElements = menuRef.current?.querySelectorAll(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-      )
+      const focusableElements = menuRef.current?.querySelectorAll(FOCUSABLE_SELECTOR)
       if (focusableElements?.length) {
         const firstElement = focusableElements[0] as HTMLElement
         // Use requestAnimationFrame to ensure the menu is rendered before focusing
@@ -131,6 +117,9 @@ export default function ColumnMenu({
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLDivElement>) => {
+      const focusableElements = menuRef.current?.querySelectorAll(FOCUSABLE_SELECTOR)
+      const { activeElement } = document
+
       switch (e.key) {
       case 'Escape':
         e.preventDefault()
@@ -150,13 +139,8 @@ export default function ColumnMenu({
       case 'Tab': {
         e.preventDefault()
         e.stopPropagation()
-        const focusableElements = menuRef.current?.querySelectorAll(
-          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-        )
-        if (!focusableElements?.length) return
+        if (!focusableElements?.length || !activeElement) return
 
-        const { activeElement } = document
-        if (!activeElement) return
         const currentIndex = Array.from(focusableElements).indexOf(activeElement)
 
         let nextIndex = currentIndex
@@ -219,9 +203,10 @@ export default function ColumnMenu({
         aria-orientation='vertical'
         onKeyDown={handleKeyDown}
         aria-expanded={isOpen}
+        aria-label={`Column menu for ${columnName}`}
       >
-        <div role='presentation' id={labelId}>{columnName}</div>
-        <hr role='separator' />
+        <div role='presentation' id={labelId} aria-hidden="true">{columnName}</div>
+        <hr role='separator' aria-hidden="true" />
         {sortable && sortDirection &&
           <MenuItem
             onClick={onClick}
