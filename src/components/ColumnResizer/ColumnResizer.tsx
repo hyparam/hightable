@@ -39,6 +39,10 @@ export default function ColumnResizer({ onDoubleClick, increaseWidth, tabIndex, 
 
     const { clientX, currentTarget, pointerId } = event
     setPointerState({ clientX, pointerId })
+    if (!('setPointerCapture' in currentTarget)) {
+      // browserless unit tests don't support PointerEvents
+      return
+    }
     currentTarget.setPointerCapture(pointerId)
   }, [navigateToCell])
 
