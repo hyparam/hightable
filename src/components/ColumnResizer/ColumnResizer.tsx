@@ -49,23 +49,20 @@ export default function ColumnResizer({ onDoubleClick, increaseWidth, width, tab
   }, [navigateToCell])
 
   // Handle pointer move event during resizing
-  const getOnPointerMove = useCallback(() => {
+  const handlePointerMove = useCallback((event: PointerEvent<HTMLSpanElement>) => {
     if (!pointerState) {
-      // no callback if pointer is not down
       return
     }
     const { clientX: previousClientX } = pointerState
-    return (event: PointerEvent<HTMLSpanElement>) => {
-      const { pointerId, clientX } = event
-      if (event.pointerId !== pointerState.pointerId) {
-        // Ignore pointer events from other pointers
-        return
-      }
-      const delta = clientX - previousClientX
-      if (delta !== 0) {
-        increaseWidth?.(delta)
-        setPointerState({ clientX, pointerId })
-      }
+    const { pointerId, clientX } = event
+    if (event.pointerId !== pointerState.pointerId) {
+      // Ignore pointer events from other pointers
+      return
+    }
+    const delta = clientX - previousClientX
+    if (delta !== 0) {
+      increaseWidth?.(delta)
+      setPointerState({ clientX, pointerId })
     }
   }, [pointerState, increaseWidth])
 
@@ -142,7 +139,7 @@ export default function ColumnResizer({ onDoubleClick, increaseWidth, width, tab
       aria-description='Press "Enter" or "Space" to autoresize the column. Press "Escape" to cancel resizing. Press "ArrowRight" or "ArrowLeft" to resize the column by 10 pixels.'
       onDoubleClick={handleDoubleClick}
       onPointerDown={handlePointerDown}
-      onPointerMove={getOnPointerMove()}
+      onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onClick={disableOnClick}
       onFocus={onFocus}
