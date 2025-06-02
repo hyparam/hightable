@@ -11,6 +11,7 @@ interface ColumnWidthContextType {
   getColumnWidth?: (columnIndex: number) => number | undefined
   getColumnStyle?: (columnIndex: number) => CSSProperties
   setColumnWidth?: (options: WidthSetterOptions) => void
+  increaseColumnWidth?: (options: { columnIndex: number; delta: number }) => void
 }
 
 export const ColumnWidthContext = createContext<ColumnWidthContextType>({})
@@ -67,13 +68,25 @@ export function ColumnWidthProvider({ children, localStorageKey }: ColumnWidthPr
     })
   }, [setWidths])
 
+  const increaseColumnWidth = useCallback(({ columnIndex, delta }: { columnIndex: number; delta: number }) => {
+    if (delta === 0 || isNaN(delta) || !Number.isFinite(delta)) {
+      return
+    }
+    const currentWidth = getColumnWidth(columnIndex)
+    if (currentWidth === undefined) {
+      return
+    }
+    setColumnWidth({ columnIndex, width: currentWidth + delta })
+  }, [getColumnWidth, setColumnWidth])
+
   const value = useMemo(() => {
     return {
       getColumnWidth,
       getColumnStyle,
       setColumnWidth,
+      increaseColumnWidth,
     }
-  }, [getColumnWidth, getColumnStyle, setColumnWidth])
+  }, [getColumnWidth, getColumnStyle, setColumnWidth, increaseColumnWidth])
 
   return (
     <ColumnWidthContext.Provider value={value}>

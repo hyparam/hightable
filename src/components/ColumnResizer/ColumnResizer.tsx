@@ -2,13 +2,12 @@ import { KeyboardEvent, MouseEvent, PointerEvent, useCallback, useMemo, useState
 
 interface PointerState {
   clientX: number
-  width: number
   pointerId: number
 }
 
 interface Props {
   onDoubleClick?: () => void
-  setWidth?: (width: number | undefined) => void
+  increaseWidth?: (delta: number) => void
   width?: number
   tabIndex?: number
   navigateToCell?: () => void
@@ -17,13 +16,9 @@ interface Props {
 const keyboardShiftWidth = 10
 const minWidth = 1
 
-export default function ColumnResizer({ onDoubleClick, setWidth, width, tabIndex, navigateToCell }: Props) {
+export default function ColumnResizer({ onDoubleClick, increaseWidth, width, tabIndex, navigateToCell }: Props) {
   const [pointerState, setPointerState] = useState<PointerState | undefined>(undefined)
   const [activeKeyboard, setActiveKeyboard] = useState<boolean>(false)
-
-  // Double click and mouse down/mouse up events must not conflict with each other.
-  // This is done by updating the width on mouse down only when the width changes (dragging)
-  // and by calling the onDoubleClick handler when the user double clicks only if the width is not being resized.
 
   const handleDoubleClick = useCallback(() => {
     navigateToCell?.()
@@ -43,19 +38,11 @@ export default function ColumnResizer({ onDoubleClick, setWidth, width, tabIndex
   const handlePointerDown = useCallback((event: PointerEvent<HTMLSpanElement>) => {
     navigateToCell?.()
     event.stopPropagation()
-    if (width === undefined) {
-      // If width is not set, we cannot resize
-      return
-    }
 
     const { clientX, currentTarget, pointerId } = event
-    setPointerState({
-      clientX,
-      width,
-      pointerId,
-    })
+    setPointerState({ clientX, pointerId })
     currentTarget.setPointerCapture(pointerId)
-  }, [navigateToCell, width])
+  }, [navigateToCell])
 
   // Handle pointer move event during resizing
   const getOnPointerMove = useCallback(() => {
@@ -63,19 +50,20 @@ export default function ColumnResizer({ onDoubleClick, setWidth, width, tabIndex
       // no callback if pointer is not down
       return
     }
-    const { clientX, width } = pointerState
+    const { clientX: previousClientX } = pointerState
     return (event: PointerEvent<HTMLSpanElement>) => {
+      const { pointerId, clientX } = event
       if (event.pointerId !== pointerState.pointerId) {
         // Ignore pointer events from other pointers
         return
       }
-      const deltaX = event.clientX - clientX
-      if (deltaX !== 0) {
-        setWidth?.(Math.max(1, width + event.clientX - clientX))
-        // TODO: send the delta, not the absolute width (increaseWidth)
+      const delta = clientX - previousClientX
+      if (delta !== 0) {
+        increaseWidth?.(delta)
+        setPointerState({ clientX, pointerId })
       }
     }
-  }, [pointerState, setWidth])
+  }, [pointerState, increaseWidth])
 
   // Handle pointer up to end resizing
   const handlePointerUp = useCallback((event: PointerEvent<HTMLSpanElement>) => {
@@ -122,11 +110,11 @@ export default function ColumnResizer({ onDoubleClick, setWidth, width, tabIndex
       return
     }
     if (e.key === 'ArrowRight') {
-      setWidth?.(Math.max(minWidth, width + keyboardShiftWidth))
+      increaseWidth?.(keyboardShiftWidth)
     } else if (e.key === 'ArrowLeft') {
-      setWidth?.(Math.max(minWidth, width - keyboardShiftWidth))
+      increaseWidth?.(-keyboardShiftWidth)
     }
-  }, [handleDoubleClick, pointerState, setWidth, width, activeKeyboard, navigateToCell])
+  }, [handleDoubleClick, pointerState, increaseWidth, width, activeKeyboard, navigateToCell])
 
   const ariaBusy = pointerState !== undefined || activeKeyboard
 
