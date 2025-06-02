@@ -30,22 +30,26 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
   const sortable = !!onClick // if onClick is defined, the column is sortable
 
   // Get the column width from the context
-  const { getColumnStyle, setColumnWidth, getColumnWidth } = useColumnWidth()
+  const { getColumnStyle, setColumnWidth, increaseColumnWidth, getColumnWidth } = useColumnWidth()
   const columnStyle = getColumnStyle?.(columnIndex)
   const width = getColumnWidth?.(columnIndex)
   const setWidth = useCallback((nextWidth: number | undefined) => {
     setColumnWidth?.({ columnIndex, width: nextWidth })
   }, [setColumnWidth, columnIndex])
+  const increaseWidth = useCallback((delta: number) => {
+    increaseColumnWidth?.({ columnIndex, delta })
+  }, [increaseColumnWidth, columnIndex])
 
   // Measure default column width when data is ready, if no width is set
   useEffect(() => {
     const element = ref.current
     if (dataReady && element && width === undefined) {
       const nextWidth = measureWidth(element)
-      if (!isNaN(nextWidth)) {
-        // should not happen in the browser (but fails in unit tests)
-        setWidth(nextWidth)
+      if (isNaN(nextWidth)) {
+        // browserless unit tests get NaN
+        return
       }
+      setWidth(nextWidth)
     }
   }, [dataReady, setWidth, width])
 
@@ -57,10 +61,11 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
         setWidth(undefined)
       })
       const nextWidth = measureWidth(element)
-      if (!isNaN(nextWidth)) {
-        // should not happen in the browser (but fails in unit tests)
-        setWidth(nextWidth)
+      if (isNaN(nextWidth)) {
+        // browserless unit tests get NaN
+        return
       }
+      setWidth(nextWidth)
     }
   }, [setWidth])
 
@@ -111,7 +116,7 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
     >
       {children}
       <ColumnResizer
-        setWidth={setWidth}
+        increaseWidth={increaseWidth}
         onDoubleClick={autoResize}
         width={width}
         tabIndex={tabIndex}

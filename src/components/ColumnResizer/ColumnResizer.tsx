@@ -1,8 +1,13 @@
-import { KeyboardEvent, MouseEvent, useCallback, useEffect, useMemo, useState } from 'react'
+import { KeyboardEvent, MouseEvent, PointerEvent, useCallback, useMemo, useState } from 'react'
+
+interface PointerState {
+  clientX: number
+  pointerId: number
+}
 
 interface Props {
   onDoubleClick?: () => void
-  setWidth?: (width: number | undefined) => void
+  increaseWidth?: (delta: number) => void
   width?: number
   tabIndex?: number
   navigateToCell?: () => void
@@ -11,61 +16,58 @@ interface Props {
 const keyboardShiftWidth = 10
 const minWidth = 1
 
-export default function ColumnResizer({ onDoubleClick, setWidth, width, tabIndex, navigateToCell }: Props) {
-  const [resizeClientX, setResizeClientX] = useState<number | undefined>(undefined)
+export default function ColumnResizer({ onDoubleClick, increaseWidth, width, tabIndex, navigateToCell }: Props) {
+  const [pointerState, setPointerState] = useState<PointerState | undefined>(undefined)
   const [activeKeyboard, setActiveKeyboard] = useState<boolean>(false)
 
   const handleDoubleClick = useCallback(() => {
     navigateToCell?.()
+    if (pointerState) {
+      // If pointer is down, we are resizing, so don't call onDoubleClick
+      return
+    }
     onDoubleClick?.()
-  }, [onDoubleClick, navigateToCell])
+  }, [onDoubleClick, navigateToCell, pointerState])
 
   // Disable click event propagation
   const disableOnClick = useCallback((e: MouseEvent) => {
     e.stopPropagation()
   }, [])
 
-  // Handle mouse down to start resizing
-  const onMouseDown = useCallback((e: MouseEvent) => {
+  // Handle pointer down to start resizing
+  const handlePointerDown = useCallback((event: PointerEvent<HTMLSpanElement>) => {
     navigateToCell?.()
-    e.stopPropagation()
-    const nextResizeWidth = width ?? 0
-    setResizeClientX(e.clientX - nextResizeWidth)
-    setWidth?.(nextResizeWidth)
-  }, [setWidth, width, navigateToCell])
+    event.stopPropagation()
 
-  // Handle mouse move event during resizing
-  useEffect(() => {
-    if (resizeClientX !== undefined) {
-      function updateResizeWidth(clientX: number) {
-        return function(event: globalThis.MouseEvent) {
-          setWidth?.(Math.max(1, event.clientX - clientX))
-        }
-      }
-      const listener = updateResizeWidth(resizeClientX)
-      window.addEventListener('mousemove', listener)
-      return () => {
-        window.removeEventListener('mousemove', listener)
-      }
+    const { clientX, currentTarget, pointerId } = event
+    setPointerState({ clientX, pointerId })
+    if (!('setPointerCapture' in currentTarget)) {
+      // browserless unit tests don't support PointerEvents
+      return
     }
-  }, [resizeClientX, setWidth])
+    currentTarget.setPointerCapture(pointerId)
+  }, [navigateToCell])
 
-  // Handle mouse up to end resizing
-  useEffect(() => {
-    if (resizeClientX !== undefined) {
-      function stopResizing(clientX: number) {
-        return function(event: globalThis.MouseEvent) {
-          setWidth?.(Math.max(1, event.clientX - clientX))
-          setResizeClientX(undefined)
-        }
-      }
-      const listener = stopResizing(resizeClientX)
-      window.addEventListener('mouseup', listener)
-      return () => {
-        window.removeEventListener('mouseup', listener)
-      }
+  // Handle pointer move event during resizing
+  const handlePointerMove = useCallback((event: PointerEvent<HTMLSpanElement>) => {
+    if (!pointerState) {
+      return
     }
-  }, [resizeClientX, setWidth])
+    const { pointerId, clientX } = event
+    const delta = clientX - pointerState.clientX
+    if (event.pointerId !== pointerState.pointerId || delta === 0) {
+      return
+    }
+    increaseWidth?.(delta)
+    setPointerState({ clientX, pointerId })
+  }, [pointerState, increaseWidth])
+
+  // Handle pointer up to end resizing
+  const handlePointerUp = useCallback((event: PointerEvent<HTMLSpanElement>) => {
+    event.stopPropagation()
+    // releasePointerCapture() is called automatically on pointer up
+    setPointerState(undefined)
+  }, [])
 
   const onFocus = useCallback(() => {
     setActiveKeyboard(true)
@@ -85,8 +87,8 @@ export default function ColumnResizer({ onDoubleClick, setWidth, width, tabIndex
       e.preventDefault()
     }
     e.stopPropagation()
-    if (resizeClientX !== undefined) {
-      // don't allow keyboard events when resizing with the mouse
+    if (pointerState) {
+      // don't allow keyboard events when resizing with the pointer
       return
     }
     if (e.key === 'Escape') {
@@ -105,13 +107,13 @@ export default function ColumnResizer({ onDoubleClick, setWidth, width, tabIndex
       return
     }
     if (e.key === 'ArrowRight') {
-      setWidth?.(Math.max(minWidth, width + keyboardShiftWidth))
+      increaseWidth?.(keyboardShiftWidth)
     } else if (e.key === 'ArrowLeft') {
-      setWidth?.(Math.max(minWidth, width - keyboardShiftWidth))
+      increaseWidth?.(-keyboardShiftWidth)
     }
-  }, [handleDoubleClick, resizeClientX, setWidth, width, activeKeyboard, navigateToCell])
+  }, [handleDoubleClick, pointerState, increaseWidth, width, activeKeyboard, navigateToCell])
 
-  const ariaBusy = resizeClientX !== undefined || activeKeyboard
+  const ariaBusy = pointerState !== undefined || activeKeyboard
 
   const ariaValueText = useMemo(() => {
     if (width === undefined) {
@@ -132,7 +134,9 @@ export default function ColumnResizer({ onDoubleClick, setWidth, width, tabIndex
       aria-label="Resize column"
       aria-description='Press "Enter" or "Space" to autoresize the column. Press "Escape" to cancel resizing. Press "ArrowRight" or "ArrowLeft" to resize the column by 10 pixels.'
       onDoubleClick={handleDoubleClick}
-      onMouseDown={onMouseDown}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
       onClick={disableOnClick}
       onFocus={onFocus}
       onBlur={onBlur}
