@@ -30,8 +30,9 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
   const sortable = !!onClick // if onClick is defined, the column is sortable
 
   // Get the column width from the context
-  const { getColumnStyle, setColumnWidth, increaseColumnWidth } = useColumnWidth()
+  const { getColumnStyle, setColumnWidth, increaseColumnWidth, getColumnWidth } = useColumnWidth()
   const columnStyle = getColumnStyle?.(columnIndex)
+  const width = getColumnWidth?.(columnIndex)
   const setWidth = useCallback((nextWidth: number | undefined) => {
     setColumnWidth?.({ columnIndex, width: nextWidth })
   }, [setColumnWidth, columnIndex])
@@ -42,7 +43,7 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
   // Measure default column width when data is ready, if no width is set
   useEffect(() => {
     const element = ref.current
-    if (dataReady && element && columnStyle === undefined) {
+    if (dataReady && element && width === undefined) {
       const nextWidth = measureWidth(element)
       if (isNaN(nextWidth)) {
         // browserless unit tests get NaN
@@ -50,7 +51,7 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
       }
       setWidth(nextWidth)
     }
-  }, [dataReady, setWidth, columnStyle])
+  }, [dataReady, setWidth, width])
 
   const autoResize = useCallback(() => {
     const element = ref.current
@@ -117,6 +118,7 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
       <ColumnResizer
         increaseWidth={increaseWidth}
         onDoubleClick={autoResize}
+        width={width}
         tabIndex={tabIndex}
         navigateToCell={navigateToCell}
       />

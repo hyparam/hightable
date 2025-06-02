@@ -1,4 +1,4 @@
-import { KeyboardEvent, MouseEvent, PointerEvent, useCallback, useState } from 'react'
+import { KeyboardEvent, MouseEvent, PointerEvent, useCallback, useMemo, useState } from 'react'
 
 interface PointerState {
   clientX: number
@@ -8,13 +8,15 @@ interface PointerState {
 interface Props {
   onDoubleClick?: () => void
   increaseWidth?: (delta: number) => void
+  width?: number
   tabIndex?: number
   navigateToCell?: () => void
 }
 
 const keyboardShiftWidth = 10
+const minWidth = 1
 
-export default function ColumnResizer({ onDoubleClick, increaseWidth, tabIndex, navigateToCell }: Props) {
+export default function ColumnResizer({ onDoubleClick, increaseWidth, width, tabIndex, navigateToCell }: Props) {
   const [pointerState, setPointerState] = useState<PointerState | undefined>(undefined)
   const [activeKeyboard, setActiveKeyboard] = useState<boolean>(false)
 
@@ -107,23 +109,34 @@ export default function ColumnResizer({ onDoubleClick, increaseWidth, tabIndex, 
       handleDoubleClick()
       return
     }
-    if (increaseWidth === undefined) {
+    if (width === undefined) {
+      // don't allow other keyboard events when width is not set
       return
     }
     if (e.key === 'ArrowRight') {
-      increaseWidth(keyboardShiftWidth)
+      increaseWidth?.(keyboardShiftWidth)
     } else if (e.key === 'ArrowLeft') {
-      increaseWidth(-keyboardShiftWidth)
+      increaseWidth?.(-keyboardShiftWidth)
     }
-  }, [handleDoubleClick, pointerState, increaseWidth, activeKeyboard, navigateToCell])
+  }, [handleDoubleClick, pointerState, increaseWidth, width, activeKeyboard, navigateToCell])
 
   const ariaBusy = pointerState !== undefined || activeKeyboard
+
+  const ariaValueText = useMemo(() => {
+    if (width === undefined) {
+      return 'No width set.'
+    }
+    return `Width set to ${width} pixels.`
+  }, [width])
 
   return (
     <span
       role="separator"
       aria-orientation="vertical"
       aria-busy={ariaBusy}
+      aria-valuemin={minWidth}
+      aria-valuenow={width}
+      aria-valuetext={ariaValueText}
       // TODO: use aria-labelledby and aria-describedby to allow translation
       aria-label="Resize column"
       aria-description='Press "Enter" or "Space" to autoresize the column. Press "Escape" to cancel resizing. Press "ArrowRight" or "ArrowLeft" to resize the column by 10 pixels.'
