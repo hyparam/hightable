@@ -27,8 +27,12 @@ export default function ColumnResizer({ onDoubleClick, setWidth, width, tabIndex
 
   const handleDoubleClick = useCallback(() => {
     navigateToCell?.()
+    if (pointerState) {
+      // If pointer is down, we are resizing, so don't call onDoubleClick
+      return
+    }
     onDoubleClick?.()
-  }, [onDoubleClick, navigateToCell])
+  }, [onDoubleClick, navigateToCell, pointerState])
 
   // Disable click event propagation
   const disableOnClick = useCallback((e: MouseEvent) => {
