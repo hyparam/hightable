@@ -137,10 +137,10 @@ function adjustWidths({
   }
 
   const minReducedWidthMargin = 5 // leave some margin for rounding errors
-  const divider = Math.max(Math.min(numColumns, 4), 1) // between 1 and 4 (ie: 25% to 100%)
+  const multiplier = numColumns <= 3 ? 1 / numColumns : 0.3 // 30% so that 4 or more columns will overflow
   const minReducedWidth = Math.max(
     minWidth,
-    Math.floor(availableWidth / divider - minReducedWidthMargin)
+    Math.floor(multiplier * availableWidth - minReducedWidthMargin)
   )
 
   // Group column indexes by width in a Map
