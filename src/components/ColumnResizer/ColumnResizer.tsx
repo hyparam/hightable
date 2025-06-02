@@ -1,7 +1,7 @@
 import { KeyboardEvent, MouseEvent, useCallback, useEffect, useMemo, useState } from 'react'
 
 interface Props {
-  onDoubleClick?: () => void
+  autoResize?: () => void
   setWidth?: (width: number | undefined) => void
   width?: number
   tabIndex?: number
@@ -11,14 +11,14 @@ interface Props {
 const keyboardShiftWidth = 10
 
 // TODO: add aria-minwidth and aria-maxwidth?
-export default function ColumnResizer({ onDoubleClick, setWidth, width, tabIndex, navigateToCell }: Props) {
+export default function ColumnResizer({ autoResize, setWidth, width, tabIndex, navigateToCell }: Props) {
   const [resizeClientX, setResizeClientX] = useState<number | undefined>(undefined)
   const [activeKeyboard, setActiveKeyboard] = useState<boolean>(false)
 
-  const handleDoubleClick = useCallback(() => {
+  const onDoubleClick = useCallback(() => {
     navigateToCell?.()
-    onDoubleClick?.()
-  }, [onDoubleClick, navigateToCell])
+    autoResize?.()
+  }, [autoResize, navigateToCell])
 
   // Disable click event propagation
   const disableOnClick = useCallback((e: MouseEvent) => {
@@ -97,7 +97,7 @@ export default function ColumnResizer({ onDoubleClick, setWidth, width, tabIndex
     }
     if (e.key === 'Enter' || e.key === ' ') {
       // autoresize and exit keyboard mode
-      handleDoubleClick()
+      autoResize?.()
       return
     }
     if (width === undefined) {
@@ -109,7 +109,7 @@ export default function ColumnResizer({ onDoubleClick, setWidth, width, tabIndex
     } else if (e.key === 'ArrowLeft') {
       setWidth?.(width - keyboardShiftWidth)
     }
-  }, [handleDoubleClick, resizeClientX, setWidth, width, activeKeyboard, navigateToCell])
+  }, [autoResize, resizeClientX, setWidth, width, activeKeyboard, navigateToCell])
 
   const ariaBusy = resizeClientX !== undefined || activeKeyboard
 
@@ -130,7 +130,7 @@ export default function ColumnResizer({ onDoubleClick, setWidth, width, tabIndex
       // TODO: use aria-labelledby and aria-describedby to allow translation
       aria-label="Resize column"
       aria-description='Press "Enter" or "Space" to autoresize the column. Press "Escape" to cancel resizing. Press "ArrowRight" or "ArrowLeft" to resize the column by 10 pixels.'
-      onDoubleClick={handleDoubleClick}
+      onDoubleClick={onDoubleClick}
       onMouseDown={onMouseDown}
       onClick={disableOnClick}
       onFocus={onFocus}

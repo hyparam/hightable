@@ -3,7 +3,7 @@ import { DataFrame } from '../../helpers/dataframe.js'
 import { PartialRow } from '../../helpers/row.js'
 import { Selection, areAllSelected, isSelected, toggleIndexInSelection, toggleRangeInSelection, toggleRangeInTable } from '../../helpers/selection.js'
 import { OrderBy, areEqualOrderBy } from '../../helpers/sort.js'
-import { cellStyle, measureClientWidth, measureOffsetWidth } from '../../helpers/width.js'
+import { cellStyle, getClientWidth, getOffsetWidth } from '../../helpers/width.js'
 import { CellsNavigationProvider, useCellsNavigation } from '../../hooks/useCellsNavigation.js'
 import { ColumnWidthProvider, useColumnWidth } from '../../hooks/useColumnWidth.js'
 import { DataProvider, useData } from '../../hooks/useData.js'
@@ -271,8 +271,8 @@ export function HighTableInner({
     function reportWidth() {
       if (scrollRef.current && tableCornerRef.current) {
         // we use the scrollRef client width, because we're interested in the content area
-        const tableWidth = measureClientWidth(scrollRef.current)
-        const leftColumnWidth = measureOffsetWidth(tableCornerRef.current)
+        const tableWidth = getClientWidth(scrollRef.current)
+        const leftColumnWidth = getOffsetWidth(tableCornerRef.current)
         setAvailableWidth?.(tableWidth - leftColumnWidth)
       }
     }

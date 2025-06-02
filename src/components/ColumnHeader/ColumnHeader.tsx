@@ -1,7 +1,7 @@
 import { KeyboardEvent, ReactNode, useCallback, useEffect, useMemo, useRef } from 'react'
 import { flushSync } from 'react-dom'
 import { Direction } from '../../helpers/sort.js'
-import { measureOffsetWidth } from '../../helpers/width.js'
+import { getOffsetWidth } from '../../helpers/width.js'
 import { useCellNavigation } from '../../hooks/useCellsNavigation.js'
 import { useColumnWidth } from '../../hooks/useColumnWidth.js'
 import ColumnResizer from '../ColumnResizer/ColumnResizer.js'
@@ -45,7 +45,7 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
   useEffect(() => {
     const element = ref.current
     if (dataReady && element && width === undefined) {
-      const nextWidth = measureOffsetWidth(element)
+      const nextWidth = getOffsetWidth(element)
       if (!isNaN(nextWidth)) {
         // should not happen in the browser (but fails in unit tests)
         setMeasuredWidth(nextWidth)
@@ -60,7 +60,7 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
       flushSync(() => {
         setMeasuredWidth(undefined)
       })
-      const nextWidth = measureOffsetWidth(element)
+      const nextWidth = getOffsetWidth(element)
       if (!isNaN(nextWidth)) {
         // should not happen in the browser (but fails in unit tests)
         setMeasuredWidth(nextWidth)
@@ -117,7 +117,7 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
       {children}
       <ColumnResizer
         setWidth={setFixedWidth}
-        onDoubleClick={autoResize}
+        autoResize={autoResize}
         width={width}
         tabIndex={tabIndex}
         navigateToCell={navigateToCell}
