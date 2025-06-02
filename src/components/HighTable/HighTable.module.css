@@ -256,7 +256,7 @@
     border-right: 1px solid #ddd;
     height: 32px;
     /* prevent columns expanding - limits the initial and autoresized width */
-    max-width: 120rem;
+    max-width: 40rem;
     padding: 4px var(--cell-horizontal-padding);
     text-align: left;
     text-overflow: ellipsis;
