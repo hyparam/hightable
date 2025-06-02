@@ -44,10 +44,11 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
     const element = ref.current
     if (dataReady && element && columnStyle === undefined) {
       const nextWidth = measureWidth(element)
-      if (!isNaN(nextWidth)) {
-        // should not happen in the browser (but fails in unit tests)
-        setWidth(nextWidth)
+      if (isNaN(nextWidth)) {
+        // browserless unit tests get NaN
+        return
       }
+      setWidth(nextWidth)
     }
   }, [dataReady, setWidth, columnStyle])
 
@@ -59,10 +60,11 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
         setWidth(undefined)
       })
       const nextWidth = measureWidth(element)
-      if (!isNaN(nextWidth)) {
-        // should not happen in the browser (but fails in unit tests)
-        setWidth(nextWidth)
+      if (isNaN(nextWidth)) {
+        // browserless unit tests get NaN
+        return
       }
+      setWidth(nextWidth)
     }
   }, [setWidth])
 
