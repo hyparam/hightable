@@ -53,17 +53,13 @@ export default function ColumnResizer({ onDoubleClick, increaseWidth, width, tab
     if (!pointerState) {
       return
     }
-    const { clientX: previousClientX } = pointerState
     const { pointerId, clientX } = event
-    if (event.pointerId !== pointerState.pointerId) {
-      // Ignore pointer events from other pointers
+    const delta = clientX - pointerState.clientX
+    if (event.pointerId !== pointerState.pointerId || delta === 0) {
       return
     }
-    const delta = clientX - previousClientX
-    if (delta !== 0) {
-      increaseWidth?.(delta)
-      setPointerState({ clientX, pointerId })
-    }
+    increaseWidth?.(delta)
+    setPointerState({ clientX, pointerId })
   }, [pointerState, increaseWidth])
 
   // Handle pointer up to end resizing
