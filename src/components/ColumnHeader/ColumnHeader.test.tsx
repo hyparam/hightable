@@ -3,7 +3,7 @@ import { ColumnWidthProvider } from '../../hooks/useColumnWidth.js'
 import { render } from '../../utils/userEvent.js'
 import ColumnHeader from './ColumnHeader.js'
 
-import { measureOffsetWidth } from '../../helpers/width.js'
+import { getOffsetWidth } from '../../helpers/width.js'
 vi.mock('../../helpers/width.js', { spy: true })
 
 vi.stubGlobal('localStorage', (() => {
@@ -40,23 +40,23 @@ describe('ColumnHeader', () => {
     const { getByRole } = render(<table><thead><tr><ColumnHeader columnName="test" {...defaultProps}>{content}</ColumnHeader></tr></thead></table>)
     const element = getByRole('columnheader')
     expect(element.textContent).toEqual(content)
-    expect(measureOffsetWidth).not.toHaveBeenCalled()
+    expect(getOffsetWidth).not.toHaveBeenCalled()
   })
 
   it('measures the width if dataReady is true', () => {
     render(<table><thead><tr><ColumnHeader columnName="test" {...defaultProps} dataReady={true} /></tr></thead></table>)
-    expect(measureOffsetWidth).toHaveBeenCalled()
+    expect(getOffsetWidth).toHaveBeenCalled()
   })
 
   it('measures the width again if dataReady toggles to true', () => {
     const { rerender } = render(<table><thead><tr><ColumnHeader columnName="test" {...defaultProps} dataReady={true} /></tr></thead></table>)
-    expect(measureOffsetWidth).toHaveBeenCalledTimes(1)
+    expect(getOffsetWidth).toHaveBeenCalledTimes(1)
     // new data is being loaded
     rerender(<table><thead><tr><ColumnHeader columnName="test" {...defaultProps} dataReady={false} /></tr></thead></table>)
-    expect(measureOffsetWidth).toHaveBeenCalledTimes(1)
+    expect(getOffsetWidth).toHaveBeenCalledTimes(1)
     // new data is ready
     rerender(<table><thead><tr><ColumnHeader columnName="test" {...defaultProps} dataReady={true} /></tr></thead></table>)
-    expect(measureOffsetWidth).toHaveBeenCalledTimes(2)
+    expect(getOffsetWidth).toHaveBeenCalledTimes(2)
   })
 
   it('loads column width from localStorage when localStorageKey is provided', () => {
@@ -83,13 +83,13 @@ describe('ColumnHeader', () => {
     const resizeHandle = getByRole('separator')
 
     expect(header.style.maxWidth).toEqual(`${savedWidth}px`)
-    expect(measureOffsetWidth).toHaveBeenCalledTimes(0)
+    expect(getOffsetWidth).toHaveBeenCalledTimes(0)
     await user.dblClick(resizeHandle)
     // the width is set to undefined, and should then be measured,
     // but the measurement (.offsetWidth) can only run in a browser,
     // so its value is undefined and the width is not set
     expect(header.style.maxWidth).toEqual('')
-    expect(measureOffsetWidth).toHaveBeenCalledTimes(1)
+    expect(getOffsetWidth).toHaveBeenCalledTimes(1)
   })
 
   it('handles mouse click and drag on resize handle to resize', async () => {

@@ -30,26 +30,27 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
   const sortable = !!onClick // if onClick is defined, the column is sortable
 
   // Get the column width from the context
-  const { getColumnStyle, isFixedColumn, setFixedColumnWidth, getColumnWidth, setMeasuredColumnWidth } = useColumnWidth()
+  const { getColumnStyle, isFixedColumn, getColumnWidth, setMeasuredColumnWidth, increaseColumnWidth } = useColumnWidth()
   const columnStyle = getColumnStyle?.(columnIndex)
   const dataFixedWidth = isFixedColumn?.(columnIndex) === true ? true : undefined
   const width = getColumnWidth?.(columnIndex)
-  const setFixedWidth = useCallback((nextWidth: number | undefined) => {
-    setFixedColumnWidth?.({ columnIndex, width: nextWidth })
-  }, [setFixedColumnWidth, columnIndex])
   const setMeasuredWidth = useCallback((nextWidth: number | undefined) => {
     setMeasuredColumnWidth?.({ columnIndex, width: nextWidth })
   }, [setMeasuredColumnWidth, columnIndex])
+  const increaseWidth = useCallback((delta: number) => {
+    increaseColumnWidth?.({ columnIndex, delta })
+  }, [increaseColumnWidth, columnIndex])
 
   // Measure default column width when data is ready, if no width is set
   useEffect(() => {
     const element = ref.current
     if (dataReady && element && width === undefined) {
       const nextWidth = getOffsetWidth(element)
-      if (!isNaN(nextWidth)) {
-        // should not happen in the browser (but fails in unit tests)
-        setMeasuredWidth(nextWidth)
+      if (isNaN(nextWidth)) {
+        // browserless unit tests get NaN
+        return
       }
+      setMeasuredWidth(nextWidth)
     }
   }, [dataReady, setMeasuredWidth, width])
 
@@ -61,10 +62,11 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
         setMeasuredWidth(undefined)
       })
       const nextWidth = getOffsetWidth(element)
-      if (!isNaN(nextWidth)) {
-        // should not happen in the browser (but fails in unit tests)
-        setMeasuredWidth(nextWidth)
+      if (isNaN(nextWidth)) {
+        // browserless unit tests get NaN
+        return
       }
+      setMeasuredWidth(nextWidth)
     }
   }, [setMeasuredWidth])
 
@@ -116,7 +118,7 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
     >
       {children}
       <ColumnResizer
-        setWidth={setFixedWidth}
+        increaseWidth={increaseWidth}
         autoResize={autoResize}
         width={width}
         tabIndex={tabIndex}

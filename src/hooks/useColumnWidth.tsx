@@ -14,6 +14,7 @@ interface ColumnWidthContextType {
   setAvailableWidth?: (width: number | undefined) => void // used to set the width of the wrapper element
   setFixedColumnWidth?: (options: WidthSetterOptions) => void // used to set a fixed width for a column (will be stored and overrides the auto width)
   setMeasuredColumnWidth?: (options: WidthSetterOptions) => void // used to set the width of a column based on its measured width
+  increaseColumnWidth?: (options: { columnIndex: number; delta: number }) => void
 }
 
 export const ColumnWidthContext = createContext<ColumnWidthContextType>({})
@@ -91,6 +92,17 @@ export function ColumnWidthProvider({ children, localStorageKey, numColumns, min
     })
   }, [setFixedColumnWidth, setMeasuredWidths])
 
+  const increaseColumnWidth = useCallback(({ columnIndex, delta }: { columnIndex: number; delta: number }) => {
+    if (delta === 0 || isNaN(delta) || !Number.isFinite(delta)) {
+      return
+    }
+    const currentWidth = getColumnWidth(columnIndex)
+    if (currentWidth === undefined) {
+      return
+    }
+    setFixedColumnWidth({ columnIndex, width: currentWidth + delta })
+  }, [getColumnWidth, setFixedColumnWidth])
+
   const value = useMemo(() => {
     return {
       getColumnWidth,
@@ -99,8 +111,9 @@ export function ColumnWidthProvider({ children, localStorageKey, numColumns, min
       setAvailableWidth,
       setFixedColumnWidth,
       setMeasuredColumnWidth,
+      increaseColumnWidth,
     }
-  }, [getColumnWidth, getColumnStyle, isFixedColumn, setAvailableWidth, setFixedColumnWidth, setMeasuredColumnWidth])
+  }, [getColumnWidth, getColumnStyle, isFixedColumn, setAvailableWidth, setFixedColumnWidth, setMeasuredColumnWidth, increaseColumnWidth])
 
   return (
     <ColumnWidthContext.Provider value={value}>
