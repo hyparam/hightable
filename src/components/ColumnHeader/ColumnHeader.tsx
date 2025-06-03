@@ -30,7 +30,7 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
   const sortable = !!onClick // if onClick is defined, the column is sortable
 
   // Get the column width from the context
-  const { getColumnStyle, isFixedColumn, getColumnWidth, setMeasuredColumnWidth, increaseColumnWidth } = useColumnWidth()
+  const { getColumnStyle, isFixedColumn, getColumnWidth, setMeasuredColumnWidth, setFixedColumnWidth, increaseColumnWidth } = useColumnWidth()
   const columnStyle = getColumnStyle?.(columnIndex)
   const dataFixedWidth = isFixedColumn?.(columnIndex) === true ? true : undefined
   const width = getColumnWidth?.(columnIndex)
@@ -41,19 +41,19 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
   // Measure default column width when data is ready, if no width is set
   useEffect(() => {
     const element = ref.current
-    if (dataReady && element && setMeasuredColumnWidth && width === undefined) {
+    if (dataReady && element && width === undefined) {
       const nextWidth = getOffsetWidth(element)
       if (isNaN(nextWidth)) {
         // browserless unit tests get NaN
         return
       }
-      setMeasuredColumnWidth({ columnIndex, width: nextWidth })
+      setMeasuredColumnWidth?.({ columnIndex, width: nextWidth })
     }
   }, [dataReady, setMeasuredColumnWidth, width, columnIndex])
 
   const autoResize = useCallback(() => {
     const element = ref.current
-    if (element && setMeasuredColumnWidth) {
+    if (element && setMeasuredColumnWidth && setFixedColumnWidth) {
       // Remove the width, let it size naturally, and then measure it
       flushSync(() => {
         setMeasuredColumnWidth({ columnIndex, width: undefined })
@@ -63,9 +63,9 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
         // browserless unit tests get NaN
         return
       }
-      setMeasuredColumnWidth({ columnIndex, width: nextWidth })
+      setFixedColumnWidth({ columnIndex, width: nextWidth })
     }
-  }, [setMeasuredColumnWidth, columnIndex])
+  }, [setMeasuredColumnWidth, setFixedColumnWidth, columnIndex])
 
   const description = useMemo(() => {
     if (!sortable) {

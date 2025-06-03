@@ -87,8 +87,9 @@ describe('ColumnHeader', () => {
     await user.dblClick(resizeHandle)
     // the width is set to undefined, and should then be measured,
     // but the measurement (.offsetWidth) can only run in a browser,
-    // so its value is undefined and the width is not set
-    expect(header.style.maxWidth).toEqual('')
+    // so its value is 0
+    // The fixed width is then adjusted to the minimum width: 10px
+    expect(header.style.maxWidth).toEqual('10px')
     expect(getOffsetWidth).toHaveBeenCalledTimes(1)
   })
 

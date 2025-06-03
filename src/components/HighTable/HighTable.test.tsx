@@ -984,7 +984,12 @@ describe('Navigating Hightable with the keyboard', () => {
       await user.keyboard('{ArrowRight}')
       expect(separator.getAttribute('aria-valuenow')).toBe((+value + 10).toString())
       await user.keyboard(key)
-      expect(separator.getAttribute('aria-valuenow')).toBe(value)
+      const valueNow = separator.getAttribute('aria-valuenow')
+      if (valueNow === null) {
+        throw new Error('aria-valuenow should not be null')
+      }
+      // the autosized column width (smart fit) is less than the default adjusted width
+      expect(+valueNow).toBeLessThan(+value)
       expect(document.activeElement).toBe(cell)
     })
   })
