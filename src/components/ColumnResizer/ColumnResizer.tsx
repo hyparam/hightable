@@ -20,13 +20,12 @@ export default function ColumnResizer({ autoResize, increaseWidth, width, tabInd
   const [pointerState, setPointerState] = useState<PointerState | undefined>(undefined)
   const [activeKeyboard, setActiveKeyboard] = useState<boolean>(false)
 
-  const onDoubleClick = useCallback(() => {
-    navigateToCell?.()
-    if (pointerState) {
-      // If pointer is down, we are resizing, so don't call onDoubleClick
-      return
+  const autoResizeAndRemoveFocus = useCallback(() => {
+    if (!pointerState) {
+      // If pointer is down, don't auto-resize
+      autoResize?.()
     }
-    autoResize?.()
+    navigateToCell?.()
   }, [autoResize, navigateToCell, pointerState])
 
   // Disable click event propagation
@@ -99,7 +98,7 @@ export default function ColumnResizer({ autoResize, increaseWidth, width, tabInd
     }
     if (e.key === 'Enter' || e.key === ' ') {
       // autoresize and exit keyboard mode
-      autoResize?.()
+      autoResizeAndRemoveFocus()
       return
     }
     if (width === undefined) {
@@ -111,7 +110,7 @@ export default function ColumnResizer({ autoResize, increaseWidth, width, tabInd
     } else if (e.key === 'ArrowLeft') {
       increaseWidth?.(-keyboardShiftWidth)
     }
-  }, [autoResize, pointerState, increaseWidth, width, activeKeyboard, navigateToCell])
+  }, [autoResizeAndRemoveFocus, pointerState, increaseWidth, width, activeKeyboard, navigateToCell])
 
   const ariaBusy = pointerState !== undefined || activeKeyboard
 
@@ -132,7 +131,7 @@ export default function ColumnResizer({ autoResize, increaseWidth, width, tabInd
       // TODO: use aria-labelledby and aria-describedby to allow translation
       aria-label="Resize column"
       aria-description='Press "Enter" or "Space" to autoresize the column. Press "Escape" to cancel resizing. Press "ArrowRight" or "ArrowLeft" to resize the column by 10 pixels.'
-      onDoubleClick={onDoubleClick}
+      onDoubleClick={autoResizeAndRemoveFocus}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
