@@ -34,9 +34,6 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
   const columnStyle = getColumnStyle?.(columnIndex)
   const dataFixedWidth = isFixedColumn?.(columnIndex) === true ? true : undefined
   const width = getColumnWidth?.(columnIndex)
-  const setMeasuredWidth = useCallback((nextWidth: number | undefined) => {
-    setMeasuredColumnWidth?.({ columnIndex, width: nextWidth })
-  }, [setMeasuredColumnWidth, columnIndex])
   const increaseWidth = useCallback((delta: number) => {
     increaseColumnWidth?.({ columnIndex, delta })
   }, [increaseColumnWidth, columnIndex])
@@ -44,31 +41,31 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
   // Measure default column width when data is ready, if no width is set
   useEffect(() => {
     const element = ref.current
-    if (dataReady && element && width === undefined) {
+    if (dataReady && element && setMeasuredColumnWidth && width === undefined) {
       const nextWidth = getOffsetWidth(element)
       if (isNaN(nextWidth)) {
         // browserless unit tests get NaN
         return
       }
-      setMeasuredWidth(nextWidth)
+      setMeasuredColumnWidth({ columnIndex, width: nextWidth })
     }
-  }, [dataReady, setMeasuredWidth, width])
+  }, [dataReady, setMeasuredColumnWidth, width, columnIndex])
 
   const autoResize = useCallback(() => {
     const element = ref.current
-    if (element) {
+    if (element && setMeasuredColumnWidth) {
       // Remove the width, let it size naturally, and then measure it
       flushSync(() => {
-        setMeasuredWidth(undefined)
+        setMeasuredColumnWidth({ columnIndex, width: undefined })
       })
       const nextWidth = getOffsetWidth(element)
       if (isNaN(nextWidth)) {
         // browserless unit tests get NaN
         return
       }
-      setMeasuredWidth(nextWidth)
+      setMeasuredColumnWidth({ columnIndex, width: nextWidth })
     }
-  }, [setMeasuredWidth])
+  }, [setMeasuredColumnWidth, columnIndex])
 
   const description = useMemo(() => {
     if (!sortable) {
