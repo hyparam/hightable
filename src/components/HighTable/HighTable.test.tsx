@@ -739,28 +739,28 @@ describe('in disabled selection state (neither selection nor onSelection props),
 })
 
 const initialWidth = 62 // initial width of the columns, in pixels, above the default minimal width of 50px
-const measureOffsetWidth = vi.fn(() => initialWidth)
-const measureClientWidth = vi.fn(() => 1000) // used to get the width of the table - let's give space
+const getOffsetWidth = vi.fn(() => initialWidth)
+const getClientWidth = vi.fn(() => 1000) // used to get the width of the table - let's give space
 const keyItem = `key${columnWidthsSuffix}`
 const undefinedItem = `undefined${columnWidthsSuffix}`
 vi.mock(import('../../helpers/width.js'), async (importOriginal ) => {
   const actual = await importOriginal()
   return {
     ...actual,
-    measureOffsetWidth: () => measureOffsetWidth(),
-    measureClientWidth: () => measureClientWidth(),
+    getOffsetWidth: () => getOffsetWidth(),
+    getClientWidth: () => getClientWidth(),
   }})
 describe('HighTable localstorage', () => {
   it('does not save the autosized column widths', () => {
     localStorage.clear()
     render(<HighTable data={data} cacheKey="key" />)
-    expect(measureClientWidth).toHaveBeenCalled()
+    expect(getClientWidth).toHaveBeenCalled()
     expect(localStorage.getItem(keyItem)).toEqual(null)
   })
   it('saves nothing on initialization if cacheKey is not provided', () => {
     localStorage.clear()
     render(<HighTable data={data} />)
-    expect(measureClientWidth).toHaveBeenCalled()
+    expect(getClientWidth).toHaveBeenCalled()
     expect(localStorage.getItem(keyItem)).toBeNull()
     expect(localStorage.getItem(undefinedItem)).toBeNull()
     expect(localStorage.length).toBe(0)
