@@ -992,6 +992,26 @@ describe('Navigating Hightable with the keyboard', () => {
       expect(+valueNow).toBeLessThan(+value)
       expect(document.activeElement).toBe(cell)
     })
+
+    it.for(['{ }', '{Enter}'])('the column resizer toggles back to adjustable column when %s is pressed if previously autosized', async (key) => {
+      const { user } = render(<HighTable data={data} />)
+      // go to the column resizer
+      await user.keyboard('{ArrowRight}{Tab}')
+      const separator = document.activeElement
+      if (!separator) {
+        throw new Error('Separator is null')
+      }
+      const initialValue = separator.getAttribute('aria-valuenow')
+      // autoresize
+      await user.keyboard(key)
+      expect(separator.getAttribute('aria-valuenow')).not.toBe(initialValue)
+      // focus the resizer again
+      await user.keyboard('{Tab}')
+      // press the key
+      await user.keyboard(key)
+      // already autosized - toggles to adjustable width
+      expect(separator.getAttribute('aria-valuenow')).toBe(initialValue)
+    })
   })
 })
 

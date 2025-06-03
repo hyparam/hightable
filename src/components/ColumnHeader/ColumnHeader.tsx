@@ -63,9 +63,15 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
         // browserless unit tests get NaN
         return
       }
-      setFixedColumnWidth({ columnIndex, width: nextWidth })
+      if (dataFixedWidth && width === nextWidth) {
+        // If the width is already set and matches the measured width, toggle from fixed width to adjustable width
+        setMeasuredColumnWidth({ columnIndex, width: nextWidth })
+      } else {
+        setFixedColumnWidth({ columnIndex, width: nextWidth })
+      }
+
     }
-  }, [setMeasuredColumnWidth, setFixedColumnWidth, columnIndex])
+  }, [setMeasuredColumnWidth, setFixedColumnWidth, columnIndex, dataFixedWidth, width])
 
   const description = useMemo(() => {
     if (!sortable) {
