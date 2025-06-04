@@ -978,7 +978,7 @@ describe('Navigating Hightable with the keyboard', () => {
       expect(document.activeElement).toBe(cell)
     })
 
-    it('the column resizer changes the column width when ArrowRight or ArrowLeft are pressed', async () => {
+    it('the column resizer changes the column width when ArrowRight, ArrowLeft, ArrowUp, ArrowDown, ArrowPageUp, ArrowPageDown and Home are pressed', async () => {
       const { user } = render(<HighTable data={data} />)
       // go to the column resizer
       await user.keyboard('{ArrowRight}{Tab}')
@@ -995,6 +995,16 @@ describe('Navigating Hightable with the keyboard', () => {
       expect(spinbutton.getAttribute('aria-valuenow')).toBe((+value + 10).toString())
       await user.keyboard('{ArrowLeft}{ArrowLeft}{ArrowLeft}')
       expect(spinbutton.getAttribute('aria-valuenow')).toBe((+value - 20).toString())
+      await user.keyboard('{ArrowUp}')
+      expect(spinbutton.getAttribute('aria-valuenow')).toBe((+value - 10).toString())
+      await user.keyboard('{ArrowDown}')
+      expect(spinbutton.getAttribute('aria-valuenow')).toBe((+value - 20).toString())
+      await user.keyboard('{PageUp}')
+      expect(spinbutton.getAttribute('aria-valuenow')).toBe((+value + 80).toString())
+      await user.keyboard('{PageDown}')
+      expect(spinbutton.getAttribute('aria-valuenow')).toBe((+value - 20).toString())
+      await user.keyboard('{Home}')
+      expect(spinbutton.getAttribute('aria-valuenow')).toBe((50).toString()) // min width is hardcoded to 50px
     })
 
     it.for(['{ }', '{Enter}'])('the column resizer autosizes the column and exits resize mode when %s is pressed', async (key) => {
