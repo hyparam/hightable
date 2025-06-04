@@ -93,7 +93,7 @@ describe('ColumnHeader', () => {
       <table><thead><tr><ColumnHeader columnName="test" {...defaultProps} /></tr></thead></table>
     </ColumnStatesProvider>)
     const header = getByRole('columnheader')
-    const resizeHandle = getByRole('separator')
+    const resizeHandle = getByRole('spinbutton')
 
     expect(header.style.maxWidth).toEqual(`${savedWidth}px`)
     expect(getOffsetWidth).toHaveBeenCalledTimes(0)
@@ -117,7 +117,7 @@ describe('ColumnHeader', () => {
 
     // Simulate resizing the column
     const header = getByRole('columnheader')
-    const resizeHandle = getByRole('separator')
+    const resizeHandle = getByRole('spinbutton')
 
     const x = 150
     const delta = 10
@@ -155,7 +155,7 @@ describe('ColumnHeader', () => {
     const onClick = vi.fn()
     const { user, getByRole } = render(<table><thead><tr><ColumnHeader columnName="test" {...defaultProps} onClick={onClick} /></tr></thead></table>)
     const header = getByRole('columnheader')
-    const resizeHandle = getByRole('separator')
+    const resizeHandle = getByRole('spinbutton')
     await user.click(resizeHandle)
     expect(onClick).not.toHaveBeenCalled()
     await user.click(header)
