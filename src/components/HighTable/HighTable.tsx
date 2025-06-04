@@ -55,7 +55,7 @@ interface Props {
 const defaultPadding = 20
 const defaultOverscan = 20
 const ariaOffset = 2 // 1-based index, +1 for the header
-export const columnWidthsSuffix = ':columns:widths' // suffix used to store the column widths in local storage
+export const columnWidthsSuffix = ':column:widths' // suffix used to store the column widths in local storage
 
 /**
  * Render a table with streaming rows on demand from a DataFrame.
