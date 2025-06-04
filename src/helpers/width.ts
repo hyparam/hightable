@@ -164,24 +164,21 @@ export function adjustMeasuredWidths({
   }
 
   // fill the adjusted widths
-  let lastIndex = undefined
+  let lastColumnWidth = undefined
   for (const { width, indexes } of orderedWidthGroups) {
     for (const index of indexes) {
-      columnWidths[index] = {
+      const columnWidth = {
         width: width,
         measured: columnWidths[index]?.measured, // keep the measured width if it exists (it should)
       }
-      lastIndex = index
+      columnWidths[index] = columnWidth
+      lastColumnWidth = columnWidth
       remainingWidth -= width
     }
   }
   // add the missing pixels to the last column
-  if (lastIndex !== undefined && remainingWidth > 0) {
-    const columnWidth = columnWidths[lastIndex]
-    if (columnWidth?.width !== undefined) {
-      // should always be the case
-      columnWidth.width = clamp(columnWidth.width + remainingWidth)
-    }
+  if (lastColumnWidth !== undefined && remainingWidth > 0) {
+    lastColumnWidth.width = clamp(lastColumnWidth.width + remainingWidth)
   }
 
   return columnWidths
