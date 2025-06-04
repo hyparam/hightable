@@ -1,8 +1,8 @@
 import { CSSProperties, ReactNode, createContext, useCallback, useContext, useMemo, useState } from 'react'
-import { NullableColumnWidth, adjustMeasuredWidths, cellStyle, hasFixedWidth, isValidWidth } from '../helpers/width.js'
+import { MaybeColumnWidth, adjustMeasuredWidths, cellStyle, hasFixedWidth, isValidWidth } from '../helpers/width.js'
 import { useLocalStorageState } from './useLocalStorageState.js'
 
-export type NullableColumnState = NullableColumnWidth
+export type MaybeColumnState = MaybeColumnWidth
 
 interface ColumnStatesContextType {
   getColumnWidth?: (columnIndex: number) => number | undefined
@@ -33,13 +33,37 @@ export function ColumnStatesProvider({ children, localStorageKey, numColumns, mi
     throw new Error(`Invalid numColumns: ${numColumns}. It must be a positive integer.`)
   }
 
+  const [availableWidth, setAvailableWidth] = useState<number>(0)
+  // ^ TODO: add a validation for availableWidth?
+
   // An array of column states
   // The index is the column rank in the header (0-based)
   // The array is uninitialized so that we don't have to know the number of columns in advance
-  const [columnStates, setColumnStates] = useLocalStorageState<NullableColumnState[]>({ key: localStorageKey })
-  const [isInitialized, setIsInitialized] = useState(false)
-  const [availableWidth, setAvailableWidth] = useState<number>(0)
-  // ^ TODO: add a validation for availableWidth?
+  const [columnStates, setColumnStates] = useLocalStorageState<MaybeColumnState[]>({ key: localStorageKey, parse, stringify })
+  function stringify(columnStates: MaybeColumnState[]) {
+    // only save the fixed widths
+    const columnStatesWithoutMeasured = columnStates.map(columnState => {
+      return hasFixedWidth(columnState) ? { width: columnState.width } : undefined
+    })
+    return JSON.stringify(columnStatesWithoutMeasured)
+  }
+  function parse(json: string): MaybeColumnState[] {
+    const columnStates = JSON.parse(json)
+    if (!Array.isArray(columnStates)) {
+      return []
+    }
+    // only keep the width field, and ensure the width is clamped
+    return columnStates.map((columnState: unknown) => {
+      if (columnState === null || columnState === undefined) {
+        return undefined
+      }
+      if (typeof columnState !== 'object' || !('width' in columnState)) {
+        return undefined
+      }
+      const width = isValidWidth(columnState.width) ? columnState.width : undefined
+      return { width }
+    })
+  }
 
   const clamp = useCallback((width: number) => {
     // TODO: add maxWidth
@@ -127,25 +151,6 @@ export function ColumnStatesProvider({ children, localStorageKey, numColumns, mi
   }, [getColumnWidth, getColumnStyle, isFixedColumn, setAvailableWidth, forceWidth,
     measureWidth,
     removeWidth, increaseWidth])
-
-  if (!isInitialized) {
-    // only keep the fixed columns, and change the rest to undefined
-    setColumnStates(columnStates => {
-      return columnStates?.map((columnState) => {
-        const nextColumnState = { ...columnState ?? {} }
-        if (hasFixedWidth(nextColumnState)) {
-          // keep the fixed columns as they are (ensuring the width is clamped)
-          nextColumnState.width = clamp(nextColumnState.width)
-        } else {
-          // change the rest to undefined
-          nextColumnState.width = undefined
-        }
-        nextColumnState.measured = undefined
-        return nextColumnState
-      })
-    })
-    setIsInitialized(true)
-  }
 
   return (
     <ColumnStatesContext.Provider value={value}>

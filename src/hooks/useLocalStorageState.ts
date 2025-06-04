@@ -1,11 +1,14 @@
-import { Dispatch, SetStateAction, useCallback, useState } from 'react'
+import { Dispatch, SetStateAction, useEffect, useState } from 'react'
+
+type Parse<T> = (value: string) => T
+type Stringify<T> = (value: T) => string
 
 /**
  * Get value from local storage for a key.
  */
-function loadFromLocalStorage(key: string): unknown {
+function loadFromLocalStorage<T>({ key, parse }: { key: string, parse?: Parse<T> }): T | undefined {
   const json = localStorage.getItem(key)
-  return json ? JSON.parse(json) : undefined
+  return json ? (parse ?? JSON.parse)(json) : undefined
 }
 
 /**
@@ -13,15 +16,21 @@ function loadFromLocalStorage(key: string): unknown {
  *
  * If value is undefined, the column value is removed from local storage.
  */
-function saveToOrDeleteFromLocalStorage({ key, value }: { key?: string, value: unknown }) {
+function saveToOrDeleteFromLocalStorage<T>({ key, value, stringify }: { key?: string, value: unknown, stringify?: Stringify<T> }) {
   if (key === undefined) {
     return
   }
   if (value === undefined) {
     localStorage.removeItem(key)
   } else {
-    localStorage.setItem(key, JSON.stringify(value))
+    localStorage.setItem(key, (stringify ?? JSON.stringify)(value))
   }
+}
+
+interface Options<T> {
+  key?: string // The key to use in local storage. If undefined, the value is not persisted.
+  parse?: Parse<T> // A function to parse the value from local storage. If not provided, JSON.parse is used.
+  stringify?: Stringify<T> // A function to stringify the value to local storage. If not provided, JSON.stringify is used.
 }
 
 /**
@@ -39,39 +48,26 @@ function saveToOrDeleteFromLocalStorage({ key, value }: { key?: string, value: u
  *
  * @param options
  * @param [string | undefined] options.key The key to use in local storage. If undefined, the value is not persisted.
+ * @param [function] options.parse A function to parse the value from local storage. If not provided, JSON.parse is used.
+ * @param [function] options.stringify A function to stringify the value to local storage. If not provided, JSON.stringify is used.
  *
  * @returns [T | undefined, Dispatch<SetStateAction<T | undefined>>] The value and the setter.
  */
-export function useLocalStorageState<T>({ key }: { key?: string } = {}): [T | undefined, Dispatch<SetStateAction<T | undefined>>] {
+export function useLocalStorageState<T>({ key, parse, stringify }: Options<T> = {}): [T | undefined, Dispatch<SetStateAction<T | undefined>>] {
   const [value, setValue] = useState<T | undefined>(undefined)
   const [lastCacheKey, setLastCacheKey] = useState<string | undefined>(undefined)
   if (key !== lastCacheKey) {
     if (key !== undefined) {
-      // TODO(SL): check if the type of loaded value is T | undefined, accepting a check function as an argument?
-      setValue(loadFromLocalStorage(key) as T | undefined)
+      setValue(loadFromLocalStorage({ key, parse }))
     } // else: do not change the value
     setLastCacheKey(key)
   }
 
-  const memoizedSetValue = useCallback((valueOrSetter: SetStateAction<T | undefined>) => {
-    if (typeof valueOrSetter === 'function') {
-      // Typescript does not provide a way to prevent T from being a function,
-      // so we have to assume that the function is a setter, and cast it.
-      const setter = valueOrSetter as (prevState: T | undefined) => T | undefined
-      if (key === undefined) {
-        setValue(setter)
-      } else {
-        const currentValue = loadFromLocalStorage(key) as T | undefined
-        const nextValue = setter(currentValue)
-        setValue(nextValue)
-        saveToOrDeleteFromLocalStorage({ key, value: nextValue })
-      }
-    } else {
-      const nextValue = valueOrSetter
-      setValue(nextValue)
-      saveToOrDeleteFromLocalStorage({ key, value: nextValue })
-    }
-  }, [key])
+  console.log(`useLocalStorageState: key=${key}, value=${JSON.stringify(value)}`)
+  useEffect(() => {
+    console.log(`useLocalStorageState: saving value=${JSON.stringify(value)} to key=${key}`)
+    saveToOrDeleteFromLocalStorage({ key, value, stringify })
+  }, [value, key, stringify])
 
-  return [value, memoizedSetValue]
+  return [value, setValue]
 }

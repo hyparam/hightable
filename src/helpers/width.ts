@@ -13,8 +13,8 @@ export function getClientWidth(element: Pick<HTMLElement, 'clientWidth'>): numbe
   return element.clientWidth - 1
 }
 
-export function isValidWidth(width: (number | undefined | null)): width is number {
-  return width !== undefined && width !== null && !isNaN(width) && width >= 0
+export function isValidWidth(width: unknown): width is number {
+  return typeof width === 'number' && Number.isFinite(width) && !isNaN(width) && width >= 0
 }
 
 export interface ColumnWidth {
@@ -26,10 +26,9 @@ export interface FixedColumnWidth {
   measured?: undefined
 }
 
-// in local storage, uninitialized values are stored as null, not as undefined
-export type NullableColumnWidth = (ColumnWidth | undefined | null)
+export type MaybeColumnWidth = ColumnWidth | undefined
 
-export function hasFixedWidth(columnWidth: NullableColumnWidth): columnWidth is FixedColumnWidth {
+export function hasFixedWidth(columnWidth: MaybeColumnWidth): columnWidth is FixedColumnWidth {
   return columnWidth?.width !== undefined && columnWidth.measured === undefined
 }
 
@@ -55,7 +54,7 @@ export function adjustMeasuredWidths({
   minWidth,
   numColumns,
 }: {
-  columnWidths: NullableColumnWidth[]
+  columnWidths: MaybeColumnWidth[]
   availableWidth?: number
   minWidth: number
   numColumns: number

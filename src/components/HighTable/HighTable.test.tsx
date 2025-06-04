@@ -2,7 +2,7 @@ import { act, fireEvent, waitFor, within } from '@testing-library/react'
 import { UserEvent } from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { DataFrame, sortableDataFrame } from '../../helpers/dataframe.js'
-import { NullableColumnState } from '../../hooks/useColumnStates.js'
+import { MaybeColumnState } from '../../hooks/useColumnStates.js'
 import { wrapResolved } from '../../utils/promise.js'
 import { render } from '../../utils/userEvent.js'
 import HighTable, { columnStatesSuffix } from './HighTable.js'
@@ -752,17 +752,18 @@ vi.mock(import('../../helpers/width.js'), async (importOriginal ) => {
     getClientWidth: () => getClientWidth(),
   }})
 describe('HighTable localstorage', () => {
-  it('saves the fixed and adjusted column widths', () => {
+  it('only saves the fixed widths', () => {
     localStorage.clear()
     render(<HighTable data={data} cacheKey="key" />)
     expect(getClientWidth).toHaveBeenCalled()
     const json = localStorage.getItem(keyItem)
     expect(json).not.toEqual(null)
-    const columnStates = JSON.parse(json ?? '[]') as NullableColumnState[] // TODO: we could check the type of the column states
+    const columnStates = JSON.parse(json ?? '[]') as MaybeColumnState[] // TODO: we could check the type of the column states
     expect(columnStates).toHaveLength(4) // 4 columns
+    console.log('columnStates', columnStates)
     columnStates.forEach((columnState) => {
-      expect(columnState?.measured).toBe(initialWidth) // all columns should be measured
-      expect(columnState?.width).toBeDefined() // all columns should have been adjusted to some width
+      expect(columnState?.measured).toBeUndefined() // the measured field is not stored
+      expect(columnState?.width).toBeUndefined() // no columns is fixed
     })
   })
   it('saves nothing on initialization if cacheKey is not provided', () => {
@@ -800,10 +801,10 @@ describe('HighTable localstorage', () => {
 
     const json = localStorage.getItem(keyItem)
     expect(json).not.toEqual(null)
-    const columnStates = JSON.parse(json ?? '[]') as NullableColumnState[]
+    const columnStates = JSON.parse(json ?? '[]') as MaybeColumnState[]
     expect(columnStates).toHaveLength(4) // 4 columns
     columnStates.forEach((columnState) => {
-      expect(columnState?.measured).toBe(initialWidth) // all columns should be measured
+      expect(columnState?.measured).toBeUndefined() // the measured field is not stored
       expect(columnState?.width).toBeDefined() // all columns should have been adjusted to some width
     })
   })
