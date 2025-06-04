@@ -13,93 +13,24 @@ export function getClientWidth(element: Pick<HTMLElement, 'clientWidth'>): numbe
   return element.clientWidth - 1
 }
 
-interface FixedInput {
-  index: number
-  width: number
-  status: 'fixed'
- }
-interface MeasuredInput {
-  index: number
-  width: number
-  status: 'measured'
-}
-interface MissingInput {
-  index: number
-  status: 'missing'
-}
-type IndexedInput = FixedInput | MeasuredInput | MissingInput
-export function isFixedInput(input: IndexedInput): input is FixedInput {
-  return input.status === 'fixed'
-}
-export function isMeasuredInput(input: IndexedInput): input is MeasuredInput {
-  return input.status === 'measured'
-}
-export function isMissingInput(input: IndexedInput): input is MissingInput {
-  return input.status === 'missing'
-}
-
-function isValidWidth(width: (number | undefined | null)): width is number {
+export function isValidWidth(width: (number | undefined | null)): width is number {
   return width !== undefined && width !== null && !isNaN(width) && width >= 0
 }
 
-function toInputs({
-  fixedWidths,
-  measuredWidths,
-  numColumns,
-  minWidth,
-}: {
-  fixedWidths?: (number | undefined | null)[]
-  measuredWidths: (number | undefined | null)[]
-  numColumns: number
-  minWidth: number
-}): IndexedInput[] {
-  const indexedWidths: IndexedInput[] = []
-  const validMinWidth = Math.floor(isValidWidth(minWidth) ? minWidth : 0)
-
-  for (let index = 0; index < numColumns; index++) {
-    const fixedWidth = fixedWidths?.[index]
-    const measuredWidth = measuredWidths[index]
-    if (isValidWidth(fixedWidth)) {
-      indexedWidths.push({
-        index,
-        width: Math.floor(Math.max(fixedWidth, validMinWidth)),
-        status: 'fixed',
-      })
-    } else if (isValidWidth(measuredWidth)) {
-      indexedWidths.push({
-        index,
-        width: Math.floor(Math.max(measuredWidth, validMinWidth)),
-        status: 'measured',
-      })
-    } else {
-      indexedWidths.push({
-        index,
-        status: 'missing',
-      })
-    }
-  }
-
-  return indexedWidths
+export interface ColumnWidth {
+  measured?: number
+  width?: number
 }
-
-interface FixedWidth {
+export interface FixedColumnWidth {
   width: number
-  status: 'fixed'
+  measured?: undefined
 }
-interface AdjustedWidth {
-  width: number
-  status: 'adjusted'
-}
-interface UndefinedWidth {
-  width: undefined
-  status: 'undefined'
-}
-type ColumnWidth = FixedWidth | AdjustedWidth | UndefinedWidth
 
-function dontAdjustWidths(inputs: IndexedInput[]): ColumnWidth[] {
-  return inputs.map((input) => {
-    return isFixedInput(input) ? input : { width: undefined, status: 'undefined' }
-  })
+// in local storage, uninitialized values are stored as null, not as undefined
+export type NullableColumnWidth = (ColumnWidth | undefined | null)
+
+export function hasFixedWidth(columnWidth: NullableColumnWidth): columnWidth is FixedColumnWidth {
+  return columnWidth?.width !== undefined && columnWidth.measured === undefined
 }
 
 interface WidthGroup {
@@ -115,48 +46,69 @@ function getTotalWidth(widthGroups: WidthGroup[]): number {
   return width
 }
 
-function adjustWidths({
-  fixedInputs,
-  measuredInputs,
-  numColumns,
-  minWidth,
+/**
+ * Adjusts the widths of the measured columns to fill the available width.
+ */
+export function adjustMeasuredWidths({
+  columnWidths,
   availableWidth,
+  minWidth,
+  numColumns,
 }: {
-  fixedInputs: FixedInput[]
-  measuredInputs: MeasuredInput[]
-  numColumns: number
+  columnWidths: NullableColumnWidth[]
+  availableWidth?: number
   minWidth: number
-  availableWidth: number
-}): ColumnWidth[] {
-  // the fixed widths will stay as they are
-
-  // the rest of the widths are measured, and we will adjust them to fill the available space
-  const numMeasuredColumns = measuredInputs.length
+  numColumns: number
+}) {
+  if (!isValidWidth(availableWidth)) {
+    return columnWidths
+  }
+  const numMeasuredColumns = columnWidths.filter(c => c?.measured !== undefined).length
   if (numMeasuredColumns === 0) {
-    throw new Error('No measured columns to adjust widths for.')
+    // no measured columns, nothing to adjust
+    return columnWidths
   }
 
+  // Compute the remaining space to fill. It can be negative.
+  let remainingWidth = availableWidth
+  for (const columnWidth of columnWidths) {
+    if (columnWidth?.measured !== undefined) {
+      // ignore measured columns
+      continue
+    }
+    if (columnWidth?.width === undefined) {
+      // no info, we assume the width is minWidth
+      remainingWidth -= minWidth
+      continue
+    }
+    remainingWidth -= columnWidth.width
+  }
+  if (columnWidths.length < numColumns) {
+    // if there are fewer columns than numColumns, we assume the missing columns have a width of minWidth
+    remainingWidth -= (numColumns - columnWidths.length) * minWidth
+  }
   const minReducedWidthMargin = 5 // leave some margin for rounding errors
   const multiplier = numColumns <= 3 ? 1 / numColumns : 0.3 // 30% so that 4 or more columns will overflow
   const minReducedWidth = Math.max(
     minWidth,
-    Math.floor(multiplier * availableWidth - minReducedWidthMargin)
+    Math.floor(multiplier * remainingWidth - minReducedWidthMargin)
   )
 
-  // Group column indexes by width in a Map
-  const indexesByWidthMap = measuredInputs.reduce<Map<number, number[]>>(
-    (acc, cur) => {
-      if (acc.has(cur.width)) {
-        acc.get(cur.width)?.push(cur.index)
+  // Group measured column indexes by width in a Map
+  const indexesByWidth = new Map<number, number[]>()
+  for (const [columnIndex, columnWidth] of columnWidths.entries()) {
+    if (columnWidth?.measured !== undefined) {
+      const { measured } = columnWidth
+      const array = indexesByWidth.get(measured)
+      if (array) {
+        array.push(columnIndex)
       } else {
-        acc.set(cur.width, [cur.index])
+        indexesByWidth.set(measured, [columnIndex])
       }
-      return acc
-    },
-    new Map<number, number[]>()
-  )
+    }
+  }
   // Convert to width groups ({width, indexes}), and sort by width (ascending)
-  const orderedWidthGroups = [...indexesByWidthMap.entries()].map<WidthGroup>(
+  const orderedWidthGroups = [...indexesByWidth.entries()].map<WidthGroup>(
     ([width, indexes]) => ({ width, indexes })
   ).sort((a, b) => a.width - b.width)
 
@@ -168,18 +120,16 @@ function adjustWidths({
   //
   // If we succeed in reducing below the target width, we add the remaining space to all the widths equally
 
-  const fixedColumnsWidth = fixedInputs.reduce((acc, { width }) => acc + width, 0)
-  const targetWidth = availableWidth - fixedColumnsWidth
   let i = 0
   while (orderedWidthGroups.length > 0 && i < 100) {
     // safeguard against infinite loop
     i++
 
     const currentWidth = getTotalWidth(orderedWidthGroups)
-    if (currentWidth <= targetWidth) {
+    if (currentWidth <= remainingWidth) {
       // the current widths are below the target, the loop has ended
       // Increase the widths equally to fill the remaining space
-      const delta = Math.floor((targetWidth - currentWidth) / numMeasuredColumns)
+      const delta = Math.floor((remainingWidth - currentWidth) / numMeasuredColumns)
       for (const group of orderedWidthGroups) {
         group.width += delta
       }
@@ -216,19 +166,13 @@ function adjustWidths({
     }
   }
 
-  // Build the final widths array
-  const columnWidths = new Array<ColumnWidth>(numColumns).fill({ width: undefined, status: 'undefined' })
-  // fill with the adjusted widths
+  // fill the adjusted widths
   let lastIndex = undefined
-  let remainingWidth = targetWidth
   for (const { width, indexes } of orderedWidthGroups) {
     for (const index of indexes) {
-      if (columnWidths[index]?.status !== 'undefined') {
-        throw new Error(`Duplicate index ${index} in widths array.`)
-      }
       columnWidths[index] = {
-        width,
-        status: 'adjusted',
+        width: width,
+        measured: columnWidths[index]?.measured, // keep the measured width if it exists (it should)
       }
       lastIndex = index
       remainingWidth -= width
@@ -243,70 +187,5 @@ function adjustWidths({
     }
   }
 
-  // fill with the fixed widths
-  for (const { width, index } of fixedInputs) {
-    if (columnWidths[index]?.status !== 'undefined') {
-      throw new Error(`Duplicate index ${index} in widths array.`)
-    }
-    columnWidths[index] = {
-      width,
-      status: 'fixed',
-    }
-  }
-  // check that all the widths are defined and valid
-  for (let i = 0; i < numColumns; i++) {
-    const columnWidth = columnWidths[i]
-    if (columnWidth === undefined) {
-      throw new Error(`Column width for column ${i} is undefined.`)
-    }
-    if (columnWidth.status === 'undefined') {
-      continue // nothing to check for undefined widths
-    }
-    if (!isValidWidth(columnWidth.width)) {
-      throw new Error(`Invalid width for column ${i}: ${columnWidth.width}.`)
-    }
-    if (columnWidth.width < minWidth) {
-      throw new Error(`Width for column ${i} is below minWidth: ${columnWidth.width} < ${minWidth}.`)
-    }
-  }
-
   return columnWidths
-}
-
-export function computeColumnWidths({
-  fixedWidths,
-  measuredWidths,
-  numColumns,
-  minWidth,
-  availableWidth,
-}: {
-  fixedWidths?: (number | undefined | null)[]
-  measuredWidths: (number | undefined | null)[]
-  numColumns: number
-  minWidth: number
-  availableWidth?: number
-}): ColumnWidth[] {
-  const inputs = toInputs({ fixedWidths, measuredWidths, numColumns, minWidth })
-
-  const fixedInputs = inputs.filter(isFixedInput)
-  const measuredInputs = inputs.filter(isMeasuredInput)
-  const missingInputs = inputs.filter(isMissingInput)
-
-  if (measuredInputs.length === 0 || !isValidWidth(availableWidth)) {
-    // no measured columns, or availableWidth is invalid: nothing to adjust
-    // Return the fixed widths if any, undefined width for the other columns
-    return dontAdjustWidths(inputs)
-  }
-
-  const validMinWidth = Math.floor(isValidWidth(minWidth) ? minWidth : 0)
-  // apply the minWidth to every missing column width in the calculation
-  // the missing columns will still be undefined in the final result
-  const adjustedAvailableWidth = availableWidth - missingInputs.length * validMinWidth
-  return adjustWidths({
-    fixedInputs,
-    measuredInputs,
-    numColumns,
-    minWidth: validMinWidth,
-    availableWidth: adjustedAvailableWidth,
-  })
 }

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { ColumnWidthProvider } from '../../hooks/useColumnWidth.js'
+import { ColumnStatesProvider } from '../../hooks/useColumnStates.js'
 import { render } from '../../utils/userEvent.js'
 import ColumnHeader from './ColumnHeader.js'
 
@@ -61,11 +61,11 @@ describe('ColumnHeader', () => {
 
   it('loads column width from localStorage when localStorageKey is provided', () => {
     const savedWidth = 42
-    localStorage.setItem(cacheKey, JSON.stringify([savedWidth]))
+    localStorage.setItem(cacheKey, JSON.stringify([{ width: savedWidth }]))
 
-    const { getByRole } = render(<ColumnWidthProvider localStorageKey={cacheKey} numColumns={1} minWidth={10}>
+    const { getByRole } = render(<ColumnStatesProvider localStorageKey={cacheKey} numColumns={1} minWidth={10}>
       <table><thead><tr><ColumnHeader columnName="test" {...defaultProps}/></tr></thead></table>
-    </ColumnWidthProvider>)
+    </ColumnStatesProvider>)
     const header = getByRole('columnheader')
     expect(header.style.maxWidth).toEqual(`${savedWidth}px`)
   })
@@ -74,11 +74,11 @@ describe('ColumnHeader', () => {
     // Set the initial width
     const savedWidth = 42
     const minWidth = 10
-    localStorage.setItem(cacheKey, JSON.stringify([savedWidth]))
+    localStorage.setItem(cacheKey, JSON.stringify([{ width: savedWidth }]))
 
-    const { user, getByRole } = render(<ColumnWidthProvider localStorageKey={cacheKey} numColumns={1} minWidth={minWidth}>
+    const { user, getByRole } = render(<ColumnStatesProvider localStorageKey={cacheKey} numColumns={1} minWidth={minWidth}>
       <table><thead><tr><ColumnHeader columnName="test" {...defaultProps} /></tr></thead></table>
-    </ColumnWidthProvider>)
+    </ColumnStatesProvider>)
     const header = getByRole('columnheader')
     const resizeHandle = getByRole('separator')
 
@@ -96,11 +96,11 @@ describe('ColumnHeader', () => {
   it('handles mouse click and drag on resize handle to resize', async () => {
     // Set the initial width
     const savedWidth = 42
-    localStorage.setItem(cacheKey, JSON.stringify([savedWidth]))
+    localStorage.setItem(cacheKey, JSON.stringify([{ width: savedWidth }]))
 
-    const { user, getByRole } = render(<ColumnWidthProvider localStorageKey={cacheKey} numColumns={1} minWidth={10}>
+    const { user, getByRole } = render(<ColumnStatesProvider localStorageKey={cacheKey} numColumns={1} minWidth={10}>
       <table><thead><tr><ColumnHeader columnName="test" {...defaultProps} /></tr></thead></table>
-    </ColumnWidthProvider>)
+    </ColumnStatesProvider>)
 
     // Simulate resizing the column
     const header = getByRole('columnheader')
@@ -123,18 +123,18 @@ describe('ColumnHeader', () => {
   it('reloads column width when localStorageKey changes', () => {
     const cacheKey2 = 'key-2'
     const width1 = 150
-    localStorage.setItem(cacheKey, JSON.stringify([width1]))
+    localStorage.setItem(cacheKey, JSON.stringify([{ width: width1 }]))
     const width2 = 300
-    localStorage.setItem(cacheKey2, JSON.stringify([width2]))
+    localStorage.setItem(cacheKey2, JSON.stringify([{ width: width2 }]))
 
-    const { rerender, getByRole } = render(<ColumnWidthProvider localStorageKey={cacheKey} numColumns={1} minWidth={10}>
+    const { rerender, getByRole } = render(<ColumnStatesProvider localStorageKey={cacheKey} numColumns={1} minWidth={10}>
       <table><thead><tr><ColumnHeader columnName="test" {...defaultProps} /></tr></thead></table>
-    </ColumnWidthProvider>)
+    </ColumnStatesProvider>)
     const header = getByRole('columnheader')
     expect(header.style.maxWidth).toEqual(`${width1}px`)
-    rerender(<ColumnWidthProvider localStorageKey={cacheKey2} numColumns={1} minWidth={10}>
+    rerender(<ColumnStatesProvider localStorageKey={cacheKey2} numColumns={1} minWidth={10}>
       <table><thead><tr><ColumnHeader columnName="test" {...defaultProps} /></tr></thead></table>
-    </ColumnWidthProvider>)
+    </ColumnStatesProvider>)
     expect(header.style.maxWidth).toEqual(`${width2}px`)
   })
 

@@ -2,9 +2,10 @@ import { act, fireEvent, waitFor, within } from '@testing-library/react'
 import { UserEvent } from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { DataFrame, sortableDataFrame } from '../../helpers/dataframe.js'
+import { NullableColumnState } from '../../hooks/useColumnStates.js'
 import { wrapResolved } from '../../utils/promise.js'
 import { render } from '../../utils/userEvent.js'
-import HighTable, { columnWidthsSuffix } from './HighTable.js'
+import HighTable, { columnStatesSuffix } from './HighTable.js'
 
 Element.prototype.scrollIntoView = vi.fn()
 
@@ -741,8 +742,8 @@ describe('in disabled selection state (neither selection nor onSelection props),
 const initialWidth = 62 // initial width of the columns, in pixels, above the default minimal width of 50px
 const getOffsetWidth = vi.fn(() => initialWidth)
 const getClientWidth = vi.fn(() => 1000) // used to get the width of the table - let's give space
-const keyItem = `key${columnWidthsSuffix}`
-const undefinedItem = `undefined${columnWidthsSuffix}`
+const keyItem = `key${columnStatesSuffix}`
+const undefinedItem = `undefined${columnStatesSuffix}`
 vi.mock(import('../../helpers/width.js'), async (importOriginal ) => {
   const actual = await importOriginal()
   return {
@@ -751,11 +752,18 @@ vi.mock(import('../../helpers/width.js'), async (importOriginal ) => {
     getClientWidth: () => getClientWidth(),
   }})
 describe('HighTable localstorage', () => {
-  it('does not save the autosized column widths', () => {
+  it('saves the fixed and adjusted column widths', () => {
     localStorage.clear()
     render(<HighTable data={data} cacheKey="key" />)
     expect(getClientWidth).toHaveBeenCalled()
-    expect(localStorage.getItem(keyItem)).toEqual(null)
+    const json = localStorage.getItem(keyItem)
+    expect(json).not.toEqual(null)
+    const columnStates = JSON.parse(json ?? '[]') as NullableColumnState[] // TODO: we could check the type of the column states
+    expect(columnStates).toHaveLength(4) // 4 columns
+    columnStates.forEach((columnState) => {
+      expect(columnState?.measured).toBe(initialWidth) // all columns should be measured
+      expect(columnState?.width).toBeDefined() // all columns should have been adjusted to some width
+    })
   })
   it('saves nothing on initialization if cacheKey is not provided', () => {
     localStorage.clear()
@@ -768,20 +776,42 @@ describe('HighTable localstorage', () => {
   it('is used to load previously saved column widths', () => {
     localStorage.clear()
     const savedWidth = initialWidth * 2
-    localStorage.setItem(keyItem, JSON.stringify([savedWidth, savedWidth, savedWidth, savedWidth]))
+    const json = JSON.stringify(Array(4).fill({ width: savedWidth }))
+    localStorage.setItem(keyItem, json)
 
     const { getAllByRole } = render(<HighTable data={data} cacheKey="key" />)
     const header = getAllByRole('columnheader')[0]
     if (!header) {
       throw new Error('Header should not be null')
     }
-    expect(localStorage.getItem(keyItem)).toEqual(JSON.stringify([savedWidth, savedWidth, savedWidth, savedWidth]))
+    expect(localStorage.getItem(keyItem)).toEqual(json)
     expect(header.style.maxWidth).toEqual(`${savedWidth}px`)
   })
-  it('is not used or updated if new data are loaded', () => {
+  it('it ignores non-fixed column widths in localStorage', () => {
     localStorage.clear()
     const savedWidth = initialWidth * 2
-    localStorage.setItem(keyItem, JSON.stringify([savedWidth, savedWidth, savedWidth, savedWidth]))
+    localStorage.setItem(keyItem, JSON.stringify(Array(4).fill({ width: savedWidth, measured: savedWidth })))
+
+    const { getAllByRole } = render(<HighTable data={data} cacheKey="key" />)
+    const header = getAllByRole('columnheader')[0]
+    if (!header) {
+      throw new Error('Header should not be null')
+    }
+
+    const json = localStorage.getItem(keyItem)
+    expect(json).not.toEqual(null)
+    const columnStates = JSON.parse(json ?? '[]') as NullableColumnState[]
+    expect(columnStates).toHaveLength(4) // 4 columns
+    columnStates.forEach((columnState) => {
+      expect(columnState?.measured).toBe(initialWidth) // all columns should be measured
+      expect(columnState?.width).toBeDefined() // all columns should have been adjusted to some width
+    })
+  })
+  it('the previous data is used or updated if new data are loaded', () => {
+    localStorage.clear()
+    const savedWidth = initialWidth * 2
+    const json = JSON.stringify(Array(4).fill({ width: savedWidth }))
+    localStorage.setItem(keyItem, json)
 
     const { getAllByRole, rerender } = render(<HighTable data={data} cacheKey="key" />)
 
@@ -792,7 +822,7 @@ describe('HighTable localstorage', () => {
     if (!header) {
       throw new Error('Header should not be null')
     }
-    expect(localStorage.getItem(`${otherKey}${columnWidthsSuffix}`)).toEqual(null)
+    expect(localStorage.getItem(`${otherKey}${columnStatesSuffix}`)).not.toEqual(localStorage.getItem(keyItem))
     expect(header.style.maxWidth).not.toEqual(`${savedWidth}px`)
   })
 })

@@ -5,7 +5,7 @@ import { Selection, areAllSelected, isSelected, toggleIndexInSelection, toggleRa
 import { OrderBy, areEqualOrderBy } from '../../helpers/sort.js'
 import { cellStyle, getClientWidth, getOffsetWidth } from '../../helpers/width.js'
 import { CellsNavigationProvider, useCellsNavigation } from '../../hooks/useCellsNavigation.js'
-import { ColumnWidthProvider, useColumnWidth } from '../../hooks/useColumnWidth.js'
+import { ColumnStatesProvider, useColumnStates } from '../../hooks/useColumnStates.js'
 import { DataProvider, useData } from '../../hooks/useData.js'
 import { OrderByProvider, useOrderBy } from '../../hooks/useOrderBy.js'
 import { SelectionProvider, useSelection } from '../../hooks/useSelection.js'
@@ -55,7 +55,7 @@ interface Props {
 const defaultPadding = 20
 const defaultOverscan = 20
 const ariaOffset = 2 // 1-based index, +1 for the header
-export const columnWidthsSuffix = ':column:widths' // suffix used to store the column widths in local storage
+export const columnStatesSuffix = ':column:states' // suffix used to store the column states in local storage
 
 /**
  * Render a table with streaming rows on demand from a DataFrame.
@@ -84,11 +84,11 @@ function HighTableData(props: PropsData) {
     /* important: key={key} ensures the local state is recreated if the data has changed */
     <OrderByProvider key={key} orderBy={orderBy} onOrderByChange={onOrderByChange} disabled={!data.sortable}>
       <SelectionProvider selection={selection} onSelectionChange={onSelectionChange}>
-        <ColumnWidthProvider key={key} localStorageKey={cacheKey ? `${cacheKey}${columnWidthsSuffix}` : undefined} numColumns={data.header.length} minWidth={minWidth}>
+        <ColumnStatesProvider key={key} localStorageKey={cacheKey ? `${cacheKey}${columnStatesSuffix}` : undefined} numColumns={data.header.length} minWidth={minWidth}>
           <CellsNavigationProvider colCount={ariaColCount} rowCount={ariaRowCount} rowPadding={props.padding ?? defaultPadding}>
             <HighTableInner {...props} />
           </CellsNavigationProvider>
-        </ColumnWidthProvider>
+        </ColumnStatesProvider>
       </SelectionProvider>
     </OrderByProvider>
   )
@@ -138,7 +138,7 @@ export function HighTableInner({
   const { enterCellsNavigation, setEnterCellsNavigation, onTableKeyDown: onNavigationTableKeyDown, onScrollKeyDown, rowIndex, colIndex, focusFirstCell } = useCellsNavigation()
   const [lastCellPosition, setLastCellPosition] = useState({ rowIndex, colIndex })
   const [numRows, setNumRows] = useState(data.numRows)
-  const { setAvailableWidth } = useColumnWidth()
+  const { setAvailableWidth } = useColumnStates()
 
   // TODO(SL): remove this state and only rely on the data frame for these operations?
   // ie. cache the previous sort indexes in the data frame itself
