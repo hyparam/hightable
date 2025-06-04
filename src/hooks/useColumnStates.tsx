@@ -108,7 +108,7 @@ export function ColumnStatesProvider({ children, localStorageKey, numColumns, mi
       // compute the adjusted widths
       return adjustMeasuredWidths({ columnWidths: nextColumnStates, availableWidth, clamp, numColumns })
     })
-  }, [availableWidth, clamp, isValidIndex, clamp, numColumns, setColumnStates])
+  }, [availableWidth, clamp, isValidIndex, numColumns, setColumnStates])
 
   const removeWidth = useCallback(({ columnIndex }: { columnIndex: number }) => {
     if (!isValidIndex(columnIndex)) {
