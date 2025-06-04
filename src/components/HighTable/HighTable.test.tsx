@@ -954,7 +954,7 @@ describe('Navigating Hightable with the keyboard', () => {
       if (!focusedElement) {
         throw new Error('Focused element not found')
       }
-      expect(focusedElement.getAttribute('role')).toBe('separator')
+      expect(focusedElement.getAttribute('role')).toBe('spinbutton')
       // Shift+Tab focuses the header cell again
       await user.keyboard('{Shift>}{Tab}{/Shift}')
       expect(document.activeElement).toBe(cell)
@@ -967,14 +967,14 @@ describe('Navigating Hightable with the keyboard', () => {
       const cell = document.activeElement
       await user.keyboard('{Tab}')
       // press Enter to activate the column resizer
-      const separator = document.activeElement
-      if (!separator) {
+      const spinbutton = document.activeElement
+      if (!spinbutton) {
         throw new Error('Separator is null')
       }
-      expect(separator.getAttribute('aria-busy')).toBe('true')
+      expect(spinbutton.getAttribute('aria-busy')).toBe('true')
       // escape to deactivate the column resizer
       await user.keyboard('{Escape}')
-      expect(separator.getAttribute('aria-busy')).toBe('false')
+      expect(spinbutton.getAttribute('aria-busy')).toBe('false')
       expect(document.activeElement).toBe(cell)
     })
 
@@ -982,19 +982,19 @@ describe('Navigating Hightable with the keyboard', () => {
       const { user } = render(<HighTable data={data} />)
       // go to the column resizer
       await user.keyboard('{ArrowRight}{Tab}')
-      const separator = document.activeElement
-      if (!separator) {
-        throw new Error('Separator is null')
+      const spinbutton = document.activeElement
+      if (!spinbutton) {
+        throw new Error('Spinbutton is null')
       }
-      const value = separator.getAttribute('aria-valuenow')
+      const value = spinbutton.getAttribute('aria-valuenow')
       if (value === null) {
         throw new Error('aria-valuenow should not be null')
       }
       // the column measurement is mocked
       await user.keyboard('{ArrowRight}')
-      expect(separator.getAttribute('aria-valuenow')).toBe((+value + 10).toString())
+      expect(spinbutton.getAttribute('aria-valuenow')).toBe((+value + 10).toString())
       await user.keyboard('{ArrowLeft}{ArrowLeft}{ArrowLeft}')
-      expect(separator.getAttribute('aria-valuenow')).toBe((+value - 20).toString())
+      expect(spinbutton.getAttribute('aria-valuenow')).toBe((+value - 20).toString())
     })
 
     it.for(['{ }', '{Enter}'])('the column resizer autosizes the column and exits resize mode when %s is pressed', async (key) => {
@@ -1003,18 +1003,18 @@ describe('Navigating Hightable with the keyboard', () => {
       await user.keyboard('{ArrowRight}')
       const cell = document.activeElement
       await user.keyboard('{Tab}')
-      const separator = document.activeElement
-      if (!separator) {
-        throw new Error('Separator is null')
+      const spinbutton = document.activeElement
+      if (!spinbutton) {
+        throw new Error('Spinbutton is null')
       }
-      const value = separator.getAttribute('aria-valuenow')
+      const value = spinbutton.getAttribute('aria-valuenow')
       if (value === null) {
         throw new Error('aria-valuenow should not be null')
       }
       await user.keyboard('{ArrowRight}')
-      expect(separator.getAttribute('aria-valuenow')).toBe((+value + 10).toString())
+      expect(spinbutton.getAttribute('aria-valuenow')).toBe((+value + 10).toString())
       await user.keyboard(key)
-      const valueNow = separator.getAttribute('aria-valuenow')
+      const valueNow = spinbutton.getAttribute('aria-valuenow')
       if (valueNow === null) {
         throw new Error('aria-valuenow should not be null')
       }
@@ -1027,20 +1027,20 @@ describe('Navigating Hightable with the keyboard', () => {
       const { user } = render(<HighTable data={data} />)
       // go to the column resizer
       await user.keyboard('{ArrowRight}{Tab}')
-      const separator = document.activeElement
-      if (!separator) {
-        throw new Error('Separator is null')
+      const spinbutton = document.activeElement
+      if (!spinbutton) {
+        throw new Error('Spinbutton is null')
       }
-      const initialValue = separator.getAttribute('aria-valuenow')
+      const initialValue = spinbutton.getAttribute('aria-valuenow')
       // autoresize
       await user.keyboard(key)
-      expect(separator.getAttribute('aria-valuenow')).not.toBe(initialValue)
+      expect(spinbutton.getAttribute('aria-valuenow')).not.toBe(initialValue)
       // focus the resizer again
       await user.keyboard('{Tab}')
       // press the key
       await user.keyboard(key)
       // already autosized - toggles to adjustable width
-      expect(separator.getAttribute('aria-valuenow')).toBe(initialValue)
+      expect(spinbutton.getAttribute('aria-valuenow')).toBe(initialValue)
     })
   })
 })

@@ -129,7 +129,7 @@ export default function ColumnResizer({ autoResize, forceWidth, width, tabIndex,
 
   return (
     <span
-      role="separator"
+      role="spinbutton"
       aria-orientation="vertical"
       aria-busy={ariaBusy}
       aria-valuenow={width}
