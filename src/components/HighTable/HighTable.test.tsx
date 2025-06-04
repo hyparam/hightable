@@ -760,7 +760,6 @@ describe('HighTable localstorage', () => {
     expect(json).not.toEqual(null)
     const columnStates = JSON.parse(json ?? '[]') as MaybeColumnState[] // TODO: we could check the type of the column states
     expect(columnStates).toHaveLength(4) // 4 columns
-    console.log('columnStates', columnStates)
     columnStates.forEach((columnState) => {
       expect(columnState?.measured).toBeUndefined() // the measured field is not stored
       expect(columnState?.width).toBeUndefined() // no columns is fixed

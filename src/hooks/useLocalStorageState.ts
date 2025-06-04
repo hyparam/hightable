@@ -61,9 +61,7 @@ export function useLocalStorageState<T>({ key, parse, stringify }: Options<T> = 
     setLastCacheKey(key)
   }
 
-  console.log(`useLocalStorageState: key=${key}, value=${JSON.stringify(value)}`)
   useEffect(() => {
-    console.log(`useLocalStorageState: saving value=${JSON.stringify(value)} to key=${key}`)
     saveToOrDeleteFromLocalStorage({ key, value, stringify })
   }, [value, key, stringify])
 
