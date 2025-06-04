@@ -111,9 +111,9 @@ export default function ColumnResizer({ autoResize, forceWidth, width, tabIndex,
       // don't allow other keyboard events when width is not set
       return
     }
-    if (e.key === 'ArrowRight') {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
       forceWidth?.(width + keyboardShiftWidth)
-    } else if (e.key === 'ArrowLeft') {
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
       forceWidth?.(width - keyboardShiftWidth)
     }
   }, [autoResizeAndRemoveFocus, initialPointerState, forceWidth, width, activeKeyboard, navigateToCell])
@@ -136,7 +136,7 @@ export default function ColumnResizer({ autoResize, forceWidth, width, tabIndex,
       aria-valuetext={ariaValueText}
       // TODO: use aria-labelledby and aria-describedby to allow translation
       aria-label="Resize column"
-      aria-description='Press "Enter" or "Space" to autoresize the column. Press "Escape" to cancel resizing. Press "ArrowRight" or "ArrowLeft" to resize the column by 10 pixels.'
+      aria-description='Press "Enter" or "Space" to autoresize the column. Press "Escape" to cancel resizing. Press "ArrowRight/ArrowUp" or "ArrowLeft/ArrowDown" to resize the column by 10 pixels.'
       onDoubleClick={autoResizeAndRemoveFocus}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
