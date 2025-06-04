@@ -51,17 +51,18 @@ function getTotalWidth(widthGroups: WidthGroup[]): number {
 export function adjustMeasuredWidths({
   columnWidths,
   availableWidth,
-  minWidth,
+  clamp,
   numColumns,
 }: {
   columnWidths: MaybeColumnWidth[]
   availableWidth?: number
-  minWidth: number
+  clamp: (width: number) => number
   numColumns: number
 }) {
   if (!isValidWidth(availableWidth)) {
     return columnWidths
   }
+  const minWidth = clamp(0)
   const numMeasuredColumns = columnWidths.filter(c => c?.measured !== undefined).length
   if (numMeasuredColumns === 0) {
     // no measured columns, nothing to adjust
@@ -88,10 +89,7 @@ export function adjustMeasuredWidths({
   }
   const minReducedWidthMargin = 5 // leave some margin for rounding errors
   const multiplier = numColumns <= 3 ? 1 / numColumns : 0.3 // 30% so that 4 or more columns will overflow
-  const minReducedWidth = Math.max(
-    minWidth,
-    Math.floor(multiplier * remainingWidth - minReducedWidthMargin)
-  )
+  const minReducedWidth = clamp(multiplier * remainingWidth - minReducedWidthMargin)
 
   // Group measured column indexes by width in a Map
   const indexesByWidth = new Map<number, number[]>()
@@ -130,7 +128,7 @@ export function adjustMeasuredWidths({
       // Increase the widths equally to fill the remaining space
       const delta = Math.floor((remainingWidth - currentWidth) / numMeasuredColumns)
       for (const group of orderedWidthGroups) {
-        group.width += delta
+        group.width = clamp(group.width + delta)
       }
       break
     }
@@ -166,24 +164,21 @@ export function adjustMeasuredWidths({
   }
 
   // fill the adjusted widths
-  let lastIndex = undefined
+  let lastColumnWidth = undefined
   for (const { width, indexes } of orderedWidthGroups) {
     for (const index of indexes) {
-      columnWidths[index] = {
+      const columnWidth = {
         width: width,
         measured: columnWidths[index]?.measured, // keep the measured width if it exists (it should)
       }
-      lastIndex = index
+      columnWidths[index] = columnWidth
+      lastColumnWidth = columnWidth
       remainingWidth -= width
     }
   }
   // add the missing pixels to the last column
-  if (lastIndex !== undefined && remainingWidth > 0) {
-    const columnWidth = columnWidths[lastIndex]
-    if (columnWidth?.width !== undefined) {
-      // should always be the case
-      columnWidth.width += remainingWidth
-    }
+  if (lastColumnWidth !== undefined && remainingWidth > 0) {
+    lastColumnWidth.width = clamp(lastColumnWidth.width + remainingWidth)
   }
 
   return columnWidths

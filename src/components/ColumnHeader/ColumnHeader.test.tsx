@@ -70,6 +70,19 @@ describe('ColumnHeader', () => {
     expect(header.style.maxWidth).toEqual(`${savedWidth}px`)
   })
 
+  it.for([
+    { savedWidth: 5, minWidth: 10, expected: '10px' },
+    { savedWidth: 50, minWidth: 10, expected: '50px' },
+  ])('clamps loaded column width from localStorage when localStorageKey is provided', ({ savedWidth, minWidth, expected }) => {
+    localStorage.setItem(cacheKey, JSON.stringify([{ width: savedWidth }]))
+
+    const { getByRole } = render(<ColumnStatesProvider localStorageKey={cacheKey} numColumns={1} minWidth={minWidth}>
+      <table><thead><tr><ColumnHeader columnName="test" {...defaultProps}/></tr></thead></table>
+    </ColumnStatesProvider>)
+    const header = getByRole('columnheader')
+    expect(header.style.maxWidth).toEqual(expected)
+  })
+
   it('handles double click on resize handle to auto resize', async () => {
     // Set the initial width
     const savedWidth = 42

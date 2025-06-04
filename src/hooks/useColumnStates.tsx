@@ -24,7 +24,6 @@ interface ColumnStatesProviderProps {
 }
 
 export function ColumnStatesProvider({ children, localStorageKey, numColumns, minWidth }: ColumnStatesProviderProps) {
-  // TODO: validate the props
   if (!isValidWidth(minWidth)) {
     throw new Error(`Invalid minWidth: ${minWidth}. It must be a positive number.`)
   }
@@ -34,6 +33,10 @@ export function ColumnStatesProvider({ children, localStorageKey, numColumns, mi
 
   const [availableWidth, setAvailableWidth] = useState<number>(0)
   // ^ TODO: add a validation for availableWidth?
+
+  const clamp = useCallback((width: number) => {
+    return Math.floor(Math.max(width, minWidth))
+  }, [minWidth])
 
   // An array of column states
   // The index is the column rank in the header (0-based)
@@ -59,15 +62,10 @@ export function ColumnStatesProvider({ children, localStorageKey, numColumns, mi
       if (typeof columnState !== 'object' || !('width' in columnState)) {
         return undefined
       }
-      const width = isValidWidth(columnState.width) ? columnState.width : undefined
+      const width = isValidWidth(columnState.width) ? clamp(columnState.width) : undefined
       return { width }
     })
   }
-
-  const clamp = useCallback((width: number) => {
-    // TODO: add maxWidth
-    return Math.floor(Math.max(width, minWidth))
-  }, [minWidth])
 
   const isValidIndex = useCallback((index: number) => {
     return Number.isInteger(index) && index >= 0 && index < numColumns
@@ -108,9 +106,9 @@ export function ColumnStatesProvider({ children, localStorageKey, numColumns, mi
       const nextColumnStates = [...columnStates ?? []]
       nextColumnStates[columnIndex] = { ...nextColumnStates[columnIndex] ?? {}, measured: clamp(measured), width: undefined }
       // compute the adjusted widths
-      return adjustMeasuredWidths({ columnWidths: nextColumnStates, availableWidth, minWidth, numColumns })
+      return adjustMeasuredWidths({ columnWidths: nextColumnStates, availableWidth, clamp, numColumns })
     })
-  }, [availableWidth, clamp, isValidIndex, minWidth, numColumns, setColumnStates])
+  }, [availableWidth, clamp, isValidIndex, numColumns, setColumnStates])
 
   const removeWidth = useCallback(({ columnIndex }: { columnIndex: number }) => {
     if (!isValidIndex(columnIndex)) {
