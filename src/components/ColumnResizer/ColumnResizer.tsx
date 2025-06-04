@@ -17,7 +17,6 @@ interface Props {
 const smallStep = 10
 const bigStep = 100
 
-// TODO: add aria-minwidth and aria-maxwidth?
 export default function ColumnResizer({ autoResize, forceWidth, width, tabIndex, navigateToCell }: Props) {
   const [initialPointerState, setInitialPointerState] = useState<InitialPointerState | undefined>(undefined)
   const [activeKeyboard, setActiveKeyboard] = useState<boolean>(false)
