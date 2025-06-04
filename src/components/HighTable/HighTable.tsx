@@ -29,8 +29,9 @@ interface Slice {
   data: DataFrame // the data frame used to fetch the slice
 }
 
+// TODO(SL): pass as HighTable props?
 const rowHeight = 33 // row height px
-const maxWidth = 640 // maximum width of a cell in px, used to compute the column widths (640 = 40rem with the default font size of 16px)
+const maxWidth = 960 // maximum width of a cell in px, used to compute the column widths (960 = 60rem with the default font size of 16px)
 const minWidth = 50 // minimum width of a cell in px, used to compute the column widths
 
 interface Props {
