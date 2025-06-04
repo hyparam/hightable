@@ -14,7 +14,8 @@ interface Props {
   navigateToCell?: () => void
 }
 
-const keyboardShiftWidth = 10
+const smallStep = 10
+const bigStep = 100
 
 // TODO: add aria-minwidth and aria-maxwidth?
 export default function ColumnResizer({ autoResize, forceWidth, width, tabIndex, navigateToCell }: Props) {
@@ -87,7 +88,7 @@ export default function ColumnResizer({ autoResize, forceWidth, width, tabIndex,
       // let the event propagate to the parent
       return
     }
-    if ([' ', 'ArrowRight', 'ArrowLeft'].includes(e.key)) {
+    if ([' ', 'ArrowRight', 'ArrowLeft', 'ArrowUp', 'ArrowDown', 'PageUp', 'PageDown'].includes(e.key)) {
       // prevent scrolling the table
       e.preventDefault()
     }
@@ -112,9 +113,13 @@ export default function ColumnResizer({ autoResize, forceWidth, width, tabIndex,
       return
     }
     if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
-      forceWidth?.(width + keyboardShiftWidth)
+      forceWidth?.(width + smallStep)
     } else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
-      forceWidth?.(width - keyboardShiftWidth)
+      forceWidth?.(width - smallStep)
+    } else if (e.key === 'PageUp') {
+      forceWidth?.(width + bigStep)
+    } else if (e.key === 'PageDown') {
+      forceWidth?.(width - bigStep)
     }
   }, [autoResizeAndRemoveFocus, initialPointerState, forceWidth, width, activeKeyboard, navigateToCell])
 
@@ -136,7 +141,7 @@ export default function ColumnResizer({ autoResize, forceWidth, width, tabIndex,
       aria-valuetext={ariaValueText}
       // TODO: use aria-labelledby and aria-describedby to allow translation
       aria-label="Resize column"
-      aria-description='Press "Enter" or "Space" to autoresize the column. Press "Escape" to cancel resizing. Press "ArrowRight/ArrowUp" or "ArrowLeft/ArrowDown" to resize the column by 10 pixels.'
+      aria-description='Press "Enter" or "Space" to autoresize the column. Press "Escape" to cancel resizing. Press "ArrowRight/ArrowUp" or "ArrowLeft/ArrowDown" to resize the column by 10 pixels. Press PageUp/PageDown to resize the column by 100 pixels.'
       onDoubleClick={autoResizeAndRemoveFocus}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
