@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { ColumnWidthProvider } from '../../hooks/useColumnWidth.js'
+import { ColumnStatesProvider } from '../../hooks/useColumnStates.js'
 import { render } from '../../utils/userEvent.js'
 import ColumnHeader from './ColumnHeader.js'
 
-import { measureWidth } from '../../helpers/width.js'
+import { getOffsetWidth } from '../../helpers/width.js'
 vi.mock('../../helpers/width.js', { spy: true })
 
 vi.stubGlobal('localStorage', (() => {
@@ -40,32 +40,32 @@ describe('ColumnHeader', () => {
     const { getByRole } = render(<table><thead><tr><ColumnHeader columnName="test" {...defaultProps}>{content}</ColumnHeader></tr></thead></table>)
     const element = getByRole('columnheader')
     expect(element.textContent).toEqual(content)
-    expect(measureWidth).not.toHaveBeenCalled()
+    expect(getOffsetWidth).not.toHaveBeenCalled()
   })
 
   it('measures the width if dataReady is true', () => {
     render(<table><thead><tr><ColumnHeader columnName="test" {...defaultProps} dataReady={true} /></tr></thead></table>)
-    expect(measureWidth).toHaveBeenCalled()
+    expect(getOffsetWidth).toHaveBeenCalled()
   })
 
   it('measures the width again if dataReady toggles to true', () => {
     const { rerender } = render(<table><thead><tr><ColumnHeader columnName="test" {...defaultProps} dataReady={true} /></tr></thead></table>)
-    expect(measureWidth).toHaveBeenCalledTimes(1)
+    expect(getOffsetWidth).toHaveBeenCalledTimes(1)
     // new data is being loaded
     rerender(<table><thead><tr><ColumnHeader columnName="test" {...defaultProps} dataReady={false} /></tr></thead></table>)
-    expect(measureWidth).toHaveBeenCalledTimes(1)
+    expect(getOffsetWidth).toHaveBeenCalledTimes(1)
     // new data is ready
     rerender(<table><thead><tr><ColumnHeader columnName="test" {...defaultProps} dataReady={true} /></tr></thead></table>)
-    expect(measureWidth).toHaveBeenCalledTimes(2)
+    expect(getOffsetWidth).toHaveBeenCalledTimes(2)
   })
 
   it('loads column width from localStorage when localStorageKey is provided', () => {
     const savedWidth = 42
-    localStorage.setItem(cacheKey, JSON.stringify([savedWidth]))
+    localStorage.setItem(cacheKey, JSON.stringify([{ width: savedWidth }]))
 
-    const { getByRole } = render(<ColumnWidthProvider localStorageKey={cacheKey}>
+    const { getByRole } = render(<ColumnStatesProvider localStorageKey={cacheKey} numColumns={1} minWidth={10}>
       <table><thead><tr><ColumnHeader columnName="test" {...defaultProps}/></tr></thead></table>
-    </ColumnWidthProvider>)
+    </ColumnStatesProvider>)
     const header = getByRole('columnheader')
     expect(header.style.maxWidth).toEqual(`${savedWidth}px`)
   })
@@ -73,32 +73,34 @@ describe('ColumnHeader', () => {
   it('handles double click on resize handle to auto resize', async () => {
     // Set the initial width
     const savedWidth = 42
-    localStorage.setItem(cacheKey, JSON.stringify([savedWidth]))
+    const minWidth = 10
+    localStorage.setItem(cacheKey, JSON.stringify([{ width: savedWidth }]))
 
-    const { user, getByRole } = render(<ColumnWidthProvider localStorageKey={cacheKey}>
+    const { user, getByRole } = render(<ColumnStatesProvider localStorageKey={cacheKey} numColumns={1} minWidth={minWidth}>
       <table><thead><tr><ColumnHeader columnName="test" {...defaultProps} /></tr></thead></table>
-    </ColumnWidthProvider>)
+    </ColumnStatesProvider>)
     const header = getByRole('columnheader')
     const resizeHandle = getByRole('separator')
 
     expect(header.style.maxWidth).toEqual(`${savedWidth}px`)
-    expect(measureWidth).toHaveBeenCalledTimes(0)
+    expect(getOffsetWidth).toHaveBeenCalledTimes(0)
     await user.dblClick(resizeHandle)
     // the width is set to undefined, and should then be measured,
     // but the measurement (.offsetWidth) can only run in a browser,
-    // so its value is 0 + the 1px offset added to avoid rounding errors
-    expect(header.style.maxWidth).toEqual('1px')
-    expect(measureWidth).toHaveBeenCalledTimes(1)
+    // so its value is 0
+    // The fixed width is then adjusted to the minimum width: 10px
+    expect(header.style.maxWidth).toEqual('10px')
+    expect(getOffsetWidth).toHaveBeenCalledTimes(1)
   })
 
   it('handles mouse click and drag on resize handle to resize', async () => {
     // Set the initial width
     const savedWidth = 42
-    localStorage.setItem(cacheKey, JSON.stringify([savedWidth]))
+    localStorage.setItem(cacheKey, JSON.stringify([{ width: savedWidth }]))
 
-    const { user, getByRole } = render(<ColumnWidthProvider localStorageKey={cacheKey}>
+    const { user, getByRole } = render(<ColumnStatesProvider localStorageKey={cacheKey} numColumns={1} minWidth={10}>
       <table><thead><tr><ColumnHeader columnName="test" {...defaultProps} /></tr></thead></table>
-    </ColumnWidthProvider>)
+    </ColumnStatesProvider>)
 
     // Simulate resizing the column
     const header = getByRole('columnheader')
@@ -121,18 +123,18 @@ describe('ColumnHeader', () => {
   it('reloads column width when localStorageKey changes', () => {
     const cacheKey2 = 'key-2'
     const width1 = 150
-    localStorage.setItem(cacheKey, JSON.stringify([width1]))
+    localStorage.setItem(cacheKey, JSON.stringify([{ width: width1 }]))
     const width2 = 300
-    localStorage.setItem(cacheKey2, JSON.stringify([width2]))
+    localStorage.setItem(cacheKey2, JSON.stringify([{ width: width2 }]))
 
-    const { rerender, getByRole } = render(<ColumnWidthProvider localStorageKey={cacheKey}>
+    const { rerender, getByRole } = render(<ColumnStatesProvider localStorageKey={cacheKey} numColumns={1} minWidth={10}>
       <table><thead><tr><ColumnHeader columnName="test" {...defaultProps} /></tr></thead></table>
-    </ColumnWidthProvider>)
+    </ColumnStatesProvider>)
     const header = getByRole('columnheader')
     expect(header.style.maxWidth).toEqual(`${width1}px`)
-    rerender(<ColumnWidthProvider localStorageKey={cacheKey2}>
+    rerender(<ColumnStatesProvider localStorageKey={cacheKey2} numColumns={1} minWidth={10}>
       <table><thead><tr><ColumnHeader columnName="test" {...defaultProps} /></tr></thead></table>
-    </ColumnWidthProvider>)
+    </ColumnStatesProvider>)
     expect(header.style.maxWidth).toEqual(`${width2}px`)
   })
 

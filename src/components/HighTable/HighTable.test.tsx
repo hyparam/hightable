@@ -2,9 +2,10 @@ import { act, fireEvent, waitFor, within } from '@testing-library/react'
 import { UserEvent } from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { DataFrame, sortableDataFrame } from '../../helpers/dataframe.js'
+import { MaybeColumnState } from '../../hooks/useColumnStates.js'
 import { wrapResolved } from '../../utils/promise.js'
 import { render } from '../../utils/userEvent.js'
-import HighTable, { columnWidthsSuffix } from './HighTable.js'
+import HighTable, { columnStatesSuffix } from './HighTable.js'
 
 Element.prototype.scrollIntoView = vi.fn()
 
@@ -738,37 +739,36 @@ describe('in disabled selection state (neither selection nor onSelection props),
   })
 })
 
-const initialWidth = 42
-const measureWidth = vi.fn(() => initialWidth)
-const keyItem = `key${columnWidthsSuffix}`
-const undefinedItem = `undefined${columnWidthsSuffix}`
+const initialWidth = 62 // initial width of the columns, in pixels, above the default minimal width of 50px
+const getOffsetWidth = vi.fn(() => initialWidth)
+const getClientWidth = vi.fn(() => 1000) // used to get the width of the table - let's give space
+const keyItem = `key${columnStatesSuffix}`
+const undefinedItem = `undefined${columnStatesSuffix}`
 vi.mock(import('../../helpers/width.js'), async (importOriginal ) => {
   const actual = await importOriginal()
   return {
     ...actual,
-    measureWidth: () => measureWidth(),
+    getOffsetWidth: () => getOffsetWidth(),
+    getClientWidth: () => getClientWidth(),
   }})
 describe('HighTable localstorage', () => {
-  it('saves the autosized column widths on initialization, if not saved before', () => {
+  it('only saves the fixed widths', () => {
     localStorage.clear()
-    const { getAllByRole } = render(<HighTable data={data} cacheKey="key" />)
-    const header = getAllByRole('columnheader')[0]
-    if (!header) {
-      throw new Error('Header should not be null')
-    }
-    expect(header.style.maxWidth).toEqual(`${initialWidth}px`)
-    expect(measureWidth).toHaveBeenCalled()
-    expect(localStorage.getItem(keyItem)).toEqual(JSON.stringify([initialWidth, initialWidth, initialWidth, initialWidth]))
+    render(<HighTable data={data} cacheKey="key" />)
+    expect(getClientWidth).toHaveBeenCalled()
+    const json = localStorage.getItem(keyItem)
+    expect(json).not.toEqual(null)
+    const columnStates = JSON.parse(json ?? '[]') as MaybeColumnState[] // TODO: we could check the type of the column states
+    expect(columnStates).toHaveLength(4) // 4 columns
+    columnStates.forEach((columnState) => {
+      expect(columnState?.measured).toBeUndefined() // the measured field is not stored
+      expect(columnState?.width).toBeUndefined() // no columns is fixed
+    })
   })
   it('saves nothing on initialization if cacheKey is not provided', () => {
     localStorage.clear()
-    const { getAllByRole } = render(<HighTable data={data} />)
-    const header = getAllByRole('columnheader')[0]
-    if (!header) {
-      throw new Error('Header should not be null')
-    }
-    expect(header.style.maxWidth).toEqual(`${initialWidth}px`)
-    expect(measureWidth).toHaveBeenCalled()
+    render(<HighTable data={data} />)
+    expect(getClientWidth).toHaveBeenCalled()
     expect(localStorage.getItem(keyItem)).toBeNull()
     expect(localStorage.getItem(undefinedItem)).toBeNull()
     expect(localStorage.length).toBe(0)
@@ -776,20 +776,42 @@ describe('HighTable localstorage', () => {
   it('is used to load previously saved column widths', () => {
     localStorage.clear()
     const savedWidth = initialWidth * 2
-    localStorage.setItem(keyItem, JSON.stringify([savedWidth, savedWidth, savedWidth, savedWidth]))
+    const json = JSON.stringify(Array(4).fill({ width: savedWidth }))
+    localStorage.setItem(keyItem, json)
 
     const { getAllByRole } = render(<HighTable data={data} cacheKey="key" />)
     const header = getAllByRole('columnheader')[0]
     if (!header) {
       throw new Error('Header should not be null')
     }
-    expect(localStorage.getItem(keyItem)).toEqual(JSON.stringify([savedWidth, savedWidth, savedWidth, savedWidth]))
+    expect(localStorage.getItem(keyItem)).toEqual(json)
     expect(header.style.maxWidth).toEqual(`${savedWidth}px`)
   })
-  it('is updated if new data are loaded', () => {
+  it('it ignores non-fixed column widths in localStorage', () => {
     localStorage.clear()
     const savedWidth = initialWidth * 2
-    localStorage.setItem(keyItem, JSON.stringify([savedWidth, savedWidth, savedWidth, savedWidth]))
+    localStorage.setItem(keyItem, JSON.stringify(Array(4).fill({ width: savedWidth, measured: savedWidth })))
+
+    const { getAllByRole } = render(<HighTable data={data} cacheKey="key" />)
+    const header = getAllByRole('columnheader')[0]
+    if (!header) {
+      throw new Error('Header should not be null')
+    }
+
+    const json = localStorage.getItem(keyItem)
+    expect(json).not.toEqual(null)
+    const columnStates = JSON.parse(json ?? '[]') as MaybeColumnState[]
+    expect(columnStates).toHaveLength(4) // 4 columns
+    columnStates.forEach((columnState) => {
+      expect(columnState?.measured).toBeUndefined() // the measured field is not stored
+      expect(columnState?.width).toBeDefined() // all columns should have been adjusted to some width
+    })
+  })
+  it('the previous data is used or updated if new data are loaded', () => {
+    localStorage.clear()
+    const savedWidth = initialWidth * 2
+    const json = JSON.stringify(Array(4).fill({ width: savedWidth }))
+    localStorage.setItem(keyItem, json)
 
     const { getAllByRole, rerender } = render(<HighTable data={data} cacheKey="key" />)
 
@@ -800,8 +822,8 @@ describe('HighTable localstorage', () => {
     if (!header) {
       throw new Error('Header should not be null')
     }
-    expect(localStorage.getItem(`${otherKey}${columnWidthsSuffix}`)).toEqual(JSON.stringify([initialWidth, initialWidth]))
-    expect(header.style.maxWidth).toEqual(`${initialWidth}px`)
+    expect(localStorage.getItem(`${otherKey}${columnStatesSuffix}`)).not.toEqual(localStorage.getItem(keyItem))
+    expect(header.style.maxWidth).not.toEqual(`${savedWidth}px`)
   })
 })
 
@@ -965,12 +987,14 @@ describe('Navigating Hightable with the keyboard', () => {
         throw new Error('Separator is null')
       }
       const value = separator.getAttribute('aria-valuenow')
+      if (value === null) {
+        throw new Error('aria-valuenow should not be null')
+      }
       // the column measurement is mocked
-      expect(value).toBe(initialWidth.toString())
       await user.keyboard('{ArrowRight}')
-      expect(separator.getAttribute('aria-valuenow')).toBe((initialWidth + 10).toString())
+      expect(separator.getAttribute('aria-valuenow')).toBe((+value + 10).toString())
       await user.keyboard('{ArrowLeft}{ArrowLeft}{ArrowLeft}')
-      expect(separator.getAttribute('aria-valuenow')).toBe((initialWidth - 20).toString())
+      expect(separator.getAttribute('aria-valuenow')).toBe((+value - 20).toString())
     })
 
     it.for(['{ }', '{Enter}'])('the column resizer autosizes the column and exits resize mode when %s is pressed', async (key) => {
@@ -984,13 +1008,39 @@ describe('Navigating Hightable with the keyboard', () => {
         throw new Error('Separator is null')
       }
       const value = separator.getAttribute('aria-valuenow')
-      // the column measurement is mocked
-      expect(value).toBe(initialWidth.toString())
+      if (value === null) {
+        throw new Error('aria-valuenow should not be null')
+      }
       await user.keyboard('{ArrowRight}')
-      expect(separator.getAttribute('aria-valuenow')).toBe((initialWidth + 10).toString())
+      expect(separator.getAttribute('aria-valuenow')).toBe((+value + 10).toString())
       await user.keyboard(key)
-      expect(separator.getAttribute('aria-valuenow')).toBe(initialWidth.toString())
+      const valueNow = separator.getAttribute('aria-valuenow')
+      if (valueNow === null) {
+        throw new Error('aria-valuenow should not be null')
+      }
+      // the autosized column width (smart fit) is less than the default adjusted width
+      expect(+valueNow).toBeLessThan(+value)
       expect(document.activeElement).toBe(cell)
+    })
+
+    it.for(['{ }', '{Enter}'])('the column resizer toggles back to adjustable column when %s is pressed if previously autosized', async (key) => {
+      const { user } = render(<HighTable data={data} />)
+      // go to the column resizer
+      await user.keyboard('{ArrowRight}{Tab}')
+      const separator = document.activeElement
+      if (!separator) {
+        throw new Error('Separator is null')
+      }
+      const initialValue = separator.getAttribute('aria-valuenow')
+      // autoresize
+      await user.keyboard(key)
+      expect(separator.getAttribute('aria-valuenow')).not.toBe(initialValue)
+      // focus the resizer again
+      await user.keyboard('{Tab}')
+      // press the key
+      await user.keyboard(key)
+      // already autosized - toggles to adjustable width
+      expect(separator.getAttribute('aria-valuenow')).toBe(initialValue)
     })
   })
 })
