@@ -30,13 +30,13 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
   const sortable = !!onClick // if onClick is defined, the column is sortable
 
   // Get the column width from the context
-  const { getColumnStyle, isFixedColumn, getColumnWidth, measureWidth, forceWidth, removeWidth, increaseWidth } = useColumnStates()
+  const { getColumnStyle, isFixedColumn, getColumnWidth, measureWidth, forceWidth, removeWidth } = useColumnStates()
   const columnStyle = getColumnStyle?.(columnIndex)
   const dataFixedWidth = isFixedColumn?.(columnIndex) === true ? true : undefined
   const width = getColumnWidth?.(columnIndex)
-  const increase = useCallback((delta: number) => {
-    increaseWidth?.({ columnIndex, delta })
-  }, [increaseWidth, columnIndex])
+  const forceColumnWidth = useCallback((width: number) => {
+    forceWidth?.({ columnIndex, width })
+  }, [forceWidth, columnIndex])
 
   // Measure default column width when data is ready, if no width is set
   useEffect(() => {
@@ -121,7 +121,7 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
     >
       {children}
       <ColumnResizer
-        increaseWidth={increase}
+        forceWidth={forceColumnWidth}
         autoResize={autoResize}
         width={width}
         tabIndex={tabIndex}

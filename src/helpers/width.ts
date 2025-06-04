@@ -22,8 +22,8 @@ export interface ColumnWidth {
   width?: number
 }
 export interface FixedColumnWidth {
-  width: number
   measured?: undefined
+  width: number
 }
 
 export type MaybeColumnWidth = ColumnWidth | undefined

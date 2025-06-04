@@ -12,7 +12,6 @@ interface ColumnStatesContextType {
   forceWidth?: (options: { columnIndex: number; width: number }) => void // used to set a fixed width for a column (will be stored and overrides the auto width)
   measureWidth?: (options: { columnIndex: number; measured: number }) => void // used to set the measured width (and adjust all the measured columns)
   removeWidth?: (options: { columnIndex: number }) => void // used to remove the width of a column, so it can be measured again
-  increaseWidth?: (options: { columnIndex: number; delta: number }) => void
 }
 
 export const ColumnStatesContext = createContext<ColumnStatesContextType>({})
@@ -126,17 +125,6 @@ export function ColumnStatesProvider({ children, localStorageKey, numColumns, mi
     })
   }, [isValidIndex, setColumnStates])
 
-  const increaseWidth = useCallback(({ columnIndex, delta }: { columnIndex: number; delta: number }) => {
-    if (delta === 0 || isNaN(delta) || !Number.isFinite(delta)) {
-      return
-    }
-    const currentWidth = getColumnWidth(columnIndex)
-    if (currentWidth === undefined) {
-      return
-    }
-    forceWidth({ columnIndex, width: currentWidth + delta })
-  }, [getColumnWidth, forceWidth])
-
   const value = useMemo(() => {
     return {
       getColumnWidth,
@@ -146,11 +134,8 @@ export function ColumnStatesProvider({ children, localStorageKey, numColumns, mi
       forceWidth,
       measureWidth,
       removeWidth,
-      increaseWidth,
     }
-  }, [getColumnWidth, getColumnStyle, isFixedColumn, setAvailableWidth, forceWidth,
-    measureWidth,
-    removeWidth, increaseWidth])
+  }, [getColumnWidth, getColumnStyle, isFixedColumn, setAvailableWidth, forceWidth, measureWidth, removeWidth])
 
   return (
     <ColumnStatesContext.Provider value={value}>
