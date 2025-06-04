@@ -1,3 +1,14 @@
+export interface ColumnWidth {
+  measured?: number
+  width?: number
+}
+export interface FixedColumnWidth {
+  width: number
+  measured?: undefined
+}
+
+export type MaybeColumnWidth = ColumnWidth | undefined
+
 export function cellStyle(width: number | undefined) {
   const px = width ? `${width}px` : undefined
   return { minWidth: px, maxWidth: px }
@@ -16,17 +27,6 @@ export function getClientWidth(element: Pick<HTMLElement, 'clientWidth'>): numbe
 export function isValidWidth(width: unknown): width is number {
   return typeof width === 'number' && Number.isFinite(width) && !isNaN(width) && width >= 0
 }
-
-export interface ColumnWidth {
-  measured?: number
-  width?: number
-}
-export interface FixedColumnWidth {
-  measured?: undefined
-  width: number
-}
-
-export type MaybeColumnWidth = ColumnWidth | undefined
 
 export function hasFixedWidth(columnWidth: MaybeColumnWidth): columnWidth is FixedColumnWidth {
   return columnWidth?.width !== undefined && columnWidth.measured === undefined
@@ -51,17 +51,18 @@ function getTotalWidth(widthGroups: WidthGroup[]): number {
 export function adjustMeasuredWidths({
   columnWidths,
   availableWidth,
-  minWidth,
+  clamp,
   numColumns,
 }: {
   columnWidths: MaybeColumnWidth[]
   availableWidth?: number
-  minWidth: number
+  clamp: (width: number) => number
   numColumns: number
 }) {
   if (!isValidWidth(availableWidth)) {
     return columnWidths
   }
+  const defaultWidth = clamp(0)
   const numMeasuredColumns = columnWidths.filter(c => c?.measured !== undefined).length
   if (numMeasuredColumns === 0) {
     // no measured columns, nothing to adjust
@@ -76,22 +77,19 @@ export function adjustMeasuredWidths({
       continue
     }
     if (columnWidth?.width === undefined) {
-      // no info, we assume the width is minWidth
-      remainingWidth -= minWidth
+      // no info, we assume the width is defaultWidth
+      remainingWidth -= defaultWidth
       continue
     }
     remainingWidth -= columnWidth.width
   }
   if (columnWidths.length < numColumns) {
-    // if there are fewer columns than numColumns, we assume the missing columns have a width of minWidth
-    remainingWidth -= (numColumns - columnWidths.length) * minWidth
+    // if there are fewer columns than numColumns, we assume the missing columns have a width of defaultWidth
+    remainingWidth -= (numColumns - columnWidths.length) * defaultWidth
   }
   const minReducedWidthMargin = 5 // leave some margin for rounding errors
   const multiplier = numColumns <= 3 ? 1 / numColumns : 0.3 // 30% so that 4 or more columns will overflow
-  const minReducedWidth = Math.max(
-    minWidth,
-    Math.floor(multiplier * remainingWidth - minReducedWidthMargin)
-  )
+  const minReducedWidth = clamp(multiplier * remainingWidth - minReducedWidthMargin)
 
   // Group measured column indexes by width in a Map
   const indexesByWidth = new Map<number, number[]>()
@@ -130,7 +128,7 @@ export function adjustMeasuredWidths({
       // Increase the widths equally to fill the remaining space
       const delta = Math.floor((remainingWidth - currentWidth) / numMeasuredColumns)
       for (const group of orderedWidthGroups) {
-        group.width += delta
+        group.width = clamp(group.width + delta)
       }
       break
     }
@@ -166,24 +164,21 @@ export function adjustMeasuredWidths({
   }
 
   // fill the adjusted widths
-  let lastIndex = undefined
+  let lastColumnWidth = undefined
   for (const { width, indexes } of orderedWidthGroups) {
     for (const index of indexes) {
-      columnWidths[index] = {
+      const columnWidth = {
         width: width,
         measured: columnWidths[index]?.measured, // keep the measured width if it exists (it should)
       }
-      lastIndex = index
+      columnWidths[index] = columnWidth
+      lastColumnWidth = columnWidth
       remainingWidth -= width
     }
   }
   // add the missing pixels to the last column
-  if (lastIndex !== undefined && remainingWidth > 0) {
-    const columnWidth = columnWidths[lastIndex]
-    if (columnWidth?.width !== undefined) {
-      // should always be the case
-      columnWidth.width += remainingWidth
-    }
+  if (lastColumnWidth !== undefined && remainingWidth > 0) {
+    lastColumnWidth.width = clamp(lastColumnWidth.width + remainingWidth)
   }
 
   return columnWidths

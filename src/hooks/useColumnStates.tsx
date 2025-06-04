@@ -19,21 +19,31 @@ export const ColumnStatesContext = createContext<ColumnStatesContextType>({})
 interface ColumnStatesProviderProps {
   localStorageKey?: string // optional key to use for local storage (no local storage if not provided)
   numColumns: number // number of columns (used to initialize the widths array, and compute the widths)
+  maxWidth: number // maximum width for a column in pixels
   minWidth: number // minimum width for a column in pixels
   children: ReactNode
 }
 
-export function ColumnStatesProvider({ children, localStorageKey, numColumns, minWidth }: ColumnStatesProviderProps) {
-  // TODO: validate the props
+export function ColumnStatesProvider({ children, localStorageKey, numColumns, maxWidth, minWidth }: ColumnStatesProviderProps) {
+  if (!Number.isInteger(numColumns) || numColumns < 0) {
+    throw new Error(`Invalid numColumns: ${numColumns}. It must be a positive integer.`)
+  }
+  if (!isValidWidth(maxWidth)) {
+    throw new Error(`Invalid maxWidth: ${maxWidth}. It must be a positive number.`)
+  }
   if (!isValidWidth(minWidth)) {
     throw new Error(`Invalid minWidth: ${minWidth}. It must be a positive number.`)
   }
-  if (!Number.isInteger(numColumns) || numColumns < 0) {
-    throw new Error(`Invalid numColumns: ${numColumns}. It must be a positive integer.`)
+  if (minWidth > maxWidth) {
+    throw new Error(`Invalid widths: minWidth (${minWidth}) cannot be greater than maxWidth (${maxWidth}).`)
   }
 
   const [availableWidth, setAvailableWidth] = useState<number>(0)
   // ^ TODO: add a validation for availableWidth?
+
+  const clamp = useCallback((width: number) => {
+    return Math.floor(Math.min(Math.max(width, minWidth), maxWidth))
+  }, [maxWidth, minWidth])
 
   // An array of column states
   // The index is the column rank in the header (0-based)
@@ -59,15 +69,10 @@ export function ColumnStatesProvider({ children, localStorageKey, numColumns, mi
       if (typeof columnState !== 'object' || !('width' in columnState)) {
         return undefined
       }
-      const width = isValidWidth(columnState.width) ? columnState.width : undefined
+      const width = isValidWidth(columnState.width) ? clamp(columnState.width) : undefined
       return { width }
     })
   }
-
-  const clamp = useCallback((width: number) => {
-    // TODO: add maxWidth
-    return Math.floor(Math.max(width, minWidth))
-  }, [minWidth])
 
   const isValidIndex = useCallback((index: number) => {
     return Number.isInteger(index) && index >= 0 && index < numColumns
@@ -108,9 +113,9 @@ export function ColumnStatesProvider({ children, localStorageKey, numColumns, mi
       const nextColumnStates = [...columnStates ?? []]
       nextColumnStates[columnIndex] = { ...nextColumnStates[columnIndex] ?? {}, measured: clamp(measured), width: undefined }
       // compute the adjusted widths
-      return adjustMeasuredWidths({ columnWidths: nextColumnStates, availableWidth, minWidth, numColumns })
+      return adjustMeasuredWidths({ columnWidths: nextColumnStates, availableWidth, clamp, numColumns })
     })
-  }, [availableWidth, clamp, isValidIndex, minWidth, numColumns, setColumnStates])
+  }, [availableWidth, clamp, isValidIndex, numColumns, setColumnStates])
 
   const removeWidth = useCallback(({ columnIndex }: { columnIndex: number }) => {
     if (!isValidIndex(columnIndex)) {

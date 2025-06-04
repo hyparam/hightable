@@ -30,6 +30,7 @@ interface Slice {
 }
 
 const rowHeight = 33 // row height px
+const maxWidth = 640 // maximum width of a cell in px, used to compute the column widths (640 = 40rem with the default font size of 16px)
 const minWidth = 50 // minimum width of a cell in px, used to compute the column widths
 
 interface Props {
@@ -84,7 +85,7 @@ function HighTableData(props: PropsData) {
     /* important: key={key} ensures the local state is recreated if the data has changed */
     <OrderByProvider key={key} orderBy={orderBy} onOrderByChange={onOrderByChange} disabled={!data.sortable}>
       <SelectionProvider selection={selection} onSelectionChange={onSelectionChange}>
-        <ColumnStatesProvider key={key} localStorageKey={cacheKey ? `${cacheKey}${columnStatesSuffix}` : undefined} numColumns={data.header.length} minWidth={minWidth}>
+        <ColumnStatesProvider key={key} localStorageKey={cacheKey ? `${cacheKey}${columnStatesSuffix}` : undefined} numColumns={data.header.length} maxWidth={maxWidth} minWidth={minWidth}>
           <CellsNavigationProvider colCount={ariaColCount} rowCount={ariaRowCount} rowPadding={props.padding ?? defaultPadding}>
             <HighTableInner {...props} />
           </CellsNavigationProvider>

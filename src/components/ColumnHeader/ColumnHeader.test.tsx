@@ -63,20 +63,33 @@ describe('ColumnHeader', () => {
     const savedWidth = 42
     localStorage.setItem(cacheKey, JSON.stringify([{ width: savedWidth }]))
 
-    const { getByRole } = render(<ColumnStatesProvider localStorageKey={cacheKey} numColumns={1} minWidth={10}>
+    const { getByRole } = render(<ColumnStatesProvider localStorageKey={cacheKey} numColumns={1} minWidth={10} maxWidth={1000}>
       <table><thead><tr><ColumnHeader columnName="test" {...defaultProps}/></tr></thead></table>
     </ColumnStatesProvider>)
     const header = getByRole('columnheader')
     expect(header.style.maxWidth).toEqual(`${savedWidth}px`)
   })
 
+  it.for([
+    { savedWidth: 5, minWidth: 10, maxWidth: 100, expected: '10px' },
+    { savedWidth: 150, minWidth: 10, maxWidth: 100, expected: '100px' },
+    { savedWidth: 50, minWidth: 10, maxWidth: 100, expected: '50px' },
+  ])('clamps loaded column width from localStorage when localStorageKey is provided', ({ savedWidth, minWidth, maxWidth, expected }) => {
+    localStorage.setItem(cacheKey, JSON.stringify([{ width: savedWidth }]))
+
+    const { getByRole } = render(<ColumnStatesProvider localStorageKey={cacheKey} numColumns={1} minWidth={minWidth} maxWidth={maxWidth}>
+      <table><thead><tr><ColumnHeader columnName="test" {...defaultProps}/></tr></thead></table>
+    </ColumnStatesProvider>)
+    const header = getByRole('columnheader')
+    expect(header.style.maxWidth).toEqual(expected)
+  })
+
   it('handles double click on resize handle to auto resize', async () => {
     // Set the initial width
     const savedWidth = 42
-    const minWidth = 10
     localStorage.setItem(cacheKey, JSON.stringify([{ width: savedWidth }]))
 
-    const { user, getByRole } = render(<ColumnStatesProvider localStorageKey={cacheKey} numColumns={1} minWidth={minWidth}>
+    const { user, getByRole } = render(<ColumnStatesProvider localStorageKey={cacheKey} numColumns={1} minWidth={10} maxWidth={1000}>
       <table><thead><tr><ColumnHeader columnName="test" {...defaultProps} /></tr></thead></table>
     </ColumnStatesProvider>)
     const header = getByRole('columnheader')
@@ -98,7 +111,7 @@ describe('ColumnHeader', () => {
     const savedWidth = 42
     localStorage.setItem(cacheKey, JSON.stringify([{ width: savedWidth }]))
 
-    const { user, getByRole } = render(<ColumnStatesProvider localStorageKey={cacheKey} numColumns={1} minWidth={10}>
+    const { user, getByRole } = render(<ColumnStatesProvider localStorageKey={cacheKey} numColumns={1} minWidth={10} maxWidth={1000}>
       <table><thead><tr><ColumnHeader columnName="test" {...defaultProps} /></tr></thead></table>
     </ColumnStatesProvider>)
 
@@ -127,12 +140,12 @@ describe('ColumnHeader', () => {
     const width2 = 300
     localStorage.setItem(cacheKey2, JSON.stringify([{ width: width2 }]))
 
-    const { rerender, getByRole } = render(<ColumnStatesProvider localStorageKey={cacheKey} numColumns={1} minWidth={10}>
+    const { rerender, getByRole } = render(<ColumnStatesProvider localStorageKey={cacheKey} numColumns={1} minWidth={10} maxWidth={1000}>
       <table><thead><tr><ColumnHeader columnName="test" {...defaultProps} /></tr></thead></table>
     </ColumnStatesProvider>)
     const header = getByRole('columnheader')
     expect(header.style.maxWidth).toEqual(`${width1}px`)
-    rerender(<ColumnStatesProvider localStorageKey={cacheKey2} numColumns={1} minWidth={10}>
+    rerender(<ColumnStatesProvider localStorageKey={cacheKey2} numColumns={1} minWidth={10} maxWidth={1000}>
       <table><thead><tr><ColumnHeader columnName="test" {...defaultProps} /></tr></thead></table>
     </ColumnStatesProvider>)
     expect(header.style.maxWidth).toEqual(`${width2}px`)
