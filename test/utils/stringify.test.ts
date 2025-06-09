@@ -34,7 +34,7 @@ describe('stringify', () => {
 
   test('handles objects', () => {
     const obj = { a: 1, b: 'two' }
-    expect(stringify(obj)).toBe('{a: 1, b: two}')
+    expect(stringify(obj)).toBe('{\n  a: 1,\n  b: two\n}')
   })
 
   test('handles nested objects and arrays', () => {
@@ -42,11 +42,18 @@ describe('stringify', () => {
       a: [1, 2, { x: 'x' }],
       b: { c: 'hello' },
     }
-    expect(stringify(nested)).toBe(`{a: [
-  1,
-  2,
-  {x: x}
-], b: {c: hello}}`)
+    expect(stringify(nested)).toBe(`{
+  a: [
+    1,
+    2,
+    {
+      x: x
+    }
+  ],
+  b: {
+    c: hello
+  }
+}`)
   })
 
   test('handles booleans', () => {
