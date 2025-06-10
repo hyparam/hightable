@@ -18,6 +18,8 @@ export interface DataFrameV2 {
   numRows: number
   header: string[]
 
+  // TODO(SL): add getIndex, or getRowIndex({row, orderBy}) to get the index of a row in the original data when sorted by orderBy.
+
   // undefined means pending, ResolvedValue is a boxed value type (so we can distinguish undefined from pending)
   // getCell does NOT initiate a fetch, it just returns resolved data
   getCell({ row, column, orderBy }: {row: number, column: string, orderBy?: OrderBy}): ResolvedValue | undefined
@@ -36,6 +38,10 @@ interface ResolvedValue {
 interface CancellableJob {
   // table can call cancel when a user scrolls out of view. dataframe implementer can choose to ignore, de-queue, or cancel in flight fetches.
   cancel(): void
+}
+
+export function sortableDataFrame(data: DataFrameV2): DataFrameV2 {
+  return data // TODO(SL): implement sorting
 }
 
 export function arrayDataFrame(data: Cells[]): DataFrameV2 {

@@ -1,18 +1,14 @@
 import { ReactNode, createContext, useContext, useState } from 'react'
-import { DataFrame } from '../helpers/dataframe.js'
+import { DataFrameV2, arrayDataFrame } from '../helpers/dataframeV2.js'
 
 interface DataContextType {
-  data: DataFrame,
+  data: DataFrameV2,
   key: string,
 }
 
 function getDefaultDataContext(): DataContextType {
   return {
-    data: {
-      numRows: 0,
-      header: [],
-      rows: () => [],
-    },
+    data: arrayDataFrame([]),
     key: 'default',
   }
 }
@@ -20,7 +16,7 @@ function getDefaultDataContext(): DataContextType {
 export const DataContext = createContext<DataContextType>(getDefaultDataContext())
 
 interface DataProviderProps {
-  data: DataFrame,
+  data: DataFrameV2,
   children: ReactNode
 }
 
@@ -31,7 +27,7 @@ function getRandomKey(): string {
 export function DataProvider({ children, data }: DataProviderProps) {
   // We want a string key to identify the data.
   const [key, setKey] = useState<string>(getRandomKey())
-  const [previousData, setPreviousData] = useState<DataFrame>(data)
+  const [previousData, setPreviousData] = useState<DataFrameV2>(data)
 
   if (data !== previousData) {
     setKey(getRandomKey())
