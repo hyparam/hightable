@@ -1,7 +1,8 @@
 import { CSSProperties, KeyboardEvent, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { DataFrame } from '../../helpers/dataframe.js'
+import { ColumnConfiguration } from '../../helpers/columnConfiguration.js'
+import { DataFrameV2 } from '../../helpers/dataframeV2.js'
 import { PartialRow } from '../../helpers/row.js'
-import { Selection, areAllSelected, isSelected, toggleIndexInSelection, toggleRangeInSelection, toggleRangeInTable } from '../../helpers/selection.js'
+import { Selection, areAllSelected, isSelected, toggleIndexInSelection, toggleRangeInSelection } from '../../helpers/selection.js'
 import { OrderBy, areEqualOrderBy } from '../../helpers/sort.js'
 import { cellStyle, getClientWidth, getOffsetWidth } from '../../helpers/width.js'
 import { CellsNavigationProvider, useCellsNavigation } from '../../hooks/useCellsNavigation.js'
@@ -9,6 +10,7 @@ import { ColumnStatesProvider, useColumnStates } from '../../hooks/useColumnStat
 import { DataProvider, useData } from '../../hooks/useData.js'
 import { OrderByProvider, useOrderBy } from '../../hooks/useOrderBy.js'
 import { SelectionProvider, useSelection } from '../../hooks/useSelection.js'
+import { useTableConfig } from '../../hooks/useTableConfig.js'
 import { stringify as stringifyDefault } from '../../utils/stringify.js'
 import { throttle } from '../../utils/throttle.js'
 import Cell from '../Cell/Cell.js'
@@ -18,8 +20,6 @@ import TableCorner from '../TableCorner/TableCorner.js'
 import TableHeader from '../TableHeader/TableHeader.js'
 import { formatRowNumber, rowError } from './HighTable.helpers.js'
 import styles from './HighTable.module.css'
-import { ColumnConfiguration } from '../../helpers/columnConfiguration.js'
-import { useTableConfig } from '../../hooks/useTableConfig.js'
 
 /**
  * A slice of the (optionally sorted) rows to render as HTML.
@@ -28,14 +28,14 @@ interface Slice {
   offset: number // offset (slice.rows[0] corresponds to the row #offset in the sorted data frame)
   orderedBy: OrderBy // the order used to fetch the rows slice.
   rows: PartialRow[] // slice of the (optionally sorted) rows to render as HTML. The rows might be incomplete (not all the cells, or no index).
-  data: DataFrame // the data frame used to fetch the slice
+  data: DataFrameV2 // the data frame used to fetch the slice // TODO(SL): remove this field, we will use the events to refresh the slice
 }
 
 const rowHeight = 33 // row height px
 const minWidth = 50 // minimum width of a cell in px, used to compute the column widths
 
 interface Props {
-  data: DataFrame
+  data: DataFrameV2
   columnConfiguration?: ColumnConfiguration
   cacheKey?: string // used to persist column widths. If undefined, the column widths are not persisted. It is expected to be unique for each table.
   overscan?: number // number of rows to fetch outside of the viewport
@@ -85,7 +85,9 @@ function HighTableData(props: PropsData) {
   const ariaRowCount = data.numRows + 1 // don't forget the header row
   return (
     /* important: key={key} ensures the local state is recreated if the data has changed */
-    <OrderByProvider key={key} orderBy={orderBy} onOrderByChange={onOrderByChange} disabled={!data.sortable}>
+    <OrderByProvider key={key} orderBy={orderBy} onOrderByChange={onOrderByChange} disabled={true}>
+      {/* <OrderByProvider key={key} orderBy={orderBy} onOrderByChange={onOrderByChange} disabled={!data.sortable}></OrderByProvider> */
+      /* TODO(SL): enable sorting when the DataFrameV2 supports it */}
       <SelectionProvider selection={selection} onSelectionChange={onSelectionChange}>
         <ColumnStatesProvider key={key} localStorageKey={cacheKey ? `${cacheKey}${columnStatesSuffix}` : undefined} numColumns={data.header.length} minWidth={minWidth}>
           <CellsNavigationProvider colCount={ariaColCount} rowCount={ariaRowCount} rowPadding={props.padding ?? defaultPadding}>
@@ -131,8 +133,8 @@ export function HighTableInner({
    *                  rendered in HTML.
    *
    * The same row can be obtained as:
-   * - data.rows(dataIndex, dataIndex + 1)
-   * - data.rows(tableIndex, tableIndex + 1, orderBy)
+   * - data.getCell({row: dataIndex, column: 'id'})
+   * - data.getCell({row: tableIndex, column: 'id', orderBy})
    */
 
   const { data } = useData()
@@ -180,19 +182,20 @@ export function HighTableInner({
       }
 
       // sorting, toggle the range in the sorted order
-      const requestId = ++pendingSelectionRequest.current
-      const newSelection = await toggleRangeInTable({
-        selection,
-        tableIndex,
-        orderBy,
-        data,
-        ranksMap,
-        setRanksMap,
-      })
-      if (requestId === pendingSelectionRequest.current) {
-        // only update the selection if the request is still the last one
-        onSelectionChange(newSelection)
-      }
+      throw new Error('Sorting is not implemented yet') // TODO(SL): implement sorting
+      // const requestId = ++pendingSelectionRequest.current
+      // const newSelection = await toggleRangeInTable({
+      //   selection,
+      //   tableIndex,
+      //   orderBy,
+      //   data,
+      //   ranksMap,
+      //   setRanksMap,
+      // })
+      // if (requestId === pendingSelectionRequest.current) {
+      //   // only update the selection if the request is still the last one
+      //   onSelectionChange(newSelection)
+      // }
     }
   }, [data, onSelectionChange, orderBy, ranksMap, selection])
   const allRowsSelected = useMemo(() => {
@@ -300,92 +303,91 @@ export function HighTableInner({
 
   // fetch rows
   useEffect(() => {
+    // TODO(SL): move this to the Cell component?
     /**
      * Fetch the rows in the range [start, end) and update the state.
     */
-    async function fetchRows() {
-      const { start, end } = rowsRange
-      const currentOrderBy = orderBy ?? []
+    const { start, end } = rowsRange
+    const currentOrderBy = orderBy ?? []
 
-      // Don't update if the view, or slice, is unchanged
-      if (slice && slice.data === data && start === slice.offset && end === slice.offset + slice.rows.length && areEqualOrderBy(slice.orderedBy, currentOrderBy) ) {
-        return
+    // Don't update if the view, or slice, is unchanged
+    if (slice && slice.data === data && start === slice.offset && end === slice.offset + slice.rows.length && areEqualOrderBy(slice.orderedBy, currentOrderBy) ) {
+      return
+    }
+
+    if (start === end) {
+      const slice = {
+        offset: start,
+        rows: [],
+        orderedBy: currentOrderBy,
+        data,
       }
+      setSlice(slice)
+      return
+    }
 
-      if (start === end) {
+    // Fetch a chunk of rows from the data frame
+    try {
+      const requestId = ++pendingRequest.current
+      // const rowsChunk = data.rows({ start, end, orderBy: currentOrderBy })
+
+      const updateRows = throttle(() => {
+        const resolved: PartialRow[] = []
+        for (const rowIndex of Array.from({ length: end - start }, (_, i) => i + start)) {
+          const resolvedRow: PartialRow = {
+            index: rowIndex, // TODO(SL): when sorting is supported, replace with data.getIndex(...)
+            cells: {},
+          }
+          for (const column of data.header) {
+            const cell = data.getCell({ row: rowIndex, column, orderBy: currentOrderBy })
+            if (!cell) {
+              // cell is not resolved yet, skip it
+              continue
+            }
+            resolvedRow.cells[column] = cell.value // cell.value is the resolved value
+          }
+          resolved.push(resolvedRow)
+        }
+
         const slice = {
           offset: start,
-          rows: [],
+          rows: resolved,
           orderedBy: currentOrderBy,
           data,
         }
         setSlice(slice)
-        return
-      }
+      }, 10)
+      updateRows() // initial update
 
-      // Fetch a chunk of rows from the data frame
-      try {
-        const requestId = ++pendingRequest.current
-        const rowsChunk = data.rows({ start, end, orderBy: currentOrderBy })
+      // TODO(SL): uncomment for async data fetching
+      // TODO(SL): restore a mechanism to change slice when the number of rows has changed
+      // // fetch the data
+      // const cancellableJob = data.fetch({
+      //   rowStart: start,
+      //   rowEnd: end,
+      //   columns: data.header,
+      //   orderBy: currentOrderBy,
+      // })
 
-        const updateRows = throttle(() => {
-          const resolved: PartialRow[] = []
-          for (const asyncRow of rowsChunk) {
-            const resolvedRow: PartialRow = { cells: {} }
-            for (const [key, promise] of Object.entries(asyncRow.cells)) {
-              if ('resolved' in promise) {
-                resolvedRow.cells[key] = promise.resolved
-              }
-            }
-            if ('resolved' in asyncRow.index) {
-              resolvedRow.index = asyncRow.index.resolved
-            }
-            resolved.push(resolvedRow)
-          }
-          const slice = {
-            offset: start,
-            rows: resolved,
-            orderedBy: currentOrderBy,
-            data,
-          }
-          setSlice(slice)
-        }, 10)
-        updateRows() // initial update
+      // // Subscribe to data updates
+      // function onRowChange() {
+      //   if (pendingRequest.current === requestId) {
+      //     // only update if the request is still the last one
+      //     updateRows()
+      //   }
+      // }
 
-        // Subscribe to data updates
-        for (const asyncRow of rowsChunk) {
-          for (const promise of [asyncRow.index, ...Object.values(asyncRow.cells)] ) {
-            void promise.then(() => {
-              if (pendingRequest.current === requestId) {
-                updateRows()
-              }
-            }).catch((error: unknown) => {
-              if (
-                pendingRequest.current === requestId
-                && typeof error === 'object'
-                && error !== null
-                && 'numRows' in error
-                && typeof error.numRows === 'number'
-                && error.numRows >= 0
-                && error.numRows < numRows
-                && Number.isInteger(error.numRows)
-              ) {
-                // The data frame only has numRows, let's update the state
-                setNumRows(error.numRows)
-              }
-              // TODO(SL): handle the error
-            })
-          }
-        }
+      // data.eventTarget.addEventListener('dataframe:rowchange', onRowChange)
 
-        // Await all pending promises
-        await Promise.all(rowsChunk.flatMap(asyncRow => [asyncRow.index, ...Object.values(asyncRow.cells)]))
-      } catch (error) {
-        onError(error as Error)
-      }
+      // return () => {
+      //   // unsubscribe from data updates
+      //   data.eventTarget.removeEventListener('dataframe:rowchange', onRowChange)
+      //   // cancel the fetch
+      //   cancellableJob.cancel()
+      // }
+    } catch (error) {
+      onError(error as Error)
     }
-    // update
-    void fetchRows()
   }, [data, onError, orderBy, slice, rowsRange, numRows])
 
   const getOnDoubleClickCell = useCallback((col: number, row?: number) => {
