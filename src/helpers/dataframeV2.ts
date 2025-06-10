@@ -60,17 +60,8 @@ export function arrayDataFrame(data: Cells[]): DataFrameV2 {
       },
     }
   }
-  if (!(0 in data)) {
-    return {
-      numRows: 0,
-      header: [],
-      getCell: () => undefined,
-      fetch,
-      eventTarget,
-    }
-  }
 
-  const header = Object.keys(data[0])
+  const header = 0 in data ? Object.keys(data[0]) : []
 
   return {
     numRows: data.length,
@@ -90,7 +81,7 @@ export function arrayDataFrame(data: Cells[]): DataFrameV2 {
         throw new Error(`Column "${column}" not found in row ${row}`)
       }
       // Return a resolved value (which might be undefined as well)
-      return { value: data[row] }
+      return { value: cells[column] }
       // Note that this function never returns undefined (meaning pending cell), because the data is static.
     },
     fetch,
