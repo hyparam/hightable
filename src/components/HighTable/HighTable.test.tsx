@@ -1,38 +1,103 @@
 import { act, fireEvent, waitFor, within } from '@testing-library/react'
 import { UserEvent } from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { DataFrame, sortableDataFrame } from '../../helpers/dataframe.js'
+import { DataFrameEvents, DataFrameV2 } from '../../helpers/dataframeV2.js'
+import { OrderBy } from '../../helpers/sort.js'
+import { createEventTarget } from '../../helpers/typedEventTarget.js'
 import { MaybeColumnState } from '../../hooks/useColumnStates.js'
-import { wrapResolved } from '../../utils/promise.js'
 import { render } from '../../utils/userEvent.js'
-import HighTable, { columnStatesSuffix } from './HighTable.js'
+import HighTable, { columnStatesSuffix, defaultOverscan } from './HighTable.js'
 
 Element.prototype.scrollIntoView = vi.fn()
 
-const data: DataFrame = {
+const data: DataFrameV2 = {
   header: ['ID', 'Count', 'Double', 'Triple'],
   numRows: 1000,
-  rows: ({ start, end }) => Array.from({ length: end - start }, (_, index) => ({
-    index: wrapResolved(index + start),
-    cells: {
-      ID: wrapResolved(`row ${index + start}`),
-      Count: wrapResolved(1000 - start - index),
-      Double: wrapResolved((1000 - start - index) * 2),
-      Triple: wrapResolved((1000 - start - index) * 3),
-    },
-  })),
+  getCell({ row, column }: { row: number, column: string }) {
+    if (row < 0 || row >= 1000) {
+      throw new Error(`Invalid row index: ${row}`)
+    }
+    if (column === 'ID') {
+      return { value: `row ${row}` }
+    } else if (column === 'Count') {
+      return { value: 1000 - row }
+    } else if (column === 'Double') {
+      return { value: (1000 - row) * 2 }
+    } else if (column === 'Triple') {
+      return { value: (1000 - row) * 3 }
+    }
+    throw new Error(`Unknown column: ${column}`)
+  },
+  eventTarget: createEventTarget<DataFrameEvents>(),
 }
 
-const otherData: DataFrame = {
+const otherData: DataFrameV2 = {
   header: ['ID', 'Count'],
   numRows: 1000,
-  rows: ({ start, end }) => Array.from({ length: end - start }, (_, index) => ({
-    index: wrapResolved(index + start),
-    cells: {
-      ID: wrapResolved(`other ${index + start}`),
-      Count: wrapResolved(1000 - start - index),
+  getCell({ row, column }: { row: number, column: string }) {
+    if (row < 0 || row >= 1000) {
+      throw new Error(`Invalid row index: ${row}`)
+    }
+    if (column === 'ID') {
+      return { value: `other ${row}` }
+    } else if (column === 'Count') {
+      return { value: 1000 - row }
+    }
+    throw new Error(`Unknown column: ${column}`)
+  },
+  eventTarget: createEventTarget<DataFrameEvents>(),
+}
+
+function createAsyncDataFrame({ ms }: {ms: number} = { ms: 10 }): DataFrameV2 & {_forTests: {cancel: () => void, asyncDataFetched: boolean[]}} {
+  const asyncDataFetched = Array.from({ length: 1000 }, (_, i) => i).reduce<boolean[]>((acc, row) => {
+    acc[row] = false
+    return acc
+  }, [])
+  const eventTarget = createEventTarget<DataFrameEvents>()
+  const cancel = vi.fn()
+  return {
+    header: ['ID', 'Name', 'Age'],
+    numRows: 1000,
+    getCell: vi.fn(({ row, column }: { row: number, column: string }) => {
+      if (!asyncDataFetched[row]) {
+        return undefined
+      }
+      if (row < 0 || row >= 1000) {
+        throw new Error(`Invalid row index: ${row}`)
+      }
+      if (column === 'ID') {
+        return { value: `async ${row}` }
+      } else if (column === 'Name') {
+        return { value: `Async Name ${row}` }
+      } else if (column === 'Age') {
+        return { value: 20 + row % 50 }
+      }
+      throw new Error(`Unknown column: ${column}`)
+    }),
+    fetch: vi.fn(({ rowStart, rowEnd, columns, orderBy }: { rowStart: number, rowEnd: number, columns: string[], orderBy?: OrderBy }) => {
+      let cancelled = false
+      void new Promise(resolve => setTimeout(resolve, ms)).then(() => {
+        if (cancelled) {
+          return
+        }
+        for (let row = rowStart; row < rowEnd; row++) {
+          asyncDataFetched[row] = true
+        }
+        eventTarget.dispatchEvent(new CustomEvent('dataframe:update', { detail: { rowStart, rowEnd, columns, orderBy } }))
+      })
+      return {
+        cancel: () => {
+          cancelled = true
+          cancel()
+        },
+      }
+    }),
+    eventTarget,
+    _forTests: {
+      cancel,
+      asyncDataFetched,
     },
-  })),
+  }
 }
 
 async function setFocusOnScrollableDiv(user: UserEvent) {
@@ -46,15 +111,27 @@ describe('HighTable', () => {
   const mockData = {
     header: ['ID', 'Name', 'Age'],
     numRows: 100,
-    rows: vi.fn(({ start, end }: { start: number, end: number }) => Array.from({ length: end - start }, (_, index) => ({
-      index: wrapResolved(index + start),
-      cells: {
-        ID: wrapResolved(index + start),
-        Name: wrapResolved(`Name ${index + start}`),
-        Age: wrapResolved(20 + index % 50),
-      },
-    }))
-    ),
+    getCell: vi.fn(({ row, column }: { row: number, column: string }) => {
+      if (row < 0 || row >= 1000) {
+        throw new Error(`Invalid row index: ${row}`)
+      }
+      if (column === 'ID') {
+        return { value: row }
+      } else if (column === 'Name') {
+        return { value: `Name ${row}` }
+      } else if (column === 'Age') {
+        return { value: 20 + row % 50 }
+      }
+      throw new Error(`Unknown column: ${column}`)
+    }),
+    fetch() {
+      return {
+        cancel: () => {
+        // No-op for static data
+        },
+      }
+    },
+    eventTarget: createEventTarget<DataFrameEvents>(),
   }
 
   beforeEach(() => {
@@ -65,8 +142,9 @@ describe('HighTable', () => {
     const { getByText } = render(<HighTable data={mockData} />)
     await waitFor(() => {
       expect(getByText('ID')).toBeDefined()
-      expect(mockData.rows).toHaveBeenCalledOnce()
-      expect(mockData.rows).toHaveBeenCalledWith({ start: 0, end: 24, orderBy: [] })
+      expect(mockData.getCell).toHaveBeenCalledWith({ row: 0, column: 'ID' })
+      expect(mockData.getCell).toHaveBeenCalledWith({ row: 23, column: 'Age' })
+      expect(mockData.getCell).not.toHaveBeenCalledWith({ row: 24, column: 'Age' })
     })
   })
 
@@ -74,22 +152,22 @@ describe('HighTable', () => {
     const { getByText } = render(<HighTable data={mockData} overscan={10} />)
     await waitFor(() => {
       expect(getByText('ID')).toBeDefined()
-      expect(mockData.rows).toHaveBeenCalledOnce()
-      expect(mockData.rows).toHaveBeenCalledWith({ start: 0, end: 14, orderBy: [] })
+      expect(mockData.getCell).toHaveBeenCalledWith({ row: 13, column: 'Age' })
+      expect(mockData.getCell).not.toHaveBeenCalledWith({ row: 14, column: 'Age' })
     })
   })
 
   it('creates the rows after having fetched the data', () => {
     const { queryByRole } = render(<HighTable data={mockData}/>)
-    expect(queryByRole('cell', { name: 'Name 0' })).toBeDefined()
+    expect(queryByRole('cell', { name: 'Name 0' })).not.toBeNull()
   })
 
   it('handles scroll to load more rows', async () => {
     const { getByLabelText } = render(<HighTable className="myclass" data={mockData} />)
     const scrollDiv = getByLabelText('Virtual-scroll table')
     await waitFor(() => {
-      expect(mockData.rows).toHaveBeenCalledTimes(1)
-      expect(mockData.rows).toHaveBeenCalledWith({ start: 0, end: 24, orderBy: [] })
+      expect(mockData.getCell).toHaveBeenCalledWith({ row: 23, column: 'Age' })
+      expect(mockData.getCell).not.toHaveBeenCalledWith({ row: 24, column: 'Age' })
     })
 
     act(() => {
@@ -99,7 +177,7 @@ describe('HighTable', () => {
     })
 
     await waitFor(() => {
-      expect(mockData.rows).toHaveBeenCalledWith({ start: 0, end: 39, orderBy: [] })
+      expect(mockData.getCell).toHaveBeenCalledWith({ row: 24, column: 'Age' })
     })
   })
 
@@ -136,15 +214,124 @@ describe('HighTable', () => {
 
   it('displays error when data fetch fails', async () => {
     const mockOnError = vi.fn()
-    mockData.rows.mockRejectedValueOnce(new Error('Failed to fetch data'))
+    mockData.getCell.mockImplementationOnce(() => {throw new Error('Failed to fetch data')})
     const { container } = render(<HighTable data={mockData} onError={mockOnError} />)
 
     await waitFor(() => {
-      expect(mockData.rows).toHaveBeenCalledOnce()
+      expect(mockData.getCell).toHaveBeenCalled()
       expect(mockOnError).toHaveBeenCalledWith(expect.any(Error))
     })
     // Clear pending state on error:
     expect(container.querySelector('div.pending')).toBeNull()
+  })
+})
+
+describe('with async data, HighTable', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('renders initial rows', async () => {
+    const rowEnd = defaultOverscan + 4
+    const asyncData = createAsyncDataFrame()
+    const { getByText } = render(<HighTable data={asyncData} />)
+    await waitFor(() => {
+      expect(getByText('ID')).toBeDefined()
+      expect(asyncData.fetch).toHaveBeenCalledExactlyOnceWith({ rowStart: 0, rowEnd, columns: ['ID', 'Name', 'Age'], orderBy: undefined })
+      expect(asyncData.getCell).toHaveBeenCalledWith({ row: 0, column: 'ID' })
+      expect(asyncData.getCell).toHaveBeenCalledWith({ row: rowEnd - 1, column: 'Age' })
+      expect(asyncData.getCell).not.toHaveBeenCalledWith({ row: rowEnd, column: 'Age' })
+    })
+  })
+
+  it('uses overscan option', async () => {
+    const overscan = 10
+    const rowEnd = overscan + 4
+    const asyncData = createAsyncDataFrame()
+    const { getByText } = render(<HighTable data={asyncData} overscan={overscan} />)
+    await waitFor(() => {
+      expect(getByText('ID')).toBeDefined()
+      expect(asyncData.fetch).toHaveBeenCalledExactlyOnceWith({ rowStart: 0, rowEnd, columns: ['ID', 'Name', 'Age'], orderBy: undefined })
+      expect(asyncData.getCell).toHaveBeenCalledWith({ row: rowEnd - 1, column: 'Age' })
+      expect(asyncData.getCell).not.toHaveBeenCalledWith({ row: rowEnd, column: 'Age' })
+    })
+  })
+
+  it('creates the rows after having fetched the data', async () => {
+    const asyncData = createAsyncDataFrame()
+    const { queryByRole, findByRole } = render(<HighTable data={asyncData}/>)
+    // initially, the cell is not there because the data is not fetched yet
+    expect(queryByRole('cell', { name: 'async 0' })).toBeNull()
+    // after some delay, the cell should be there
+    await expect(findByRole('cell', { name: 'async 0' })).resolves.toBeDefined()
+  })
+
+  it('handles scroll to load more rows', async () => {
+    const asyncData = createAsyncDataFrame()
+    const { getByLabelText, findByRole, queryByRole } = render(<HighTable className="myclass" data={asyncData} />)
+    const scrollDiv = getByLabelText('Virtual-scroll table')
+    await waitFor(() => {
+      expect(asyncData.getCell).toHaveBeenCalledWith({ row: 23, column: 'Age' })
+      expect(asyncData.getCell).not.toHaveBeenCalledWith({ row: 24, column: 'Age' })
+    })
+    await expect(findByRole('cell', { name: 'async 0' })).resolves.toBeDefined()
+    expect(queryByRole('cell', { name: 'async 24' })).toBeNull()
+
+    act(() => {
+      // not using userEvent because it doesn't support scroll events
+      // https://github.com/testing-library/user-event/issues/475
+      fireEvent.scroll(scrollDiv, { target: { scrollTop: 500 } })
+    })
+
+    await waitFor(() => {
+      expect(asyncData.getCell).toHaveBeenCalledWith({ row: 24, column: 'Age' })
+    })
+    await expect(findByRole('cell', { name: 'async 24' })).resolves.toBeDefined()
+    expect(queryByRole('cell', { name: 'async 50' })).toBeNull()
+
+    act(() => {
+      // not using userEvent because it doesn't support scroll events
+      // https://github.com/testing-library/user-event/issues/475
+      fireEvent.scroll(scrollDiv, { target: { scrollTop: 1500 } })
+    })
+    await waitFor(() => {
+      expect(asyncData.getCell).toHaveBeenCalledWith({ row: 50, column: 'Age' })
+    })
+    await expect(findByRole('cell', { name: 'async 50' })).resolves.toBeDefined()
+
+    expect(asyncData._forTests.cancel).toHaveBeenCalled()
+  })
+
+  it('cancels data fetch when scrolling fast', async () => {
+    const ms = 500
+    const asyncData = createAsyncDataFrame({ ms })
+    const { getByLabelText, findByRole, queryByRole } = render(<HighTable className="myclass" data={asyncData} />)
+    const scrollDiv = getByLabelText('Virtual-scroll table')
+    await expect(findByRole('cell', { name: 'async 0' })).resolves.toBeDefined()
+    expect(queryByRole('cell', { name: 'async 24' })).toBeNull()
+    expect(asyncData._forTests.cancel).not.toHaveBeenCalled()
+    console.log(asyncData._forTests.asyncDataFetched[0], asyncData._forTests.asyncDataFetched[24], asyncData._forTests.asyncDataFetched[50])
+
+    act(() => {
+      // not using userEvent because it doesn't support scroll events
+      // https://github.com/testing-library/user-event/issues/475
+      fireEvent.scroll(scrollDiv, { target: { scrollTop: 500 } })
+    })
+
+    // scroll again before the first fetch is done
+    void new Promise(resolve => setTimeout(resolve, ms / 5))
+    act(() => {
+      // not using userEvent because it doesn't support scroll events
+      // https://github.com/testing-library/user-event/issues/475
+      fireEvent.scroll(scrollDiv, { target: { scrollTop: 1500 } })
+    })
+    await waitFor(() => {
+      expect(asyncData.getCell).toHaveBeenCalledWith({ row: 50, column: 'Age' })
+    })
+    await expect(findByRole('cell', { name: 'async 50' })).resolves.toBeDefined()
+
+    expect(asyncData._forTests.cancel).toHaveBeenCalled()
+    expect(asyncData._forTests.asyncDataFetched[24]).toBe(false) // the fetch for row 24 should have been cancelled
   })
 })
 
@@ -300,7 +487,7 @@ describe('in controlled selection state (selection and onSelection props), ', ()
     const newSelection = undefined
     rerender(<HighTable data={data} selection={newSelection} onSelectionChange={onSelectionChange}/>)
     // no need to await because the data is already fetched
-    expect(queryByRole('row', { selected: true })).toBeDefined()
+    expect(queryByRole('row', { selected: true })).not.toBeNull()
     expect(console.warn).toHaveBeenNthCalledWith(1, expect.stringMatching(/cannot be set to undefined/))
   })
 
