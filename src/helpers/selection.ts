@@ -1,5 +1,5 @@
-import { DataFrame, computeDataIndexes, getRanks, getUnsortedRanks } from './dataframe.js'
-import { OrderBy } from './sort.js'
+// import { DataFrame, computeDataIndexes, getRanks, getUnsortedRanks } from './dataframe.js'
+// import { OrderBy } from './sort.js'
 
 /**
  * A selection is modelled as an array of ordered and non-overlapping ranges.
@@ -358,63 +358,63 @@ export function convertSelection({ selection, permutationIndexes }: { selection:
   return { ranges: nextRanges, anchor: nextAnchor }
 }
 
-/**
- * Compute the new selection state after a shift-click (range toggle) on the row with the given table index,
- * when the rows are sorted.
- *
- * The selection is extended from the anchor to the index. This
- * range is done in the visual space of the user, ie: between the rows as they appear in the table.
- *
- * The new anchor is the row with the given table index.
- *
- * If the rows are sorted, the indexes are converted from data domain to table domain and vice versa,
- * which requires the sort index of the data frame. If not available, it must be computed, which is
- * an async operation that can be expensive.
- *
- * @param {Object} params
- * @param {number} params.tableIndex - The index of the row in the table (table domain, sorted row indexes).
- * @param {Selection} params.selection - The current selection state (data domain, row indexes).
- * @param {OrderBy} params.orderBy - The order if the rows are sorted.
- * @param {DataFrame} params.data - The data frame.
- * @param {Map<string,number[]>} params.ranks - The map of ranks for each column of the data frame (they can be missing, if so thay will be populated in this function).
- * @param {function} params.setColumnRanks - A function to update the map of column ranks.
- */
-export async function toggleRangeInTable({
-  tableIndex,
-  selection,
-  orderBy,
-  data,
-  ranksMap,
-  setRanksMap,
-}: { tableIndex: number, selection: Selection, orderBy: OrderBy, data: DataFrame, ranksMap: Map<string, Promise<number[]>>, setRanksMap: (setter: (ranksMap: Map<string, Promise<number[]>>) => Map<string, Promise<number[]>>) => void }): Promise<Selection> {
-  // Extend the selection from the anchor to the index with sorted data
-  // Convert the indexes to work in the data domain before converting back.
-  if (!data.sortable) {
-    throw new Error('Data frame is not sortable')
-  }
-  const orderByWithDefaultSort = [...orderBy, { column: '', direction: 'ascending' as const }]
-  const orderByWithRanksPromises = orderByWithDefaultSort.map(({ column, direction }) => {
-    return {
-      column,
-      direction,
-      ranks: ranksMap.get(column) ?? (column === '' ? getUnsortedRanks({ data }) : getRanks({ data, column })),
-    }
-  })
-  if (orderByWithRanksPromises.some(({ column }) => !ranksMap.has(column))) {
-    setRanksMap(ranksMap => {
-      const nextRanksMap = new Map(ranksMap)
-      orderByWithRanksPromises.forEach(({ column, ranks }) => nextRanksMap.set(column, ranks))
-      return nextRanksMap
-    })
-  }
-  const orderByWithRanks = await Promise.all(orderByWithRanksPromises.map(async ({ column, direction, ranks }) => ({ column, direction, ranks: await ranks })))
+// /**
+//  * Compute the new selection state after a shift-click (range toggle) on the row with the given table index,
+//  * when the rows are sorted.
+//  *
+//  * The selection is extended from the anchor to the index. This
+//  * range is done in the visual space of the user, ie: between the rows as they appear in the table.
+//  *
+//  * The new anchor is the row with the given table index.
+//  *
+//  * If the rows are sorted, the indexes are converted from data domain to table domain and vice versa,
+//  * which requires the sort index of the data frame. If not available, it must be computed, which is
+//  * an async operation that can be expensive.
+//  *
+//  * @param {Object} params
+//  * @param {number} params.tableIndex - The index of the row in the table (table domain, sorted row indexes).
+//  * @param {Selection} params.selection - The current selection state (data domain, row indexes).
+//  * @param {OrderBy} params.orderBy - The order if the rows are sorted.
+//  * @param {DataFrame} params.data - The data frame.
+//  * @param {Map<string,number[]>} params.ranks - The map of ranks for each column of the data frame (they can be missing, if so thay will be populated in this function).
+//  * @param {function} params.setColumnRanks - A function to update the map of column ranks.
+//  */
+// export async function toggleRangeInTable({
+//   tableIndex,
+//   selection,
+//   orderBy,
+//   data,
+//   ranksMap,
+//   setRanksMap,
+// }: { tableIndex: number, selection: Selection, orderBy: OrderBy, data: DataFrame, ranksMap: Map<string, Promise<number[]>>, setRanksMap: (setter: (ranksMap: Map<string, Promise<number[]>>) => Map<string, Promise<number[]>>) => void }): Promise<Selection> {
+//   // Extend the selection from the anchor to the index with sorted data
+//   // Convert the indexes to work in the data domain before converting back.
+//   if (!data.sortable) {
+//     throw new Error('Data frame is not sortable')
+//   }
+//   const orderByWithDefaultSort = [...orderBy, { column: '', direction: 'ascending' as const }]
+//   const orderByWithRanksPromises = orderByWithDefaultSort.map(({ column, direction }) => {
+//     return {
+//       column,
+//       direction,
+//       ranks: ranksMap.get(column) ?? (column === '' ? getUnsortedRanks({ data }) : getRanks({ data, column })),
+//     }
+//   })
+//   if (orderByWithRanksPromises.some(({ column }) => !ranksMap.has(column))) {
+//     setRanksMap(ranksMap => {
+//       const nextRanksMap = new Map(ranksMap)
+//       orderByWithRanksPromises.forEach(({ column, ranks }) => nextRanksMap.set(column, ranks))
+//       return nextRanksMap
+//     })
+//   }
+//   const orderByWithRanks = await Promise.all(orderByWithRanksPromises.map(async ({ column, direction, ranks }) => ({ column, direction, ranks: await ranks })))
 
-  const dataIndexes = computeDataIndexes(orderByWithRanks)
-  const tableIndexes = invertPermutationIndexes(dataIndexes)
-  const tableSelection = convertSelection({ selection, permutationIndexes: tableIndexes })
-  const { ranges, anchor } = tableSelection
-  const newAnchor = tableIndex
-  const newTableSelection = { ranges: extendFromAnchor({ ranges, anchor, index: tableIndex }), anchor: newAnchor }
-  const newDataSelection = convertSelection({ selection: newTableSelection, permutationIndexes: dataIndexes })
-  return newDataSelection
-}
+//   const dataIndexes = computeDataIndexes(orderByWithRanks)
+//   const tableIndexes = invertPermutationIndexes(dataIndexes)
+//   const tableSelection = convertSelection({ selection, permutationIndexes: tableIndexes })
+//   const { ranges, anchor } = tableSelection
+//   const newAnchor = tableIndex
+//   const newTableSelection = { ranges: extendFromAnchor({ ranges, anchor, index: tableIndex }), anchor: newAnchor }
+//   const newDataSelection = convertSelection({ selection: newTableSelection, permutationIndexes: dataIndexes })
+//   return newDataSelection
+// }

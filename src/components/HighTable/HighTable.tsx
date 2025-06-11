@@ -44,7 +44,7 @@ interface Props {
 }
 
 const defaultPadding = 20
-const defaultOverscan = 20
+export const defaultOverscan = 20
 const ariaOffset = 2 // 1-based index, +1 for the header
 export const columnStatesSuffix = ':column:states' // suffix used to store the column states in local storage
 
@@ -236,10 +236,17 @@ export function HighTableInner({
 
   // handle scrolling and window resizing
   useEffect(() => {
+    let cancellableJob: { cancel: () => void } | undefined
+
     /**
      * Compute the dimensions based on the current scroll position.
      */
     function handleScroll() {
+      if (cancellableJob) {
+        // cancel the previous job if it exists
+        cancellableJob.cancel()
+        cancellableJob = undefined
+      }
       // view window height (0 is not allowed - the syntax is verbose, but makes it clear)
       const currentClientHeight = scrollRef.current?.clientHeight
       const clientHeight = currentClientHeight === undefined || currentClientHeight === 0 ? 100 : currentClientHeight
@@ -256,7 +263,13 @@ export function HighTableInner({
       if (isNaN(end)) throw new Error(`invalid end row ${end}`)
       if (end - start > 1000) throw new Error(`attempted to render too many rows ${end - start} table must be contained in a scrollable div`)
 
-      setRowsRange({ start, end }) // TODO(SL): call data.fetch when setting the rows range
+      setRowsRange({ start, end })
+      cancellableJob = data.fetch?.({
+        rowStart: start,
+        rowEnd: end,
+        columns: data.header,
+        orderBy,
+      })
     }
 
     /**
@@ -282,38 +295,18 @@ export function HighTableInner({
     window.addEventListener('resize', reportWidth)
 
     return () => {
+      if (cancellableJob) {
+        // cancel the job if it exists
+        cancellableJob.cancel()
+        cancellableJob = undefined
+      }
       scroller?.removeEventListener('scroll', handleScroll)
       window.removeEventListener('resize', handleScroll)
       window.removeEventListener('resize', reportWidth)
     }
-  }, [numRows, overscan, padding, scrollHeight, setAvailableWidth])
+  }, [numRows, overscan, padding, scrollHeight, setAvailableWidth, data, orderBy])
 
-  // TODO(SL): uncomment for async data fetching
   // TODO(SL): restore a mechanism to change slice when the number of rows has changed
-  // // fetch the data
-  // const cancellableJob = data.fetch({
-  //   rowStart: start,
-  //   rowEnd: end,
-  //   columns: data.header,
-  //   orderBy: currentOrderBy,
-  // })
-
-  // // Subscribe to data updates
-  // function onRowChange() {
-  //   if (pendingRequest.current === requestId) {
-  //     // only update if the request is still the last one
-  //     updateRows()
-  //   }
-  // }
-
-  // data.eventTarget.addEventListener('dataframe:rowchange', onRowChange)
-
-  // return () => {
-  //   // unsubscribe from data updates
-  //   data.eventTarget.removeEventListener('dataframe:rowchange', onRowChange)
-  //   // cancel the fetch
-  //   cancellableJob.cancel()
-  // }
 
   const getOnDoubleClickCell = useCallback((col: number, row?: number) => {
     // TODO(SL): give feedback (a specific class on the cell element?) about why the double click is disabled?
