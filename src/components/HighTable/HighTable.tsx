@@ -1,9 +1,8 @@
 import { CSSProperties, KeyboardEvent, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ColumnConfiguration } from '../../helpers/columnConfiguration.js'
 import { DataFrameV2 } from '../../helpers/dataframeV2.js'
-import { PartialRow } from '../../helpers/row.js'
 import { Selection, areAllSelected, isSelected, toggleIndexInSelection, toggleRangeInSelection } from '../../helpers/selection.js'
-import { OrderBy, areEqualOrderBy } from '../../helpers/sort.js'
+import { OrderBy } from '../../helpers/sort.js'
 import { cellStyle, getClientWidth, getOffsetWidth } from '../../helpers/width.js'
 import { CellsNavigationProvider, useCellsNavigation } from '../../hooks/useCellsNavigation.js'
 import { ColumnStatesProvider, useColumnStates } from '../../hooks/useColumnStates.js'
@@ -12,24 +11,13 @@ import { OrderByProvider, useOrderBy } from '../../hooks/useOrderBy.js'
 import { SelectionProvider, useSelection } from '../../hooks/useSelection.js'
 import { useTableConfig } from '../../hooks/useTableConfig.js'
 import { stringify as stringifyDefault } from '../../utils/stringify.js'
-import { throttle } from '../../utils/throttle.js'
 import Cell from '../Cell/Cell.js'
 import Row from '../Row/Row.js'
 import RowHeader from '../RowHeader/RowHeader.js'
 import TableCorner from '../TableCorner/TableCorner.js'
 import TableHeader from '../TableHeader/TableHeader.js'
-import { formatRowNumber, rowError } from './HighTable.helpers.js'
+import { formatRowNumber } from './HighTable.helpers.js'
 import styles from './HighTable.module.css'
-
-/**
- * A slice of the (optionally sorted) rows to render as HTML.
- */
-interface Slice {
-  offset: number // offset (slice.rows[0] corresponds to the row #offset in the sorted data frame)
-  orderedBy: OrderBy // the order used to fetch the rows slice.
-  rows: PartialRow[] // slice of the (optionally sorted) rows to render as HTML. The rows might be incomplete (not all the cells, or no index).
-  data: DataFrameV2 // the data frame used to fetch the slice // TODO(SL): remove this field, we will use the events to refresh the slice
-}
 
 const rowHeight = 33 // row height px
 const minWidth = 50 // minimum width of a cell in px, used to compute the column widths
@@ -122,14 +110,14 @@ export function HighTableInner({
 }: PropsInner) {
   /**
    * The component relies on the model of a virtual table which rows are ordered and only the
-   * visible rows are fetched (slice) and rendered as HTML <tr> elements.
+   * visible rows are fetched (rows range) and rendered as HTML <tr> elements.
    *
    * We use two reference domains for the rows:
    * - data:          the index of a row in the original (unsorted) data frame is referred as
    *                  dataIndex. It's the `index` field of the AsyncRow objects in the data frame.
    *                  The mouse event callbacks receive this index.
    * - virtual table: the index of a row in the virtual table (sorted) is referred as tableIndex.
-   *                  slice.offset lives in the table domain: it's the first virtual row to be
+   *                  rowsRange.start lives in the table domain: it's the first virtual row to be
    *                  rendered in HTML.
    *
    * The same row can be obtained as:
@@ -138,7 +126,6 @@ export function HighTableInner({
    */
 
   const { data } = useData()
-  const [slice, setSlice] = useState<Slice | undefined>(undefined)
   const [rowsRange, setRowsRange] = useState({ start: 0, end: 0 })
   const { enterCellsNavigation, setEnterCellsNavigation, onTableKeyDown: onNavigationTableKeyDown, onScrollKeyDown, rowIndex, colIndex, focusFirstCell } = useCellsNavigation()
   const [lastCellPosition, setLastCellPosition] = useState({ rowIndex, colIndex })
@@ -209,18 +196,18 @@ export function HighTableInner({
 
   // total scrollable height
   const scrollHeight = (numRows + 1) * rowHeight
-  const offsetTop = slice ? Math.max(0, slice.offset - padding) * rowHeight : 0
+  const offsetTop = Math.max(0, rowsRange.start - padding) * rowHeight
 
   const tableCornerRef = useRef<Pick<HTMLTableCellElement, 'offsetWidth'>>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
-  const pendingRequest = useRef(0)
 
   // scroll vertically to the focused cell if needed
   useEffect(() => {
-    if (!slice) {
-      // don't scroll if the slice is not ready
-      return
-    }
+    // TODO(SL): add a new guard?
+    // if (!slice) {
+    //   // don't scroll if the slice is not ready
+    //   return
+    // }
     if (!enterCellsNavigation && lastCellPosition.rowIndex === rowIndex && lastCellPosition.colIndex === colIndex) {
       // don't scroll if the navigation cell is unchanged
       // occurs when the user is scrolling with the mouse for example, and the
@@ -236,16 +223,16 @@ export function HighTableInner({
       return
     }
     let nextScrollTop = scroller.scrollTop
-    // if tableIndex outside of the slice, scroll to the estimated position of the cell,
+    // if tableIndex outside of the rows range, scroll to the estimated position of the cell,
     // to wait for the cell to be fetched and rendered
-    if (tableIndex < slice.offset || tableIndex >= slice.offset + slice.rows.length) {
+    if (tableIndex < rowsRange.start || tableIndex >= rowsRange.end) {
       nextScrollTop = tableIndex * rowHeight
     }
     if (nextScrollTop !== scroller.scrollTop) {
       // scroll to the cell
       scroller.scrollTop = nextScrollTop
     }
-  }, [rowIndex, colIndex, slice, lastCellPosition, padding, enterCellsNavigation, setEnterCellsNavigation])
+  }, [rowIndex, colIndex, rowsRange, lastCellPosition, padding, enterCellsNavigation, setEnterCellsNavigation])
 
   // handle scrolling and window resizing
   useEffect(() => {
@@ -269,7 +256,7 @@ export function HighTableInner({
       if (isNaN(end)) throw new Error(`invalid end row ${end}`)
       if (end - start > 1000) throw new Error(`attempted to render too many rows ${end - start} table must be contained in a scrollable div`)
 
-      setRowsRange({ start, end })
+      setRowsRange({ start, end }) // TODO(SL): call data.fetch when setting the rows range
     }
 
     /**
@@ -301,94 +288,32 @@ export function HighTableInner({
     }
   }, [numRows, overscan, padding, scrollHeight, setAvailableWidth])
 
-  // fetch rows
-  useEffect(() => {
-    // TODO(SL): move this to the Cell component?
-    /**
-     * Fetch the rows in the range [start, end) and update the state.
-    */
-    const { start, end } = rowsRange
-    const currentOrderBy = orderBy ?? []
+  // TODO(SL): uncomment for async data fetching
+  // TODO(SL): restore a mechanism to change slice when the number of rows has changed
+  // // fetch the data
+  // const cancellableJob = data.fetch({
+  //   rowStart: start,
+  //   rowEnd: end,
+  //   columns: data.header,
+  //   orderBy: currentOrderBy,
+  // })
 
-    // Don't update if the view, or slice, is unchanged
-    if (slice && slice.data === data && start === slice.offset && end === slice.offset + slice.rows.length && areEqualOrderBy(slice.orderedBy, currentOrderBy) ) {
-      return
-    }
+  // // Subscribe to data updates
+  // function onRowChange() {
+  //   if (pendingRequest.current === requestId) {
+  //     // only update if the request is still the last one
+  //     updateRows()
+  //   }
+  // }
 
-    if (start === end) {
-      const slice = {
-        offset: start,
-        rows: [],
-        orderedBy: currentOrderBy,
-        data,
-      }
-      setSlice(slice)
-      return
-    }
+  // data.eventTarget.addEventListener('dataframe:rowchange', onRowChange)
 
-    // Fetch a chunk of rows from the data frame
-    try {
-      const requestId = ++pendingRequest.current
-      // const rowsChunk = data.rows({ start, end, orderBy: currentOrderBy })
-
-      const updateRows = throttle(() => {
-        const resolved: PartialRow[] = []
-        for (const rowIndex of Array.from({ length: end - start }, (_, i) => i + start)) {
-          const resolvedRow: PartialRow = {
-            index: rowIndex, // TODO(SL): when sorting is supported, replace with data.getIndex(...)
-            cells: {},
-          }
-          for (const column of data.header) {
-            const cell = data.getCell({ row: rowIndex, column, orderBy: currentOrderBy })
-            if (!cell) {
-              // cell is not resolved yet, skip it
-              continue
-            }
-            resolvedRow.cells[column] = cell.value // cell.value is the resolved value
-          }
-          resolved.push(resolvedRow)
-        }
-
-        const slice = {
-          offset: start,
-          rows: resolved,
-          orderedBy: currentOrderBy,
-          data,
-        }
-        setSlice(slice)
-      }, 10)
-      updateRows() // initial update
-
-      // TODO(SL): uncomment for async data fetching
-      // TODO(SL): restore a mechanism to change slice when the number of rows has changed
-      // // fetch the data
-      // const cancellableJob = data.fetch({
-      //   rowStart: start,
-      //   rowEnd: end,
-      //   columns: data.header,
-      //   orderBy: currentOrderBy,
-      // })
-
-      // // Subscribe to data updates
-      // function onRowChange() {
-      //   if (pendingRequest.current === requestId) {
-      //     // only update if the request is still the last one
-      //     updateRows()
-      //   }
-      // }
-
-      // data.eventTarget.addEventListener('dataframe:rowchange', onRowChange)
-
-      // return () => {
-      //   // unsubscribe from data updates
-      //   data.eventTarget.removeEventListener('dataframe:rowchange', onRowChange)
-      //   // cancel the fetch
-      //   cancellableJob.cancel()
-      // }
-    } catch (error) {
-      onError(error as Error)
-    }
-  }, [data, onError, orderBy, slice, rowsRange, numRows])
+  // return () => {
+  //   // unsubscribe from data updates
+  //   data.eventTarget.removeEventListener('dataframe:rowchange', onRowChange)
+  //   // cancel the fetch
+  //   cancellableJob.cancel()
+  // }
 
   const getOnDoubleClickCell = useCallback((col: number, row?: number) => {
     // TODO(SL): give feedback (a specific class on the cell element?) about why the double click is disabled?
@@ -420,9 +345,10 @@ export function HighTableInner({
   }, [data, focus, focusFirstCell])
 
   // add empty pre and post rows to fill the viewport
-  const offset = slice?.offset ?? 0
-  const rowsLength = slice?.rows.length ?? 0
+  const offset = rowsRange.start
+  const rowsLength = rowsRange.end - rowsRange.start
   const prePadding = Array.from({ length: Math.min(padding, offset) }, () => [])
+  const tableIndexes = Array.from({ length: rowsLength }, (_, i) => i + offset)
   const postPadding = Array.from({ length: Math.min(padding, numRows - offset - rowsLength) }, () => [])
 
   // minimum left column width based on number of rows - it depends on CSS, so it's
@@ -478,7 +404,8 @@ export function HighTableInner({
                   ref={tableCornerRef}
                 >&nbsp;</TableCorner>
                 <TableHeader
-                  dataReady={slice !== undefined}
+                // TODO(SL): find a better way to check if the data is ready and the column widths should be computed
+                  dataReady={rowsLength > 0}
                   header={columns}
                   orderBy={orderBy}
                   onOrderByChange={onOrderByChange}
@@ -497,10 +424,11 @@ export function HighTableInner({
                   </Row>
                 )
               })}
-              {slice?.rows.map((row, sliceIndex) => {
-                const tableIndex = slice.offset + sliceIndex
+              {tableIndexes.map((tableIndex) => {
                 const inferredDataIndex = orderBy === undefined || orderBy.length === 0 ? tableIndex : undefined
-                const dataIndex = row.index ?? inferredDataIndex
+                // TODO(SL): when sorting is supported, use data.getIndex()
+                // const dataIndex = row.index ?? inferredDataIndex
+                const dataIndex = inferredDataIndex
                 const selected = isRowSelected(dataIndex)
                 const ariaRowIndex = tableIndex + ariaOffset
                 return (
@@ -508,7 +436,7 @@ export function HighTableInner({
                     key={tableIndex}
                     selected={selected}
                     ariaRowIndex={ariaRowIndex}
-                    title={rowError(row, columns.length)}
+                    // title={rowError(row, columns.length)} // TODO(SL): re-enable later
                   >
                     <RowHeader
                       busy={dataIndex === undefined}
@@ -521,18 +449,17 @@ export function HighTableInner({
                       dataRowIndex={dataIndex}
                     >{formatRowNumber(dataIndex)}</RowHeader>
                     {data.header.map((column, columnIndex) => {
-                      // Note: the resolved cell value can be undefined
-                      const hasResolved = column in row.cells
-                      const value = row.cells[column]
                       return <Cell
                         key={columnIndex}
+                        data={data}
+                        rowIndex={tableIndex}
+                        column={column}
+                        orderBy={orderBy}
                         onDoubleClick={getOnDoubleClickCell(columnIndex, dataIndex)}
                         onMouseDown={getOnMouseDownCell(columnIndex, dataIndex)}
                         onKeyDown={getOnKeyDownCell(columnIndex, dataIndex)}
                         stringify={stringify}
-                        value={value}
                         columnIndex={columnIndex}
-                        hasResolved={hasResolved}
                         className={columnClassNames[columnIndex]}
                         ariaColIndex={columnIndex + ariaOffset}
                         ariaRowIndex={ariaRowIndex}
