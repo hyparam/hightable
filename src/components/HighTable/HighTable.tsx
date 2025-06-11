@@ -134,7 +134,6 @@ export function HighTableInner({
   const { data } = useData()
   const [slice, setSlice] = useState<Slice | undefined>(undefined)
   const [rowsRange, setRowsRange] = useState({ start: 0, end: 0 })
-  const [hasCompleteRow, setHasCompleteRow] = useState(false)
   const { enterCellsNavigation, setEnterCellsNavigation, onTableKeyDown: onNavigationTableKeyDown, onScrollKeyDown, rowIndex, colIndex, focusFirstCell } = useCellsNavigation()
   const [lastCellPosition, setLastCellPosition] = useState({ rowIndex, colIndex })
   const [numRows, setNumRows] = useState(data.numRows)
@@ -345,16 +344,6 @@ export function HighTableInner({
             data,
           }
           setSlice(slice)
-          if (!hasCompleteRow) {
-            // check if at least one row is complete
-            const columnsSet = new Set(slice.data.header)
-            if (slice.rows.some(row => {
-              const keys = Object.keys(row.cells)
-              return keys.length === columnsSet.size && keys.every(key => columnsSet.has(key))
-            })) {
-              setHasCompleteRow(true)
-            }
-          }
         }, 10)
         updateRows() // initial update
 
@@ -392,7 +381,7 @@ export function HighTableInner({
     }
     // update
     void fetchRows()
-  }, [data, onError, orderBy, slice, rowsRange, hasCompleteRow, numRows])
+  }, [data, onError, orderBy, slice, rowsRange, numRows])
 
   const getOnDoubleClickCell = useCallback((col: number, row?: number) => {
     // TODO(SL): give feedback (a specific class on the cell element?) about why the double click is disabled?
@@ -482,7 +471,7 @@ export function HighTableInner({
                   ref={tableCornerRef}
                 >&nbsp;</TableCorner>
                 <TableHeader
-                  dataReady={hasCompleteRow}
+                  dataReady={slice !== undefined}
                   header={data.header}
                   orderBy={orderBy}
                   onOrderByChange={onOrderByChange}
