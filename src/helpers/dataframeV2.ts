@@ -1,6 +1,7 @@
-import { Cells } from './row.js'
 import { OrderBy } from './sort'
 import { CustomEventTarget, createEventTarget } from './typedEventTarget'
+
+export type Cells = Record<string, any>
 
 // Map of event type -> detail
 // Starting with a single event, required in Iceberg
@@ -25,8 +26,9 @@ export interface DataFrameV2 {
   // getCell does NOT initiate a fetch, it just returns resolved data
   getCell({ row, column, orderBy }: {row: number, column: string, orderBy?: OrderBy}): ResolvedValue | undefined
 
-  // initiate fetches for row/column data:
-  fetch({ rowStart, rowEnd, columns, orderBy }: { rowStart: number, rowEnd: number, columns: string[], orderBy?: OrderBy }): CancellableJob
+  // initiate fetches for row/column data
+  // static data frames don't need to implement it
+  fetch?: ({ rowStart, rowEnd, columns, orderBy }: { rowStart: number, rowEnd: number, columns: string[], orderBy?: OrderBy }) => CancellableJob
 
   // emits events, defined in DataFrameEvents
   eventTarget: CustomEventTarget<DataFrameEvents>
