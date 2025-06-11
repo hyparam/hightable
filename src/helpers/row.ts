@@ -22,11 +22,6 @@ export interface Row {
   index: number
 }
 
-export interface PartialRow {
-  index?: number
-  cells: Cells
-}
-
 export interface ResolvableRow {
   cells: Record<string, ResolvablePromise<any>>
   index: ResolvablePromise<number>

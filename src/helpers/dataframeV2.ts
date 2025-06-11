@@ -5,8 +5,9 @@ import { CustomEventTarget, createEventTarget } from './typedEventTarget'
 // Map of event type -> detail
 // Starting with a single event, required in Iceberg
 // TODO(SL): shall we force lowercase event type? https://developer.mozilla.org/en-US/docs/Web/API/Element/MozMousePixelScroll_event is a counter-example (but deprecated).
-interface DataFrameEvents {
+export interface DataFrameEvents {
   'dataframe:numrowschange': { numRows: number };
+  'dataframe:update': { rowStart: number, rowEnd: number, columns: string[], orderBy?: OrderBy };
 }
 
 /**
@@ -31,7 +32,7 @@ export interface DataFrameV2 {
   eventTarget: CustomEventTarget<DataFrameEvents>
 }
 
-interface ResolvedValue {
+export interface ResolvedValue {
   value: any
 }
 
