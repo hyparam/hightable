@@ -3,9 +3,9 @@ import { DataFrame } from '../../helpers/dataframe.js'
 import { PartialRow } from '../../helpers/row.js'
 import { Selection, areAllSelected, isSelected, toggleIndexInSelection, toggleRangeInSelection, toggleRangeInTable } from '../../helpers/selection.js'
 import { OrderBy, areEqualOrderBy } from '../../helpers/sort.js'
-import { leftCellStyle } from '../../helpers/width.js'
+import { cellStyle, getClientWidth, getOffsetWidth } from '../../helpers/width.js'
 import { CellsNavigationProvider, useCellsNavigation } from '../../hooks/useCellsNavigation.js'
-import { ColumnWidthProvider } from '../../hooks/useColumnWidth.js'
+import { ColumnStatesProvider, useColumnStates } from '../../hooks/useColumnStates.js'
 import { DataProvider, useData } from '../../hooks/useData.js'
 import { OrderByProvider, useOrderBy } from '../../hooks/useOrderBy.js'
 import { SelectionProvider, useSelection } from '../../hooks/useSelection.js'
@@ -31,6 +31,7 @@ interface Slice {
 }
 
 const rowHeight = 33 // row height px
+const minWidth = 50 // minimum width of a cell in px, used to compute the column widths
 
 interface Props {
   data: DataFrame
@@ -55,7 +56,7 @@ interface Props {
 const defaultPadding = 20
 const defaultOverscan = 20
 const ariaOffset = 2 // 1-based index, +1 for the header
-export const columnWidthsSuffix = ':columns:widths' // suffix used to store the column widths in local storage
+export const columnStatesSuffix = ':column:states' // suffix used to store the column states in local storage
 
 /**
  * Render a table with streaming rows on demand from a DataFrame.
@@ -85,11 +86,11 @@ function HighTableData(props: PropsData) {
     <OrderByProvider key={key} orderBy={orderBy} onOrderByChange={onOrderByChange} disabled={!data.sortable}>
       <SelectionProvider selection={selection} onSelectionChange={onSelectionChange}>
         <PortalContainerProvider>
-          <ColumnWidthProvider localStorageKey={cacheKey ? `${cacheKey}${columnWidthsSuffix}` : undefined}>
+          <ColumnStatesProvider key={key} localStorageKey={cacheKey ? `${cacheKey}${columnStatesSuffix}` : undefined} numColumns={data.header.length} minWidth={minWidth}>
             <CellsNavigationProvider colCount={ariaColCount} rowCount={ariaRowCount} rowPadding={props.padding ?? defaultPadding}>
               <HighTableInner {...props} />
             </CellsNavigationProvider>
-          </ColumnWidthProvider>
+          </ColumnStatesProvider>
         </PortalContainerProvider>
       </SelectionProvider>
     </OrderByProvider>
@@ -136,11 +137,11 @@ export function HighTableInner({
   const { data } = useData()
   const [slice, setSlice] = useState<Slice | undefined>(undefined)
   const [rowsRange, setRowsRange] = useState({ start: 0, end: 0 })
-  const [hasCompleteRow, setHasCompleteRow] = useState(false)
   const { enterCellsNavigation, setEnterCellsNavigation, onTableKeyDown: onNavigationTableKeyDown, onScrollKeyDown, rowIndex, colIndex, focusFirstCell } = useCellsNavigation()
   const [lastCellPosition, setLastCellPosition] = useState({ rowIndex, colIndex })
   const [numRows, setNumRows] = useState(data.numRows)
   const { containerRef } = usePortalContainer()
+  const { setAvailableWidth } = useColumnStates()
 
   // TODO(SL): remove this state and only rely on the data frame for these operations?
   // ie. cache the previous sort indexes in the data frame itself
@@ -206,6 +207,7 @@ export function HighTableInner({
   const scrollHeight = (numRows + 1) * rowHeight
   const offsetTop = slice ? Math.max(0, slice.offset - padding) * rowHeight : 0
 
+  const tableCornerRef = useRef<Pick<HTMLTableCellElement, 'offsetWidth'>>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const pendingRequest = useRef(0)
 
@@ -246,7 +248,6 @@ export function HighTableInner({
     /**
      * Compute the dimensions based on the current scroll position.
      */
-
     function handleScroll() {
       // view window height (0 is not allowed - the syntax is verbose, but makes it clear)
       const currentClientHeight = scrollRef.current?.clientHeight
@@ -266,19 +267,35 @@ export function HighTableInner({
 
       setRowsRange({ start, end })
     }
+
+    /**
+     * Report the scroller width
+     */
+    function reportWidth() {
+      if (scrollRef.current && tableCornerRef.current) {
+        // we use the scrollRef client width, because we're interested in the content area
+        const tableWidth = getClientWidth(scrollRef.current)
+        const leftColumnWidth = getOffsetWidth(tableCornerRef.current)
+        setAvailableWidth?.(tableWidth - leftColumnWidth)
+      }
+    }
+
     // run once
     handleScroll()
+    reportWidth()
 
-    // scroll listeners
+    // listeners
     const scroller = scrollRef.current
     scroller?.addEventListener('scroll', handleScroll)
     window.addEventListener('resize', handleScroll)
+    window.addEventListener('resize', reportWidth)
 
     return () => {
       scroller?.removeEventListener('scroll', handleScroll)
       window.removeEventListener('resize', handleScroll)
+      window.removeEventListener('resize', reportWidth)
     }
-  }, [numRows, overscan, padding, scrollHeight])
+  }, [numRows, overscan, padding, scrollHeight, setAvailableWidth])
 
   // fetch rows
   useEffect(() => {
@@ -331,16 +348,6 @@ export function HighTableInner({
             data,
           }
           setSlice(slice)
-          if (!hasCompleteRow) {
-            // check if at least one row is complete
-            const columnsSet = new Set(slice.data.header)
-            if (slice.rows.some(row => {
-              const keys = Object.keys(row.cells)
-              return keys.length === columnsSet.size && keys.every(key => columnsSet.has(key))
-            })) {
-              setHasCompleteRow(true)
-            }
-          }
         }, 10)
         updateRows() // initial update
 
@@ -378,7 +385,7 @@ export function HighTableInner({
     }
     // update
     void fetchRows()
-  }, [data, onError, orderBy, slice, rowsRange, hasCompleteRow, numRows])
+  }, [data, onError, orderBy, slice, rowsRange, numRows])
 
   const getOnDoubleClickCell = useCallback((col: number, row?: number) => {
     // TODO(SL): give feedback (a specific class on the cell element?) about why the double click is disabled?
@@ -421,7 +428,7 @@ export function HighTableInner({
     return Math.ceil(Math.log10(numRows + 1)) * 4 + 22
   }, [numRows])
   const cornerStyle = useMemo(() => {
-    return leftCellStyle(rowHeaderWidth)
+    return cellStyle(rowHeaderWidth)
   }, [rowHeaderWidth])
   const tableScrollStyle = useMemo(() => {
     return {
@@ -465,9 +472,10 @@ export function HighTableInner({
                   style={cornerStyle}
                   ariaColIndex={1}
                   ariaRowIndex={1}
+                  ref={tableCornerRef}
                 >&nbsp;</TableCorner>
                 <TableHeader
-                  dataReady={hasCompleteRow}
+                  dataReady={slice !== undefined}
                   header={data.header}
                   orderBy={orderBy}
                   onOrderByChange={onOrderByChange}

@@ -1,8 +1,28 @@
 # CHANGELOG
 
-## [Unreleased](https://github.com/hyparam/hightable/compare/v0.16.0...HEAD)
+## [Unreleased](https://github.com/hyparam/hightable/compare/v0.17.0...HEAD)
 
-## [0.15.6](https://github.com/hyparam/hightable/compare/v0.15.6...v0.16.0) - 2025-05-23
+## [0.17.0](https://github.com/hyparam/hightable/compare/v0.16.0...v0.17.0) - 2025-06-04
+
+### Changed
+
+- **Breaking** change the algorithm to compute the column widths ([#197](https://github.com/hyparam/hightable/pull/197), [#201](https://github.com/hyparam/hightable/pull/201)):
+  - no column can be narrower than minWidth (hardcoded to 50px).
+  - a column resized manually (with mouse or keyboard), including autoresize, is highlighted visually with a blue dot. It's called a "fixed width".
+  - the fixed widths are saved in local storage, and restored when the table is mounted.
+  - an autoresized column can be unconstrained by the same action as autoresizing (double-click or space or enter on the resizer).
+  - when resizing a column, the other columns are let unchanged.
+  - on mount or table resize, the free columns are resized to fill the available space, shrinking or growing to fit the table width.
+  - the localstorage key now has the syntax `${cacheKey}:column:states` instead of `${cacheKey}:columns:widths`, to invalidate the existing entries, since the format has changed.
+- **Breaking** change the role (hence the CSS selector) of the resizer from `separator` to `spinbutton` ([#202](https://github.com/hyparam/hightable/pull/202)).
+- add support for ArrowUp, ArrowDown, PageUp, PageDown and Home in the column resizer ([#202](https://github.com/hyparam/hightable/pull/202)).
+- use border-box sizing to compute the width of the columns ([#196](https://github.com/hyparam/hightable/pull/196)).
+
+### Refactored
+
+- updated dev dependencies ([#204](https://github.com/hyparam/hightable/pull/204)).
+
+## [0.16.0](https://github.com/hyparam/hightable/compare/v0.15.6...v0.16.0) - 2025-05-23
 
 ### Added
 

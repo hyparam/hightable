@@ -170,7 +170,7 @@
   }
 
   /* column resize */
-  thead [role="separator"] {
+  thead [role="spinbutton"] {
     position: absolute;
     top: 1px;
     right: 0;
@@ -178,7 +178,7 @@
     width: 8px;
     cursor: col-resize;
     background-color: #888;
-    z-index: var(--header-separator-z-index, auto);
+    z-index: var(--header-spinbutton-z-index, auto);
   }
 
   /* row numbers */
@@ -259,7 +259,7 @@
   }
   --header-z-index: 10;
   --header-background-z-index: calc(var(--header-z-index) - 1);
-  --header-separator-z-index: calc(var(--header-z-index) + 1);
+  --header-spinbutton-z-index: calc(var(--header-z-index) + 1);
   --header-corner-z-index: calc(var(--header-z-index) + 3);
   --header-progress-z-index: calc(var(--header-z-index) + 2);
   --cell-placeholder-z-index: 1;
@@ -323,6 +323,18 @@
       &[aria-sort] {
         padding-right: calc(var(--cell-horizontal-padding) + 2.5rem);
       }
+
+      &[data-fixed-width="true"]::before {
+        /* fixed width columns - show a detail*/
+        position: absolute;
+        right: var(--cell-horizontal-padding);
+        top: 4px;
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background-color: var(--top-border-color);
+        content: "";
+      }
     }
   }
 
@@ -347,7 +359,8 @@
     border-bottom: 1px solid #ddd;
     border-right: 1px solid #ddd;
     height: 32px;
-    max-width: 40rem; /* prevent columns expanding - limits the initial and autoresized width */
+    /* prevent columns expanding - limits the initial and autoresized width */
+    max-width: 40rem;
     padding: 4px var(--cell-horizontal-padding);
     text-align: left;
     text-overflow: ellipsis;
@@ -372,7 +385,7 @@
   }
 
   /* column resize */
-  thead [role="separator"] {
+  thead [role="spinbutton"] {
     background-color: transparent;
     transition: background-color 0.2s ease;
     &:hover {

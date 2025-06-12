@@ -1,6 +1,6 @@
 import { KeyboardEvent, MouseEvent, useCallback, useMemo, useRef } from 'react'
 import { useCellNavigation } from '../../hooks/useCellsNavigation.js'
-import { useColumnWidth } from '../../hooks/useColumnWidth.js'
+import { useColumnStates } from '../../hooks/useColumnStates.js'
 
 interface Props {
   onDoubleClick?: (event: MouseEvent) => void
@@ -45,7 +45,7 @@ export default function Cell({ onDoubleClick, onMouseDown, onKeyDown, stringify,
   }, [onDoubleClick, navigateToCell])
 
   // Get the column width from the context
-  const { getColumnStyle } = useColumnWidth()
+  const { getColumnStyle } = useColumnStates()
   const columnStyle = getColumnStyle?.(columnIndex)
 
   // render as truncated text

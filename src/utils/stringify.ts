@@ -13,10 +13,10 @@ export function stringify(value: unknown): string | undefined {
   if (value === null || value === undefined) return JSON.stringify(value)
   if (value instanceof Date) return value.toISOString()
   if (typeof value === 'object') {
-    return `{${Object.entries(value)
+    return `{\n${Object.entries(value)
       .filter((d) => d[1] !== undefined)
-      .map(([k, v]) => `${k}: ${stringify(v)}`)
-      .join(', ')}}`
+      .map(([k, v]) => indent(`${k}: ${stringify(v)}`, 2))
+      .join(',\n')}\n}`
   }
   // Fallback to JSON.stringify for unknown types or corner cases (e.g. functions)
   return JSON.stringify(value)
