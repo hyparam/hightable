@@ -128,7 +128,7 @@
   }
 
   /* column menu button */
-  th > div[role="button"] {
+  th > button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -146,15 +146,15 @@
     z-index: 10;
   }
 
-  th:hover > div[role="button"],
-  th > div[role="button"]:focus,
-  th > div[role="button"]:focus-visible,
-  th[aria-expanded="true"] > div[role="button"] {
+  th:hover > button,
+  th > button:focus,
+  th > button:focus-visible,
+  th[aria-expanded="true"] > button {
     background-color: #dbdbe5;
     opacity: 1;
   }
 
-  th > div[role="button"]:focus {
+  th > button:focus {
     outline-style: solid;
     outline-color: var(--focus-border-color);
     outline-width: var(--focus-border-width);
@@ -162,7 +162,7 @@
     background-color: #dbdbe5;
   }
 
-  th > div[role="button"] > span {
+  th > button > span {
     font-size: 1rem;
     line-height: 1;
     color: #444;

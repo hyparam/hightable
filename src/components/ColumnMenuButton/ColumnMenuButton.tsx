@@ -11,7 +11,7 @@ interface ColumnMenuButtonProps {
   icon?: ReactNode
 }
 
-const ColumnMenuButton = forwardRef<HTMLDivElement, ColumnMenuButtonProps>(
+const ColumnMenuButton = forwardRef<HTMLButtonElement, ColumnMenuButtonProps>(
   (
     {
       onClick,
@@ -52,20 +52,20 @@ const ColumnMenuButton = forwardRef<HTMLDivElement, ColumnMenuButtonProps>(
     )
 
     return (
-      <div
+      <button
         ref={ref}
+        type="button"
         onClick={handleClick}
         onKeyDown={handleKeyDown}
         aria-label={ariaLabel}
         aria-haspopup='menu'
         aria-expanded={isExpanded}
         aria-controls={menuId}
-        aria-disabled={disabled}
-        role='button'
+        disabled={disabled}
         tabIndex={disabled ? -1 : tabIndex}
       >
         {icon}
-      </div>
+      </button>
     )
   }
 )
