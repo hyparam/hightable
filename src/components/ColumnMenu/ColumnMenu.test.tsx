@@ -50,9 +50,6 @@ describe('ColumnMenu', () => {
 
       const menu = getByRole('menu')
       expect(menu.getAttribute('aria-orientation')).toBe('vertical')
-      expect(menu.getAttribute('aria-label')).toBe(
-        'Column menu for Test Column'
-      )
       expect(menu.getAttribute('tabIndex')).toBe('-1')
     })
 
@@ -370,7 +367,6 @@ describe('ColumnMenu', () => {
       )
 
       const menu = getByRole('menu')
-      expect(menu.getAttribute('aria-label')).toBe('Column menu for ')
       const id = menu.getAttribute('aria-labelledby')
       if (id === null) {
         throw new Error('aria-labelledby should not be null')
@@ -384,14 +380,10 @@ describe('ColumnMenu', () => {
 
     it('handles special characters in column name', () => {
       const specialName = 'Column with "quotes" & symbols'
-      const { getByRole, getByText } = render(
+      const { getByText } = render(
         <ColumnMenu {...defaultProps} columnName={specialName} />
       )
 
-      const menu = getByRole('menu')
-      expect(menu.getAttribute('aria-label')).toBe(
-        `Column menu for ${specialName}`
-      )
       expect(getByText(specialName)).toBeDefined()
     })
   })

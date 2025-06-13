@@ -158,7 +158,6 @@ export default function ColumnMenu({
         aria-labelledby={labelId}
         aria-orientation='vertical'
         onKeyDown={handleKeyDown}
-        aria-label={`Column menu for ${columnName}`}
       >
         <div role='presentation' id={labelId} aria-hidden="true">{columnName}</div>
         <hr role='separator' aria-hidden="true" />
