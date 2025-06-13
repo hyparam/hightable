@@ -84,6 +84,7 @@ interface TableProps {
   onOrderByChange?: (orderBy: OrderBy) => void; // orderBy change handler
   selection?: Selection; // selection state (if defined, the component selection is controlled by the parent)
   onSelectionChange?: (selection: Selection) => void; // selection change handler
+  columnConfiguration?: Record<string, ColumnConfig>; // allows for additional configuration of columns
 }
 ```
 
@@ -118,6 +119,14 @@ interface Selection {
     end: number // exclusive upper limit, positive integer, strictly greater than start (no zero-length ranges).
   }>; // the rows selection is an array of row index ranges (0-based). The values are indexes of the virtual table (sorted rows), and thus depend on the order.
   anchor?: number // anchor row used as a reference for shift+click selection. It's a virtual table index (sorted), and thus depends on the order.
+}
+```
+
+ColumnConfig is defined as:
+
+```typescript
+interface ColumnConfig {
+  headerComponent?: React.ReactNode; // allows overriding column header cell with custom component
 }
 ```
 
