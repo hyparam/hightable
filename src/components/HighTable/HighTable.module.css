@@ -75,7 +75,6 @@
     font-size: 14px;
     color: #444;
     position: fixed;
-    z-index: 1001;
   }
 
   div[role="menu"]:focus,
@@ -88,13 +87,13 @@
   }
 
   /* menu overlay */
+  /* TODO(SL): use dialog and ::backdrop instead? */
   div[role="presentation"]:has(+ div[role="menu"]) {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    z-index: 1000;
     background-color: transparent;
   }
 
