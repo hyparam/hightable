@@ -5,9 +5,7 @@ import { useFocusManagement } from '../../hooks/useFocusManagement'
 import { usePortalContainer } from '../../hooks/usePortalContainer'
 import { useScrollLock } from '../../hooks/useScrollLock'
 
-function getSortDirection(direction?: Direction, sortable?: boolean) {
-  if (!sortable) return null
-
+function getSortDirection(direction?: Direction) {
   switch (direction) {
   case 'ascending':
     return 'Ascending'
@@ -144,7 +142,7 @@ export default function ColumnMenu({
     return null
   }
 
-  const sortDirection = getSortDirection(direction, sortable)
+  const sortDirection = getSortDirection(direction)
 
   return createPortal(
     <>
