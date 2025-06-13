@@ -86,40 +86,28 @@ export default function ColumnMenu({
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLDivElement>) => {
+      e.preventDefault()
+      e.stopPropagation()
       switch (e.key) {
       case 'Escape':
-        e.preventDefault()
-        e.stopPropagation()
         onToggle()
         break
       case 'Enter':
       case ' ':
-        e.preventDefault()
-        e.stopPropagation()
         if (sortable) {
           onClick?.()
         }
         break
       case 'ArrowUp':
       case 'ArrowLeft':
-        e.preventDefault()
-        e.stopPropagation()
         navigateFocus('previous')
         break
       case 'ArrowDown':
       case 'ArrowRight':
-        e.preventDefault()
-        e.stopPropagation()
         navigateFocus('next')
         break
       case 'Tab':
-        e.preventDefault()
-        e.stopPropagation()
         navigateFocus(e.shiftKey ? 'previous' : 'next')
-        break
-      default:
-        e.preventDefault()
-        e.stopPropagation()
         break
       }
     },
