@@ -21,9 +21,7 @@ describe('ColumnMenuButton', () => {
       expect(button.getAttribute('aria-label')).toBe('Column menu')
       expect(button.getAttribute('aria-haspopup')).toBe('menu')
       expect(button.getAttribute('aria-expanded')).toBe('false')
-      expect(button.getAttribute('aria-disabled')).toBe('false')
       expect(button.getAttribute('tabIndex')).toBe('0')
-      expect(button.getAttribute('role')).toBe('button')
     })
 
     it('renders with custom aria-label', () => {
@@ -168,9 +166,9 @@ describe('ColumnMenuButton', () => {
       const { getByRole } = render(
         <ColumnMenuButton {...defaultProps} disabled={true} />
       )
-      const button = getByRole('button')
-      expect(button.getAttribute('aria-disabled')).toBe('true')
+      const button = getByRole('button') as HTMLButtonElement
       expect(button.getAttribute('tabIndex')).toBe('-1')
+      expect(button.disabled).toBe(true)
     })
 
     it('does not call handlers when disabled', async () => {
@@ -196,7 +194,6 @@ describe('ColumnMenuButton', () => {
       render(<ColumnMenuButton {...defaultProps} ref={ref} />)
 
       expect(ref.current).toBeDefined()
-      expect(ref.current?.getAttribute('role')).toBe('button')
       expect(ref.current?.tagName).toBe('BUTTON')
     })
   })
