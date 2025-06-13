@@ -148,7 +148,6 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
         direction={direction}
         sortable={sortable}
         onClick={onClick}
-        columnIndex={columnIndex}
         onToggle={handleToggle}
         id={menuId}
       />

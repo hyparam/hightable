@@ -65,8 +65,7 @@ interface ColumnMenuProps {
   direction?: Direction
   sortable?: boolean
   onClick?: () => void
-  columnIndex: number
-  onToggle: (columnIndex: number) => void
+  onToggle: () => void
   id?: string
 }
 
@@ -77,7 +76,6 @@ export default function ColumnMenu({
   direction,
   sortable,
   onClick,
-  columnIndex,
   onToggle,
   id,
 }: ColumnMenuProps) {
@@ -95,7 +93,7 @@ export default function ColumnMenu({
       case 'Escape':
         e.preventDefault()
         e.stopPropagation()
-        onToggle(columnIndex)
+        onToggle()
         break
       case 'Enter':
       case ' ':
@@ -128,16 +126,16 @@ export default function ColumnMenu({
         break
       }
     },
-    [navigateFocus, onToggle, columnIndex, onClick, sortable]
+    [navigateFocus, onToggle, onClick, sortable]
   )
 
   const handleOverlayClick = useCallback(
     (e: MouseEvent<HTMLDivElement>) => {
       e.preventDefault()
       e.stopPropagation()
-      onToggle(columnIndex)
+      onToggle()
     },
-    [columnIndex, onToggle]
+    [onToggle]
   )
 
   if (!isOpen) {

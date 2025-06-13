@@ -153,9 +153,7 @@ describe('ColumnMenu', () => {
       menu.focus()
       await user.keyboard('{Escape}')
 
-      expect(defaultProps.onToggle).toHaveBeenCalledWith(
-        defaultProps.columnIndex
-      )
+      expect(defaultProps.onToggle).toHaveBeenCalled()
     })
 
     it('calls onClick on Enter key when sortable', async () => {
@@ -331,9 +329,7 @@ describe('ColumnMenu', () => {
 
       if (overlay) {
         await user.click(overlay)
-        expect(defaultProps.onToggle).toHaveBeenCalledWith(
-          defaultProps.columnIndex
-        )
+        expect(defaultProps.onToggle).toHaveBeenCalled()
       }
     })
   })
