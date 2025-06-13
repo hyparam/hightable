@@ -106,6 +106,12 @@ export default function ColumnMenu({
       case 'ArrowRight':
         navigateFocus('next')
         break
+      case 'Home':
+        navigateFocus('first')
+        break
+      case 'End':
+        navigateFocus('last')
+        break
       case 'Tab':
         navigateFocus(e.shiftKey ? 'previous' : 'next')
         break

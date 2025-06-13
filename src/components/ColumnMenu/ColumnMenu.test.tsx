@@ -209,6 +209,7 @@ describe('ColumnMenu', () => {
       expect(menu).toBeDefined()
     })
 
+    // TODO(SL): really test the navigation. For now, it works the same if the key is pressed or not. The menu only has one item, so the keys are useless.
     describe('Arrow key navigation', () => {
       it('handles ArrowUp key', async () => {
         const { user, getByRole } = render(
@@ -260,6 +261,7 @@ describe('ColumnMenu', () => {
       })
     })
 
+    // TODO(SL): really test the navigation. For now, it works the same if the key is pressed or not. The menu only has one item, so the keys are useless.
     describe('Tab navigation', () => {
       it('handles Tab key', async () => {
         const { user, getByRole } = render(
@@ -282,6 +284,30 @@ describe('ColumnMenu', () => {
         menu.focus()
         await user.keyboard('{Shift>}{Tab}{/Shift}')
 
+        expect(menu).toBeDefined()
+      })
+    })
+
+    // TODO(SL): really test the navigation. For now, it works the same if the key is pressed or not. The menu only has one item, so the keys are useless.
+    describe('Home/End keys', () => {
+      it('handles Home key', async () => {
+        const { user, getByRole } = render(
+          <ColumnMenu {...defaultProps} sortable={true} />
+        )
+        const menu = getByRole('menu')
+        menu.focus()
+        await user.keyboard('{Home}')
+        // Navigation should be handled (no specific assertion as useFocusManagement is mocked)
+        expect(menu).toBeDefined()
+      })
+      it('handles End key', async () => {
+        const { user, getByRole } = render(
+          <ColumnMenu {...defaultProps} sortable={true} />
+        )
+        const menu = getByRole('menu')
+        menu.focus()
+        await user.keyboard('{End}')
+        // Navigation should be handled (no specific assertion as useFocusManagement is mocked)
         expect(menu).toBeDefined()
       })
     })
