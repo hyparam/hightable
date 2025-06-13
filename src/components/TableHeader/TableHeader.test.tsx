@@ -3,7 +3,7 @@ import { render } from '../../utils/userEvent.js'
 import TableHeader from './TableHeader.js'
 
 describe('TableHeader', () => {
-  const header = ['Name', 'Age', 'Address']
+  const header = [{ key: 'Name', index: 0 }, { key: 'Age', index: 1 }, { key: 'Address', index: 2 }]
   const dataReady = true
 
   beforeEach(() => {
@@ -19,7 +19,7 @@ describe('TableHeader', () => {
       />
     </tr></thead></table>)
     header.forEach(columnHeader => {
-      expect(getByText(columnHeader)).toBeDefined()
+      expect(getByText(columnHeader.key)).toBeDefined()
     })
   })
 
