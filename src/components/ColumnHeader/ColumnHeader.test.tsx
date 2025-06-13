@@ -26,6 +26,8 @@ const defaultProps = {
   columnIndex: 0,
   ariaColIndex: 1,
   ariaRowIndex: 1,
+  isColumnMenuOpen: false,
+  onToggleColumnMenu: vi.fn(),
 }
 
 describe('ColumnHeader', () => {
@@ -101,8 +103,8 @@ describe('ColumnHeader', () => {
     // the width is set to undefined, and should then be measured,
     // but the measurement (.offsetWidth) can only run in a browser,
     // so its value is 0
-    // The fixed width is then adjusted to the minimum width: 10px
-    expect(header.style.maxWidth).toEqual('10px')
+    // The fixed width is then adjusted to the minimum width: 24px
+    expect(header.style.maxWidth).toEqual('24px')
     expect(getOffsetWidth).toHaveBeenCalledTimes(1)
   })
 

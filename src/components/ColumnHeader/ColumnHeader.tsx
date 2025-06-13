@@ -3,8 +3,11 @@ import { flushSync } from 'react-dom'
 import { Direction } from '../../helpers/sort.js'
 import { getOffsetWidth } from '../../helpers/width.js'
 import { useCellNavigation } from '../../hooks/useCellsNavigation.js'
+import ColumnMenu from '../ColumnMenu/ColumnMenu.js'
+import ColumnMenuButton from '../ColumnMenuButton/ColumnMenuButton.js'
 import { useColumnStates } from '../../hooks/useColumnStates.js'
 import ColumnResizer from '../ColumnResizer/ColumnResizer.js'
+import { useColumnMenu } from '../../hooks/useColumnMenu.js'
 
 interface Props {
   columnIndex: number // index of the column in the dataframe (0-based)
@@ -22,7 +25,10 @@ interface Props {
 
 export default function ColumnHeader({ columnIndex, columnName, dataReady, direction, onClick, orderByIndex, orderBySize, ariaColIndex, ariaRowIndex, className, children }: Props) {
   const ref = useRef<HTMLTableCellElement>(null)
+  const buttonRef = useRef<HTMLButtonElement>(null)
   const { tabIndex, navigateToCell } = useCellNavigation({ ref, ariaColIndex, ariaRowIndex })
+  const { isOpen, position, menuId, handleToggle, handleMenuClick } =
+    useColumnMenu(columnIndex, ref, navigateToCell)
   const handleClick = useCallback(() => {
     navigateToCell()
     onClick?.()
@@ -111,6 +117,7 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
       aria-description={description}
       aria-rowindex={ariaRowIndex}
       aria-colindex={ariaColIndex}
+      aria-expanded={isOpen}
       tabIndex={tabIndex}
       title={description}
       onClick={handleClick}
@@ -120,12 +127,33 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
       data-fixed-width={dataFixedWidth}
     >
       {children}
+      {sortable &&
+        <ColumnMenuButton
+          ref={buttonRef}
+          onClick={handleMenuClick}
+          onEscape={navigateToCell}
+          tabIndex={tabIndex}
+          isExpanded={isOpen}
+          menuId={menuId}
+          aria-label={`Column menu for ${columnName}`}
+        />
+      }
       <ColumnResizer
         forceWidth={forceColumnWidth}
         autoResize={autoResize}
         width={width}
         tabIndex={tabIndex}
         navigateToCell={navigateToCell}
+      />
+      <ColumnMenu
+        columnName={columnName}
+        isOpen={isOpen}
+        position={position}
+        direction={direction}
+        sortable={sortable}
+        onClick={onClick}
+        columnIndex={columnIndex}
+        onToggle={handleToggle}
       />
     </th>
   )

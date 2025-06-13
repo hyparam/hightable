@@ -18,6 +18,7 @@ import TableCorner from '../TableCorner/TableCorner.js'
 import TableHeader from '../TableHeader/TableHeader.js'
 import { formatRowNumber, rowError } from './HighTable.helpers.js'
 import styles from './HighTable.module.css'
+import { PortalContainerProvider, usePortalContainer } from '../../hooks/usePortalContainer.js'
 
 /**
  * A slice of the (optionally sorted) rows to render as HTML.
@@ -84,11 +85,13 @@ function HighTableData(props: PropsData) {
     /* important: key={key} ensures the local state is recreated if the data has changed */
     <OrderByProvider key={key} orderBy={orderBy} onOrderByChange={onOrderByChange} disabled={!data.sortable}>
       <SelectionProvider selection={selection} onSelectionChange={onSelectionChange}>
-        <ColumnStatesProvider key={key} localStorageKey={cacheKey ? `${cacheKey}${columnStatesSuffix}` : undefined} numColumns={data.header.length} minWidth={minWidth}>
-          <CellsNavigationProvider colCount={ariaColCount} rowCount={ariaRowCount} rowPadding={props.padding ?? defaultPadding}>
-            <HighTableInner {...props} />
-          </CellsNavigationProvider>
-        </ColumnStatesProvider>
+        <PortalContainerProvider>
+          <ColumnStatesProvider key={key} localStorageKey={cacheKey ? `${cacheKey}${columnStatesSuffix}` : undefined} numColumns={data.header.length} minWidth={minWidth}>
+            <CellsNavigationProvider colCount={ariaColCount} rowCount={ariaRowCount} rowPadding={props.padding ?? defaultPadding}>
+              <HighTableInner {...props} />
+            </CellsNavigationProvider>
+          </ColumnStatesProvider>
+        </PortalContainerProvider>
       </SelectionProvider>
     </OrderByProvider>
   )
@@ -137,6 +140,7 @@ export function HighTableInner({
   const { enterCellsNavigation, setEnterCellsNavigation, onTableKeyDown: onNavigationTableKeyDown, onScrollKeyDown, rowIndex, colIndex, focusFirstCell } = useCellsNavigation()
   const [lastCellPosition, setLastCellPosition] = useState({ rowIndex, colIndex })
   const [numRows, setNumRows] = useState(data.numRows)
+  const { containerRef } = usePortalContainer()
   const { setAvailableWidth } = useColumnStates()
 
   // TODO(SL): remove this state and only rely on the data frame for these operations?
@@ -446,7 +450,7 @@ export function HighTableInner({
   const ariaColCount = data.header.length + 1 // don't forget the selection column
   const ariaRowCount = numRows + 1 // don't forget the header row
   return (
-    <div className={`${styles.hightable} ${styled ? styles.styled : ''} ${className}`}>
+    <div ref={containerRef} className={`${styles.hightable} ${styled ? styles.styled : ''} ${className}`}>
       <div className={styles.topBorder} role="presentation"></div>
       <div className={styles.tableScroll} ref={scrollRef} role="group" aria-labelledby="caption" style={tableScrollStyle} onKeyDown={restrictedOnScrollKeyDown} tabIndex={0}>
         <div style={{ height: `${scrollHeight}px` }}>
