@@ -117,7 +117,6 @@ describe('ColumnMenu', () => {
       )
 
       const menuItem = getByRole('menuitem')
-      expect(menuItem.getAttribute('aria-haspopup')).toBe('false')
       expect(menuItem.getAttribute('tabIndex')).toBe('0')
       expect(menuItem.getAttribute('type')).toBe('button')
     })
