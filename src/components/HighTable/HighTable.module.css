@@ -44,7 +44,6 @@
       user-select: none;
       top: 0;
       z-index: var(--header-z-index, auto);
-      overflow: auto;
     }
   }
 
@@ -98,7 +97,7 @@
     z-index: 1000;
     background-color: transparent;
   }
-  
+
   div[role="menu"] > [role="presentation"] {
     padding: 8px 12px;
     font-weight: bold;
@@ -107,7 +106,7 @@
     border-top-left-radius: 4px;
     border-top-right-radius: 4px;
   }
-  
+
   div[role="menu"] > [role="menuitem"] {
     display: block;
     width: 100%;
