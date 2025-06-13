@@ -158,12 +158,10 @@ export default function ColumnMenu({
       >
         <div role='presentation' id={labelId} aria-hidden="true">{columnName}</div>
         <hr role='separator' aria-hidden="true" />
-        {sortable && sortDirection &&
-          <MenuItem
-            onClick={onClick}
-            label={sortDirection}
-          />
-        }
+        {sortable && <MenuItem
+          onClick={onClick}
+          label={sortDirection}
+        />}
       </div>
     </>,
     containerRef.current ?? document.body
