@@ -192,12 +192,12 @@ describe('ColumnMenuButton', () => {
 
   describe('Ref forwarding', () => {
     it('forwards ref correctly', () => {
-      const ref = { current: null as HTMLDivElement | null }
+      const ref = { current: null as HTMLButtonElement | null }
       render(<ColumnMenuButton {...defaultProps} ref={ref} />)
 
       expect(ref.current).toBeDefined()
       expect(ref.current?.getAttribute('role')).toBe('button')
-      expect(ref.current?.tagName).toBe('DIV')
+      expect(ref.current?.tagName).toBe('BUTTON')
     })
   })
 
