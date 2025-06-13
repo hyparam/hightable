@@ -70,6 +70,8 @@ const ColumnMenuButton = forwardRef<HTMLButtonElement, ColumnMenuButtonProps>(
   }
 )
 
+// To avoid showing ForwardRef in dev tools error messages:
+// > The above error occurred in the <ForwardRef> component
 ColumnMenuButton.displayName = 'ColumnMenuButton'
 
 export default ColumnMenuButton
