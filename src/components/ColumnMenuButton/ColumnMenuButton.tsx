@@ -21,37 +21,27 @@ export default function ColumnMenuButton({
   'aria-label': ariaLabel = 'Column menu',
   icon = <span aria-hidden='true'>⋮</span>,
 }: ColumnMenuButtonProps) {
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
-      if (disabled) return
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      e.stopPropagation()
+      onClick?.(e)
+    } else if (e.key === 'Escape') {
+      e.preventDefault()
+      e.stopPropagation()
+      onEscape?.(e)
+    }
+  }, [onClick, onEscape])
 
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault()
-        e.stopPropagation()
-        onClick?.(e)
-      } else if (e.key === 'Escape') {
-        e.preventDefault()
-        e.stopPropagation()
-        onEscape?.(e)
-      }
-    },
-    [onClick, onEscape, disabled]
-  )
-
-  const handleClick = useCallback(
-    (e: MouseEvent) => {
-      if (!disabled) {
-        onClick?.(e)
-      }
-    },
-    [onClick, disabled]
-  )
+  const handleClick = useCallback((e: MouseEvent) => {
+    onClick?.(e)
+  }, [onClick])
 
   return (
     <button
       type="button"
-      onClick={handleClick}
-      onKeyDown={handleKeyDown}
+      onClick={disabled ? undefined : handleClick}
+      onKeyDown={disabled ? undefined : handleKeyDown}
       aria-label={ariaLabel}
       aria-haspopup='menu'
       aria-expanded={isExpanded}
