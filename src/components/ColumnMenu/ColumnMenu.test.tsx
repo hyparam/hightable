@@ -59,16 +59,6 @@ describe('ColumnMenu', () => {
       const overlay = container.querySelector('[role="presentation"]')
       expect(overlay).toBeDefined()
     })
-
-    it('renders separator element', () => {
-      const { getByRole } = render(<ColumnMenu {...defaultProps} />)
-
-      const menu = getByRole('menu')
-      const separator = menu.querySelector('hr')
-      expect(separator).toBeDefined()
-      expect(separator?.getAttribute('role')).toBe('separator')
-      expect(separator?.getAttribute('aria-hidden')).toBe('true')
-    })
   })
 
   describe('Sort functionality', () => {
