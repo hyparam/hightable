@@ -25,8 +25,6 @@ function MenuItem({ onClick, label }: MenuItemProps) {
   const handleClick = useCallback((e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault()
     e.stopPropagation()
-    // Focus the button when clicked
-    e.currentTarget.focus()
     onClick?.()
   }, [onClick])
 
