@@ -155,7 +155,6 @@ export default function ColumnMenu({
         onClick={onWrapperClick}
       >
         <div role='presentation' id={labelId} aria-hidden="true">{columnName}</div>
-        <hr role='separator' aria-hidden="true" />
         {sortable && <MenuItem
           onClick={onClick}
           label={sortDirection}
