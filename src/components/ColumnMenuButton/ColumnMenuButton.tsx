@@ -1,7 +1,7 @@
 import { KeyboardEvent, MouseEvent, ReactNode, useCallback } from 'react'
 
 interface ColumnMenuButtonProps {
-  onClick?: (e: MouseEvent | KeyboardEvent) => void
+  onClick?: (e: MouseEvent<HTMLElement> | KeyboardEvent<HTMLElement>) => void
   onEscape?: (e: KeyboardEvent) => void
   tabIndex?: number
   isExpanded?: boolean
@@ -21,7 +21,7 @@ export default function ColumnMenuButton({
   'aria-label': ariaLabel = 'Column menu',
   icon = <span aria-hidden='true'>⋮</span>,
 }: ColumnMenuButtonProps) {
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+  const handleKeyDown = useCallback((e: KeyboardEvent<HTMLElement>) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault()
       e.stopPropagation()
@@ -33,7 +33,7 @@ export default function ColumnMenuButton({
     }
   }, [onClick, onEscape])
 
-  const handleClick = useCallback((e: MouseEvent) => {
+  const handleClick = useCallback((e: MouseEvent<HTMLElement>) => {
     onClick?.(e)
   }, [onClick])
 

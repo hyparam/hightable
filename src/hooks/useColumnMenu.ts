@@ -13,13 +13,11 @@ export function useColumnMenu(
   }, [])
 
   const handleMenuClick = useCallback(
-    (e: MouseEvent | KeyboardEvent) => {
+    (e: MouseEvent<HTMLElement> | KeyboardEvent<HTMLElement>) => {
       e.stopPropagation()
 
       const rect = ref.current?.getBoundingClientRect()
-      const buttonRect = (
-        e.currentTarget as HTMLElement
-      ).getBoundingClientRect()
+      const buttonRect = e.currentTarget.getBoundingClientRect()
 
       setPosition({
         left: buttonRect.left,
