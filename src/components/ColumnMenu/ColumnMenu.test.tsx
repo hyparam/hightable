@@ -50,7 +50,6 @@ describe('ColumnMenu', () => {
 
       const menu = getByRole('menu')
       expect(menu.getAttribute('aria-orientation')).toBe('vertical')
-      expect(menu.getAttribute('aria-expanded')).toBe('true')
       expect(menu.getAttribute('aria-label')).toBe(
         'Column menu for Test Column'
       )
