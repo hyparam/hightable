@@ -25,7 +25,6 @@ interface Props {
 
 export default function ColumnHeader({ columnIndex, columnName, dataReady, direction, onClick, orderByIndex, orderBySize, ariaColIndex, ariaRowIndex, className, children }: Props) {
   const ref = useRef<HTMLTableCellElement>(null)
-  const buttonRef = useRef<HTMLButtonElement>(null)
   const { tabIndex, navigateToCell } = useCellNavigation({ ref, ariaColIndex, ariaRowIndex })
   const { isOpen, position, menuId, handleToggle, handleMenuClick } = useColumnMenu(ref, navigateToCell)
   const handleClick = useCallback(() => {
@@ -128,7 +127,6 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
       {children}
       {sortable &&
         <ColumnMenuButton
-          ref={buttonRef}
           onClick={handleMenuClick}
           onEscape={navigateToCell}
           tabIndex={tabIndex}

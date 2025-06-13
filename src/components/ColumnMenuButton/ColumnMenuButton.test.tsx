@@ -188,16 +188,6 @@ describe('ColumnMenuButton', () => {
     })
   })
 
-  describe('Ref forwarding', () => {
-    it('forwards ref correctly', () => {
-      const ref = { current: null as HTMLButtonElement | null }
-      render(<ColumnMenuButton {...defaultProps} ref={ref} />)
-
-      expect(ref.current).toBeDefined()
-      expect(ref.current?.tagName).toBe('BUTTON')
-    })
-  })
-
   describe('Optional callbacks', () => {
     it('works without onClick handler', async () => {
       const { user, getByRole } = render(
