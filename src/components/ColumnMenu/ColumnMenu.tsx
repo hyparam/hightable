@@ -21,10 +21,9 @@ function getSortDirection(direction?: Direction, sortable?: boolean) {
 interface MenuItemProps {
   onClick?: () => void
   label: string
-  columnName: string
 }
 
-function MenuItem({ onClick, label, columnName }: MenuItemProps) {
+function MenuItem({ onClick, label }: MenuItemProps) {
   const handleClick = useCallback((e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault()
     e.stopPropagation()
@@ -38,7 +37,6 @@ function MenuItem({ onClick, label, columnName }: MenuItemProps) {
       role='menuitem'
       onClick={handleClick}
       tabIndex={0}
-      aria-label={`${label} ${columnName}`}
       aria-haspopup='false'
       type='button'
     >
@@ -163,7 +161,6 @@ export default function ColumnMenu({
           <MenuItem
             onClick={onClick}
             label={sortDirection}
-            columnName={columnName}
           />
         }
       </div>
