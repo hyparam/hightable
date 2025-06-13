@@ -1,14 +1,9 @@
+import { KeyboardEvent, MouseEvent, useCallback, useId, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { Direction } from '../../helpers/sort'
-import { usePortalContainer } from '../../hooks/usePortalContainer'
-import {
-  KeyboardEvent,
-  MouseEvent,
-  useCallback,
-  useRef,
-} from 'react'
-import { useScrollLock } from '../../hooks/useScrollLock'
 import { useFocusManagement } from '../../hooks/useFocusManagement'
+import { usePortalContainer } from '../../hooks/usePortalContainer'
+import { useScrollLock } from '../../hooks/useScrollLock'
 
 function getSortDirection(direction?: Direction, sortable?: boolean) {
   if (!sortable) return null
@@ -72,6 +67,7 @@ interface ColumnMenuProps {
   onClick?: () => void
   columnIndex: number
   onToggle: (columnIndex: number) => void
+  id?: string
 }
 
 export default function ColumnMenu({
@@ -83,11 +79,12 @@ export default function ColumnMenu({
   onClick,
   columnIndex,
   onToggle,
+  id,
 }: ColumnMenuProps) {
   const { containerRef } = usePortalContainer()
   const { top, left } = position
   const menuRef = useRef<HTMLDivElement>(null)
-  const labelId = useRef(`column-menu-label-${columnIndex}`).current
+  const labelId = useId()
 
   useScrollLock(isOpen)
   const { navigateFocus } = useFocusManagement(isOpen, menuRef)
@@ -153,6 +150,7 @@ export default function ColumnMenu({
     <>
       <Overlay onClick={handleOverlayClick} />
       <div
+        id={id}
         role='menu'
         style={{ top, left }}
         ref={menuRef}

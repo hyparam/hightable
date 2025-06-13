@@ -1,13 +1,12 @@
-import { KeyboardEvent, MouseEvent, RefObject, useCallback, useState } from 'react'
+import { KeyboardEvent, MouseEvent, RefObject, useCallback, useId, useState } from 'react'
 
 export function useColumnMenu(
-  columnIndex: number,
   ref: RefObject<HTMLTableCellElement | null>,
   navigateToCell: () => void
 ) {
   const [position, setPosition] = useState({ left: 0, top: 0 })
   const [isOpen, setIsOpen] = useState(false)
-  const menuId = `column-menu-label-${columnIndex}`
+  const menuId = useId()
 
   const handleToggle = useCallback(() => {
     setIsOpen((current) => !current)

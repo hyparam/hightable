@@ -28,10 +28,11 @@ describe('ColumnMenu', () => {
 
       const menu = getByRole('menu')
       expect(menu).toBeDefined()
-      expect(menu.getAttribute('aria-labelledby')).toMatch(
-        /^column-menu-label-\d+$/
-      )
-      expect(getByText('Test Column')).toBeDefined()
+      const ariaLabelledBy = menu.getAttribute('aria-labelledby')
+      expect(ariaLabelledBy).toBeDefined()
+      const labelElement = getByText('Test Column')
+      expect(labelElement).toBeDefined()
+      expect(labelElement.getAttribute('id')).toBe(ariaLabelledBy)
     })
 
     it('renders with correct position styling', () => {
@@ -364,35 +365,22 @@ describe('ColumnMenu', () => {
       expect(menu).toBeDefined()
     })
 
-    it('handles columnIndex 0 correctly', () => {
-      const { getByRole } = render(
-        <ColumnMenu {...defaultProps} columnIndex={0} />
-      )
-
-      const menu = getByRole('menu')
-      expect(menu.getAttribute('aria-labelledby')).toBe('column-menu-label-0')
-    })
-
-    it('handles different columnIndex values', () => {
-      const { getByRole } = render(
-        <ColumnMenu {...defaultProps} columnIndex={5} />
-      )
-
-      const menu = getByRole('menu')
-      expect(menu.getAttribute('aria-labelledby')).toBe('column-menu-label-5')
-    })
-
     it('handles empty column name', () => {
-      const { getByRole, container } = render(
+      const { getByRole } = render(
         <ColumnMenu {...defaultProps} columnName='' />
       )
 
       const menu = getByRole('menu')
       expect(menu.getAttribute('aria-label')).toBe('Column menu for ')
+      const id = menu.getAttribute('aria-labelledby')
+      if (id === null) {
+        throw new Error('aria-labelledby should not be null')
+      }
 
-      const labelElement = container.querySelector('#column-menu-label-0')
+      const labelElement = menu.querySelector('[role=presentation]')
       expect(labelElement).toBeDefined()
-      expect(labelElement?.textContent ?? '').toBe('')
+      expect(labelElement?.textContent).toBe('')
+      expect(labelElement?.getAttribute('id')).toBe(id)
     })
 
     it('handles special characters in column name', () => {
