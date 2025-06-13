@@ -14,7 +14,7 @@ function getSortDirection(direction?: Direction, sortable?: boolean) {
   case 'descending':
     return 'Descending'
   default:
-    return 'Sort'
+    return 'No sort'
   }
 }
 

@@ -79,7 +79,7 @@ describe('ColumnMenu', () => {
 
       const sortButton = getByRole('menuitem')
       expect(sortButton).toBeDefined()
-      expect(sortButton.textContent).toBe('Sort')
+      expect(sortButton.textContent).toBe('No sort')
     })
 
     it('shows correct sort direction text', () => {
