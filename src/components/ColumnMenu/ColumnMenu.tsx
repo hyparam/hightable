@@ -32,10 +32,19 @@ function MenuItem({ onClick, label }: MenuItemProps) {
     onClick?.()
   }, [onClick])
 
+  const handleKeyDown = useCallback((e: KeyboardEvent<HTMLButtonElement>) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.stopPropagation()
+      e.preventDefault()
+      onClick?.()
+    }
+  }, [onClick])
+
   return (
     <button
       role='menuitem'
       onClick={handleClick}
+      onKeyDown={handleKeyDown}
       tabIndex={0}
       type='button'
     >
@@ -84,41 +93,36 @@ export default function ColumnMenu({
   useScrollLock(isOpen)
   const { navigateFocus } = useFocusManagement(isOpen, menuRef)
 
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent<HTMLDivElement>) => {
-      e.preventDefault()
-      e.stopPropagation()
-      switch (e.key) {
-      case 'Escape':
-        onToggle()
-        break
-      case 'Enter':
-      case ' ':
-        if (sortable) {
-          onClick?.()
-        }
-        break
-      case 'ArrowUp':
-      case 'ArrowLeft':
-        navigateFocus('previous')
-        break
-      case 'ArrowDown':
-      case 'ArrowRight':
-        navigateFocus('next')
-        break
-      case 'Home':
-        navigateFocus('first')
-        break
-      case 'End':
-        navigateFocus('last')
-        break
-      case 'Tab':
-        navigateFocus(e.shiftKey ? 'previous' : 'next')
-        break
-      }
-    },
-    [navigateFocus, onToggle, onClick, sortable]
-  )
+  const handleKeyDown = useCallback((e: KeyboardEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    switch (e.key) {
+    case 'Escape':
+      onToggle()
+      break
+    case 'Enter':
+    case ' ':
+      // Handled by the menu item
+      break
+    case 'ArrowUp':
+    case 'ArrowLeft':
+      navigateFocus('previous')
+      break
+    case 'ArrowDown':
+    case 'ArrowRight':
+      navigateFocus('next')
+      break
+    case 'Home':
+      navigateFocus('first')
+      break
+    case 'End':
+      navigateFocus('last')
+      break
+    case 'Tab':
+      navigateFocus(e.shiftKey ? 'previous' : 'next')
+      break
+    }
+  }, [navigateFocus, onToggle] )
 
   const handleOverlayClick = useCallback(
     (e: MouseEvent<HTMLDivElement>) => {

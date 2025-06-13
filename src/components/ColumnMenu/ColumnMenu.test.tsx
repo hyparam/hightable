@@ -160,8 +160,8 @@ describe('ColumnMenu', () => {
         <ColumnMenu {...defaultProps} sortable={true} onClick={onClick} />
       )
 
-      const menu = getByRole('menu')
-      menu.focus()
+      const sortButton = getByRole('menuitem')
+      sortButton.focus()
       await user.keyboard('{Enter}')
 
       expect(onClick).toHaveBeenCalled()
@@ -173,40 +173,11 @@ describe('ColumnMenu', () => {
         <ColumnMenu {...defaultProps} sortable={true} onClick={onClick} />
       )
 
-      const menu = getByRole('menu')
-      menu.focus()
+      const sortButton = getByRole('menuitem')
+      sortButton.focus()
       await user.keyboard('{ }')
 
       expect(onClick).toHaveBeenCalled()
-    })
-
-    it('does not call onClick on Enter/Space when not sortable', async () => {
-      const onClick = vi.fn()
-      const { user, getByRole } = render(
-        <ColumnMenu {...defaultProps} sortable={false} onClick={onClick} />
-      )
-
-      const menu = getByRole('menu')
-      menu.focus()
-      await user.keyboard('{Enter}')
-      await user.keyboard('{ }')
-
-      expect(onClick).not.toHaveBeenCalled()
-    })
-
-    it('handles Enter/Space gracefully when no onClick provided', async () => {
-      const { user, getByRole } = render(
-        <ColumnMenu {...defaultProps} sortable={false} />
-      )
-
-      const menu = getByRole('menu')
-      menu.focus()
-
-      // Should not throw errors
-      await user.keyboard('{Enter}')
-      await user.keyboard('{ }')
-
-      expect(menu).toBeDefined()
     })
 
     // TODO(SL): really test the navigation. For now, it works the same if the key is pressed or not. The menu only has one item, so the keys are useless.
