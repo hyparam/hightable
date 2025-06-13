@@ -3,7 +3,6 @@ import { createPortal } from 'react-dom'
 import { Direction } from '../../helpers/sort'
 import { useFocusManagement } from '../../hooks/useFocusManagement'
 import { usePortalContainer } from '../../hooks/usePortalContainer'
-import { useScrollLock } from '../../hooks/useScrollLock'
 
 function getSortDirection(direction?: Direction) {
   switch (direction) {
@@ -86,7 +85,6 @@ export default function ColumnMenu({
   const menuRef = useRef<HTMLDivElement>(null)
   const labelId = useId()
 
-  useScrollLock(isOpen)
   const { navigateFocus } = useFocusManagement(isOpen, menuRef)
 
   const handleKeyDown = useCallback((e: KeyboardEvent<HTMLDivElement>) => {
