@@ -135,6 +135,13 @@ export default function ColumnMenu({
     [onToggle]
   )
 
+  const onWrapperClick = useCallback((e: MouseEvent<HTMLDivElement>) => {
+    // Prevent click on the presentation div from propagating
+    // Note that the div will receive focus anyway
+    e.preventDefault()
+    e.stopPropagation()
+  }, [])
+
   if (!isOpen) {
     return null
   }
@@ -153,6 +160,7 @@ export default function ColumnMenu({
         aria-labelledby={labelId}
         aria-orientation='vertical'
         onKeyDown={handleKeyDown}
+        onClick={onWrapperClick}
       >
         <div role='presentation' id={labelId} aria-hidden="true">{columnName}</div>
         <hr role='separator' aria-hidden="true" />
