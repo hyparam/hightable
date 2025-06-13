@@ -37,7 +37,6 @@ function MenuItem({ onClick, label }: MenuItemProps) {
       role='menuitem'
       onClick={handleClick}
       tabIndex={0}
-      aria-haspopup='false'
       type='button'
     >
       {label}
