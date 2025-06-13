@@ -5,6 +5,7 @@ import { getOffsetWidth } from '../../helpers/width.js'
 import { useCellNavigation } from '../../hooks/useCellsNavigation.js'
 import { useColumnStates } from '../../hooks/useColumnStates.js'
 import ColumnResizer from '../ColumnResizer/ColumnResizer.js'
+import { ColumnConfig } from '../../helpers/columnConfiguration.js'
 
 interface Props {
   columnIndex: number // index of the column in the dataframe (0-based)
@@ -18,9 +19,10 @@ interface Props {
   ariaColIndex: number // aria col index for the header
   ariaRowIndex: number // aria row index for the header
   className?: string // optional class name
+  columnConfig?: ColumnConfig
 }
 
-export default function ColumnHeader({ columnIndex, columnName, dataReady, direction, onClick, orderByIndex, orderBySize, ariaColIndex, ariaRowIndex, className, children }: Props) {
+export default function ColumnHeader({ columnIndex, columnName, columnConfig, dataReady, direction, onClick, orderByIndex, orderBySize, ariaColIndex, ariaRowIndex, className, children }: Props) {
   const ref = useRef<HTMLTableCellElement>(null)
   const { tabIndex, navigateToCell } = useCellNavigation({ ref, ariaColIndex, ariaRowIndex })
   const handleClick = useCallback(() => {
@@ -119,7 +121,7 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
       className={className}
       data-fixed-width={dataFixedWidth}
     >
-      {children}
+      {columnConfig?.headerComponent ?? children}
       <ColumnResizer
         forceWidth={forceColumnWidth}
         autoResize={autoResize}
