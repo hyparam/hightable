@@ -6,7 +6,7 @@ export function cellStyle(width: number | undefined) {
 // These two functions can be mocked in unit tests
 export function getOffsetWidth(element: Pick<HTMLElement, 'offsetWidth'>): number {
   // add 1px to avoid rounding errors, since offsetWidth always returns an integer
-  return element.offsetWidth + 24
+  return element.offsetWidth + 1
 }
 export function getClientWidth(element: Pick<HTMLElement, 'clientWidth'>): number {
   // remove 1px to avoid rounding errors, since offsetWidth always returns an integer
