@@ -44,15 +44,17 @@ export function useFocusManagement(
   const previousFocusRef = useRef<HTMLElement | null>(null)
 
   const getFocusableElements = useCallback(() => {
-    return menuRef.current?.querySelectorAll(FOCUSABLE_SELECTOR) ?? []
+    return [...menuRef.current?.querySelectorAll(FOCUSABLE_SELECTOR) ?? []].filter(d => d instanceof HTMLElement)
   }, [menuRef])
 
   useEffect(() => {
     if (isOpen) {
-      previousFocusRef.current = document.activeElement as HTMLElement
-      const focusableElements = getFocusableElements()
-      if (focusableElements.length) {
-        const firstElement = focusableElements[0] as HTMLElement
+      const { activeElement } = document
+      if (activeElement instanceof HTMLElement) {
+        previousFocusRef.current = document.activeElement as HTMLElement
+      }
+      const firstElement = getFocusableElements().at(0)
+      if (firstElement) {
         requestAnimationFrame(() => {
           firstElement.focus()
         })
@@ -65,10 +67,14 @@ export function useFocusManagement(
 
   const navigateFocus = useCallback((direction: 'next' | 'previous' | 'first' | 'last') => {
     const focusableElements = getFocusableElements()
-    if (!focusableElements.length) return
+    if (!focusableElements.length) {
+      return
+    }
 
     const { activeElement } = document
-    if (!activeElement) return
+    if (!activeElement || !(activeElement instanceof HTMLElement)) {
+      return
+    }
 
     const currentIndex = Array.from(focusableElements).indexOf(activeElement)
     let nextIndex: number
@@ -88,10 +94,7 @@ export function useFocusManagement(
       break
     }
 
-    const nextElement = focusableElements[nextIndex]
-    if (nextElement instanceof HTMLElement) {
-      nextElement.focus()
-    }
+    focusableElements[nextIndex]?.focus()
   }, [getFocusableElements])
 
   return { getFocusableElements, navigateFocus }
