@@ -3,7 +3,7 @@ import { render } from '../../utils/userEvent.js'
 import TableHeader from './TableHeader.js'
 
 describe('TableHeader', () => {
-  const header = [{ key: 'Name', index: 0 }, { key: 'Age', index: 1 }, { key: 'Address', index: 2 }]
+  const columnDescriptors = [{ key: 'Name', index: 0, sortable: true }, { key: 'Age', index: 1, sortable: true }, { key: 'Address', index: 2, sortable: true }]
   const dataReady = true
 
   beforeEach(() => {
@@ -14,12 +14,12 @@ describe('TableHeader', () => {
     const { getByText } = render(<table><thead><tr>
       <TableHeader
         dataReady={dataReady}
-        header={header}
+        columnDescriptors={columnDescriptors}
         ariaRowIndex={1}
       />
     </tr></thead></table>)
-    header.forEach(columnHeader => {
-      expect(getByText(columnHeader.key)).toBeDefined()
+    columnDescriptors.forEach(descriptor => {
+      expect(getByText(descriptor.key)).toBeDefined()
     })
   })
 
@@ -27,7 +27,7 @@ describe('TableHeader', () => {
     const onOrderByChange = vi.fn()
     const { user, getByText } = render(<table><thead><tr>
       <TableHeader
-        header={header}
+        columnDescriptors={columnDescriptors}
         orderBy={[]}
         onOrderByChange={onOrderByChange}
         dataReady={dataReady}
@@ -45,7 +45,7 @@ describe('TableHeader', () => {
     const onOrderByChange = vi.fn()
     const { user, getByText } = render(<table><thead><tr>
       <TableHeader
-        header={header}
+        columnDescriptors={columnDescriptors}
         onOrderByChange={onOrderByChange}
         orderBy={[{ column: 'Age', direction: 'ascending' }]}
         dataReady={dataReady}
@@ -63,7 +63,7 @@ describe('TableHeader', () => {
     const onOrderByChange = vi.fn()
     const { user, getByText } = render(<table><thead><tr>
       <TableHeader
-        header={header}
+        columnDescriptors={columnDescriptors}
         onOrderByChange={onOrderByChange}
         orderBy={[{ column: 'Age', direction: 'descending' }]}
         dataReady={dataReady}
@@ -81,7 +81,7 @@ describe('TableHeader', () => {
     const onOrderByChange = vi.fn()
     const { user, getByText } = render(<table><thead><tr>
       <TableHeader
-        header={header}
+        columnDescriptors={columnDescriptors}
         onOrderByChange={onOrderByChange}
         orderBy={[{ column: 'Age', direction: 'ascending' }]}
         dataReady={dataReady}
