@@ -7,7 +7,9 @@ export interface ColumnOrderBy {
 
 export type OrderBy = ColumnOrderBy[]
 
-export function areEqualOrderBy(a: OrderBy, b: OrderBy): boolean {
+export function areEqualOrderBy(a?: OrderBy, b?: OrderBy): boolean {
+  if (!a && !b) return true
+  if (!a || !b) return false
   if (a.length !== b.length) return false
   return a.every((itemA, i) => {
     const itemB = b[i]
