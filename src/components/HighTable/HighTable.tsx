@@ -58,7 +58,7 @@ export const columnStatesSuffix = ':column:states' // suffix used to store the c
  */
 export default function HighTable(props: Props) {
   return (
-    <DataProvider data={props.data}>
+    <DataProvider data={props.data} onError={props.onError ?? console.error}>
       <HighTableData {...props} />
     </DataProvider>
   )
@@ -67,10 +67,11 @@ export default function HighTable(props: Props) {
 type PropsData = Omit<Props, 'data'>
 
 function HighTableData(props: PropsData) {
-  const { data, key } = useData()
+  const { data, numRows, key } = useData()
   const { cacheKey, orderBy, onOrderByChange, selection, onSelectionChange } = props
   const ariaColCount = data.header.length + 1 // don't forget the selection column
-  const ariaRowCount = data.numRows + 1 // don't forget the header row
+  const ariaRowCount = numRows + 1 // don't forget the header row
+
   return (
     /* important: key={key} ensures the local state is recreated if the data has changed */
     <OrderByProvider key={key} orderBy={orderBy} onOrderByChange={onOrderByChange} disabled={true}>
@@ -79,7 +80,7 @@ function HighTableData(props: PropsData) {
       <SelectionProvider selection={selection} onSelectionChange={onSelectionChange}>
         <ColumnStatesProvider key={key} localStorageKey={cacheKey ? `${cacheKey}${columnStatesSuffix}` : undefined} numColumns={data.header.length} minWidth={minWidth}>
           <CellsNavigationProvider colCount={ariaColCount} rowCount={ariaRowCount} rowPadding={props.padding ?? defaultPadding}>
-            <HighTableInner {...props} />
+            <HighTableInner numRows={numRows} {...props} />
           </CellsNavigationProvider>
         </ColumnStatesProvider>
       </SelectionProvider>
@@ -87,7 +88,9 @@ function HighTableData(props: PropsData) {
   )
 }
 
-type PropsInner = Omit<PropsData, 'orderBy' | 'onOrderByChange' | 'selection' | 'onSelectionChange'>
+type PropsInner = Omit<PropsData, 'orderBy' | 'onOrderByChange' | 'selection' | 'onSelectionChange'> & {
+  numRows: number // number of rows in the data frame
+}
 
 /**
  * The main purpose of extracting HighTableInner from HighTable is to
@@ -107,6 +110,7 @@ export function HighTableInner({
   columnClassNames = [],
   styled = true,
   columnConfiguration,
+  numRows,
 }: PropsInner) {
   /**
    * The component relies on the model of a virtual table which rows are ordered and only the
@@ -129,7 +133,6 @@ export function HighTableInner({
   const [rowsRange, setRowsRange] = useState({ start: 0, end: 0 })
   const { enterCellsNavigation, setEnterCellsNavigation, onTableKeyDown: onNavigationTableKeyDown, onScrollKeyDown, rowIndex, colIndex, focusFirstCell } = useCellsNavigation()
   const [lastCellPosition, setLastCellPosition] = useState({ rowIndex, colIndex })
-  const [numRows, setNumRows] = useState(data.numRows)
   const { setAvailableWidth } = useColumnStates()
 
   // TODO(SL): remove this state and only rely on the data frame for these operations?

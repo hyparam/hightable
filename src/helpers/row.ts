@@ -1,3 +1,8 @@
+
+export function isValidRowNumber(row: unknown): row is number {
+  return typeof row === 'number' && Number.isInteger(row) && row >= 0
+}
+
 // import { ResolvablePromise, WrappedPromise, resolvablePromise } from '../utils/promise.js'
 
 // /**
