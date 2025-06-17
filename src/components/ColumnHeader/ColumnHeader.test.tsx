@@ -29,6 +29,8 @@ const defaultProps = {
   columnConfig: { sortable: true },
 }
 
+const nonSortableProps = { ...defaultProps, columnConfig: { sortable: false } }
+
 describe('ColumnHeader', () => {
   const cacheKey = 'key'
 
@@ -38,7 +40,7 @@ describe('ColumnHeader', () => {
 
   it('renders column header correctly', () => {
     const content = 'test'
-    const { getByRole } = render(<table><thead><tr><ColumnHeader columnName={content} {...defaultProps}>{content}</ColumnHeader></tr></thead></table>)
+    const { getByRole } = render(<table><thead><tr><ColumnHeader columnName={content} {...nonSortableProps}>{content}</ColumnHeader></tr></thead></table>)
     const element = getByRole('columnheader')
     expect(element.textContent).toEqual(content)
     expect(getOffsetWidth).not.toHaveBeenCalled()

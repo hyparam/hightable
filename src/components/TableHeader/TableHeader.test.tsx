@@ -104,7 +104,7 @@ describe('TableHeader', () => {
           <thead>
             <tr>
               <TableHeader
-                header={header}
+                columnDescriptors={columnDescriptors}
                 dataReady={dataReady}
                 ariaRowIndex={1}
                 onOrderByChange={onOrderByChange}
@@ -142,7 +142,7 @@ describe('TableHeader', () => {
           <thead>
             <tr>
               <TableHeader
-                header={header}
+                columnDescriptors={columnDescriptors}
                 dataReady={dataReady}
                 ariaRowIndex={1}
                 onOrderByChange={onOrderByChange}
