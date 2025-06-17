@@ -27,9 +27,8 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, da
   const { tabIndex, navigateToCell } = useCellNavigation({ ref, ariaColIndex, ariaRowIndex })
   const { sortable, headerComponent } = columnConfig
   const handleClick = useCallback(() => {
-    if (!sortable) return undefined
     navigateToCell()
-    onClick?.()
+    if (sortable) onClick?.()
   }, [onClick, navigateToCell, sortable])
 
   // Get the column width from the context

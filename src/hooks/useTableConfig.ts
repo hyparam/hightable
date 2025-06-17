@@ -16,6 +16,11 @@ export function useTableConfig(
     const { header, sortable: dfSortable } = df
     const inHeader = new Set(header)
 
+    // Until dataframe 2.0 only allow disabling sort via UI, cannot directly enable sort
+    if (config?.sortable) {
+      console.warn('Currently enabling sort via sortable is not implemented, value will be ignored')
+      delete config.sortable
+    }
     // Build descriptors following DataFrame.header order
     const cols: ColumnDescriptor[] = header.map((key, i) => ({
       key,
