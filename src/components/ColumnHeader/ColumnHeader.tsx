@@ -1,11 +1,14 @@
 import { KeyboardEvent, ReactNode, useCallback, useEffect, useMemo, useRef } from 'react'
 import { flushSync } from 'react-dom'
+import { ColumnConfig } from '../../helpers/columnConfiguration.js'
 import { Direction } from '../../helpers/sort.js'
 import { getOffsetWidth } from '../../helpers/width.js'
 import { useCellNavigation } from '../../hooks/useCellsNavigation.js'
+import { useColumnMenu } from '../../hooks/useColumnMenu.js'
 import { useColumnStates } from '../../hooks/useColumnStates.js'
+import ColumnMenu from '../ColumnMenu/ColumnMenu.js'
+import ColumnMenuButton from '../ColumnMenuButton/ColumnMenuButton.js'
 import ColumnResizer from '../ColumnResizer/ColumnResizer.js'
-import { ColumnConfig } from '../../helpers/columnConfiguration.js'
 
 interface Props {
   columnIndex: number // index of the column in the dataframe (0-based)
@@ -26,6 +29,8 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, da
   const ref = useRef<HTMLTableCellElement>(null)
   const { tabIndex, navigateToCell } = useCellNavigation({ ref, ariaColIndex, ariaRowIndex })
   const { sortable, headerComponent } = columnConfig
+  const { isOpen, position, menuId, handleToggle, handleMenuClick } = useColumnMenu(ref, navigateToCell)
+
   const handleClick = useCallback(() => {
     navigateToCell()
     if (sortable) onClick?.()
@@ -122,12 +127,32 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, da
       data-fixed-width={dataFixedWidth}
     >
       {headerComponent ?? children}
+      {sortable &&
+        <ColumnMenuButton
+          onClick={handleMenuClick}
+          onEscape={navigateToCell}
+          tabIndex={tabIndex}
+          isExpanded={isOpen}
+          menuId={menuId}
+          aria-label={`Column menu for ${columnName}`}
+        />
+      }
       <ColumnResizer
         forceWidth={forceColumnWidth}
         autoResize={autoResize}
         width={width}
         tabIndex={tabIndex}
         navigateToCell={navigateToCell}
+      />
+      <ColumnMenu
+        columnName={columnName}
+        isOpen={isOpen}
+        position={position}
+        direction={direction}
+        sortable={sortable}
+        onClick={onClick}
+        onToggle={handleToggle}
+        id={menuId}
       />
     </th>
   )

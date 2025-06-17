@@ -1,4 +1,5 @@
 import { CSSProperties, KeyboardEvent, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { ColumnConfiguration } from '../../helpers/columnConfiguration.js'
 import { DataFrame } from '../../helpers/dataframe.js'
 import { PartialRow } from '../../helpers/row.js'
 import { Selection, areAllSelected, isSelected, toggleIndexInSelection, toggleRangeInSelection, toggleRangeInTable } from '../../helpers/selection.js'
@@ -8,7 +9,9 @@ import { CellsNavigationProvider, useCellsNavigation } from '../../hooks/useCell
 import { ColumnStatesProvider, useColumnStates } from '../../hooks/useColumnStates.js'
 import { DataProvider, useData } from '../../hooks/useData.js'
 import { OrderByProvider, useOrderBy } from '../../hooks/useOrderBy.js'
+import { PortalContainerProvider, usePortalContainer } from '../../hooks/usePortalContainer.js'
 import { SelectionProvider, useSelection } from '../../hooks/useSelection.js'
+import { useTableConfig } from '../../hooks/useTableConfig.js'
 import { stringify as stringifyDefault } from '../../utils/stringify.js'
 import { throttle } from '../../utils/throttle.js'
 import Cell from '../Cell/Cell.js'
@@ -18,8 +21,6 @@ import TableCorner from '../TableCorner/TableCorner.js'
 import TableHeader from '../TableHeader/TableHeader.js'
 import { formatRowNumber, rowError } from './HighTable.helpers.js'
 import styles from './HighTable.module.css'
-import { ColumnConfiguration } from '../../helpers/columnConfiguration.js'
-import { useTableConfig } from '../../hooks/useTableConfig.js'
 
 /**
  * A slice of the (optionally sorted) rows to render as HTML.
@@ -89,7 +90,9 @@ function HighTableData(props: PropsData) {
       <SelectionProvider selection={selection} onSelectionChange={onSelectionChange}>
         <ColumnStatesProvider key={key} localStorageKey={cacheKey ? `${cacheKey}${columnStatesSuffix}` : undefined} numColumns={data.header.length} minWidth={minWidth}>
           <CellsNavigationProvider colCount={ariaColCount} rowCount={ariaRowCount} rowPadding={props.padding ?? defaultPadding}>
-            <HighTableInner {...props} />
+            <PortalContainerProvider>
+              <HighTableInner {...props} />
+            </PortalContainerProvider>
           </CellsNavigationProvider>
         </ColumnStatesProvider>
       </SelectionProvider>
@@ -141,6 +144,7 @@ export function HighTableInner({
   const { enterCellsNavigation, setEnterCellsNavigation, onTableKeyDown: onNavigationTableKeyDown, onScrollKeyDown, rowIndex, colIndex, focusFirstCell } = useCellsNavigation()
   const [lastCellPosition, setLastCellPosition] = useState({ rowIndex, colIndex })
   const [numRows, setNumRows] = useState(data.numRows)
+  const { containerRef } = usePortalContainer()
   const { setAvailableWidth } = useColumnStates()
 
   // TODO(SL): remove this state and only rely on the data frame for these operations?
@@ -451,7 +455,7 @@ export function HighTableInner({
   const ariaColCount = columns.length + 1 // don't forget the selection column
   const ariaRowCount = numRows + 1 // don't forget the header row
   return (
-    <div className={`${styles.hightable} ${styled ? styles.styled : ''} ${className}`}>
+    <div ref={containerRef} className={`${styles.hightable} ${styled ? styles.styled : ''} ${className}`}>
       <div className={styles.topBorder} role="presentation"></div>
       <div className={styles.tableScroll} ref={scrollRef} role="group" aria-labelledby="caption" style={tableScrollStyle} onKeyDown={restrictedOnScrollKeyDown} tabIndex={0}>
         <div style={{ height: `${scrollHeight}px` }}>
