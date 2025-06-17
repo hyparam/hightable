@@ -13,6 +13,7 @@ import ColumnResizer from '../ColumnResizer/ColumnResizer.js'
 interface Props {
   columnIndex: number // index of the column in the dataframe (0-based)
   columnName: string
+  columnConfig: ColumnConfig
   children?: ReactNode
   dataReady?: boolean
   direction?: Direction
@@ -22,18 +23,18 @@ interface Props {
   ariaColIndex: number // aria col index for the header
   ariaRowIndex: number // aria row index for the header
   className?: string // optional class name
-  columnConfig?: ColumnConfig
 }
 
 export default function ColumnHeader({ columnIndex, columnName, columnConfig, dataReady, direction, onClick, orderByIndex, orderBySize, ariaColIndex, ariaRowIndex, className, children }: Props) {
   const ref = useRef<HTMLTableCellElement>(null)
   const { tabIndex, navigateToCell } = useCellNavigation({ ref, ariaColIndex, ariaRowIndex })
+  const { sortable, headerComponent } = columnConfig
   const { isOpen, position, menuId, handleToggle, handleMenuClick } = useColumnMenu(ref, navigateToCell)
+
   const handleClick = useCallback(() => {
     navigateToCell()
-    onClick?.()
-  }, [onClick, navigateToCell])
-  const sortable = !!onClick // if onClick is defined, the column is sortable
+    if (sortable) onClick?.()
+  }, [onClick, navigateToCell, sortable])
 
   // Get the column width from the context
   const { getColumnStyle, isFixedColumn, getColumnWidth, measureWidth, forceWidth, removeWidth } = useColumnStates()
@@ -125,7 +126,7 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, da
       className={className}
       data-fixed-width={dataFixedWidth}
     >
-      {columnConfig?.headerComponent ?? children}
+      {headerComponent ?? children}
       {sortable &&
         <ColumnMenuButton
           onClick={handleMenuClick}

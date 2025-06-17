@@ -219,6 +219,16 @@ export const HeaderComponent: Story = {
     },
   },
 }
+export const NonSortableColunns: Story = {
+  args: {
+    data: sortableData,
+    columnConfiguration: {
+      Double: {
+        sortable: false,
+      },
+    },
+  },
+}
 export const FilteredRows: Story = {
   args: {
     data: filteredData,

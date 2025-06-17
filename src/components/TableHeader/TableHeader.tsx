@@ -3,8 +3,8 @@ import { OrderBy, toggleColumn } from '../../helpers/sort.js'
 import ColumnHeader from '../ColumnHeader/ColumnHeader.js'
 import { ColumnDescriptor } from '../../hooks/useTableConfig.js'
 
-interface TableProps {
-  header: ColumnDescriptor[]
+interface TableHeaderProps {
+  columnDescriptors: ColumnDescriptor[]
   orderBy?: OrderBy // array of column order by clauses. If undefined, the table is unordered, the sort elements are hidden and the interactions are disabled.
   onOrderByChange?: (orderBy: OrderBy) => void // callback to call when a user interaction changes the order. The interactions are disabled if undefined.
   dataReady: boolean
@@ -16,8 +16,8 @@ interface TableProps {
  * Render a header for a table.
  */
 export default function TableHeader({
-  header, orderBy, onOrderByChange, dataReady, ariaRowIndex, columnClassNames = [],
-}: TableProps) {
+  columnDescriptors, orderBy, onOrderByChange, dataReady, ariaRowIndex, columnClassNames = [],
+}: TableHeaderProps) {
   // Function to handle click for changing orderBy
   const getOnOrderByClick = useCallback((columnHeader: string) => {
     if (!onOrderByChange || !orderBy) return undefined
@@ -30,8 +30,8 @@ export default function TableHeader({
     return new Map((orderBy ?? []).map(({ column, direction }, index) => [column, { direction, index }]))
   }, [orderBy])
 
-  return header.map((colConfig) => {
-    const { key: name, index: columnIndex, ...columnConfig } = colConfig
+  return columnDescriptors.map((colDescriptor) => {
+    const { key: name, index: columnIndex, ...columnConfig } = colDescriptor
     // Note: columnIndex is the index of the column in the dataframe header
     // and not the index of the column in the table (which can be different if
     // some columns are hidden, or if the order is changed)

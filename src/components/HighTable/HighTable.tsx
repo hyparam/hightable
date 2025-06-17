@@ -154,7 +154,7 @@ export function HighTableInner({
   const { orderBy, onOrderByChange } = useOrderBy()
   const { selection, onSelectionChange, toggleAllRows, onTableKeyDown: onSelectionTableKeyDown } = useSelection({ numRows })
 
-  const columns = useTableConfig(data.header, columnConfiguration)
+  const columns = useTableConfig(data, columnConfiguration)
   const onTableKeyDown = useCallback((event: KeyboardEvent) => {
     onNavigationTableKeyDown?.(event)
     onSelectionTableKeyDown?.(event, numRows)
@@ -481,7 +481,7 @@ export function HighTableInner({
                 >&nbsp;</TableCorner>
                 <TableHeader
                   dataReady={slice !== undefined}
-                  header={columns}
+                  columnDescriptors={columns}
                   orderBy={orderBy}
                   onOrderByChange={onOrderByChange}
                   columnClassNames={columnClassNames}

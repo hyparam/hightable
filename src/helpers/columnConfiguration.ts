@@ -3,9 +3,9 @@ import React from 'react'
 // Single column config
 export interface ColumnConfig {
   headerComponent?: React.ReactNode;
+  sortable?: boolean;
   // width?: number;
   // hideable?: boolean;
-  // sortable?: boolean;
   // filters: Some filter structure
   // cellRenderer?: (value: unknown, row: Row) => React.ReactNode;
 }
