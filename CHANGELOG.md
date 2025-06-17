@@ -1,6 +1,13 @@
 # CHANGELOG
 
-## [0.17.1](https://github.com/hyparam/hightable/compare/v0.17.0...HEAD)
+## [0.17.2](https://github.com/hyparam/hightable/compare/v0.17.1...HEAD)
+
+### Added
+
+- Added sortable option to the columnConfiguration property
+  - Currently disable only, sortable: true will be ignored
+
+## [0.17.1](https://github.com/hyparam/hightable/compare/v0.17.0...v0.17.1)
 
 ### Added
 
