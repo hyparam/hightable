@@ -65,6 +65,39 @@
     }
   }
 
+  /* column menu (in portal) */
+  div[role="menu"] {
+    position: fixed;
+    z-index: 1001;
+  }
+
+  /* menu overlay (in portal) */
+  /* TODO(SL): use dialog and ::backdrop instead? */
+  div[role="presentation"]:has(+ div[role="menu"]) {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: transparent;
+    z-index: 1000;
+  }
+
+  /* column menu button */
+  /* TODO: fix the positioning */
+  thead {
+    th {
+      & > button {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 20px;
+        height: 20px;
+      }
+    }
+  }
+
   /* column resize */
   thead [role="spinbutton"] {
     position: absolute;
@@ -170,6 +203,7 @@
   --focus-background-color: #efeef6;
   --focusable-border-color: #666;
   --focusable-background-color: #f1f1f3;
+  --light-border-color: #c9c9c9;
 
   .top-border {
     border-top: var(--top-border-height) solid var(--top-border-color);
@@ -208,8 +242,7 @@
   thead {
     th {
       background-color: #f1f1f3;
-      /* border: none; */
-      border-bottom: 2px solid #c9c9c9;
+      border-bottom: 2px solid var(--light-border-color);
       color: #444;
       height: 20px;
       padding-top: 4px;
@@ -217,7 +250,7 @@
 
       /* sorting is enabled - add space for the sort arrow */
       &[aria-sort] {
-        padding-right: calc(var(--cell-horizontal-padding) + 2rem);
+        padding-right: calc(var(--cell-horizontal-padding) + 2.5rem);
       }
 
       &[data-fixed-width="true"]::before {
@@ -235,7 +268,7 @@
   }
 
   th[aria-sort]::after {
-    right: var(--cell-horizontal-padding);
+    right: calc(var(--cell-horizontal-padding) + 1rem);
     top: 4px;
     padding-left: 2px;
     background: none;
@@ -277,6 +310,87 @@
       outline-width: var(--focus-border-width);
       outline-offset: -2px;
       background-color: var(--focus-background-color);
+    }
+  }
+
+  /* column menu (in portal) */
+  div[role="menu"] {
+    margin-top: 4px;
+    background-color: var(--focusable-background-color);
+    border: 1px solid var(--light-border-color);
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    min-width: 150px;
+    font-size: 0.875rem;
+    color: #444;
+    padding: 4px 0;
+
+    &:focus,
+    & > [role="menuitem"]:focus {
+      outline-style: solid;
+      outline-color: var(--focus-border-color);
+      outline-width: var(--focus-border-width);
+      outline-offset: -2px;
+    }
+
+    & > [role="presentation"] {
+      padding: 4px 12px 8px;
+      font-weight: bold;
+    }
+
+    & > [role="menuitem"] {
+      display: block;
+      width: 100%;
+      text-align: left;
+      padding: 8px 12px;
+      border-style: solid;
+      border-color: var(--light-border-color);
+      border-width: 1px 0;
+      background-color: white;
+      cursor: pointer;
+
+      &:hover {
+        background-color: var(--focusable-background-color);
+      }
+    }
+  }
+
+  /* column menu button */
+  thead {
+    th {
+      & > button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+        border-radius: 50%;
+        border: none;
+        background-color: #f1f1f3;
+
+        &:focus {
+          outline-style: solid;
+          outline-color: var(--focus-border-color);
+          outline-width: var(--focus-border-width);
+          outline-offset: -2px;
+          background-color: #dbdbe5;
+        }
+
+        & > span {
+          font-size: 0.875rem;
+          line-height: 1;
+          color: #444;
+          font-weight: bold;
+        }
+      }
+      &:hover > button,
+      & > button:focus,
+      & > button:focus-visible,
+      & > button[aria-expanded="true"] {
+        background-color: #dbdbe5;
+        opacity: 1;
+      }
     }
   }
 
