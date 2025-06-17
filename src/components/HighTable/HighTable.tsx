@@ -88,13 +88,13 @@ function HighTableData(props: PropsData) {
     /* important: key={key} ensures the local state is recreated if the data has changed */
     <OrderByProvider key={key} orderBy={orderBy} onOrderByChange={onOrderByChange} disabled={!data.sortable}>
       <SelectionProvider selection={selection} onSelectionChange={onSelectionChange}>
-        <PortalContainerProvider>
-          <ColumnStatesProvider key={key} localStorageKey={cacheKey ? `${cacheKey}${columnStatesSuffix}` : undefined} numColumns={data.header.length} minWidth={minWidth}>
-            <CellsNavigationProvider colCount={ariaColCount} rowCount={ariaRowCount} rowPadding={props.padding ?? defaultPadding}>
+        <ColumnStatesProvider key={key} localStorageKey={cacheKey ? `${cacheKey}${columnStatesSuffix}` : undefined} numColumns={data.header.length} minWidth={minWidth}>
+          <CellsNavigationProvider colCount={ariaColCount} rowCount={ariaRowCount} rowPadding={props.padding ?? defaultPadding}>
+            <PortalContainerProvider>
               <HighTableInner {...props} />
-            </CellsNavigationProvider>
-          </ColumnStatesProvider>
-        </PortalContainerProvider>
+            </PortalContainerProvider>
+          </CellsNavigationProvider>
+        </ColumnStatesProvider>
       </SelectionProvider>
     </OrderByProvider>
   )
