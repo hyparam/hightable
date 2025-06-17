@@ -1,6 +1,12 @@
 # CHANGELOG
 
-## [Unreleased](https://github.com/hyparam/hightable/compare/v0.17.0...HEAD)
+## [0.17.1](https://github.com/hyparam/hightable/compare/v0.17.0...HEAD)
+
+### Added
+
+- Added external facing columnConfiguration property to HighTable component
+  - Format is { [columnName]: { ...configuration } }
+  - Currently only supports one property, headerComponent which allows overriding the header cell with a custom React component
 
 ## [0.17.0](https://github.com/hyparam/hightable/compare/v0.16.0...v0.17.0) - 2025-06-04
 

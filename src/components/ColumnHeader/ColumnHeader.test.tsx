@@ -37,7 +37,17 @@ describe('ColumnHeader', () => {
 
   it('renders column header correctly', () => {
     const content = 'test'
-    const { getByRole } = render(<table><thead><tr><ColumnHeader columnName="test" {...defaultProps}>{content}</ColumnHeader></tr></thead></table>)
+    const { getByRole } = render(<table><thead><tr><ColumnHeader columnName={content} {...defaultProps}>{content}</ColumnHeader></tr></thead></table>)
+    const element = getByRole('columnheader')
+    expect(element.textContent).toEqual(content)
+    expect(getOffsetWidth).not.toHaveBeenCalled()
+  })
+
+  it('renders headerComponent from columnConfiguration if present', () => {
+    const key = 'test'
+    const content = 'component'
+    const colConfig = { headerComponent: <span>{content}</span> }
+    const { getByRole } = render(<table><thead><tr><ColumnHeader columnName={key} columnConfig={colConfig} {...defaultProps}>{content}</ColumnHeader></tr></thead></table>)
     const element = getByRole('columnheader')
     expect(element.textContent).toEqual(content)
     expect(getOffsetWidth).not.toHaveBeenCalled()

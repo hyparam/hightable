@@ -1,5 +1,6 @@
 import { KeyboardEvent, ReactNode, useCallback, useEffect, useMemo, useRef } from 'react'
 import { flushSync } from 'react-dom'
+import { ColumnConfig } from '../../helpers/columnConfiguration.js'
 import { Direction } from '../../helpers/sort.js'
 import { getOffsetWidth } from '../../helpers/width.js'
 import { useCellNavigation } from '../../hooks/useCellsNavigation.js'
@@ -21,9 +22,10 @@ interface Props {
   ariaColIndex: number // aria col index for the header
   ariaRowIndex: number // aria row index for the header
   className?: string // optional class name
+  columnConfig?: ColumnConfig
 }
 
-export default function ColumnHeader({ columnIndex, columnName, dataReady, direction, onClick, orderByIndex, orderBySize, ariaColIndex, ariaRowIndex, className, children }: Props) {
+export default function ColumnHeader({ columnIndex, columnName, columnConfig, dataReady, direction, onClick, orderByIndex, orderBySize, ariaColIndex, ariaRowIndex, className, children }: Props) {
   const ref = useRef<HTMLTableCellElement>(null)
   const { tabIndex, navigateToCell } = useCellNavigation({ ref, ariaColIndex, ariaRowIndex })
   const { isOpen, position, menuId, handleToggle, handleMenuClick } = useColumnMenu(ref, navigateToCell)
@@ -123,7 +125,7 @@ export default function ColumnHeader({ columnIndex, columnName, dataReady, direc
       className={className}
       data-fixed-width={dataFixedWidth}
     >
-      {children}
+      {columnConfig?.headerComponent ?? children}
       {sortable &&
         <ColumnMenuButton
           onClick={handleMenuClick}

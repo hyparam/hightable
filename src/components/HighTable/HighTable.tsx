@@ -1,4 +1,5 @@
 import { CSSProperties, KeyboardEvent, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { ColumnConfiguration } from '../../helpers/columnConfiguration.js'
 import { DataFrame } from '../../helpers/dataframe.js'
 import { PartialRow } from '../../helpers/row.js'
 import { Selection, areAllSelected, isSelected, toggleIndexInSelection, toggleRangeInSelection, toggleRangeInTable } from '../../helpers/selection.js'
@@ -8,7 +9,9 @@ import { CellsNavigationProvider, useCellsNavigation } from '../../hooks/useCell
 import { ColumnStatesProvider, useColumnStates } from '../../hooks/useColumnStates.js'
 import { DataProvider, useData } from '../../hooks/useData.js'
 import { OrderByProvider, useOrderBy } from '../../hooks/useOrderBy.js'
+import { PortalContainerProvider, usePortalContainer } from '../../hooks/usePortalContainer.js'
 import { SelectionProvider, useSelection } from '../../hooks/useSelection.js'
+import { useTableConfig } from '../../hooks/useTableConfig.js'
 import { stringify as stringifyDefault } from '../../utils/stringify.js'
 import { throttle } from '../../utils/throttle.js'
 import Cell from '../Cell/Cell.js'
@@ -18,7 +21,6 @@ import TableCorner from '../TableCorner/TableCorner.js'
 import TableHeader from '../TableHeader/TableHeader.js'
 import { formatRowNumber, rowError } from './HighTable.helpers.js'
 import styles from './HighTable.module.css'
-import { PortalContainerProvider, usePortalContainer } from '../../hooks/usePortalContainer.js'
 
 /**
  * A slice of the (optionally sorted) rows to render as HTML.
@@ -35,6 +37,7 @@ const minWidth = 50 // minimum width of a cell in px, used to compute the column
 
 interface Props {
   data: DataFrame
+  columnConfiguration?: ColumnConfiguration
   cacheKey?: string // used to persist column widths. If undefined, the column widths are not persisted. It is expected to be unique for each table.
   overscan?: number // number of rows to fetch outside of the viewport
   padding?: number // number of padding rows to render outside of the viewport
@@ -49,7 +52,7 @@ interface Props {
   onSelectionChange?: (selection: Selection) => void // callback to call when a user interaction changes the selection. The selection is expressed as data indexes (not as indexes in the table). The interactions are disabled if undefined.
   stringify?: (value: unknown) => string | undefined
   className?: string // additional class names for the component
-  columnClassNames?: (string | undefined)[] // list of additional class names for the header and cells of each column. The index in this array corresponds to the column index in data.header
+  columnClassNames?: (string | undefined)[] // list of additional class names for the header and cells of each column. The index in this array corresponds to the column index in columns
   styled?: boolean // use styled component? (default true)
 }
 
@@ -116,6 +119,7 @@ export function HighTableInner({
   className = '',
   columnClassNames = [],
   styled = true,
+  columnConfiguration,
 }: PropsInner) {
   /**
    * The component relies on the model of a virtual table which rows are ordered and only the
@@ -150,6 +154,7 @@ export function HighTableInner({
   const { orderBy, onOrderByChange } = useOrderBy()
   const { selection, onSelectionChange, toggleAllRows, onTableKeyDown: onSelectionTableKeyDown } = useSelection({ numRows })
 
+  const columns = useTableConfig(data.header, columnConfiguration)
   const onTableKeyDown = useCallback((event: KeyboardEvent) => {
     onNavigationTableKeyDown?.(event)
     onSelectionTableKeyDown?.(event, numRows)
@@ -445,9 +450,9 @@ export function HighTableInner({
   }, [onScrollKeyDown])
 
   // don't render table if header is empty
-  if (!data.header.length) return
+  if (!columns.length) return
 
-  const ariaColCount = data.header.length + 1 // don't forget the selection column
+  const ariaColCount = columns.length + 1 // don't forget the selection column
   const ariaRowCount = numRows + 1 // don't forget the header row
   return (
     <div ref={containerRef} className={`${styles.hightable} ${styled ? styles.styled : ''} ${className}`}>
@@ -476,7 +481,7 @@ export function HighTableInner({
                 >&nbsp;</TableCorner>
                 <TableHeader
                   dataReady={slice !== undefined}
-                  header={data.header}
+                  header={columns}
                   orderBy={orderBy}
                   onOrderByChange={onOrderByChange}
                   columnClassNames={columnClassNames}
@@ -505,7 +510,7 @@ export function HighTableInner({
                     key={tableIndex}
                     selected={selected}
                     ariaRowIndex={ariaRowIndex}
-                    title={rowError(row, data.header.length)}
+                    title={rowError(row, columns.length)}
                   >
                     <RowHeader
                       busy={dataIndex === undefined}

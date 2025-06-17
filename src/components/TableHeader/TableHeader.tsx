@@ -1,9 +1,10 @@
 import { useCallback, useMemo } from 'react'
 import { OrderBy, toggleColumn } from '../../helpers/sort.js'
 import ColumnHeader from '../ColumnHeader/ColumnHeader.js'
+import { ColumnDescriptor } from '../../hooks/useTableConfig.js'
 
 interface TableProps {
-  header: string[]
+  header: ColumnDescriptor[]
   orderBy?: OrderBy // array of column order by clauses. If undefined, the table is unordered, the sort elements are hidden and the interactions are disabled.
   onOrderByChange?: (orderBy: OrderBy) => void // callback to call when a user interaction changes the order. The interactions are disabled if undefined.
   dataReady: boolean
@@ -29,7 +30,8 @@ export default function TableHeader({
     return new Map((orderBy ?? []).map(({ column, direction }, index) => [column, { direction, index }]))
   }, [orderBy])
 
-  return header.map((name, columnIndex) => {
+  return header.map((colConfig) => {
+    const { key: name, index: columnIndex, ...columnConfig } = colConfig
     // Note: columnIndex is the index of the column in the dataframe header
     // and not the index of the column in the table (which can be different if
     // some columns are hidden, or if the order is changed)
@@ -48,6 +50,7 @@ export default function TableHeader({
         className={columnClassNames[columnIndex]}
         ariaColIndex={ariaColIndex}
         ariaRowIndex={ariaRowIndex}
+        columnConfig={columnConfig}
       >
         {name}
       </ColumnHeader>

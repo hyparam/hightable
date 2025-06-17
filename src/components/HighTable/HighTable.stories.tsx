@@ -205,6 +205,20 @@ export const CustomHeaderStyle: Story = {
     columnClassNames: [undefined, undefined, 'delegated'],
   },
 }
+export const HeaderComponent: Story = {
+  args: {
+    data,
+    columnConfiguration: {
+      Double: {
+        headerComponent:
+          <span>
+            Double &nbsp;<button type="button" onClick={() => { alert('Custom function') }}>Button</button>
+          </span>
+        ,
+      },
+    },
+  },
+}
 export const FilteredRows: Story = {
   args: {
     data: filteredData,
