@@ -1,11 +1,14 @@
 import { ReactNode, createContext, useContext, useEffect, useState } from 'react'
 import { DataFrame, arrayDataFrame } from '../helpers/dataframe/index.js'
-import { isValidRowNumber } from '../helpers/row.js'
 
 interface DataContextType {
   data: DataFrame,
   numRows: number,
   key: string,
+}
+
+function isValidRowNumber(row: unknown): row is number {
+  return typeof row === 'number' && Number.isInteger(row) && row >= 0
 }
 
 function getDefaultDataContext(): DataContextType {

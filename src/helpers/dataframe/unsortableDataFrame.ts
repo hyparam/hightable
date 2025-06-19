@@ -2,7 +2,6 @@ import { CustomEventTarget, createEventTarget } from '../typedEventTarget.js'
 import { CancellableJob, Cells, CommonDataFrameEvents, ResolvedValue } from './types.js'
 
 // Map of event type -> detail
-// TODO(SL): shall we force lowercase event type? https://developer.mozilla.org/en-US/docs/Web/API/Element/MozMousePixelScroll_event is a counter-example (but deprecated).
 export interface UnsortableDataFrameEvents extends CommonDataFrameEvents{
   'dataframe:update': { rowStart: number, rowEnd: number, columns: string[], orderBy?: undefined };
 }
