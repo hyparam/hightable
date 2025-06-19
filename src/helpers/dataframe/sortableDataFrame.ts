@@ -1,5 +1,5 @@
 import { OrderBy } from '../sort.js'
-import { CustomEventTarget } from '../typedEventTarget.js'
+import { CustomEventTarget, createEventTarget } from '../typedEventTarget.js'
 import { CancellableJob, CommonDataFrameEvents, ResolvedValue } from './types.js'
 import { UnsortableDataFrame } from './unsortableDataFrame.js'
 
@@ -44,5 +44,49 @@ export interface SortableDataFrame {
 }
 
 export function sortableDataFrame(unsortableDataFrame: UnsortableDataFrame): SortableDataFrame {
-  throw new Error(`sortableDataFrame is not implemented yet - ignoring dataframe with columns: ${unsortableDataFrame.header.join(', ') }`)
+  const eventTarget = createEventTarget<SortableDataFrameEvents>()
+  unsortableDataFrame.eventTarget.addEventListener('dataframe:numrowschange', (event) => {
+    // Forward the numRows change event to the sortable data frame
+    eventTarget.dispatchEvent(new CustomEvent('dataframe:numrowschange', { detail: { numRows: event.detail.numRows } }))
+  })
+  unsortableDataFrame.eventTarget.addEventListener('dataframe:update', (event) => {
+    // Forward the update event to the sortable data frame
+    const { rowStart, rowEnd, columns } = event.detail
+    eventTarget.dispatchEvent(new CustomEvent('dataframe:update', { detail: { rowStart, rowEnd, columns } }))
+  })
+  // TODO(SL): the listeners are not removed, so we might leak memory if the sortableDataFrame is not used anymore.
+  // We could add a method to remove the listeners (.dispose() ?).
+
+  const df: SortableDataFrame = {
+    numRows: unsortableDataFrame.numRows,
+    header: [...unsortableDataFrame.header],
+    sortable: true,
+
+    getCell({ row, column, orderBy }) {
+      // If orderBy is provided, we need to fetch the cell data in the sorted order.
+      // Otherwise, we can just return the cell data as is.
+      if (orderBy && orderBy.length > 0) {
+        // This is a placeholder for actual sorting logic.
+        // In a real implementation, you would sort the data based on the orderBy criteria.
+        throw new Error('Sorting not implemented yet')
+      }
+      return unsortableDataFrame.getCell({ row, column })
+    },
+    eventTarget,
+  }
+
+  const { fetch } = unsortableDataFrame
+  if (fetch) {
+    df.fetch = ({ rowStart, rowEnd, columns, orderBy }) => {
+      // If orderBy is provided, we need to fetch the data in the sorted order.
+      // Otherwise, we can just fetch the data as is.
+      if (orderBy) {
+        // This is a placeholder for actual sorting logic.
+        // In a real implementation, you would sort the data based on the orderBy criteria.
+        throw new Error('Sorting not implemented yet')
+      }
+      return fetch({ rowStart, rowEnd, columns })
+    }
+  }
+  return df
 }
