@@ -4,7 +4,6 @@ import { CustomEventTarget, createEventTarget } from './typedEventTarget'
 export type Cells = Record<string, any>
 
 // Map of event type -> detail
-// Starting with a single event, required in Iceberg
 // TODO(SL): shall we force lowercase event type? https://developer.mozilla.org/en-US/docs/Web/API/Element/MozMousePixelScroll_event is a counter-example (but deprecated).
 export interface DataFrameEvents {
   'dataframe:numrowschange': { numRows: number };
@@ -59,17 +58,6 @@ export function arrayDataFrame(data: Cells[]): DataFrameV2 {
   // publish an event:
   // eventTarget.dispatchEvent(new CustomEvent('dataframe:numrowschange', { detail: { numRows: 42 } }))
 
-  function fetch({ orderBy }: { rowStart: number, rowEnd: number, columns: string[], orderBy?: OrderBy }) {
-    if (orderBy && orderBy.length > 0) {
-      throw new Error('Sorting is not implemented.')
-    }
-    return {
-      cancel: () => {
-        // No-op for static data
-      },
-    }
-  }
-
   const header = 0 in data ? Object.keys(data[0]) : []
 
   return {
@@ -93,7 +81,6 @@ export function arrayDataFrame(data: Cells[]): DataFrameV2 {
       return { value: cells[column] }
       // Note that this function never returns undefined (meaning pending cell), because the data is static.
     },
-    fetch,
     eventTarget,
   }
 }
