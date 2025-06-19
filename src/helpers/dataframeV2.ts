@@ -30,6 +30,15 @@ export interface DataFrameV2 {
   fetch?: ({ rowStart, rowEnd, columns, orderBy }: { rowStart: number, rowEnd: number, columns: string[], orderBy?: OrderBy }) => CancellableJob
 
   // emits events, defined in DataFrameEvents
+  // eventTarget can be used as follows:
+  //
+  // listen to an event:
+  // eventTarget.addEventListener('dataframe:numrowschange', (event) => {
+  //   console.log('Number of rows changed:', event.detail.numRows)
+  // })
+  //
+  // publish an event:
+  // eventTarget.dispatchEvent(new CustomEvent('dataframe:numrowschange', { detail: { numRows: 42 } }))
   eventTarget: CustomEventTarget<DataFrameEvents>
 }
 
@@ -47,17 +56,6 @@ export function sortableDataFrame(data: DataFrameV2): DataFrameV2 {
 }
 
 export function arrayDataFrame(data: Cells[]): DataFrameV2 {
-  const eventTarget = createEventTarget<DataFrameEvents>()
-  // eventTarget can be used as follows:
-  //
-  // listen to an event:
-  // eventTarget.addEventListener('dataframe:numrowschange', (event) => {
-  //   console.log('Number of rows changed:', event.detail.numRows)
-  // })
-  //
-  // publish an event:
-  // eventTarget.dispatchEvent(new CustomEvent('dataframe:numrowschange', { detail: { numRows: 42 } }))
-
   const header = 0 in data ? Object.keys(data[0]) : []
 
   return {
@@ -81,6 +79,6 @@ export function arrayDataFrame(data: Cells[]): DataFrameV2 {
       return { value: cells[column] }
       // Note that this function never returns undefined (meaning pending cell), because the data is static.
     },
-    eventTarget,
+    eventTarget: createEventTarget<DataFrameEvents>(),
   }
 }
