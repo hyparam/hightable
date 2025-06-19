@@ -1,11 +1,11 @@
 import { KeyboardEvent, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { DataFrameEvents, DataFrameV2, ResolvedValue } from '../../helpers/dataframeV2.js'
+import { DataFrame, DataFrameEvents, ResolvedValue } from '../../helpers/dataframe/index.js'
 import { OrderBy, areEqualOrderBy } from '../../helpers/sort.js'
 import { useCellNavigation } from '../../hooks/useCellsNavigation.js'
 import { useColumnStates } from '../../hooks/useColumnStates.js'
 
 interface Props {
-  data: DataFrameV2
+  data: DataFrame
   rowIndex: number
   column: string
   orderBy?: OrderBy

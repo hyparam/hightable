@@ -1,6 +1,6 @@
 import { CSSProperties, KeyboardEvent, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ColumnConfiguration } from '../../helpers/columnConfiguration.js'
-import { DataFrameV2 } from '../../helpers/dataframeV2.js'
+import { DataFrame } from '../../helpers/dataframe/index.js'
 import { Selection, areAllSelected, isSelected, toggleIndexInSelection, toggleRangeInSelection } from '../../helpers/selection.js'
 import { OrderBy } from '../../helpers/sort.js'
 import { cellStyle, getClientWidth, getOffsetWidth } from '../../helpers/width.js'
@@ -23,7 +23,7 @@ const rowHeight = 33 // row height px
 const minWidth = 50 // minimum width of a cell in px, used to compute the column widths
 
 interface Props {
-  data: DataFrameV2
+  data: DataFrame
   columnConfiguration?: ColumnConfiguration
   cacheKey?: string // used to persist column widths. If undefined, the column widths are not persisted. It is expected to be unique for each table.
   overscan?: number // number of rows to fetch outside of the viewport
@@ -76,7 +76,7 @@ function HighTableData(props: PropsData) {
     /* important: key={key} ensures the local state is recreated if the data has changed */
     <OrderByProvider key={key} orderBy={orderBy} onOrderByChange={onOrderByChange} disabled={true}>
       {/* <OrderByProvider key={key} orderBy={orderBy} onOrderByChange={onOrderByChange} disabled={!data.sortable}></OrderByProvider> */
-      /* TODO(SL): enable sorting when the DataFrameV2 supports it */}
+      /* TODO(SL): enable sorting when the DataFrame supports it */}
       <SelectionProvider selection={selection} onSelectionChange={onSelectionChange}>
         <ColumnStatesProvider key={key} localStorageKey={cacheKey ? `${cacheKey}${columnStatesSuffix}` : undefined} numColumns={data.header.length} minWidth={minWidth}>
           <CellsNavigationProvider colCount={ariaColCount} rowCount={ariaRowCount} rowPadding={props.padding ?? defaultPadding}>

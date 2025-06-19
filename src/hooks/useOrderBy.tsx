@@ -26,7 +26,7 @@ export function OrderByProvider({ children, orderBy, onOrderByChange, disabled }
 
   return (
     <OrderByContext.Provider value={{
-      orderBy: undefined, //state.value, // TODO(SL): enable this when the DataFrameV2 supports sorting
+      orderBy: undefined, //state.value, // TODO(SL): enable this when the DataFrame supports sorting
       onOrderByChange: state.onChange,
     }}>
       {children}

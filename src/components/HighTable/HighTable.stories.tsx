@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { DataFrameEvents, DataFrameV2 } from '../../helpers/dataframeV2.js'
+import { UnsortableDataFrame, UnsortableDataFrameEvents } from '../../helpers/dataframe/unsortableDataFrame.js'
 import { createEventTarget } from '../../helpers/typedEventTarget.js'
 import HighTable from './HighTable.js'
 
@@ -8,7 +8,7 @@ function random(seed: number) {
   return x - Math.floor(x)
 }
 
-const data: DataFrameV2 = {
+const data: UnsortableDataFrame = {
   header: ['ID', 'Count', 'Double', 'Constant', 'Value1', 'Value2', 'Value3'],
   numRows: 1000,
   getCell({ row, column }) {
@@ -33,7 +33,7 @@ const data: DataFrameV2 = {
       },
     }
   },
-  eventTarget: createEventTarget<DataFrameEvents>(),
+  eventTarget: createEventTarget<UnsortableDataFrameEvents>(),
 }
 
 // function delay<T>(value: T, ms: number): Promise<T> {
@@ -60,7 +60,7 @@ const data: DataFrameV2 = {
 
 // const sortableData = rowCache(sortableDataFrame(data))
 
-// const dataWithUndefinedCells: DataFrameV2 = {
+// const dataWithUndefinedCells: DataFrame = {
 //   header: ['ID', 'Count'],
 //   numRows: 1000,
 //   rows: ({ start, end }) => Array.from({ length: end - start }, (_, index) => {
@@ -78,7 +78,7 @@ const data: DataFrameV2 = {
 //   }),
 // }
 
-// const filteredData: DataFrameV2 = rowCache(sortableDataFrame({
+// const filteredData: DataFrame = rowCache(sortableDataFrame({
 //   header: ['ID', 'Count', 'Value1', 'Value2'],
 //   numRows: 1000,
 //   // only the first 15 rows are valid, the rest are deleted
@@ -110,7 +110,7 @@ const data: DataFrameV2 = {
 //   }),
 // }))
 
-// const longStringsData: DataFrameV2 = {
+// const longStringsData: DataFrame = {
 //   header: ['ID', 'LongString', 'Value1', 'Value2'],
 //   numRows: 1000,
 //   rows: ({ start, end }) => Array.from({ length: end - start }, (_, index) => {
@@ -127,7 +127,7 @@ const data: DataFrameV2 = {
 //   }),
 // }
 
-// const manyColumnsData: DataFrameV2 = {
+// const manyColumnsData: DataFrame = {
 //   header: ['ID1', 'LongString1', 'Value1', 'ID2', 'LongString2', 'Value2', 'ID3', 'LongString3', 'Value3', 'ID4', 'LongString4', 'Value4'],
 //   numRows: 1000,
 //   rows: ({ start, end }) => Array.from({ length: end - start }, (_, index) => {

@@ -1,8 +1,7 @@
 import { act, fireEvent, waitFor } from '@testing-library/react'
 import { UserEvent } from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { DataFrameEvents, DataFrameV2 } from '../../helpers/dataframeV2.js'
-import { OrderBy } from '../../helpers/sort.js'
+import { UnsortableDataFrame, UnsortableDataFrameEvents } from '../../helpers/dataframe/unsortableDataFrame.js'
 import { createEventTarget } from '../../helpers/typedEventTarget.js'
 import { MaybeColumnState } from '../../hooks/useColumnStates.js'
 import { render } from '../../utils/userEvent.js'
@@ -10,7 +9,7 @@ import HighTable, { columnStatesSuffix, defaultOverscan } from './HighTable.js'
 
 Element.prototype.scrollIntoView = vi.fn()
 
-const data: DataFrameV2 = {
+const data: UnsortableDataFrame = {
   header: ['ID', 'Count', 'Double', 'Triple'],
   numRows: 1000,
   getCell({ row, column }: { row: number, column: string }) {
@@ -28,10 +27,10 @@ const data: DataFrameV2 = {
     }
     throw new Error(`Unknown column: ${column}`)
   },
-  eventTarget: createEventTarget<DataFrameEvents>(),
+  eventTarget: createEventTarget<UnsortableDataFrameEvents>(),
 }
 
-const otherData: DataFrameV2 = {
+const otherData: UnsortableDataFrame = {
   header: ['ID', 'Count'],
   numRows: 1000,
   getCell({ row, column }: { row: number, column: string }) {
@@ -45,15 +44,15 @@ const otherData: DataFrameV2 = {
     }
     throw new Error(`Unknown column: ${column}`)
   },
-  eventTarget: createEventTarget<DataFrameEvents>(),
+  eventTarget: createEventTarget<UnsortableDataFrameEvents>(),
 }
 
-function createAsyncDataFrame({ ms }: {ms: number} = { ms: 10 }): DataFrameV2 & {_forTests: {cancel: () => void, asyncDataFetched: boolean[]}} {
+function createAsyncDataFrame({ ms }: {ms: number} = { ms: 10 }): UnsortableDataFrame & {_forTests: {cancel: () => void, asyncDataFetched: boolean[]}} {
   const asyncDataFetched = Array.from({ length: 1000 }, (_, i) => i).reduce<boolean[]>((acc, row) => {
     acc[row] = false
     return acc
   }, [])
-  const eventTarget = createEventTarget<DataFrameEvents>()
+  const eventTarget = createEventTarget<UnsortableDataFrameEvents>()
   const cancel = vi.fn()
   return {
     header: ['ID', 'Name', 'Age'],
@@ -74,7 +73,7 @@ function createAsyncDataFrame({ ms }: {ms: number} = { ms: 10 }): DataFrameV2 & 
       }
       throw new Error(`Unknown column: ${column}`)
     }),
-    fetch: vi.fn(({ rowStart, rowEnd, columns, orderBy }: { rowStart: number, rowEnd: number, columns: string[], orderBy?: OrderBy }) => {
+    fetch: vi.fn(({ rowStart, rowEnd, columns }: { rowStart: number, rowEnd: number, columns: string[] }) => {
       let cancelled = false
       void new Promise(resolve => setTimeout(resolve, ms)).then(() => {
         if (cancelled) {
@@ -83,7 +82,7 @@ function createAsyncDataFrame({ ms }: {ms: number} = { ms: 10 }): DataFrameV2 & 
         for (let row = rowStart; row < rowEnd; row++) {
           asyncDataFetched[row] = true
         }
-        eventTarget.dispatchEvent(new CustomEvent('dataframe:update', { detail: { rowStart, rowEnd, columns, orderBy } }))
+        eventTarget.dispatchEvent(new CustomEvent('dataframe:update', { detail: { rowStart, rowEnd, columns } }))
       })
       return {
         cancel: () => {
@@ -131,7 +130,7 @@ describe('HighTable', () => {
         },
       }
     },
-    eventTarget: createEventTarget<DataFrameEvents>(),
+    eventTarget: createEventTarget<UnsortableDataFrameEvents>(),
   }
 
   beforeEach(() => {

@@ -1,9 +1,9 @@
 import { ReactNode, createContext, useContext, useEffect, useState } from 'react'
-import { DataFrameV2, arrayDataFrame } from '../helpers/dataframeV2.js'
+import { DataFrame, arrayDataFrame } from '../helpers/dataframe/index.js'
 import { isValidRowNumber } from '../helpers/row.js'
 
 interface DataContextType {
-  data: DataFrameV2,
+  data: DataFrame,
   numRows: number,
   key: string,
 }
@@ -19,7 +19,7 @@ function getDefaultDataContext(): DataContextType {
 export const DataContext = createContext<DataContextType>(getDefaultDataContext())
 
 interface DataProviderProps {
-  data: DataFrameV2,
+  data: DataFrame,
   onError: (error: Error) => void
   children: ReactNode
 }
@@ -31,7 +31,7 @@ function getRandomKey(): string {
 export function DataProvider({ children, onError, data }: DataProviderProps) {
   // We want a string key to identify the data.
   const [key, setKey] = useState<string>(getRandomKey())
-  const [previousData, setPreviousData] = useState<DataFrameV2>(data)
+  const [previousData, setPreviousData] = useState<DataFrame>(data)
   const [numRows, setNumRows] = useState(data.numRows)
 
   useEffect(() => {

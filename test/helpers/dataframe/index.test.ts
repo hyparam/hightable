@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { arrayDataFrame } from '../../src/helpers/dataframeV2.js'
+import { arrayDataFrame } from '../../../src/helpers/dataframe/index.js'
 
 describe('arrayDataFrame', () => {
   const testData = [
@@ -43,9 +43,9 @@ describe('arrayDataFrame', () => {
     }).toThrow('Invalid row index: 0')
   })
 
-  it('provides fetch, even if it\'s a no-op function', () => {
+  it('does not provides fetch', () => {
     const df = arrayDataFrame([])
-    expect(df.fetch).toBeDefined()
+    expect(df.fetch).toBeUndefined()
   })
 
 })
