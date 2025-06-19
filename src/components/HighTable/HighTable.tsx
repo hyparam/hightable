@@ -104,7 +104,7 @@ export function HighTableInner({
   onDoubleClickCell,
   onMouseDownCell,
   onKeyDownCell,
-  onError = console.error,
+  // onError = console.error, // TODO(SL): re-enable later
   stringify = stringifyDefault,
   className = '',
   columnClassNames = [],
@@ -137,7 +137,7 @@ export function HighTableInner({
 
   // TODO(SL): remove this state and only rely on the data frame for these operations?
   // ie. cache the previous sort indexes in the data frame itself
-  const [ranksMap, setRanksMap] = useState<Map<string, Promise<number[]>>>(() => new Map())
+  // const [ranksMap, setRanksMap] = useState<Map<string, Promise<number[]>>>(() => new Map())
 
   const { orderBy, onOrderByChange } = useOrderBy()
   const { selection, onSelectionChange, toggleAllRows, onTableKeyDown: onSelectionTableKeyDown } = useSelection({ numRows })
@@ -148,15 +148,15 @@ export function HighTableInner({
     onSelectionTableKeyDown?.(event, numRows)
   }, [onNavigationTableKeyDown, onSelectionTableKeyDown, numRows])
 
-  const pendingSelectionRequest = useRef(0)
-  const getOnCheckboxPress = useCallback(({ tableIndex, dataIndex }: {tableIndex: number, dataIndex: number | undefined}) => {
+  // const pendingSelectionRequest = useRef(0)
+  const getOnCheckboxPress = useCallback(({ dataIndex }: {tableIndex: number, dataIndex: number | undefined}) => {
     if (selection && onSelectionChange && dataIndex !== undefined) {
       return (shiftKey: boolean): void => {
-        void onSelectRowClick(shiftKey, selection, onSelectionChange, dataIndex)
+        onSelectRowClick(shiftKey, selection, onSelectionChange, dataIndex)
       }
     }
 
-    async function onSelectRowClick(shiftKey: boolean, selection: Selection, onSelectionChange: (selection: Selection) => void, dataIndex: number) {
+    function onSelectRowClick(shiftKey: boolean, selection: Selection, onSelectionChange: (selection: Selection) => void, dataIndex: number) {
       const useAnchor = shiftKey && selection.anchor !== undefined
 
       if (!useAnchor) {
@@ -187,7 +187,7 @@ export function HighTableInner({
       //   onSelectionChange(newSelection)
       // }
     }
-  }, [data, onSelectionChange, orderBy, ranksMap, selection])
+  }, [onSelectionChange, orderBy, selection])
   const allRowsSelected = useMemo(() => {
     if (!selection) return undefined
     return areAllSelected({ ranges: selection.ranges, length: numRows })

@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { DataFrameV2 } from '../../helpers/dataframeV2.js'
+import { DataFrameEvents, DataFrameV2 } from '../../helpers/dataframeV2.js'
 import { createEventTarget } from '../../helpers/typedEventTarget.js'
 import HighTable from './HighTable.js'
 
@@ -33,10 +33,7 @@ const data: DataFrameV2 = {
       },
     }
   },
-  eventTarget: createEventTarget<{
-    'dataframe:numrowschange': { numRows: number }
-  }>(),
-
+  eventTarget: createEventTarget<DataFrameEvents>(),
 }
 
 // function delay<T>(value: T, ms: number): Promise<T> {
