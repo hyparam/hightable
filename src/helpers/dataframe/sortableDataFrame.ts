@@ -20,7 +20,8 @@ export interface SortableDataFrame {
   header: string[]
   sortable: true // indicates that this DataFrame supports sorting
 
-  // TODO(SL): add getIndex, or getRowIndex({row, orderBy}) to get the index of a row in the original data when sorted by orderBy.
+  // return the index of the row'th sorted row in the original unsorted data
+  getUnsortedRow({ row, orderBy }: { row: number, orderBy?: OrderBy }): number
 
   // undefined means pending, ResolvedValue is a boxed value type (so we can distinguish undefined from pending)
   // getCell does NOT initiate a fetch, it just returns resolved data
@@ -57,20 +58,21 @@ export function sortableDataFrame(unsortableDataFrame: UnsortableDataFrame): Sor
   // TODO(SL): the listeners are not removed, so we might leak memory if the sortableDataFrame is not used anymore.
   // We could add a method to remove the listeners (.dispose() ?).
 
+  function getUnsortedRow({ row, orderBy }: { row: number, orderBy?: OrderBy }): number {
+    if (!orderBy || orderBy.length === 0) {
+      // If no orderBy is provided, we can return the row as is.
+      return row
+    }
+    throw new Error('Sorting not implemented yet')
+  }
   const df: SortableDataFrame = {
     numRows: unsortableDataFrame.numRows,
     header: [...unsortableDataFrame.header],
     sortable: true,
-
+    getUnsortedRow,
     getCell({ row, column, orderBy }) {
-      // If orderBy is provided, we need to fetch the cell data in the sorted order.
-      // Otherwise, we can just return the cell data as is.
-      if (orderBy && orderBy.length > 0) {
-        // This is a placeholder for actual sorting logic.
-        // In a real implementation, you would sort the data based on the orderBy criteria.
-        throw new Error('Sorting not implemented yet')
-      }
-      return unsortableDataFrame.getCell({ row, column })
+      const unsortedRow = getUnsortedRow({ row, orderBy })
+      return unsortableDataFrame.getCell({ row: unsortedRow, column })
     },
     eventTarget,
   }
