@@ -7,6 +7,13 @@ export interface ColumnOrderBy {
 
 export type OrderBy = ColumnOrderBy[]
 
+export function checkOrderBy({ header, orderBy }: {header: string[], orderBy: OrderBy}): void {
+  const unknownColumns = orderBy.map(({ column }) => column).filter(column => !header.includes(column))
+  if (unknownColumns.length > 0) {
+    throw new Error(`Invalid orderBy field: ${unknownColumns.join(', ')}`)
+  }
+}
+
 export function areEqualOrderBy(a?: OrderBy, b?: OrderBy): boolean {
   if (!a && !b) return true
   if (!a || !b) return false
