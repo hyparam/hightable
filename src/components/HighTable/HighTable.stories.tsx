@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { UnsortableDataFrame, UnsortableDataFrameEvents } from '../../helpers/dataframe/unsortableDataFrame.js'
+import { UnsortableDataFrame, UnsortableDataFrameEvents, getStaticFetch } from '../../helpers/dataframe/unsortableDataFrame.js'
 import { createEventTarget } from '../../helpers/typedEventTarget.js'
 import HighTable from './HighTable.js'
 
@@ -8,31 +8,27 @@ function random(seed: number) {
   return x - Math.floor(x)
 }
 
+const header = ['ID', 'Count', 'Double', 'Constant', 'Value1', 'Value2', 'Value3']
+function getCell({ row, column }: { row: number, column: string }) {
+  const count = 1000 - row
+  if (!header.includes(column)) {
+    throw new Error(`Invalid column: ${column}`)
+  }
+  return {
+    value: column === 'ID' ? `row ${row}` :
+      column === 'Count' ? count :
+        column === 'Double' ? count * 2 :
+          column === 'Constant' ? 42 :
+            column === 'Value1' ? Math.floor(100 * random(135 + row)) :
+              column === 'Value2' ? Math.floor(100 * random(648 + row)) :
+                Math.floor(100 * random(315 + row)),
+  }
+}
 const data: UnsortableDataFrame = {
-  header: ['ID', 'Count', 'Double', 'Constant', 'Value1', 'Value2', 'Value3'],
+  header,
   numRows: 1000,
-  getCell({ row, column }) {
-    const count = 1000 - row
-    if (!this.header.includes(column)) {
-      throw new Error(`Invalid column: ${column}`)
-    }
-    return {
-      value: column === 'ID' ? `row ${row}` :
-        column === 'Count' ? count :
-          column === 'Double' ? count * 2 :
-            column === 'Constant' ? 42 :
-              column === 'Value1' ? Math.floor(100 * random(135 + row)) :
-                column === 'Value2' ? Math.floor(100 * random(648 + row)) :
-                  Math.floor(100 * random(315 + row)),
-    }
-  },
-  fetch() {
-    return {
-      cancel: () => {
-        // No-op for static data
-      },
-    }
-  },
+  getCell,
+  fetch: getStaticFetch({ getCell }),
   eventTarget: createEventTarget<UnsortableDataFrameEvents>(),
 }
 

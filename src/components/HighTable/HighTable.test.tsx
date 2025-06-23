@@ -1,7 +1,7 @@
 import { act, fireEvent, waitFor } from '@testing-library/react'
 import { UserEvent } from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { UnsortableDataFrame, UnsortableDataFrameEvents } from '../../helpers/dataframe/unsortableDataFrame.js'
+import { UnsortableDataFrame, UnsortableDataFrameEvents, getStaticFetch } from '../../helpers/dataframe/unsortableDataFrame.js'
 import { createEventTarget } from '../../helpers/typedEventTarget.js'
 import { MaybeColumnState } from '../../hooks/useColumnStates.js'
 import { render } from '../../utils/userEvent.js'
@@ -9,41 +9,47 @@ import HighTable, { columnStatesSuffix, defaultOverscan } from './HighTable.js'
 
 Element.prototype.scrollIntoView = vi.fn()
 
+function getDataCell({ row, column }: { row: number, column: string }) {
+  if (row < 0 || row >= 1000) {
+    throw new Error(`Invalid row index: ${row}`)
+  }
+  if (column === 'ID') {
+    return { value: `row ${row}` }
+  } else if (column === 'Count') {
+    return { value: 1000 - row }
+  } else if (column === 'Double') {
+    return { value: (1000 - row) * 2 }
+  } else if (column === 'Triple') {
+    return { value: (1000 - row) * 3 }
+  }
+  throw new Error(`Unknown column: ${column}`)
+}
+
 const data: UnsortableDataFrame = {
   header: ['ID', 'Count', 'Double', 'Triple'],
   numRows: 1000,
-  getCell({ row, column }: { row: number, column: string }) {
-    if (row < 0 || row >= 1000) {
-      throw new Error(`Invalid row index: ${row}`)
-    }
-    if (column === 'ID') {
-      return { value: `row ${row}` }
-    } else if (column === 'Count') {
-      return { value: 1000 - row }
-    } else if (column === 'Double') {
-      return { value: (1000 - row) * 2 }
-    } else if (column === 'Triple') {
-      return { value: (1000 - row) * 3 }
-    }
-    throw new Error(`Unknown column: ${column}`)
-  },
+  getCell: getDataCell,
+  fetch: getStaticFetch({ getCell: getDataCell }),
   eventTarget: createEventTarget<UnsortableDataFrameEvents>(),
+}
+
+function getOtherDataCell({ row, column }: { row: number, column: string }) {
+  if (row < 0 || row >= 1000) {
+    throw new Error(`Invalid row index: ${row}`)
+  }
+  if (column === 'ID') {
+    return { value: `other ${row}` }
+  } else if (column === 'Count') {
+    return { value: 1000 - row }
+  }
+  throw new Error(`Unknown column: ${column}`)
 }
 
 const otherData: UnsortableDataFrame = {
   header: ['ID', 'Count'],
   numRows: 1000,
-  getCell({ row, column }: { row: number, column: string }) {
-    if (row < 0 || row >= 1000) {
-      throw new Error(`Invalid row index: ${row}`)
-    }
-    if (column === 'ID') {
-      return { value: `other ${row}` }
-    } else if (column === 'Count') {
-      return { value: 1000 - row }
-    }
-    throw new Error(`Unknown column: ${column}`)
-  },
+  getCell: getOtherDataCell,
+  fetch: getStaticFetch({ getCell: getOtherDataCell }),
   eventTarget: createEventTarget<UnsortableDataFrameEvents>(),
 }
 
@@ -55,29 +61,24 @@ async function setFocusOnCellCol3Row3(user: UserEvent) {
 }
 
 describe('HighTable', () => {
+  function getCell({ row, column }: { row: number, column: string }) {
+    if (row < 0 || row >= 1000) {
+      throw new Error(`Invalid row index: ${row}`)
+    }
+    if (column === 'ID') {
+      return { value: row }
+    } else if (column === 'Name') {
+      return { value: `Name ${row}` }
+    } else if (column === 'Age') {
+      return { value: 20 + row % 50 }
+    }
+    throw new Error(`Unknown column: ${column}`)
+  }
   const mockData = {
     header: ['ID', 'Name', 'Age'],
     numRows: 100,
-    getCell: vi.fn(({ row, column }: { row: number, column: string }) => {
-      if (row < 0 || row >= 1000) {
-        throw new Error(`Invalid row index: ${row}`)
-      }
-      if (column === 'ID') {
-        return { value: row }
-      } else if (column === 'Name') {
-        return { value: `Name ${row}` }
-      } else if (column === 'Age') {
-        return { value: 20 + row % 50 }
-      }
-      throw new Error(`Unknown column: ${column}`)
-    }),
-    fetch() {
-      return {
-        cancel: () => {
-        // No-op for static data
-        },
-      }
-    },
+    getCell: vi.fn(getCell),
+    fetch: getStaticFetch({ getCell }),
     eventTarget: createEventTarget<UnsortableDataFrameEvents>(),
   }
 
@@ -182,36 +183,42 @@ describe('with async data, HighTable', () => {
     }, [])
     const signalAborted: boolean[] = []
     const eventTarget = createEventTarget<UnsortableDataFrameEvents>()
+    function getCell({ row, column }: { row: number, column: string }) {
+      if (!asyncDataFetched[row]) {
+        return undefined
+      }
+      if (row < 0 || row >= 1000) {
+        throw new Error(`Invalid row index: ${row}`)
+      }
+      if (column === 'ID') {
+        return { value: `async ${row}` }
+      } else if (column === 'Name') {
+        return { value: `Async Name ${row}` }
+      } else if (column === 'Age') {
+        return { value: 20 + row % 50 }
+      }
+      throw new Error(`Unknown column: ${column}`)
+    }
+    const staticFetch = getStaticFetch({ getCell })
     return {
       header: ['ID', 'Name', 'Age'],
       numRows: 1000,
-      getCell: vi.fn(({ row, column }: { row: number, column: string }) => {
-        if (!asyncDataFetched[row]) {
-          return undefined
-        }
-        if (row < 0 || row >= 1000) {
-          throw new Error(`Invalid row index: ${row}`)
-        }
-        if (column === 'ID') {
-          return { value: `async ${row}` }
-        } else if (column === 'Name') {
-          return { value: `Async Name ${row}` }
-        } else if (column === 'Age') {
-          return { value: 20 + row % 50 }
-        }
-        throw new Error(`Unknown column: ${column}`)
-      }),
-      fetch: vi.fn(({ rowStart, rowEnd, columns, signal }: { rowStart: number, rowEnd: number, columns: string[], signal?: AbortSignal }) => {
-        void new Promise(resolve => setTimeout(resolve, ms)).then(() => {
-          if (signal?.aborted) {
+      getCell: vi.fn(getCell),
+      fetch: vi.fn(async ({ rowStart, rowEnd, columns, signal, onColumnComplete }: { rowStart: number, rowEnd: number, columns: string[], signal?: AbortSignal, onColumnComplete?: (data: any[]) => void }) => {
+        await new Promise(resolve => setTimeout(resolve, ms))
+        // reject if the signal is aborted, and call onColumnComplete for each column
+        try {
+          await staticFetch({ rowStart, rowEnd, columns, signal, onColumnComplete })
+        } catch (error) {
+          if (error instanceof DOMException && error.name === 'AbortError') {
             signalAborted.push(true)
-            return
           }
-          for (let row = rowStart; row < rowEnd; row++) {
-            asyncDataFetched[row] = true
-          }
-          eventTarget.dispatchEvent(new CustomEvent('dataframe:update', { detail: { rowStart, rowEnd, columns } }))
-        })
+          throw error
+        }
+        for (let row = rowStart; row < rowEnd; row++) {
+          asyncDataFetched[row] = true
+        }
+        eventTarget.dispatchEvent(new CustomEvent('dataframe:update', { detail: { rowStart, rowEnd, columns } }))
       }),
       eventTarget,
       _forTests: {

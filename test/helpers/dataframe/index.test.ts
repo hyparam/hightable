@@ -43,9 +43,9 @@ describe('arrayDataFrame', () => {
     }).toThrow('Invalid row index: 0')
   })
 
-  it('does not provides fetch', () => {
+  it('provides fetch', () => {
     const df = arrayDataFrame([])
-    expect(df.fetch).toBeUndefined()
+    expect(df.fetch).toBeDefined()
   })
 
 })

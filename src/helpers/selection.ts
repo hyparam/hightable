@@ -203,8 +203,8 @@ export function unselectRange({ ranges, range }: { ranges: Ranges, range: Range 
  *
  * @param {Object} params
  * @param {Ranges} params.ranges - The current selection ranges.
- * @param {number} params.anchor - The anchor index (inclusive).
  * @param {number} params.index - The index to extend the selection to (inclusive).
+ * @param {number} [params.anchor] - The anchor index (inclusive).
  *
  * @returns {Ranges} The new selection ranges.
  */

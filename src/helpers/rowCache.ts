@@ -5,7 +5,7 @@
 // /**
 //  * Wrap a dataframe with cached rows.
 //  *
-//  * @param df async dataframe to wrap
+//  * @param {DataFrame} df async dataframe to wrap
 //  */
 // export function rowCache(df: DataFrame): DataFrame {
 //   // Row cache is stored as a sorted array of RowGroups, per sort order

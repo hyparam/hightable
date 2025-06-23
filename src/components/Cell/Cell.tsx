@@ -5,38 +5,38 @@ import { useCellNavigation } from '../../hooks/useCellsNavigation.js'
 import { useColumnStates } from '../../hooks/useColumnStates.js'
 
 interface Props {
+  ariaColIndex: number
+  ariaRowIndex: number
+  column: string
+  columnIndex: number
   data: DataFrame
   rowIndex: number
-  column: string
-  orderBy?: OrderBy
+  stringify: (value: unknown) => string | undefined
+  className?: string
+  dataRowIndex?: number
   onDoubleClick?: (event: MouseEvent) => void
   onMouseDown?: (event: MouseEvent) => void
   onKeyDown?: (event: KeyboardEvent) => void
-  stringify: (value: unknown) => string | undefined
-  columnIndex: number
-  ariaColIndex: number
-  ariaRowIndex: number
-  dataRowIndex?: number
-  className?: string
+  orderBy?: OrderBy
 }
 
 /**
  * Render a table cell <td> with title and optional custom rendering
  *
- * @param props
- * @param props.data the dataframe to get the cell from
- * @param props.rowIndex row index in the table (0-based)
- * @param props.column column name in the dataframe
- * @param props.orderBy optional order by to sort the dataframe
- * @param props.columnIndex column index in the dataframe (0-based)
- * @param props.onDoubleClick double click callback
- * @param props.onMouseDown mouse down callback
- * @param props.onKeyDown key down callback
- * @param props.stringify function to stringify the value
- * @param props.ariaColIndex aria col index
- * @param props.ariaRowIndex aria row index
- * @param props.dataRowIndex optional, index of the row in the dataframe (0-based)
- * @param props.className optional class name
+ * @param {Object} props
+ * @param {number} props.ariaColIndex aria col index
+ * @param {number} props.ariaRowIndex aria row index
+ * @param {string} props.column column name in the dataframe
+ * @param {number} props.columnIndex column index in the table (0-based)
+ * @param {DataFrame} props.data the dataframe to get the cell from
+ * @param {number} props.rowIndex row index in the table (0-based)
+ * @param {function} props.stringify function to stringify the value
+ * @param {string} [props.className] class name
+ * @param {number} [props.dataRowIndex] index of the row in the dataframe (0-based)
+ * @param {function} [props.onDoubleClick] double click callback
+ * @param {function} [props.onMouseDown] mouse down callback
+ * @param {function} [props.onKeyDown] key down callback
+ * @param {OrderBy} [props.orderBy] order by to sort the dataframe
  */
 export default function Cell({ data, rowIndex, column, orderBy, onDoubleClick, onMouseDown, onKeyDown, stringify, columnIndex, className, ariaColIndex, ariaRowIndex, dataRowIndex }: Props) {
   const ref = useRef<HTMLTableCellElement>(null)

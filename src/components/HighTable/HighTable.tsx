@@ -130,6 +130,7 @@ export function HighTableInner({
    */
 
   const { data } = useData()
+  // end is exclusive
   const [rowsRange, setRowsRange] = useState({ start: 0, end: 0 })
   const { enterCellsNavigation, setEnterCellsNavigation, onTableKeyDown: onNavigationTableKeyDown, onScrollKeyDown, rowIndex, colIndex, focusFirstCell } = useCellsNavigation()
   const [lastCellPosition, setLastCellPosition] = useState({ rowIndex, colIndex })
@@ -265,7 +266,8 @@ export function HighTableInner({
       if (end - start > 1000) throw new Error(`attempted to render too many rows ${end - start} table must be contained in a scrollable div`)
 
       setRowsRange({ start, end })
-      data.fetch?.({
+      // TODO(SL): catch the errors? (special case: AbortError when the signal is aborted)
+      void data.fetch?.({
         rowStart: start,
         rowEnd: end,
         columns: data.header,
