@@ -239,17 +239,15 @@ export function HighTableInner({
 
   // handle scrolling and window resizing
   useEffect(() => {
-    let cancellableJob: { cancel: () => void } | undefined
+    let abortController: AbortController | undefined = undefined
 
     /**
      * Compute the dimensions based on the current scroll position.
      */
     function handleScroll() {
-      if (cancellableJob) {
-        // cancel the previous job if it exists
-        cancellableJob.cancel()
-        cancellableJob = undefined
-      }
+      // abort the previous fetches if any
+      abortController?.abort()
+      abortController = new AbortController()
       // view window height (0 is not allowed - the syntax is verbose, but makes it clear)
       const currentClientHeight = scrollRef.current?.clientHeight
       const clientHeight = currentClientHeight === undefined || currentClientHeight === 0 ? 100 : currentClientHeight
@@ -267,11 +265,12 @@ export function HighTableInner({
       if (end - start > 1000) throw new Error(`attempted to render too many rows ${end - start} table must be contained in a scrollable div`)
 
       setRowsRange({ start, end })
-      cancellableJob = data.fetch?.({
+      data.fetch?.({
         rowStart: start,
         rowEnd: end,
         columns: data.header,
         orderBy,
+        signal: abortController.signal,
       })
     }
 
@@ -298,11 +297,7 @@ export function HighTableInner({
     window.addEventListener('resize', reportWidth)
 
     return () => {
-      if (cancellableJob) {
-        // cancel the job if it exists
-        cancellableJob.cancel()
-        cancellableJob = undefined
-      }
+      abortController?.abort() // cancel the fetches if any
       scroller?.removeEventListener('scroll', handleScroll)
       window.removeEventListener('resize', handleScroll)
       window.removeEventListener('resize', reportWidth)

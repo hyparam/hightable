@@ -2,7 +2,7 @@ import type { SortableDataFrame, SortableDataFrameEvents } from './sortableDataF
 import type { UnsortableDataFrame, UnsortableDataFrameEvents } from './unsortableDataFrame.js'
 export { sortableDataFrame } from './sortableDataFrame.js'
 export type { SortableDataFrame, SortableDataFrameEvents } from './sortableDataFrame.js'
-export type { CancellableJob, Cells, ResolvedValue } from './types.js'
+export type { Cells, ResolvedValue } from './types.js'
 export { arrayDataFrame } from './unsortableDataFrame.js'
 export type { UnsortableDataFrame, UnsortableDataFrameEvents } from './unsortableDataFrame.js'
 export type DataFrame = SortableDataFrame | UnsortableDataFrame

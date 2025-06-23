@@ -1,5 +1,5 @@
 import { CustomEventTarget, createEventTarget } from '../typedEventTarget.js'
-import { CancellableJob, Cells, CommonDataFrameEvents, ResolvedValue } from './types.js'
+import { Cells, CommonDataFrameEvents, ResolvedValue } from './types.js'
 
 // Map of event type -> detail
 export interface UnsortableDataFrameEvents extends CommonDataFrameEvents{
@@ -22,7 +22,9 @@ export interface UnsortableDataFrame {
 
   // initiate fetches for row/column data
   // static data frames don't need to implement it
-  fetch?: ({ rowStart, rowEnd, columns }: { rowStart: number, rowEnd: number, columns: string[] }) => CancellableJob
+  // The table can use an AbortController and pass its .signal, to be able to cancel with .abort() when a user scrolls out of view.
+  // The dataframe implementer can choose to ignore, de-queue, or cancel in flight fetches.
+  fetch?: ({ rowStart, rowEnd, columns, signal }: { rowStart: number, rowEnd: number, columns: string[], signal?: AbortSignal }) => void
 
   // emits events, defined in DataFrameEvents
   eventTarget: CustomEventTarget<UnsortableDataFrameEvents>

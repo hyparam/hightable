@@ -1,6 +1,6 @@
 import { OrderBy } from '../sort.js'
 import { CustomEventTarget, createEventTarget } from '../typedEventTarget.js'
-import { CancellableJob, CommonDataFrameEvents, ResolvedValue } from './types.js'
+import { CommonDataFrameEvents, ResolvedValue } from './types.js'
 import { UnsortableDataFrame } from './unsortableDataFrame.js'
 
 export type Cells = Record<string, any>
@@ -29,7 +29,9 @@ export interface SortableDataFrame {
 
   // initiate fetches for row/column data
   // static data frames don't need to implement it
-  fetch?: ({ rowStart, rowEnd, columns, orderBy }: { rowStart: number, rowEnd: number, columns: string[], orderBy?: OrderBy }) => CancellableJob
+  // The table can use an AbortController and pass its .signal, to be able to cancel with .abort() when a user scrolls out of view.
+  // The dataframe implementer can choose to ignore, de-queue, or cancel in flight fetches.
+  fetch?: ({ rowStart, rowEnd, columns, orderBy, signal }: { rowStart: number, rowEnd: number, columns: string[], orderBy?: OrderBy, signal?: AbortSignal }) => void
 
   // emits events, defined in DataFrameEvents
   // eventTarget can be used as follows:
@@ -87,7 +89,7 @@ export function sortableDataFrame(unsortableDataFrame: UnsortableDataFrame): Sor
         // In a real implementation, you would sort the data based on the orderBy criteria.
         throw new Error('Sorting not implemented yet')
       }
-      return fetch({ rowStart, rowEnd, columns })
+      fetch({ rowStart, rowEnd, columns })
     }
   }
   return df

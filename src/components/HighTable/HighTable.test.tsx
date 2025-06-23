@@ -47,58 +47,6 @@ const otherData: UnsortableDataFrame = {
   eventTarget: createEventTarget<UnsortableDataFrameEvents>(),
 }
 
-function createAsyncDataFrame({ ms }: {ms: number} = { ms: 10 }): UnsortableDataFrame & {_forTests: {cancel: () => void, asyncDataFetched: boolean[]}} {
-  const asyncDataFetched = Array.from({ length: 1000 }, (_, i) => i).reduce<boolean[]>((acc, row) => {
-    acc[row] = false
-    return acc
-  }, [])
-  const eventTarget = createEventTarget<UnsortableDataFrameEvents>()
-  const cancel = vi.fn()
-  return {
-    header: ['ID', 'Name', 'Age'],
-    numRows: 1000,
-    getCell: vi.fn(({ row, column }: { row: number, column: string }) => {
-      if (!asyncDataFetched[row]) {
-        return undefined
-      }
-      if (row < 0 || row >= 1000) {
-        throw new Error(`Invalid row index: ${row}`)
-      }
-      if (column === 'ID') {
-        return { value: `async ${row}` }
-      } else if (column === 'Name') {
-        return { value: `Async Name ${row}` }
-      } else if (column === 'Age') {
-        return { value: 20 + row % 50 }
-      }
-      throw new Error(`Unknown column: ${column}`)
-    }),
-    fetch: vi.fn(({ rowStart, rowEnd, columns }: { rowStart: number, rowEnd: number, columns: string[] }) => {
-      let cancelled = false
-      void new Promise(resolve => setTimeout(resolve, ms)).then(() => {
-        if (cancelled) {
-          return
-        }
-        for (let row = rowStart; row < rowEnd; row++) {
-          asyncDataFetched[row] = true
-        }
-        eventTarget.dispatchEvent(new CustomEvent('dataframe:update', { detail: { rowStart, rowEnd, columns } }))
-      })
-      return {
-        cancel: () => {
-          cancelled = true
-          cancel()
-        },
-      }
-    }),
-    eventTarget,
-    _forTests: {
-      cancel,
-      asyncDataFetched,
-    },
-  }
-}
-
 async function setFocusOnScrollableDiv(user: UserEvent) {
   await user.keyboard('{Shift>}{Tab}{/Shift}')
 }
@@ -227,6 +175,52 @@ describe('HighTable', () => {
 })
 
 describe('with async data, HighTable', () => {
+  function createAsyncDataFrame({ ms }: {ms: number} = { ms: 10 }): UnsortableDataFrame & {_forTests: {signalAborted: boolean[], asyncDataFetched: boolean[]}} {
+    const asyncDataFetched = Array.from({ length: 1000 }, (_, i) => i).reduce<boolean[]>((acc, row) => {
+      acc[row] = false
+      return acc
+    }, [])
+    const signalAborted: boolean[] = []
+    const eventTarget = createEventTarget<UnsortableDataFrameEvents>()
+    return {
+      header: ['ID', 'Name', 'Age'],
+      numRows: 1000,
+      getCell: vi.fn(({ row, column }: { row: number, column: string }) => {
+        if (!asyncDataFetched[row]) {
+          return undefined
+        }
+        if (row < 0 || row >= 1000) {
+          throw new Error(`Invalid row index: ${row}`)
+        }
+        if (column === 'ID') {
+          return { value: `async ${row}` }
+        } else if (column === 'Name') {
+          return { value: `Async Name ${row}` }
+        } else if (column === 'Age') {
+          return { value: 20 + row % 50 }
+        }
+        throw new Error(`Unknown column: ${column}`)
+      }),
+      fetch: vi.fn(({ rowStart, rowEnd, columns, signal }: { rowStart: number, rowEnd: number, columns: string[], signal?: AbortSignal }) => {
+        void new Promise(resolve => setTimeout(resolve, ms)).then(() => {
+          if (signal?.aborted) {
+            signalAborted.push(true)
+            return
+          }
+          for (let row = rowStart; row < rowEnd; row++) {
+            asyncDataFetched[row] = true
+          }
+          eventTarget.dispatchEvent(new CustomEvent('dataframe:update', { detail: { rowStart, rowEnd, columns } }))
+        })
+      }),
+      eventTarget,
+      _forTests: {
+        signalAborted,
+        asyncDataFetched,
+      },
+    }
+  }
+
   beforeEach(() => {
     vi.clearAllMocks()
   })
@@ -237,7 +231,7 @@ describe('with async data, HighTable', () => {
     const { getByText } = render(<HighTable data={asyncData} />)
     await waitFor(() => {
       expect(getByText('ID')).toBeDefined()
-      expect(asyncData.fetch).toHaveBeenCalledExactlyOnceWith({ rowStart: 0, rowEnd, columns: ['ID', 'Name', 'Age'], orderBy: undefined })
+      expect(asyncData.fetch).toHaveBeenCalledExactlyOnceWith({ rowStart: 0, rowEnd, columns: ['ID', 'Name', 'Age'], orderBy: undefined, signal: expect.any(AbortSignal) })
       expect(asyncData.getCell).toHaveBeenCalledWith({ row: 0, column: 'ID' })
       expect(asyncData.getCell).toHaveBeenCalledWith({ row: rowEnd - 1, column: 'Age' })
       expect(asyncData.getCell).not.toHaveBeenCalledWith({ row: rowEnd, column: 'Age' })
@@ -251,7 +245,7 @@ describe('with async data, HighTable', () => {
     const { getByText } = render(<HighTable data={asyncData} overscan={overscan} />)
     await waitFor(() => {
       expect(getByText('ID')).toBeDefined()
-      expect(asyncData.fetch).toHaveBeenCalledExactlyOnceWith({ rowStart: 0, rowEnd, columns: ['ID', 'Name', 'Age'], orderBy: undefined })
+      expect(asyncData.fetch).toHaveBeenCalledExactlyOnceWith({ rowStart: 0, rowEnd, columns: ['ID', 'Name', 'Age'], orderBy: undefined, signal: expect.any(AbortSignal) })
       expect(asyncData.getCell).toHaveBeenCalledWith({ row: rowEnd - 1, column: 'Age' })
       expect(asyncData.getCell).not.toHaveBeenCalledWith({ row: rowEnd, column: 'Age' })
     })
@@ -299,17 +293,17 @@ describe('with async data, HighTable', () => {
     })
     await expect(findByRole('cell', { name: 'async 50' })).resolves.toBeDefined()
 
-    expect(asyncData._forTests.cancel).toHaveBeenCalled()
+    expect(asyncData._forTests.signalAborted).toHaveLength(0) // the fetches are too fast to be cancelled (10ms)
   })
 
-  it('cancels data fetch when scrolling fast', async () => {
+  it('aborts data fetch when scrolling fast', async () => {
     const ms = 500
     const asyncData = createAsyncDataFrame({ ms })
     const { getByLabelText, findByRole, queryByRole } = render(<HighTable className="myclass" data={asyncData} />)
     const scrollDiv = getByLabelText('Virtual-scroll table')
     await expect(findByRole('cell', { name: 'async 0' })).resolves.toBeDefined()
     expect(queryByRole('cell', { name: 'async 24' })).toBeNull()
-    expect(asyncData._forTests.cancel).not.toHaveBeenCalled()
+    expect(asyncData._forTests.signalAborted).toHaveLength(0)
     console.log(asyncData._forTests.asyncDataFetched[0], asyncData._forTests.asyncDataFetched[24], asyncData._forTests.asyncDataFetched[50])
 
     act(() => {
@@ -330,7 +324,7 @@ describe('with async data, HighTable', () => {
     })
     await expect(findByRole('cell', { name: 'async 50' })).resolves.toBeDefined()
 
-    expect(asyncData._forTests.cancel).toHaveBeenCalled()
+    expect(asyncData._forTests.signalAborted).toHaveLength(1) // one fetch should have been aborted, because we scrolled again before the first fetch was done
     expect(asyncData._forTests.asyncDataFetched[24]).toBe(false) // the fetch for row 24 should have been cancelled
   })
 })
