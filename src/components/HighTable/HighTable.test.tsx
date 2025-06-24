@@ -311,7 +311,6 @@ describe('with async data, HighTable', () => {
     await expect(findByRole('cell', { name: 'async 0' })).resolves.toBeDefined()
     expect(queryByRole('cell', { name: 'async 24' })).toBeNull()
     expect(asyncData._forTests.signalAborted).toHaveLength(0)
-    console.log(asyncData._forTests.asyncDataFetched[0], asyncData._forTests.asyncDataFetched[24], asyncData._forTests.asyncDataFetched[50])
 
     act(() => {
       // not using userEvent because it doesn't support scroll events

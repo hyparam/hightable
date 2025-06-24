@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { arrayDataFrame, sortableDataFrame } from '../../../src/helpers/dataframe/index.js'
 
 describe('arrayDataFrame', () => {
@@ -57,81 +57,84 @@ describe('sortableDataFrame', () => {
     { id: 2, name: 'Bob', age: 20 },
     { id: 4, name: 'Dani', age: 20 },
   ]
-
   const dataFrame = arrayDataFrame(data)
-  const sortableDf = sortableDataFrame(dataFrame)
 
   it('should set sortable to true', () => {
-    expect(sortableDf.sortable).toBe(true)
+    const df = sortableDataFrame(dataFrame)
+    expect(df.sortable).toBe(true)
   })
 
   it('should preserve header and numRows', () => {
-    expect(sortableDf.header).toEqual(dataFrame.header)
-    expect(sortableDf.numRows).toBe(dataFrame.numRows)
+    const df = sortableDataFrame(dataFrame)
+    expect(df.header).toEqual(dataFrame.header)
+    expect(df.numRows).toBe(dataFrame.numRows)
   })
 
   it('should return unsorted data when orderBy is not provided', () => {
-    expect(sortableDf.getCell({ row: 0, column: 'name' })?.value).toBe('Charlie')
-    expect(sortableDf.getCell({ row: 1, column: 'name' })?.value).toBe('Alice')
-    expect(sortableDf.getCell({ row: 2, column: 'name' })?.value).toBe('Bob')
+    const df = sortableDataFrame(dataFrame)
+    expect(df.getCell({ row: 0, column: 'name' })?.value).toBe('Charlie')
+    expect(df.getCell({ row: 1, column: 'name' })?.value).toBe('Alice')
+    expect(df.getCell({ row: 2, column: 'name' })?.value).toBe('Bob')
   })
 
   it('should return unsorted data when orderBy is an empty array', () => {
-    expect(sortableDf.getCell({ row: 0, column: 'name', orderBy: [] })?.value).toBe('Charlie')
-    expect(sortableDf.getCell({ row: 1, column: 'name', orderBy: [] })?.value).toBe('Alice')
-    expect(sortableDf.getCell({ row: 2, column: 'name', orderBy: [] })?.value).toBe('Bob')
+    const df = sortableDataFrame(dataFrame)
+    expect(df.getCell({ row: 0, column: 'name', orderBy: [] })?.value).toBe('Charlie')
+    expect(df.getCell({ row: 1, column: 'name', orderBy: [] })?.value).toBe('Alice')
+    expect(df.getCell({ row: 2, column: 'name', orderBy: [] })?.value).toBe('Bob')
   })
 
-  //   it('should return data sorted by column "age" in ascending order', async () => {
-  //     const rows = await awaitRows(sortableDf.rows({ start: 0, end: 4, orderBy: [{ column: 'age', direction: 'ascending' as const }] }))
-  //     expect(rows).toEqual([
-  //       { index: 2, cells: { id: 2, name: 'Bob', age: 20 } },
-  //       { index: 3, cells: { id: 4, name: 'Dani', age: 20 } },
-  //       { index: 0, cells: { id: 3, name: 'Charlie', age: 25 } },
-  //       { index: 1, cells: { id: 1, name: 'Alice', age: 30 } },
-  //     ])
-  //   })
+  it('should return data sorted by column "age" in ascending order', async () => {
+    const df = sortableDataFrame(dataFrame)
+    const orderBy = [{ column: 'age', direction: 'ascending' as const }]
+    await df.fetch({ orderBy, rowStart: 0, rowEnd: 4, columns: ['name'] })
+    expect(df.getCell({ row: 0, column: 'name', orderBy })?.value).toBe('Bob')
+    expect(df.getCell({ row: 1, column: 'name', orderBy })?.value).toBe('Dani')
+    expect(df.getCell({ row: 2, column: 'name', orderBy })?.value).toBe('Charlie')
+    expect(df.getCell({ row: 3, column: 'name', orderBy })?.value).toBe('Alice')
+  })
 
-  //   it('should return data sorted by column "age" in descending order, using the data index in case of ties', async () => {
-  //     const rows = await awaitRows(sortableDf.rows({ start: 0, end: 4, orderBy: [{ column: 'age', direction: 'descending' as const }] }))
-  //     expect(rows).toEqual([
-  //       { index: 1, cells: { id: 1, name: 'Alice', age: 30 } },
-  //       { index: 0, cells: { id: 3, name: 'Charlie', age: 25 } },
-  //       { index: 2, cells: { id: 2, name: 'Bob', age: 20 } },
-  //       { index: 3, cells: { id: 4, name: 'Dani', age: 20 } },
-  //     ])
-  //   })
+  it('should provide a dataframe:update as an alternative way to update the datan, when sorting by column "age" in ascending order', () => new Promise<void>((done) => {
+    const df = sortableDataFrame(dataFrame)
+    const orderBy = [{ column: 'age', direction: 'ascending' as const }]
 
-  //   it('should return data sorted by columns "age" in ascending order and "name" in descending order', async () => {
-  //     const rows = await awaitRows(sortableDf.rows({ start: 0, end: 4, orderBy: [{ column: 'age', direction: 'ascending' as const }, { column: 'name', direction: 'descending' as const }] }))
-  //     expect(rows).toEqual([
-  //       { index: 3, cells: { id: 4, name: 'Dani', age: 20 } },
-  //       { index: 2, cells: { id: 2, name: 'Bob', age: 20 } },
-  //       { index: 0, cells: { id: 3, name: 'Charlie', age: 25 } },
-  //       { index: 1, cells: { id: 1, name: 'Alice', age: 30 } },
-  //     ])
-  //   })
+    const callback = vi.fn((e) => {
+      console.log(e)
+      expect(df.getCell({ row: 0, column: 'name', orderBy })?.value).toBe('Bob')
+      expect(df.getCell({ row: 1, column: 'name', orderBy })?.value).toBe('Dani')
+      expect(df.getCell({ row: 2, column: 'name', orderBy })?.value).toBe('Charlie')
+      expect(df.getCell({ row: 3, column: 'name', orderBy })?.value).toBe('Alice')
+      done()
+    })
+    df.eventTarget.addEventListener('dataframe:update', callback, { once: true })
+    void df.fetch({ orderBy, rowStart: 0, rowEnd: 4, columns: ['name'] })
+  }))
 
-  //   it('should slice the sorted data correctly in ascending order', async () => {
-  //     const rows = await awaitRows(sortableDf.rows({ start: 1, end: 3, orderBy: [{ column: 'id', direction: 'ascending' as const }] }))
-  //     expect(rows).toEqual([
-  //       { index: 2, cells: { id: 2, name: 'Bob', age: 20 } },
-  //       { index: 0, cells: { id: 3, name: 'Charlie', age: 25 } },
-  //     ])
-  //   })
+  it('should return data sorted by column "age" in descending order, using the data index in case of ties', async () => {
+    const df = sortableDataFrame(dataFrame)
+    const orderBy = [{ column: 'age', direction: 'descending' as const }]
+    await df.fetch({ orderBy, rowStart: 0, rowEnd: 4, columns: ['name'] })
+    expect(df.getCell({ row: 0, column: 'name', orderBy })?.value).toBe('Alice')
+    expect(df.getCell({ row: 1, column: 'name', orderBy })?.value).toBe('Charlie')
+    expect(df.getCell({ row: 2, column: 'name', orderBy })?.value).toBe('Bob')
+    expect(df.getCell({ row: 3, column: 'name', orderBy })?.value).toBe('Dani')
+  })
 
-  //   it('should slice the sorted data correctly in descending order', async () => {
-  //     const rows = await awaitRows(sortableDf.rows({ start: 1, end: 3, orderBy: [{ column: 'id', direction: 'descending' as const }] }))
-  //     expect(rows).toEqual([
-  //       { index: 0, cells: { id: 3, name: 'Charlie', age: 25 } },
-  //       { index: 2, cells: { id: 2, name: 'Bob', age: 20 } },
-  //     ])
-  //   })
+  it('should return data sorted by columns "age" in ascending order and "name" in descending order', async () => {
+    const df = sortableDataFrame(dataFrame)
+    const orderBy = [{ column: 'age', direction: 'ascending' as const }, { column: 'name', direction: 'descending' as const }]
+    await df.fetch({ orderBy, rowStart: 0, rowEnd: 4, columns: ['name'] })
+    expect(df.getCell({ row: 0, column: 'name', orderBy })?.value).toBe('Dani')
+    expect(df.getCell({ row: 1, column: 'name', orderBy })?.value).toBe('Bob')
+    expect(df.getCell({ row: 2, column: 'name', orderBy })?.value).toBe('Charlie')
+    expect(df.getCell({ row: 3, column: 'name', orderBy })?.value).toBe('Alice')
+  })
 
-  //   it('should throw for invalid orderBy field', () => {
-  //     expect(() => sortableDf.rows({ start: 0, end: 3, orderBy: [{ column: 'invalid', direction: 'ascending' as const }] }))
-  //       .toThrowError('Invalid orderBy field: invalid')
-  //   })
+  it('should throw for invalid orderBy field', async () => {
+    const df = sortableDataFrame(dataFrame)
+    const orderBy = [{ column: 'invalid', direction: 'ascending' as const }]
+    await expect(df.fetch({ orderBy, rowStart: 0, rowEnd: 4, columns: ['name'] })).rejects.toThrow('Invalid orderBy field: invalid')
+  })
 })
 
 // ---
@@ -274,34 +277,5 @@ describe('sortableDataFrame', () => {
 //     ].map((cells, index) => ({ cells, index: index + 8 })))
 //     expect(df.rows).toHaveBeenCalledTimes(2)
 //     expect(df.rows).toHaveBeenCalledWith({ start: 9, end: 11 })
-//   })
-// })
-
-// describe('getRanks', () => {
-//   const data = [
-//     { id: 3, name: 'Charlie', age: 25 },
-//     { id: 1, name: 'Alice', age: 30 },
-//     { id: 2, name: 'Bob', age: 20 },
-//     { id: 4, name: 'Dani', age: 20 },
-//   ].map((cells, index) => ({ cells, index }))
-
-//   const dataFrame: DataFrame = {
-//     header: ['id', 'name', 'age'],
-//     numRows: data.length,
-//     rows({ start, end }): AsyncRow[] {
-//       // Return the slice of data between start and end indices
-//       return data.slice(start, end).map(wrapObject)
-//     },
-//     sortable: false,
-//   }
-
-//   it('should return different indexes when all the values are different', async () => {
-//     const ranks = await getRanks({ data: dataFrame, column: 'id' })
-//     expect(ranks).toEqual([2, 0, 1, 3])
-//   })
-
-//   it('should return equal indexes when the values are the same', async () => {
-//     const ranks = await getRanks({ data: dataFrame, column: 'age' })
-//     expect(ranks).toEqual([2, 3, 0, 0])
 //   })
 // })

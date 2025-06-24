@@ -267,7 +267,7 @@ export function HighTableInner({
 
       setRowsRange({ start, end })
       // TODO(SL): catch the errors? (special case: AbortError when the signal is aborted)
-      void data.fetch?.({
+      void data.fetch({
         rowStart: start,
         rowEnd: end,
         columns: data.header,

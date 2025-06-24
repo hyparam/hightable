@@ -32,7 +32,7 @@ export interface SortableDataFrame {
   // rowEnd is exclusive
   // The table can use an AbortController and pass its .signal, to be able to cancel with .abort() when a user scrolls out of view.
   // The dataframe implementer can choose to ignore, de-queue, or cancel in flight fetches.
-  fetch?: ({ rowStart, rowEnd, columns, orderBy, signal }: { rowStart: number, rowEnd: number, columns: string[], orderBy?: OrderBy, signal?: AbortSignal }) => Promise<void>
+  fetch: ({ rowStart, rowEnd, columns, orderBy, signal }: { rowStart: number, rowEnd: number, columns: string[], orderBy?: OrderBy, signal?: AbortSignal }) => Promise<void>
 
   // emits events, defined in DataFrameEvents
   // eventTarget can be used as follows:
@@ -100,8 +100,8 @@ export function sortableDataFrame(unsortableDataFrame: UnsortableDataFrame): Sor
 
     const { orderBy, ...rest } = args
     const { rowStart, rowEnd, columns, signal } = rest
-    if (!orderBy || orderBy.length === 0 || rowStart === 0 && rowEnd === unsortableDataFrame.numRows) {
-      // If orderBy is not provided, or all the rows are required, we ignore orderBy.
+    if (!orderBy || orderBy.length === 0) {
+      // If orderBy is not provided, we can fetch the data without sorting.
       return unsortableDataFrame.fetch(rest)
     }
 
@@ -112,21 +112,21 @@ export function sortableDataFrame(unsortableDataFrame: UnsortableDataFrame): Sor
     }
     checkOrderBy({ header: unsortableDataFrame.header, orderBy })
     const serializedOrderBy = serializeOrderBy(orderBy)
-    const indexes = indexesByOrderBy.get(serializedOrderBy)
+    let indexes = indexesByOrderBy.get(serializedOrderBy)
 
-    if (indexes) {
-      return fetchFromIndexes({ columns, signal, indexes: indexes.slice(rowStart, rowEnd), unsortableFetch: unsortableDataFrame.fetch })
+    if (!indexes) {
+      // If the indexes are not cached, we need to compute them.
+      // First, we fetch the ranks for each column in the orderBy.
+      // If the ranks are already cached, we use them, otherwise we compute them.
+      const orderByWithRanks = await fetchOrderByWithRanks({ orderBy, signal, ranksByColumn, unsortableDataFrame })
+      // Compute the indexes using the ranks for each column in the orderBy.
+      indexes = computeIndexes(orderByWithRanks)
+      // Store the computed indexes in the map and emit an event.
+      indexesByOrderBy.set(serializedOrderBy, indexes)
+      eventTarget.dispatchEvent(new CustomEvent('dataframe:update', { detail: { rowStart, rowEnd, columns, orderBy } }))
     }
 
-    // If the indexes are not cached, we need to compute them.
-    // First, we fetch the ranks for each column in the orderBy.
-    // If the ranks are already cached, we use them, otherwise we compute them.
-    const orderByWithRanks = await fetchOrderByWithRanks({ orderBy, signal, ranksByColumn, unsortableDataFrame })
-    // Compute the indexes using the ranks for each column in the orderBy.
-    const computedIndexes = computeIndexes(orderByWithRanks)
-    // Store the computed indexes in the map.
-    indexesByOrderBy.set(serializedOrderBy, computedIndexes)
-    return fetchFromIndexes({ columns, signal, indexes: computedIndexes.slice(rowStart, rowEnd), unsortableFetch: unsortableDataFrame.fetch })
+    return fetchFromIndexes({ columns, signal, indexes: indexes.slice(rowStart, rowEnd), unsortableFetch: unsortableDataFrame.fetch })
   }
 
   return {
