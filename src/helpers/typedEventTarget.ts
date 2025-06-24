@@ -50,3 +50,33 @@ export const TypedCustomEvent = CustomEvent as typeof _TypedCustomEvent
 export function createEventTarget<TDetails>(): CustomEventTarget<TDetails> {
   return new EventTarget() as CustomEventTarget<TDetails>
 }
+
+export function cloneEventTarget<TDetails>(eventTarget: CustomEventTarget<TDetails>, eventTypes: (keyof TDetails)[]): {
+  eventTarget: CustomEventTarget<TDetails>,
+  detach: () => void;
+ } {
+  const cloned = createEventTarget<TDetails>()
+  // listen to all the events from the original event target
+  const listeners: {eventType: keyof TDetails, callback: (ev: CustomEvent<TDetails[keyof TDetails]>) => void}[] = []
+  for (const eventType of eventTypes) {
+    function callback(ev: CustomEvent<TDetails[typeof eventType]>) {
+      // dispatch the event to the cloned event target
+      cloned.dispatchEvent(new TypedCustomEvent(eventType, { detail: ev.detail }))
+    }
+
+    eventTarget.addEventListener(eventType, callback)
+    listeners.push({ eventType, callback })
+  }
+  function detach() {
+    // remove all the listeners from the original event target
+    while (listeners.length > 0) {
+      const listener = listeners.pop()
+      if (!listener) {
+        continue
+      }
+      const { eventType, callback } = listener
+      eventTarget.removeEventListener(eventType, callback)
+    }
+  }
+  return { eventTarget: cloned, detach }
+}

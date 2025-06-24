@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { UnsortableDataFrame, UnsortableDataFrameEvents, getStaticFetch } from '../../helpers/dataframe/unsortableDataFrame.js'
+import { sortableDataFrame } from '../../helpers/dataframe/sortableDataFrame.js'
+import { UnsortableDataFrame, UnsortableDataFrameEvents, cacheUnsortableDataFrame, getStaticFetch } from '../../helpers/dataframe/unsortableDataFrame.js'
 import { createEventTarget } from '../../helpers/typedEventTarget.js'
 import HighTable from './HighTable.js'
 
@@ -32,27 +33,48 @@ const data: UnsortableDataFrame = {
   eventTarget: createEventTarget<UnsortableDataFrameEvents>(),
 }
 
-// function delay<T>(value: T, ms: number): Promise<T> {
-//   return new Promise(resolve => setTimeout(() => { resolve(value) }, ms))
-// }
-// const delayedData = sortableDataFrame({
-//   header: ['ID', 'Count'],
-//   numRows: 50,
+function delay<T>(value: T, ms: number): Promise<T> {
+  return new Promise(resolve => setTimeout(() => { resolve(value) }, ms))
+}
+const delayedDataHeader = ['ID', 'Count']
+const delayedDataNumRows = 500
+async function delayedDataFetch({ rowStart, rowEnd, columns, signal, onColumnComplete }: { rowStart: number, rowEnd: number, columns: string[], signal?: AbortSignal, onColumnComplete?: (data: {column: string, values: any[]}) => void }) {
+  if (rowStart < 0 || rowEnd > delayedDataNumRows) {
+    throw new Error(`Invalid row range: ${rowStart} - ${rowEnd}, numRows: ${delayedDataNumRows}`)
+  }
+  const columnPromises: Promise<any>[] = []
+  for (const column of columns) {
+    if (!delayedDataHeader.includes(column)) {
+      throw new Error(`Invalid column: ${column}`)
+    }
+    const valuePromises: Promise<any>[] = []
+    for (let row = rowStart; row < rowEnd; row++) {
+      const rowMs = row % 3 === 0 ? 10 * Math.floor(10 * Math.random()) :
+        row % 3 === 1 ? 20 * Math.floor(10 * Math.random()) :
+          500
+      const ms = rowMs * (column === 'ID' ? 1 : 2)
+      const resolvedValue = column === 'ID' ? `row ${row}` : delayedDataNumRows - row
+      valuePromises.push(delay(resolvedValue, ms))
+    }
+    const columnPromise = Promise.all(valuePromises).then((values) => {
+      if (signal?.aborted) {
+        throw new DOMException('Aborted', 'AbortError')
+      }
+      onColumnComplete?.({ column, values })
+    })
+    columnPromises.push(columnPromise)
+  }
+  await Promise.all(columnPromises)
+}
 
-//   rows: ({ start, end }) => Array.from({ length: end - start }, (_, innerIndex) => {
-//     const index = innerIndex + start
-//     const ms = index % 3 === 0 ? 100 * Math.floor(10 * Math.random()) :
-//       index % 3 === 1 ? 100 * Math.floor(100 * Math.random()) :
-//         1e10
-//     return {
-//       index: wrapPromise(delay(index, ms)),
-//       cells: {
-//         ID: wrapPromise(delay(`row ${index}`, ms)),
-//         Count: wrapPromise(delay(50 - index, ms)),
-//       },
-//     }
-//   }),
-// })
+const delayedData: UnsortableDataFrame = {
+  header: delayedDataHeader,
+  numRows: delayedDataNumRows,
+  fetch: delayedDataFetch,
+  getCell: () => { return undefined },
+  eventTarget: createEventTarget<UnsortableDataFrameEvents>(),
+}
+const sortableDelayedData = sortableDataFrame(cacheUnsortableDataFrame(delayedData))
 
 // const sortableData = rowCache(sortableDataFrame(data))
 
@@ -165,11 +187,11 @@ export const Unstyled: Story = {
     styled: false,
   },
 }
-// export const Placeholders: Story = {
-//   args: {
-//     data: delayedData,
-//   },
-// }
+export const Placeholders: Story = {
+  args: {
+    data: sortableDelayedData,
+  },
+}
 // export const UndefinedCells: Story = {
 //   args: {
 //     data: dataWithUndefinedCells,

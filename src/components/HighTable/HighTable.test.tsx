@@ -204,7 +204,7 @@ describe('with async data, HighTable', () => {
       header: ['ID', 'Name', 'Age'],
       numRows: 1000,
       getCell: vi.fn(getCell),
-      fetch: vi.fn(async ({ rowStart, rowEnd, columns, signal, onColumnComplete }: { rowStart: number, rowEnd: number, columns: string[], signal?: AbortSignal, onColumnComplete?: (data: any[]) => void }) => {
+      fetch: vi.fn(async ({ rowStart, rowEnd, columns, signal, onColumnComplete }: { rowStart: number, rowEnd: number, columns: string[], signal?: AbortSignal, onColumnComplete?: (data: {column: string, values: any[]}) => void }) => {
         await new Promise(resolve => setTimeout(resolve, ms))
         // reject if the signal is aborted, and call onColumnComplete for each column
         try {

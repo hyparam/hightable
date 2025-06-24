@@ -32,7 +32,7 @@ interface Props {
   onDoubleClickCell?: (event: MouseEvent, col: number, row: number) => void
   onMouseDownCell?: (event: MouseEvent, col: number, row: number) => void
   onKeyDownCell?: (event: KeyboardEvent, col: number, row: number) => void // for accessibility, it should be passed if onDoubleClickCell is passed. It can handle more than that action though.
-  onError?: (error: Error) => void
+  onError?: (error: unknown) => void
   orderBy?: OrderBy // order used to fetch the rows. If undefined, the table is unordered, the sort controls are hidden and the interactions are disabled. Pass [] to fetch the rows in the original order.
   onOrderByChange?: (orderBy: OrderBy) => void // callback to call when a user interaction changes the order. The interactions are disabled if undefined.
   selection?: Selection // selection and anchor rows, expressed as data indexes (not as indexes in the table). If undefined, the selection is hidden and the interactions are disabled.
@@ -104,7 +104,7 @@ export function HighTableInner({
   onDoubleClickCell,
   onMouseDownCell,
   onKeyDownCell,
-  // onError = console.error, // TODO(SL): re-enable later
+  onError = console.error,
   stringify = stringifyDefault,
   className = '',
   columnClassNames = [],
@@ -267,12 +267,18 @@ export function HighTableInner({
 
       setRowsRange({ start, end })
       // TODO(SL): catch the errors? (special case: AbortError when the signal is aborted)
-      void data.fetch({
+      data.fetch({
         rowStart: start,
         rowEnd: end,
         columns: data.header,
         orderBy,
         signal: abortController.signal,
+      }).catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          // fetch was aborted, ignore the error
+          return
+        }
+        onError(error) // report the error to the parent component
       })
     }
 
@@ -304,7 +310,7 @@ export function HighTableInner({
       window.removeEventListener('resize', handleScroll)
       window.removeEventListener('resize', reportWidth)
     }
-  }, [numRows, overscan, padding, scrollHeight, setAvailableWidth, data, orderBy])
+  }, [numRows, overscan, padding, scrollHeight, setAvailableWidth, data, orderBy, onError])
 
   // TODO(SL): restore a mechanism to change slice when the number of rows has changed
 

@@ -1,4 +1,4 @@
-import { CustomEventTarget, createEventTarget } from '../typedEventTarget.js'
+import { CustomEventTarget, cloneEventTarget, createEventTarget } from '../typedEventTarget.js'
 import { Cells, CommonDataFrameEvents, ResolvedValue } from './types.js'
 
 // Map of event type -> detail
@@ -27,7 +27,7 @@ export interface UnsortableDataFrame {
   // The dataframe implementer can choose to ignore, de-queue, or cancel in flight fetches.
   // if the signal is aborted, fetch should reject with an AbortError DOMException. Note that onColumnComplete might have already been called for some columns.
   // TODO(SL): should we pass a callback for errors (onError)? or dispatch an event using eventTarget?
-  fetch({ rowStart, rowEnd, columns, signal, onColumnComplete }: { rowStart: number, rowEnd: number, columns: string[], signal?: AbortSignal, onColumnComplete?: (data: any[]) => void }): Promise<void>
+  fetch({ rowStart, rowEnd, columns, signal, onColumnComplete }: { rowStart: number, rowEnd: number, columns: string[], signal?: AbortSignal, onColumnComplete?: (data: {column: string, values: any[]}) => void }): Promise<void>
 
   // emits events, defined in DataFrameEvents
   eventTarget: CustomEventTarget<UnsortableDataFrameEvents>
@@ -72,7 +72,7 @@ export function getStaticFetch({ getCell }: {getCell: UnsortableDataFrame['getCe
         const slice = Array(rowEnd - rowStart).fill(undefined).map((_, i) => {
           return getCell({ row: rowStart + i, column })
         })
-        onColumnComplete(slice)
+        onColumnComplete({ column, values: slice })
       }
     }
     return Promise.resolve()
@@ -99,11 +99,14 @@ export function getStaticFetch({ getCell }: {getCell: UnsortableDataFrame['getCe
 export function fetchRange({ unsortableDataFrame, column, rowStart, rowEnd, signal }: {unsortableDataFrame: UnsortableDataFrame, column: string, rowStart: number, rowEnd: number, signal?: AbortSignal}): Promise<any[]> {
   const length = rowEnd - rowStart
   return new Promise((resolve, reject) => {
-    function onColumnComplete(data: any[]) {
-      if (data.length !== length) {
-        reject(new Error(`Fetched data length ${data.length} does not match expected length ${length}`))
+    function onColumnComplete(data: {column: string, values: any[]}) {
+      if (data.values.length !== length) {
+        reject(new Error(`Fetched data length ${data.values.length} does not match expected length ${length}`))
       }
-      resolve(data)
+      if (data.column !== column) {
+        reject(new Error(`Data fetched for column "${data.column}" while the requested column was "${column}"`))
+      }
+      resolve(data.values)
     }
     // Fetch the data
     unsortableDataFrame.fetch({ rowStart, rowEnd, columns: [column], signal, onColumnComplete }).catch((error) => {
@@ -169,4 +172,80 @@ export async function fetchColumn({ unsortableDataFrame, column, signal }: {unso
 
   await Promise.all(missingRangePromises)
   return values
+}
+
+export function cacheUnsortableDataFrame({ numRows, header, getCell, fetch, eventTarget }: UnsortableDataFrame): UnsortableDataFrame {
+  const cachedColumns: Record<string, (ResolvedValue | undefined)[]> = header.reduce<Record<string, any[]>>((acc, column) => {
+    acc[column] = Array(numRows).fill(undefined)
+    return acc
+  }, {})
+
+  const { eventTarget: wrappedEventTarget } = cloneEventTarget(eventTarget, ['dataframe:numrowschange', 'dataframe:update'])
+  // TODO(SL): get "detach" function from cloneEventTarget and call it when the dataframe is no longer needed
+  // for example, by providing a "dispose" method on the returned dataframe
+
+  function wrappedFetch({ rowStart, rowEnd, columns, signal, onColumnComplete }: { rowStart: number, rowEnd: number, columns: string[], signal?: AbortSignal, onColumnComplete?: (data: {column: string, values: any[]}) => void }) {
+    if (signal?.aborted) {
+      return Promise.reject(new DOMException('Fetch aborted', 'AbortError'))
+    }
+    function onColumnCompleteWrapper({ column, values }: {column: string, values: any[]}) {
+      if (signal?.aborted) {
+        console.warn('Fetch aborted while processing onColumnComplete')
+        return
+      }
+      if (onColumnComplete) {
+        onColumnComplete({ column, values })
+      }
+      const cachedColumn = cachedColumns[column]
+      if (!cachedColumn) {
+        console.warn(`Column "${column}" not found in cached columns`)
+        return
+      }
+      // Cache the fetched data
+      let numUpdatedValues = 0
+      for (const [i, value] of values.entries()) {
+        const currentCachedCell = cachedColumn[rowStart + i]
+        if (!currentCachedCell || currentCachedCell.value !== value) {
+          cachedColumn[rowStart + i] = { value }
+          numUpdatedValues++
+        }
+      }
+
+      if (numUpdatedValues > 0) {
+        // Dispatch an event to notify that the column has been updated
+        wrappedEventTarget.dispatchEvent(new CustomEvent('dataframe:update', {
+          detail: { columns: [column], rowStart, rowEnd },
+        }))
+        console.debug(`Cached column "${column}" from row ${rowStart} to ${rowEnd}, updated ${numUpdatedValues} values`)
+      }
+
+      // console.debug(`No changes for column "${column}" from row ${rowStart} to ${rowEnd}`)
+
+    }
+
+    // Fetch the data
+    return fetch({ rowStart, rowEnd, columns, signal, onColumnComplete: onColumnCompleteWrapper })
+  }
+
+  function wrappedGetCell({ row, column }: { row: number, column: string }): ResolvedValue | undefined {
+    if (row < 0 || row >= numRows) {
+      throw new Error(`Invalid row index: ${row}. Must be between 0 and ${numRows - 1}.`)
+    }
+    const cachedColumn = cachedColumns[column]
+    if (!header.includes(column) || !cachedColumn) {
+      throw new Error(`Invalid column: ${column}. Available columns: ${header.join(', ')}`)
+    }
+    // Return the cached value, which might be undefined (meaning pending)
+    return cachedColumn[row] ?? getCell({ row, column })
+    // TODO(SL): does it make sense to use the original getCell here?
+    // If it has a value, should we cache it? or is wrappedFetch the only way to cache values?
+  }
+
+  return {
+    numRows,
+    header,
+    getCell: wrappedGetCell,
+    fetch: wrappedFetch,
+    eventTarget: wrappedEventTarget,
+  }
 }
