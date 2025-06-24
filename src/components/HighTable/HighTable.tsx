@@ -8,6 +8,7 @@ import { CellsNavigationProvider, useCellsNavigation } from '../../hooks/useCell
 import { ColumnStatesProvider, useColumnStates } from '../../hooks/useColumnStates.js'
 import { DataProvider, useData } from '../../hooks/useData.js'
 import { OrderByProvider, useOrderBy } from '../../hooks/useOrderBy.js'
+import { PortalContainerProvider, usePortalContainer } from '../../hooks/usePortalContainer.js'
 import { SelectionProvider, useSelection } from '../../hooks/useSelection.js'
 import { useTableConfig } from '../../hooks/useTableConfig.js'
 import { stringify as stringifyDefault } from '../../utils/stringify.js'
@@ -80,7 +81,9 @@ function HighTableData(props: PropsData) {
       <SelectionProvider selection={selection} onSelectionChange={onSelectionChange}>
         <ColumnStatesProvider key={key} localStorageKey={cacheKey ? `${cacheKey}${columnStatesSuffix}` : undefined} numColumns={data.header.length} minWidth={minWidth}>
           <CellsNavigationProvider colCount={ariaColCount} rowCount={ariaRowCount} rowPadding={props.padding ?? defaultPadding}>
-            <HighTableInner numRows={numRows} {...props} />
+            <PortalContainerProvider>
+              <HighTableInner numRows={numRows} {...props} />
+            </PortalContainerProvider>
           </CellsNavigationProvider>
         </ColumnStatesProvider>
       </SelectionProvider>
@@ -134,6 +137,7 @@ export function HighTableInner({
   const [rowsRange, setRowsRange] = useState({ start: 0, end: 0 })
   const { enterCellsNavigation, setEnterCellsNavigation, onTableKeyDown: onNavigationTableKeyDown, onScrollKeyDown, rowIndex, colIndex, focusFirstCell } = useCellsNavigation()
   const [lastCellPosition, setLastCellPosition] = useState({ rowIndex, colIndex })
+  const { containerRef } = usePortalContainer()
   const { setAvailableWidth } = useColumnStates()
 
   // TODO(SL): remove this state and only rely on the data frame for these operations?
@@ -143,7 +147,7 @@ export function HighTableInner({
   const { orderBy, onOrderByChange } = useOrderBy()
   const { selection, onSelectionChange, toggleAllRows, onTableKeyDown: onSelectionTableKeyDown } = useSelection({ numRows })
 
-  const columns = useTableConfig(data.header, columnConfiguration)
+  const columns = useTableConfig(data, columnConfiguration)
   const onTableKeyDown = useCallback((event: KeyboardEvent) => {
     onNavigationTableKeyDown?.(event)
     onSelectionTableKeyDown?.(event, numRows)
@@ -378,7 +382,7 @@ export function HighTableInner({
   const ariaColCount = columns.length + 1 // don't forget the selection column
   const ariaRowCount = numRows + 1 // don't forget the header row
   return (
-    <div className={`${styles.hightable} ${styled ? styles.styled : ''} ${className}`}>
+    <div ref={containerRef} className={`${styles.hightable} ${styled ? styles.styled : ''} ${className}`}>
       <div className={styles.topBorder} role="presentation"></div>
       <div className={styles.tableScroll} ref={scrollRef} role="group" aria-labelledby="caption" style={tableScrollStyle} onKeyDown={restrictedOnScrollKeyDown} tabIndex={0}>
         <div style={{ height: `${scrollHeight}px` }}>
@@ -405,7 +409,7 @@ export function HighTableInner({
                 <TableHeader
                 // TODO(SL): find a better way to check if the data is ready and the column widths should be computed
                   dataReady={rowsLength > 0}
-                  header={columns}
+                  columnDescriptors={columns}
                   orderBy={orderBy}
                   onOrderByChange={onOrderByChange}
                   columnClassNames={columnClassNames}

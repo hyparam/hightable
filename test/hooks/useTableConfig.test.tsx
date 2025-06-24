@@ -1,34 +1,66 @@
-import React from 'react'
-import { afterEach, describe, expect, it } from 'vitest'
 import { cleanup, renderHook } from '@testing-library/react'
+import { afterEach, describe, expect, it } from 'vitest'
 
-import { useTableConfig } from '../../src/hooks/useTableConfig'
 import { ColumnConfiguration } from '../../src/helpers/columnConfiguration'
+import { DataFrame } from '../../src/helpers/dataframe/index.js'
+import { useTableConfig } from '../../src/hooks/useTableConfig'
 
 afterEach(cleanup)
 
 describe('useTableConfig', () => {
   it('returns descriptors in DataFrame header order', () => {
-    const header = ['id', 'name', 'status']
+    const df = {
+      header: ['id', 'name', 'status'],
+      sortable: false,
+    } as DataFrame
 
-    const { result } = renderHook(() => useTableConfig(header, undefined))
+    const { result } = renderHook(() => useTableConfig(df, undefined))
 
-    expect(result.current.map(c => c.key)).toEqual(header)
+    expect(result.current.map(c => c.key)).toEqual(df.header)
     expect(result.current.map(c => c.index)).toEqual([0, 1, 2])
   })
 
   it('merges columnConfiguration props into descriptors', () => {
-    const header = ['id', 'name']
+    const df = {
+      header: ['id', 'name', 'status'],
+      sortable: false,
+    } as DataFrame
+
     const columnConfiguration: ColumnConfiguration = {
       name: { headerComponent: <strong>Name</strong> },
     }
 
     const { result } = renderHook(() =>
-      useTableConfig(header, columnConfiguration)
+      useTableConfig(df, columnConfiguration)
     )
 
     const [, nameCol] = result.current
     expect(nameCol.key).toBe('name')
+    expect(nameCol.sortable).toBe(false)
+    expect(nameCol.headerComponent).toMatchInlineSnapshot(`
+      <strong>
+        Name
+      </strong>
+    `)
+  })
+
+  it('overrides dataframe sortable with column specific value', () => {
+    const df = {
+      header: ['id', 'name', 'status'],
+      sortable: false,
+    } as DataFrame
+
+    const columnConfiguration: ColumnConfiguration = {
+      name: { headerComponent: <strong>Name</strong>, sortable: true },
+    }
+
+    const { result } = renderHook(() =>
+      useTableConfig(df, columnConfiguration)
+    )
+
+    const [, nameCol] = result.current
+    expect(nameCol.key).toBe('name')
+    expect(nameCol.sortable).toBe(true)
     expect(nameCol.headerComponent).toMatchInlineSnapshot(`
       <strong>
         Name
@@ -37,14 +69,17 @@ describe('useTableConfig', () => {
   })
 
   it('ignores configuration keys that are not in DataFrame.header', () => {
-    const header = ['id']
+    const df = {
+      header: ['id'],
+      sortable: false,
+    } as DataFrame
     const columnConfiguration = {
       id: { width: 50 },
       extraneous: { width: 123 },
     } as unknown as ColumnConfiguration // stray key on purpose
 
     const { result } = renderHook(() =>
-      useTableConfig(header, columnConfiguration)
+      useTableConfig(df, columnConfiguration)
     )
 
     expect(result.current).toHaveLength(1)
@@ -52,16 +87,19 @@ describe('useTableConfig', () => {
   })
 
   it('returns a stable reference when inputs are unchanged', () => {
-    const header = ['id']
+    const df = {
+      header: ['id'],
+      sortable: false,
+    } as DataFrame
 
     const { result, rerender } = renderHook(
-      ({ h, c }: { h: string[]; c?: ColumnConfiguration }) =>
-        useTableConfig(h, c),
-      { initialProps: { h: header, c: undefined } }
+      ({ d, c }: { d: DataFrame; c?: ColumnConfiguration }) =>
+        useTableConfig(d, c),
+      { initialProps: { d: df, c: undefined } }
     )
 
     const first = result.current
-    rerender({ h: header, c: undefined })
+    rerender({ d: df, c: undefined })
 
     // React memo should give us the same array instance
     expect(result.current).toBe(first)

@@ -26,7 +26,10 @@ const defaultProps = {
   columnIndex: 0,
   ariaColIndex: 1,
   ariaRowIndex: 1,
+  columnConfig: { sortable: true },
 }
+
+const nonSortableProps = { ...defaultProps, columnConfig: { sortable: false } }
 
 describe('ColumnHeader', () => {
   const cacheKey = 'key'
@@ -37,7 +40,7 @@ describe('ColumnHeader', () => {
 
   it('renders column header correctly', () => {
     const content = 'test'
-    const { getByRole } = render(<table><thead><tr><ColumnHeader columnName={content} {...defaultProps}>{content}</ColumnHeader></tr></thead></table>)
+    const { getByRole } = render(<table><thead><tr><ColumnHeader columnName={content} {...nonSortableProps}>{content}</ColumnHeader></tr></thead></table>)
     const element = getByRole('columnheader')
     expect(element.textContent).toEqual(content)
     expect(getOffsetWidth).not.toHaveBeenCalled()
@@ -46,8 +49,9 @@ describe('ColumnHeader', () => {
   it('renders headerComponent from columnConfiguration if present', () => {
     const key = 'test'
     const content = 'component'
-    const colConfig = { headerComponent: <span>{content}</span> }
-    const { getByRole } = render(<table><thead><tr><ColumnHeader columnName={key} columnConfig={colConfig} {...defaultProps}>{content}</ColumnHeader></tr></thead></table>)
+    const columnConfig = { headerComponent: <span>{content}</span> }
+    const props = { ...defaultProps, columnConfig }
+    const { getByRole } = render(<table><thead><tr><ColumnHeader columnName={key} {...props}>{content}</ColumnHeader></tr></thead></table>)
     const element = getByRole('columnheader')
     expect(element.textContent).toEqual(content)
     expect(getOffsetWidth).not.toHaveBeenCalled()
@@ -175,6 +179,28 @@ describe('ColumnHeader', () => {
   it.for(['{ }', '{Enter}'])('call onClick (eg. to change orderBy) when pressing "%s" while the header is focused', async (key) => {
     const onClick = vi.fn()
     const { user, getByRole } = render(<table><thead><tr><ColumnHeader columnName="test" {...defaultProps} onClick={onClick} /></tr></thead></table>)
+    const header = getByRole('columnheader')
+    header.focus()
+    await user.keyboard(key)
+    expect(onClick).toHaveBeenCalled()
+  })
+
+  it('does not call onClick when clicking on the header when sortable is set to false', async () => {
+    const onClick = vi.fn()
+    const props = { ...defaultProps, sortable: false }
+    const { user, getByRole } = render(<table><thead><tr><ColumnHeader columnName="test" {...props} onClick={onClick} /></tr></thead></table>)
+    const header = getByRole('columnheader')
+    const resizeHandle = getByRole('spinbutton')
+    await user.click(resizeHandle)
+    expect(onClick).not.toHaveBeenCalled()
+    await user.click(header)
+    expect(onClick).toHaveBeenCalled()
+  })
+
+  it.for(['{ }', '{Enter}'])('does not call onClick when pressing "%s" while the header is focused', async (key) => {
+    const onClick = vi.fn()
+    const props = { ...defaultProps, sortable: false }
+    const { user, getByRole } = render(<table><thead><tr><ColumnHeader columnName="test" {...props} onClick={onClick} /></tr></thead></table>)
     const header = getByRole('columnheader')
     header.focus()
     await user.keyboard(key)

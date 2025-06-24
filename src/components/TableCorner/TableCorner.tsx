@@ -66,4 +66,9 @@ function TableCorner({ children, checked, onCheckboxPress, style, ariaColIndex, 
   )
 }
 
-export default forwardRef(TableCorner)
+// To avoid showing ForwardRef in dev tools error messages:
+// > The above error occurred in the <ForwardRef> component
+const ForwardedTableCorner = forwardRef(TableCorner)
+ForwardedTableCorner.displayName = 'TableCorner'
+
+export default ForwardedTableCorner

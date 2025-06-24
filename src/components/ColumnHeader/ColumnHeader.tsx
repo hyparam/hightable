@@ -1,15 +1,19 @@
 import { KeyboardEvent, ReactNode, useCallback, useEffect, useMemo, useRef } from 'react'
 import { flushSync } from 'react-dom'
+import { ColumnConfig } from '../../helpers/columnConfiguration.js'
 import { Direction } from '../../helpers/sort.js'
 import { getOffsetWidth } from '../../helpers/width.js'
 import { useCellNavigation } from '../../hooks/useCellsNavigation.js'
+import { useColumnMenu } from '../../hooks/useColumnMenu.js'
 import { useColumnStates } from '../../hooks/useColumnStates.js'
+import ColumnMenu from '../ColumnMenu/ColumnMenu.js'
+import ColumnMenuButton from '../ColumnMenuButton/ColumnMenuButton.js'
 import ColumnResizer from '../ColumnResizer/ColumnResizer.js'
-import { ColumnConfig } from '../../helpers/columnConfiguration.js'
 
 interface Props {
   columnIndex: number // index of the column in the dataframe (0-based)
   columnName: string
+  columnConfig: ColumnConfig
   children?: ReactNode
   dataReady?: boolean
   direction?: Direction
@@ -19,17 +23,18 @@ interface Props {
   ariaColIndex: number // aria col index for the header
   ariaRowIndex: number // aria row index for the header
   className?: string // optional class name
-  columnConfig?: ColumnConfig
 }
 
 export default function ColumnHeader({ columnIndex, columnName, columnConfig, dataReady, direction, onClick, orderByIndex, orderBySize, ariaColIndex, ariaRowIndex, className, children }: Props) {
   const ref = useRef<HTMLTableCellElement>(null)
   const { tabIndex, navigateToCell } = useCellNavigation({ ref, ariaColIndex, ariaRowIndex })
+  const { sortable, headerComponent } = columnConfig
+  const { isOpen, position, menuId, handleToggle, handleMenuClick } = useColumnMenu(ref, navigateToCell)
+
   const handleClick = useCallback(() => {
     navigateToCell()
-    onClick?.()
-  }, [onClick, navigateToCell])
-  const sortable = !!onClick // if onClick is defined, the column is sortable
+    if (sortable) onClick?.()
+  }, [onClick, navigateToCell, sortable])
 
   // Get the column width from the context
   const { getColumnStyle, isFixedColumn, getColumnWidth, measureWidth, forceWidth, removeWidth } = useColumnStates()
@@ -121,13 +126,33 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, da
       className={className}
       data-fixed-width={dataFixedWidth}
     >
-      {columnConfig?.headerComponent ?? children}
+      {headerComponent ?? children}
+      {sortable &&
+        <ColumnMenuButton
+          onClick={handleMenuClick}
+          onEscape={navigateToCell}
+          tabIndex={tabIndex}
+          isExpanded={isOpen}
+          menuId={menuId}
+          aria-label={`Column menu for ${columnName}`}
+        />
+      }
       <ColumnResizer
         forceWidth={forceColumnWidth}
         autoResize={autoResize}
         width={width}
         tabIndex={tabIndex}
         navigateToCell={navigateToCell}
+      />
+      <ColumnMenu
+        columnName={columnName}
+        isOpen={isOpen}
+        position={position}
+        direction={direction}
+        sortable={sortable}
+        onClick={onClick}
+        onToggle={handleToggle}
+        id={menuId}
       />
     </th>
   )

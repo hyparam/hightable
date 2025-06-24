@@ -241,6 +241,16 @@ export const Placeholders: Story = {
 //     },
 //   },
 // }
+// export const NonSortableColunns: Story = {
+//   args: {
+//     data: sortableData,
+//     columnConfiguration: {
+//       Double: {
+//         sortable: false,
+//       },
+//     },
+//   },
+// }
 // export const FilteredRows: Story = {
 //   args: {
 //     data: filteredData,
@@ -274,7 +284,6 @@ export const Placeholders: Story = {
 //     data: sortableData,
 //   },
 // }
-
 // export const ReadOnlySelection: Story = {
 //   render: (args) => {
 //     const selection = {
