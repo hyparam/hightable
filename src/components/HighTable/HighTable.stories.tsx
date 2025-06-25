@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
+import { DataFrameEvents } from '../../helpers/dataframe/index.js'
 import { sortableDataFrame } from '../../helpers/dataframe/sortableDataFrame.js'
-import { UnsortableDataFrame, UnsortableDataFrameEvents, cacheUnsortableDataFrame, getStaticFetch } from '../../helpers/dataframe/unsortableDataFrame.js'
+import { UnsortableDataFrame, cacheUnsortableDataFrame, getStaticFetch } from '../../helpers/dataframe/unsortableDataFrame.js'
 import { createEventTarget } from '../../helpers/typedEventTarget.js'
 import HighTable from './HighTable.js'
 
@@ -30,7 +31,7 @@ const data: UnsortableDataFrame = {
   numRows: 1000,
   getCell,
   fetch: getStaticFetch({ getCell }),
-  eventTarget: createEventTarget<UnsortableDataFrameEvents>(),
+  eventTarget: createEventTarget<DataFrameEvents>(),
 }
 
 function delay<T>(value: T, ms: number): Promise<T> {
@@ -67,16 +68,17 @@ async function delayedDataFetch({ rowStart, rowEnd, columns, signal, onColumnCom
   await Promise.all(columnPromises)
 }
 
-const delayedData: UnsortableDataFrame = {
+const notGetCellDelayedData: UnsortableDataFrame = {
   header: delayedDataHeader,
   numRows: delayedDataNumRows,
   fetch: delayedDataFetch,
   getCell: () => { return undefined },
-  eventTarget: createEventTarget<UnsortableDataFrameEvents>(),
+  eventTarget: createEventTarget<DataFrameEvents>(),
 }
-const sortableDelayedData = sortableDataFrame(cacheUnsortableDataFrame(delayedData))
+const delayedData = cacheUnsortableDataFrame(notGetCellDelayedData)
+// const sortableDelayedData = sortableDataFrame(delayedData)
 
-// const sortableData = rowCache(sortableDataFrame(data))
+const sortableData = sortableDataFrame(data)
 
 // const dataWithUndefinedCells: DataFrame = {
 //   header: ['ID', 'Count'],
@@ -187,9 +189,14 @@ export const Unstyled: Story = {
     styled: false,
   },
 }
+export const Sortable: Story = {
+  args: {
+    data: sortableData,
+  },
+}
 export const Placeholders: Story = {
   args: {
-    data: sortableDelayedData,
+    data: delayedData,
   },
 }
 // export const UndefinedCells: Story = {
@@ -216,31 +223,31 @@ export const Placeholders: Story = {
 //     data: sortableData,
 //   },
 // }
-// export const CustomHeaderStyle: Story = {
-//   args: {
-//     data,
-//     // See .storybook/global.css for the CSS rule
-//     // .custom-hightable thead th.delegated {
-//     //   background-color: #ffe9a9;
-//     // }
-//     className: 'custom-hightable',
-//     columnClassNames: [undefined, undefined, 'delegated'],
-//   },
-// }
-// export const HeaderComponent: Story = {
-//   args: {
-//     data,
-//     columnConfiguration: {
-//       Double: {
-//         headerComponent:
-//           <span>
-//             Double &nbsp;<button type="button" onClick={() => { alert('Custom function') }}>Button</button>
-//           </span>
-//         ,
-//       },
-//     },
-//   },
-// }
+export const CustomHeaderStyle: Story = {
+  args: {
+    data,
+    // See .storybook/global.css for the CSS rule
+    // .custom-hightable thead th.delegated {
+    //   background-color: #ffe9a9;
+    // }
+    className: 'custom-hightable',
+    columnClassNames: [undefined, undefined, 'delegated'],
+  },
+}
+export const HeaderComponent: Story = {
+  args: {
+    data,
+    columnConfiguration: {
+      Double: {
+        headerComponent:
+          <span>
+            Double &nbsp;<button type="button" onClick={() => { alert('Custom function') }}>Button</button>
+          </span>
+        ,
+      },
+    },
+  },
+}
 // export const NonSortableColunns: Story = {
 //   args: {
 //     data: sortableData,

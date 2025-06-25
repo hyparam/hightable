@@ -3,6 +3,7 @@ import { DataFrame, DataFrameEvents, ResolvedValue } from '../../helpers/datafra
 import { OrderBy, areEqualOrderBy } from '../../helpers/sort.js'
 import { useCellNavigation } from '../../hooks/useCellsNavigation.js'
 import { useColumnStates } from '../../hooks/useColumnStates.js'
+import { useRow } from '../../hooks/useUnsortedRow.js'
 
 interface Props {
   ariaColIndex: number
@@ -13,10 +14,9 @@ interface Props {
   rowIndex: number
   stringify: (value: unknown) => string | undefined
   className?: string
-  dataRowIndex?: number
-  onDoubleClick?: (event: MouseEvent) => void
-  onMouseDown?: (event: MouseEvent) => void
-  onKeyDown?: (event: KeyboardEvent) => void
+  onDoubleClickCell?: (event: MouseEvent, col: number, row: number) => void
+  onMouseDownCell?: (event: MouseEvent, col: number, row: number) => void
+  onKeyDownCell?: (event: KeyboardEvent, col: number, row: number) => void // for accessibility, it should be passed if onDoubleClickCell is passed. It can handle more than that action though.
   orderBy?: OrderBy
 }
 
@@ -32,25 +32,40 @@ interface Props {
  * @param {number} props.rowIndex row index in the table (0-based)
  * @param {function} props.stringify function to stringify the value
  * @param {string} [props.className] class name
- * @param {number} [props.dataRowIndex] index of the row in the dataframe (0-based)
  * @param {function} [props.onDoubleClick] double click callback
  * @param {function} [props.onMouseDown] mouse down callback
  * @param {function} [props.onKeyDown] key down callback
  * @param {OrderBy} [props.orderBy] order by to sort the dataframe
  */
-export default function Cell({ data, rowIndex, column, orderBy, onDoubleClick, onMouseDown, onKeyDown, stringify, columnIndex, className, ariaColIndex, ariaRowIndex, dataRowIndex }: Props) {
+export default function Cell({ data, rowIndex, column, orderBy, onDoubleClickCell, onMouseDownCell, onKeyDownCell, stringify, columnIndex, className, ariaColIndex, ariaRowIndex }: Props) {
   const ref = useRef<HTMLTableCellElement>(null)
-  const [cell, setCell] = useState<ResolvedValue | undefined>(data.getCell({ row: rowIndex, column, orderBy }))
+  const { unsortedRow } = useRow()
+  const [cell, setCell] = useState<ResolvedValue | undefined>(() => {return data.getCell({ row: rowIndex, column, orderBy })})
   const { tabIndex, navigateToCell } = useCellNavigation({ ref, ariaColIndex, ariaRowIndex })
+
   const handleMouseDown = useCallback((event: MouseEvent) => {
     navigateToCell()
-    onMouseDown?.(event)
-  }, [onMouseDown, navigateToCell])
+    if (onMouseDownCell && unsortedRow !== undefined) {
+      onMouseDownCell(event, columnIndex, unsortedRow)
+    }
+  }, [navigateToCell, onMouseDownCell, unsortedRow, columnIndex])
   const handleDoubleClick = useCallback((event: MouseEvent) => {
     navigateToCell()
-    onDoubleClick?.(event)
-  }, [onDoubleClick, navigateToCell])
+    if (onDoubleClickCell && unsortedRow !== undefined) {
+      onDoubleClickCell(event, columnIndex, unsortedRow)
+    }
+  }, [navigateToCell, onDoubleClickCell, unsortedRow, columnIndex])
+  const handleKeyDown = useCallback((event: KeyboardEvent) => {
+    // No need to navigate to the cell when using the keyboard, it is already focused
+    if (onKeyDownCell && unsortedRow !== undefined) {
+      onKeyDownCell(event, columnIndex, unsortedRow)
+    }
+  }, [onKeyDownCell, unsortedRow, columnIndex])
+
   useEffect(() => {
+    // update cell when data or orderBy changes
+    setCell(data.getCell({ row: rowIndex, column, orderBy }))
+    // and listen for updates to the dataframe (the cell might still be undefined)
     function onFetchEvent(event: CustomEvent<DataFrameEvents['dataframe:update']>) {
       const { rowStart, rowEnd, columns, orderBy: eventOrderBy } = event.detail
       if (rowStart <= rowIndex && rowIndex < rowEnd && columns.includes(column) && areEqualOrderBy(orderBy, eventOrderBy)) {
@@ -90,11 +105,11 @@ export default function Cell({ data, rowIndex, column, orderBy, onDoubleClick, o
       aria-busy={cell === undefined}
       aria-rowindex={ariaRowIndex}
       aria-colindex={ariaColIndex}
-      data-rowindex={dataRowIndex}
+      data-rowindex={unsortedRow}
       tabIndex={tabIndex}
       onDoubleClick={handleDoubleClick}
       onMouseDown={handleMouseDown}
-      onKeyDown={onKeyDown}
+      onKeyDown={handleKeyDown}
       style={columnStyle}
       className={className}
       title={title}>

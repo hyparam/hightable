@@ -1,10 +1,5 @@
 import { CustomEventTarget, cloneEventTarget, createEventTarget } from '../typedEventTarget.js'
-import { Cells, CommonDataFrameEvents, ResolvedValue } from './types.js'
-
-// Map of event type -> detail
-export interface UnsortableDataFrameEvents extends CommonDataFrameEvents{
-  'dataframe:update': { rowStart: number, rowEnd: number, columns: string[], orderBy?: undefined };
-}
+import { Cells, DataFrameEvents, ResolvedValue } from './types.js'
 
 /**
  * UnsortableDataFrame is an interface for a data structure that represents a table of data.
@@ -30,7 +25,7 @@ export interface UnsortableDataFrame {
   fetch({ rowStart, rowEnd, columns, signal, onColumnComplete }: { rowStart: number, rowEnd: number, columns: string[], signal?: AbortSignal, onColumnComplete?: (data: {column: string, values: any[]}) => void }): Promise<void>
 
   // emits events, defined in DataFrameEvents
-  eventTarget: CustomEventTarget<UnsortableDataFrameEvents>
+  eventTarget: CustomEventTarget<DataFrameEvents>
 }
 
 export function arrayDataFrame(data: Cells[]): UnsortableDataFrame {
@@ -57,7 +52,7 @@ export function arrayDataFrame(data: Cells[]): UnsortableDataFrame {
     header,
     getCell,
     fetch: getStaticFetch({ getCell }),
-    eventTarget: createEventTarget<UnsortableDataFrameEvents>(),
+    eventTarget: createEventTarget<DataFrameEvents>(),
   }
 }
 

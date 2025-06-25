@@ -1,7 +1,8 @@
 import { act, fireEvent, waitFor } from '@testing-library/react'
 import { UserEvent } from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { UnsortableDataFrame, UnsortableDataFrameEvents, getStaticFetch } from '../../helpers/dataframe/unsortableDataFrame.js'
+import { DataFrameEvents } from '../../helpers/dataframe/index.js'
+import { UnsortableDataFrame, getStaticFetch } from '../../helpers/dataframe/unsortableDataFrame.js'
 import { createEventTarget } from '../../helpers/typedEventTarget.js'
 import { MaybeColumnState } from '../../hooks/useColumnStates.js'
 import { render } from '../../utils/userEvent.js'
@@ -30,7 +31,7 @@ const data: UnsortableDataFrame = {
   numRows: 1000,
   getCell: getDataCell,
   fetch: getStaticFetch({ getCell: getDataCell }),
-  eventTarget: createEventTarget<UnsortableDataFrameEvents>(),
+  eventTarget: createEventTarget<DataFrameEvents>(),
 }
 
 function getOtherDataCell({ row, column }: { row: number, column: string }) {
@@ -50,7 +51,7 @@ const otherData: UnsortableDataFrame = {
   numRows: 1000,
   getCell: getOtherDataCell,
   fetch: getStaticFetch({ getCell: getOtherDataCell }),
-  eventTarget: createEventTarget<UnsortableDataFrameEvents>(),
+  eventTarget: createEventTarget<DataFrameEvents>(),
 }
 
 async function setFocusOnScrollableDiv(user: UserEvent) {
@@ -79,7 +80,7 @@ describe('HighTable', () => {
     numRows: 100,
     getCell: vi.fn(getCell),
     fetch: getStaticFetch({ getCell }),
-    eventTarget: createEventTarget<UnsortableDataFrameEvents>(),
+    eventTarget: createEventTarget<DataFrameEvents>(),
   }
 
   beforeEach(() => {
@@ -182,7 +183,7 @@ describe('with async data, HighTable', () => {
       return acc
     }, [])
     const signalAborted: boolean[] = []
-    const eventTarget = createEventTarget<UnsortableDataFrameEvents>()
+    const eventTarget = createEventTarget<DataFrameEvents>()
     function getCell({ row, column }: { row: number, column: string }) {
       if (!asyncDataFetched[row]) {
         return undefined
@@ -352,7 +353,7 @@ describe('with async data, HighTable', () => {
 //     expect(columns[0]?.textContent).toBe(ID)
 //     expect(columns[1]?.textContent).toBe(Count)
 //   }
-//
+
 // it('shows the rows in the right order', async () => {
 //   const { user, findByRole, getByRole, findAllByRole } = render(<HighTable data={sortableDataFrame(data)} />)
 
@@ -428,7 +429,7 @@ describe('with async data, HighTable', () => {
 
 //   expect(mockDoubleClick).toHaveBeenCalledWith(expect.anything(), 0, 0)
 // })
-//})
+// })
 
 describe('in controlled selection state (selection and onSelection props), ', () => {
   beforeEach(() => {

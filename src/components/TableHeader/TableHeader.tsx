@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react'
 import { OrderBy, toggleColumn } from '../../helpers/sort.js'
-import ColumnHeader from '../ColumnHeader/ColumnHeader.js'
 import { ColumnDescriptor } from '../../hooks/useTableConfig.js'
+import ColumnHeader from '../ColumnHeader/ColumnHeader.js'
 
 interface TableHeaderProps {
   columnDescriptors: ColumnDescriptor[]

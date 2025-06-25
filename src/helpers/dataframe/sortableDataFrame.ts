@@ -1,14 +1,9 @@
 import { OrderBy, checkOrderBy } from '../sort.js'
 import { CustomEventTarget, createEventTarget } from '../typedEventTarget.js'
-import { CommonDataFrameEvents, ResolvedValue } from './types.js'
+import { DataFrameEvents, ResolvedValue } from './types.js'
 import { UnsortableDataFrame, fetchColumn } from './unsortableDataFrame.js'
 
 export type Cells = Record<string, any>
-
-// Map of event type -> detail
-export interface SortableDataFrameEvents extends CommonDataFrameEvents {
-  'dataframe:update': { rowStart: number, rowEnd: number, columns: string[], orderBy?: OrderBy };
-}
 
 /**
  * DataFrame is an interface for a data structure that represents a table of data.
@@ -44,7 +39,7 @@ export interface SortableDataFrame {
   //
   // publish an event:
   // eventTarget.dispatchEvent(new CustomEvent('dataframe:numrowschange', { detail: { numRows: 42 } }))
-  eventTarget: CustomEventTarget<SortableDataFrameEvents>
+  eventTarget: CustomEventTarget<DataFrameEvents>
 }
 
 export function sortableDataFrame(unsortableDataFrame: UnsortableDataFrame): SortableDataFrame {
@@ -54,7 +49,7 @@ export function sortableDataFrame(unsortableDataFrame: UnsortableDataFrame): Sor
   const ranksByColumn = new Map<string, number[]>()
   const indexesByOrderBy = new Map<string, number[]>()
 
-  const eventTarget = createEventTarget<SortableDataFrameEvents>()
+  const eventTarget = createEventTarget<DataFrameEvents>()
   unsortableDataFrame.eventTarget.addEventListener('dataframe:numrowschange', (event) => {
     // Forward the numRows change event to the sortable data frame
     eventTarget.dispatchEvent(new CustomEvent('dataframe:numrowschange', { detail: { numRows: event.detail.numRows } }))
@@ -97,7 +92,6 @@ export function sortableDataFrame(unsortableDataFrame: UnsortableDataFrame): Sor
 
   async function fetch(args: { rowStart: number, rowEnd: number, columns: string[], orderBy?: OrderBy, signal?: AbortSignal }): Promise<void> {
     // TODO?: no-op if the arguments have already been fetched once (we should cache with key:boolean, and (smartly) invalidate the cache on update)
-
     const { orderBy, ...rest } = args
     const { rowStart, rowEnd, columns, signal } = rest
     if (!orderBy || orderBy.length === 0) {
@@ -123,7 +117,7 @@ export function sortableDataFrame(unsortableDataFrame: UnsortableDataFrame): Sor
       indexes = computeIndexes(orderByWithRanks)
       // Store the computed indexes in the map and emit an event.
       indexesByOrderBy.set(serializedOrderBy, indexes)
-      eventTarget.dispatchEvent(new CustomEvent('dataframe:update', { detail: { rowStart, rowEnd, columns, orderBy } }))
+      eventTarget.dispatchEvent(new CustomEvent('dataframe:index:update', { detail: { rowStart, rowEnd, orderBy } }))
     }
 
     return fetchFromIndexes({ columns, signal, indexes: indexes.slice(rowStart, rowEnd), unsortableFetch: unsortableDataFrame.fetch })

@@ -11,13 +11,13 @@ import { OrderByProvider, useOrderBy } from '../../hooks/useOrderBy.js'
 import { PortalContainerProvider, usePortalContainer } from '../../hooks/usePortalContainer.js'
 import { SelectionProvider, useSelection } from '../../hooks/useSelection.js'
 import { useTableConfig } from '../../hooks/useTableConfig.js'
+import { RowProvider } from '../../hooks/useUnsortedRow.js'
 import { stringify as stringifyDefault } from '../../utils/stringify.js'
 import Cell from '../Cell/Cell.js'
 import Row from '../Row/Row.js'
 import RowHeader from '../RowHeader/RowHeader.js'
 import TableCorner from '../TableCorner/TableCorner.js'
 import TableHeader from '../TableHeader/TableHeader.js'
-import { formatRowNumber } from './HighTable.helpers.js'
 import styles from './HighTable.module.css'
 
 const rowHeight = 33 // row height px
@@ -30,6 +30,7 @@ interface Props {
   overscan?: number // number of rows to fetch outside of the viewport
   padding?: number // number of padding rows to render outside of the viewport
   focus?: boolean // focus table on mount? (default true)
+  // TODO(SL): replace col: number with col: string?
   onDoubleClickCell?: (event: MouseEvent, col: number, row: number) => void
   onMouseDownCell?: (event: MouseEvent, col: number, row: number) => void
   onKeyDownCell?: (event: KeyboardEvent, col: number, row: number) => void // for accessibility, it should be passed if onDoubleClickCell is passed. It can handle more than that action though.
@@ -75,9 +76,7 @@ function HighTableData(props: PropsData) {
 
   return (
     /* important: key={key} ensures the local state is recreated if the data has changed */
-    <OrderByProvider key={key} orderBy={orderBy} onOrderByChange={onOrderByChange} disabled={true}>
-      {/* <OrderByProvider key={key} orderBy={orderBy} onOrderByChange={onOrderByChange} disabled={!data.sortable}></OrderByProvider> */
-      /* TODO(SL): enable sorting when the DataFrame supports it */}
+    <OrderByProvider key={key} orderBy={orderBy} onOrderByChange={onOrderByChange} disabled={!data.sortable}>
       <SelectionProvider selection={selection} onSelectionChange={onSelectionChange}>
         <ColumnStatesProvider key={key} localStorageKey={cacheKey ? `${cacheKey}${columnStatesSuffix}` : undefined} numColumns={data.header.length} minWidth={minWidth}>
           <CellsNavigationProvider colCount={ariaColCount} rowCount={ariaRowCount} rowPadding={props.padding ?? defaultPadding}>
@@ -154,25 +153,21 @@ export function HighTableInner({
   }, [onNavigationTableKeyDown, onSelectionTableKeyDown, numRows])
 
   // const pendingSelectionRequest = useRef(0)
-  const getOnCheckboxPress = useCallback(({ dataIndex }: {tableIndex: number, dataIndex: number | undefined}) => {
-    if (selection && onSelectionChange && dataIndex !== undefined) {
-      return (shiftKey: boolean): void => {
-        onSelectRowClick(shiftKey, selection, onSelectionChange, dataIndex)
-      }
+  const onCheckboxPress = useMemo(() => {
+    if (!selection || !onSelectionChange) {
+      return undefined
     }
-
-    function onSelectRowClick(shiftKey: boolean, selection: Selection, onSelectionChange: (selection: Selection) => void, dataIndex: number) {
+    return ({ row, shiftKey }: {row: number, shiftKey: boolean}) => {
       const useAnchor = shiftKey && selection.anchor !== undefined
-
       if (!useAnchor) {
         // single row toggle
-        onSelectionChange(toggleIndexInSelection({ selection, index: dataIndex }))
+        onSelectionChange(toggleIndexInSelection({ selection, index: row }))
         return
       }
 
       if (!orderBy || orderBy.length === 0) {
         // no sorting, toggle the range
-        onSelectionChange(toggleRangeInSelection({ selection, index: dataIndex }))
+        onSelectionChange(toggleRangeInSelection({ selection, index: row }))
         return
       }
 
@@ -197,9 +192,12 @@ export function HighTableInner({
     if (!selection) return undefined
     return areAllSelected({ ranges: selection.ranges, length: numRows })
   }, [selection, numRows])
-  const isRowSelected = useCallback((dataIndex: number | undefined) => {
-    if (!selection || dataIndex === undefined) return undefined
-    return isSelected({ ranges: selection.ranges, index: dataIndex })
+  const isRowSelected = useMemo(() => {
+    if (!selection) return undefined
+    return (index: number | undefined): boolean | undefined => {
+      if (index === undefined) return undefined
+      return isSelected({ ranges: selection.ranges, index })
+    }
   }, [selection])
 
   // total scrollable height
@@ -318,27 +316,6 @@ export function HighTableInner({
 
   // TODO(SL): restore a mechanism to change slice when the number of rows has changed
 
-  const getOnDoubleClickCell = useCallback((col: number, row?: number) => {
-    // TODO(SL): give feedback (a specific class on the cell element?) about why the double click is disabled?
-    if (!onDoubleClickCell || row === undefined) return
-    return (e: MouseEvent) => {
-      onDoubleClickCell(e, col, row)
-    }
-  }, [onDoubleClickCell])
-  const getOnMouseDownCell = useCallback((col: number, row?: number) => {
-    // TODO(SL): give feedback (a specific class on the cell element?) about why the double click is disabled?
-    if (!onMouseDownCell || row === undefined) return
-    return (e: MouseEvent) => {
-      onMouseDownCell(e, col, row)
-    }
-  }, [onMouseDownCell])
-  const getOnKeyDownCell = useCallback((col: number, row?: number) => {
-    if (!onKeyDownCell || row === undefined) return
-    return (e: KeyboardEvent) => {
-      onKeyDownCell(e, col, row)
-    }
-  }, [onKeyDownCell])
-
   // focus table on mount, or on data change, so arrow keys work
   useEffect(() => {
     if (focus) {
@@ -428,48 +405,44 @@ export function HighTableInner({
                 )
               })}
               {tableIndexes.map((tableIndex) => {
-                const inferredDataIndex = orderBy === undefined || orderBy.length === 0 ? tableIndex : undefined
-                // TODO(SL): when sorting is supported, use data.getIndex()
-                // const dataIndex = row.index ?? inferredDataIndex
-                const dataIndex = inferredDataIndex
-                const selected = isRowSelected(dataIndex)
                 const ariaRowIndex = tableIndex + ariaOffset
                 return (
-                  <Row
-                    key={tableIndex}
-                    selected={selected}
-                    ariaRowIndex={ariaRowIndex}
-                    // title={rowError(row, columns.length)} // TODO(SL): re-enable later
+                  <RowProvider
+                    key={tableIndex} // TODO(SL): is there a better key?
+                    data={data}
+                    row={tableIndex}
+                    orderBy={orderBy}
+                    isRowSelected={isRowSelected}
                   >
-                    <RowHeader
-                      busy={dataIndex === undefined}
-                      style={cornerStyle}
-                      onCheckboxPress={getOnCheckboxPress({ tableIndex, dataIndex })}
-                      checked={selected}
-                      showCheckBox={selection !== undefined}
-                      ariaColIndex={1}
+                    <Row
                       ariaRowIndex={ariaRowIndex}
-                      dataRowIndex={dataIndex}
-                    >{formatRowNumber(dataIndex)}</RowHeader>
-                    {data.header.map((column, columnIndex) => {
-                      return <Cell
-                        key={columnIndex}
-                        data={data}
-                        rowIndex={tableIndex}
-                        column={column}
-                        orderBy={orderBy}
-                        onDoubleClick={getOnDoubleClickCell(columnIndex, dataIndex)}
-                        onMouseDown={getOnMouseDownCell(columnIndex, dataIndex)}
-                        onKeyDown={getOnKeyDownCell(columnIndex, dataIndex)}
-                        stringify={stringify}
-                        columnIndex={columnIndex}
-                        className={columnClassNames[columnIndex]}
-                        ariaColIndex={columnIndex + ariaOffset}
+                      // title={rowError(row, columns.length)} // TODO(SL): re-enable later?
+                    >
+                      <RowHeader
+                        style={cornerStyle}
+                        onCheckboxPress={onCheckboxPress}
+                        ariaColIndex={1}
                         ariaRowIndex={ariaRowIndex}
-                        dataRowIndex={dataIndex}
                       />
-                    })}
-                  </Row>
+                      {data.header.map((column, columnIndex) => {
+                        return <Cell
+                          key={columnIndex}
+                          data={data}
+                          rowIndex={tableIndex}
+                          column={column}
+                          orderBy={orderBy}
+                          onDoubleClickCell={onDoubleClickCell}
+                          onMouseDownCell={onMouseDownCell}
+                          onKeyDownCell={onKeyDownCell}
+                          stringify={stringify}
+                          columnIndex={columnIndex}
+                          className={columnClassNames[columnIndex]}
+                          ariaColIndex={columnIndex + ariaOffset}
+                          ariaRowIndex={ariaRowIndex}
+                        />
+                      })}
+                    </Row>
+                  </RowProvider>
                 )
               })}
               {postPadding.map((_, postPaddingIndex) => {
