@@ -2,8 +2,9 @@ import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useState } from 'react'
 import { DataFrameEvents } from '../../helpers/dataframe/index.js'
 import { sortableDataFrame } from '../../helpers/dataframe/sortableDataFrame.js'
-import { UnsortableDataFrame, cacheUnsortableDataFrame, getStaticFetch } from '../../helpers/dataframe/unsortableDataFrame.js'
+import { UnsortableDataFrame, arrayDataFrame, cacheUnsortableDataFrame, getStaticFetch } from '../../helpers/dataframe/unsortableDataFrame.js'
 import type { Selection } from '../../helpers/selection.js'
+import type { OrderBy } from '../../helpers/sort.js'
 import { createEventTarget } from '../../helpers/typedEventTarget.js'
 import HighTable from './HighTable.js'
 
@@ -85,6 +86,7 @@ const sortableDelayedData = sortableDataFrame(delayedData)
 
 const sortableData = sortableDataFrame(data)
 
+// TODO(SL): implement a better way to test the change of numRows for the same dataframe
 // const filteredData: DataFrame = rowCache(sortableDataFrame({
 //   header: ['ID', 'Count', 'Value1', 'Value2'],
 //   numRows: 1000,
@@ -117,22 +119,15 @@ const sortableData = sortableDataFrame(data)
 //   }),
 // }))
 
-// const longStringsData: DataFrame = {
-//   header: ['ID', 'LongString', 'Value1', 'Value2'],
-//   numRows: 1000,
-//   rows: ({ start, end }) => Array.from({ length: end - start }, (_, index) => {
-//     const id = index + start
-//     return {
-//       index: wrapResolved(id),
-//       cells: {
-//         ID: wrapResolved( `row ${id}`),
-//         LongString: wrapResolved('Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum'.repeat(10)),
-//         Value1: wrapResolved(Math.floor(100 * random(135 + index))),
-//         Value2: wrapResolved(Math.floor(100 * random(648 + index))),
-//       },
-//     }
-//   }),
-// }
+const longString = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum'
+const longStringsData = sortableDataFrame(arrayDataFrame(Array.from({ length: 1000 }, (_, index) => {
+  return {
+    ID: `row ${index}`,
+    LongString: longString.repeat(10),
+    Value1: Math.floor(100 * random(135 + index)),
+    Value2: Math.floor(100 * random(648 + index)),
+  }
+})))
 
 // const manyColumnsData: DataFrame = {
 //   header: ['ID1', 'LongString1', 'Value1', 'ID2', 'LongString2', 'Value2', 'ID3', 'LongString3', 'Value3', 'ID4', 'LongString4', 'Value4'],
@@ -217,30 +212,25 @@ export const Placeholders: Story = {
     data: sortableDelayedData,
   },
 }
-// export const UndefinedCells: Story = {
-//   args: {
-//     data: dataWithUndefinedCells,
-//   },
-// }
-// export const MultiSort: Story = {
-//   render: (args) => {
-//     const [orderBy, setOrderBy] = useState<OrderBy>([
-//       { column: 'Count', direction: 'ascending' },
-//       { column: 'Value1', direction: 'descending' },
-//       { column: 'Value2', direction: 'ascending' },
-//     ])
-//     return (
-//       <HighTable
-//         {...args}
-//         orderBy={orderBy}
-//         onOrderByChange={setOrderBy}
-//       />
-//     )
-//   },
-//   args: {
-//     data: sortableData,
-//   },
-// }
+export const MultiSort: Story = {
+  render: (args) => {
+    const [orderBy, setOrderBy] = useState<OrderBy>([
+      { column: 'Count', direction: 'ascending' },
+      { column: 'Value1', direction: 'descending' },
+      { column: 'Value2', direction: 'ascending' },
+    ])
+    return (
+      <HighTable
+        {...args}
+        orderBy={orderBy}
+        onOrderByChange={setOrderBy}
+      />
+    )
+  },
+  args: {
+    data: sortableData,
+  },
+}
 export const CustomHeaderStyle: Story = {
   args: {
     data,
@@ -281,11 +271,11 @@ export const HeaderComponent: Story = {
 //     data: filteredData,
 //   },
 // }
-// export const LongStrings: Story = {
-//   args: {
-//     data: longStringsData,
-//   },
-// }
+export const LongStrings: Story = {
+  args: {
+    data: longStringsData,
+  },
+}
 // export const ManyColumns: Story = {
 //   args: {
 //     data: manyColumnsData,

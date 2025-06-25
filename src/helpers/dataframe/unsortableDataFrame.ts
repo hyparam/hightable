@@ -189,7 +189,7 @@ export function cacheUnsortableDataFrame({ numRows, header, getCell, fetch, even
     }
     function onColumnCompleteWrapper({ column, values }: {column: string, values: any[]}) {
       if (signal?.aborted) {
-        console.warn('Fetch aborted while processing onColumnComplete')
+        console.debug('Fetch aborted while processing onColumnComplete')
         return
       }
       if (onColumnComplete) {
@@ -215,11 +215,7 @@ export function cacheUnsortableDataFrame({ numRows, header, getCell, fetch, even
         wrappedEventTarget.dispatchEvent(new CustomEvent('dataframe:update', {
           detail: { columns: [column], rowStart, rowEnd },
         }))
-        console.debug(`Cached column "${column}" from row ${rowStart} to ${rowEnd}, updated ${numUpdatedValues} values`)
       }
-
-      // console.debug(`No changes for column "${column}" from row ${rowStart} to ${rowEnd}`)
-
     }
 
     // Fetch the data
