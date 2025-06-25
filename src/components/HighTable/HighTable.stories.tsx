@@ -176,6 +176,23 @@ export const Empty: Story = {
     data: emptyData,
   },
 }
+export const EmptySelectable: Story = {
+  render: (args) => {
+    const [selection, onSelectionChange] = useState<Selection>({
+      ranges: [],
+    })
+    return (
+      <HighTable
+        {...args}
+        selection={selection}
+        onSelectionChange={onSelectionChange}
+      />
+    )
+  },
+  args: {
+    data: emptyData,
+  },
+}
 export const Placeholders: Story = {
   args: {
     data: delayedData,
