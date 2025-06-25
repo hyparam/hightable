@@ -478,7 +478,7 @@ export function HighTableInner({
                   ariaColIndex={1}
                   ariaRowIndex={1}
                   ref={tableCornerRef}
-                >&nbsp;</TableCorner>
+                />
                 <TableHeader
                   dataReady={slice !== undefined}
                   columnDescriptors={columns}
