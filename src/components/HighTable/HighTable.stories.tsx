@@ -281,38 +281,38 @@ export const LongStrings: Story = {
 //     data: manyColumnsData,
 //   },
 // }
-// export const RowsSelection: Story = {
-//   render: (args) => {
-//     const [selection, onSelectionChange] = useState<Selection>({
-//       ranges: [{ start: 1, end: 3 }, { start: 5, end: 7 }],
-//       anchor: 5,
-//     })
-//     return (
-//       <HighTable
-//         {...args}
-//         selection={selection}
-//         onSelectionChange={onSelectionChange}
-//       />
-//     )
-//   },
-//   args: {
-//     data: sortableData,
-//   },
-// }
-// export const ReadOnlySelection: Story = {
-//   render: (args) => {
-//     const selection = {
-//       ranges: [{ start: 1, end: 3 }, { start: 5, end: 7 }],
-//       anchor: 5,
-//     }
-//     return (
-//       <HighTable
-//         {...args}
-//         selection={selection}
-//       />
-//     )
-//   },
-//   args: {
-//     data: sortableData,
-//   },
-// }
+export const RowsSelection: Story = {
+  render: (args) => {
+    const [selection, onSelectionChange] = useState<Selection>({
+      ranges: [{ start: 1, end: 3 }, { start: 5, end: 7 }],
+      anchor: 5,
+    })
+    return (
+      <HighTable
+        {...args}
+        selection={selection}
+        onSelectionChange={onSelectionChange}
+      />
+    )
+  },
+  args: {
+    data: sortableData,
+  },
+}
+export const ReadOnlySelection: Story = {
+  render: (args) => {
+    const selection = {
+      ranges: [{ start: 1, end: 3 }, { start: 5, end: 7 }],
+      anchor: 5,
+    }
+    return (
+      <HighTable
+        {...args}
+        selection={selection}
+      />
+    )
+  },
+  args: {
+    data: sortableData,
+  },
+}
