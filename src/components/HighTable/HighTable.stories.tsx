@@ -12,7 +12,7 @@ function random(seed: number) {
   return x - Math.floor(x)
 }
 
-const header = ['ID', 'Count', 'Double', 'Constant', 'Value1', 'Value2', 'Value3']
+const header = ['ID', 'Count', 'Double', 'Constant', 'Value1', 'Value2', 'Value3', 'Undefined']
 function getCell({ row, column }: { row: number, column: string }) {
   const count = 1000 - row
   if (!header.includes(column)) {
@@ -25,7 +25,8 @@ function getCell({ row, column }: { row: number, column: string }) {
           column === 'Constant' ? 42 :
             column === 'Value1' ? Math.floor(100 * random(135 + row)) :
               column === 'Value2' ? Math.floor(100 * random(648 + row)) :
-                Math.floor(100 * random(315 + row)),
+                column === 'Value3' ? Math.floor(100 * random(315 + row)) :
+                  undefined,
   }
 }
 const data: UnsortableDataFrame = {
@@ -80,27 +81,9 @@ const noGetCellDelayedData: UnsortableDataFrame = {
   eventTarget: createEventTarget<DataFrameEvents>(),
 }
 const delayedData = cacheUnsortableDataFrame(noGetCellDelayedData)
-// const sortableDelayedData = sortableDataFrame(delayedData)
+const sortableDelayedData = sortableDataFrame(delayedData)
 
 const sortableData = sortableDataFrame(data)
-
-// const dataWithUndefinedCells: DataFrame = {
-//   header: ['ID', 'Count'],
-//   numRows: 1000,
-//   rows: ({ start, end }) => Array.from({ length: end - start }, (_, index) => {
-//     const id = index % 2 === 0 ? `row ${index + start}` : undefined
-//     const ms = index % 3 === 0 ? 0 :
-//       index % 3 === 1 ? 100 * Math.floor(10 * Math.random()) :
-//         100 * Math.floor(100 * Math.random())
-//     return {
-//       index: wrapResolved(index + start),
-//       cells: {
-//         ID: ms ? wrapPromise(delay(id, ms)) : wrapResolved(id),
-//         Count: wrapResolved(1000 - start - index),
-//       },
-//     }
-//   }),
-// }
 
 // const filteredData: DataFrame = rowCache(sortableDataFrame({
 //   header: ['ID', 'Count', 'Value1', 'Value2'],
@@ -231,7 +214,7 @@ export const EmptySelectable: Story = {
 }
 export const Placeholders: Story = {
   args: {
-    data: delayedData,
+    data: sortableDelayedData,
   },
 }
 // export const UndefinedCells: Story = {
