@@ -148,6 +148,12 @@ const manyColumnsData: DataFrame = {
   }),
 }
 
+const emptyData: DataFrame = {
+  header: ['ID', 'Count', 'Double', 'Constant', 'Value1', 'Value2', 'Value3'],
+  numRows: 0,
+  rows: () => [],
+}
+
 const meta: Meta<typeof HighTable> = {
   component: HighTable,
 }
@@ -163,6 +169,28 @@ export const Unstyled: Story = {
   args: {
     data,
     styled: false,
+  },
+}
+export const Empty: Story = {
+  args: {
+    data: emptyData,
+  },
+}
+export const EmptySelectable: Story = {
+  render: (args) => {
+    const [selection, onSelectionChange] = useState<Selection>({
+      ranges: [],
+    })
+    return (
+      <HighTable
+        {...args}
+        selection={selection}
+        onSelectionChange={onSelectionChange}
+      />
+    )
+  },
+  args: {
+    data: emptyData,
   },
 }
 export const Placeholders: Story = {
