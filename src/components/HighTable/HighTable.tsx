@@ -430,7 +430,9 @@ export function HighTableInner({
   // minimum left column width based on number of rows - it depends on CSS, so it's
   // only a bottom limit
   const rowHeaderWidth = useMemo(() => {
-    return Math.ceil(Math.log10(numRows + 1)) * 4 + 22
+    if (numRows > 0) {
+      return Math.ceil(Math.log10(numRows + 1)) * 4 + 22
+    }
   }, [numRows])
   const cornerStyle = useMemo(() => {
     return cellStyle(rowHeaderWidth)
@@ -478,7 +480,7 @@ export function HighTableInner({
                   ariaColIndex={1}
                   ariaRowIndex={1}
                   ref={tableCornerRef}
-                >&nbsp;</TableCorner>
+                />
                 <TableHeader
                   dataReady={slice !== undefined}
                   columnDescriptors={columns}
