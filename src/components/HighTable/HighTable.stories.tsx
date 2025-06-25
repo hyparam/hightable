@@ -129,30 +129,22 @@ const longStringsData = sortableDataFrame(arrayDataFrame(Array.from({ length: 10
   }
 })))
 
-// const manyColumnsData: DataFrame = {
-//   header: ['ID1', 'LongString1', 'Value1', 'ID2', 'LongString2', 'Value2', 'ID3', 'LongString3', 'Value3', 'ID4', 'LongString4', 'Value4'],
-//   numRows: 1000,
-//   rows: ({ start, end }) => Array.from({ length: end - start }, (_, index) => {
-//     const id = index + start
-//     return {
-//       index: wrapResolved(id),
-//       cells: {
-//         ID1: wrapResolved( `row ${id} A`),
-//         LongString1: wrapResolved('A Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum'.repeat(10)),
-//         Value1: wrapResolved(Math.floor(100 * random(123 + index))),
-//         ID2: wrapResolved( `row ${id} B`),
-//         LongString2: wrapResolved('B Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum'.repeat(8)),
-//         Value2: wrapResolved(Math.floor(100 * random(456 + index))),
-//         ID3: wrapResolved( `row ${id} C`),
-//         LongString3: wrapResolved('C Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum'.repeat(12)),
-//         Value3: wrapResolved(Math.floor(100 * random(789 + index))),
-//         ID4: wrapResolved( `row ${id} D`),
-//         LongString4: wrapResolved('D Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum'.repeat(10)),
-//         Value4: wrapResolved(Math.floor(100 * random(951 + index))),
-//       },
-//     }
-//   }),
-// }
+const manyColumnsData = sortableDataFrame(arrayDataFrame(Array.from({ length: 1000 }, (_, index) => {
+  return {
+    ID1: `row ${index} A`,
+    LongString1: longString.repeat(10),
+    Value1: Math.floor(100 * random(123 + index)),
+    ID2: `row ${index} B`,
+    LongString2: longString.repeat(8),
+    Value2: Math.floor(100 * random(456 + index)),
+    ID3: `row ${index} C`,
+    LongString3: longString.repeat(12),
+    Value3: Math.floor(100 * random(789 + index)),
+    ID4: `row ${index} D`,
+    LongString4: longString.repeat(10),
+    Value4: Math.floor(100 * random(951 + index)),
+  }
+})))
 
 const emptyData: UnsortableDataFrame = {
   header: ['ID', 'Count', 'Double', 'Constant', 'Value1', 'Value2', 'Value3'],
@@ -276,11 +268,11 @@ export const LongStrings: Story = {
     data: longStringsData,
   },
 }
-// export const ManyColumns: Story = {
-//   args: {
-//     data: manyColumnsData,
-//   },
-// }
+export const ManyColumns: Story = {
+  args: {
+    data: manyColumnsData,
+  },
+}
 export const RowsSelection: Story = {
   render: (args) => {
     const [selection, onSelectionChange] = useState<Selection>({
