@@ -115,9 +115,8 @@
     position: sticky;
     left: 0;
     user-select: none;
-    min-width: 48px;
-    max-width: none;
-    width: 48px;
+    min-width: var(--row-label-width);
+    max-width: var(--row-label-width);
     z-index: var(--header-z-index, auto);
   }
 
@@ -125,9 +124,8 @@
   /* TODO: find a better selector for the table corner */
   thead td:first-child {
     position: sticky;
-    min-width: 48px;
-    max-width: none;
-    width: 48px;
+    min-width: var(--row-label-width);
+    max-width: var(--row-label-width);
     top: 0;
     left: 0;
     z-index: var(--header-corner-z-index, auto);
@@ -178,6 +176,8 @@
     bottom: 0;
     background: var(--mock-row-label-background, transparent);
     z-index: var(--header-background-z-index, auto);
+    min-width: var(--row-label-width);
+    max-width: var(--row-label-width);
   }
 }
 
@@ -204,6 +204,8 @@
   --focusable-border-color: #666;
   --focusable-background-color: #f1f1f3;
   --light-border-color: #c9c9c9;
+
+  --row-label-width: 36px;
 
   .top-border {
     border-top: var(--top-border-height) solid var(--top-border-color);
@@ -421,8 +423,6 @@
     font-size: 0.68rem;
     padding: 0 2px;
     text-align: center;
-    min-width: 32px;
-    width: 32px;
   }
   /* highlight the selected rows */
   tr[aria-selected="true"] {
@@ -438,7 +438,6 @@
     background-color: #f9f4ff;
     border-right: 1px solid #ccc;
     box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.2);
-    min-width: 32px;
   }
   thead td:first-child[aria-disabled="false"] {
     background: #f9f4ff; /* redundant with td:first-child, but allows to force the background if it has been overridden with a logo */

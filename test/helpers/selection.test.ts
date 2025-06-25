@@ -124,6 +124,9 @@ describe('areAllSelected', () => {
   test('should throw an error if the length is invalid', () => {
     expect(() => areAllSelected({ ranges: [], length: -1 })).toThrow('Invalid length')
   })
+  test('should return false if the length is zero', () => {
+    expect(areAllSelected({ ranges: [], length: 0 })).toBe(false)
+  })
 })
 
 describe('toggleAll', () => {

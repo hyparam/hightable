@@ -77,7 +77,7 @@ export function toggleAll({ ranges, length }: { ranges: Ranges, length: number }
   if (length && !isValidIndex(length)) {
     throw new Error('Invalid length')
   }
-  if (areAllSelected({ ranges, length })) {
+  if (!length || areAllSelected({ ranges, length })) {
     return []
   }
   return [{ start: 0, end: length }]
