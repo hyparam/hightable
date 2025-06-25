@@ -359,25 +359,18 @@ export function convertSelection({ selection, permutationIndexes }: { selection:
 }
 
 /**
- * Compute the new selection state after a shift-click (range toggle) on the row with the given table index,
- * when the rows are sorted.
- *
- * The selection is extended from the anchor to the index. This
- * range is done in the visual space of the user, ie: between the rows as they appear in the table.
- *
- * The new anchor is the row with the given table index.
- *
- * If the rows are sorted, the indexes are converted from data domain to table domain and vice versa,
- * which requires the sort index of the data frame. If not available, it must be computed, which is
- * an async operation that can be expensive.
+ * Compute the new selection state after a shift-click (range toggle) on the row with the given table index.
+ * 
+ * This function works with view-based positions (tableIndex) but stores the selection as data indices.
+ * The selection is extended from the anchor to the clicked index in the visual space of the user.
  *
  * @param {Object} params
- * @param {number} params.tableIndex - The index of the row in the table (table domain, sorted row indexes).
- * @param {Selection} params.selection - The current selection state (data domain, row indexes).
+ * @param {number} params.tableIndex - The index of the row in the table (view position).
+ * @param {Selection} params.selection - The current selection state (stored as data indices).
  * @param {OrderBy} params.orderBy - The order if the rows are sorted.
  * @param {DataFrame} params.data - The data frame.
- * @param {Map<string,number[]>} params.ranks - The map of ranks for each column of the data frame (they can be missing, if so thay will be populated in this function).
- * @param {function} params.setColumnRanks - A function to update the map of column ranks.
+ * @param {Map<string,number[]>} params.ranksMap - The map of ranks for each column.
+ * @param {function} params.setRanksMap - A function to update the map of column ranks.
  */
 export async function toggleRangeInTable({
   tableIndex,
@@ -387,11 +380,70 @@ export async function toggleRangeInTable({
   ranksMap,
   setRanksMap,
 }: { tableIndex: number, selection: Selection, orderBy: OrderBy, data: DataFrame, ranksMap: Map<string, Promise<number[]>>, setRanksMap: (setter: (ranksMap: Map<string, Promise<number[]>>) => Map<string, Promise<number[]>>) => void }): Promise<Selection> {
-  // Extend the selection from the anchor to the index with sorted data
-  // Convert the indexes to work in the data domain before converting back.
-  if (!data.sortable) {
-    throw new Error('Data frame is not sortable')
+  // Validate inputs
+  if (!isValidIndex(tableIndex)) {
+    throw new Error('Invalid index')
   }
+  if (!areValidRanges(selection.ranges)) {
+    throw new Error('Invalid ranges')
+  }
+  if (selection.anchor !== undefined && !isValidIndex(selection.anchor)) {
+    throw new Error('Invalid anchor')
+  }
+  
+  // Only check sortable for sorted data
+  if (orderBy.length > 0) {
+    // Check if orderBy columns exist in data
+    for (const { column } of orderBy) {
+      if (column && !data.header.includes(column)) {
+        throw new Error(`Invalid column: ${column}`)
+      }
+    }
+    if (!data.sortable) {
+      throw new Error('Data frame is not sortable')
+    }
+  }
+  
+  // Get the mapping from table positions to data indices
+  const dataIndexes = await getDataIndexes({ orderBy, data, ranksMap, setRanksMap })
+  
+  // Convert current selection from data indices to table positions
+  const tableSelection = convertDataSelectionToTableSelection({ selection, dataIndexes })
+  
+  // Perform the range toggle in table space
+  const { ranges, anchor } = tableSelection
+  const newTableSelection = { 
+    ranges: extendFromAnchor({ ranges, anchor, index: tableIndex }), 
+    anchor: tableIndex 
+  }
+  
+  // Convert back to data indices for storage
+  const newDataSelection = convertTableSelectionToDataSelection({ selection: newTableSelection, dataIndexes })
+  return newDataSelection
+}
+
+/**
+ * Get the data indices for the current view order
+ */
+async function getDataIndexes({ 
+  orderBy, 
+  data, 
+  ranksMap, 
+  setRanksMap 
+}: { 
+  orderBy: OrderBy, 
+  data: DataFrame, 
+  ranksMap: Map<string, Promise<number[]>>, 
+  setRanksMap: (setter: (ranksMap: Map<string, Promise<number[]>>) => Map<string, Promise<number[]>>) => void 
+}): Promise<number[]> {
+  // If no sorting is applied, get the actual data indices from the rows
+  if (orderBy.length === 0) {
+    const rows = data.rows({ start: 0, end: data.numRows })
+    const dataIndexes = await Promise.all(rows.map(row => row.index))
+    return dataIndexes
+  }
+  
+  // For sorted data, use the ranking approach
   const orderByWithDefaultSort = [...orderBy, { column: '', direction: 'ascending' as const }]
   const orderByWithRanksPromises = orderByWithDefaultSort.map(({ column, direction }) => {
     return {
@@ -400,6 +452,7 @@ export async function toggleRangeInTable({
       ranks: ranksMap.get(column) ?? (column === '' ? getUnsortedRanks({ data }) : getRanks({ data, column })),
     }
   })
+  
   if (orderByWithRanksPromises.some(({ column }) => !ranksMap.has(column))) {
     setRanksMap(ranksMap => {
       const nextRanksMap = new Map(ranksMap)
@@ -407,14 +460,105 @@ export async function toggleRangeInTable({
       return nextRanksMap
     })
   }
+  
   const orderByWithRanks = await Promise.all(orderByWithRanksPromises.map(async ({ column, direction, ranks }) => ({ column, direction, ranks: await ranks })))
+  return computeDataIndexes(orderByWithRanks)
+}
 
-  const dataIndexes = computeDataIndexes(orderByWithRanks)
-  const tableIndexes = invertPermutationIndexes(dataIndexes)
-  const tableSelection = convertSelection({ selection, permutationIndexes: tableIndexes })
-  const { ranges, anchor } = tableSelection
-  const newAnchor = tableIndex
-  const newTableSelection = { ranges: extendFromAnchor({ ranges, anchor, index: tableIndex }), anchor: newAnchor }
-  const newDataSelection = convertSelection({ selection: newTableSelection, permutationIndexes: dataIndexes })
-  return newDataSelection
+/**
+ * Convert a selection from data indices to table positions
+ * Handles individual single-row ranges and merges them into contiguous table ranges
+ */
+function convertDataSelectionToTableSelection({ selection, dataIndexes }: { selection: Selection, dataIndexes: number[] }): Selection {
+  // Create a map from data index to table index
+  const dataToTableIndexMap = new Map<number, number>()
+  dataIndexes.forEach((dataIndex, tableIndex) => {
+    dataToTableIndexMap.set(dataIndex, tableIndex)
+  })
+  
+  // Convert each selected data index to its table position
+  const tableRanges: Range[] = []
+  for (const range of selection.ranges) {
+    for (let dataIndex = range.start; dataIndex < range.end; dataIndex++) {
+      const tableIndex = dataToTableIndexMap.get(dataIndex)
+      if (tableIndex !== undefined) {
+        tableRanges.push({ start: tableIndex, end: tableIndex + 1 })
+      }
+    }
+  }
+  
+  // Sort and merge adjacent ranges to create contiguous table selections
+  const mergedRanges = mergeRanges(tableRanges.sort((a, b) => a.start - b.start))
+  
+  const tableAnchor = selection.anchor !== undefined ? dataToTableIndexMap.get(selection.anchor) : undefined
+  return { ranges: mergedRanges, anchor: tableAnchor }
+}
+
+/**
+ * Convert a selection from table positions to data indices
+ * Convert table ranges to data index ranges, merging contiguous data indices when possible
+ */
+function convertTableSelectionToDataSelection({ selection, dataIndexes }: { selection: Selection, dataIndexes: number[] }): Selection {
+  // Collect all selected data indices
+  const selectedDataIndices: number[] = []
+  for (const range of selection.ranges) {
+    for (let tableIndex = range.start; tableIndex < range.end; tableIndex++) {
+      const dataIndex = dataIndexes[tableIndex]
+      if (dataIndex !== undefined) {
+        selectedDataIndices.push(dataIndex)
+      }
+    }
+  }
+  
+  // Sort data indices and create ranges
+  selectedDataIndices.sort((a, b) => a - b)
+  
+  const dataRanges: Range[] = []
+  if (selectedDataIndices.length > 0) {
+    let rangeStart = selectedDataIndices[0]!
+    let rangeEnd = rangeStart + 1
+    
+    for (let i = 1; i < selectedDataIndices.length; i++) {
+      const current = selectedDataIndices[i]!
+      if (current === rangeEnd) {
+        // Extend current range
+        rangeEnd = current + 1
+      } else {
+        // Finish current range and start new one
+        dataRanges.push({ start: rangeStart, end: rangeEnd })
+        rangeStart = current
+        rangeEnd = current + 1
+      }
+    }
+    
+    // Add the last range
+    dataRanges.push({ start: rangeStart, end: rangeEnd })
+  }
+  
+  const dataAnchor = selection.anchor !== undefined ? dataIndexes[selection.anchor] : undefined
+  return { ranges: dataRanges, anchor: dataAnchor }
+}
+
+/**
+ * Merge adjacent and overlapping ranges
+ */
+function mergeRanges(ranges: Range[]): Range[] {
+  if (ranges.length === 0) return []
+  
+  const merged: Range[] = []
+  let current = ranges[0]!
+  
+  for (let i = 1; i < ranges.length; i++) {
+    const next = ranges[i]!
+    if (current.end >= next.start) {
+      // Merge overlapping or adjacent ranges
+      current = { start: current.start, end: Math.max(current.end, next.end) }
+    } else {
+      merged.push(current)
+      current = next
+    }
+  }
+  
+  merged.push(current)
+  return merged
 }

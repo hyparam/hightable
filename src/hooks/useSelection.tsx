@@ -44,13 +44,14 @@ export function SelectionProvider({ children, selection, onSelectionChange }: Se
       if (!state.value || !state.onChange || !(target instanceof HTMLTableCellElement)) {
         return
       }
-      const index = Number(target.getAttribute('data-rowindex'))
+      const dataIndex = Number(target.getAttribute('data-rowindex'))
       const isDataCell = target.getAttribute('role') === 'cell' // the row header cells are handled by the RowHeader component
-      if (!isDataCell || isNaN(index) || !Number.isInteger(index) || index < 0 || index >= numRows) {
+      if (!isDataCell || isNaN(dataIndex) || !Number.isInteger(dataIndex) || dataIndex < 0 || dataIndex >= numRows) {
         return
       }
       event.preventDefault()
-      state.onChange({ ranges: toggleIndex({ ranges: state.value.ranges, index }), anchor: index })
+      // For keyboard navigation, we use data index directly since we don't have easy access to table index
+      state.onChange({ ranges: toggleIndex({ ranges: state.value.ranges, index: dataIndex }), anchor: dataIndex })
     }
   }, [state])
 

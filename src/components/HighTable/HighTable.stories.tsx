@@ -308,3 +308,86 @@ export const ReadOnlySelection: Story = {
     data: sortableData,
   },
 }
+
+// Create sample and shuffled datasets for testing view-based selection
+function createSampleData(baseData: DataFrame, numSample: number, shuffle: boolean = false): DataFrame {
+  const allIndices = Array.from({ length: baseData.numRows }, (_, i) => i)
+  let selectedIndices: number[]
+  
+  if (shuffle) {
+    // Shuffle the indices
+    const shuffled = [...allIndices]
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      const temp = shuffled[i]!
+      shuffled[i] = shuffled[j]!
+      shuffled[j] = temp
+    }
+    selectedIndices = shuffled.slice(0, numSample)
+  } else {
+    selectedIndices = allIndices.slice(0, numSample)
+  }
+
+  return {
+    header: baseData.header,
+    numRows: selectedIndices.length,
+    rows: ({ start, end }) => {
+      const sliceIndices = selectedIndices.slice(start, end)
+      return sliceIndices.map(originalIndex => {
+        const originalRows = baseData.rows({ start: originalIndex, end: originalIndex + 1 })
+        return originalRows[0]!
+      })
+    },
+    sortable: baseData.sortable,
+  }
+}
+
+const fullDataset = sortableData
+const sampleDataset = createSampleData(data, 100, true) // 100 row shuffled sample
+
+export const ViewBasedSelection: Story = {
+  render: (args) => {
+    const [selection, onSelectionChange] = useState<Selection>({
+      ranges: [],
+      anchor: undefined,
+    })
+    const [useFullDataset, setUseFullDataset] = useState(true)
+    const [orderBy, setOrderBy] = useState<OrderBy>([])
+    
+    const currentData = useFullDataset ? fullDataset : sampleDataset
+    
+    return (
+      <div>
+        <div style={{ padding: '10px', borderBottom: '1px solid #ccc', marginBottom: '10px' }}>
+          <button 
+            onClick={() => setUseFullDataset(!useFullDataset)}
+            style={{
+              padding: '8px 16px',
+              marginRight: '10px',
+              backgroundColor: '#007acc',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            Switch to {useFullDataset ? 'Sample (100 rows, shuffled)' : 'Full Dataset (1000 rows)'}
+          </button>
+          <span style={{ fontSize: '14px', color: '#666' }}>
+            Current: {useFullDataset ? 'Full Dataset (1000 rows)' : 'Sample Dataset (100 rows, shuffled)'} | 
+            Selected: {selection.ranges.reduce((sum, range) => sum + (range.end - range.start), 0)} rows
+          </span>
+        </div>
+        <HighTable
+          {...args}
+          data={currentData}
+          selection={selection}
+          onSelectionChange={onSelectionChange}
+          orderBy={orderBy}
+          onOrderByChange={setOrderBy}
+        />
+      </div>
+    )
+  },
+  args: {},
+}
