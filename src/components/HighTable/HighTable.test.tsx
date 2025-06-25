@@ -1,7 +1,8 @@
-import { act, fireEvent, waitFor } from '@testing-library/react'
+import { act, fireEvent, waitFor, within } from '@testing-library/react'
 import { UserEvent } from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { DataFrameEvents } from '../../helpers/dataframe/index.js'
+import { sortableDataFrame } from '../../helpers/dataframe/sortableDataFrame.js'
 import { UnsortableDataFrame, getStaticFetch } from '../../helpers/dataframe/unsortableDataFrame.js'
 import { createEventTarget } from '../../helpers/typedEventTarget.js'
 import { MaybeColumnState } from '../../hooks/useColumnStates.js'
@@ -340,100 +341,99 @@ describe('with async data, HighTable', () => {
   })
 })
 
-// TODO(SL): re-enable
-// describe('When sorted, HighTable', () => {
-//   function checkRowContents(row: HTMLElement | undefined, rowNumber: string, ID: string, Count: string) {
-//     expect(row).toBeDefined()
-//     if (!row) {
-//       throw new Error('Row is undefined')
-//     }
+describe('When sorted, HighTable', () => {
+  function checkRowContents(row: HTMLElement | undefined, rowNumber: string, ID: string, Count: string) {
+    expect(row).toBeDefined()
+    if (!row) {
+      throw new Error('Row is undefined')
+    }
 
-//     const selectionCell = within(row).getByRole('rowheader')
-//     expect(selectionCell).toBeDefined()
-//     expect(selectionCell.textContent).toBe(rowNumber)
+    const selectionCell = within(row).getByRole('rowheader')
+    expect(selectionCell).toBeDefined()
+    expect(selectionCell.textContent).toBe(rowNumber)
 
-//     const columns = within(row).getAllByRole('cell')
-//     expect(columns).toHaveLength(4)
-//     expect(columns[0]?.textContent).toBe(ID)
-//     expect(columns[1]?.textContent).toBe(Count)
-//   }
+    const columns = within(row).getAllByRole('cell')
+    expect(columns).toHaveLength(4)
+    expect(columns[0]?.textContent).toBe(ID)
+    expect(columns[1]?.textContent).toBe(Count)
+  }
 
-// it('shows the rows in the right order', async () => {
-//   const { user, findByRole, getByRole, findAllByRole } = render(<HighTable data={sortableDataFrame(data)} />)
+  it('shows the rows in the right order', async () => {
+    const { user, findByRole, getByRole, findAllByRole } = render(<HighTable data={sortableDataFrame(data)} />)
 
-//   expect(getByRole('columnheader', { name: 'ID' })).toBeDefined()
-//   await findByRole('cell', { name: 'row 0' })
+    expect(getByRole('columnheader', { name: 'ID' })).toBeDefined()
+    await findByRole('cell', { name: 'row 0' })
 
-//   const table = getByRole('grid') // not table! because the table is interactive. See https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Roles/grid_role
-//   // first rowgroup is for the thead second is for tbody
-//   const tbody = within(table).getAllByRole('rowgroup')[1]
-//   let rows = tbody ? within(tbody).getAllByRole('row') : []
-//   checkRowContents(rows[0], '1', 'row 0', '1,000')
+    const table = getByRole('grid') // not table! because the table is interactive. See https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Roles/grid_role
+    // first rowgroup is for the thead second is for tbody
+    const tbody = within(table).getAllByRole('rowgroup')[1]
+    let rows = tbody ? within(tbody).getAllByRole('row') : []
+    checkRowContents(rows[0], '1', 'row 0', '1,000')
 
-//   // Click on the Count header to sort by Count (none -> ascending)
-//   const countHeader = getByRole('columnheader', { name: 'Count' })
-//   await user.click(countHeader)
-//   await findAllByRole('cell', { name: 'row 999' })
+    // Click on the Count header to sort by Count (none -> ascending)
+    const countHeader = getByRole('columnheader', { name: 'Count' })
+    await user.click(countHeader)
+    await findAllByRole('cell', { name: 'row 999' })
 
-//   let rowGroups = within(getByRole('grid')).getAllByRole('rowgroup')[1]
-//   rows = rowGroups ? within(rowGroups).getAllByRole('row') : []
-//   checkRowContents(rows[0], '1,000', 'row 999', '1')
+    let rowGroups = within(getByRole('grid')).getAllByRole('rowgroup')[1]
+    rows = rowGroups ? within(rowGroups).getAllByRole('row') : []
+    checkRowContents(rows[0], '1,000', 'row 999', '1')
 
-//   // Click again on the Count header to sort by descending Count (ascending -> descending)
-//   await user.click(countHeader)
-//   await findAllByRole('cell', { name: 'row 0' })
+    // Click again on the Count header to sort by descending Count (ascending -> descending)
+    await user.click(countHeader)
+    await findAllByRole('cell', { name: 'row 0' })
 
-//   rowGroups = within(getByRole('grid')).getAllByRole('rowgroup')[1]
-//   rows = rowGroups ? within(rowGroups).getAllByRole('row') : []
-//   checkRowContents(rows[0], '1', 'row 0', '1,000')
+    rowGroups = within(getByRole('grid')).getAllByRole('rowgroup')[1]
+    rows = rowGroups ? within(rowGroups).getAllByRole('row') : []
+    checkRowContents(rows[0], '1', 'row 0', '1,000')
 
-//   // Click again on the Count header to remove the sort (descending -> none)
-//   await user.click(countHeader)
-//   await findAllByRole('cell', { name: 'row 0' })
+    // Click again on the Count header to remove the sort (descending -> none)
+    await user.click(countHeader)
+    await findAllByRole('cell', { name: 'row 0' })
 
-//   rowGroups = within(getByRole('grid')).getAllByRole('rowgroup')[1]
-//   rows = rowGroups ? within(rowGroups).getAllByRole('row') : []
-//   checkRowContents(rows[0], '1', 'row 0', '1,000')
+    rowGroups = within(getByRole('grid')).getAllByRole('rowgroup')[1]
+    rows = rowGroups ? within(rowGroups).getAllByRole('row') : []
+    checkRowContents(rows[0], '1', 'row 0', '1,000')
 
-//   // Click on the Count header to sort by Count (none -> ascending)
-//   await user.click(countHeader)
-//   await findAllByRole('cell', { name: 'row 999' })
+    // Click on the Count header to sort by Count (none -> ascending)
+    await user.click(countHeader)
+    await findAllByRole('cell', { name: 'row 999' })
 
-//   rowGroups = within(getByRole('grid')).getAllByRole('rowgroup')[1]
-//   rows = rowGroups ? within(rowGroups).getAllByRole('row') : []
-//   checkRowContents(rows[0], '1,000', 'row 999', '1')
-// })
+    rowGroups = within(getByRole('grid')).getAllByRole('rowgroup')[1]
+    rows = rowGroups ? within(rowGroups).getAllByRole('row') : []
+    checkRowContents(rows[0], '1,000', 'row 999', '1')
+  })
 
-// it('provides the double click callback with the right row index', async () => {
-//   const mockDoubleClick = vi.fn()
-//   const { user, findByRole, getByRole } = render(<HighTable data={sortableDataFrame(data)} onDoubleClickCell={mockDoubleClick} />)
-//   const cell0 = await findByRole('cell', { name: 'row 0' })
+  it('provides the double click callback with the right row index', async () => {
+    const mockDoubleClick = vi.fn()
+    const { user, findByRole, getByRole } = render(<HighTable data={sortableDataFrame(data)} onDoubleClickCell={mockDoubleClick} />)
+    const cell0 = await findByRole('cell', { name: 'row 0' })
 
-//   await user.dblClick(cell0)
+    await user.dblClick(cell0)
 
-//   expect(mockDoubleClick).toHaveBeenCalledWith(expect.anything(), 0, 0)
-//   vi.clearAllMocks()
+    expect(mockDoubleClick).toHaveBeenCalledWith(expect.anything(), 0, 0)
+    vi.clearAllMocks()
 
-//   // Click on the Count header to sort by Count
-//   const countHeader = getByRole('columnheader', { name: 'Count' })
-//   await user.click(countHeader)
+    // Click on the Count header to sort by Count
+    const countHeader = getByRole('columnheader', { name: 'Count' })
+    await user.click(countHeader)
 
-//   const cell999 = await findByRole('cell', { name: 'row 999' })
+    const cell999 = await findByRole('cell', { name: 'row 999' })
 
-//   await user.dblClick(cell999)
+    await user.dblClick(cell999)
 
-//   expect(mockDoubleClick).toHaveBeenCalledWith(expect.anything(), 0, 999)
+    expect(mockDoubleClick).toHaveBeenCalledWith(expect.anything(), 0, 999)
 
-//   // Click on the Count header to sort by descending Count
-//   await user.click(countHeader)
+    // Click on the Count header to sort by descending Count
+    await user.click(countHeader)
 
-//   const cell00 = await findByRole('cell', { name: 'row 0' })
+    const cell00 = await findByRole('cell', { name: 'row 0' })
 
-//   await user.dblClick(cell00)
+    await user.dblClick(cell00)
 
-//   expect(mockDoubleClick).toHaveBeenCalledWith(expect.anything(), 0, 0)
-// })
-// })
+    expect(mockDoubleClick).toHaveBeenCalledWith(expect.anything(), 0, 0)
+  })
+})
 
 describe('in controlled selection state (selection and onSelection props), ', () => {
   beforeEach(() => {
