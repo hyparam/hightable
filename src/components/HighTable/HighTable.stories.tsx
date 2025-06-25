@@ -70,14 +70,14 @@ async function delayedDataFetch({ rowStart, rowEnd, columns, signal, onColumnCom
   await Promise.all(columnPromises)
 }
 
-const notGetCellDelayedData: UnsortableDataFrame = {
+const noGetCellDelayedData: UnsortableDataFrame = {
   header: delayedDataHeader,
   numRows: delayedDataNumRows,
   fetch: delayedDataFetch,
   getCell: () => { return undefined },
   eventTarget: createEventTarget<DataFrameEvents>(),
 }
-const delayedData = cacheUnsortableDataFrame(notGetCellDelayedData)
+const delayedData = cacheUnsortableDataFrame(noGetCellDelayedData)
 // const sortableDelayedData = sortableDataFrame(delayedData)
 
 const sortableData = sortableDataFrame(data)
