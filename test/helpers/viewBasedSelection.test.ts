@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { DataFrame, sortableDataFrame } from '../../src/helpers/dataframe.js'
-import { Selection, toggleRangeInTable } from '../../src/helpers/selection.js'
+import { Selection, isSelected, toggleAllIndices, toggleRangeInTable, toggleAll } from '../../src/helpers/selection.js'
 import { wrapResolved } from '../../src/utils/promise.js'
 
 // Create test data
@@ -143,20 +143,17 @@ describe('View-based selection', () => {
       // Mock implementation for testing
     }
 
-    // Sort by name ascending: Alice, Bob, Charlie, Diana, Eve (data indices: 0, 1, 2, 3, 4)
-    const orderBy = [{ column: 'name', direction: 'ascending' as const }]
-    
-    // Select Alice (data index 0)
+    // Start with Bob selected (data index 1)
     const initialSelection: Selection = {
-      ranges: [{ start: 0, end: 1 }],
-      anchor: 0,
+      ranges: [{ start: 1, end: 2 }], // Bob's data index
+      anchor: 1,
     }
 
-    // Extend to Charlie (table index 2 in sorted view)
+    // Extend selection to Charlie (table position 2 in sorted view, data index 0)
     const result = await toggleRangeInTable({
-      tableIndex: 2, // Charlie's position in sorted view
+      tableIndex: 2, // Charlie's table position in sorted view (sorted by name: Alice, Bob, Charlie, Diana, Eve)
       selection: initialSelection,
-      orderBy,
+      orderBy: [{ column: 'name', direction: 'ascending' }],
       data: sortableFullDataFrame,
       ranksMap,
       setRanksMap,
@@ -165,5 +162,30 @@ describe('View-based selection', () => {
     // Should have some selection and Charlie as anchor
     expect(result.ranges.length).toBeGreaterThan(0)
     expect(result.anchor).toBe(2) // Charlie's data index
+  })
+
+  it('should handle select all correctly in sample dataset', () => {
+    // Test select all functionality with a sample dataset
+    // In a sample, data indices are not contiguous (e.g., might be [45, 123, 267, 89, ...])
+    const sampleDataIndices = [45, 123, 267, 89, 156, 234, 78, 345, 12, 189] // Example sample indices
+    const currentSelection: Selection = { ranges: [], anchor: undefined }
+    
+    // Use toggleAllIndices for sample datasets
+    const result = toggleAllIndices({ ranges: currentSelection.ranges, indices: sampleDataIndices })
+    
+    // Should select all sample indices, potentially merged into ranges
+    // Verify that all sample indices are selected
+    for (const index of sampleDataIndices) {
+      expect(isSelected({ ranges: result, index })).toBe(true)
+    }
+    
+    // Test toggle all when all are already selected - should deselect all
+    const allSelectedResult = toggleAllIndices({ ranges: result, indices: sampleDataIndices })
+    expect(allSelectedResult).toEqual([]) // Should deselect all
+    
+    // Verify none are selected after deselecting all
+    for (const index of sampleDataIndices) {
+      expect(isSelected({ ranges: allSelectedResult, index })).toBe(false)
+    }
   })
 })

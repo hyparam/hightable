@@ -83,6 +83,39 @@ export function toggleAll({ ranges, length }: { ranges: Ranges, length: number }
   return [{ start: 0, end: length }]
 }
 
+/**
+ * Toggle all rows based on specific data indices (for views like samples where data indices are not contiguous)
+ */
+export function toggleAllIndices({ ranges, indices }: { ranges: Ranges, indices: number[] }): Ranges {
+  if (!areValidRanges(ranges)) {
+    throw new Error('Invalid ranges')
+  }
+  if (!indices || indices.length === 0) {
+    return []
+  }
+  
+  // Check if all indices are already selected
+  const allSelected = indices.every(index => isSelected({ ranges, index }))
+  
+  if (allSelected) {
+    // Deselect all - remove all the indices from the current selection
+    let newRanges = ranges
+    for (const index of indices) {
+      newRanges = toggleIndex({ ranges: newRanges, index })
+    }
+    return newRanges
+  } else {
+    // Select all - add all indices to the current selection
+    let newRanges = ranges
+    for (const index of indices) {
+      if (!isSelected({ ranges: newRanges, index })) {
+        newRanges = toggleIndex({ ranges: newRanges, index })
+      }
+    }
+    return mergeRanges(newRanges.sort((a, b) => a.start - b.start))
+  }
+}
+
 export function selectRange({ ranges, range }: { ranges: Ranges, range: Range }): Ranges {
   if (!areValidRanges(ranges)) {
     throw new Error('Invalid ranges')
