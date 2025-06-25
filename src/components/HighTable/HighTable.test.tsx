@@ -29,6 +29,7 @@ function getDataCell({ row, column }: { row: number, column: string }) {
 const data: UnsortableDataFrame = {
   header: ['ID', 'Count', 'Double', 'Triple'],
   numRows: 1000,
+  getUnsortedRow: ({ row }) => ({ value: row }),
   getCell: getDataCell,
   fetch: getStaticFetch({ getCell: getDataCell }),
   eventTarget: createEventTarget<DataFrameEvents>(),
@@ -49,6 +50,7 @@ function getOtherDataCell({ row, column }: { row: number, column: string }) {
 const otherData: UnsortableDataFrame = {
   header: ['ID', 'Count'],
   numRows: 1000,
+  getUnsortedRow: ({ row }) => ({ value: row }),
   getCell: getOtherDataCell,
   fetch: getStaticFetch({ getCell: getOtherDataCell }),
   eventTarget: createEventTarget<DataFrameEvents>(),
@@ -78,6 +80,7 @@ describe('HighTable', () => {
   const mockData = {
     header: ['ID', 'Name', 'Age'],
     numRows: 100,
+    getUnsortedRow: ({ row }: { row: number }) => ({ value: row }),
     getCell: vi.fn(getCell),
     fetch: getStaticFetch({ getCell }),
     eventTarget: createEventTarget<DataFrameEvents>(),
@@ -204,6 +207,7 @@ describe('with async data, HighTable', () => {
     return {
       header: ['ID', 'Name', 'Age'],
       numRows: 1000,
+      getUnsortedRow: ({ row }: { row: number }) => ({ value: row }),
       getCell: vi.fn(getCell),
       fetch: vi.fn(async ({ rowStart, rowEnd, columns, signal, onColumnComplete }: { rowStart: number, rowEnd: number, columns: string[], signal?: AbortSignal, onColumnComplete?: (data: {column: string, values: any[]}) => void }) => {
         await new Promise(resolve => setTimeout(resolve, ms))

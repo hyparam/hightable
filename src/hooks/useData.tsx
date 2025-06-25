@@ -5,6 +5,7 @@ interface DataContextType {
   data: DataFrame,
   numRows: number,
   key: string,
+  version: number,
 }
 
 function isValidRowNumber(row: unknown): row is number {
@@ -16,6 +17,7 @@ function getDefaultDataContext(): DataContextType {
     data: arrayDataFrame([]),
     numRows: 0,
     key: 'default',
+    version: 0,
   }
 }
 
@@ -36,6 +38,7 @@ export function DataProvider({ children, onError, data }: DataProviderProps) {
   const [key, setKey] = useState<string>(getRandomKey())
   const [previousData, setPreviousData] = useState<DataFrame>(data)
   const [numRows, setNumRows] = useState(data.numRows)
+  const [version, setVersion] = useState(0)
 
   useEffect(() => {
     function onNumRowsChange(event: CustomEvent<{ numRows: number }>) {
@@ -52,6 +55,18 @@ export function DataProvider({ children, onError, data }: DataProviderProps) {
     }
   }, [data, onError])
 
+  useEffect(() => {
+    function onUpdate() {
+      setVersion(prev => prev + 1)
+    }
+    data.eventTarget.addEventListener('dataframe:update', onUpdate)
+    data.eventTarget.addEventListener('dataframe:index:update', onUpdate)
+    return () => {
+      data.eventTarget.removeEventListener('dataframe:update', onUpdate)
+      data.eventTarget.removeEventListener('dataframe:index:update', onUpdate)
+    }
+  }, [data, onError])
+
   if (data !== previousData) {
     setKey(getRandomKey())
     setPreviousData(data)
@@ -63,6 +78,7 @@ export function DataProvider({ children, onError, data }: DataProviderProps) {
       data,
       numRows,
       key,
+      version,
     }}>
       {children}
     </DataContext.Provider>

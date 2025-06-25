@@ -11,7 +11,6 @@ import { OrderByProvider, useOrderBy } from '../../hooks/useOrderBy.js'
 import { PortalContainerProvider, usePortalContainer } from '../../hooks/usePortalContainer.js'
 import { SelectionProvider, useSelection } from '../../hooks/useSelection.js'
 import { useTableConfig } from '../../hooks/useTableConfig.js'
-import { RowProvider } from '../../hooks/useUnsortedRow.js'
 import { stringify as stringifyDefault } from '../../utils/stringify.js'
 import Cell from '../Cell/Cell.js'
 import Row from '../Row/Row.js'
@@ -69,11 +68,10 @@ export default function HighTable(props: Props) {
 type PropsData = Omit<Props, 'data'>
 
 function HighTableData(props: PropsData) {
-  const { data, numRows, key } = useData()
+  const { data, numRows, key, version } = useData()
   const { cacheKey, orderBy, onOrderByChange, selection, onSelectionChange } = props
   const ariaColCount = data.header.length + 1 // don't forget the selection column
   const ariaRowCount = numRows + 1 // don't forget the header row
-
   return (
     /* important: key={key} ensures the local state is recreated if the data has changed */
     <OrderByProvider key={key} orderBy={orderBy} onOrderByChange={onOrderByChange} disabled={!data.sortable}>
@@ -81,7 +79,7 @@ function HighTableData(props: PropsData) {
         <ColumnStatesProvider key={key} localStorageKey={cacheKey ? `${cacheKey}${columnStatesSuffix}` : undefined} numColumns={data.header.length} minWidth={minWidth}>
           <CellsNavigationProvider colCount={ariaColCount} rowCount={ariaRowCount} rowPadding={props.padding ?? defaultPadding}>
             <PortalContainerProvider>
-              <HighTableInner numRows={numRows} {...props} />
+              <HighTableInner numRows={numRows} version={version} {...props} />
             </PortalContainerProvider>
           </CellsNavigationProvider>
         </ColumnStatesProvider>
@@ -92,6 +90,7 @@ function HighTableData(props: PropsData) {
 
 type PropsInner = Omit<PropsData, 'orderBy' | 'onOrderByChange' | 'selection' | 'onSelectionChange'> & {
   numRows: number // number of rows in the data frame
+  version: number // version of the data frame, used to re-render the component when the data changes
 }
 
 /**
@@ -113,6 +112,7 @@ export function HighTableInner({
   styled = true,
   columnConfiguration,
   numRows,
+  version,
 }: PropsInner) {
   /**
    * The component relies on the model of a virtual table which rows are ordered and only the
@@ -268,7 +268,6 @@ export function HighTableInner({
       if (end - start > 1000) throw new Error(`attempted to render too many rows ${end - start} table must be contained in a scrollable div`)
 
       setRowsRange({ start, end })
-      // TODO(SL): catch the errors? (special case: AbortError when the signal is aborted)
       data.fetch({
         rowStart: start,
         rowEnd: end,
@@ -408,43 +407,42 @@ export function HighTableInner({
               })}
               {tableIndexes.map((tableIndex) => {
                 const ariaRowIndex = tableIndex + ariaOffset
+                const unsortedRow = data.getUnsortedRow({ row: tableIndex, orderBy })?.value
+                const selected = isRowSelected?.(unsortedRow)
+                // The row key includes the version, to rerender the row again when the data changes (e.g. when the user scrolls, or when the data has been fetched)
+                const rowKey = `${version}-${tableIndex}`
                 return (
-                  <RowProvider
-                    key={tableIndex} // TODO(SL): is there a better key?
-                    data={data}
-                    row={tableIndex}
-                    orderBy={orderBy}
-                    isRowSelected={isRowSelected}
+                  <Row
+                    key={rowKey}
+                    ariaRowIndex={ariaRowIndex}
+                    selected={selected}
+                    // title={rowError(row, columns.length)} // TODO(SL): re-enable later?
                   >
-                    <Row
+                    <RowHeader
+                      style={cornerStyle}
+                      selected={selected}
+                      unsortedRow={unsortedRow}
+                      onCheckboxPress={onCheckboxPress}
+                      ariaColIndex={1}
                       ariaRowIndex={ariaRowIndex}
-                      // title={rowError(row, columns.length)} // TODO(SL): re-enable later?
-                    >
-                      <RowHeader
-                        style={cornerStyle}
-                        onCheckboxPress={onCheckboxPress}
-                        ariaColIndex={1}
+                    />
+                    {data.header.map((column, columnIndex) => {
+                      const cell = data.getCell({ row: tableIndex, column, orderBy })
+                      return <Cell
+                        key={columnIndex}
+                        onDoubleClickCell={onDoubleClickCell}
+                        onMouseDownCell={onMouseDownCell}
+                        onKeyDownCell={onKeyDownCell}
+                        stringify={stringify}
+                        columnIndex={columnIndex}
+                        className={columnClassNames[columnIndex]}
+                        ariaColIndex={columnIndex + ariaOffset}
                         ariaRowIndex={ariaRowIndex}
+                        cell={cell}
+                        unsortedRow={unsortedRow}
                       />
-                      {data.header.map((column, columnIndex) => {
-                        return <Cell
-                          key={columnIndex}
-                          data={data}
-                          rowIndex={tableIndex}
-                          column={column}
-                          orderBy={orderBy}
-                          onDoubleClickCell={onDoubleClickCell}
-                          onMouseDownCell={onMouseDownCell}
-                          onKeyDownCell={onKeyDownCell}
-                          stringify={stringify}
-                          columnIndex={columnIndex}
-                          className={columnClassNames[columnIndex]}
-                          ariaColIndex={columnIndex + ariaOffset}
-                          ariaRowIndex={ariaRowIndex}
-                        />
-                      })}
-                    </Row>
-                  </RowProvider>
+                    })}
+                  </Row>
                 )
               })}
               {postPadding.map((_, postPaddingIndex) => {

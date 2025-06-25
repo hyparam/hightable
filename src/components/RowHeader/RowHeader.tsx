@@ -1,8 +1,9 @@
 import { CSSProperties, ChangeEvent, KeyboardEvent, MouseEvent, useCallback, useRef } from 'react'
 import { useCellNavigation } from '../../hooks/useCellsNavigation'
-import { useRow } from '../../hooks/useUnsortedRow'
 
 interface Props {
+  selected?: boolean
+  unsortedRow?: number
   onCheckboxPress?: ({ row, shiftKey }: {row: number, shiftKey: boolean}) => void
   showCheckBox?: boolean
   style?: CSSProperties
@@ -16,9 +17,8 @@ function formatRowNumber(rowIndex?: number): string {
   return (rowIndex + 1).toLocaleString('en-US')
 }
 
-export default function RowHeader({ onCheckboxPress, style, ariaColIndex, ariaRowIndex }: Props) {
+export default function RowHeader({ onCheckboxPress, style, ariaColIndex, ariaRowIndex, selected, unsortedRow }: Props) {
   const ref = useRef<HTMLTableCellElement>(null)
-  const { unsortedRow, selected } = useRow()
   const { tabIndex, navigateToCell } = useCellNavigation({ ref, ariaColIndex, ariaRowIndex })
   const handleClick = useCallback((event: MouseEvent) => {
     navigateToCell()

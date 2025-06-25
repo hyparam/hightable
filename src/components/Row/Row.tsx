@@ -1,9 +1,8 @@
 import { ReactNode } from 'react'
-import { useRow } from '../../hooks/useUnsortedRow'
 
 interface Props {
   children: ReactNode
-  isRowSelected?: (unsortedRow: number | undefined) => boolean | undefined
+  selected?: boolean
   ariaRowIndex: number
   title?: string
 }
@@ -11,9 +10,9 @@ interface Props {
 export default function Row({
   children,
   ariaRowIndex,
+  selected,
   title,
 }: Props) {
-  const { selected } = useRow()
   return (
     <tr
       role="row"

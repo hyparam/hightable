@@ -11,6 +11,9 @@ export interface UnsortableDataFrame {
   header: string[]
   sortable?: false // indicates that this DataFrame does not support sorting
 
+  // return the index of the row'th sorted row in the original unsorted data (it's the identity, for unsortable data frames)
+  getUnsortedRow({ row }: { row: number }): ResolvedValue<number>
+
   // undefined means pending, ResolvedValue is a boxed value type (so we can distinguish undefined from pending)
   // getCell does NOT initiate a fetch, it just returns resolved data
   getCell({ row, column }: {row: number, column: string}): ResolvedValue | undefined
@@ -50,6 +53,7 @@ export function arrayDataFrame(data: Cells[]): UnsortableDataFrame {
   return {
     numRows: data.length,
     header,
+    getUnsortedRow: ({ row }) => ({ value: row }), // for unsortable data frames, the unsorted row is the same as the sorted row
     getCell,
     fetch: getStaticFetch({ getCell }),
     eventTarget: createEventTarget<DataFrameEvents>(),
@@ -239,6 +243,7 @@ export function cacheUnsortableDataFrame({ numRows, header, getCell, fetch, even
   return {
     numRows,
     header,
+    getUnsortedRow: ({ row }) => ({ value: row }), // for unsortable data frames, the unsorted row is the same as the sorted row
     getCell: wrappedGetCell,
     fetch: wrappedFetch,
     eventTarget: wrappedEventTarget,

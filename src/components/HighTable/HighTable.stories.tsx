@@ -31,6 +31,7 @@ function getCell({ row, column }: { row: number, column: string }) {
 const data: UnsortableDataFrame = {
   header,
   numRows: 1000,
+  getUnsortedRow: ({ row }) => ({ value: row }),
   getCell,
   fetch: getStaticFetch({ getCell }),
   eventTarget: createEventTarget<DataFrameEvents>(),
@@ -73,6 +74,7 @@ async function delayedDataFetch({ rowStart, rowEnd, columns, signal, onColumnCom
 const noGetCellDelayedData: UnsortableDataFrame = {
   header: delayedDataHeader,
   numRows: delayedDataNumRows,
+  getUnsortedRow: ({ row }) => ({ value: row }),
   fetch: delayedDataFetch,
   getCell: () => { return undefined },
   eventTarget: createEventTarget<DataFrameEvents>(),
@@ -177,6 +179,7 @@ const sortableData = sortableDataFrame(data)
 const emptyData: UnsortableDataFrame = {
   header: ['ID', 'Count', 'Double', 'Constant', 'Value1', 'Value2', 'Value3'],
   numRows: 0,
+  getUnsortedRow: ({ row }) => ({ value: row }),
   getCell: () => { return undefined },
   fetch: () => Promise.resolve(),
   eventTarget: createEventTarget<DataFrameEvents>(),
