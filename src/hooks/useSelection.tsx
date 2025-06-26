@@ -50,7 +50,6 @@ export function SelectionProvider({ children, selection, onSelectionChange }: Se
         return
       }
       event.preventDefault()
-      // For keyboard navigation, we use data index directly since we don't have easy access to table index
       state.onChange({ ranges: toggleIndex({ ranges: state.value.ranges, index: dataIndex }), anchor: dataIndex })
     }
   }, [state])

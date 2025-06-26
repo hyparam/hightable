@@ -1,7 +1,7 @@
 import { describe, expect, it, test, vi } from 'vitest'
 import { DataFrame, sortableDataFrame } from '../../src/helpers/dataframe.js'
 import { AsyncRow, Row } from '../../src/helpers/row.js'
-import { areAllSelected, areValidRanges, convertSelection, extendFromAnchor, invertPermutationIndexes, isSelected, isValidIndex, isValidRange, Ranges, selectRange, toggleAll, toggleAllIndices, toggleIndex, toggleIndexInSelection, toggleRangeInSelection, toggleRangeInTable, unselectRange } from '../../src/helpers/selection.js'
+import { Ranges, areAllSelected, areValidRanges, convertSelection, extendFromAnchor, invertPermutationIndexes, isSelected, isValidIndex, isValidRange, selectRange, toggleAll, toggleAllIndices, toggleIndex, toggleIndexInSelection, toggleRangeInSelection, toggleRangeInTable, unselectRange } from '../../src/helpers/selection.js'
 import { wrapResolved } from '../../src/utils/promise.js'
 
 describe('an index', () => {
@@ -156,7 +156,7 @@ describe('toggleAllIndices', () => {
     const ranges = [{ start: 0, end: 1 }, { start: 2, end: 3 }, { start: 5, end: 6 }, { start: 7, end: 8 }]
     expect(toggleAllIndices({ ranges, indices })).toEqual([])
   })
-  
+
   test('should select all specified indices if none are selected', () => {
     const indices = [1, 3, 5]
     const ranges: Ranges = []
@@ -164,7 +164,7 @@ describe('toggleAllIndices', () => {
     // Should create individual ranges for each index and potentially merge adjacent ones
     expect(result).toEqual([{ start: 1, end: 2 }, { start: 3, end: 4 }, { start: 5, end: 6 }])
   })
-  
+
   test('should select remaining indices if some are selected', () => {
     const indices = [1, 2, 4, 5]
     const ranges = [{ start: 1, end: 2 }] // Only index 1 is selected
@@ -172,20 +172,20 @@ describe('toggleAllIndices', () => {
     // Should select all indices, and merge adjacent ones
     expect(result).toEqual([{ start: 1, end: 3 }, { start: 4, end: 6 }])
   })
-  
+
   test('should handle non-contiguous indices correctly', () => {
     const indices = [10, 25, 30, 100]
     const ranges: Ranges = []
     const result = toggleAllIndices({ ranges, indices })
     expect(result).toEqual([{ start: 10, end: 11 }, { start: 25, end: 26 }, { start: 30, end: 31 }, { start: 100, end: 101 }])
   })
-  
+
   test('should return empty selection if indices array is empty', () => {
     const indices: number[] = []
     const ranges = [{ start: 0, end: 5 }]
     expect(toggleAllIndices({ ranges, indices })).toEqual([])
   })
-  
+
   test('should throw an error if ranges are invalid', () => {
     const indices = [1, 2, 3]
     const ranges = [{ start: 2, end: 1 }] // Invalid range

@@ -93,10 +93,10 @@ export function toggleAllIndices({ ranges, indices }: { ranges: Ranges, indices:
   if (!indices || indices.length === 0) {
     return []
   }
-  
+
   // Check if all indices are already selected
   const allSelected = indices.every(index => isSelected({ ranges, index }))
-  
+
   if (allSelected) {
     // Deselect all - remove all the indices from the current selection
     let newRanges = ranges
@@ -393,7 +393,7 @@ export function convertSelection({ selection, permutationIndexes }: { selection:
 
 /**
  * Compute the new selection state after a shift-click (range toggle) on the row with the given table index.
- * 
+ *
  * This function works with view-based positions (tableIndex) but stores the selection as data indices.
  * The selection is extended from the anchor to the clicked index in the visual space of the user.
  *
@@ -423,7 +423,7 @@ export async function toggleRangeInTable({
   if (selection.anchor !== undefined && !isValidIndex(selection.anchor)) {
     throw new Error('Invalid anchor')
   }
-  
+
   // Only check sortable for sorted data
   if (orderBy.length > 0) {
     // Check if orderBy columns exist in data
@@ -436,20 +436,20 @@ export async function toggleRangeInTable({
       throw new Error('Data frame is not sortable')
     }
   }
-  
+
   // Get the mapping from table positions to data indices
   const dataIndexes = await getDataIndexes({ orderBy, data, ranksMap, setRanksMap })
-  
+
   // Convert current selection from data indices to table positions
   const tableSelection = convertDataSelectionToTableSelection({ selection, dataIndexes })
-  
+
   // Perform the range toggle in table space
   const { ranges, anchor } = tableSelection
-  const newTableSelection = { 
-    ranges: extendFromAnchor({ ranges, anchor, index: tableIndex }), 
-    anchor: tableIndex 
+  const newTableSelection = {
+    ranges: extendFromAnchor({ ranges, anchor, index: tableIndex }),
+    anchor: tableIndex,
   }
-  
+
   // Convert back to data indices for storage
   const newDataSelection = convertTableSelectionToDataSelection({ selection: newTableSelection, dataIndexes })
   return newDataSelection
@@ -458,16 +458,16 @@ export async function toggleRangeInTable({
 /**
  * Get the data indices for the current view order
  */
-async function getDataIndexes({ 
-  orderBy, 
-  data, 
-  ranksMap, 
-  setRanksMap 
-}: { 
-  orderBy: OrderBy, 
-  data: DataFrame, 
-  ranksMap: Map<string, Promise<number[]>>, 
-  setRanksMap: (setter: (ranksMap: Map<string, Promise<number[]>>) => Map<string, Promise<number[]>>) => void 
+async function getDataIndexes({
+  orderBy,
+  data,
+  ranksMap,
+  setRanksMap,
+}: {
+  orderBy: OrderBy,
+  data: DataFrame,
+  ranksMap: Map<string, Promise<number[]>>,
+  setRanksMap: (setter: (ranksMap: Map<string, Promise<number[]>>) => Map<string, Promise<number[]>>) => void
 }): Promise<number[]> {
   // If no sorting is applied, get the actual data indices from the rows
   if (orderBy.length === 0) {
@@ -475,7 +475,7 @@ async function getDataIndexes({
     const dataIndexes = await Promise.all(rows.map(row => row.index))
     return dataIndexes
   }
-  
+
   // For sorted data, use the ranking approach
   const orderByWithDefaultSort = [...orderBy, { column: '', direction: 'ascending' as const }]
   const orderByWithRanksPromises = orderByWithDefaultSort.map(({ column, direction }) => {
@@ -485,7 +485,7 @@ async function getDataIndexes({
       ranks: ranksMap.get(column) ?? (column === '' ? getUnsortedRanks({ data }) : getRanks({ data, column })),
     }
   })
-  
+
   if (orderByWithRanksPromises.some(({ column }) => !ranksMap.has(column))) {
     setRanksMap(ranksMap => {
       const nextRanksMap = new Map(ranksMap)
@@ -493,7 +493,7 @@ async function getDataIndexes({
       return nextRanksMap
     })
   }
-  
+
   const orderByWithRanks = await Promise.all(orderByWithRanksPromises.map(async ({ column, direction, ranks }) => ({ column, direction, ranks: await ranks })))
   return computeDataIndexes(orderByWithRanks)
 }
@@ -508,7 +508,7 @@ function convertDataSelectionToTableSelection({ selection, dataIndexes }: { sele
   dataIndexes.forEach((dataIndex, tableIndex) => {
     dataToTableIndexMap.set(dataIndex, tableIndex)
   })
-  
+
   // Convert each selected data index to its table position
   const tableRanges: Range[] = []
   for (const range of selection.ranges) {
@@ -519,10 +519,10 @@ function convertDataSelectionToTableSelection({ selection, dataIndexes }: { sele
       }
     }
   }
-  
+
   // Sort and merge adjacent ranges to create contiguous table selections
   const mergedRanges = mergeRanges(tableRanges.sort((a, b) => a.start - b.start))
-  
+
   const tableAnchor = selection.anchor !== undefined ? dataToTableIndexMap.get(selection.anchor) : undefined
   return { ranges: mergedRanges, anchor: tableAnchor }
 }
@@ -542,17 +542,17 @@ function convertTableSelectionToDataSelection({ selection, dataIndexes }: { sele
       }
     }
   }
-  
+
   // Sort data indices and create ranges
   selectedDataIndices.sort((a, b) => a - b)
-  
+
   const dataRanges: Range[] = []
   if (selectedDataIndices.length > 0) {
-    let rangeStart = selectedDataIndices[0]!
+    let rangeStart = selectedDataIndices[0] ?? 0
     let rangeEnd = rangeStart + 1
-    
+
     for (let i = 1; i < selectedDataIndices.length; i++) {
-      const current = selectedDataIndices[i]!
+      const current = selectedDataIndices[i] ?? 0
       if (current === rangeEnd) {
         // Extend current range
         rangeEnd = current + 1
@@ -563,11 +563,11 @@ function convertTableSelectionToDataSelection({ selection, dataIndexes }: { sele
         rangeEnd = current + 1
       }
     }
-    
+
     // Add the last range
     dataRanges.push({ start: rangeStart, end: rangeEnd })
   }
-  
+
   const dataAnchor = selection.anchor !== undefined ? dataIndexes[selection.anchor] : undefined
   return { ranges: dataRanges, anchor: dataAnchor }
 }
@@ -577,12 +577,12 @@ function convertTableSelectionToDataSelection({ selection, dataIndexes }: { sele
  */
 function mergeRanges(ranges: Range[]): Range[] {
   if (ranges.length === 0) return []
-  
+
   const merged: Range[] = []
-  let current = ranges[0]!
-  
+  let current = ranges[0] ?? { start: 0, end: 0 }
+
   for (let i = 1; i < ranges.length; i++) {
-    const next = ranges[i]!
+    const next = ranges[i] ?? { start: 0, end: 0 }
     if (current.end >= next.start) {
       // Merge overlapping or adjacent ranges
       current = { start: current.start, end: Math.max(current.end, next.end) }
@@ -591,7 +591,7 @@ function mergeRanges(ranges: Range[]): Range[] {
       current = next
     }
   }
-  
+
   merged.push(current)
   return merged
 }

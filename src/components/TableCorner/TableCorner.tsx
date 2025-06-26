@@ -4,7 +4,7 @@ import { useCellNavigation } from '../../hooks/useCellsNavigation'
 interface Props {
   checked?: boolean
   children?: ReactNode
-  onCheckboxPress?: () => void
+  onCheckboxPress?: () => Promise<void>
   style?: CSSProperties
   ariaColIndex: number
   ariaRowIndex: number
@@ -22,14 +22,14 @@ function TableCorner({ children, checked, onCheckboxPress, style, ariaColIndex, 
   const { tabIndex, navigateToCell } = useCellNavigation({ ref: cellRef, ariaColIndex, ariaRowIndex })
   const handleClick = useCallback(() => {
     navigateToCell()
-    onCheckboxPress?.()
+    void onCheckboxPress?.()
   }, [onCheckboxPress, navigateToCell])
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault()
       // TODO: let the event propagate?
       event.stopPropagation()
-      onCheckboxPress?.()
+      void onCheckboxPress?.()
     }
   }, [onCheckboxPress])
   const showCheckBox = checked !== undefined
