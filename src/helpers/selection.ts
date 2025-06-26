@@ -94,18 +94,15 @@ export function toggleAllIndices({ ranges, indices }: { ranges: Ranges, indices:
     return []
   }
 
-  // Check if all indices are already selected
   const allSelected = indices.every(index => isSelected({ ranges, index }))
 
   if (allSelected) {
-    // Deselect all - remove all the indices from the current selection
     let newRanges = ranges
     for (const index of indices) {
       newRanges = toggleIndex({ ranges: newRanges, index })
     }
     return newRanges
   } else {
-    // Select all - add all indices to the current selection
     let newRanges = ranges
     for (const index of indices) {
       if (!isSelected({ ranges: newRanges, index })) {

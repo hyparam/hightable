@@ -74,16 +74,6 @@ export function useSelection({ data, numRows }: {data: DataFrame, numRows: numbe
   const context = useContext(SelectionContext)
   const { selection, onSelectionChange } = context
 
-  // const getToggleAllRows = useCallback(() => {
-  //   if (!selection || !onSelectionChange) return
-  //   return () => {
-  //     onSelectionChange({
-  //       ranges: toggleAll({ ranges: selection.ranges, length: numRows }),
-  //       anchor: undefined,
-  //     })
-  //   }
-  // }, [onSelectionChange, numRows, selection])
-
   const toggleAllRows = useCallback(async () => {
     if (!selection || !onSelectionChange) return
 
