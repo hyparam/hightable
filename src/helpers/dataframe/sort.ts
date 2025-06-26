@@ -61,19 +61,29 @@ export function sortableDataFrame(dataFrame: DataFrame): DataFrame {
 
   async function wrappedFetch(args: { rowStart: number, rowEnd: number, columns: string[], orderBy?: OrderBy, signal?: AbortSignal, onColumnComplete?: (data: { column: string, values: any[], orderBy?: OrderBy }) => void }): Promise<void> {
     const { orderBy, ...rest } = args
-    const { rowStart, rowEnd, columns, signal, onColumnComplete } = rest
     if (!orderBy || orderBy.length === 0) {
       // If orderBy is not provided, we can fetch the data without sorting.
       return fetch(rest)
     }
+
+    const { rowStart, rowEnd, columns, signal, onColumnComplete } = rest
     if (onColumnComplete) {
       throw new Error('onColumnComplete is not supported with sorting.')
     }
 
-    // TODO(SL): check the arguments (rowStart, rowEnd, columns, orderBy) and throw an error if they are invalid
-    if (rowStart >= rowEnd) {
+    if (rowStart < 0 || rowEnd > numRows || rowStart > rowEnd) {
+      throw new Error(`Invalid range: [${rowStart}, ${rowEnd}) for numRows: ${numRows}.`)
+    }
+    if (rowStart === rowEnd) {
       // If the range is empty, we can return.
       return
+    }
+    if (columns.length === 0) {
+      // If no columns are provided, we can return.
+      return
+    }
+    if (columns.some((column) => !header.includes(column))) {
+      throw new Error(`Invalid columns: ${columns.join(', ')}. Must be a subset of the header: ${header.join(', ')}.`)
     }
     checkOrderBy({ header, orderBy })
 
