@@ -392,14 +392,21 @@ export function convertSelection({ selection, permutationIndexes }: { selection:
 }
 
 /**
- * Compute the new selection state after a shift-click (range toggle) on the row with the given table index.
+ * Compute the new selection state after a shift-click (range toggle) on the row with the given table index,
+ * when the rows are sorted.
  *
- * This function works with view-based positions (tableIndex) but stores the selection as data indices.
- * The selection is extended from the anchor to the clicked index in the visual space of the user.
+ * The selection is extended from the anchor to the index. This
+ * range is done in the visual space of the user, ie: between the rows as they appear in the table.
+ *
+ * The new anchor is the row with the given table index.
+ *
+ * If the rows are sorted, the indexes are converted from data domain to table domain and vice versa,
+ * which requires the sort index of the data frame. If not available, it must be computed, which is
+ * an async operation that can be expensive.
  *
  * @param {Object} params
- * @param {number} params.tableIndex - The index of the row in the table (view position).
- * @param {Selection} params.selection - The current selection state (stored as data indices).
+ * @param {number} params.tableIndex - The index of the row in the table (table domain, sorted row indexes).
+ * @param {Selection} params.selection - The current selection state (data domain, row indexes).
  * @param {OrderBy} params.orderBy - The order if the rows are sorted.
  * @param {DataFrame} params.data - The data frame.
  * @param {Map<string,number[]>} params.ranksMap - The map of ranks for each column.
@@ -485,7 +492,6 @@ async function getDataIndexes({
       ranks: ranksMap.get(column) ?? (column === '' ? getUnsortedRanks({ data }) : getRanks({ data, column })),
     }
   })
-
   if (orderByWithRanksPromises.some(({ column }) => !ranksMap.has(column))) {
     setRanksMap(ranksMap => {
       const nextRanksMap = new Map(ranksMap)
@@ -493,7 +499,6 @@ async function getDataIndexes({
       return nextRanksMap
     })
   }
-
   const orderByWithRanks = await Promise.all(orderByWithRanksPromises.map(async ({ column, direction, ranks }) => ({ column, direction, ranks: await ranks })))
   return computeDataIndexes(orderByWithRanks)
 }

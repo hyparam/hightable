@@ -2,7 +2,7 @@ import { CSSProperties, KeyboardEvent, MouseEvent, useCallback, useEffect, useMe
 import { ColumnConfiguration } from '../../helpers/columnConfiguration.js'
 import { DataFrame } from '../../helpers/dataframe.js'
 import { PartialRow } from '../../helpers/row.js'
-import { Selection, areAllSelected, isSelected, toggleAllIndices, toggleIndexInSelection, toggleRangeInTable } from '../../helpers/selection.js'
+import { Selection, areAllSelected, isSelected, toggleIndexInSelection, toggleRangeInTable } from '../../helpers/selection.js'
 import { OrderBy, areEqualOrderBy } from '../../helpers/sort.js'
 import { cellStyle, getClientWidth, getOffsetWidth } from '../../helpers/width.js'
 import { CellsNavigationProvider, useCellsNavigation } from '../../hooks/useCellsNavigation.js'
@@ -151,40 +151,12 @@ export function HighTableInner({
   // ie. cache the previous sort indexes in the data frame itself
   const [ranksMap, setRanksMap] = useState<Map<string, Promise<number[]>>>(() => new Map())
 
-  // Update numRows when data changes (important for sample/filtered datasets)
   useEffect(() => {
     setNumRows(data.numRows)
   }, [data])
 
   const { orderBy, onOrderByChange } = useOrderBy()
-  const { selection, onSelectionChange, onTableKeyDown: onSelectionTableKeyDown } = useSelection({ numRows })
-
-  // Custom toggle all function that works with the actual data indices in the current view
-  const toggleAllRows = useCallback(async () => {
-    if (!selection || !onSelectionChange) return
-
-    // Get all rows in the current view to extract their data indices
-    const allRows = data.rows({ start: 0, end: numRows, orderBy })
-    const dataIndices: number[] = []
-
-    // Extract data indices from all rows
-    for (const asyncRow of allRows) {
-      if ('resolved' in asyncRow.index && asyncRow.index.resolved !== undefined) {
-        dataIndices.push(asyncRow.index.resolved)
-      } else {
-        // For non-sorted views, data index equals table index
-        const resolvedIndex = await asyncRow.index
-        dataIndices.push(resolvedIndex)
-      }
-    }
-
-    const newRanges = toggleAllIndices({ ranges: selection.ranges, indices: dataIndices })
-
-    onSelectionChange({
-      ranges: newRanges,
-      anchor: undefined,
-    })
-  }, [data, numRows, orderBy, selection, onSelectionChange])
+  const { selection, onSelectionChange, toggleAllRows, onTableKeyDown: onSelectionTableKeyDown } = useSelection({ data, numRows })
 
   const columns = useTableConfig(data, columnConfiguration)
   const onTableKeyDown = useCallback((event: KeyboardEvent) => {
@@ -198,13 +170,12 @@ export function HighTableInner({
     const useAnchor = shiftKey && selection.anchor !== undefined
 
     if (!useAnchor) {
-      // single row toggle - use data index for storage
+      // single row toggle
       onSelectionChange(toggleIndexInSelection({ selection, index: dataIndex }))
       return
     }
 
-    // For all range selections (with anchor), use table-based logic
-    // This ensures visual continuity across different view types
+    // sorting, toggle the range in the sorted order
     const requestId = ++pendingSelectionRequest.current
     const newSelection = await toggleRangeInTable({
       selection,
