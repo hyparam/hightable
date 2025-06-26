@@ -158,11 +158,11 @@ describe('toggleAllIndices', () => {
   })
 
   test('should select all specified indices if none are selected', () => {
-    const indices = [1, 3, 5]
+    const indices = [1, 3, 4]
     const ranges: Ranges = []
     const result = toggleAllIndices({ ranges, indices })
     // Should create individual ranges for each index and potentially merge adjacent ones
-    expect(result).toEqual([{ start: 1, end: 2 }, { start: 3, end: 4 }, { start: 5, end: 6 }])
+    expect(result).toEqual([{ start: 1, end: 2 }, { start: 3, end: 5 }])
   })
 
   test('should select remaining indices if some are selected', () => {
