@@ -505,13 +505,11 @@ async function getDataIndexes({
  * Handles individual single-row ranges and merges them into contiguous table ranges
  */
 function convertDataSelectionToTableSelection({ selection, dataIndexes }: { selection: Selection, dataIndexes: number[] }): Selection {
-  // Create a map from data index to table index
   const dataToTableIndexMap = new Map<number, number>()
   dataIndexes.forEach((dataIndex, tableIndex) => {
     dataToTableIndexMap.set(dataIndex, tableIndex)
   })
 
-  // Convert each selected data index to its table position
   const tableRanges: Range[] = []
   for (const range of selection.ranges) {
     for (let dataIndex = range.start; dataIndex < range.end; dataIndex++) {
@@ -522,7 +520,6 @@ function convertDataSelectionToTableSelection({ selection, dataIndexes }: { sele
     }
   }
 
-  // Sort and merge adjacent ranges to create contiguous table selections
   const mergedRanges = mergeRanges(tableRanges.sort((a, b) => a.start - b.start))
 
   const tableAnchor = selection.anchor !== undefined ? dataToTableIndexMap.get(selection.anchor) : undefined
@@ -534,7 +531,6 @@ function convertDataSelectionToTableSelection({ selection, dataIndexes }: { sele
  * Convert table ranges to data index ranges, merging contiguous data indices when possible
  */
 function convertTableSelectionToDataSelection({ selection, dataIndexes }: { selection: Selection, dataIndexes: number[] }): Selection {
-  // Collect all selected data indices
   const selectedDataIndices: number[] = []
   for (const range of selection.ranges) {
     for (let tableIndex = range.start; tableIndex < range.end; tableIndex++) {
@@ -545,7 +541,6 @@ function convertTableSelectionToDataSelection({ selection, dataIndexes }: { sele
     }
   }
 
-  // Sort data indices and create ranges
   selectedDataIndices.sort((a, b) => a - b)
 
   const dataRanges: Range[] = []
@@ -556,17 +551,14 @@ function convertTableSelectionToDataSelection({ selection, dataIndexes }: { sele
     for (let i = 1; i < selectedDataIndices.length; i++) {
       const current = selectedDataIndices[i] ?? 0
       if (current === rangeEnd) {
-        // Extend current range
         rangeEnd = current + 1
       } else {
-        // Finish current range and start new one
         dataRanges.push({ start: rangeStart, end: rangeEnd })
         rangeStart = current
         rangeEnd = current + 1
       }
     }
 
-    // Add the last range
     dataRanges.push({ start: rangeStart, end: rangeEnd })
   }
 
@@ -586,7 +578,6 @@ function mergeRanges(ranges: Range[]): Range[] {
   for (let i = 1; i < ranges.length; i++) {
     const next = ranges[i] ?? { start: 0, end: 0 }
     if (current.end >= next.start) {
-      // Merge overlapping or adjacent ranges
       current = { start: current.start, end: Math.max(current.end, next.end) }
     } else {
       merged.push(current)
