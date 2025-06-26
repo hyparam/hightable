@@ -12,8 +12,9 @@ export function sortableDataFrame(dataFrame: DataFrame): DataFrame {
 
   const wrappedHeader = header.slice() // Create a shallow copy of the header to avoid mutating the original
 
-  // We could use TypedArrays to store the ranks, for example
+  // TODO(SL): We could use TypedArrays to store the ranks, for example
   // TODO(SL): cache promises instead of resolved values? beware: how to handle abort signal?
+  // TODO(SL): how to erase the cache if needed? .dispose() method? do we need it?
   const ranksByColumn = new Map<string, number[]>()
   const indexesByOrderBy = new Map<string, number[]>()
 
@@ -59,7 +60,6 @@ export function sortableDataFrame(dataFrame: DataFrame): DataFrame {
   }
 
   async function wrappedFetch(args: { rowStart: number, rowEnd: number, columns: string[], orderBy?: OrderBy, signal?: AbortSignal, onColumnComplete?: (data: { column: string, values: any[], orderBy?: OrderBy }) => void }): Promise<void> {
-    // TODO?: no-op if the arguments have already been fetched once (we should cache with key:boolean, and (smartly) invalidate the cache on update)
     const { orderBy, ...rest } = args
     const { rowStart, rowEnd, columns, signal, onColumnComplete } = rest
     if (!orderBy || orderBy.length === 0) {
@@ -70,7 +70,7 @@ export function sortableDataFrame(dataFrame: DataFrame): DataFrame {
       throw new Error('onColumnComplete is not supported with sorting.')
     }
 
-    // TODO: check the arguments (rowStart, rowEnd, columns, orderBy) and throw an error if they are invalid
+    // TODO(SL): check the arguments (rowStart, rowEnd, columns, orderBy) and throw an error if they are invalid
     if (rowStart >= rowEnd) {
       // If the range is empty, we can return.
       return

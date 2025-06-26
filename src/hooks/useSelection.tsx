@@ -25,7 +25,7 @@ export function SelectionProvider({ children, selection, onSelectionChange }: Se
   })
 
   const onTableKeyDown = useCallback((event: KeyboardEvent, numRows: number) => {
-    // TODO: move numRows to the Provider props?
+    // TODO: move numRows to the Provider props? What should occur with the selection if the number of rows changes?
     const { key, shiftKey } = event
 
     if (key === 'Escape') {

@@ -168,6 +168,8 @@ export function HighTableInner({
       }
 
       // sorting, toggle the range in the sorted order
+      // TODO(SL): show a status message while the request is pending?
+      // TODO(SL): remove ranksByColumn and indexesByOrderBy, and make it native to dataframev2?
       const requestId = ++pendingSelectionRequest.current
       const newSelection = await toggleRangeInTable({
         selection,
@@ -210,11 +212,6 @@ export function HighTableInner({
 
   // scroll vertically to the focused cell if needed
   useEffect(() => {
-    // TODO(SL): add a new guard?
-    // if (!slice) {
-    //   // don't scroll if the slice is not ready
-    //   return
-    // }
     if (!enterCellsNavigation && lastCellPosition.rowIndex === rowIndex && lastCellPosition.colIndex === colIndex) {
       // don't scroll if the navigation cell is unchanged
       // occurs when the user is scrolling with the mouse for example, and the
@@ -386,7 +383,7 @@ export function HighTableInner({
                   ref={tableCornerRef}
                 />
                 <TableHeader
-                // TODO(SL): find a better way to check if the data is ready and the column widths should be computed
+                  // TODO(SL): find a better way to check if the data is ready and the column widths should be computed
                   dataReady={rowsLength > 0}
                   columnDescriptors={columns}
                   orderBy={orderBy}

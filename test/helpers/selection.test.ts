@@ -424,15 +424,27 @@ describe('toggleRangeInTable', () => {
       toggleRangeInTable({ ...props, ranksByColumn: wrongButTrustedRanksByColumn })
     ).resolves.toEqual({ ranges: [{ start: 0, end: 2 }], anchor: 0 })
   })
+  it.each([
+    undefined,
+    new Map([['age', ageRanks]]),
+  ])('should call setRanks if some ranks are not provided', async (ranksByColumn) => {
+    const setRanks = vi.fn()
+    await toggleRangeInTable({ ...props, ranksByColumn, setRanks })
+    expect(setRanks).toHaveBeenCalledWith({ column: 'name', ranks: nameRanks })
+  })
   it('should not call setRanks if all ranks are provided', async () => {
     const setRanks = vi.fn()
     await toggleRangeInTable({ ...props, ranksByColumn: new Map([['name', nameRanks]]), setRanks })
     expect(setRanks).not.toHaveBeenCalled()
   })
-  it('should call setRanks if ranks are not provided', async () => {
-    const setRanks = vi.fn()
-    await toggleRangeInTable({ ...props, setRanks })
-    expect(setRanks).toHaveBeenCalledWith({ column: 'name', ranks: nameRanks })
+  it('should call setIndexes if some indexes are not provided', async () => {
+    const setIndexes = vi.fn()
+    await toggleRangeInTable({ ...props, setIndexes })
+    expect(setIndexes).toHaveBeenCalledWith({ orderBy, indexes: [1, 2, 0, 3] })
   })
-  // TODO(SL): do the same with setIndexes?
+  it('should not call setIndexes if all indexes are provided', async () => {
+    const setIndexes = vi.fn()
+    await toggleRangeInTable({ ...props, indexes: [1, 2, 0, 3], setIndexes })
+    expect(setIndexes).not.toHaveBeenCalled()
+  })
 })
