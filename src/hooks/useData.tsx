@@ -47,6 +47,10 @@ export function DataProvider({ children, onError, data }: DataProviderProps) {
         onError(new Error(`Invalid number of rows: ${newNumRows}`))
         return
       }
+      if (newNumRows !== data.numRows) {
+        onError(new Error(`Number of rows changed from ${data.numRows} to ${newNumRows}, but the data frame did not change.`))
+        return
+      }
       setNumRows(newNumRows)
     }
     data.eventTarget.addEventListener('dataframe:numrowschange', onNumRowsChange)

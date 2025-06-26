@@ -1260,3 +1260,46 @@ describe('When the table scroller is focused', () => {
     expect(document.activeElement).toBe(cell)
   })
 })
+
+describe('When the number of rows is updated (iceberg dataframe, for example)', () => {
+  it('the table is updated with the new number of rows', async () => {
+    const smallData = {
+      ...data,
+      numRows: 5,
+      eventTarget: createEventTarget<DataFrameEvents>(),
+    }
+    const { findByRole, getByRole, getAllByRole } = render(<HighTable data={smallData} />)
+    // await because we have to wait for the data to be fetched first
+    await findByRole('cell', { name: 'row 2' })
+    expect(getAllByRole('row')).toHaveLength(6) // +1 for the header row
+    expect(getByRole('grid').getAttribute('aria-rowcount')).toBe('6')
+
+    act(() => {
+      smallData.numRows = 10
+      smallData.eventTarget.dispatchEvent(new CustomEvent('dataframe:numrowschange', { detail: { numRows: smallData.numRows } }))
+    })
+
+    // await again, since we have to wait for the new data to be fetched
+    await findByRole('cell', { name: 'row 8' })
+    expect(getAllByRole('row')).toHaveLength(11) // +1 for the header row
+    expect(getByRole('grid').getAttribute('aria-rowcount')).toBe('11')
+  })
+  it('an error is thrown if the numrowschange event is sent but data.numRows has not beed updated', () => {
+    const smallData = {
+      ...data,
+      numRows: 5,
+      eventTarget: createEventTarget<DataFrameEvents>(),
+    }
+
+    const errors: unknown[] = []
+    const { getByRole } = render(<HighTable data={smallData} onError={error => { errors.push(error) }} />)
+    expect(getByRole('grid').getAttribute('aria-rowcount')).toBe('6')
+
+    act(() => {
+      smallData.eventTarget.dispatchEvent(new CustomEvent('dataframe:numrowschange', { detail: { numRows: 10 } }))
+    })
+    expect(errors).toHaveLength(1)
+    expect(errors[0]).toBeInstanceOf(Error)
+    expect((errors[0] as Error).message).toBe('Number of rows changed from 5 to 10, but the data frame did not change.')
+  })
+})

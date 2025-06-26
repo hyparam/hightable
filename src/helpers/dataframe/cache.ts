@@ -85,7 +85,7 @@ export function cacheUnsortableDataFrame({ numRows, header, getCell, fetch, even
   }
 }
 
-// RESTORE this?
+// TODO(SL!) RESTORE this?
 
 // import { DataFrame } from './dataframe.js'
 // import { AsyncRow } from './row.js'

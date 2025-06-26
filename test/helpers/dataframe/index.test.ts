@@ -138,6 +138,7 @@ describe('sortableDataFrame', () => {
   })
 })
 
+// TODO(SL!): restore rowCache tests
 // ---
 
 // import { describe, expect, it, vi } from 'vitest'

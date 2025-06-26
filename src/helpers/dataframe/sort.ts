@@ -28,6 +28,8 @@ export function sortableDataFrame(dataFrame: DataFrame): DataFrame {
     const { rowStart, rowEnd, columns } = event.detail
     wrappedEventTarget.dispatchEvent(new CustomEvent('dataframe:update', { detail: { rowStart, rowEnd, columns } }))
   })
+  // The dataframe:index:update event should not be dispatched by an unsortable data frame, so we don't need to forward it here.
+
   // TODO(SL!): the listeners are not removed, so we might leak memory if the wrapped dataFrame is not used anymore.
   // We could add a method to remove the listeners (.dispose() ?).
 
