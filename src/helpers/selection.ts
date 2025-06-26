@@ -417,7 +417,6 @@ export async function toggleRangeInTable({
   ranksMap,
   setRanksMap,
 }: { tableIndex: number, selection: Selection, orderBy: OrderBy, data: DataFrame, ranksMap: Map<string, Promise<number[]>>, setRanksMap: (setter: (ranksMap: Map<string, Promise<number[]>>) => Map<string, Promise<number[]>>) => void }): Promise<Selection> {
-  // Validate inputs
   if (!isValidIndex(tableIndex)) {
     throw new Error('Invalid index')
   }
@@ -441,20 +440,10 @@ export async function toggleRangeInTable({
     }
   }
 
-  // Get the mapping from table positions to data indices
   const dataIndexes = await getDataIndexes({ orderBy, data, ranksMap, setRanksMap })
-
-  // Convert current selection from data indices to table positions
   const tableSelection = convertDataSelectionToTableSelection({ selection, dataIndexes })
-
-  // Perform the range toggle in table space
   const { ranges, anchor } = tableSelection
-  const newTableSelection = {
-    ranges: extendFromAnchor({ ranges, anchor, index: tableIndex }),
-    anchor: tableIndex,
-  }
-
-  // Convert back to data indices for storage
+  const newTableSelection = { ranges: extendFromAnchor({ ranges, anchor, index: tableIndex }), anchor: tableIndex }
   const newDataSelection = convertTableSelectionToDataSelection({ selection: newTableSelection, dataIndexes })
   return newDataSelection
 }
