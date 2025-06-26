@@ -1,11 +1,11 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { within } from '@testing-library/react'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { render } from '../../utils/userEvent.js'
 import TableHeader from './TableHeader.js'
 
 describe('TableHeader', () => {
   const columnDescriptors = [{ key: 'Name', index: 0, sortable: true }, { key: 'Age', index: 1, sortable: true }, { key: 'Address', index: 2, sortable: true }]
-  const dataReady = true
+  const canMeasureWidth = true
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -14,7 +14,7 @@ describe('TableHeader', () => {
   it('renders table headers correctly', () => {
     const { getByText } = render(<table><thead><tr>
       <TableHeader
-        dataReady={dataReady}
+        canMeasureWidth={canMeasureWidth}
         columnDescriptors={columnDescriptors}
         ariaRowIndex={1}
       />
@@ -31,7 +31,7 @@ describe('TableHeader', () => {
         columnDescriptors={columnDescriptors}
         orderBy={[]}
         onOrderByChange={onOrderByChange}
-        dataReady={dataReady}
+        canMeasureWidth={canMeasureWidth}
         ariaRowIndex={1}
       />
     </tr></thead></table>)
@@ -49,7 +49,7 @@ describe('TableHeader', () => {
         columnDescriptors={columnDescriptors}
         onOrderByChange={onOrderByChange}
         orderBy={[{ column: 'Age', direction: 'ascending' }]}
-        dataReady={dataReady}
+        canMeasureWidth={canMeasureWidth}
         ariaRowIndex={1}
       />
     </tr></thead></table>)
@@ -67,7 +67,7 @@ describe('TableHeader', () => {
         columnDescriptors={columnDescriptors}
         onOrderByChange={onOrderByChange}
         orderBy={[{ column: 'Age', direction: 'descending' }]}
-        dataReady={dataReady}
+        canMeasureWidth={canMeasureWidth}
         ariaRowIndex={1}
       />
     </tr></thead></table>)
@@ -85,7 +85,7 @@ describe('TableHeader', () => {
         columnDescriptors={columnDescriptors}
         onOrderByChange={onOrderByChange}
         orderBy={[{ column: 'Age', direction: 'ascending' }]}
-        dataReady={dataReady}
+        canMeasureWidth={canMeasureWidth}
         ariaRowIndex={1}
       />
     </tr></thead></table>)
@@ -105,7 +105,7 @@ describe('TableHeader', () => {
             <tr>
               <TableHeader
                 columnDescriptors={columnDescriptors}
-                dataReady={dataReady}
+                canMeasureWidth={canMeasureWidth}
                 ariaRowIndex={1}
                 onOrderByChange={onOrderByChange}
                 orderBy={[]}
@@ -143,7 +143,7 @@ describe('TableHeader', () => {
             <tr>
               <TableHeader
                 columnDescriptors={columnDescriptors}
-                dataReady={dataReady}
+                canMeasureWidth={canMeasureWidth}
                 ariaRowIndex={1}
                 onOrderByChange={onOrderByChange}
                 orderBy={[]}

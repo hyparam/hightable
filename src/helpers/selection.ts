@@ -372,7 +372,7 @@ export function convertSelection({ selection, permutationIndexes }: { selection:
  * an async operation that can be expensive.
  *
  * @param {Object} params
- * @param {number} params.tableIndex - The index of the row in the table (table domain, sorted row indexes).
+ * @param {number} params.index - The index of the row in the table (table domain, sorted row indexes).
  * @param {Selection} params.selection - The current selection state (data domain, row indexes).
  * @param {OrderBy} params.orderBy - The order if the rows are sorted.
  * @param {DataFrame} params.dataFrame - The data frame.
@@ -382,8 +382,8 @@ export function convertSelection({ selection, permutationIndexes }: { selection:
  * @param {function} [params.setIndexes] - A function to set the indexes for an orderBy.
  * @param {AbortSignal} [params.signal] - An optional abort signal to cancel the async operation if needed.
  */
-export async function toggleRangeInTable({
-  tableIndex,
+export async function toggleRangeInSortedSelection({
+  index,
   selection,
   orderBy,
   dataFrame,
@@ -392,7 +392,7 @@ export async function toggleRangeInTable({
   indexes,
   setIndexes,
   signal,
-}: { tableIndex: number, selection: Selection, orderBy: OrderBy, dataFrame: DataFrame, ranksByColumn?: Map<string, number[]>, setRanks?: ({ column, ranks }: {column: string, ranks: number[]}) => void, indexes?: number[], setIndexes?: ({ orderBy, indexes }: { orderBy: OrderBy, indexes: number[] }) => void, signal?: AbortSignal }): Promise<Selection> {
+}: { index: number, selection: Selection, orderBy: OrderBy, dataFrame: DataFrame, ranksByColumn?: Map<string, number[]>, setRanks?: ({ column, ranks }: {column: string, ranks: number[]}) => void, indexes?: number[], setIndexes?: ({ orderBy, indexes }: { orderBy: OrderBy, indexes: number[] }) => void, signal?: AbortSignal }): Promise<Selection> {
   // Extend the selection from the anchor to the index with sorted data
   // Convert the indexes to work in the data domain before converting back.
   if (!dataFrame.sortable) {
@@ -403,8 +403,8 @@ export async function toggleRangeInTable({
   const tableIndexes = invertPermutationIndexes(dataIndexes)
   const tableSelection = convertSelection({ selection, permutationIndexes: tableIndexes })
   const { ranges, anchor } = tableSelection
-  const newAnchor = tableIndex
-  const newTableSelection = { ranges: extendFromAnchor({ ranges, anchor, index: tableIndex }), anchor: newAnchor }
+  const newAnchor = index
+  const newTableSelection = { ranges: extendFromAnchor({ ranges, anchor, index }), anchor: newAnchor }
   const newDataSelection = convertSelection({ selection: newTableSelection, permutationIndexes: dataIndexes })
   return newDataSelection
 }

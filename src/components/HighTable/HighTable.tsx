@@ -1,7 +1,7 @@
 import { CSSProperties, KeyboardEvent, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ColumnConfiguration } from '../../helpers/columnConfiguration.js'
 import { DataFrame } from '../../helpers/dataframe/index.js'
-import { Selection, toggleIndexInSelection, toggleRangeInSelection, toggleRangeInTable } from '../../helpers/selection.js'
+import { Selection, toggleIndexInSelection, toggleRangeInSelection, toggleRangeInSortedSelection } from '../../helpers/selection.js'
 import { OrderBy, serializeOrderBy } from '../../helpers/sort.js'
 import { cellStyle, getClientWidth, getOffsetWidth } from '../../helpers/width.js'
 import { CellsNavigationProvider, useCellsNavigation } from '../../hooks/useCellsNavigation.js'
@@ -162,9 +162,9 @@ export function HighTableInner({
       // TODO(SL): show a status message while the request is pending?
       // TODO(SL): remove ranksByColumn and indexesByOrderBy, and make it native to dataframev2?
       const requestId = ++pendingSelectionRequest.current
-      const newSelection = await toggleRangeInTable({
+      const newSelection = await toggleRangeInSortedSelection({
         selection,
-        tableIndex: row,
+        index: row,
         orderBy,
         dataFrame: data,
         ranksByColumn,
@@ -201,17 +201,17 @@ export function HighTableInner({
     }
     setEnterCellsNavigation?.(false)
     setLastCellPosition(cellPosition)
-    const tableIndex = cellPosition.rowIndex - ariaOffset
+    const row = cellPosition.rowIndex - ariaOffset
     const scroller = scrollRef.current
     if (!scroller) {
       // don't scroll if the scroller is not ready
       return
     }
     let nextScrollTop = scroller.scrollTop
-    // if tableIndex outside of the rows range, scroll to the estimated position of the cell,
+    // if row outside of the rows range, scroll to the estimated position of the cell,
     // to wait for the cell to be fetched and rendered
-    if (tableIndex < rowsRange.start || tableIndex >= rowsRange.end) {
-      nextScrollTop = tableIndex * rowHeight
+    if (row < rowsRange.start || row >= rowsRange.end) {
+      nextScrollTop = row * rowHeight
     }
     if (nextScrollTop !== scroller.scrollTop) {
       // scroll to the cell
@@ -305,7 +305,7 @@ export function HighTableInner({
   const offset = rowsRange.start
   const rowsLength = rowsRange.end - rowsRange.start
   const prePadding = Array.from({ length: Math.min(padding, offset) }, () => [])
-  const tableIndexes = Array.from({ length: rowsLength }, (_, i) => i + offset)
+  const rows = Array.from({ length: rowsLength }, (_, i) => i + offset)
   const postPadding = Array.from({ length: Math.min(padding, numRows - offset - rowsLength) }, () => [])
 
   // minimum left column width based on number of rows - it depends on CSS, so it's
@@ -331,6 +331,30 @@ export function HighTableInner({
     }
     onScrollKeyDown?.(event)
   }, [onScrollKeyDown])
+
+  // Prepare the slice of data to render
+  const slice = useMemo(() => {
+    let hasCompleteRow = false
+    const rowContents = rows.map((row) => {
+      const unsortedRow = data.getUnsortedRow({ row, orderBy })?.value
+      const cells = data.header.map((column, columnIndex) => {
+        const cell = data.getCell({ row, column, orderBy })
+        return { columnIndex, cell }
+      })
+      if (cells.every(({ cell }) => cell?.value !== undefined)) {
+        hasCompleteRow = true
+      }
+      return {
+        row,
+        unsortedRow,
+        cells,
+      }
+    })
+    return {
+      rowContents,
+      hasCompleteRow,
+    }
+  }, [data, rows, orderBy])
 
   // don't render table if header is empty
   if (!columns.length) return
@@ -363,8 +387,7 @@ export function HighTableInner({
                   ref={tableCornerRef}
                 />
                 <TableHeader
-                  // TODO(SL!): find a better way to check if the data is ready and the column widths should be computed
-                  dataReady={rowsLength > 0}
+                  canMeasureWidth={slice.hasCompleteRow}
                   columnDescriptors={columns}
                   orderBy={orderBy}
                   onOrderByChange={onOrderByChange}
@@ -375,20 +398,19 @@ export function HighTableInner({
             </thead>
             <tbody role="rowgroup">
               {prePadding.map((_, prePaddingIndex) => {
-                const tableIndex = offset - prePadding.length + prePaddingIndex
-                const ariaRowIndex = tableIndex + ariaOffset
+                const row = offset - prePadding.length + prePaddingIndex
+                const ariaRowIndex = row + ariaOffset
                 return (
-                  <Row key={tableIndex} ariaRowIndex={ariaRowIndex}>
+                  <Row key={row} ariaRowIndex={ariaRowIndex}>
                     <RowHeader style={cornerStyle} ariaColIndex={1} ariaRowIndex={ariaRowIndex} />
                   </Row>
                 )
               })}
-              {tableIndexes.map((tableIndex) => {
-                const ariaRowIndex = tableIndex + ariaOffset
-                const unsortedRow = data.getUnsortedRow({ row: tableIndex, orderBy })?.value
+              {slice.rowContents.map(({ row, unsortedRow, cells }) => {
+                const ariaRowIndex = row + ariaOffset
                 const selected = isRowSelected?.(unsortedRow)
                 // The row key includes the version, to rerender the row again when the data changes (e.g. when the user scrolls, or when the data has been fetched)
-                const rowKey = `${version}-${tableIndex}`
+                const rowKey = `${version}-${row}`
                 return (
                   <Row
                     key={rowKey}
@@ -400,12 +422,11 @@ export function HighTableInner({
                       style={cornerStyle}
                       selected={selected}
                       unsortedRow={unsortedRow}
-                      onCheckboxPress={getOnCheckboxPress({ unsortedRow, row: tableIndex })}
+                      onCheckboxPress={getOnCheckboxPress({ unsortedRow, row })}
                       ariaColIndex={1}
                       ariaRowIndex={ariaRowIndex}
                     />
-                    {data.header.map((column, columnIndex) => {
-                      const cell = data.getCell({ row: tableIndex, column, orderBy })
+                    {cells.map(({ columnIndex, cell }) => {
                       return <Cell
                         key={columnIndex}
                         onDoubleClickCell={onDoubleClickCell}
@@ -424,10 +445,10 @@ export function HighTableInner({
                 )
               })}
               {postPadding.map((_, postPaddingIndex) => {
-                const tableIndex = offset + rowsLength + postPaddingIndex
-                const ariaRowIndex = tableIndex + ariaOffset
+                const row = offset + rowsLength + postPaddingIndex
+                const ariaRowIndex = row + ariaOffset
                 return (
-                  <Row key={tableIndex} ariaRowIndex={ariaRowIndex}>
+                  <Row key={row} ariaRowIndex={ariaRowIndex}>
                     <RowHeader style={cornerStyle} ariaColIndex={1} ariaRowIndex={ariaRowIndex} />
                   </Row>
                 )
