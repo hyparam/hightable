@@ -1,6 +1,7 @@
 import { KeyboardEvent, ReactNode, createContext, useCallback, useContext } from 'react'
-import { Selection, getDefaultSelection, toggleAll, toggleIndex } from '../helpers/selection.js'
+import { Selection, getDefaultSelection, toggleAll, toggleAllIndices, toggleIndex } from '../helpers/selection.js'
 import { useInputState } from './useInputState.js'
+import { DataFrame } from '../helpers/dataframe.js'
 
 interface SelectionContextType {
   selection?: Selection // selection and anchor rows, expressed as data indexes (not as indexes in the table). If undefined, the selection is hidden and the interactions are disabled.
@@ -44,13 +45,13 @@ export function SelectionProvider({ children, selection, onSelectionChange }: Se
       if (!state.value || !state.onChange || !(target instanceof HTMLTableCellElement)) {
         return
       }
-      const index = Number(target.getAttribute('data-rowindex'))
+      const dataIndex = Number(target.getAttribute('data-rowindex'))
       const isDataCell = target.getAttribute('role') === 'cell' // the row header cells are handled by the RowHeader component
-      if (!isDataCell || isNaN(index) || !Number.isInteger(index) || index < 0 || index >= numRows) {
+      if (!isDataCell || isNaN(dataIndex) || !Number.isInteger(dataIndex) || dataIndex < 0 || dataIndex >= numRows) {
         return
       }
       event.preventDefault()
-      state.onChange({ ranges: toggleIndex({ ranges: state.value.ranges, index }), anchor: index })
+      state.onChange({ ranges: toggleIndex({ ranges: state.value.ranges, index: dataIndex }), anchor: dataIndex })
     }
   }, [state])
 
@@ -66,25 +67,38 @@ export function SelectionProvider({ children, selection, onSelectionChange }: Se
 }
 
 type HighTableSelection = SelectionContextType & {
-  toggleAllRows?: () => void // toggle all rows in the table. undefined if the selection or the onSelectionChange callback are not defined.
+  toggleAllRows?: () => Promise<void> // toggle all rows in the table. undefined if the selection or the onSelectionChange callback are not defined.
 }
 
-export function useSelection({ numRows }: {numRows: number}): HighTableSelection {
+export function useSelection({ data, numRows }: {data: DataFrame, numRows: number}): HighTableSelection {
   const context = useContext(SelectionContext)
   const { selection, onSelectionChange } = context
 
-  const getToggleAllRows = useCallback(() => {
+  const toggleAllRows = useCallback(async () => {
     if (!selection || !onSelectionChange) return
-    return () => {
-      onSelectionChange({
-        ranges: toggleAll({ ranges: selection.ranges, length: numRows }),
-        anchor: undefined,
-      })
+
+    const allRows = data.rows({ start: 0, end: numRows })
+    const dataIndices: number[] = []
+
+    for (const asyncRow of allRows) {
+      if ('resolved' in asyncRow.index && asyncRow.index.resolved !== undefined) {
+        dataIndices.push(asyncRow.index.resolved)
+      } else {
+        const resolvedIndex = await asyncRow.index
+        dataIndices.push(resolvedIndex)
+      }
     }
-  }, [onSelectionChange, numRows, selection])
+
+    const newRanges = toggleAllIndices({ ranges: selection.ranges, indices: dataIndices })
+
+    onSelectionChange({
+      ranges: newRanges,
+      anchor: undefined,
+    })
+  }, [data, numRows, selection, onSelectionChange])
 
   return {
     ...context,
-    toggleAllRows: getToggleAllRows(),
+    toggleAllRows,
   }
 }

@@ -2,7 +2,7 @@ import { CSSProperties, KeyboardEvent, MouseEvent, useCallback, useEffect, useMe
 import { ColumnConfiguration } from '../../helpers/columnConfiguration.js'
 import { DataFrame } from '../../helpers/dataframe.js'
 import { PartialRow } from '../../helpers/row.js'
-import { Selection, areAllSelected, isSelected, toggleIndexInSelection, toggleRangeInSelection, toggleRangeInTable } from '../../helpers/selection.js'
+import { Selection, areAllSelected, isSelected, toggleIndexInSelection, toggleRangeInTable } from '../../helpers/selection.js'
 import { OrderBy, areEqualOrderBy } from '../../helpers/sort.js'
 import { cellStyle, getClientWidth, getOffsetWidth } from '../../helpers/width.js'
 import { CellsNavigationProvider, useCellsNavigation } from '../../hooks/useCellsNavigation.js'
@@ -151,8 +151,12 @@ export function HighTableInner({
   // ie. cache the previous sort indexes in the data frame itself
   const [ranksMap, setRanksMap] = useState<Map<string, Promise<number[]>>>(() => new Map())
 
+  useEffect(() => {
+    setNumRows(data.numRows)
+  }, [data])
+
   const { orderBy, onOrderByChange } = useOrderBy()
-  const { selection, onSelectionChange, toggleAllRows, onTableKeyDown: onSelectionTableKeyDown } = useSelection({ numRows })
+  const { selection, onSelectionChange, toggleAllRows, onTableKeyDown: onSelectionTableKeyDown } = useSelection({ data, numRows })
 
   const columns = useTableConfig(data, columnConfiguration)
   const onTableKeyDown = useCallback((event: KeyboardEvent) => {
@@ -161,44 +165,39 @@ export function HighTableInner({
   }, [onNavigationTableKeyDown, onSelectionTableKeyDown, numRows])
 
   const pendingSelectionRequest = useRef(0)
+
+  const onSelectRowClick = useCallback(async (shiftKey: boolean, selection: Selection, onSelectionChange: (selection: Selection) => void, tableIndex: number, dataIndex: number) => {
+    const useAnchor = shiftKey && selection.anchor !== undefined
+
+    if (!useAnchor) {
+      // single row toggle
+      onSelectionChange(toggleIndexInSelection({ selection, index: dataIndex }))
+      return
+    }
+
+    // sorting, toggle the range in the sorted order
+    const requestId = ++pendingSelectionRequest.current
+    const newSelection = await toggleRangeInTable({
+      selection,
+      tableIndex,
+      orderBy: orderBy ?? [],
+      data,
+      ranksMap,
+      setRanksMap,
+    })
+    if (requestId === pendingSelectionRequest.current) {
+      // only update the selection if the request is still the last one
+      onSelectionChange(newSelection)
+    }
+  }, [data, orderBy, ranksMap, setRanksMap])
+
   const getOnCheckboxPress = useCallback(({ tableIndex, dataIndex }: {tableIndex: number, dataIndex: number | undefined}) => {
     if (selection && onSelectionChange && dataIndex !== undefined) {
       return (shiftKey: boolean): void => {
-        void onSelectRowClick(shiftKey, selection, onSelectionChange, dataIndex)
+        void onSelectRowClick(shiftKey, selection, onSelectionChange, tableIndex, dataIndex)
       }
     }
-
-    async function onSelectRowClick(shiftKey: boolean, selection: Selection, onSelectionChange: (selection: Selection) => void, dataIndex: number) {
-      const useAnchor = shiftKey && selection.anchor !== undefined
-
-      if (!useAnchor) {
-        // single row toggle
-        onSelectionChange(toggleIndexInSelection({ selection, index: dataIndex }))
-        return
-      }
-
-      if (!orderBy || orderBy.length === 0) {
-        // no sorting, toggle the range
-        onSelectionChange(toggleRangeInSelection({ selection, index: dataIndex }))
-        return
-      }
-
-      // sorting, toggle the range in the sorted order
-      const requestId = ++pendingSelectionRequest.current
-      const newSelection = await toggleRangeInTable({
-        selection,
-        tableIndex,
-        orderBy,
-        data,
-        ranksMap,
-        setRanksMap,
-      })
-      if (requestId === pendingSelectionRequest.current) {
-        // only update the selection if the request is still the last one
-        onSelectionChange(newSelection)
-      }
-    }
-  }, [data, onSelectionChange, orderBy, ranksMap, selection])
+  }, [selection, onSelectionChange, onSelectRowClick])
   const allRowsSelected = useMemo(() => {
     if (!selection) return undefined
     return areAllSelected({ ranges: selection.ranges, length: numRows })
