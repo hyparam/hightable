@@ -90,7 +90,7 @@ export function toggleAllIndices({ ranges, indices }: { ranges: Ranges, indices:
   if (!areValidRanges(ranges)) {
     throw new Error('Invalid ranges')
   }
-  if (!indices || indices.length === 0) {
+  if (indices.length === 0) {
     return []
   }
 
