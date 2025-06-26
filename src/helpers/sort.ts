@@ -7,6 +7,10 @@ export interface ColumnOrderBy {
 
 export type OrderBy = ColumnOrderBy[]
 
+export function serializeOrderBy(orderBy: OrderBy): string {
+  return JSON.stringify(orderBy)
+}
+
 export function checkOrderBy({ header, orderBy }: {header: string[], orderBy: OrderBy}): void {
   const unknownColumns = orderBy.map(({ column }) => column).filter(column => !header.includes(column))
   if (unknownColumns.length > 0) {
@@ -55,4 +59,24 @@ export function toggleColumn(column: string, orderBy: OrderBy): OrderBy {
   }
   // the column is not the principal column. Set it as the principal column with ascending direction
   return [{ column, direction: 'ascending' }, ...prefix, ...suffix]
+}
+
+export function computeRanks(values: any[]): number[] {
+  const valuesWithIndex = values.map((value, index) => ({ value, index }))
+  const sortedValuesWithIndex = Array.from(valuesWithIndex).sort(({ value: a }, { value: b }) => {
+    if (a < b) return -1
+    if (a > b) return 1
+    return 0
+  })
+  const numRows = sortedValuesWithIndex.length
+  const ascendingRanks = sortedValuesWithIndex.reduce(({ lastValue, lastRank, ranks }, { value, index }, rank) => {
+    if (value === lastValue) {
+      ranks[index] = lastRank
+      return { ranks, lastValue, lastRank }
+    } else {
+      ranks[index] = rank
+      return { ranks, lastValue: value, lastRank: rank }
+    }
+  }, { ranks: Array(numRows).fill(-1), lastValue: undefined, lastRank: 0 }).ranks
+  return ascendingRanks
 }

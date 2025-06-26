@@ -4,7 +4,7 @@ import { useCellNavigation } from '../../hooks/useCellsNavigation'
 interface Props {
   selected?: boolean
   unsortedRow?: number
-  onCheckboxPress?: ({ row, shiftKey }: {row: number, shiftKey: boolean}) => void
+  onCheckboxPress?: ({ shiftKey }: { shiftKey: boolean }) => Promise<void>
   showCheckBox?: boolean
   style?: CSSProperties
   ariaColIndex: number
@@ -22,20 +22,22 @@ export default function RowHeader({ onCheckboxPress, style, ariaColIndex, ariaRo
   const { tabIndex, navigateToCell } = useCellNavigation({ ref, ariaColIndex, ariaRowIndex })
   const handleClick = useCallback((event: MouseEvent) => {
     navigateToCell()
-    if (unsortedRow !== undefined && onCheckboxPress) {
-      onCheckboxPress({ row: unsortedRow, shiftKey: event.shiftKey })
-    }
-  }, [onCheckboxPress, navigateToCell, unsortedRow])
+    onCheckboxPress?.({ shiftKey: event.shiftKey }).catch((error) => {
+      // Handle the error, e.g., log it or show a notification + handle signal abort gracefully
+      console.error('Error handling checkbox press:', error)
+    })
+  }, [onCheckboxPress, navigateToCell])
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault()
       // TODO: let the event propagate?
       event.stopPropagation()
-      if (unsortedRow !== undefined && onCheckboxPress) {
-        onCheckboxPress({ row: unsortedRow, shiftKey: event.shiftKey })
-      }
+      onCheckboxPress?.({ shiftKey: event.shiftKey }).catch((error) => {
+        // Handle the error, e.g., log it or show a notification + handle signal abort gracefully
+        console.error('Error handling checkbox press:', error)
+      })
     }
-  }, [onCheckboxPress, unsortedRow])
+  }, [onCheckboxPress])
   const disabledCheckbox = onCheckboxPress === undefined
   const onChange = useCallback((e: ChangeEvent) => {e.preventDefault()}, [])
 

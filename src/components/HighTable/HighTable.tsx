@@ -1,8 +1,8 @@
 import { CSSProperties, KeyboardEvent, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ColumnConfiguration } from '../../helpers/columnConfiguration.js'
 import { DataFrame } from '../../helpers/dataframe/index.js'
-import { Selection, areAllSelected, isSelected, toggleIndexInSelection, toggleRangeInSelection } from '../../helpers/selection.js'
-import { OrderBy } from '../../helpers/sort.js'
+import { Selection, areAllSelected, isSelected, toggleIndexInSelection, toggleRangeInSelection, toggleRangeInTable } from '../../helpers/selection.js'
+import { OrderBy, serializeOrderBy } from '../../helpers/sort.js'
 import { cellStyle, getClientWidth, getOffsetWidth } from '../../helpers/width.js'
 import { CellsNavigationProvider, useCellsNavigation } from '../../hooks/useCellsNavigation.js'
 import { ColumnStatesProvider, useColumnStates } from '../../hooks/useColumnStates.js'
@@ -139,11 +139,7 @@ export function HighTableInner({
   const { containerRef } = usePortalContainer()
   const { setAvailableWidth } = useColumnStates()
 
-  // TODO(SL): remove this state and only rely on the data frame for these operations?
-  // ie. cache the previous sort indexes in the data frame itself
-  // const [ranksMap, setRanksMap] = useState<Map<string, Promise<number[]>>>(() => new Map())
-
-  const { orderBy, onOrderByChange } = useOrderBy()
+  const { orderBy, onOrderByChange, ranksByColumn, indexesByOrderBy } = useOrderBy()
   const { selection, onSelectionChange, toggleAllRows, onTableKeyDown: onSelectionTableKeyDown } = useSelection({ numRows })
 
   const columns = useTableConfig(data, columnConfiguration)
@@ -152,42 +148,47 @@ export function HighTableInner({
     onSelectionTableKeyDown?.(event, numRows)
   }, [onNavigationTableKeyDown, onSelectionTableKeyDown, numRows])
 
-  // const pendingSelectionRequest = useRef(0)
-  const onCheckboxPress = useMemo(() => {
-    if (!selection || !onSelectionChange) {
+  const pendingSelectionRequest = useRef(0)
+  const getOnCheckboxPress = useCallback(({ row, unsortedRow }: { row: number, unsortedRow?: number }) => {
+    if (!selection || !onSelectionChange || unsortedRow === undefined) {
       return undefined
     }
-    return ({ row, shiftKey }: {row: number, shiftKey: boolean}) => {
+    return async ({ shiftKey }: { shiftKey: boolean }) => {
       const useAnchor = shiftKey && selection.anchor !== undefined
       if (!useAnchor) {
         // single row toggle
-        onSelectionChange(toggleIndexInSelection({ selection, index: row }))
+        onSelectionChange(toggleIndexInSelection({ selection, index: unsortedRow }))
         return
       }
 
       if (!orderBy || orderBy.length === 0) {
         // no sorting, toggle the range
-        onSelectionChange(toggleRangeInSelection({ selection, index: row }))
+        onSelectionChange(toggleRangeInSelection({ selection, index: unsortedRow }))
         return
       }
 
       // sorting, toggle the range in the sorted order
-      throw new Error('Sorting is not implemented yet') // TODO(SL): implement sorting
-      // const requestId = ++pendingSelectionRequest.current
-      // const newSelection = await toggleRangeInTable({
-      //   selection,
-      //   tableIndex,
-      //   orderBy,
-      //   data,
-      //   ranksMap,
-      //   setRanksMap,
-      // })
-      // if (requestId === pendingSelectionRequest.current) {
-      //   // only update the selection if the request is still the last one
-      //   onSelectionChange(newSelection)
-      // }
+      const requestId = ++pendingSelectionRequest.current
+      const newSelection = await toggleRangeInTable({
+        selection,
+        tableIndex: row,
+        orderBy,
+        dataFrame: data,
+        ranksByColumn,
+        setRanks: ({ column, ranks }) => {
+          ranksByColumn?.set(column, ranks)
+        },
+        indexes: indexesByOrderBy?.get(serializeOrderBy(orderBy)),
+        setIndexes: ({ orderBy, indexes }) => {
+          indexesByOrderBy?.set(serializeOrderBy(orderBy), indexes)
+        },
+      })
+      if (requestId === pendingSelectionRequest.current) {
+        // only update the selection if the request is still the last one
+        onSelectionChange(newSelection)
+      }
     }
-  }, [onSelectionChange, orderBy, selection])
+  }, [onSelectionChange, orderBy, selection, data, ranksByColumn, indexesByOrderBy])
   const allRowsSelected = useMemo(() => {
     if (!selection) return undefined
     return areAllSelected({ ranges: selection.ranges, length: numRows })
@@ -422,7 +423,7 @@ export function HighTableInner({
                       style={cornerStyle}
                       selected={selected}
                       unsortedRow={unsortedRow}
-                      onCheckboxPress={onCheckboxPress}
+                      onCheckboxPress={getOnCheckboxPress({ unsortedRow, row: tableIndex })}
                       ariaColIndex={1}
                       ariaRowIndex={ariaRowIndex}
                     />

@@ -1,9 +1,8 @@
 import { act, fireEvent, waitFor, within } from '@testing-library/react'
 import { UserEvent } from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { DataFrameEvents } from '../../helpers/dataframe/index.js'
-import { sortableDataFrame } from '../../helpers/dataframe/sortableDataFrame.js'
-import { UnsortableDataFrame, getStaticFetch } from '../../helpers/dataframe/unsortableDataFrame.js'
+import { DataFrame, DataFrameEvents, getStaticFetch } from '../../helpers/dataframe/index.js'
+import { sortableDataFrame } from '../../helpers/dataframe/sort.js'
 import { createEventTarget } from '../../helpers/typedEventTarget.js'
 import { MaybeColumnState } from '../../hooks/useColumnStates.js'
 import { render } from '../../utils/userEvent.js'
@@ -27,7 +26,7 @@ function getDataCell({ row, column }: { row: number, column: string }) {
   throw new Error(`Unknown column: ${column}`)
 }
 
-const data: UnsortableDataFrame = {
+const data: DataFrame = {
   header: ['ID', 'Count', 'Double', 'Triple'],
   numRows: 1000,
   getUnsortedRow: ({ row }) => ({ value: row }),
@@ -48,7 +47,7 @@ function getOtherDataCell({ row, column }: { row: number, column: string }) {
   throw new Error(`Unknown column: ${column}`)
 }
 
-const otherData: UnsortableDataFrame = {
+const otherData: DataFrame = {
   header: ['ID', 'Count'],
   numRows: 1000,
   getUnsortedRow: ({ row }) => ({ value: row }),
@@ -181,7 +180,7 @@ describe('HighTable', () => {
 })
 
 describe('with async data, HighTable', () => {
-  function createAsyncDataFrame({ ms }: {ms: number} = { ms: 10 }): UnsortableDataFrame & {_forTests: {signalAborted: boolean[], asyncDataFetched: boolean[]}} {
+  function createAsyncDataFrame({ ms }: {ms: number} = { ms: 10 }): DataFrame & {_forTests: {signalAborted: boolean[], asyncDataFetched: boolean[]}} {
     const asyncDataFetched = Array.from({ length: 1000 }, (_, i) => i).reduce<boolean[]>((acc, row) => {
       acc[row] = false
       return acc

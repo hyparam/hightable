@@ -1,8 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useState } from 'react'
-import { DataFrameEvents } from '../../helpers/dataframe/index.js'
-import { sortableDataFrame } from '../../helpers/dataframe/sortableDataFrame.js'
-import { UnsortableDataFrame, arrayDataFrame, cacheUnsortableDataFrame, getStaticFetch } from '../../helpers/dataframe/unsortableDataFrame.js'
+import { DataFrame, DataFrameEvents, arrayDataFrame, cacheUnsortableDataFrame, getStaticFetch } from '../../helpers/dataframe/index.js'
+import { sortableDataFrame } from '../../helpers/dataframe/sort.js'
 import type { Selection } from '../../helpers/selection.js'
 import type { OrderBy } from '../../helpers/sort.js'
 import { createEventTarget } from '../../helpers/typedEventTarget.js'
@@ -30,7 +29,7 @@ function getCell({ row, column }: { row: number, column: string }) {
                   undefined,
   }
 }
-const data: UnsortableDataFrame = {
+const data: DataFrame = {
   header,
   numRows: 1000,
   getUnsortedRow: ({ row }) => ({ value: row }),
@@ -73,7 +72,7 @@ async function delayedDataFetch({ rowStart, rowEnd, columns, signal, onColumnCom
   await Promise.all(columnPromises)
 }
 
-const noGetCellDelayedData: UnsortableDataFrame = {
+const noGetCellDelayedData: DataFrame = {
   header: delayedDataHeader,
   numRows: delayedDataNumRows,
   getUnsortedRow: ({ row }) => ({ value: row }),
@@ -146,7 +145,7 @@ const manyColumnsData = sortableDataFrame(arrayDataFrame(Array.from({ length: 10
   }
 })))
 
-const emptyData: UnsortableDataFrame = {
+const emptyData: DataFrame = {
   header: ['ID', 'Count', 'Double', 'Constant', 'Value1', 'Value2', 'Value3'],
   numRows: 0,
   getUnsortedRow: ({ row }) => ({ value: row }),
