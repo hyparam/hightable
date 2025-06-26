@@ -143,7 +143,7 @@ export default function ColumnResizer({ autoResize, forceWidth, width, tabIndex,
       aria-valuemin={0}
       aria-valuenow={width}
       aria-valuetext={ariaValueText}
-      // TODO: use aria-labelledby and aria-describedby to allow translation
+      // TODO(SL): use aria-labelledby and aria-describedby to allow translation
       aria-label="Resize column"
       aria-description='Press "Enter" or "Space" to autoresize the column (press again to unset the width). Press "Escape" to cancel resizing. Press "ArrowRight/ArrowUp" or "ArrowLeft/ArrowDown" to resize the column by 10 pixels. Press PageUp/PageDown to resize the column by 100 pixels.'
       onDoubleClick={autoResizeAndRemoveFocus}

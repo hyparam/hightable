@@ -1,8 +1,12 @@
 import { KeyboardEvent, ReactNode, RefObject, createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 
-interface CellsNavigationContextType {
+export interface CellPosition {
   colIndex: number // table column index, same semantic as aria-colindex (1-based, includes row headers)
   rowIndex: number // table row index, same semantic as aria-rowindex (1-based, includes column headers)
+}
+
+interface CellsNavigationContextType {
+  cellPosition: CellPosition
   shouldFocus: boolean // true if the current cell should be focused
   enterCellsNavigation?: boolean // true if entering cells navigation mode
   onTableKeyDown?: (event: KeyboardEvent) => void // function to handle keydown events inside the table. It is created only once.
@@ -15,8 +19,10 @@ interface CellsNavigationContextType {
 }
 
 const defaultCellsNavigationContext: CellsNavigationContextType = {
-  colIndex: 1, // the cursor cell is initially the top-left cell
-  rowIndex: 1, //
+  cellPosition: {
+    colIndex: 1, // the cursor cell is initially the top-left cell
+    rowIndex: 1, //
+  },
   shouldFocus: false,
   enterCellsNavigation: false,
   onTableKeyDown: undefined,
@@ -37,8 +43,8 @@ interface CellsNavigationProviderProps {
 }
 
 export function CellsNavigationProvider({ colCount, rowCount, rowPadding, children }: CellsNavigationProviderProps) {
-  const [colIndex, setColIndex] = useState(defaultCellsNavigationContext.colIndex)
-  const [rowIndex, setRowIndex] = useState(defaultCellsNavigationContext.rowIndex)
+  const [colIndex, setColIndex] = useState(defaultCellsNavigationContext.cellPosition.colIndex)
+  const [rowIndex, setRowIndex] = useState(defaultCellsNavigationContext.cellPosition.rowIndex)
   const [shouldFocus, setShouldFocus] = useState(false)
   const [enterCellsNavigation, setEnterCellsNavigation] = useState(false)
 
@@ -109,16 +115,18 @@ export function CellsNavigationProvider({ colCount, rowCount, rowPadding, childr
   }, [])
 
   const focusFirstCell = useCallback(() => {
-    setColIndex(defaultCellsNavigationContext.colIndex)
-    setRowIndex(defaultCellsNavigationContext.rowIndex)
+    setColIndex(defaultCellsNavigationContext.cellPosition.colIndex)
+    setRowIndex(defaultCellsNavigationContext.cellPosition.rowIndex)
     setEnterCellsNavigation(true)
     setShouldFocus(true)
   }, [])
 
   const value = useMemo(() => {
     return {
-      colIndex,
-      rowIndex,
+      cellPosition: {
+        colIndex,
+        rowIndex,
+      },
       onTableKeyDown,
       onScrollKeyDown,
       setColIndex,
@@ -151,7 +159,7 @@ interface CellFocus {
 }
 
 export function useCellNavigation({ ref, ariaColIndex, ariaRowIndex }: CellData): CellFocus {
-  const { colIndex, rowIndex, setColIndex, setRowIndex, shouldFocus, setShouldFocus } = useContext(CellsNavigationContext)
+  const { cellPosition: { colIndex, rowIndex }, setColIndex, setRowIndex, shouldFocus, setShouldFocus } = useContext(CellsNavigationContext)
 
   // Check if the cell is the current navigation cell
   const isCurrentCell = ariaColIndex === colIndex && ariaRowIndex === rowIndex

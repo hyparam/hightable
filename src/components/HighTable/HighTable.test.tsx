@@ -164,7 +164,7 @@ describe('HighTable', () => {
     expect(mockKeyDown).toHaveBeenCalledWith(expect.anything(), 1, 0)
   })
 
-  // TODO(SL): add a new event on dataframev2 (fetcherror)
+  // TODO(SL!): add a new event on dataframev2 (fetcherror)
   // it('displays error when data fetch fails', async () => {
   //   const mockOnError = vi.fn()
   //   mockData.getCell.mockImplementationOnce(() => {throw new Error('Failed to fetch data')})

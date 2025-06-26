@@ -94,7 +94,7 @@ describe('sortableDataFrame', () => {
     expect(df.getCell({ row: 3, column: 'name', orderBy })?.value).toBe('Alice')
   })
 
-  // TODO(SL): re-enable
+  // TODO(SL!): re-enable
   // it('should provide a dataframe:update as an alternative way to update the data, when sorting by column "age" in ascending order', () => new Promise<void>((done) => {
   //   const df = sortableDataFrame(dataFrame)
   //   const orderBy = [{ column: 'age', direction: 'ascending' as const }]

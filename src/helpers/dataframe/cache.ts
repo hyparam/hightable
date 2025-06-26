@@ -2,7 +2,7 @@ import type { OrderBy } from '../sort.js'
 import { cloneEventTarget } from '../typedEventTarget.js'
 import type { DataFrame, ResolvedValue } from './types.js'
 
-export function cacheUnsortableDataFrame({ numRows, header, getCell, fetch, eventTarget, sortable }: DataFrame): DataFrame {
+export function cacheUnsortableDataFrame({ numRows, header, getCell, fetch, eventTarget, sortable }: Omit<DataFrame, 'getUnsortedRow'> & {getUnsortedRow?: ({ row }: { row: number }) => ResolvedValue<number> | undefined}): DataFrame {
   if (sortable) {
     throw new Error('This function is intended for unsortable data frames only. (Create and) use cacheSortableDataFrame for sortable data frames.')
   }
@@ -12,7 +12,7 @@ export function cacheUnsortableDataFrame({ numRows, header, getCell, fetch, even
   }, {})
 
   const { eventTarget: wrappedEventTarget } = cloneEventTarget(eventTarget, ['dataframe:numrowschange', 'dataframe:update', 'dataframe:index:update'])
-  // TODO(SL): get "detach" function from cloneEventTarget and call it when the dataframe is no longer needed
+  // TODO(SL!): get "detach" function from cloneEventTarget and call it when the dataframe is no longer needed
   // for example, by providing a "dispose" method on the returned dataframe
 
   function wrappedFetch({ rowStart, rowEnd, columns, orderBy, signal, onColumnComplete }: { rowStart: number, rowEnd: number, columns: string[], orderBy?: OrderBy, signal?: AbortSignal, onColumnComplete?: (data: {column: string, values: any[]}) => void }) {
@@ -70,7 +70,7 @@ export function cacheUnsortableDataFrame({ numRows, header, getCell, fetch, even
     }
     // Return the cached value, which might be undefined (meaning pending)
     return cachedColumn[row] ?? getCell({ row, column })
-    // TODO(SL): does it make sense to use the original getCell here?
+    // TODO(SL!): does it make sense to use the original getCell here?
     // If it has a value, should we cache it? or is wrappedFetch the only way to cache values?
   }
 

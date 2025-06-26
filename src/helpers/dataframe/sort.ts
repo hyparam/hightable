@@ -14,7 +14,7 @@ export function sortableDataFrame(dataFrame: DataFrame): DataFrame {
 
   // TODO(SL): We could use TypedArrays to store the ranks, for example
   // TODO(SL): cache promises instead of resolved values? beware: how to handle abort signal?
-  // TODO(SL): how to erase the cache if needed? .dispose() method? do we need it?
+  // TODO(SL!): how to erase the cache if needed? .dispose() method? do we need it?
   const ranksByColumn = new Map<string, number[]>()
   const indexesByOrderBy = new Map<string, number[]>()
 
@@ -28,7 +28,7 @@ export function sortableDataFrame(dataFrame: DataFrame): DataFrame {
     const { rowStart, rowEnd, columns } = event.detail
     wrappedEventTarget.dispatchEvent(new CustomEvent('dataframe:update', { detail: { rowStart, rowEnd, columns } }))
   })
-  // TODO(SL): the listeners are not removed, so we might leak memory if the wrapped dataFrame is not used anymore.
+  // TODO(SL!): the listeners are not removed, so we might leak memory if the wrapped dataFrame is not used anymore.
   // We could add a method to remove the listeners (.dispose() ?).
 
   function wrappedGetUnsortedRow({ row, orderBy }: { row: number, orderBy?: OrderBy }): ResolvedValue<number> | undefined {

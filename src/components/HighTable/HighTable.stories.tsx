@@ -37,6 +37,7 @@ const data: DataFrame = {
   fetch: getStaticFetch({ getCell }),
   eventTarget: createEventTarget<DataFrameEvents>(),
 }
+const sortableData = sortableDataFrame(data)
 
 function delay<T>(value: T, ms: number): Promise<T> {
   return new Promise(resolve => setTimeout(() => { resolve(value) }, ms))
@@ -72,20 +73,15 @@ async function delayedDataFetch({ rowStart, rowEnd, columns, signal, onColumnCom
   await Promise.all(columnPromises)
 }
 
-const noGetCellDelayedData: DataFrame = {
+const sortableDelayedData = sortableDataFrame(cacheUnsortableDataFrame({
   header: delayedDataHeader,
   numRows: delayedDataNumRows,
-  getUnsortedRow: ({ row }) => ({ value: row }),
   fetch: delayedDataFetch,
   getCell: () => { return undefined },
   eventTarget: createEventTarget<DataFrameEvents>(),
-}
-const delayedData = cacheUnsortableDataFrame(noGetCellDelayedData)
-const sortableDelayedData = sortableDataFrame(delayedData)
+}))
 
-const sortableData = sortableDataFrame(data)
-
-// TODO(SL): implement a better way to test the change of numRows for the same dataframe
+// TODO(SL!): implement a better way to test the change of numRows for the same dataframe
 // const filteredData: DataFrame = rowCache(sortableDataFrame({
 //   header: ['ID', 'Count', 'Value1', 'Value2'],
 //   numRows: 1000,

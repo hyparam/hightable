@@ -1,7 +1,7 @@
 import { CSSProperties, KeyboardEvent, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ColumnConfiguration } from '../../helpers/columnConfiguration.js'
 import { DataFrame } from '../../helpers/dataframe/index.js'
-import { Selection, areAllSelected, isSelected, toggleIndexInSelection, toggleRangeInSelection, toggleRangeInTable } from '../../helpers/selection.js'
+import { Selection, toggleIndexInSelection, toggleRangeInSelection, toggleRangeInTable } from '../../helpers/selection.js'
 import { OrderBy, serializeOrderBy } from '../../helpers/sort.js'
 import { cellStyle, getClientWidth, getOffsetWidth } from '../../helpers/width.js'
 import { CellsNavigationProvider, useCellsNavigation } from '../../hooks/useCellsNavigation.js'
@@ -69,31 +69,40 @@ type PropsData = Omit<Props, 'data'>
 
 function HighTableData(props: PropsData) {
   const { data, numRows, key, version } = useData()
+  const numRowsKey = `${key}:${numRows}` // use numRows as a key to recreate a context if the number of rows changes
   const { cacheKey, orderBy, onOrderByChange, selection, onSelectionChange } = props
-  const ariaColCount = data.header.length + 1 // don't forget the selection column
-  const ariaRowCount = numRows + 1 // don't forget the header row
+
   return (
-    /* important: key={key} ensures the local state is recreated if the data has changed */
-    <OrderByProvider key={key} orderBy={orderBy} onOrderByChange={onOrderByChange} disabled={!data.sortable}>
-      <SelectionProvider selection={selection} onSelectionChange={onSelectionChange}>
-        <ColumnStatesProvider key={key} localStorageKey={cacheKey ? `${cacheKey}${columnStatesSuffix}` : undefined} numColumns={data.header.length} minWidth={minWidth}>
-          <CellsNavigationProvider colCount={ariaColCount} rowCount={ariaRowCount} rowPadding={props.padding ?? defaultPadding}>
+    /* Create a new set of widths if the data has changed, but keep it if only the number of rows changed */
+    <ColumnStatesProvider key={key} localStorageKey={cacheKey ? `${cacheKey}${columnStatesSuffix}` : undefined} numColumns={data.header.length} minWidth={minWidth}>
+      {/* Create a new context if numRows changes, to flush the cache (ranks and indexes) */}
+      <OrderByProvider key={numRowsKey} orderBy={orderBy} onOrderByChange={onOrderByChange} disabled={!data.sortable}>
+        {/* Create a new selection context if numRows has changed, because the local selection might not be valid with a new number of rows */}
+        <SelectionProvider key={numRowsKey} selection={selection} onSelectionChange={onSelectionChange} numRows={numRows}>
+          {/* Create a new navigation context if numRows has changed, because the focused cell might not exist anymore */}
+          <CellsNavigationProvider key={numRowsKey} colCount={data.header.length + 1} rowCount={numRows + 1} rowPadding={props.padding ?? defaultPadding}>
             <PortalContainerProvider>
-              <HighTableInner numRows={numRows} version={version} {...props} />
+              <HighTableInner version={version} {...props} />
             </PortalContainerProvider>
           </CellsNavigationProvider>
-        </ColumnStatesProvider>
-      </SelectionProvider>
-    </OrderByProvider>
+        </SelectionProvider>
+      </OrderByProvider>
+    </ColumnStatesProvider>
   )
 }
 
 type PropsInner = Omit<PropsData, 'orderBy' | 'onOrderByChange' | 'selection' | 'onSelectionChange'> & {
-  numRows: number // number of rows in the data frame
   version: number // version of the data frame, used to re-render the component when the data changes
 }
 
+interface RowsRange {
+  start: number // start index of the rows range (inclusive)
+  end: number // end index of the rows range (exclusive)
+}
+
 /**
+ * The component is a virtual table: only the visible rows are fetched and rendered as HTML <tr> elements.
+ *
  * The main purpose of extracting HighTableInner from HighTable is to
  * separate the context providers from the main component. It will also
  * remove the need to reindent the code if adding a new context provide.
@@ -111,42 +120,24 @@ export function HighTableInner({
   columnClassNames = [],
   styled = true,
   columnConfiguration,
-  numRows,
   version,
 }: PropsInner) {
-  /**
-   * The component relies on the model of a virtual table which rows are ordered and only the
-   * visible rows are fetched (rows range) and rendered as HTML <tr> elements.
-   *
-   * We use two reference domains for the rows:
-   * - data:          the index of a row in the original (unsorted) data frame is referred as
-   *                  dataIndex. It's the `index` field of the AsyncRow objects in the data frame.
-   *                  The mouse event callbacks receive this index.
-   * - virtual table: the index of a row in the virtual table (sorted) is referred as tableIndex.
-   *                  rowsRange.start lives in the table domain: it's the first virtual row to be
-   *                  rendered in HTML.
-   *
-   * The same row can be obtained as:
-   * - data.getCell({row: dataIndex, column: 'id'})
-   * - data.getCell({row: tableIndex, column: 'id', orderBy})
-   */
-
-  const { data } = useData()
-  // end is exclusive
-  const [rowsRange, setRowsRange] = useState({ start: 0, end: 0 })
-  const { enterCellsNavigation, setEnterCellsNavigation, onTableKeyDown: onNavigationTableKeyDown, onScrollKeyDown, rowIndex, colIndex, focusFirstCell } = useCellsNavigation()
-  const [lastCellPosition, setLastCellPosition] = useState({ rowIndex, colIndex })
+  // contexts
+  const { data, numRows } = useData()
+  const { enterCellsNavigation, setEnterCellsNavigation, onTableKeyDown: onNavigationTableKeyDown, onScrollKeyDown, cellPosition, focusFirstCell } = useCellsNavigation()
   const { containerRef } = usePortalContainer()
   const { setAvailableWidth } = useColumnStates()
-
   const { orderBy, onOrderByChange, ranksByColumn, indexesByOrderBy } = useOrderBy()
-  const { selection, onSelectionChange, toggleAllRows, onTableKeyDown: onSelectionTableKeyDown } = useSelection({ numRows })
-
+  const { selection, onSelectionChange, toggleAllRows, onTableKeyDown: onSelectionTableKeyDown, allRowsSelected, isRowSelected } = useSelection()
   const columns = useTableConfig(data, columnConfiguration)
+  // local state
+  const [rowsRange, setRowsRange] = useState<RowsRange>({ start: 0, end: 0 })
+  const [lastCellPosition, setLastCellPosition] = useState(cellPosition)
+
   const onTableKeyDown = useCallback((event: KeyboardEvent) => {
     onNavigationTableKeyDown?.(event)
-    onSelectionTableKeyDown?.(event, numRows)
-  }, [onNavigationTableKeyDown, onSelectionTableKeyDown, numRows])
+    onSelectionTableKeyDown?.(event)
+  }, [onNavigationTableKeyDown, onSelectionTableKeyDown])
 
   const pendingSelectionRequest = useRef(0)
   const getOnCheckboxPress = useCallback(({ row, unsortedRow }: { row: number, unsortedRow?: number }) => {
@@ -191,19 +182,9 @@ export function HighTableInner({
       }
     }
   }, [onSelectionChange, orderBy, selection, data, ranksByColumn, indexesByOrderBy])
-  const allRowsSelected = useMemo(() => {
-    if (!selection) return undefined
-    return areAllSelected({ ranges: selection.ranges, length: numRows })
-  }, [selection, numRows])
-  const isRowSelected = useMemo(() => {
-    if (!selection) return undefined
-    return (index: number | undefined): boolean | undefined => {
-      if (index === undefined) return undefined
-      return isSelected({ ranges: selection.ranges, index })
-    }
-  }, [selection])
 
   // total scrollable height
+  /* TODO: fix the computation on unstyled tables */
   const scrollHeight = (numRows + 1) * rowHeight
   const offsetTop = Math.max(0, rowsRange.start - padding) * rowHeight
 
@@ -212,15 +193,15 @@ export function HighTableInner({
 
   // scroll vertically to the focused cell if needed
   useEffect(() => {
-    if (!enterCellsNavigation && lastCellPosition.rowIndex === rowIndex && lastCellPosition.colIndex === colIndex) {
+    if (!enterCellsNavigation && lastCellPosition.rowIndex === cellPosition.rowIndex && lastCellPosition.colIndex === cellPosition.colIndex) {
       // don't scroll if the navigation cell is unchanged
       // occurs when the user is scrolling with the mouse for example, and the
       // cell exits the viewport: don't want to scroll back to it
       return
     }
     setEnterCellsNavigation?.(false)
-    setLastCellPosition({ rowIndex, colIndex })
-    const tableIndex = rowIndex - ariaOffset
+    setLastCellPosition(cellPosition)
+    const tableIndex = cellPosition.rowIndex - ariaOffset
     const scroller = scrollRef.current
     if (!scroller) {
       // don't scroll if the scroller is not ready
@@ -236,7 +217,7 @@ export function HighTableInner({
       // scroll to the cell
       scroller.scrollTop = nextScrollTop
     }
-  }, [rowIndex, colIndex, rowsRange, lastCellPosition, padding, enterCellsNavigation, setEnterCellsNavigation])
+  }, [cellPosition, rowsRange, lastCellPosition, padding, enterCellsNavigation, setEnterCellsNavigation])
 
   // handle scrolling and window resizing
   useEffect(() => {
@@ -311,7 +292,7 @@ export function HighTableInner({
     }
   }, [numRows, overscan, padding, scrollHeight, setAvailableWidth, data, orderBy, onError])
 
-  // TODO(SL): restore a mechanism to change slice when the number of rows has changed
+  // TODO(SL!): restore a mechanism to change slice when the number of rows has changed
 
   // focus table on mount, or on data change, so arrow keys work
   useEffect(() => {
@@ -383,7 +364,7 @@ export function HighTableInner({
                   ref={tableCornerRef}
                 />
                 <TableHeader
-                  // TODO(SL): find a better way to check if the data is ready and the column widths should be computed
+                  // TODO(SL!): find a better way to check if the data is ready and the column widths should be computed
                   dataReady={rowsLength > 0}
                   columnDescriptors={columns}
                   orderBy={orderBy}
