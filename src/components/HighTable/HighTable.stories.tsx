@@ -1,10 +1,10 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useState } from 'react'
-import { DataFrame, sortableDataFrame } from '../../helpers/dataframe.js'
-import { rowCache } from '../../helpers/rowCache.js'
-import { Selection } from '../../helpers/selection.js'
-import { OrderBy } from '../../helpers/sort.js'
-import { wrapPromise, wrapResolved } from '../../utils/promise.js'
+import { DataFrame, DataFrameEvents, arrayDataFrame, cacheUnsortableDataFrame, getStaticFetch } from '../../helpers/dataframe/index.js'
+import { sortableDataFrame } from '../../helpers/dataframe/sort.js'
+import type { Selection } from '../../helpers/selection.js'
+import type { OrderBy } from '../../helpers/sort.js'
+import { createEventTarget } from '../../helpers/typedEventTarget.js'
 import HighTable from './HighTable.js'
 
 function random(seed: number) {
@@ -12,146 +12,109 @@ function random(seed: number) {
   return x - Math.floor(x)
 }
 
-const data: DataFrame = {
-  header: ['ID', 'Count', 'Double', 'Constant', 'Value1', 'Value2', 'Value3'],
-  numRows: 1000,
-  rows: ({ start, end }) => Array.from({ length: end - start }, (_, i) => {
-    const index = i + start
-    const count = 1000 - index
-    return {
-      index: wrapResolved(index),
-      cells: {
-        ID: wrapResolved(`row ${index}`),
-        Count: wrapResolved(count),
-        Double: wrapResolved(count * 2),
-        Constant: wrapResolved(42),
-        Value1: wrapResolved(Math.floor(100 * random(135 + index))),
-        Value2: wrapResolved(Math.floor(100 * random(648 + index))),
-        Value3: wrapResolved(Math.floor(100 * random(315 + index))),
-      },
-    }
-  }),
+const header = ['ID', 'Count', 'Double', 'Constant', 'Value1', 'Value2', 'Value3', 'Undefined']
+function getCell({ row, column }: { row: number, column: string }) {
+  const count = 1000 - row
+  if (!header.includes(column)) {
+    throw new Error(`Invalid column: ${column}`)
+  }
+  return {
+    value: column === 'ID' ? `row ${row}` :
+      column === 'Count' ? count :
+        column === 'Double' ? count * 2 :
+          column === 'Constant' ? 42 :
+            column === 'Value1' ? Math.floor(100 * random(135 + row)) :
+              column === 'Value2' ? Math.floor(100 * random(648 + row)) :
+                column === 'Value3' ? Math.floor(100 * random(315 + row)) :
+                  undefined,
+  }
 }
+const data: DataFrame = {
+  header,
+  numRows: 1000,
+  getUnsortedRow: ({ row }) => ({ value: row }),
+  getCell,
+  fetch: getStaticFetch({ getCell }),
+  eventTarget: createEventTarget<DataFrameEvents>(),
+}
+const sortableData = sortableDataFrame(data)
 
 function delay<T>(value: T, ms: number): Promise<T> {
   return new Promise(resolve => setTimeout(() => { resolve(value) }, ms))
 }
-const delayedData = sortableDataFrame({
-  header: ['ID', 'Count'],
-  numRows: 50,
-  rows: ({ start, end }) => Array.from({ length: end - start }, (_, innerIndex) => {
-    const index = innerIndex + start
-    const ms = index % 3 === 0 ? 100 * Math.floor(10 * Math.random()) :
-      index % 3 === 1 ? 100 * Math.floor(100 * Math.random()) :
-        1e10
-    return {
-      index: wrapPromise(delay(index, ms)),
-      cells: {
-        ID: wrapPromise(delay(`row ${index}`, ms)),
-        Count: wrapPromise(delay(50 - index, ms)),
-      },
+const delayedDataHeader = ['ID', 'Count']
+const delayedDataNumRows = 500
+async function delayedDataFetch({ rowStart, rowEnd, columns, signal, onColumnComplete }: { rowStart: number, rowEnd: number, columns: string[], signal?: AbortSignal, onColumnComplete?: (data: {column: string, values: any[]}) => void }) {
+  if (rowStart < 0 || rowEnd > delayedDataNumRows) {
+    throw new Error(`Invalid row range: ${rowStart} - ${rowEnd}, numRows: ${delayedDataNumRows}`)
+  }
+  const columnPromises: Promise<any>[] = []
+  for (const column of columns) {
+    if (!delayedDataHeader.includes(column)) {
+      throw new Error(`Invalid column: ${column}`)
     }
-  }),
-})
-
-const sortableData = rowCache(sortableDataFrame(data))
-
-const dataWithUndefinedCells: DataFrame = {
-  header: ['ID', 'Count'],
-  numRows: 1000,
-  rows: ({ start, end }) => Array.from({ length: end - start }, (_, index) => {
-    const id = index % 2 === 0 ? `row ${index + start}` : undefined
-    const ms = index % 3 === 0 ? 0 :
-      index % 3 === 1 ? 100 * Math.floor(10 * Math.random()) :
-        100 * Math.floor(100 * Math.random())
-    return {
-      index: wrapResolved(index + start),
-      cells: {
-        ID: ms ? wrapPromise(delay(id, ms)) : wrapResolved(id),
-        Count: wrapResolved(1000 - start - index),
-      },
+    const valuePromises: Promise<any>[] = []
+    for (let row = rowStart; row < rowEnd; row++) {
+      const rowMs = row % 3 === 0 ? 10 * Math.floor(10 * Math.random()) :
+        row % 3 === 1 ? 20 * Math.floor(10 * Math.random()) :
+          500
+      const ms = rowMs * (column === 'ID' ? 1 : 2)
+      const resolvedValue = column === 'ID' ? `row ${row}` : delayedDataNumRows - row
+      valuePromises.push(delay(resolvedValue, ms))
     }
-  }),
+    const columnPromise = Promise.all(valuePromises).then((values) => {
+      if (signal?.aborted) {
+        throw new DOMException('Aborted', 'AbortError')
+      }
+      onColumnComplete?.({ column, values })
+    })
+    columnPromises.push(columnPromise)
+  }
+  await Promise.all(columnPromises)
 }
 
-const filteredData: DataFrame = rowCache(sortableDataFrame({
-  header: ['ID', 'Count', 'Value1', 'Value2'],
-  numRows: 1000,
-  // only the first 15 rows are valid, the rest are deleted
-  rows: ({ start, end }) => Array.from({ length: end - start }, (_, index) => {
-    const id = index + start
-    if (id < 150) {
-      const count = 1000 - id
-      return {
-        index: wrapResolved(id),
-        cells: {
-          ID: wrapResolved( `row ${id}`),
-          Count: wrapResolved(count),
-          Value1: wrapResolved(Math.floor(100 * random(135 + index))),
-          Value2: wrapResolved(Math.floor(100 * random(648 + index))),
-        },
-      }
-    } else {
-      const error = { numRows: 150 }
-      return {
-        index: wrapPromise<number>(Promise.reject(error)),
-        cells: {
-          ID: wrapPromise<string>(Promise.reject(error)),
-          Count: wrapPromise<number>(Promise.reject(error)),
-          Value1: wrapPromise<number>(Promise.reject(error)),
-          Value2: wrapPromise<number>(Promise.reject(error)),
-        },
-      }
-    }
-  }),
+const sortableDelayedData = sortableDataFrame(cacheUnsortableDataFrame({
+  header: delayedDataHeader,
+  numRows: delayedDataNumRows,
+  fetch: delayedDataFetch,
+  getCell: () => { return undefined },
+  eventTarget: createEventTarget<DataFrameEvents>(),
 }))
 
-const longStringsData: DataFrame = {
-  header: ['ID', 'LongString', 'Value1', 'Value2'],
-  numRows: 1000,
-  rows: ({ start, end }) => Array.from({ length: end - start }, (_, index) => {
-    const id = index + start
-    return {
-      index: wrapResolved(id),
-      cells: {
-        ID: wrapResolved( `row ${id}`),
-        LongString: wrapResolved('Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum'.repeat(10)),
-        Value1: wrapResolved(Math.floor(100 * random(135 + index))),
-        Value2: wrapResolved(Math.floor(100 * random(648 + index))),
-      },
-    }
-  }),
-}
+const longString = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum'
+const longStringsData = sortableDataFrame(arrayDataFrame(Array.from({ length: 1000 }, (_, index) => {
+  return {
+    ID: `row ${index}`,
+    LongString: longString.repeat(10),
+    Value1: Math.floor(100 * random(135 + index)),
+    Value2: Math.floor(100 * random(648 + index)),
+  }
+})))
 
-const manyColumnsData: DataFrame = {
-  header: ['ID1', 'LongString1', 'Value1', 'ID2', 'LongString2', 'Value2', 'ID3', 'LongString3', 'Value3', 'ID4', 'LongString4', 'Value4'],
-  numRows: 1000,
-  rows: ({ start, end }) => Array.from({ length: end - start }, (_, index) => {
-    const id = index + start
-    return {
-      index: wrapResolved(id),
-      cells: {
-        ID1: wrapResolved( `row ${id} A`),
-        LongString1: wrapResolved('A Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum'.repeat(10)),
-        Value1: wrapResolved(Math.floor(100 * random(123 + index))),
-        ID2: wrapResolved( `row ${id} B`),
-        LongString2: wrapResolved('B Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum'.repeat(8)),
-        Value2: wrapResolved(Math.floor(100 * random(456 + index))),
-        ID3: wrapResolved( `row ${id} C`),
-        LongString3: wrapResolved('C Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum'.repeat(12)),
-        Value3: wrapResolved(Math.floor(100 * random(789 + index))),
-        ID4: wrapResolved( `row ${id} D`),
-        LongString4: wrapResolved('D Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum'.repeat(10)),
-        Value4: wrapResolved(Math.floor(100 * random(951 + index))),
-      },
-    }
-  }),
-}
+const manyColumnsData = sortableDataFrame(arrayDataFrame(Array.from({ length: 1000 }, (_, index) => {
+  return {
+    ID1: `row ${index} A`,
+    LongString1: longString.repeat(10),
+    Value1: Math.floor(100 * random(123 + index)),
+    ID2: `row ${index} B`,
+    LongString2: longString.repeat(8),
+    Value2: Math.floor(100 * random(456 + index)),
+    ID3: `row ${index} C`,
+    LongString3: longString.repeat(12),
+    Value3: Math.floor(100 * random(789 + index)),
+    ID4: `row ${index} D`,
+    LongString4: longString.repeat(10),
+    Value4: Math.floor(100 * random(951 + index)),
+  }
+})))
 
 const emptyData: DataFrame = {
   header: ['ID', 'Count', 'Double', 'Constant', 'Value1', 'Value2', 'Value3'],
   numRows: 0,
-  rows: () => [],
+  getUnsortedRow: ({ row }) => ({ value: row }),
+  getCell: () => { return undefined },
+  fetch: () => Promise.resolve(),
+  eventTarget: createEventTarget<DataFrameEvents>(),
 }
 
 const meta: Meta<typeof HighTable> = {
@@ -169,6 +132,11 @@ export const Unstyled: Story = {
   args: {
     data,
     styled: false,
+  },
+}
+export const Sortable: Story = {
+  args: {
+    data: sortableData,
   },
 }
 export const Empty: Story = {
@@ -195,12 +163,7 @@ export const EmptySelectable: Story = {
 }
 export const Placeholders: Story = {
   args: {
-    data: delayedData,
-  },
-}
-export const UndefinedCells: Story = {
-  args: {
-    data: dataWithUndefinedCells,
+    data: sortableDelayedData,
   },
 }
 export const MultiSort: Story = {
@@ -257,11 +220,6 @@ export const NonSortableColunns: Story = {
     },
   },
 }
-export const FilteredRows: Story = {
-  args: {
-    data: filteredData,
-  },
-}
 export const LongStrings: Story = {
   args: {
     data: longStringsData,
@@ -290,7 +248,6 @@ export const RowsSelection: Story = {
     data: sortableData,
   },
 }
-
 export const ReadOnlySelection: Story = {
   render: (args) => {
     const selection = {

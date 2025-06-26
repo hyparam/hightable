@@ -1,8 +1,6 @@
 import { describe, expect, it, test, vi } from 'vitest'
-import { DataFrame, sortableDataFrame } from '../../src/helpers/dataframe.js'
-import { AsyncRow, Row } from '../../src/helpers/row.js'
-import { areAllSelected, areValidRanges, convertSelection, extendFromAnchor, invertPermutationIndexes, isSelected, isValidIndex, isValidRange, selectRange, toggleAll, toggleIndex, toggleIndexInSelection, toggleRangeInSelection, toggleRangeInTable, unselectRange } from '../../src/helpers/selection.js'
-import { wrapResolved } from '../../src/utils/promise.js'
+import { arrayDataFrame, cacheUnsortableDataFrame, sortableDataFrame } from '../../src/helpers/dataframe/index.js'
+import { areAllSelected, areValidRanges, convertSelection, extendFromAnchor, invertPermutationIndexes, isSelected, isValidIndex, isValidRange, selectRange, toggleAll, toggleIndex, toggleIndexInSelection, toggleRangeInSelection, toggleRangeInSortedSelection, unselectRange } from '../../src/helpers/selection.js'
 
 describe('an index', () => {
   test('is a positive integer', () => {
@@ -215,34 +213,6 @@ describe('extendFromAnchor', () => {
   })
 })
 
-const data = [
-  { id: 3, name: 'Charlie', age: 25 },
-  { id: 1, name: 'Alice', age: 30 },
-  { id: 2, name: 'Bob', age: 20 },
-  { id: 4, name: 'Dani', age: 20 },
-].map((cells, index) => ({ cells, index }))
-
-export function wrapObject({ index, cells }: Row): AsyncRow {
-  return {
-    index: wrapResolved(index),
-    cells: Object.fromEntries(
-      Object.entries(cells).map(([key, value]) => [key, wrapResolved(value)])
-    ),
-  }
-}
-
-const dataFrame: DataFrame = {
-  header: ['id', 'name', 'age'],
-  numRows: data.length,
-  rows({ start, end }): AsyncRow[] {
-    // Return the slice of data between start and end indices
-    return data.slice(start, end).map(wrapObject)
-  },
-  sortable: false,
-}
-
-const sortableDf = sortableDataFrame(dataFrame)
-
 describe('invertPermutationIndexes', () => {
   it('should throw an error if an index is negative', () => {
     expect(
@@ -268,8 +238,8 @@ describe('invertPermutationIndexes', () => {
     [[], []],
     [[0], [0]],
     [[5, 0, 3, 1, 2, 4], [1, 3, 4, 2, 5, 0]],
-  ])('should invert the permutation indexes', ([dataIndexes, expectedTableIndexes]) => {
-    expect(invertPermutationIndexes(dataIndexes)).toEqual(expectedTableIndexes)
+  ])('should invert the permutation indexes', ([dataIndexes, expectedindexes]) => {
+    expect(invertPermutationIndexes(dataIndexes)).toEqual(expectedindexes)
   })
 })
 
@@ -346,44 +316,51 @@ describe('toggleRangeInSelection', () => {
   })
 })
 
-describe('toggleRangeInTable', () => {
+const data = [
+  { id: 3, name: 'Charlie', age: 25 },
+  { id: 1, name: 'Alice', age: 30 },
+  { id: 2, name: 'Bob', age: 20 },
+  { id: 4, name: 'Dani', age: 20 },
+]
+const sortableDf = sortableDataFrame(cacheUnsortableDataFrame(arrayDataFrame(data)))
+
+describe('toggleRangeInSortedSelection', () => {
   // default values
   const selection = { ranges: [{ start: 1, end: 2 }], anchor: 1 }
   const orderBy = [{ column: 'name', direction: 'ascending' as const }]
-  const data = sortableDf
-  const ranksMap = new Map()
-  const setRanksMap = vi.fn()
-  const props = { tableIndex: 2, selection, orderBy, data, ranksMap, setRanksMap }
+  const dataFrame = sortableDf
+  // const indexesByOrderBy = new Map()
+  const props = { index: 2, selection, orderBy, dataFrame }
   // { id: 3, name: 'Charlie', age: 25 },
   // { id: 1, name: 'Alice', age: 30 },
   // { id: 2, name: 'Bob', age: 20 },
   // { id: 4, name: 'Dani', age: 20 },
   const ageRanks = [2, 3, 0, 0]
   const nameRanks = [2, 0, 1, 3]
-  const indexRanks = [0, 1, 2, 3]
+  // const indexRanks = [0, 1, 2, 3]
   it('should throw an error if the table index is invalid', async () => {
     await expect(
-      toggleRangeInTable({ ...props, tableIndex: -3 })
+      toggleRangeInSortedSelection({ ...props, index: -3 })
     ).rejects.toThrow('Invalid index')
   })
   it('should throw an error if the ranges are invalid', async () => {
     await expect(
-      toggleRangeInTable({ ...props, selection: { ...selection, ranges: [{ start: 1, end: 0 }] } })
+      toggleRangeInSortedSelection({ ...props, selection: { ...selection, ranges: [{ start: 1, end: 0 }] } })
     ).rejects.toThrow('Invalid ranges')
   })
   it('should throw an error if the anchor is invalid', async () => {
     await expect(
-      toggleRangeInTable({ ...props, selection: { ...selection, anchor: -3 } })
+      toggleRangeInSortedSelection({ ...props, selection: { ...selection, anchor: -3 } })
     ).rejects.toThrow('Invalid anchor')
   })
   it('should throw an error if the orderBy column is not in the data headers', async () => {
     await expect(
-      toggleRangeInTable({ ...props, orderBy: [{ column: 'doesnotexist', direction: 'ascending' }] })
+      toggleRangeInSortedSelection({ ...props, orderBy: [{ column: 'doesnotexist', direction: 'ascending' }] })
     ).rejects.toThrow('Invalid column: doesnotexist')
   })
   it('should throw an error if the data is not sortable', async () => {
     await expect(
-      toggleRangeInTable({ ...props, data: { ...sortableDf, sortable: false } })
+      toggleRangeInSortedSelection({ ...props, dataFrame: { ...sortableDf, sortable: false } })
     ).rejects.toThrow('Data frame is not sortable')
   })
   it('should extend the selection (ascending order)', async () => {
@@ -396,14 +373,14 @@ describe('toggleRangeInTable', () => {
      *
      * current selection: index=1 (Alice)
      *
-     * extend to Charlie (index 0) using tableIndex: 2
+     * extend to Charlie (index 0) using index: 2
      *
      * new selection: indexes=1,2,0 (Alice, Bob, Charlie)
      *
-     * the new anchor is the data index of tableIndex 2, which is 0
+     * the new anchor is the data index of index 2, which is 0
      */
     await expect(
-      toggleRangeInTable(props)
+      toggleRangeInSortedSelection(props)
     ).resolves.toEqual({ ranges: [{ start: 0, end: 3 }], anchor: 0 })
   })
   it('should extend the selection (descending order)', async () => {
@@ -416,26 +393,17 @@ describe('toggleRangeInTable', () => {
      *
      * current selection: index=1 (Alice)
      *
-     * extend to Bob (index 2) using tableIndex=2
+     * extend to Bob (index 2) using index=2
      *
      * new selection: indexes=1,2 (Alice, Bob)
      *
-     * the new anchor is the data index of tableIndex 2, which is 2
+     * the new anchor is the data index of index 2, which is 2
      */
     await expect(
-      toggleRangeInTable({ ...props, orderBy: [{ column: 'name', direction: 'descending' }] })
+      toggleRangeInSortedSelection({ ...props, orderBy: [{ column: 'name', direction: 'descending' }] })
     ).resolves.toEqual({ ranges: [{ start: 1, end: 3 }], anchor: 2 })
   })
-  it('should call setRanksMap if new ranks are computed', async () => {
-    let cachedRanksMap = new Map<string, Promise<number[]>>()
-    const setRanksMap = vi.fn(function (setter: (ranksMap: Map<string, Promise<number[]>>) => Map<string, Promise<number[]>>) {
-      cachedRanksMap = setter(cachedRanksMap)
-    })
-    await toggleRangeInTable({ ...props, setRanksMap })
-    expect(setRanksMap).toHaveBeenCalledOnce()
-    expect(cachedRanksMap).toEqual(new Map([['name', Promise.resolve(nameRanks)], ['', Promise.resolve(indexRanks)]]))
-  })
-  it('should extend the selection using ranksMap if provided', async () => {
+  it('should extend the selection using ranksByColumn if provided', async () => {
     /**
      * sorted rows (by age, not by name, since it's what the wrong ranks map provides):
      * { name: 'Bob' }, index: 2
@@ -445,20 +413,38 @@ describe('toggleRangeInTable', () => {
      *
      * current selection: index=1 (Alice)
      *
-     * extend to Charlie (index 0) using tableIndex=2
+     * extend to Charlie (index 0) using index=2
      *
      * new selection: indexes=0,1 (Charlie, Alice)
      *
-     * the new anchor is the data index of tableIndex 2, which is 0
+     * the new anchor is the data index of index 2, which is 0
      */
-    const wrongButTrustedRanksMap = new Map([['name', Promise.resolve(ageRanks)]])
+    const wrongButTrustedRanksByColumn = new Map([['name', ageRanks]])
     await expect(
-      toggleRangeInTable({ ...props, ranksMap: wrongButTrustedRanksMap })
+      toggleRangeInSortedSelection({ ...props, ranksByColumn: wrongButTrustedRanksByColumn })
     ).resolves.toEqual({ ranges: [{ start: 0, end: 2 }], anchor: 0 })
   })
-  it('should not call setRanksMap if all ranks are provided', async () => {
-    const setRanksMap = vi.fn()
-    await toggleRangeInTable({ ...props, ranksMap: new Map([['name', Promise.resolve(nameRanks)], ['', Promise.resolve(indexRanks)]]), setRanksMap })
-    expect(setRanksMap).not.toHaveBeenCalled()
+  it.each([
+    undefined,
+    new Map([['age', ageRanks]]),
+  ])('should call setRanks if some ranks are not provided', async (ranksByColumn) => {
+    const setRanks = vi.fn()
+    await toggleRangeInSortedSelection({ ...props, ranksByColumn, setRanks })
+    expect(setRanks).toHaveBeenCalledWith({ column: 'name', ranks: nameRanks })
+  })
+  it('should not call setRanks if all ranks are provided', async () => {
+    const setRanks = vi.fn()
+    await toggleRangeInSortedSelection({ ...props, ranksByColumn: new Map([['name', nameRanks]]), setRanks })
+    expect(setRanks).not.toHaveBeenCalled()
+  })
+  it('should call setIndexes if some indexes are not provided', async () => {
+    const setIndexes = vi.fn()
+    await toggleRangeInSortedSelection({ ...props, setIndexes })
+    expect(setIndexes).toHaveBeenCalledWith({ orderBy, indexes: [1, 2, 0, 3] })
+  })
+  it('should not call setIndexes if all indexes are provided', async () => {
+    const setIndexes = vi.fn()
+    await toggleRangeInSortedSelection({ ...props, indexes: [1, 2, 0, 3], setIndexes })
+    expect(setIndexes).not.toHaveBeenCalled()
   })
 })

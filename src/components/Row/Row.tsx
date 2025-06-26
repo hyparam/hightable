@@ -9,8 +9,8 @@ interface Props {
 
 export default function Row({
   children,
-  selected,
   ariaRowIndex,
+  selected,
   title,
 }: Props) {
   return (

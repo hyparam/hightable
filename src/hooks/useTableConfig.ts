@@ -1,7 +1,7 @@
 // src/hooks/useTableConfig.ts
 import { useMemo } from 'react'
-import { ColumnConfig, ColumnConfiguration } from '../helpers/columnConfiguration'
-import { DataFrame } from '../helpers/dataframe'
+import { ColumnConfig, ColumnConfiguration } from '../helpers/columnConfiguration.js'
+import { DataFrame } from '../helpers/dataframe/index.js'
 
 export interface ColumnDescriptor extends ColumnConfig {
   key: string; // column name
