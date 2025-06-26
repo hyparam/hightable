@@ -139,7 +139,7 @@ async function fetchFromIndexes({ columns, indexes, signal, fetch }: { columns: 
   await Promise.all(promises)
 }
 
-export type OrderByWithRanks = {
+type OrderByWithRanks = {
   direction: 'ascending' | 'descending',
   ranks: number[]
 }[]
@@ -169,7 +169,7 @@ export async function fetchIndexes({ orderBy, signal, ranksByColumn, setRanks, i
  *
  * @returns {Promise<{ direction: 'ascending' | 'descending', ranks: number[] }[]>} A promise that resolves to an array of objects containing the direction and ranks for each column in the orderBy.
  */
-export async function fetchOrderByWithRanks({ orderBy, signal, ranksByColumn, setRanks, dataFrame }: {orderBy: OrderBy, signal?: AbortSignal, ranksByColumn?: Map<string, number[]>, setRanks?: ({ column, ranks }: {column: string, ranks: number[]}) => void, dataFrame: DataFrame }): Promise<OrderByWithRanks> {
+async function fetchOrderByWithRanks({ orderBy, signal, ranksByColumn, setRanks, dataFrame }: {orderBy: OrderBy, signal?: AbortSignal, ranksByColumn?: Map<string, number[]>, setRanks?: ({ column, ranks }: {column: string, ranks: number[]}) => void, dataFrame: DataFrame }): Promise<OrderByWithRanks> {
   const orderByWithRanks: OrderByWithRanks = []
   const promises: Promise<any>[] = []
 
@@ -199,7 +199,7 @@ export async function fetchOrderByWithRanks({ orderBy, signal, ranksByColumn, se
   return orderByWithRanks
 }
 
-export function computeIndexes(orderByWithRanks: OrderByWithRanks): number[] {
+function computeIndexes(orderByWithRanks: OrderByWithRanks): number[] {
   if (!(0 in orderByWithRanks)) {
     throw new Error('orderByWithRanks should have at least one element')
   }
@@ -236,7 +236,7 @@ export function computeIndexes(orderByWithRanks: OrderByWithRanks): number[] {
  *
  * @returns {Promise<any[]>} A promise that resolves to an array of values for the specified column.
  */
-export async function fetchColumn({ dataFrame, column, signal }: {dataFrame: DataFrame, column: string, signal?: AbortSignal}): Promise<any[]> {
+async function fetchColumn({ dataFrame, column, signal }: {dataFrame: DataFrame, column: string, signal?: AbortSignal}): Promise<any[]> {
   const values = Array(dataFrame.numRows).fill(undefined)
   const missingRangePromises: Promise<void>[] = []
   let currentRange: {rowStart: number, rowEnd: number} | undefined = undefined
@@ -299,7 +299,7 @@ export async function fetchColumn({ dataFrame, column, signal }: {dataFrame: Dat
  *
  * @returns {any[]} data as an array of values.
  */
-export function fetchRange({ dataFrame, column, rowStart, rowEnd, signal }: {dataFrame: DataFrame, column: string, rowStart: number, rowEnd: number, signal?: AbortSignal}): Promise<any[]> {
+function fetchRange({ dataFrame, column, rowStart, rowEnd, signal }: {dataFrame: DataFrame, column: string, rowStart: number, rowEnd: number, signal?: AbortSignal}): Promise<any[]> {
   const length = rowEnd - rowStart
   return new Promise((resolve, reject) => {
     function onColumnComplete(data: {column: string, values: any[]}) {
