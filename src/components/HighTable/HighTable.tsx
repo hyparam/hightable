@@ -292,15 +292,13 @@ export function HighTableInner({
     }
   }, [numRows, overscan, padding, scrollHeight, setAvailableWidth, data, orderBy, onError])
 
-  // TODO(SL!): restore a mechanism to change slice when the number of rows has changed
-
-  // focus table on mount, or on data change, so arrow keys work
+  // focus table on mount, or on later changes, so arrow keys work
   useEffect(() => {
     if (focus) {
       // Try focusing the first cell
       focusFirstCell?.()
     }
-  }, [data, focus, focusFirstCell])
+  }, [data, numRows, focus, focusFirstCell])
 
   // add empty pre and post rows to fill the viewport
   const offset = rowsRange.start
