@@ -293,12 +293,13 @@ export function HighTableInner({
   }, [numRows, overscan, padding, scrollHeight, setAvailableWidth, data, orderBy, onError])
 
   // focus table on mount, or on later changes, so arrow keys work
+  // Note that the dependency upon data and nowRows was removed, because focusFirstCell should depend on them
   useEffect(() => {
     if (focus) {
       // Try focusing the first cell
       focusFirstCell?.()
     }
-  }, [data, numRows, focus, focusFirstCell])
+  }, [focus, focusFirstCell])
 
   // add empty pre and post rows to fill the viewport
   const offset = rowsRange.start
