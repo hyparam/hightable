@@ -1,6 +1,6 @@
 import { createEventTarget } from '../typedEventTarget.js'
 import { createGetRowNumber, getNoOpFetch, validateGetCellParams } from './helpers.js'
-import type { Cells, DataFrame, DataFrameEvents, ResolvedValue } from './types.js'
+import type { Cells, DataFrame, DataFrameEvents, DataFrameSimple, ResolvedValue } from './types.js'
 
 export function arrayDataFrame(data: Cells[]): DataFrame {
   const header = 0 in data ? Object.keys(data[0]) : []
@@ -53,7 +53,7 @@ export function getStaticFetch({ getCell }: {getCell: DataFrame['getCell']}): Da
   }
 }
 
-export function fromArray(array: Record<string, any>[]): DataFrame {
+export function fromArray(array: Record<string, any>[]): DataFrameSimple {
   // beware: we don't copy the array, so it must not be mutated after this point.
   const header = 0 in array ? Object.keys(array[0]) : []
   const numRows = array.length
