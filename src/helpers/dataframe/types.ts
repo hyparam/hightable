@@ -109,6 +109,7 @@ export interface DataFrameSimple {
   //
   // static data frames will return a Promise that resolves immediately.
   // rowEnd is exclusive
+  // TODO(SL): make it optional
   fetch: ({ rowStart, rowEnd, columns, signal }: { rowStart: number, rowEnd: number, columns: string[], signal?: AbortSignal }) => Promise<void>
 
   // emits events, defined in DataFrameEvents
@@ -121,5 +122,7 @@ export interface DataFrameSimple {
   //
   // publish an event:
   // eventTarget.dispatchEvent(new CustomEvent('dataframe:numrowschange', { detail: { numRows: 42 } }))
+
+  // TODO(SL): make it optional
   eventTarget: CustomEventTarget<DataFrameEvents>
 }

@@ -1,8 +1,8 @@
 import { ReactNode, createContext, useContext, useEffect, useState } from 'react'
-import { DataFrame, arrayDataFrame } from '../helpers/dataframe/index.js'
+import { DataFrame, DataFrameSimple, arrayDataFrame } from '../helpers/dataframe/index.js'
 
 interface DataContextType {
-  data: DataFrame,
+  data: DataFrame | DataFrameSimple,
   numRows: number,
   key: string,
   version: number,
@@ -24,7 +24,7 @@ function getDefaultDataContext(): DataContextType {
 export const DataContext = createContext<DataContextType>(getDefaultDataContext())
 
 interface DataProviderProps {
-  data: DataFrame,
+  data: DataFrame | DataFrameSimple,
   onError: (error: Error) => void
   children: ReactNode
 }
@@ -36,7 +36,7 @@ function getRandomKey(): string {
 export function DataProvider({ children, onError, data }: DataProviderProps) {
   // We want a string key to identify the data.
   const [key, setKey] = useState<string>(getRandomKey())
-  const [previousData, setPreviousData] = useState<DataFrame>(data)
+  const [previousData, setPreviousData] = useState<DataFrame | DataFrameSimple>(data)
   const [numRows, setNumRows] = useState(data.numRows)
   const [version, setVersion] = useState(0)
 
@@ -63,9 +63,11 @@ export function DataProvider({ children, onError, data }: DataProviderProps) {
     function onUpdate() {
       setVersion(prev => prev + 1)
     }
+    data.eventTarget.addEventListener('resolve', onUpdate)
     data.eventTarget.addEventListener('dataframe:update', onUpdate)
     data.eventTarget.addEventListener('dataframe:index:update', onUpdate)
     return () => {
+      data.eventTarget.removeEventListener('resolve', onUpdate)
       data.eventTarget.removeEventListener('dataframe:update', onUpdate)
       data.eventTarget.removeEventListener('dataframe:index:update', onUpdate)
     }

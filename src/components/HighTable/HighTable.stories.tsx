@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useState } from 'react'
-import { DataFrame, DataFrameEvents, arrayDataFrame, cacheUnsortableDataFrame, getStaticFetch } from '../../helpers/dataframe/index.js'
+import { createGetRowNumber, getNoOpFetch } from '../../helpers/dataframe/helpers.js'
+import { DataFrame, DataFrameEvents, DataFrameSimple, arrayDataFrame, cacheUnsortableDataFrame } from '../../helpers/dataframe/index.js'
 import { sortableDataFrame } from '../../helpers/dataframe/sort.js'
 import type { Selection } from '../../helpers/selection.js'
 import type { OrderBy } from '../../helpers/sort.js'
@@ -29,12 +30,12 @@ function getCell({ row, column }: { row: number, column: string }) {
                   undefined,
   }
 }
-const data: DataFrame = {
+const data: DataFrameSimple = {
   header,
   numRows: 1000,
-  getRowNumber: ({ row }) => ({ value: row }),
+  getRowNumber: createGetRowNumber({ numRows: 1000 }),
   getCell,
-  fetch: getStaticFetch({ getCell }),
+  fetch: getNoOpFetch({ getCell, header, numRows: 1000 }),
   eventTarget: createEventTarget<DataFrameEvents>(),
 }
 const sortableData = sortableDataFrame(data)

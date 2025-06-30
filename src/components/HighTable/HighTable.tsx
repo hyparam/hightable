@@ -1,6 +1,6 @@
 import { CSSProperties, KeyboardEvent, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ColumnConfiguration } from '../../helpers/columnConfiguration.js'
-import { DataFrame } from '../../helpers/dataframe/index.js'
+import { DataFrame, DataFrameSimple } from '../../helpers/dataframe/index.js'
 import { Selection, toggleIndexInSelection, toggleRangeInSelection, toggleRangeInSortedSelection } from '../../helpers/selection.js'
 import { OrderBy, serializeOrderBy } from '../../helpers/sort.js'
 import { cellStyle, getClientWidth, getOffsetWidth } from '../../helpers/width.js'
@@ -23,7 +23,7 @@ const rowHeight = 33 // row height px
 const minWidth = 50 // minimum width of a cell in px, used to compute the column widths
 
 interface Props {
-  data: DataFrame
+  data: DataFrame | DataFrameSimple
   columnConfiguration?: ColumnConfiguration
   cacheKey?: string // used to persist column widths. If undefined, the column widths are not persisted. It is expected to be unique for each table.
   overscan?: number // number of rows to fetch outside of the viewport
@@ -76,7 +76,7 @@ function HighTableData(props: PropsData) {
     /* Create a new set of widths if the data has changed, but keep it if only the number of rows changed */
     <ColumnStatesProvider key={key} localStorageKey={cacheKey ? `${cacheKey}${columnStatesSuffix}` : undefined} numColumns={data.header.length} minWidth={minWidth}>
       {/* Create a new context if numRows changes, to flush the cache (ranks and indexes) */}
-      <OrderByProvider key={numRowsKey} orderBy={orderBy} onOrderByChange={onOrderByChange} disabled={!data.sortable}>
+      <OrderByProvider key={numRowsKey} orderBy={orderBy} onOrderByChange={onOrderByChange} disabled={!('sortable' in data && data.sortable)}>
         {/* Create a new selection context if numRows has changed, because the local selection might not be valid with a new number of rows */}
         <SelectionProvider key={numRowsKey} selection={selection} onSelectionChange={onSelectionChange} numRows={numRows}>
           {/* Create a new navigation context if numRows has changed, because the focused cell might not exist anymore */}
