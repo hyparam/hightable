@@ -19,7 +19,7 @@ import Row from '../Row/Row.js'
 import RowHeader from '../RowHeader/RowHeader.js'
 import TableCorner from '../TableCorner/TableCorner.js'
 import TableHeader from '../TableHeader/TableHeader.js'
-import { formatRowNumber, rowError } from './HighTable.helpers.js'
+import { formatRowNumber } from './HighTable.helpers.js'
 import styles from './HighTable.module.css'
 
 /**
@@ -512,7 +512,6 @@ export function HighTableInner({
                     key={tableIndex}
                     selected={selected}
                     ariaRowIndex={ariaRowIndex}
-                    title={rowError(row, columns.length)}
                   >
                     <RowHeader
                       busy={dataIndex === undefined}
