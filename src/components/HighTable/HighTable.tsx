@@ -158,6 +158,11 @@ export function HighTableInner({
         return
       }
 
+      if (!('sortable' in data)) {
+        throw new Error('DataFrame is not sortable, cannot toggle range in sorted selection')
+        // not DataFrameSimple at this point
+      }
+
       // sorting, toggle the range in the sorted order
       // TODO(SL): show a status message while the request is pending?
       // TODO(SL): remove ranksByColumn and indexesByOrderBy, and make it native to dataframev2?

@@ -1,8 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useState } from 'react'
-import { createGetRowNumber, getNoOpFetch } from '../../helpers/dataframe/helpers.js'
-import { DataFrame, DataFrameEvents, DataFrameSimple, arrayDataFrame, cacheUnsortableDataFrame } from '../../helpers/dataframe/index.js'
+import { createGetRowNumber, createNoOpFetch, validateGetCellParams } from '../../helpers/dataframe/helpers.js'
+import { DataFrameEvents, DataFrameSimple, fromArray } from '../../helpers/dataframe/index.js'
 import { sortableDataFrame } from '../../helpers/dataframe/sort.js'
+import type { ResolvedValue } from '../../helpers/dataframe/types.js'
 import type { Selection } from '../../helpers/selection.js'
 import type { OrderBy } from '../../helpers/sort.js'
 import { createEventTarget } from '../../helpers/typedEventTarget.js'
@@ -35,8 +36,7 @@ const data: DataFrameSimple = {
   numRows: 1000,
   getRowNumber: createGetRowNumber({ numRows: 1000 }),
   getCell,
-  fetch: getNoOpFetch({ getCell, header, numRows: 1000 }),
-  eventTarget: createEventTarget<DataFrameEvents>(),
+  fetch: createNoOpFetch({ getCell, header, numRows: 1000 }),
 }
 const sortableData = sortableDataFrame(data)
 
@@ -45,8 +45,16 @@ function delay<T>(value: T, ms: number): Promise<T> {
 }
 const delayedDataHeader = ['ID', 'Count']
 const delayedDataNumRows = 500
+const delayedCache = new Map([
+  ['ID', Array<ResolvedValue | undefined>(delayedDataNumRows).fill(undefined)],
+  ['Count', Array<ResolvedValue | undefined>(delayedDataNumRows).fill(undefined)],
+])
+function delayedGetCell({ row, column }: { row: number, column: string }): ResolvedValue | undefined {
+  validateGetCellParams({ row, column, data: { numRows: delayedDataNumRows, header: delayedDataHeader } })
+  return delayedCache.get(column)?.[row]
+}
 const delayedEventTarget = createEventTarget<DataFrameEvents>()
-async function delayedDataFetch({ rowStart, rowEnd, columns, signal, onColumnComplete }: { rowStart: number, rowEnd: number, columns: string[], signal?: AbortSignal, onColumnComplete?: (data: {column: string, values: any[]}) => void }) {
+async function delayedDataFetch({ rowStart, rowEnd, columns, signal }: { rowStart: number, rowEnd: number, columns: string[], signal?: AbortSignal }) {
   if (rowStart < 0 || rowEnd > delayedDataNumRows) {
     throw new Error(`Invalid row range: ${rowStart} - ${rowEnd}, numRows: ${delayedDataNumRows}`)
   }
@@ -62,34 +70,40 @@ async function delayedDataFetch({ rowStart, rowEnd, columns, signal, onColumnCom
           500
       const ms = rowMs * (column === 'ID' ? 1 : 2)
       const resolvedValue = column === 'ID' ? `row ${row}` : delayedDataNumRows - row
-      valuePromises.push(delay(resolvedValue, ms))
-      // this implementation dispatches an event for each cell resolved, because they are all independent
-      // delayedEventTarget.dispatchEvent(new CustomEvent('cell:resolve', {
-      //   detail: { rowStart: row, rowEnd: row + 1, column },
-      // }))
-      delayedEventTarget.dispatchEvent(new CustomEvent('resolve'))
+      valuePromises.push(delay(resolvedValue, ms).then((value) => {
+        if (signal?.aborted) {
+          throw new DOMException('Aborted', 'AbortError')
+        }
+        const cachedColumn = delayedCache.get(column)
+        if (!cachedColumn) {
+          throw new Error(`Column "${column}" not found in cache`)
+        }
+        // Cache the resolved value
+        const currentCachedCell = cachedColumn[row]
+        if (!currentCachedCell || currentCachedCell.value !== value) {
+          cachedColumn[row] = { value }
+          // Dispatch an event to notify that the cell has been updated
+          delayedEventTarget.dispatchEvent(new CustomEvent('resolve'))
+        }
+      }))
     }
-    const columnPromise = Promise.all(valuePromises).then((values) => {
-      if (signal?.aborted) {
-        throw new DOMException('Aborted', 'AbortError')
-      }
-      onColumnComplete?.({ column, values })
-    })
+    const columnPromise = Promise.all(valuePromises)
     columnPromises.push(columnPromise)
   }
   await Promise.all(columnPromises)
 }
 
-const sortableDelayedData = sortableDataFrame(cacheUnsortableDataFrame({
+const sortableDelayedData = sortableDataFrame({
   header: delayedDataHeader,
   numRows: delayedDataNumRows,
   fetch: delayedDataFetch,
-  getCell: () => { return undefined },
+  getCell: delayedGetCell,
+  getRowNumber: createGetRowNumber({ numRows: delayedDataNumRows }),
   eventTarget: delayedEventTarget,
-}))
+})
 
 const longString = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum'
-const longStringsData = sortableDataFrame(arrayDataFrame(Array.from({ length: 1000 }, (_, index) => {
+const longStringsData = sortableDataFrame(fromArray(Array.from({ length: 1000 }, (_, index) => {
   return {
     ID: `row ${index}`,
     LongString: longString.repeat(10),
@@ -98,7 +112,7 @@ const longStringsData = sortableDataFrame(arrayDataFrame(Array.from({ length: 10
   }
 })))
 
-const manyColumnsData = sortableDataFrame(arrayDataFrame(Array.from({ length: 1000 }, (_, index) => {
+const manyColumnsData = sortableDataFrame(fromArray(Array.from({ length: 1000 }, (_, index) => {
   return {
     ID1: `row ${index} A`,
     LongString1: longString.repeat(10),
@@ -115,13 +129,17 @@ const manyColumnsData = sortableDataFrame(arrayDataFrame(Array.from({ length: 10
   }
 })))
 
-const emptyData: DataFrame = {
-  header: ['ID', 'Count', 'Double', 'Constant', 'Value1', 'Value2', 'Value3'],
+const emptyDataHeader = ['ID', 'Count', 'Double', 'Constant', 'Value1', 'Value2', 'Value3']
+function emptyGetCell({ row, column }: {row: number, column: string}): undefined {
+  validateGetCellParams({ row, column, data: { numRows: 0, header: emptyDataHeader } })
+  return undefined
+}
+const emptyData: DataFrameSimple = {
+  header: emptyDataHeader,
   numRows: 0,
-  getRowNumber: ({ row }) => ({ value: row }),
-  getCell: () => { return undefined },
-  fetch: () => Promise.resolve(),
-  eventTarget: createEventTarget<DataFrameEvents>(),
+  getRowNumber: createGetRowNumber({ numRows: 0 }),
+  getCell: emptyGetCell,
+  fetch: createNoOpFetch({ getCell: emptyGetCell, header: emptyDataHeader, numRows: 0 }),
 }
 
 const meta: Meta<typeof HighTable> = {

@@ -1,7 +1,8 @@
 import { act, fireEvent, waitFor, within } from '@testing-library/react'
 import { UserEvent } from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { DataFrame, DataFrameEvents, getStaticFetch } from '../../helpers/dataframe/index.js'
+import { createGetRowNumber, createNoOpFetch } from '../../helpers/dataframe/helpers.js'
+import { DataFrame, DataFrameEvents, DataFrameSimple } from '../../helpers/dataframe/index.js'
 import { sortableDataFrame } from '../../helpers/dataframe/sort.js'
 import { createEventTarget } from '../../helpers/typedEventTarget.js'
 import { MaybeColumnState } from '../../hooks/useColumnStates.js'
@@ -26,13 +27,13 @@ function getDataCell({ row, column }: { row: number, column: string }) {
   throw new Error(`Unknown column: ${column}`)
 }
 
-const data: DataFrame = {
-  header: ['ID', 'Count', 'Double', 'Triple'],
+const header = ['ID', 'Count', 'Double', 'Triple']
+const data: DataFrameSimple = {
+  header,
   numRows: 1000,
-  getRowNumber: ({ row }) => ({ value: row }),
+  getRowNumber: createGetRowNumber({ numRows: 1000 }),
   getCell: getDataCell,
-  fetch: getStaticFetch({ getCell: getDataCell }),
-  eventTarget: createEventTarget<DataFrameEvents>(),
+  fetch: createNoOpFetch({ getCell: getDataCell, header, numRows: 1000 }),
 }
 
 function getOtherDataCell({ row, column }: { row: number, column: string }) {
@@ -47,13 +48,13 @@ function getOtherDataCell({ row, column }: { row: number, column: string }) {
   throw new Error(`Unknown column: ${column}`)
 }
 
-const otherData: DataFrame = {
-  header: ['ID', 'Count'],
+const otherHeader = ['ID', 'Count']
+const otherData: DataFrameSimple = {
+  header: otherHeader,
   numRows: 1000,
-  getRowNumber: ({ row }) => ({ value: row }),
+  getRowNumber: createGetRowNumber({ numRows: 1000 }),
   getCell: getOtherDataCell,
-  fetch: getStaticFetch({ getCell: getOtherDataCell }),
-  eventTarget: createEventTarget<DataFrameEvents>(),
+  fetch: createNoOpFetch({ getCell: getOtherDataCell, header: otherHeader, numRows: 1000 }),
 }
 
 async function setFocusOnScrollableDiv(user: UserEvent) {
@@ -80,10 +81,9 @@ describe('HighTable', () => {
   const mockData = {
     header: ['ID', 'Name', 'Age'],
     numRows: 100,
-    getRowNumber: ({ row }: { row: number }) => ({ value: row }),
+    getRowNumber: createGetRowNumber({ numRows: 100 }),
     getCell: vi.fn(getCell),
-    fetch: getStaticFetch({ getCell }),
-    eventTarget: createEventTarget<DataFrameEvents>(),
+    fetch: createNoOpFetch({ getCell, header: ['ID', 'Name', 'Age'], numRows: 100 }),
   }
 
   beforeEach(() => {
@@ -203,7 +203,7 @@ describe('with async data, HighTable', () => {
       }
       throw new Error(`Unknown column: ${column}`)
     }
-    const staticFetch = getStaticFetch({ getCell })
+    const noOpFetch = createNoOpFetch({ getCell, header: ['ID', 'Name', 'Age'], numRows: 1000 })
     return {
       header: ['ID', 'Name', 'Age'],
       numRows: 1000,
@@ -213,7 +213,7 @@ describe('with async data, HighTable', () => {
         await new Promise(resolve => setTimeout(resolve, ms))
         // reject if the signal is aborted, and call onColumnComplete for each column
         try {
-          await staticFetch({ rowStart, rowEnd, columns, signal, onColumnComplete })
+          await noOpFetch({ rowStart, rowEnd, columns, signal, onColumnComplete })
         } catch (error) {
           if (error instanceof DOMException && error.name === 'AbortError') {
             signalAborted.push(true)

@@ -135,12 +135,12 @@ interface ColumnConfig {
 HighTable includes a helper function to convert an array of objects to a DataFrame object. The function accepts an array of objects and assume that all the objects share the same keys. The dataframe is not sortable, see `sortableDataFrame` for that.
 
 ```javascript
-import { arrayDataFrame } from 'hightable'
+import { fromArray } from 'hightable'
 const data = [
   { id: 1, name: 'Alice' },
   { id: 2, name: 'Bob' },
 ]
-const dataframe = arrayDataFrame(data)
+const dataframe = fromArray(data)
 ```
 
 ## Sortable DataFrame

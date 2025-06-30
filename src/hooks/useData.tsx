@@ -1,5 +1,5 @@
 import { ReactNode, createContext, useContext, useEffect, useState } from 'react'
-import { DataFrame, DataFrameSimple, arrayDataFrame } from '../helpers/dataframe/index.js'
+import { DataFrame, DataFrameSimple, fromArray } from '../helpers/dataframe/index.js'
 
 interface DataContextType {
   data: DataFrame | DataFrameSimple,
@@ -14,7 +14,7 @@ function isValidRowNumber(row: unknown): row is number {
 
 function getDefaultDataContext(): DataContextType {
   return {
-    data: arrayDataFrame([]),
+    data: fromArray([]),
     numRows: 0,
     key: 'default',
     version: 0,
@@ -53,9 +53,9 @@ export function DataProvider({ children, onError, data }: DataProviderProps) {
       }
       setNumRows(newNumRows)
     }
-    data.eventTarget.addEventListener('dataframe:numrowschange', onNumRowsChange)
+    data.eventTarget?.addEventListener('dataframe:numrowschange', onNumRowsChange)
     return () => {
-      data.eventTarget.removeEventListener('dataframe:numrowschange', onNumRowsChange)
+      data.eventTarget?.removeEventListener('dataframe:numrowschange', onNumRowsChange)
     }
   }, [data, onError])
 
@@ -63,13 +63,13 @@ export function DataProvider({ children, onError, data }: DataProviderProps) {
     function onUpdate() {
       setVersion(prev => prev + 1)
     }
-    data.eventTarget.addEventListener('resolve', onUpdate)
-    data.eventTarget.addEventListener('dataframe:update', onUpdate)
-    data.eventTarget.addEventListener('dataframe:index:update', onUpdate)
+    data.eventTarget?.addEventListener('resolve', onUpdate)
+    data.eventTarget?.addEventListener('dataframe:update', onUpdate)
+    data.eventTarget?.addEventListener('dataframe:index:update', onUpdate)
     return () => {
-      data.eventTarget.removeEventListener('resolve', onUpdate)
-      data.eventTarget.removeEventListener('dataframe:update', onUpdate)
-      data.eventTarget.removeEventListener('dataframe:index:update', onUpdate)
+      data.eventTarget?.removeEventListener('resolve', onUpdate)
+      data.eventTarget?.removeEventListener('dataframe:update', onUpdate)
+      data.eventTarget?.removeEventListener('dataframe:index:update', onUpdate)
     }
   }, [data, onError])
 

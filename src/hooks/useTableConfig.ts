@@ -1,7 +1,7 @@
 // src/hooks/useTableConfig.ts
 import { useMemo } from 'react'
 import { ColumnConfig, ColumnConfiguration } from '../helpers/columnConfiguration.js'
-import { DataFrame } from '../helpers/dataframe/index.js'
+import { DataFrame, DataFrameSimple } from '../helpers/dataframe/index.js'
 
 export interface ColumnDescriptor extends ColumnConfig {
   key: string; // column name
@@ -9,11 +9,12 @@ export interface ColumnDescriptor extends ColumnConfig {
 }
 
 export function useTableConfig(
-  df: DataFrame,
+  df: DataFrame | DataFrameSimple,
   config?: ColumnConfiguration
 ): ColumnDescriptor[] {
   return useMemo(() => {
-    const { header, sortable: dfSortable } = df
+    const { header } = df
+    const dfSortable = 'sortable' in df ? df.sortable : false
     const inHeader = new Set(header)
 
     // Until dataframe 2.0 only allow disabling sort via UI, cannot directly enable sort

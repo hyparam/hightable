@@ -9,7 +9,7 @@ export function createGetRowNumber({ numRows }: {numRows: number}) {
   }
 }
 
-export function getNoOpFetch({ getCell, numRows, header }: Pick<DataFrame, 'getCell' | 'numRows' | 'header'>): DataFrame['fetch'] {
+export function createNoOpFetch({ getCell, numRows, header }: Pick<DataFrame, 'getCell' | 'numRows' | 'header'>): DataFrame['fetch'] {
   return ({ rowStart, rowEnd, columns, signal, onColumnComplete, orderBy }) => {
     if (signal?.aborted) {
       return Promise.reject(new DOMException('Fetch aborted', 'AbortError'))

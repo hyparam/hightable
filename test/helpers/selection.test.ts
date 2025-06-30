@@ -1,5 +1,5 @@
 import { describe, expect, it, test, vi } from 'vitest'
-import { arrayDataFrame, cacheUnsortableDataFrame, sortableDataFrame } from '../../src/helpers/dataframe/index.js'
+import { fromArray, sortableDataFrame } from '../../src/helpers/dataframe/index.js'
 import { areAllSelected, areValidRanges, convertSelection, extendFromAnchor, invertPermutationIndexes, isSelected, isValidIndex, isValidRange, selectRange, toggleAll, toggleIndex, toggleIndexInSelection, toggleRangeInSelection, toggleRangeInSortedSelection, unselectRange } from '../../src/helpers/selection.js'
 
 describe('an index', () => {
@@ -322,7 +322,7 @@ const data = [
   { id: 2, name: 'Bob', age: 20 },
   { id: 4, name: 'Dani', age: 20 },
 ]
-const sortableDf = sortableDataFrame(cacheUnsortableDataFrame(arrayDataFrame(data)))
+const sortableDf = sortableDataFrame(fromArray(data))
 
 describe('toggleRangeInSortedSelection', () => {
   // default values
