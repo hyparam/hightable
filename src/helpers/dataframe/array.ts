@@ -24,7 +24,7 @@ export function arrayDataFrame(data: Cells[]): DataFrame {
     numRows: data.length,
     header,
     sortable: false,
-    getUnsortedRow: ({ row }) => ({ value: row }),
+    getRowNumber: ({ row }) => ({ value: row }),
     getCell,
     fetch: getStaticFetch({ getCell }),
     eventTarget: createEventTarget<DataFrameEvents>(),

@@ -47,7 +47,7 @@ export function SelectionProvider({ children, numRows, selection: inputSelection
       if (!selection || !onSelectionChange || !(target instanceof HTMLTableCellElement)) {
         return
       }
-      const index = Number(target.getAttribute('data-rowindex'))
+      const index = Number(target.getAttribute('data-rownumber'))
       const isDataCell = target.getAttribute('role') === 'cell' // the row header cells are handled by the RowHeader component
       if (!isDataCell || isNaN(index) || !Number.isInteger(index) || index < 0 || index >= numRows) {
         return

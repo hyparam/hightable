@@ -23,8 +23,12 @@ export interface DataFrame {
   header: string[]
   sortable?: boolean // indicates if this DataFrame supports sorting
 
-  // return the index of the row'th sorted row in the original unsorted data
-  getUnsortedRow({ row, orderBy }: { row: number, orderBy?: OrderBy }): ResolvedValue<number> | undefined
+  // Return the row number (index in the underlying data) for the given row index in the dataframe.
+  // undefined if the row number is not available yet.
+  getRowNumber({ row, orderBy }: {
+    row: number, // row index in the dataframe
+    orderBy?: OrderBy
+  }): ResolvedValue<number> | undefined
 
   // undefined means pending, ResolvedValue is a boxed value type (so we can distinguish undefined from pending)
   // getCell does NOT initiate a fetch, it just returns resolved data

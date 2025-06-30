@@ -32,7 +32,7 @@ function getCell({ row, column }: { row: number, column: string }) {
 const data: DataFrame = {
   header,
   numRows: 1000,
-  getUnsortedRow: ({ row }) => ({ value: row }),
+  getRowNumber: ({ row }) => ({ value: row }),
   getCell,
   fetch: getStaticFetch({ getCell }),
   eventTarget: createEventTarget<DataFrameEvents>(),
@@ -111,7 +111,7 @@ const manyColumnsData = sortableDataFrame(arrayDataFrame(Array.from({ length: 10
 const emptyData: DataFrame = {
   header: ['ID', 'Count', 'Double', 'Constant', 'Value1', 'Value2', 'Value3'],
   numRows: 0,
-  getUnsortedRow: ({ row }) => ({ value: row }),
+  getRowNumber: ({ row }) => ({ value: row }),
   getCell: () => { return undefined },
   fetch: () => Promise.resolve(),
   eventTarget: createEventTarget<DataFrameEvents>(),

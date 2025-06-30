@@ -2,7 +2,7 @@ import type { OrderBy } from '../sort.js'
 import { cloneEventTarget } from '../typedEventTarget.js'
 import type { DataFrame, ResolvedValue } from './types.js'
 
-export function cacheUnsortableDataFrame({ numRows, header, getCell, fetch, eventTarget, sortable }: Omit<DataFrame, 'getUnsortedRow'> & {getUnsortedRow?: ({ row }: { row: number }) => ResolvedValue<number> | undefined}): DataFrame {
+export function cacheUnsortableDataFrame({ numRows, header, getCell, fetch, eventTarget, sortable }: Omit<DataFrame, 'getRowNumber'> & {getRowNumber?: ({ row }: { row: number }) => ResolvedValue<number> | undefined}): DataFrame {
   if (sortable) {
     throw new Error('This function is intended for unsortable data frames only. (Create and) use cacheSortableDataFrame for sortable data frames.')
   }
@@ -78,7 +78,7 @@ export function cacheUnsortableDataFrame({ numRows, header, getCell, fetch, even
     numRows,
     header,
     sortable: false,
-    getUnsortedRow: ({ row }) => ({ value: row }), // for unsortable data frames, the unsorted row is the same as the sorted row
+    getRowNumber: ({ row }) => ({ value: row }), // for unsortable data frames, the unsorted row is the same as the sorted row
     getCell: wrappedGetCell,
     fetch: wrappedFetch,
     eventTarget: wrappedEventTarget,

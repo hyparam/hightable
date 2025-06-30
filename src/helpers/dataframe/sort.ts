@@ -33,7 +33,7 @@ export function sortableDataFrame(dataFrame: DataFrame): DataFrame {
   // TODO(SL!): the listeners are not removed, so we might leak memory if the wrapped dataFrame is not used anymore.
   // We could add a method to remove the listeners (.dispose() ?).
 
-  function wrappedGetUnsortedRow({ row, orderBy }: { row: number, orderBy?: OrderBy }): ResolvedValue<number> | undefined {
+  function wrappedGetRowNumber({ row, orderBy }: { row: number, orderBy?: OrderBy }): ResolvedValue<number> | undefined {
     if (row < 0 || row >= numRows) {
       // If the row is out of bounds, we can't resolve it.
       throw new Error(`Invalid row index: ${row}. Must be between 0 and ${numRows - 1}.`)
@@ -45,20 +45,20 @@ export function sortableDataFrame(dataFrame: DataFrame): DataFrame {
     checkOrderBy({ header, orderBy })
     const serializedOrderBy = serializeOrderBy(orderBy)
     const indexes = indexesByOrderBy.get(serializedOrderBy)
-    const unsortedRowIndex = indexes?.[row]
-    if (unsortedRowIndex === undefined) {
+    const rowNumber = indexes?.[row]
+    if (rowNumber === undefined) {
       return undefined
     }
-    return { value: unsortedRowIndex }
+    return { value: rowNumber }
   }
 
   function wrappedGetCell({ row, column, orderBy }: { row: number, column: string, orderBy?: OrderBy }): ResolvedValue | undefined {
-    const unsortedRow = wrappedGetUnsortedRow({ row, orderBy })
-    if (!unsortedRow) {
+    const rowNumber = wrappedGetRowNumber({ row, orderBy })
+    if (!rowNumber) {
       // If we can't resolve the unsorted row, we return undefined.
       return undefined
     }
-    return getCell({ row: unsortedRow.value, column })
+    return getCell({ row: rowNumber.value, column })
   }
 
   async function wrappedFetch(args: { rowStart: number, rowEnd: number, columns: string[], orderBy?: OrderBy, signal?: AbortSignal, onColumnComplete?: (data: { column: string, values: any[], orderBy?: OrderBy }) => void }): Promise<void> {
@@ -109,7 +109,7 @@ export function sortableDataFrame(dataFrame: DataFrame): DataFrame {
     sortable: true,
     numRows,
     header: wrappedHeader,
-    getUnsortedRow: wrappedGetUnsortedRow,
+    getRowNumber: wrappedGetRowNumber,
     getCell: wrappedGetCell,
     fetch: wrappedFetch,
     eventTarget: wrappedEventTarget,
@@ -118,10 +118,10 @@ export function sortableDataFrame(dataFrame: DataFrame): DataFrame {
 
 async function fetchFromIndexes({ columns, indexes, signal, fetch }: { columns: string[], indexes: number[], signal?: AbortSignal, fetch: DataFrame['fetch'] }): Promise<void> {
   // Fetch the data for every index, grouping the fetches by consecutive rows.
-  const unsortedRowIndexes = indexes.sort()
+  const rowNumberIndexes = indexes.sort()
   const promises: (void | Promise<void>)[] = []
   let range: [number, number] | undefined = undefined
-  for (const row of unsortedRowIndexes) {
+  for (const row of rowNumberIndexes) {
     if (range === undefined) {
       // First iteration
       range = [row, row + 1]

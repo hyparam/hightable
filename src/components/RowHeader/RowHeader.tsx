@@ -3,7 +3,7 @@ import { useCellNavigation } from '../../hooks/useCellsNavigation'
 
 interface Props {
   selected?: boolean
-  unsortedRow?: number
+  rowNumber?: number
   onCheckboxPress?: ({ shiftKey }: { shiftKey: boolean }) => Promise<void>
   showCheckBox?: boolean
   style?: CSSProperties
@@ -17,7 +17,7 @@ function formatRowNumber(rowIndex?: number): string {
   return (rowIndex + 1).toLocaleString('en-US')
 }
 
-export default function RowHeader({ onCheckboxPress, style, ariaColIndex, ariaRowIndex, selected, unsortedRow }: Props) {
+export default function RowHeader({ onCheckboxPress, style, ariaColIndex, ariaRowIndex, selected, rowNumber }: Props) {
   const ref = useRef<HTMLTableCellElement>(null)
   const { tabIndex, navigateToCell } = useCellNavigation({ ref, ariaColIndex, ariaRowIndex })
   const handleClick = useCallback((event: MouseEvent) => {
@@ -49,15 +49,15 @@ export default function RowHeader({ onCheckboxPress, style, ariaColIndex, ariaRo
       style={style}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
-      aria-busy={unsortedRow === undefined}
+      aria-busy={rowNumber === undefined}
       aria-checked={selected}
       aria-rowindex={ariaRowIndex}
       aria-colindex={ariaColIndex}
       aria-disabled={disabledCheckbox}
       tabIndex={tabIndex}
-      data-rowindex={unsortedRow}
+      data-rownumber={rowNumber}
     >
-      <span>{formatRowNumber(unsortedRow)}</span>
+      <span>{formatRowNumber(rowNumber)}</span>
       {selected !== undefined && <input
         type='checkbox'
         onChange={onChange}

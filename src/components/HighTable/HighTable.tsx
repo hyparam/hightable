@@ -140,21 +140,21 @@ export function HighTableInner({
   }, [onNavigationTableKeyDown, onSelectionTableKeyDown])
 
   const pendingSelectionRequest = useRef(0)
-  const getOnCheckboxPress = useCallback(({ row, unsortedRow }: { row: number, unsortedRow?: number }) => {
-    if (!selection || !onSelectionChange || unsortedRow === undefined) {
+  const getOnCheckboxPress = useCallback(({ row, rowNumber }: { row: number, rowNumber?: number }) => {
+    if (!selection || !onSelectionChange || rowNumber === undefined) {
       return undefined
     }
     return async ({ shiftKey }: { shiftKey: boolean }) => {
       const useAnchor = shiftKey && selection.anchor !== undefined
       if (!useAnchor) {
         // single row toggle
-        onSelectionChange(toggleIndexInSelection({ selection, index: unsortedRow }))
+        onSelectionChange(toggleIndexInSelection({ selection, index: rowNumber }))
         return
       }
 
       if (!orderBy || orderBy.length === 0) {
         // no sorting, toggle the range
-        onSelectionChange(toggleRangeInSelection({ selection, index: unsortedRow }))
+        onSelectionChange(toggleRangeInSelection({ selection, index: rowNumber }))
         return
       }
 
@@ -336,7 +336,7 @@ export function HighTableInner({
   const slice = useMemo(() => {
     let hasCompleteRow = false
     const rowContents = rows.map((row) => {
-      const unsortedRow = data.getUnsortedRow({ row, orderBy })?.value
+      const rowNumber = data.getRowNumber({ row, orderBy })?.value
       const cells = data.header.map((column, columnIndex) => {
         const cell = data.getCell({ row, column, orderBy })
         return { columnIndex, cell }
@@ -346,7 +346,7 @@ export function HighTableInner({
       }
       return {
         row,
-        unsortedRow,
+        rowNumber,
         cells,
       }
     })
@@ -406,9 +406,9 @@ export function HighTableInner({
                   </Row>
                 )
               })}
-              {slice.rowContents.map(({ row, unsortedRow, cells }) => {
+              {slice.rowContents.map(({ row, rowNumber, cells }) => {
                 const ariaRowIndex = row + ariaOffset
-                const selected = isRowSelected?.(unsortedRow)
+                const selected = isRowSelected?.(rowNumber)
                 // The row key includes the version, to rerender the row again when the data changes (e.g. when the user scrolls, or when the data has been fetched)
                 const rowKey = `${version}-${row}`
                 return (
@@ -421,8 +421,8 @@ export function HighTableInner({
                     <RowHeader
                       style={cornerStyle}
                       selected={selected}
-                      unsortedRow={unsortedRow}
-                      onCheckboxPress={getOnCheckboxPress({ unsortedRow, row })}
+                      rowNumber={rowNumber}
+                      onCheckboxPress={getOnCheckboxPress({ rowNumber, row })}
                       ariaColIndex={1}
                       ariaRowIndex={ariaRowIndex}
                     />
@@ -438,7 +438,7 @@ export function HighTableInner({
                         ariaColIndex={columnIndex + ariaOffset}
                         ariaRowIndex={ariaRowIndex}
                         cell={cell}
-                        unsortedRow={unsortedRow}
+                        rowNumber={rowNumber}
                       />
                     })}
                   </Row>
