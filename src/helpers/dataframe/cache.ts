@@ -11,7 +11,7 @@ export function cacheUnsortableDataFrame({ numRows, header, getCell, fetch, even
     return acc
   }, {})
 
-  const { eventTarget: wrappedEventTarget } = cloneEventTarget(eventTarget, ['dataframe:numrowschange', 'dataframe:update', 'dataframe:index:update'])
+  const { eventTarget: wrappedEventTarget } = cloneEventTarget(eventTarget, ['dataframe:numrowschange', 'dataframe:update', 'dataframe:index:update', 'resolve'])
   // TODO(SL!): get "detach" function from cloneEventTarget and call it when the dataframe is no longer needed
   // for example, by providing a "dispose" method on the returned dataframe
 
@@ -50,6 +50,8 @@ export function cacheUnsortableDataFrame({ numRows, header, getCell, fetch, even
         wrappedEventTarget.dispatchEvent(new CustomEvent('dataframe:update', {
           detail: { columns: [column], rowStart, rowEnd },
         }))
+        // TODO(SL): is it required? we will remove onColumnComplete anyway
+        wrappedEventTarget.dispatchEvent(new CustomEvent('resolve'))
       }
     }
 

@@ -44,6 +44,7 @@ function delay<T>(value: T, ms: number): Promise<T> {
 }
 const delayedDataHeader = ['ID', 'Count']
 const delayedDataNumRows = 500
+const delayedEventTarget = createEventTarget<DataFrameEvents>()
 async function delayedDataFetch({ rowStart, rowEnd, columns, signal, onColumnComplete }: { rowStart: number, rowEnd: number, columns: string[], signal?: AbortSignal, onColumnComplete?: (data: {column: string, values: any[]}) => void }) {
   if (rowStart < 0 || rowEnd > delayedDataNumRows) {
     throw new Error(`Invalid row range: ${rowStart} - ${rowEnd}, numRows: ${delayedDataNumRows}`)
@@ -61,6 +62,11 @@ async function delayedDataFetch({ rowStart, rowEnd, columns, signal, onColumnCom
       const ms = rowMs * (column === 'ID' ? 1 : 2)
       const resolvedValue = column === 'ID' ? `row ${row}` : delayedDataNumRows - row
       valuePromises.push(delay(resolvedValue, ms))
+      // this implementation dispatches an event for each cell resolved, because they are all independent
+      // delayedEventTarget.dispatchEvent(new CustomEvent('cell:resolve', {
+      //   detail: { rowStart: row, rowEnd: row + 1, column },
+      // }))
+      delayedEventTarget.dispatchEvent(new CustomEvent('resolve'))
     }
     const columnPromise = Promise.all(valuePromises).then((values) => {
       if (signal?.aborted) {
@@ -78,7 +84,7 @@ const sortableDelayedData = sortableDataFrame(cacheUnsortableDataFrame({
   numRows: delayedDataNumRows,
   fetch: delayedDataFetch,
   getCell: () => { return undefined },
-  eventTarget: createEventTarget<DataFrameEvents>(),
+  eventTarget: delayedEventTarget,
 }))
 
 const longString = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum'

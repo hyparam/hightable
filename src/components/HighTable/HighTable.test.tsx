@@ -224,6 +224,8 @@ describe('with async data, HighTable', () => {
           asyncDataFetched[row] = true
         }
         eventTarget.dispatchEvent(new CustomEvent('dataframe:update', { detail: { rowStart, rowEnd, columns } }))
+        // eventTarget.dispatchEvent(new CustomEvent('cell:resolve', { detail: { rowStart, rowEnd, columns } }))
+        eventTarget.dispatchEvent(new CustomEvent('resolve'))
       }),
       eventTarget,
       _forTests: {

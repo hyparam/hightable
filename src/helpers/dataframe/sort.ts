@@ -19,6 +19,9 @@ export function sortableDataFrame(dataFrame: DataFrame): DataFrame {
   const indexesByOrderBy = new Map<string, number[]>()
 
   const wrappedEventTarget = createEventTarget<DataFrameEvents>()
+  eventTarget.addEventListener('resolve', () => {
+    wrappedEventTarget.dispatchEvent(new CustomEvent('resolve'))
+  })
   eventTarget.addEventListener('dataframe:numrowschange', (event) => {
     // Forward the numRows change event to the sortable data frame
     wrappedEventTarget.dispatchEvent(new CustomEvent('dataframe:numrowschange', { detail: { numRows: event.detail.numRows } }))
@@ -99,6 +102,7 @@ export function sortableDataFrame(dataFrame: DataFrame): DataFrame {
         indexesByOrderBy.set(serializeOrderBy(orderBy), indexes)
         // Notify the event target that the indexes have been updated.
         wrappedEventTarget.dispatchEvent(new CustomEvent('dataframe:index:update', { detail: { rowStart, rowEnd, orderBy } }))
+        wrappedEventTarget.dispatchEvent(new CustomEvent('resolve'))
       },
       dataFrame,
     })

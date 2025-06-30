@@ -11,6 +11,15 @@ export interface DataFrameEvents {
   'dataframe:numrowschange': { numRows: number };
   'dataframe:update': { rowStart: number, rowEnd: number, columns: string[], orderBy?: OrderBy };
   'dataframe:index:update': { rowStart: number, rowEnd: number, orderBy?: OrderBy };
+
+  'resolve': undefined;
+  // TODO(SL): maybe provide more specific events like:
+  // 'resolve:cell': { row: number; column: string; };
+  // 'resolve:column': { rowStart: number; rowEnd: number; column: string; };
+  // or 'resolve:column': { rows: number[]; column: string; };
+  // 'resolve:rownumber': undefined;
+  // or 'resolve:rownumber': { rowStart: number; rowEnd: number; };
+  // but beware: when sorting a dataframe, the row range (rowStart, rowEnd) would need to be converted to a set of ranges in the sorted dataframe.
 }
 
 /**
@@ -34,11 +43,22 @@ export interface DataFrame {
   // getCell does NOT initiate a fetch, it just returns resolved data
   getCell({ row, column, orderBy }: {row: number, column: string, orderBy?: OrderBy}): ResolvedValue | undefined
 
-  // initiate fetches for row/column data
-  // static data frames don't need to implement it
-  // rowEnd is exclusive
+  // Checks if the required data is available, and it not, it fetches it.
+  // The method is asynchronous and resolves when all the data has been fetch.
+  //
   // The table can use an AbortController and pass its .signal, to be able to cancel with .abort() when a user scrolls out of view.
   // The dataframe implementer can choose to ignore, de-queue, or cancel in flight fetches.
+  //
+  // It rejects on the first error, which can be the signal abort (it must throw `AbortError`).
+  //
+  // It's responsible for dispatching the "cell:resolve" and "rownumber:resolve" events when data has resolved
+  // (ie: when some new data is available synchronously with the methods `getCell` and `getRowNumber`).
+  // It can dispatch the events multiple times if the data is fetched in chunks.
+  //
+  // Note that it does not return the data.
+  //
+  // static data frames will return a Promise that resolves immediately.
+  // rowEnd is exclusive
   fetch: ({ rowStart, rowEnd, columns, orderBy, signal, onColumnComplete }: { rowStart: number, rowEnd: number, columns: string[], orderBy?: OrderBy, signal?: AbortSignal, onColumnComplete?: (data: {column: string, values: any[]}) => void }) => Promise<void>
 
   // emits events, defined in DataFrameEvents
