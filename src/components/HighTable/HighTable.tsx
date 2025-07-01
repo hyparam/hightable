@@ -167,7 +167,7 @@ export function HighTableInner({
         selection,
         index: row,
         orderBy,
-        dataFrame: data,
+        data,
         ranksByColumn,
         setRanks: ({ column, ranks }) => {
           ranksByColumn?.set(column, ranks)
