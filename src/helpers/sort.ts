@@ -61,6 +61,7 @@ export function toggleColumn(column: string, orderBy: OrderBy): OrderBy {
   return [{ column, direction: 'ascending' }, ...prefix, ...suffix]
 }
 
+// TODO(SL): test
 export function computeRanks(values: any[]): number[] {
   const valuesWithIndex = values.map((value, index) => ({ value, index }))
   const sortedValuesWithIndex = Array.from(valuesWithIndex).sort(({ value: a }, { value: b }) => {
@@ -68,15 +69,17 @@ export function computeRanks(values: any[]): number[] {
     if (a > b) return 1
     return 0
   })
-  const numRows = sortedValuesWithIndex.length
-  const ascendingRanks = sortedValuesWithIndex.reduce(({ lastValue, lastRank, ranks }, { value, index }, rank) => {
+  const ranks: number[] = Array(sortedValuesWithIndex.length).fill(-1)
+  let lastRank = 0
+  let lastValue: any = undefined
+  for (const [rank, { value, index }] of sortedValuesWithIndex.entries()) {
     if (value === lastValue) {
       ranks[index] = lastRank
-      return { ranks, lastValue, lastRank }
     } else {
       ranks[index] = rank
-      return { ranks, lastValue: value, lastRank: rank }
+      lastRank = rank
+      lastValue = value
     }
-  }, { ranks: Array(numRows).fill(-1), lastValue: undefined, lastRank: 0 }).ranks
-  return ascendingRanks
+  }
+  return ranks
 }
