@@ -209,11 +209,11 @@ describe('with async data, HighTable', () => {
       numRows: 1000,
       getRowNumber: ({ row }: { row: number }) => ({ value: row }),
       getCell: vi.fn(getCell),
-      fetch: vi.fn(async ({ rowStart, rowEnd, columns, signal, onColumnComplete }: { rowStart: number, rowEnd: number, columns: string[], signal?: AbortSignal, onColumnComplete?: (data: {column: string, values: any[]}) => void }) => {
+      fetch: vi.fn(async ({ rowStart, rowEnd, columns, signal }: { rowStart: number, rowEnd: number, columns: string[], signal?: AbortSignal }) => {
         await new Promise(resolve => setTimeout(resolve, ms))
-        // reject if the signal is aborted, and call onColumnComplete for each column
+        // reject if the signal is aborted
         try {
-          await noOpFetch({ rowStart, rowEnd, columns, signal, onColumnComplete })
+          await noOpFetch({ rowStart, rowEnd, columns, signal })
         } catch (error) {
           if (error instanceof DOMException && error.name === 'AbortError') {
             signalAborted.push(true)

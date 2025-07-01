@@ -1,4 +1,4 @@
-import { DataFrame, ResolvedValue } from './types.js'
+import { DataFrame, DataFrameSimple, ResolvedValue } from './types.js'
 
 export function createGetRowNumber({ numRows }: {numRows: number}) {
   return ({ row }: { row: number }): ResolvedValue<number> => {
@@ -9,26 +9,19 @@ export function createGetRowNumber({ numRows }: {numRows: number}) {
   }
 }
 
-export function createNoOpFetch({ getCell, numRows, header }: Pick<DataFrame, 'getCell' | 'numRows' | 'header'>): DataFrame['fetch'] {
-  return ({ rowStart, rowEnd, columns, signal, onColumnComplete, orderBy }) => {
+export function createNoOpFetch({ getCell, numRows, header }: Pick<DataFrameSimple, 'getCell' | 'numRows' | 'header'>): DataFrameSimple['fetch'] {
+  return ({ rowStart, rowEnd, columns, signal }) => {
     if (signal?.aborted) {
       return Promise.reject(new DOMException('Fetch aborted', 'AbortError'))
     }
     // Validation
     validateFetchParams({ rowStart, rowEnd, columns, data: { numRows, header } })
 
-    // TODO(SL): remove
-    if (orderBy && orderBy.length > 0) {
-      throw new Error('This fetch method does not support ordering.')
-    }
-    // TODO(SL): remove
-    // This is a static data frame, so the only purpose of this method is if onColumnComplete is passed
-    if (onColumnComplete && columns.length > 0) {
-      for (const column of columns) {
-        const slice = Array(rowEnd - rowStart).fill(undefined).map((_, i) => {
-          return getCell({ row: rowStart + i, column })
-        })
-        onColumnComplete({ column, values: slice })
+    for (const column of columns) {
+      for (let row = rowStart; row < rowEnd; row++) {
+        if (getCell({ row, column }) === undefined) {
+          throw new Error(`Cell not found for row ${row} and column "${column}", and this is a static data frame.`)
+        }
       }
     }
 
