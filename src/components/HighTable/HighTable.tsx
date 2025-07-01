@@ -68,19 +68,19 @@ export default function HighTable(props: Props) {
 type PropsData = Omit<Props, 'data'>
 
 function HighTableData(props: PropsData) {
-  const { data, numRows, key, version } = useData()
-  const numRowsKey = `${key}:${numRows}` // use numRows as a key to recreate a context if the number of rows changes
+  const { data, key, version } = useData()
+  const { numRows } = data
   const { cacheKey, orderBy, onOrderByChange, selection, onSelectionChange } = props
 
   return (
     /* Create a new set of widths if the data has changed, but keep it if only the number of rows changed */
-    <ColumnStatesProvider key={key} localStorageKey={cacheKey ? `${cacheKey}${columnStatesSuffix}` : undefined} numColumns={data.header.length} minWidth={minWidth}>
-      {/* Create a new context if numRows changes, to flush the cache (ranks and indexes) */}
-      <OrderByProvider key={numRowsKey} orderBy={orderBy} onOrderByChange={onOrderByChange} disabled={!('sortable' in data && data.sortable)}>
-        {/* Create a new selection context if numRows has changed, because the local selection might not be valid with a new number of rows */}
-        <SelectionProvider key={numRowsKey} selection={selection} onSelectionChange={onSelectionChange} numRows={numRows}>
-          {/* Create a new navigation context if numRows has changed, because the focused cell might not exist anymore */}
-          <CellsNavigationProvider key={numRowsKey} colCount={data.header.length + 1} rowCount={numRows + 1} rowPadding={props.padding ?? defaultPadding}>
+    <ColumnStatesProvider key={cacheKey ?? key} localStorageKey={cacheKey ? `${cacheKey}${columnStatesSuffix}` : undefined} numColumns={data.header.length} minWidth={minWidth}>
+      {/* Create a new context if the dataframe changes, to flush the cache (ranks and indexes) */}
+      <OrderByProvider key={key} orderBy={orderBy} onOrderByChange={onOrderByChange} disabled={!('sortable' in data && data.sortable)}>
+        {/* Create a new selection context if the dataframe has changed */}
+        <SelectionProvider key={key} selection={selection} onSelectionChange={onSelectionChange} numRows={numRows}>
+          {/* Create a new navigation context if the dataframe has changed, because the focused cell might not exist anymore */}
+          <CellsNavigationProvider key={key} colCount={data.header.length + 1} rowCount={numRows + 1} rowPadding={props.padding ?? defaultPadding}>
             <PortalContainerProvider>
               <HighTableInner version={version} {...props} />
             </PortalContainerProvider>
@@ -123,7 +123,8 @@ export function HighTableInner({
   version,
 }: PropsInner) {
   // contexts
-  const { data, numRows } = useData()
+  const { data } = useData()
+  const { numRows } = data
   const { enterCellsNavigation, setEnterCellsNavigation, onTableKeyDown: onNavigationTableKeyDown, onScrollKeyDown, cellPosition, focusFirstCell } = useCellsNavigation()
   const { containerRef } = usePortalContainer()
   const { setAvailableWidth } = useColumnStates()

@@ -22,10 +22,6 @@ export function sortableDataFrame(dataFrame: DataFrame | DataFrameSimple): DataF
   eventTarget?.addEventListener('resolve', () => {
     wrappedEventTarget.dispatchEvent(new CustomEvent('resolve'))
   })
-  eventTarget?.addEventListener('dataframe:numrowschange', (event) => {
-    // Forward the numRows change event to the sortable data frame
-    wrappedEventTarget.dispatchEvent(new CustomEvent('dataframe:numrowschange', { detail: { numRows: event.detail.numRows } }))
-  })
   eventTarget?.addEventListener('dataframe:update', (event) => {
     // Forward the update event to the sortable data frame
     const { rowStart, rowEnd, columns } = event.detail

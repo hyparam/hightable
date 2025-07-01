@@ -8,7 +8,6 @@ export interface ResolvedValue<T = any> {
 }
 
 export interface DataFrameEvents {
-  'dataframe:numrowschange': { numRows: number };
   'dataframe:update': { rowStart: number, rowEnd: number, columns: string[], orderBy?: OrderBy };
   'dataframe:index:update': { rowStart: number, rowEnd: number, orderBy?: OrderBy };
 
@@ -65,12 +64,12 @@ export interface DataFrame {
   // eventTarget can be used as follows:
   //
   // listen to an event:
-  // eventTarget.addEventListener('dataframe:numrowschange', (event) => {
-  //   console.log('Number of rows changed:', event.detail.numRows)
+  // eventTarget.addEventListener('resolve', (event) => {
+  //   console.log('A new cell has resolved')
   // })
   //
   // publish an event:
-  // eventTarget.dispatchEvent(new CustomEvent('dataframe:numrowschange', { detail: { numRows: 42 } }))
+  // eventTarget.dispatchEvent(new CustomEvent('resolve'))
   eventTarget: CustomEventTarget<DataFrameEvents>
 }
 
@@ -115,11 +114,11 @@ export interface DataFrameSimple {
   // eventTarget can be used as follows:
   //
   // listen to an event:
-  // eventTarget.addEventListener('dataframe:numrowschange', (event) => {
-  //   console.log('Number of rows changed:', event.detail.numRows)
+  // eventTarget.addEventListener('resolve', (event) => {
+  //   console.log('A new cell has resolved')
   // })
   //
   // publish an event:
-  // eventTarget.dispatchEvent(new CustomEvent('dataframe:numrowschange', { detail: { numRows: 42 } }))
+  // eventTarget.dispatchEvent(new CustomEvent('resolve'))
   eventTarget?: CustomEventTarget<DataFrameEvents>
 }

@@ -3,19 +3,13 @@ import { DataFrame, DataFrameSimple, fromArray } from '../helpers/dataframe/inde
 
 interface DataContextType {
   data: DataFrame | DataFrameSimple,
-  numRows: number,
   key: string,
   version: number,
-}
-
-function isValidRowNumber(row: unknown): row is number {
-  return typeof row === 'number' && Number.isInteger(row) && row >= 0
 }
 
 function getDefaultDataContext(): DataContextType {
   return {
     data: fromArray([]),
-    numRows: 0,
     key: 'default',
     version: 0,
   }
@@ -33,31 +27,23 @@ function getRandomKey(): string {
   return crypto.randomUUID()
 }
 
+function isValidNumRows(row: number): boolean {
+  return Number.isInteger(row) && row >= 0
+}
+
 export function DataProvider({ children, onError, data }: DataProviderProps) {
   // We want a string key to identify the data.
   const [key, setKey] = useState<string>(getRandomKey())
   const [previousData, setPreviousData] = useState<DataFrame | DataFrameSimple>(data)
-  const [numRows, setNumRows] = useState(data.numRows)
+  const [previousNumRows, setPreviousNumRows] = useState<number>(data.numRows)
   const [version, setVersion] = useState(0)
 
-  useEffect(() => {
-    function onNumRowsChange(event: CustomEvent<{ numRows: number }>) {
-      const { numRows: newNumRows } = event.detail
-      if (!isValidRowNumber(newNumRows)) {
-        onError(new Error(`Invalid number of rows: ${newNumRows}`))
-        return
-      }
-      if (newNumRows !== data.numRows) {
-        onError(new Error(`Number of rows changed from ${data.numRows} to ${newNumRows}, but the data frame did not change.`))
-        return
-      }
-      setNumRows(newNumRows)
-    }
-    data.eventTarget?.addEventListener('dataframe:numrowschange', onNumRowsChange)
-    return () => {
-      data.eventTarget?.removeEventListener('dataframe:numrowschange', onNumRowsChange)
-    }
-  }, [data, onError])
+  if (!isValidNumRows(data.numRows)) {
+    throw new Error(`Invalid numRows: ${data.numRows}. It must be a non-negative integer.`)
+  }
+  if (data.numRows !== previousNumRows) {
+    throw new Error(`Data numRows changed from ${previousNumRows} to ${data.numRows}. This is not allowed. You must create a new DataFrame instance.`)
+  }
 
   useEffect(() => {
     function onUpdate() {
@@ -76,13 +62,13 @@ export function DataProvider({ children, onError, data }: DataProviderProps) {
   if (data !== previousData) {
     setKey(getRandomKey())
     setPreviousData(data)
-    setNumRows(data.numRows)
+    setPreviousNumRows(data.numRows)
+    setVersion(0)
   }
 
   return (
     <DataContext.Provider value={{
       data,
-      numRows,
       key,
       version,
     }}>
