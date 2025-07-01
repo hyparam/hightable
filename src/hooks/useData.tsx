@@ -1,5 +1,5 @@
 import { ReactNode, createContext, useContext, useEffect, useState } from 'react'
-import { DataFrame, fromArray } from '../helpers/dataframe/index.js'
+import { DataFrame, arrayDataFrame } from '../helpers/dataframe/index.js'
 
 interface DataContextType {
   data: DataFrame,
@@ -9,7 +9,7 @@ interface DataContextType {
 
 function getDefaultDataContext(): DataContextType {
   return {
-    data: fromArray([]),
+    data: arrayDataFrame([]),
     key: 'default',
     version: 0,
   }

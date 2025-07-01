@@ -1,7 +1,7 @@
 import { createGetRowNumber, createNoOpFetch, validateGetCellParams } from './helpers.js'
 import type { ResolvedValue, UnsortableDataFrame } from './types.js'
 
-export function fromArray(array: Record<string, any>[]): UnsortableDataFrame {
+export function arrayDataFrame(array: Record<string, any>[]): UnsortableDataFrame {
   // beware: we don't copy the array, so it must not be mutated after this point.
   const header = 0 in array ? Object.keys(array[0]) : []
   const numRows = array.length

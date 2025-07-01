@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { fromArray, sortableDataFrame } from '../../../src/helpers/dataframe/index.js'
+import { arrayDataFrame, sortableDataFrame } from '../../../src/helpers/dataframe/index.js'
 
-describe('fromArray', () => {
+describe('arrayDataFrame', () => {
   const testData = [
     { id: 1, name: 'Alice', age: 30 },
     { id: 2, name: 'Bob', age: 25 },
@@ -9,33 +9,33 @@ describe('fromArray', () => {
   ]
 
   it('should create a DataFrame with correct header and numRows', () => {
-    const df = fromArray(testData)
+    const df = arrayDataFrame(testData)
     expect(df.header).toEqual(['id', 'name', 'age'])
     expect(df.numRows).toBe(3)
   })
 
   it('should return the cell value without first fetching the column', () => {
-    const df = fromArray(testData)
+    const df = arrayDataFrame(testData)
     const cell = df.getCell({ row: 1, column: 'name' })
     expect(cell?.value).toBe('Bob')
   })
 
   it('should throw if accessing data from an unknown column', () => {
-    const df = fromArray(testData)
+    const df = arrayDataFrame(testData)
     expect(() => {
       df.getCell({ row: 0, column: 'doesnotexist' } )
     }).toThrow('Invalid column: doesnotexist')
   })
 
   it('should throw if accessing data from an unknown row', () => {
-    const df = fromArray(testData)
+    const df = arrayDataFrame(testData)
     expect(() => {
       df.getCell({ row: 3, column: 'id' } )
     }).toThrow('Invalid row index: 3')
   })
 
   it('should throw if accessing data from an empty array', () => {
-    const df = fromArray([])
+    const df = arrayDataFrame([])
     expect(df.header).toEqual([])
     expect(df.numRows).toBe(0)
     expect(() => {
@@ -44,12 +44,12 @@ describe('fromArray', () => {
   })
 
   it('provides fetch', () => {
-    const df = fromArray([])
+    const df = arrayDataFrame([])
     expect(df.fetch).toBeDefined()
   })
 
   it('does not provide an event target', () => {
-    const df = fromArray([])
+    const df = arrayDataFrame([])
     expect(df.eventTarget).toBeUndefined()
   })
 
@@ -62,7 +62,7 @@ describe('sortableDataFrame', () => {
     { id: 2, name: 'Bob', age: 20 },
     { id: 4, name: 'Dani', age: 20 },
   ]
-  const dataFrame = fromArray(data)
+  const dataFrame = arrayDataFrame(data)
 
   it('should set sortable to true', () => {
     const df = sortableDataFrame(dataFrame)

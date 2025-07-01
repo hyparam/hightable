@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useState } from 'react'
 import { createGetRowNumber, createNoOpFetch, validateGetCellParams } from '../../helpers/dataframe/helpers.js'
-import { DataFrameEvents, UnsortableDataFrame, fromArray } from '../../helpers/dataframe/index.js'
+import { DataFrameEvents, UnsortableDataFrame, arrayDataFrame } from '../../helpers/dataframe/index.js'
 import { sortableDataFrame } from '../../helpers/dataframe/sort.js'
 import type { ResolvedValue } from '../../helpers/dataframe/types.js'
 import type { Selection } from '../../helpers/selection.js'
@@ -103,7 +103,7 @@ const sortableDelayedData = sortableDataFrame({
 })
 
 const longString = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum'
-const longStringsData = sortableDataFrame(fromArray(Array.from({ length: 1000 }, (_, index) => {
+const longStringsData = sortableDataFrame(arrayDataFrame(Array.from({ length: 1000 }, (_, index) => {
   return {
     ID: `row ${index}`,
     LongString: longString.repeat(10),
@@ -112,7 +112,7 @@ const longStringsData = sortableDataFrame(fromArray(Array.from({ length: 1000 },
   }
 })))
 
-const manyColumnsData = sortableDataFrame(fromArray(Array.from({ length: 1000 }, (_, index) => {
+const manyColumnsData = sortableDataFrame(arrayDataFrame(Array.from({ length: 1000 }, (_, index) => {
   return {
     ID1: `row ${index} A`,
     LongString1: longString.repeat(10),
