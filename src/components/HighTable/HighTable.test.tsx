@@ -84,7 +84,7 @@ describe('HighTable', () => {
     numRows: 100,
     getRowNumber: createGetRowNumber({ numRows: 100 }),
     getCell: vi.fn(getCell),
-    fetch: createNoOpFetch({ getCell, header: ['ID', 'Name', 'Age'], numRows: 100 }),
+    fetch: vi.fn(createNoOpFetch({ getCell, header: ['ID', 'Name', 'Age'], numRows: 100 })),
   }
 
   beforeEach(() => {
@@ -165,19 +165,18 @@ describe('HighTable', () => {
     expect(mockKeyDown).toHaveBeenCalledWith(expect.anything(), 1, 0)
   })
 
-  // TODO(SL!): add a new event on dataframev2 (fetcherror)
-  // it('displays error when data fetch fails', async () => {
-  //   const mockOnError = vi.fn()
-  //   mockData.getCell.mockImplementationOnce(() => {throw new Error('Failed to fetch data')})
-  //   const { container } = render(<HighTable data={mockData} onError={mockOnError} />)
+  it('throws error when data fetch fails', async () => {
+    const mockOnError = vi.fn()
+    mockData.fetch.mockImplementationOnce(() => Promise.reject(new Error('Failed to fetch data')))
+    const { container } = render(<HighTable data={mockData} onError={mockOnError} />)
 
-  //   await waitFor(() => {
-  //     expect(mockData.getCell).toHaveBeenCalled()
-  //     expect(mockOnError).toHaveBeenCalledWith(expect.any(Error))
-  //   })
-  //   // Clear pending state on error:
-  //   expect(container.querySelector('div.pending')).toBeNull()
-  // })
+    await waitFor(() => {
+      expect(mockData.getCell).toHaveBeenCalled()
+      expect(mockOnError).toHaveBeenCalledWith(expect.any(Error))
+    })
+    // Clear pending state on error:
+    expect(container.querySelector('div.pending')).toBeNull()
+  })
 })
 
 describe('with async data, HighTable', () => {
