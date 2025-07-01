@@ -8,20 +8,15 @@ export function sortableDataFrame(data: DataFrame): SortableDataFrame {
     return data
   }
 
-  const { header, numRows, getCell, eventTarget } = data
+  const { header, numRows, getCell } = data
 
   const wrappedHeader = header.slice() // Create a shallow copy of the header to avoid mutating the original
 
-  // TODO(SL!): how to erase the cache if needed? .dispose() method? do we need it?
+  // The cache cannot be erased. Create a new data frame if needed.
   const ranksByColumn = new Map<string, number[]>()
   const indexesByOrderBy = new Map<string, number[]>()
 
-  const wrappedEventTarget = createEventTarget<DataFrameEvents>()
-  eventTarget?.addEventListener('resolve', () => {
-    wrappedEventTarget.dispatchEvent(new CustomEvent('resolve'))
-  })
-  // TODO(SL!): the listeners are not removed, so we might leak memory if the wrapped dataframe is not used anymore.
-  // We could add a method to remove the listeners (.dispose() ?).
+  const eventTarget = createEventTarget<DataFrameEvents>()
 
   function wrappedGetRowNumber({ row, orderBy }: { row: number, orderBy?: OrderBy }): ResolvedValue<number> | undefined {
     if (row < 0 || row >= numRows) {
@@ -85,7 +80,7 @@ export function sortableDataFrame(data: DataFrame): SortableDataFrame {
         // Store the indexes in the map.
         indexesByOrderBy.set(serializeOrderBy(orderBy), indexes)
         // Notify the event target that the indexes have been updated.
-        wrappedEventTarget.dispatchEvent(new CustomEvent('resolve'))
+        eventTarget.dispatchEvent(new CustomEvent('resolve'))
       },
       data,
     })
@@ -99,7 +94,7 @@ export function sortableDataFrame(data: DataFrame): SortableDataFrame {
     getRowNumber: wrappedGetRowNumber,
     getCell: wrappedGetCell,
     fetch: wrappedFetch,
-    eventTarget: wrappedEventTarget,
+    eventTarget,
   }
 }
 
