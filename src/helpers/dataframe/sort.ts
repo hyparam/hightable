@@ -1,5 +1,6 @@
-import { OrderBy, checkOrderBy, computeRanks, serializeOrderBy } from '../sort.js'
+import { OrderBy, computeRanks, serializeOrderBy, validateOrderBy } from '../sort.js'
 import { createEventTarget } from '../typedEventTarget.js'
+import { validateRow } from './helpers.js'
 import { DataFrame, DataFrameEvents, ResolvedValue, SortableDataFrame } from './types.js'
 
 export function sortableDataFrame(data: DataFrame): SortableDataFrame {
@@ -19,15 +20,12 @@ export function sortableDataFrame(data: DataFrame): SortableDataFrame {
   const eventTarget = createEventTarget<DataFrameEvents>()
 
   function wrappedGetRowNumber({ row, orderBy }: { row: number, orderBy?: OrderBy }): ResolvedValue<number> | undefined {
-    if (row < 0 || row >= numRows) {
-      // If the row is out of bounds, we can't resolve it.
-      throw new Error(`Invalid row index: ${row}. Must be between 0 and ${numRows - 1}.`)
-    }
+    validateRow({ row, data: { numRows } })
     if (!orderBy || orderBy.length === 0) {
       // If no orderBy is provided, we can return the row as is.
       return { value: row }
     }
-    checkOrderBy({ header, orderBy })
+    validateOrderBy({ header, orderBy })
     const serializedOrderBy = serializeOrderBy(orderBy)
     const indexes = indexesByOrderBy.get(serializedOrderBy)
     const rowNumber = indexes?.[row]
@@ -46,7 +44,7 @@ export function sortableDataFrame(data: DataFrame): SortableDataFrame {
     return getCell({ row: rowNumber.value, column })
   }
 
-  async function wrappedFetch(args: { rowStart: number, rowEnd: number, columns: string[], orderBy?: OrderBy, signal?: AbortSignal }): Promise<void> {
+  async function wrappedFetch(args: { rowStart: number, rowEnd: number, columns?: string[], orderBy?: OrderBy, signal?: AbortSignal }): Promise<void> {
     const { orderBy, ...rest } = args
     if (!orderBy || orderBy.length === 0) {
       // If orderBy is not provided, we can fetch the data without sorting.
@@ -62,15 +60,12 @@ export function sortableDataFrame(data: DataFrame): SortableDataFrame {
       // If the range is empty, we can return.
       return
     }
-    if (columns.length === 0) {
-      // If no columns are provided, we can return.
-      return
-    }
-    if (columns.some((column) => !header.includes(column))) {
+    if (columns?.some((column) => !header.includes(column))) {
       throw new Error(`Invalid columns: ${columns.join(', ')}. Must be a subset of the header: ${header.join(', ')}.`)
     }
-    checkOrderBy({ header, orderBy })
+    validateOrderBy({ header, orderBy })
 
+    // Ensure row numbers are available
     const indexes = await fetchIndexes({
       orderBy,
       signal,
@@ -84,7 +79,10 @@ export function sortableDataFrame(data: DataFrame): SortableDataFrame {
       },
       data,
     })
-    return fetchFromIndexes({ columns, signal, indexes: indexes.slice(rowStart, rowEnd), fetch: data.fetch })
+    // Ensure cells are available
+    if (columns && columns.length > 0) {
+      await fetchFromIndexes({ columns, signal, indexes: indexes.slice(rowStart, rowEnd), fetch: data.fetch })
+    }
   }
 
   return {
@@ -98,7 +96,7 @@ export function sortableDataFrame(data: DataFrame): SortableDataFrame {
   }
 }
 
-async function fetchFromIndexes({ columns, indexes, signal, fetch }: { columns: string[], indexes: number[], signal?: AbortSignal, fetch: DataFrame['fetch'] }): Promise<void> {
+async function fetchFromIndexes({ columns, indexes, signal, fetch }: { columns?: string[], indexes: number[], signal?: AbortSignal, fetch: DataFrame['fetch'] }): Promise<void> {
   // Fetch the data for every index, grouping the fetches by consecutive rows.
   const rowNumberIndexes = indexes.sort()
   const promises: (void | Promise<void>)[] = []

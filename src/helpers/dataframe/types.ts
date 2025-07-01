@@ -29,7 +29,7 @@ export interface UnsortableDataFrame {
     row: number, // row index in the dataframe
   }): ResolvedValue<number> | undefined
 
-  fetch: ({ rowStart, rowEnd, columns, signal }: { rowStart: number, rowEnd: number, columns: string[], signal?: AbortSignal }) => Promise<void>
+  fetch: ({ rowStart, rowEnd, columns, signal }: { rowStart: number, rowEnd: number, columns?: string[], signal?: AbortSignal }) => Promise<void>
 
   eventTarget?: CustomEventTarget<DataFrameEvents>
 }
@@ -57,7 +57,8 @@ export interface SortableDataFrame extends Omit<UnsortableDataFrame, 'sortable'>
     orderBy?: OrderBy
   }): ResolvedValue<number> | undefined
 
-  // Checks if the required data is available, and it not, it fetches it.
+  // Checks if the required data (the required columns, which can be undefined or an empty array, and the row numbers) is available,
+  // and it not, it fetches it.
   // The method is asynchronous and resolves when all the data has been fetch.
   //
   // The table can use an AbortController and pass its .signal, to be able to cancel with .abort() when a user scrolls out of view.
@@ -73,7 +74,7 @@ export interface SortableDataFrame extends Omit<UnsortableDataFrame, 'sortable'>
   //
   // static data frames can return a Promise that resolves immediately.
   // rowEnd is exclusive
-  fetch: ({ rowStart, rowEnd, columns, orderBy, signal }: { rowStart: number, rowEnd: number, columns: string[], orderBy?: OrderBy, signal?: AbortSignal }) => Promise<void>
+  fetch: ({ rowStart, rowEnd, columns, orderBy, signal }: { rowStart: number, rowEnd: number, columns?: string[], orderBy?: OrderBy, signal?: AbortSignal }) => Promise<void>
 
   // emits events, defined in DataFrameEvents
   //

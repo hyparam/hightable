@@ -11,7 +11,7 @@ export function serializeOrderBy(orderBy: OrderBy): string {
   return JSON.stringify(orderBy)
 }
 
-export function checkOrderBy({ header, orderBy }: {header: string[], orderBy: OrderBy}): void {
+export function validateOrderBy({ header, orderBy }: {header: string[], orderBy: OrderBy}): void {
   const unknownColumns = orderBy.map(({ column }) => column).filter(column => !header.includes(column))
   if (unknownColumns.length > 0) {
     throw new Error(`Invalid orderBy field: ${unknownColumns.join(', ')}`)

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { areEqualOrderBy, checkOrderBy, computeRanks, partitionOrderBy, toggleColumn } from '../../src/helpers/sort.js'
+import { areEqualOrderBy, computeRanks, partitionOrderBy, toggleColumn, validateOrderBy } from '../../src/helpers/sort.js'
 
 const nameAsc = { column: 'name', direction: 'ascending' as const }
 const nameDesc = { column: 'name', direction: 'descending' as const }
@@ -55,14 +55,14 @@ describe('toggleColumn', () => {
   })
 })
 
-describe('checkOrderBy', () => {
+describe('validateOrderBy', () => {
   it('should not throw if the orderBy is valid', () => {
-    expect(() => { checkOrderBy({ header: ['name', 'age'], orderBy: [nameAsc, ageAsc] }) }).not.toThrow()
-    expect(() => { checkOrderBy({ header: ['name', 'age'], orderBy: [nameDesc, ageAsc] }) }).not.toThrow()
+    expect(() => { validateOrderBy({ header: ['name', 'age'], orderBy: [nameAsc, ageAsc] }) }).not.toThrow()
+    expect(() => { validateOrderBy({ header: ['name', 'age'], orderBy: [nameDesc, ageAsc] }) }).not.toThrow()
   })
   it('should throw if the orderBy contains an invalid column', () => {
-    expect(() => { checkOrderBy({ header: ['name', 'age'], orderBy: [idAsc] }) }).toThrow('Invalid orderBy field: id')
-    expect(() => { checkOrderBy({ header: ['age'], orderBy: [nameAsc, idAsc] }) }).toThrow('Invalid orderBy field: name, id')
+    expect(() => { validateOrderBy({ header: ['name', 'age'], orderBy: [idAsc] }) }).toThrow('Invalid orderBy field: id')
+    expect(() => { validateOrderBy({ header: ['age'], orderBy: [nameAsc, idAsc] }) }).toThrow('Invalid orderBy field: name, id')
   })
 })
 
