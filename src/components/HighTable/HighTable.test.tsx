@@ -1307,9 +1307,7 @@ describe('When the number of rows is updated', () => {
     expect(getAllByRole('row')).toHaveLength(6) // +1 for the header row
     expect(getByRole('grid').getAttribute('aria-rowcount')).toBe('6')
 
-    act(() => {
-      smallData.numRows = 10
-    })
+    smallData.numRows = 10
 
     rerender(
       <ErrorBoundary>
