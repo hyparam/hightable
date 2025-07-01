@@ -375,7 +375,7 @@ export function convertSelection({ selection, permutationIndexes }: { selection:
  * @param {number} params.index - The index of the row in the table (table domain, sorted row indexes).
  * @param {Selection} params.selection - The current selection state (data domain, row indexes).
  * @param {OrderBy} params.orderBy - The order if the rows are sorted.
- * @param {DataFrame} params.dataFrame - The data frame.
+ * @param {DataFrame} params.data - The data frame.
  * @param {Map<string,number[]>} [params.ranksByColumn] - A map of column names to ranks. Used to cache the ranks for each column to avoid recomputing them on every render.
  * @param {function} [params.setRanks] - A function to set the ranks for a column.
  * @param {number[]} [params.indexes] - Cached indexes of the sorted data frame.
@@ -386,19 +386,19 @@ export async function toggleRangeInSortedSelection({
   index,
   selection,
   orderBy,
-  dataFrame,
+  data,
   ranksByColumn,
   setRanks,
   indexes,
   setIndexes,
   signal,
-}: { index: number, selection: Selection, orderBy: OrderBy, dataFrame: DataFrame, ranksByColumn?: Map<string, number[]>, setRanks?: ({ column, ranks }: {column: string, ranks: number[]}) => void, indexes?: number[], setIndexes?: ({ orderBy, indexes }: { orderBy: OrderBy, indexes: number[] }) => void, signal?: AbortSignal }): Promise<Selection> {
+}: { index: number, selection: Selection, orderBy: OrderBy, data: DataFrame, ranksByColumn?: Map<string, number[]>, setRanks?: ({ column, ranks }: {column: string, ranks: number[]}) => void, indexes?: number[], setIndexes?: ({ orderBy, indexes }: { orderBy: OrderBy, indexes: number[] }) => void, signal?: AbortSignal }): Promise<Selection> {
   // Extend the selection from the anchor to the index with sorted data
   // Convert the indexes to work in the data domain before converting back.
-  if (!dataFrame.sortable) {
+  if (!data.sortable) {
     throw new Error('Data frame is not sortable')
   }
-  const dataIndexes = await fetchIndexes({ orderBy, signal, ranksByColumn, setRanks, indexes, setIndexes, dataFrame })
+  const dataIndexes = await fetchIndexes({ orderBy, signal, ranksByColumn, setRanks, indexes, setIndexes, data })
   // TODO(SL): the permuted indexes could be cached as well
   const tableIndexes = invertPermutationIndexes(dataIndexes)
   const tableSelection = convertSelection({ selection, permutationIndexes: tableIndexes })

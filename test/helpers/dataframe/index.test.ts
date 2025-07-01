@@ -56,41 +56,41 @@ describe('arrayDataFrame', () => {
 })
 
 describe('sortableDataFrame', () => {
-  const data = [
+  const array = [
     { id: 3, name: 'Charlie', age: 25 },
     { id: 1, name: 'Alice', age: 30 },
     { id: 2, name: 'Bob', age: 20 },
     { id: 4, name: 'Dani', age: 20 },
   ]
-  const dataFrame = arrayDataFrame(data)
+  const data = arrayDataFrame(array)
 
   it('should set sortable to true', () => {
-    const df = sortableDataFrame(dataFrame)
+    const df = sortableDataFrame(data)
     expect(df.sortable).toBe(true)
   })
 
   it('should preserve header and numRows', () => {
-    const df = sortableDataFrame(dataFrame)
-    expect(df.header).toEqual(dataFrame.header)
-    expect(df.numRows).toBe(dataFrame.numRows)
+    const df = sortableDataFrame(data)
+    expect(df.header).toEqual(data.header)
+    expect(df.numRows).toBe(data.numRows)
   })
 
   it('should return unsorted data when orderBy is not provided', () => {
-    const df = sortableDataFrame(dataFrame)
+    const df = sortableDataFrame(data)
     expect(df.getCell({ row: 0, column: 'name' })?.value).toBe('Charlie')
     expect(df.getCell({ row: 1, column: 'name' })?.value).toBe('Alice')
     expect(df.getCell({ row: 2, column: 'name' })?.value).toBe('Bob')
   })
 
   it('should return unsorted data when orderBy is an empty array', () => {
-    const df = sortableDataFrame(dataFrame)
+    const df = sortableDataFrame(data)
     expect(df.getCell({ row: 0, column: 'name', orderBy: [] })?.value).toBe('Charlie')
     expect(df.getCell({ row: 1, column: 'name', orderBy: [] })?.value).toBe('Alice')
     expect(df.getCell({ row: 2, column: 'name', orderBy: [] })?.value).toBe('Bob')
   })
 
   it('should return data sorted by column "age" in ascending order', async () => {
-    const df = sortableDataFrame(dataFrame)
+    const df = sortableDataFrame(data)
     const orderBy = [{ column: 'age', direction: 'ascending' as const }]
     await df.fetch({ orderBy, rowStart: 0, rowEnd: 4, columns: ['name'] })
     expect(df.getCell({ row: 0, column: 'name', orderBy })?.value).toBe('Bob')
@@ -100,7 +100,7 @@ describe('sortableDataFrame', () => {
   })
 
   it('should return data sorted by column "age" in descending order, using the data index in case of ties', async () => {
-    const df = sortableDataFrame(dataFrame)
+    const df = sortableDataFrame(data)
     const orderBy = [{ column: 'age', direction: 'descending' as const }]
     await df.fetch({ orderBy, rowStart: 0, rowEnd: 4, columns: ['name'] })
     expect(df.getCell({ row: 0, column: 'name', orderBy })?.value).toBe('Alice')
@@ -110,7 +110,7 @@ describe('sortableDataFrame', () => {
   })
 
   it('should return data sorted by columns "age" in ascending order and "name" in descending order', async () => {
-    const df = sortableDataFrame(dataFrame)
+    const df = sortableDataFrame(data)
     const orderBy = [{ column: 'age', direction: 'ascending' as const }, { column: 'name', direction: 'descending' as const }]
     await df.fetch({ orderBy, rowStart: 0, rowEnd: 4, columns: ['name'] })
     expect(df.getCell({ row: 0, column: 'name', orderBy })?.value).toBe('Dani')
@@ -120,7 +120,7 @@ describe('sortableDataFrame', () => {
   })
 
   it('should throw for invalid orderBy field', async () => {
-    const df = sortableDataFrame(dataFrame)
+    const df = sortableDataFrame(data)
     const orderBy = [{ column: 'invalid', direction: 'ascending' as const }]
     await expect(df.fetch({ orderBy, rowStart: 0, rowEnd: 4, columns: ['name'] })).rejects.toThrow('Invalid orderBy field: invalid')
   })

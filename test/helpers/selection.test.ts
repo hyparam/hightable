@@ -328,9 +328,8 @@ describe('toggleRangeInSortedSelection', () => {
   // default values
   const selection = { ranges: [{ start: 1, end: 2 }], anchor: 1 }
   const orderBy = [{ column: 'name', direction: 'ascending' as const }]
-  const dataFrame = sortableDf
   // const indexesByOrderBy = new Map()
-  const props = { index: 2, selection, orderBy, dataFrame }
+  const props = { index: 2, selection, orderBy, data: sortableDf }
   // { id: 3, name: 'Charlie', age: 25 },
   // { id: 1, name: 'Alice', age: 30 },
   // { id: 2, name: 'Bob', age: 20 },
@@ -360,7 +359,7 @@ describe('toggleRangeInSortedSelection', () => {
   })
   it('should throw an error if the data is not sortable', async () => {
     await expect(
-      toggleRangeInSortedSelection({ ...props, dataFrame: { ...sortableDf, sortable: false } })
+      toggleRangeInSortedSelection({ ...props, data: { ...sortableDf, sortable: false } })
     ).rejects.toThrow('Data frame is not sortable')
   })
   it('should extend the selection (ascending order)', async () => {
