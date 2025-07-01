@@ -47,7 +47,7 @@ export interface UnsortableDataFrame {
   //
   // static data frames will return a Promise that resolves immediately.
   // rowEnd is exclusive
-  fetch({ rowStart, rowEnd, columns, signal }: { rowStart: number, rowEnd: number, columns: string[], signal?: AbortSignal }): Promise<void>
+  fetch: ({ rowStart, rowEnd, columns, signal }: { rowStart: number, rowEnd: number, columns: string[], signal?: AbortSignal }) => Promise<void>
 
   // emits events, defined in DataFrameEvents
   // eventTarget can be used as follows:
@@ -67,9 +67,7 @@ export interface UnsortableDataFrame {
  *
  * It can mutate its data, and a table can subscribe to changes using the eventTarget.
  */
-export interface SortableDataFrame {
-  numRows: number
-  header: string[]
+export interface SortableDataFrame extends Omit<UnsortableDataFrame, 'sortable'> {
   sortable: true
 
   // Return the row number (index in the underlying data) for the given row index in the dataframe.

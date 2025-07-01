@@ -1,8 +1,8 @@
 import { OrderBy, checkOrderBy, computeRanks, serializeOrderBy } from '../sort.js'
 import { createEventTarget } from '../typedEventTarget.js'
-import { DataFrame, DataFrameEvents, ResolvedValue } from './types.js'
+import { DataFrame, DataFrameEvents, ResolvedValue, SortableDataFrame } from './types.js'
 
-export function sortableDataFrame(data: DataFrame): DataFrame {
+export function sortableDataFrame(data: DataFrame): SortableDataFrame {
   if (data.sortable) {
     // If the data frame is already sortable, we can return it as is.
     return data
@@ -12,8 +12,6 @@ export function sortableDataFrame(data: DataFrame): DataFrame {
 
   const wrappedHeader = header.slice() // Create a shallow copy of the header to avoid mutating the original
 
-  // TODO(SL): We could use TypedArrays to store the ranks, for example
-  // TODO(SL): cache promises instead of resolved values? beware: how to handle abort signal?
   // TODO(SL!): how to erase the cache if needed? .dispose() method? do we need it?
   const ranksByColumn = new Map<string, number[]>()
   const indexesByOrderBy = new Map<string, number[]>()
