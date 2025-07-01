@@ -19,7 +19,6 @@ export const DataContext = createContext<DataContextType>(getDefaultDataContext(
 
 interface DataProviderProps {
   data: DataFrame | DataFrameSimple,
-  onError: (error: Error) => void
   children: ReactNode
 }
 
@@ -31,7 +30,7 @@ function isValidNumRows(row: number): boolean {
   return Number.isInteger(row) && row >= 0
 }
 
-export function DataProvider({ children, onError, data }: DataProviderProps) {
+export function DataProvider({ children, data }: DataProviderProps) {
   // We want a string key to identify the data.
   const [key, setKey] = useState<string>(getRandomKey())
   const [previousData, setPreviousData] = useState<DataFrame | DataFrameSimple>(data)
@@ -46,18 +45,14 @@ export function DataProvider({ children, onError, data }: DataProviderProps) {
   }
 
   useEffect(() => {
-    function onUpdate() {
+    function onResolve() {
       setVersion(prev => prev + 1)
     }
-    data.eventTarget?.addEventListener('resolve', onUpdate)
-    data.eventTarget?.addEventListener('dataframe:update', onUpdate)
-    data.eventTarget?.addEventListener('dataframe:index:update', onUpdate)
+    data.eventTarget?.addEventListener('resolve', onResolve)
     return () => {
-      data.eventTarget?.removeEventListener('resolve', onUpdate)
-      data.eventTarget?.removeEventListener('dataframe:update', onUpdate)
-      data.eventTarget?.removeEventListener('dataframe:index:update', onUpdate)
+      data.eventTarget?.removeEventListener('resolve', onResolve)
     }
-  }, [data, onError])
+  }, [data])
 
   if (data !== previousData) {
     setKey(getRandomKey())

@@ -22,13 +22,6 @@ export function sortableDataFrame(dataFrame: DataFrame | DataFrameSimple): DataF
   eventTarget?.addEventListener('resolve', () => {
     wrappedEventTarget.dispatchEvent(new CustomEvent('resolve'))
   })
-  eventTarget?.addEventListener('dataframe:update', (event) => {
-    // Forward the update event to the sortable data frame
-    const { rowStart, rowEnd, columns } = event.detail
-    wrappedEventTarget.dispatchEvent(new CustomEvent('dataframe:update', { detail: { rowStart, rowEnd, columns } }))
-  })
-  // The dataframe:index:update event should not be dispatched by an unsortable data frame, so we don't need to forward it here.
-
   // TODO(SL!): the listeners are not removed, so we might leak memory if the wrapped dataFrame is not used anymore.
   // We could add a method to remove the listeners (.dispose() ?).
 
@@ -94,7 +87,6 @@ export function sortableDataFrame(dataFrame: DataFrame | DataFrameSimple): DataF
         // Store the indexes in the map.
         indexesByOrderBy.set(serializeOrderBy(orderBy), indexes)
         // Notify the event target that the indexes have been updated.
-        wrappedEventTarget.dispatchEvent(new CustomEvent('dataframe:index:update', { detail: { rowStart, rowEnd, orderBy } }))
         wrappedEventTarget.dispatchEvent(new CustomEvent('resolve'))
       },
       dataFrame,

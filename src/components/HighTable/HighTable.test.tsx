@@ -226,8 +226,6 @@ describe('with async data, HighTable', () => {
             }
           }
         }
-        eventTarget.dispatchEvent(new CustomEvent('dataframe:update', { detail: { rowStart, rowEnd, columns } }))
-        // eventTarget.dispatchEvent(new CustomEvent('cell:resolve', { detail: { rowStart, rowEnd, columns } }))
         eventTarget.dispatchEvent(new CustomEvent('resolve'))
       }),
       eventTarget,

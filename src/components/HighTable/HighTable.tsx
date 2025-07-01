@@ -59,7 +59,7 @@ export const columnStatesSuffix = ':column:states' // suffix used to store the c
  */
 export default function HighTable(props: Props) {
   return (
-    <DataProvider data={props.data} onError={props.onError ?? console.error}>
+    <DataProvider data={props.data}>
       <HighTableData {...props} />
     </DataProvider>
   )

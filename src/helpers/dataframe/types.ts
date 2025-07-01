@@ -8,9 +8,6 @@ export interface ResolvedValue<T = any> {
 }
 
 export interface DataFrameEvents {
-  'dataframe:update': { rowStart: number, rowEnd: number, columns: string[], orderBy?: OrderBy };
-  'dataframe:index:update': { rowStart: number, rowEnd: number, orderBy?: OrderBy };
-
   'resolve': undefined;
   // TODO(SL): maybe provide more specific events like:
   // 'resolve:cell': { row: number; column: string; };
