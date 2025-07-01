@@ -1,7 +1,9 @@
 import { act, fireEvent, waitFor, within } from '@testing-library/react'
 import { UserEvent } from '@testing-library/user-event'
+import { Component, ReactNode } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { DataFrame, DataFrameEvents, getStaticFetch } from '../../helpers/dataframe/index.js'
+import { createGetRowNumber, createNoOpFetch, validateFetchParams } from '../../helpers/dataframe/helpers.js'
+import { DataFrame, DataFrameEvents, UnsortableDataFrame } from '../../helpers/dataframe/index.js'
 import { sortableDataFrame } from '../../helpers/dataframe/sort.js'
 import { createEventTarget } from '../../helpers/typedEventTarget.js'
 import { MaybeColumnState } from '../../hooks/useColumnStates.js'
@@ -26,13 +28,13 @@ function getDataCell({ row, column }: { row: number, column: string }) {
   throw new Error(`Unknown column: ${column}`)
 }
 
-const data: DataFrame = {
-  header: ['ID', 'Count', 'Double', 'Triple'],
+const header = ['ID', 'Count', 'Double', 'Triple']
+const data: UnsortableDataFrame = {
+  header,
   numRows: 1000,
-  getUnsortedRow: ({ row }) => ({ value: row }),
+  getRowNumber: createGetRowNumber({ numRows: 1000 }),
   getCell: getDataCell,
-  fetch: getStaticFetch({ getCell: getDataCell }),
-  eventTarget: createEventTarget<DataFrameEvents>(),
+  fetch: createNoOpFetch({ getCell: getDataCell, header, numRows: 1000 }),
 }
 
 function getOtherDataCell({ row, column }: { row: number, column: string }) {
@@ -47,13 +49,13 @@ function getOtherDataCell({ row, column }: { row: number, column: string }) {
   throw new Error(`Unknown column: ${column}`)
 }
 
-const otherData: DataFrame = {
-  header: ['ID', 'Count'],
+const otherHeader = ['ID', 'Count']
+const otherData: UnsortableDataFrame = {
+  header: otherHeader,
   numRows: 1000,
-  getUnsortedRow: ({ row }) => ({ value: row }),
+  getRowNumber: createGetRowNumber({ numRows: 1000 }),
   getCell: getOtherDataCell,
-  fetch: getStaticFetch({ getCell: getOtherDataCell }),
-  eventTarget: createEventTarget<DataFrameEvents>(),
+  fetch: createNoOpFetch({ getCell: getOtherDataCell, header: otherHeader, numRows: 1000 }),
 }
 
 async function setFocusOnScrollableDiv(user: UserEvent) {
@@ -80,10 +82,9 @@ describe('HighTable', () => {
   const mockData = {
     header: ['ID', 'Name', 'Age'],
     numRows: 100,
-    getUnsortedRow: ({ row }: { row: number }) => ({ value: row }),
+    getRowNumber: createGetRowNumber({ numRows: 100 }),
     getCell: vi.fn(getCell),
-    fetch: getStaticFetch({ getCell }),
-    eventTarget: createEventTarget<DataFrameEvents>(),
+    fetch: createNoOpFetch({ getCell, header: ['ID', 'Name', 'Age'], numRows: 100 }),
   }
 
   beforeEach(() => {
@@ -181,10 +182,7 @@ describe('HighTable', () => {
 
 describe('with async data, HighTable', () => {
   function createAsyncDataFrame({ ms }: {ms: number} = { ms: 10 }): DataFrame & {_forTests: {signalAborted: boolean[], asyncDataFetched: boolean[]}} {
-    const asyncDataFetched = Array.from({ length: 1000 }, (_, i) => i).reduce<boolean[]>((acc, row) => {
-      acc[row] = false
-      return acc
-    }, [])
+    const asyncDataFetched = Array<boolean>(1000).fill(false)
     const signalAborted: boolean[] = []
     const eventTarget = createEventTarget<DataFrameEvents>()
     function getCell({ row, column }: { row: number, column: string }) {
@@ -203,27 +201,33 @@ describe('with async data, HighTable', () => {
       }
       throw new Error(`Unknown column: ${column}`)
     }
-    const staticFetch = getStaticFetch({ getCell })
+    const numRows = 1000
+    const header = ['ID', 'Name', 'Age']
     return {
-      header: ['ID', 'Name', 'Age'],
-      numRows: 1000,
-      getUnsortedRow: ({ row }: { row: number }) => ({ value: row }),
+      header,
+      numRows,
+      getRowNumber: ({ row }: { row: number }) => ({ value: row }),
       getCell: vi.fn(getCell),
-      fetch: vi.fn(async ({ rowStart, rowEnd, columns, signal, onColumnComplete }: { rowStart: number, rowEnd: number, columns: string[], signal?: AbortSignal, onColumnComplete?: (data: {column: string, values: any[]}) => void }) => {
+      fetch: vi.fn(async ({ rowStart, rowEnd, columns, signal }: { rowStart: number, rowEnd: number, columns: string[], signal?: AbortSignal }) => {
+        // Validation
+        validateFetchParams({ rowStart, rowEnd, columns, data: { numRows, header } })
         await new Promise(resolve => setTimeout(resolve, ms))
-        // reject if the signal is aborted, and call onColumnComplete for each column
-        try {
-          await staticFetch({ rowStart, rowEnd, columns, signal, onColumnComplete })
-        } catch (error) {
-          if (error instanceof DOMException && error.name === 'AbortError') {
-            signalAborted.push(true)
-          }
-          throw error
+        if (signal?.aborted) {
+          signalAborted.push(true)
+          return Promise.reject(new DOMException('Fetch aborted', 'AbortError'))
         }
         for (let row = rowStart; row < rowEnd; row++) {
           asyncDataFetched[row] = true
         }
-        eventTarget.dispatchEvent(new CustomEvent('dataframe:update', { detail: { rowStart, rowEnd, columns } }))
+        // Check if all cells are available
+        for (const column of columns) {
+          for (let row = rowStart; row < rowEnd; row++) {
+            if (getCell({ row, column }) === undefined) {
+              throw new Error(`Cell not found for row ${row} and column "${column}", and this is a static data frame.`)
+            }
+          }
+        }
+        eventTarget.dispatchEvent(new CustomEvent('resolve'))
       }),
       eventTarget,
       _forTests: {
@@ -1261,14 +1265,43 @@ describe('When the table scroller is focused', () => {
   })
 })
 
-describe('When the number of rows is updated (iceberg dataframe, for example)', () => {
-  it('the table is updated with the new number of rows', async () => {
+describe('When the number of rows is updated', () => {
+  it('an error is raised', async () => {
     const smallData = {
       ...data,
       numRows: 5,
-      eventTarget: createEventTarget<DataFrameEvents>(),
     }
-    const { findByRole, getByRole, getAllByRole } = render(<HighTable data={smallData} />)
+
+    class ErrorBoundary extends Component<{ children: ReactNode }, { lastError: unknown }>{
+      constructor(props: { children: ReactNode }) {
+        super(props)
+        this.state = { lastError: undefined }
+      }
+
+      static getDerivedStateFromError(error: unknown) {
+        // Update state so the next render will show the fallback UI.
+        return { lastError: error }
+      }
+
+      componentDidCatch() {
+        // Stop the error propagation
+      }
+
+      render() {
+        if (this.state.lastError) {
+          // You can render any custom fallback UI
+          return <div role="alert">Something went wrong</div>
+        }
+
+        return this.props.children
+      }
+    }
+
+    const { findByRole, getByRole, getAllByRole, rerender } = render(
+      <ErrorBoundary>
+        <HighTable data={smallData} />
+      </ErrorBoundary>
+    )
     // await because we have to wait for the data to be fetched first
     await findByRole('cell', { name: 'row 2' })
     expect(getAllByRole('row')).toHaveLength(6) // +1 for the header row
@@ -1276,30 +1309,14 @@ describe('When the number of rows is updated (iceberg dataframe, for example)', 
 
     act(() => {
       smallData.numRows = 10
-      smallData.eventTarget.dispatchEvent(new CustomEvent('dataframe:numrowschange', { detail: { numRows: smallData.numRows } }))
     })
 
-    // await again, since we have to wait for the new data to be fetched
-    await findByRole('cell', { name: 'row 8' })
-    expect(getAllByRole('row')).toHaveLength(11) // +1 for the header row
-    expect(getByRole('grid').getAttribute('aria-rowcount')).toBe('11')
-  })
-  it('an error is thrown if the numrowschange event is sent but data.numRows has not beed updated', () => {
-    const smallData = {
-      ...data,
-      numRows: 5,
-      eventTarget: createEventTarget<DataFrameEvents>(),
-    }
+    rerender(
+      <ErrorBoundary>
+        <HighTable data={smallData} />
+      </ErrorBoundary>
+    )
 
-    const errors: unknown[] = []
-    const { getByRole } = render(<HighTable data={smallData} onError={error => { errors.push(error) }} />)
-    expect(getByRole('grid').getAttribute('aria-rowcount')).toBe('6')
-
-    act(() => {
-      smallData.eventTarget.dispatchEvent(new CustomEvent('dataframe:numrowschange', { detail: { numRows: 10 } }))
-    })
-    expect(errors).toHaveLength(1)
-    expect(errors[0]).toBeInstanceOf(Error)
-    expect((errors[0] as Error).message).toBe('Number of rows changed from 5 to 10, but the data frame did not change.')
+    expect(getByRole('alert'), 'Something went wrong').toBeDefined()
   })
 })

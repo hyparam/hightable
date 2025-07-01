@@ -2,13 +2,13 @@ import { OrderBy, checkOrderBy, computeRanks, serializeOrderBy } from '../sort.j
 import { createEventTarget } from '../typedEventTarget.js'
 import { DataFrame, DataFrameEvents, ResolvedValue } from './types.js'
 
-export function sortableDataFrame(dataFrame: DataFrame): DataFrame {
-  if (dataFrame.sortable) {
+export function sortableDataFrame(data: DataFrame): DataFrame {
+  if (data.sortable) {
     // If the data frame is already sortable, we can return it as is.
-    return dataFrame
+    return data
   }
 
-  const { header, numRows, getCell, fetch, eventTarget } = dataFrame
+  const { header, numRows, getCell, eventTarget } = data
 
   const wrappedHeader = header.slice() // Create a shallow copy of the header to avoid mutating the original
 
@@ -19,21 +19,13 @@ export function sortableDataFrame(dataFrame: DataFrame): DataFrame {
   const indexesByOrderBy = new Map<string, number[]>()
 
   const wrappedEventTarget = createEventTarget<DataFrameEvents>()
-  eventTarget.addEventListener('dataframe:numrowschange', (event) => {
-    // Forward the numRows change event to the sortable data frame
-    wrappedEventTarget.dispatchEvent(new CustomEvent('dataframe:numrowschange', { detail: { numRows: event.detail.numRows } }))
+  eventTarget?.addEventListener('resolve', () => {
+    wrappedEventTarget.dispatchEvent(new CustomEvent('resolve'))
   })
-  eventTarget.addEventListener('dataframe:update', (event) => {
-    // Forward the update event to the sortable data frame
-    const { rowStart, rowEnd, columns } = event.detail
-    wrappedEventTarget.dispatchEvent(new CustomEvent('dataframe:update', { detail: { rowStart, rowEnd, columns } }))
-  })
-  // The dataframe:index:update event should not be dispatched by an unsortable data frame, so we don't need to forward it here.
-
-  // TODO(SL!): the listeners are not removed, so we might leak memory if the wrapped dataFrame is not used anymore.
+  // TODO(SL!): the listeners are not removed, so we might leak memory if the wrapped dataframe is not used anymore.
   // We could add a method to remove the listeners (.dispose() ?).
 
-  function wrappedGetUnsortedRow({ row, orderBy }: { row: number, orderBy?: OrderBy }): ResolvedValue<number> | undefined {
+  function wrappedGetRowNumber({ row, orderBy }: { row: number, orderBy?: OrderBy }): ResolvedValue<number> | undefined {
     if (row < 0 || row >= numRows) {
       // If the row is out of bounds, we can't resolve it.
       throw new Error(`Invalid row index: ${row}. Must be between 0 and ${numRows - 1}.`)
@@ -45,33 +37,30 @@ export function sortableDataFrame(dataFrame: DataFrame): DataFrame {
     checkOrderBy({ header, orderBy })
     const serializedOrderBy = serializeOrderBy(orderBy)
     const indexes = indexesByOrderBy.get(serializedOrderBy)
-    const unsortedRowIndex = indexes?.[row]
-    if (unsortedRowIndex === undefined) {
+    const rowNumber = indexes?.[row]
+    if (rowNumber === undefined) {
       return undefined
     }
-    return { value: unsortedRowIndex }
+    return { value: rowNumber }
   }
 
   function wrappedGetCell({ row, column, orderBy }: { row: number, column: string, orderBy?: OrderBy }): ResolvedValue | undefined {
-    const unsortedRow = wrappedGetUnsortedRow({ row, orderBy })
-    if (!unsortedRow) {
+    const rowNumber = wrappedGetRowNumber({ row, orderBy })
+    if (!rowNumber) {
       // If we can't resolve the unsorted row, we return undefined.
       return undefined
     }
-    return getCell({ row: unsortedRow.value, column })
+    return getCell({ row: rowNumber.value, column })
   }
 
-  async function wrappedFetch(args: { rowStart: number, rowEnd: number, columns: string[], orderBy?: OrderBy, signal?: AbortSignal, onColumnComplete?: (data: { column: string, values: any[], orderBy?: OrderBy }) => void }): Promise<void> {
+  async function wrappedFetch(args: { rowStart: number, rowEnd: number, columns: string[], orderBy?: OrderBy, signal?: AbortSignal }): Promise<void> {
     const { orderBy, ...rest } = args
     if (!orderBy || orderBy.length === 0) {
       // If orderBy is not provided, we can fetch the data without sorting.
-      return fetch(rest)
+      return data.fetch(rest)
     }
 
-    const { rowStart, rowEnd, columns, signal, onColumnComplete } = rest
-    if (onColumnComplete) {
-      throw new Error('onColumnComplete is not supported with sorting.')
-    }
+    const { rowStart, rowEnd, columns, signal } = rest
 
     if (rowStart < 0 || rowEnd > numRows || rowStart > rowEnd) {
       throw new Error(`Invalid range: [${rowStart}, ${rowEnd}) for numRows: ${numRows}.`)
@@ -98,18 +87,18 @@ export function sortableDataFrame(dataFrame: DataFrame): DataFrame {
         // Store the indexes in the map.
         indexesByOrderBy.set(serializeOrderBy(orderBy), indexes)
         // Notify the event target that the indexes have been updated.
-        wrappedEventTarget.dispatchEvent(new CustomEvent('dataframe:index:update', { detail: { rowStart, rowEnd, orderBy } }))
+        wrappedEventTarget.dispatchEvent(new CustomEvent('resolve'))
       },
-      dataFrame,
+      data,
     })
-    return fetchFromIndexes({ columns, signal, indexes: indexes.slice(rowStart, rowEnd), fetch })
+    return fetchFromIndexes({ columns, signal, indexes: indexes.slice(rowStart, rowEnd), fetch: data.fetch })
   }
 
   return {
     sortable: true,
     numRows,
     header: wrappedHeader,
-    getUnsortedRow: wrappedGetUnsortedRow,
+    getRowNumber: wrappedGetRowNumber,
     getCell: wrappedGetCell,
     fetch: wrappedFetch,
     eventTarget: wrappedEventTarget,
@@ -118,10 +107,10 @@ export function sortableDataFrame(dataFrame: DataFrame): DataFrame {
 
 async function fetchFromIndexes({ columns, indexes, signal, fetch }: { columns: string[], indexes: number[], signal?: AbortSignal, fetch: DataFrame['fetch'] }): Promise<void> {
   // Fetch the data for every index, grouping the fetches by consecutive rows.
-  const unsortedRowIndexes = indexes.sort()
+  const rowNumberIndexes = indexes.sort()
   const promises: (void | Promise<void>)[] = []
   let range: [number, number] | undefined = undefined
-  for (const row of unsortedRowIndexes) {
+  for (const row of rowNumberIndexes) {
     if (range === undefined) {
       // First iteration
       range = [row, row + 1]
@@ -146,12 +135,12 @@ type OrderByWithRanks = {
   ranks: number[]
 }[]
 
-export async function fetchIndexes({ orderBy, signal, ranksByColumn, setRanks, indexes, setIndexes, dataFrame }: { orderBy: OrderBy, signal?: AbortSignal, ranksByColumn?: Map<string, number[]>, setRanks?: ({ column, ranks }: {column: string, ranks: number[]}) => void, indexes?: number[], setIndexes?: ({ orderBy, indexes }: { orderBy: OrderBy, indexes: number[] }) => void, dataFrame: DataFrame }): Promise<number[]> {
+export async function fetchIndexes({ orderBy, signal, ranksByColumn, setRanks, indexes, setIndexes, data }: { orderBy: OrderBy, signal?: AbortSignal, ranksByColumn?: Map<string, number[]>, setRanks?: ({ column, ranks }: {column: string, ranks: number[]}) => void, indexes?: number[], setIndexes?: ({ orderBy, indexes }: { orderBy: OrderBy, indexes: number[] }) => void, data: DataFrame }): Promise<number[]> {
   if (!indexes) {
     // If the indexes are not cached, we need to compute them.
     // First, we fetch the ranks for each column in the orderBy.
     // If the ranks are already cached, we use them, otherwise we compute them.
-    const orderByWithRanks = await fetchOrderByWithRanks({ orderBy, signal, ranksByColumn, setRanks, dataFrame: dataFrame })
+    const orderByWithRanks = await fetchOrderByWithRanks({ orderBy, signal, ranksByColumn, setRanks, data })
     // Compute the indexes using the ranks for each column in the orderBy.
     indexes = computeIndexes(orderByWithRanks)
     setIndexes?.({ orderBy, indexes })
@@ -164,19 +153,19 @@ export async function fetchIndexes({ orderBy, signal, ranksByColumn, setRanks, i
  *
  * @param {Object} params
  * @param {OrderBy} params.orderBy The orderBy to compute ranks for.
- * @param {dataFrame} params.dataFrame The data frame to compute ranks from.
+ * @param {DataFrame} params.data The data frame to compute ranks from.
  * @param {Map<string, number[]>} [params.ranksByColumn] A map of column names to promises that resolve to their ranks.
  * @param {Function} [params.setRanks] A function to set the ranks for each column. It should accept an object with the column name and the ranks.
  * @param {AbortSignal} [params.signal] A signal to cancel the computation. If the signal is aborted, the function rejects with an AbortError DOMException.
  *
  * @returns {Promise<{ direction: 'ascending' | 'descending', ranks: number[] }[]>} A promise that resolves to an array of objects containing the direction and ranks for each column in the orderBy.
  */
-async function fetchOrderByWithRanks({ orderBy, signal, ranksByColumn, setRanks, dataFrame }: {orderBy: OrderBy, signal?: AbortSignal, ranksByColumn?: Map<string, number[]>, setRanks?: ({ column, ranks }: {column: string, ranks: number[]}) => void, dataFrame: DataFrame }): Promise<OrderByWithRanks> {
+async function fetchOrderByWithRanks({ orderBy, signal, ranksByColumn, setRanks, data }: {orderBy: OrderBy, signal?: AbortSignal, ranksByColumn?: Map<string, number[]>, setRanks?: ({ column, ranks }: {column: string, ranks: number[]}) => void, data: DataFrame }): Promise<OrderByWithRanks> {
   const orderByWithRanks: OrderByWithRanks = []
   const promises: Promise<any>[] = []
 
   for (const [i, { column, direction }] of orderBy.entries()) {
-    if (!dataFrame.header.includes(column)) {
+    if (!data.header.includes(column)) {
       throw new Error(`Invalid column: ${column}`)
     }
     const columnRanks = ranksByColumn?.get(column)
@@ -184,7 +173,18 @@ async function fetchOrderByWithRanks({ orderBy, signal, ranksByColumn, setRanks,
       orderByWithRanks[i] = { direction, ranks: columnRanks }
     } else {
       promises.push(
-        fetchColumn({ dataFrame, column, signal }).then((columnValues) => {
+        data.fetch({ rowStart: 0, rowEnd: data.numRows, columns: [column], signal }).then(() => {
+          if (signal?.aborted) {
+            throw new DOMException('Fetch aborted', 'AbortError')
+          }
+          // Get the values
+          const columnValues = Array.from({ length: data.numRows }, (_, row) => {
+            const cell = data.getCell({ row, column })
+            if (!cell) {
+              throw new Error(`Cell not found for row ${row} and column ${column}`)
+            }
+            return cell.value
+          })
           // return the ranks in ascending order
           // we can get the descending order replacing the rank with numRows - rank - 1. It's not exactly the rank of
           // the descending order, because the rank is the first, not the last, of the ties. But it's enough for the
@@ -223,99 +223,4 @@ function computeIndexes(orderByWithRanks: OrderByWithRanks): number[] {
   })
   // dataIndexes[0] gives the index of the first row in the sorted table
   return dataIndexes
-}
-
-/**
- * Fetch a column from a DataFrame.
- *
- * This function fetches the values of a column, filling in missing values with data fetched in ranges.
- * It handles consecutive missing rows by fetching them in ranges, which is more efficient than fetching each row individually.
- *
- * @param {Object} params
- * @param {DataFrame} params.dataFrame The DataFrame to fetch data from.
- * @param {string} params.column The column name to fetch data from.
- * @param {AbortSignal} [params.signal] A signal to cancel the fetch operation. If the signal is aborted, the function rejects with an AbortError DOMException.
- *
- * @returns {Promise<any[]>} A promise that resolves to an array of values for the specified column.
- */
-async function fetchColumn({ dataFrame, column, signal }: {dataFrame: DataFrame, column: string, signal?: AbortSignal}): Promise<any[]> {
-  const values = Array(dataFrame.numRows).fill(undefined)
-  const missingRangePromises: Promise<void>[] = []
-  let currentRange: {rowStart: number, rowEnd: number} | undefined = undefined
-  for (let row = 0; row < dataFrame.numRows; row++) {
-    const cell = dataFrame.getCell({ row, column })
-    if (cell) {
-      values[row] = cell.value
-    } else {
-      if (currentRange === undefined) {
-        // First iteration
-        currentRange = { rowStart: row, rowEnd: row + 1 }
-      } else {
-        const { rowStart, rowEnd } = currentRange
-        if (rowEnd !== row) {
-          // The row is not consecutive to the current range.
-          // Fetch the previous range
-          missingRangePromises.push(
-            fetchRange({ dataFrame, column, rowStart, rowEnd, signal }).then((data) => {
-              for (const [i, value] of data.entries()) {
-                values[rowStart + i] = value
-              }
-            })
-          )
-          // and start a new one.
-          currentRange.rowStart = row
-        }
-        currentRange.rowEnd = row + 1
-      }
-    }
-  }
-  if (currentRange) {
-    const { rowStart, rowEnd } = currentRange
-    // Fetch the last range.
-    const rangePromise = fetchRange({ dataFrame, column, rowStart, rowEnd, signal }).then((data) => {
-      for (const [i, value] of data.entries()) {
-        values[rowStart + i] = value
-      }
-    })
-    missingRangePromises.push(rangePromise)
-  }
-
-  await Promise.all(missingRangePromises)
-  return values
-}
-
-/**
- * Fetch a range of data from one column in an DataFrame.
- *
- * It requires the dataFrame to return the values in onColumnComplete.
- *
- * The range is defined by [rowStart, rowEnd), where rowEnd is exclusive.
- * The range must be within the bounds of the dataframe.
- *
- * @param {Object} params
- * @param {string} params.column The column name to fetch data from.
- * @param {number} params.rowStart The starting row index (inclusive).
- * @param {number} params.rowEnd The ending row index (exclusive).
- * @param {DataFrame} params.dataFrame The DataFrame to fetch data from.
- * @param {AbortSignal} [params.signal] A signal to cancel the fetch operation. If the signal is aborted, the function rejects with an AbortError DOMException.
- *
- * @returns {any[]} data as an array of values.
- */
-function fetchRange({ dataFrame, column, rowStart, rowEnd, signal }: {dataFrame: DataFrame, column: string, rowStart: number, rowEnd: number, signal?: AbortSignal}): Promise<any[]> {
-  const length = rowEnd - rowStart
-  return new Promise((resolve, reject) => {
-    function onColumnComplete(data: {column: string, values: any[]}) {
-      if (data.values.length !== length) {
-        reject(new Error(`Fetched data length ${data.values.length} does not match expected length ${length}`))
-      }
-      if (data.column !== column) {
-        reject(new Error(`Data fetched for column "${data.column}" while the requested column was "${column}"`))
-      }
-      resolve(data.values)
-    }
-    // Fetch the data
-    dataFrame.fetch({ rowStart, rowEnd, columns: [column], signal, onColumnComplete }).catch((error) => {
-      reject(error)
-    })
-  })
 }

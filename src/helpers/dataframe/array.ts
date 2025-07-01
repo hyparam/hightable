@@ -1,16 +1,16 @@
-import { createEventTarget } from '../typedEventTarget.js'
-import type { Cells, DataFrame, DataFrameEvents, ResolvedValue } from './types.js'
+import { createGetRowNumber, createNoOpFetch, validateGetCellParams } from './helpers.js'
+import type { ResolvedValue, UnsortableDataFrame } from './types.js'
 
-export function arrayDataFrame(data: Cells[]): DataFrame {
-  const header = 0 in data ? Object.keys(data[0]) : []
+export function arrayDataFrame(array: Record<string, any>[]): UnsortableDataFrame {
+  // beware: we don't copy the array, so it must not be mutated after this point.
+  const header = 0 in array ? Object.keys(array[0]) : []
+  const numRows = array.length
 
   function getCell({ row, column }: { row: number, column: string }): ResolvedValue | undefined {
-    const cells = data[row]
+    validateGetCellParams({ row, column, data: { numRows, header } })
+    const cells = array[row]
     if (!cells) {
-      throw new Error(`Invalid row index: ${row}`)
-    }
-    if (!header.includes(column)) {
-      throw new Error(`Invalid column: ${column}`)
+      throw new Error(`Row ${row} not found in data`)
     }
     if (!(column in cells)) {
       throw new Error(`Column "${column}" not found in row ${row}`)
@@ -21,33 +21,10 @@ export function arrayDataFrame(data: Cells[]): DataFrame {
   }
 
   return {
-    numRows: data.length,
+    numRows,
     header,
-    sortable: false,
-    getUnsortedRow: ({ row }) => ({ value: row }),
+    getRowNumber: createGetRowNumber({ numRows }),
     getCell,
-    fetch: getStaticFetch({ getCell }),
-    eventTarget: createEventTarget<DataFrameEvents>(),
-  }
-}
-
-export function getStaticFetch({ getCell }: {getCell: DataFrame['getCell']}): DataFrame['fetch'] {
-  return ({ rowStart, rowEnd, columns, signal, onColumnComplete, orderBy }) => {
-    if (orderBy && orderBy.length > 0) {
-      throw new Error('This fetch method does not support ordering.')
-    }
-    if (signal?.aborted) {
-      return Promise.reject(new DOMException('Fetch aborted', 'AbortError'))
-    }
-    // This is a static data frame, so the only purpose of this method is if onColumnComplete is passed
-    if (onColumnComplete && columns.length > 0) {
-      for (const column of columns) {
-        const slice = Array(rowEnd - rowStart).fill(undefined).map((_, i) => {
-          return getCell({ row: rowStart + i, column })
-        })
-        onColumnComplete({ column, values: slice })
-      }
-    }
-    return Promise.resolve()
+    fetch: createNoOpFetch({ getCell, numRows, header }),
   }
 }

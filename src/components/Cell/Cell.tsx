@@ -13,7 +13,7 @@ interface Props {
   onDoubleClickCell?: (event: MouseEvent, col: number, row: number) => void
   onMouseDownCell?: (event: MouseEvent, col: number, row: number) => void
   onKeyDownCell?: (event: KeyboardEvent, col: number, row: number) => void // for accessibility, it should be passed if onDoubleClickCell is passed. It can handle more than that action though.
-  unsortedRow?: number // the row index in the original data, undefined if the value has not been fetched yet
+  rowNumber?: number // the row index in the original data, undefined if the value has not been fetched yet
 }
 
 /**
@@ -29,30 +29,30 @@ interface Props {
  * @param {function} [props.onDoubleClick] double click callback
  * @param {function} [props.onMouseDown] mouse down callback
  * @param {function} [props.onKeyDown] key down callback
- * @param {number} [props.unsortedRow] the row index in the original data, undefined if the value has not been fetched yet
+ * @param {number} [props.rowNumber] the row index in the original data, undefined if the value has not been fetched yet
  */
-export default function Cell({ cell, onDoubleClickCell, onMouseDownCell, onKeyDownCell, stringify, columnIndex, className, ariaColIndex, ariaRowIndex, unsortedRow }: Props) {
+export default function Cell({ cell, onDoubleClickCell, onMouseDownCell, onKeyDownCell, stringify, columnIndex, className, ariaColIndex, ariaRowIndex, rowNumber }: Props) {
   const ref = useRef<HTMLTableCellElement>(null)
   const { tabIndex, navigateToCell } = useCellNavigation({ ref, ariaColIndex, ariaRowIndex })
 
   const handleMouseDown = useCallback((event: MouseEvent) => {
     navigateToCell()
-    if (onMouseDownCell && unsortedRow !== undefined) {
-      onMouseDownCell(event, columnIndex, unsortedRow)
+    if (onMouseDownCell && rowNumber !== undefined) {
+      onMouseDownCell(event, columnIndex, rowNumber)
     }
-  }, [navigateToCell, onMouseDownCell, unsortedRow, columnIndex])
+  }, [navigateToCell, onMouseDownCell, rowNumber, columnIndex])
   const handleDoubleClick = useCallback((event: MouseEvent) => {
     navigateToCell()
-    if (onDoubleClickCell && unsortedRow !== undefined) {
-      onDoubleClickCell(event, columnIndex, unsortedRow)
+    if (onDoubleClickCell && rowNumber !== undefined) {
+      onDoubleClickCell(event, columnIndex, rowNumber)
     }
-  }, [navigateToCell, onDoubleClickCell, unsortedRow, columnIndex])
+  }, [navigateToCell, onDoubleClickCell, rowNumber, columnIndex])
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
     // No need to navigate to the cell when using the keyboard, it is already focused
-    if (onKeyDownCell && unsortedRow !== undefined) {
-      onKeyDownCell(event, columnIndex, unsortedRow)
+    if (onKeyDownCell && rowNumber !== undefined) {
+      onKeyDownCell(event, columnIndex, rowNumber)
     }
-  }, [onKeyDownCell, unsortedRow, columnIndex])
+  }, [onKeyDownCell, rowNumber, columnIndex])
 
   // Get the column width from the context
   const { getColumnStyle } = useColumnStates()
@@ -80,7 +80,7 @@ export default function Cell({ cell, onDoubleClickCell, onMouseDownCell, onKeyDo
       aria-busy={cell === undefined}
       aria-rowindex={ariaRowIndex}
       aria-colindex={ariaColIndex}
-      data-rowindex={unsortedRow}
+      data-rownumber={rowNumber}
       tabIndex={tabIndex}
       onDoubleClick={handleDoubleClick}
       onMouseDown={handleMouseDown}
