@@ -1,6 +1,6 @@
 import { CSSProperties, KeyboardEvent, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ColumnConfiguration } from '../../helpers/columnConfiguration.js'
-import { DataFrame, DataFrameSimple } from '../../helpers/dataframe/index.js'
+import { DataFrame } from '../../helpers/dataframe/index.js'
 import { Selection, toggleIndexInSelection, toggleRangeInSelection, toggleRangeInSortedSelection } from '../../helpers/selection.js'
 import { OrderBy, serializeOrderBy } from '../../helpers/sort.js'
 import { cellStyle, getClientWidth, getOffsetWidth } from '../../helpers/width.js'
@@ -23,7 +23,7 @@ const rowHeight = 33 // row height px
 const minWidth = 50 // minimum width of a cell in px, used to compute the column widths
 
 interface Props {
-  data: DataFrame | DataFrameSimple
+  data: DataFrame
   columnConfiguration?: ColumnConfiguration
   cacheKey?: string // used to persist column widths. If undefined, the column widths are not persisted. It is expected to be unique for each table.
   overscan?: number // number of rows to fetch outside of the viewport
@@ -161,7 +161,7 @@ export function HighTableInner({
 
       if (!('sortable' in data)) {
         throw new Error('DataFrame is not sortable, cannot toggle range in sorted selection')
-        // not DataFrameSimple at this point
+        // not SortableDataFrame at this point
       }
 
       // sorting, toggle the range in the sorted order

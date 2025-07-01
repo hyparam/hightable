@@ -1,4 +1,4 @@
-import { DataFrame, DataFrameSimple, ResolvedValue } from './types.js'
+import { DataFrame, ResolvedValue, UnsortableDataFrame } from './types.js'
 
 export function createGetRowNumber({ numRows }: {numRows: number}) {
   return ({ row }: { row: number }): ResolvedValue<number> => {
@@ -9,7 +9,7 @@ export function createGetRowNumber({ numRows }: {numRows: number}) {
   }
 }
 
-export function createNoOpFetch({ getCell, numRows, header }: Pick<DataFrameSimple, 'getCell' | 'numRows' | 'header'>): DataFrameSimple['fetch'] {
+export function createNoOpFetch({ getCell, numRows, header }: Pick<UnsortableDataFrame, 'getCell' | 'numRows' | 'header'>): UnsortableDataFrame['fetch'] {
   return ({ rowStart, rowEnd, columns, signal }) => {
     if (signal?.aborted) {
       return Promise.reject(new DOMException('Fetch aborted', 'AbortError'))

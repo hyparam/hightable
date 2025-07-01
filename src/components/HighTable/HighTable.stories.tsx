@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useState } from 'react'
 import { createGetRowNumber, createNoOpFetch, validateGetCellParams } from '../../helpers/dataframe/helpers.js'
-import { DataFrameEvents, DataFrameSimple, fromArray } from '../../helpers/dataframe/index.js'
+import { DataFrameEvents, UnsortableDataFrame, fromArray } from '../../helpers/dataframe/index.js'
 import { sortableDataFrame } from '../../helpers/dataframe/sort.js'
 import type { ResolvedValue } from '../../helpers/dataframe/types.js'
 import type { Selection } from '../../helpers/selection.js'
@@ -31,7 +31,7 @@ function getCell({ row, column }: { row: number, column: string }) {
                   undefined,
   }
 }
-const data: DataFrameSimple = {
+const data: UnsortableDataFrame = {
   header,
   numRows: 1000,
   getRowNumber: createGetRowNumber({ numRows: 1000 }),
@@ -134,7 +134,7 @@ function emptyGetCell({ row, column }: {row: number, column: string}): undefined
   validateGetCellParams({ row, column, data: { numRows: 0, header: emptyDataHeader } })
   return undefined
 }
-const emptyData: DataFrameSimple = {
+const emptyData: UnsortableDataFrame = {
   header: emptyDataHeader,
   numRows: 0,
   getRowNumber: createGetRowNumber({ numRows: 0 }),

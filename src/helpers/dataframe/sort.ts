@@ -1,9 +1,9 @@
 import { OrderBy, checkOrderBy, computeRanks, serializeOrderBy } from '../sort.js'
 import { createEventTarget } from '../typedEventTarget.js'
-import { DataFrame, DataFrameEvents, DataFrameSimple, ResolvedValue } from './types.js'
+import { DataFrame, DataFrameEvents, ResolvedValue } from './types.js'
 
-export function sortableDataFrame(dataFrame: DataFrame | DataFrameSimple): DataFrame {
-  if ('sortable' in dataFrame && dataFrame.sortable) {
+export function sortableDataFrame(dataFrame: DataFrame): DataFrame {
+  if (dataFrame.sortable) {
     // If the data frame is already sortable, we can return it as is.
     return dataFrame
   }
@@ -135,7 +135,7 @@ type OrderByWithRanks = {
   ranks: number[]
 }[]
 
-export async function fetchIndexes({ orderBy, signal, ranksByColumn, setRanks, indexes, setIndexes, dataFrame }: { orderBy: OrderBy, signal?: AbortSignal, ranksByColumn?: Map<string, number[]>, setRanks?: ({ column, ranks }: {column: string, ranks: number[]}) => void, indexes?: number[], setIndexes?: ({ orderBy, indexes }: { orderBy: OrderBy, indexes: number[] }) => void, dataFrame: DataFrame | DataFrameSimple }): Promise<number[]> {
+export async function fetchIndexes({ orderBy, signal, ranksByColumn, setRanks, indexes, setIndexes, dataFrame }: { orderBy: OrderBy, signal?: AbortSignal, ranksByColumn?: Map<string, number[]>, setRanks?: ({ column, ranks }: {column: string, ranks: number[]}) => void, indexes?: number[], setIndexes?: ({ orderBy, indexes }: { orderBy: OrderBy, indexes: number[] }) => void, dataFrame: DataFrame }): Promise<number[]> {
   if (!indexes) {
     // If the indexes are not cached, we need to compute them.
     // First, we fetch the ranks for each column in the orderBy.
@@ -153,14 +153,14 @@ export async function fetchIndexes({ orderBy, signal, ranksByColumn, setRanks, i
  *
  * @param {Object} params
  * @param {OrderBy} params.orderBy The orderBy to compute ranks for.
- * @param {DataFrame | DataFrameSimple} params.dataFrame The data frame to compute ranks from.
+ * @param {DataFrame} params.dataFrame The data frame to compute ranks from.
  * @param {Map<string, number[]>} [params.ranksByColumn] A map of column names to promises that resolve to their ranks.
  * @param {Function} [params.setRanks] A function to set the ranks for each column. It should accept an object with the column name and the ranks.
  * @param {AbortSignal} [params.signal] A signal to cancel the computation. If the signal is aborted, the function rejects with an AbortError DOMException.
  *
  * @returns {Promise<{ direction: 'ascending' | 'descending', ranks: number[] }[]>} A promise that resolves to an array of objects containing the direction and ranks for each column in the orderBy.
  */
-async function fetchOrderByWithRanks({ orderBy, signal, ranksByColumn, setRanks, dataFrame }: {orderBy: OrderBy, signal?: AbortSignal, ranksByColumn?: Map<string, number[]>, setRanks?: ({ column, ranks }: {column: string, ranks: number[]}) => void, dataFrame: DataFrame | DataFrameSimple }): Promise<OrderByWithRanks> {
+async function fetchOrderByWithRanks({ orderBy, signal, ranksByColumn, setRanks, dataFrame }: {orderBy: OrderBy, signal?: AbortSignal, ranksByColumn?: Map<string, number[]>, setRanks?: ({ column, ranks }: {column: string, ranks: number[]}) => void, dataFrame: DataFrame }): Promise<OrderByWithRanks> {
   const orderByWithRanks: OrderByWithRanks = []
   const promises: Promise<any>[] = []
 

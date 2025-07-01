@@ -1,8 +1,8 @@
 import { ReactNode, createContext, useContext, useEffect, useState } from 'react'
-import { DataFrame, DataFrameSimple, fromArray } from '../helpers/dataframe/index.js'
+import { DataFrame, fromArray } from '../helpers/dataframe/index.js'
 
 interface DataContextType {
-  data: DataFrame | DataFrameSimple,
+  data: DataFrame,
   key: string,
   version: number,
 }
@@ -18,7 +18,7 @@ function getDefaultDataContext(): DataContextType {
 export const DataContext = createContext<DataContextType>(getDefaultDataContext())
 
 interface DataProviderProps {
-  data: DataFrame | DataFrameSimple,
+  data: DataFrame,
   children: ReactNode
 }
 
@@ -33,7 +33,7 @@ function isValidNumRows(row: number): boolean {
 export function DataProvider({ children, data }: DataProviderProps) {
   // We want a string key to identify the data.
   const [key, setKey] = useState<string>(getRandomKey())
-  const [previousData, setPreviousData] = useState<DataFrame | DataFrameSimple>(data)
+  const [previousData, setPreviousData] = useState<DataFrame>(data)
   const [previousNumRows, setPreviousNumRows] = useState<number>(data.numRows)
   const [version, setVersion] = useState(0)
 

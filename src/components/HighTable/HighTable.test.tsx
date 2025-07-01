@@ -1,8 +1,9 @@
 import { act, fireEvent, waitFor, within } from '@testing-library/react'
 import { UserEvent } from '@testing-library/user-event'
+import { Component, ReactNode } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createGetRowNumber, createNoOpFetch, validateFetchParams } from '../../helpers/dataframe/helpers.js'
-import { DataFrame, DataFrameEvents, DataFrameSimple } from '../../helpers/dataframe/index.js'
+import { DataFrame, DataFrameEvents, UnsortableDataFrame } from '../../helpers/dataframe/index.js'
 import { sortableDataFrame } from '../../helpers/dataframe/sort.js'
 import { createEventTarget } from '../../helpers/typedEventTarget.js'
 import { MaybeColumnState } from '../../hooks/useColumnStates.js'
@@ -28,7 +29,7 @@ function getDataCell({ row, column }: { row: number, column: string }) {
 }
 
 const header = ['ID', 'Count', 'Double', 'Triple']
-const data: DataFrameSimple = {
+const data: UnsortableDataFrame = {
   header,
   numRows: 1000,
   getRowNumber: createGetRowNumber({ numRows: 1000 }),
@@ -49,7 +50,7 @@ function getOtherDataCell({ row, column }: { row: number, column: string }) {
 }
 
 const otherHeader = ['ID', 'Count']
-const otherData: DataFrameSimple = {
+const otherData: UnsortableDataFrame = {
   header: otherHeader,
   numRows: 1000,
   getRowNumber: createGetRowNumber({ numRows: 1000 }),
@@ -1270,7 +1271,37 @@ describe('When the number of rows is updated', () => {
       ...data,
       numRows: 5,
     }
-    const { findByRole, getByRole, getAllByRole, rerender } = render(<HighTable data={smallData} />)
+
+    class ErrorBoundary extends Component<{ children: ReactNode }, { lastError: unknown }>{
+      constructor(props: { children: ReactNode }) {
+        super(props)
+        this.state = { lastError: undefined }
+      }
+
+      static getDerivedStateFromError(error: unknown) {
+        // Update state so the next render will show the fallback UI.
+        return { lastError: error }
+      }
+
+      componentDidCatch() {
+        // Stop the error propagation
+      }
+
+      render() {
+        if (this.state.lastError) {
+          // You can render any custom fallback UI
+          return <div role="alert">Something went wrong</div>
+        }
+
+        return this.props.children
+      }
+    }
+
+    const { findByRole, getByRole, getAllByRole, rerender } = render(
+      <ErrorBoundary>
+        <HighTable data={smallData} />
+      </ErrorBoundary>
+    )
     // await because we have to wait for the data to be fetched first
     await findByRole('cell', { name: 'row 2' })
     expect(getAllByRole('row')).toHaveLength(6) // +1 for the header row
@@ -1280,6 +1311,12 @@ describe('When the number of rows is updated', () => {
       smallData.numRows = 10
     })
 
-    expect(() => {rerender(<HighTable data={smallData} />)}).toThrowError('numRows changed')
+    rerender(
+      <ErrorBoundary>
+        <HighTable data={smallData} />
+      </ErrorBoundary>
+    )
+
+    expect(getByRole('alert'), 'Something went wrong').toBeDefined()
   })
 })
