@@ -26,23 +26,24 @@ function getRandomKey(): string {
   return crypto.randomUUID()
 }
 
-function isValidNumRows(row: number): boolean {
-  return Number.isInteger(row) && row >= 0
-}
+// function isValidNumRows(row: number): boolean {
+//   return Number.isInteger(row) && row >= 0
+// }
 
 export function DataProvider({ children, data }: DataProviderProps) {
   // We want a string key to identify the data.
   const [key, setKey] = useState<string>(getRandomKey())
   const [previousData, setPreviousData] = useState<DataFrame>(data)
-  const [previousNumRows, setPreviousNumRows] = useState<number>(data.numRows)
   const [version, setVersion] = useState(0)
 
-  if (!isValidNumRows(data.numRows)) {
-    throw new Error(`Invalid numRows: ${data.numRows}. It must be a non-negative integer.`)
-  }
-  if (data.numRows !== previousNumRows) {
-    throw new Error(`Data numRows changed from ${previousNumRows} to ${data.numRows}. This is not allowed. You must create a new DataFrame instance.`)
-  }
+  // TODO(SL): restore once we better handle error? (create an ErrorBoundary context -> call onError() and provide a default data context?)
+  // const [previousNumRows, setPreviousNumRows] = useState<number>(data.numRows)
+  // if (!isValidNumRows(data.numRows)) {
+  //   throw new Error(`Invalid numRows: ${data.numRows}. It must be a non-negative integer.`)
+  // }
+  // if (data.numRows !== previousNumRows) {
+  //   throw new Error(`Data numRows changed from ${previousNumRows} to ${data.numRows}. This is not allowed. You must create a new DataFrame instance.`)
+  // }
 
   useEffect(() => {
     function onResolve() {
@@ -57,7 +58,7 @@ export function DataProvider({ children, data }: DataProviderProps) {
   if (data !== previousData) {
     setKey(getRandomKey())
     setPreviousData(data)
-    setPreviousNumRows(data.numRows)
+    // setPreviousNumRows(data.numRows)
     setVersion(0)
   }
 

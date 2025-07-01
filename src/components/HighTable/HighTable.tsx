@@ -334,6 +334,7 @@ export function HighTableInner({
   }, [onScrollKeyDown])
 
   // Prepare the slice of data to render
+  // TODO(SL): also compute progress percentage here, to show a loading indicator
   const slice = useMemo(() => {
     let hasCompleteRow = false
     const rowContents = rows.map((row) => {
