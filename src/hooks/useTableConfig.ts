@@ -14,7 +14,6 @@ export function useTableConfig(
 ): ColumnDescriptor[] {
   return useMemo(() => {
     const { header } = df
-    const dfSortable = 'sortable' in df ? df.sortable : false
     const inHeader = new Set(header)
 
     // Until dataframe 2.0 only allow disabling sort via UI, cannot directly enable sort
@@ -26,7 +25,7 @@ export function useTableConfig(
     const cols: ColumnDescriptor[] = header.map((key, i) => ({
       key,
       index: i,
-      sortable: dfSortable ?? false, // Set sortable to dataframe's value by default
+      sortable: df.sortable ?? false, // Set sortable to dataframe's value by default
       ...config?.[key] ?? {},
     }))
 

@@ -76,7 +76,7 @@ function HighTableData(props: PropsData) {
     /* Create a new set of widths if the data has changed, but keep it if only the number of rows changed */
     <ColumnStatesProvider key={cacheKey ?? key} localStorageKey={cacheKey ? `${cacheKey}${columnStatesSuffix}` : undefined} numColumns={data.header.length} minWidth={minWidth}>
       {/* Create a new context if the dataframe changes, to flush the cache (ranks and indexes) */}
-      <OrderByProvider key={key} orderBy={orderBy} onOrderByChange={onOrderByChange} disabled={!('sortable' in data && data.sortable)}>
+      <OrderByProvider key={key} orderBy={orderBy} onOrderByChange={onOrderByChange} disabled={!data.sortable}>
         {/* Create a new selection context if the dataframe has changed */}
         <SelectionProvider key={key} selection={selection} onSelectionChange={onSelectionChange} numRows={numRows}>
           {/* Create a new navigation context if the dataframe has changed, because the focused cell might not exist anymore */}
@@ -157,11 +157,6 @@ export function HighTableInner({
         // no sorting, toggle the range
         onSelectionChange(toggleRangeInSelection({ selection, index: rowNumber }))
         return
-      }
-
-      if (!('sortable' in data)) {
-        throw new Error('DataFrame is not sortable, cannot toggle range in sorted selection')
-        // not SortableDataFrame at this point
       }
 
       // sorting, toggle the range in the sorted order
