@@ -1437,7 +1437,19 @@ describe('When data is a twice-sampled dataframe', () => {
     expect(rows[2]?.textContent).toContain('10')
     expect(rowHeaders[1]?.textContent).toBe('991')
   })
-  // TODO(SL): fix this failing test!
+  it('the table extends the selection when Shift+Clicking on a row number cell', async () => {
+    const onSelectionChange = vi.fn()
+    const { user } = render(<HighTable data={data} onSelectionChange={onSelectionChange}/>)
+    // scroll down and select the row
+    await user.keyboard('{PageDown}')
+    await user.keyboard(' ')
+    expect(onSelectionChange).toHaveBeenCalledWith({ ranges: [{ start: 114, end: 115 }], anchor: 114 })
+    onSelectionChange.mockClear()
+    // move the focus three rows down and shift+select
+    await user.keyboard('{ArrowDown}{ArrowDown}')
+    await user.keyboard('{Shift>} {/Shift}')
+    expect(onSelectionChange).toHaveBeenCalledWith({ ranges: [{ start: 114, end: 115 }, { start: 120, end: 121 }, { start: 126, end: 127 } ], anchor: 126 })
+  })
   it('the sorted table extends the selection when Shift+Clicking on a row number cell', async () => {
     const onSelectionChange = vi.fn()
     const { user } = render(<HighTable data={data} orderBy={[{ column: 'Count', direction: 'ascending' }]} onSelectionChange={onSelectionChange}/>)
@@ -1449,6 +1461,34 @@ describe('When data is a twice-sampled dataframe', () => {
     // move the focus three rows down and shift+select
     await user.keyboard('{ArrowDown}{ArrowDown}')
     await user.keyboard('{Shift>} {/Shift}')
-    expect(onSelectionChange).toHaveBeenCalledWith({ ranges: [{ start: 882, end: 883 }, { start: 876, end: 877 }, { start: 870, end: 871 }], anchor: 882 })
+    expect(onSelectionChange).toHaveBeenCalledWith({ ranges: [{ start: 870, end: 871 }, { start: 876, end: 877 }, { start: 882, end: 883 } ], anchor: 870 })
+  })
+  it('toggling all the rows selects all the sampled rows', async () => {
+    const onSelectionChange = vi.fn()
+    const { user, queryAllByRole, findByRole } = render(<HighTable data={data} onSelectionChange={onSelectionChange}/>)
+    // await because we have to wait for the data to be fetched first
+    await findByRole('cell', { name: 'row 0' })
+
+    // no selected rows
+    expect(queryAllByRole('row', { selected: true })).toHaveLength(0)
+    // the focus is on the table corner, let's press it to toggle all the rows
+    await user.keyboard(' ')
+
+    // all the sampled rows are selected
+    const expectedRanges = Array.from({ length: data.numRows }, (_, row) => {
+      const rowNumber = data.getRowNumber({ row })?.value
+      if (rowNumber === undefined) {
+        // should never happen
+        throw new Error(`Row number is undefined for row ${row}`)
+      }
+      return { start: rowNumber, end: rowNumber + 1 }
+    }).sort((a, b) => a.start - b.start) // sort just in case (no need to merge the ranges with that example data)
+    expect(onSelectionChange).toHaveBeenCalledWith({ ranges: expectedRanges })
+    expect(queryAllByRole('row', { selected: true }).length).toBeGreaterThan(2)
+
+    // toggle again
+    await user.keyboard(' ')
+    expect(onSelectionChange).toHaveBeenCalledWith({ ranges: [] })
+    expect(queryAllByRole('row', { selected: true })).toHaveLength(0)
   })
 })

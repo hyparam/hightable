@@ -1,8 +1,8 @@
 import { CSSProperties, KeyboardEvent, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ColumnConfiguration } from '../../helpers/columnConfiguration.js'
 import { DataFrame } from '../../helpers/dataframe/index.js'
-import { Selection, toggleIndexInSelection, toggleRangeInSelection, toggleRangeInSortedSelection } from '../../helpers/selection.js'
-import { OrderBy, serializeOrderBy } from '../../helpers/sort.js'
+import { Selection } from '../../helpers/selection.js'
+import { OrderBy } from '../../helpers/sort.js'
 import { cellStyle, getClientWidth, getOffsetWidth } from '../../helpers/width.js'
 import { CellsNavigationProvider, useCellsNavigation } from '../../hooks/useCellsNavigation.js'
 import { ColumnStatesProvider, useColumnStates } from '../../hooks/useColumnStates.js'
@@ -78,7 +78,7 @@ function HighTableData(props: PropsData) {
       {/* Create a new context if the dataframe changes, to flush the cache (ranks and indexes) */}
       <OrderByProvider key={key} orderBy={orderBy} onOrderByChange={onOrderByChange} disabled={!data.sortable}>
         {/* Create a new selection context if the dataframe has changed */}
-        <SelectionProvider key={key} selection={selection} onSelectionChange={onSelectionChange} numRows={numRows}>
+        <SelectionProvider key={key} selection={selection} onSelectionChange={onSelectionChange} data={data}>
           {/* Create a new navigation context if the dataframe has changed, because the focused cell might not exist anymore */}
           <CellsNavigationProvider key={key} colCount={data.header.length + 1} rowCount={numRows + 1} rowPadding={props.padding ?? defaultPadding}>
             <PortalContainerProvider>
@@ -128,8 +128,8 @@ export function HighTableInner({
   const { enterCellsNavigation, setEnterCellsNavigation, onTableKeyDown: onNavigationTableKeyDown, onScrollKeyDown, cellPosition, focusFirstCell } = useCellsNavigation()
   const { containerRef } = usePortalContainer()
   const { setAvailableWidth } = useColumnStates()
-  const { orderBy, onOrderByChange, ranksByColumn, indexesByOrderBy } = useOrderBy()
-  const { selection, onSelectionChange, toggleAllRows, onTableKeyDown: onSelectionTableKeyDown, allRowsSelected, isRowSelected } = useSelection()
+  const { orderBy, onOrderByChange } = useOrderBy()
+  const { selection, toggleAllRows, onTableKeyDown: onSelectionTableKeyDown, allRowsSelected, isRowSelected, toggleRowNumber, toggleRangeToRowNumber } = useSelection()
   const columns = useTableConfig(data, columnConfiguration)
   // local state
   const [rowsRange, setRowsRange] = useState<RowsRange>({ start: 0, end: 0 })
@@ -140,49 +140,18 @@ export function HighTableInner({
     onSelectionTableKeyDown?.(event)
   }, [onNavigationTableKeyDown, onSelectionTableKeyDown])
 
-  const pendingSelectionRequest = useRef(0)
   const getOnCheckboxPress = useCallback(({ row, rowNumber }: { row: number, rowNumber?: number }) => {
-    if (!selection || !onSelectionChange || rowNumber === undefined) {
+    if (rowNumber === undefined) {
       return undefined
     }
     return async ({ shiftKey }: { shiftKey: boolean }) => {
-      const useAnchor = shiftKey && selection.anchor !== undefined
-      if (!useAnchor) {
-        // single row toggle
-        onSelectionChange(toggleIndexInSelection({ selection, index: rowNumber }))
-        return
-      }
-
-      if (!orderBy || orderBy.length === 0) {
-        // no sorting, toggle the range
-        onSelectionChange(toggleRangeInSelection({ selection, index: rowNumber }))
-        return
-      }
-
-      // sorting, toggle the range in the sorted order
-      // TODO(SL): show a status message while the request is pending?
-      // TODO(SL): remove ranksByColumn and indexesByOrderBy, and make it native to dataframev2?
-      const requestId = ++pendingSelectionRequest.current
-      const newSelection = await toggleRangeInSortedSelection({
-        selection,
-        index: row,
-        orderBy,
-        data,
-        ranksByColumn,
-        setRanks: ({ column, ranks }) => {
-          ranksByColumn?.set(column, ranks)
-        },
-        indexes: indexesByOrderBy?.get(serializeOrderBy(orderBy)),
-        setIndexes: ({ orderBy, indexes }) => {
-          indexesByOrderBy?.set(serializeOrderBy(orderBy), indexes)
-        },
-      })
-      if (requestId === pendingSelectionRequest.current) {
-        // only update the selection if the request is still the last one
-        onSelectionChange(newSelection)
+      if (shiftKey) {
+        await toggleRangeToRowNumber?.({ row, rowNumber })
+      } else {
+        toggleRowNumber?.({ rowNumber })
       }
     }
-  }, [onSelectionChange, orderBy, selection, data, ranksByColumn, indexesByOrderBy])
+  }, [toggleRowNumber, toggleRangeToRowNumber])
 
   // total scrollable height
   /* TODO: fix the computation on unstyled tables */
