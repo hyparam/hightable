@@ -2,7 +2,7 @@ import { act, fireEvent, waitFor, within } from '@testing-library/react'
 import { UserEvent } from '@testing-library/user-event'
 import { Mock, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createGetRowNumber, createStaticFetch, validateColumn, validateFetchParams, validateRow } from '../../helpers/dataframe/helpers.js'
-import { DataFrame, DataFrameEvents, UnsortableDataFrame } from '../../helpers/dataframe/index.js'
+import { DataFrame, DataFrameEvents, UnsortableDataFrame, filterDataFrame } from '../../helpers/dataframe/index.js'
 import { sortableDataFrame } from '../../helpers/dataframe/sort.js'
 import { createEventTarget } from '../../helpers/typedEventTarget.js'
 import { MaybeColumnState } from '../../hooks/useColumnStates.js'
@@ -19,14 +19,15 @@ function createData(): UnsortableDataFrame {
   function getCell({ row, column }: { row: number, column: string }) {
     validateColumn({ column, data: { header } })
     validateRow({ row, data: { numRows } })
+    const count = numRows - row
     if (column === 'ID') {
       return { value: `row ${row}` }
     } else if (column === 'Count') {
-      return { value: 1000 - row }
+      return { value: count }
     } else if (column === 'Double') {
-      return { value: (1000 - row) * 2 }
+      return { value: count * 2 }
     } else if (column === 'Triple') {
-      return { value: (1000 - row) * 3 }
+      return { value: count * 3 }
     }
   }
   const props = { header, numRows, getCell, getRowNumber }
@@ -1375,3 +1376,79 @@ describe('When the table scroller is focused', () => {
 //     expect(getByRole('alert'), 'Something went wrong').toBeDefined()
 //   })
 // })
+
+describe('When data is a twice-sampled dataframe', () => {
+  function createSampledData() {
+    return sortableDataFrame(filterDataFrame({
+      data: sortableDataFrame(filterDataFrame({
+        data: createData(),
+        filter: ({ row }) => row % 2 === 0, // keep only even rows
+      })),
+      filter: ({ row }) => row % 3 === 0, // keep only rows that are multiples of 3
+    }))
+    // the rows are: 0, 6, 12, 18, 24, ...
+  }
+  let data: DataFrame
+  beforeEach(() => {
+    vi.clearAllMocks()
+    data = createSampledData()
+  })
+  it('the table is rendered with the correct row numbers and contents', async () => {
+    const { findByRole, getAllByRole } = render(<HighTable data={data} />)
+    // await because we have to wait for the data to be fetched first
+    await findByRole('cell', { name: 'row 0' })
+    const rows = getAllByRole('row')
+    const rowHeaders = getAllByRole('rowheader')
+    // header row
+    expect(rows[0]?.getAttribute('aria-rowindex')).toBe('1')
+    expect(rows[0]?.getAttribute('data-rownumber')).toBeNull()
+    // first data row
+    expect(rows[1]?.getAttribute('aria-rowindex')).toBe('2')
+    expect(rows[1]?.getAttribute('data-rownumber')).toBe('0')
+    expect(rows[1]?.textContent).toContain('row 0')
+    expect(rows[1]?.textContent).toContain('1,000')
+    expect(rowHeaders[0]?.textContent).toBe('1') // row numbers are formatted as 1-based index
+    // second data row
+    expect(rows[2]?.getAttribute('aria-rowindex')).toBe('3')
+    expect(rows[2]?.getAttribute('data-rownumber')).toBe('6')
+    expect(rows[2]?.textContent).toContain('row 6')
+    expect(rows[2]?.textContent).toContain('994')
+    expect(rowHeaders[1]?.textContent).toBe('7')
+  })
+  it('the sorted table is rendered with the correct row numbers and contents', async () => {
+    const { findByRole, getAllByRole } = render(<HighTable data={data} orderBy={[{ column: 'Count', direction: 'ascending' }]} />)
+    // await because we have to wait for the data to be fetched first
+    await findByRole('cell', { name: 'row 996' })
+    const rows = getAllByRole('row')
+    const rowHeaders = getAllByRole('rowheader')
+    // header row
+    expect(rows[0]?.getAttribute('aria-rowindex')).toBe('1')
+    expect(rows[0]?.getAttribute('data-rownumber')).toBeNull()
+    // first data row
+    expect(rows[1]?.getAttribute('aria-rowindex')).toBe('2')
+    expect(rows[1]?.getAttribute('data-rownumber')).toBe('996')
+    expect(rows[1]?.textContent).toContain('row 996')
+    expect(rows[1]?.textContent).toContain('4')
+    expect(rowHeaders[0]?.textContent).toBe('997') // row numbers are formatted as 1-based index
+    // second data row
+    expect(rows[2]?.getAttribute('aria-rowindex')).toBe('3')
+    expect(rows[2]?.getAttribute('data-rownumber')).toBe('990')
+    expect(rows[2]?.textContent).toContain('row 990')
+    expect(rows[2]?.textContent).toContain('10')
+    expect(rowHeaders[1]?.textContent).toBe('991')
+  })
+  // TODO(SL): fix this failing test!
+  it('the sorted table extends the selection when Shift+Clicking on a row number cell', async () => {
+    const onSelectionChange = vi.fn()
+    const { user } = render(<HighTable data={data} orderBy={[{ column: 'Count', direction: 'ascending' }]} onSelectionChange={onSelectionChange}/>)
+    // scroll down and select the row
+    await user.keyboard('{PageDown}')
+    await user.keyboard(' ')
+    expect(onSelectionChange).toHaveBeenCalledWith({ ranges: [{ start: 882, end: 883 }], anchor: 882 })
+    onSelectionChange.mockClear()
+    // move the focus three rows down and shift+select
+    await user.keyboard('{ArrowDown}{ArrowDown}')
+    await user.keyboard('{Shift>} {/Shift}')
+    expect(onSelectionChange).toHaveBeenCalledWith({ ranges: [{ start: 882, end: 883 }, { start: 876, end: 877 }, { start: 870, end: 871 }], anchor: 882 })
+  })
+})

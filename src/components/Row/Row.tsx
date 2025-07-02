@@ -4,6 +4,7 @@ interface Props {
   children: ReactNode
   selected?: boolean
   ariaRowIndex: number
+  rowNumber?: number
   title?: string
 }
 
@@ -11,6 +12,7 @@ export default function Row({
   children,
   ariaRowIndex,
   selected,
+  rowNumber,
   title,
 }: Props) {
   return (
@@ -19,6 +21,7 @@ export default function Row({
       aria-rowindex={ariaRowIndex}
       title={title}
       aria-selected={selected}
+      data-rownumber={rowNumber}
     >
       {children}
     </tr>
