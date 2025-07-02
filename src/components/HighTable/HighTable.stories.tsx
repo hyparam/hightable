@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useState } from 'react'
-import { createGetRowNumber, createStaticFetch, validateColumn, validateFetchParams, validateRow } from '../../helpers/dataframe/helpers.js'
+import { checkSignal, createGetRowNumber, createStaticFetch, validateColumn, validateFetchParams, validateRow } from '../../helpers/dataframe/helpers.js'
 import { DataFrameEvents, UnsortableDataFrame, arrayDataFrame } from '../../helpers/dataframe/index.js'
 import { sortableDataFrame } from '../../helpers/dataframe/sort.js'
 import type { ResolvedValue } from '../../helpers/dataframe/types.js'
@@ -58,9 +58,7 @@ function createDelayedData(): UnsortableDataFrame {
   }
   const eventTarget = createEventTarget<DataFrameEvents>()
   async function fetch({ rowStart, rowEnd, columns, signal }: { rowStart: number, rowEnd: number, columns?: string[], signal?: AbortSignal }) {
-    if (signal?.aborted) {
-      throw new DOMException('Aborted', 'AbortError')
-    }
+    checkSignal(signal)
     validateFetchParams({ rowStart, rowEnd, columns, data: { numRows, header } })
     const columnPromises: Promise<any>[] = []
     for (const column of columns ?? []) {
@@ -72,9 +70,7 @@ function createDelayedData(): UnsortableDataFrame {
         const ms = rowMs * (column === 'ID' ? 1 : 2)
         const resolvedValue = column === 'ID' ? `row ${row}` : numRows - row
         valuePromises.push(delay(resolvedValue, ms).then((value) => {
-          if (signal?.aborted) {
-            throw new DOMException('Aborted', 'AbortError')
-          }
+          checkSignal(signal)
           const cachedColumn = cache.get(column)
           if (!cachedColumn) {
             throw new Error(`Column "${column}" not found in cache`)

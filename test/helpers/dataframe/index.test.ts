@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { arrayDataFrame, sortableDataFrame } from '../../../src/helpers/dataframe/index.js'
+import { arrayDataFrame, filterDataFrame, sortableDataFrame } from '../../../src/helpers/dataframe/index.js'
 
 describe('arrayDataFrame', () => {
   const testData = [
@@ -123,5 +123,46 @@ describe('sortableDataFrame', () => {
     const df = sortableDataFrame(data)
     const orderBy = [{ column: 'invalid', direction: 'ascending' as const }]
     await expect(df.fetch({ orderBy, rowStart: 0, rowEnd: 4, columns: ['name'] })).rejects.toThrow('Invalid orderBy field: invalid')
+  })
+})
+
+describe('filtered data', () => {
+  function createDataFrame() {
+    const array = [
+      { id: 3, name: 'Charlie', age: 25 },
+      { id: 1, name: 'Alice', age: 30 },
+      { id: 2, name: 'Bob', age: 20 },
+      { id: 4, name: 'Dani', age: 20 },
+    ]
+    return arrayDataFrame(array)
+  }
+  function createSampledDataFrame() {
+    const data = createDataFrame()
+    const sampledRows = [1, 3]
+    return sortableDataFrame(filterDataFrame({ data, filter: ({ row }) => sampledRows.includes(row) }))
+  }
+
+  it('should return row numbers of the underlying data', () => {
+    const df = createSampledDataFrame()
+    expect(df.getRowNumber({ row: 0 })?.value).toBe(1) // Alice
+    expect(df.getRowNumber({ row: 1 })?.value).toBe(3) // Dani
+  })
+  it('should return the correct cell values', () => {
+    const df = createSampledDataFrame()
+    expect(df.getCell({ row: 0, column: 'name' })?.value).toBe('Alice')
+    expect(df.getCell({ row: 1, column: 'name' })?.value).toBe('Dani')
+  })
+  it('should return ordered data when sorted', async () => {
+    const df = createSampledDataFrame()
+    const orderBy = [{ column: 'name', direction: 'descending' as const }]
+    await df.fetch({ orderBy, rowStart: 0, rowEnd: 2, columns: ['name'] })
+    expect(df.getCell({ row: 0, column: 'name', orderBy })?.value).toBe('Dani')
+    expect(df.getCell({ row: 1, column: 'name', orderBy })?.value).toBe('Alice')
+  })
+  it('should support two filters', () => {
+    const df = filterDataFrame({ data: createSampledDataFrame(), filter: ({ row }) => row === 1 })
+    expect(df.numRows).toBe(1)
+    expect(df.getRowNumber({ row: 0 })?.value).toBe(3) // Dani
+    expect(df.getCell({ row: 0, column: 'name' })?.value).toBe('Dani')
   })
 })

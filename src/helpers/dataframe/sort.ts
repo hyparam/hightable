@@ -1,6 +1,6 @@
 import { OrderBy, computeRanks, serializeOrderBy, validateOrderBy } from '../sort.js'
 import { createEventTarget } from '../typedEventTarget.js'
-import { validateRow } from './helpers.js'
+import { checkSignal, validateFetchParams, validateRow } from './helpers.js'
 import { DataFrame, DataFrameEvents, ResolvedValue, SortableDataFrame } from './types.js'
 
 export function sortableDataFrame(data: DataFrame): SortableDataFrame {
@@ -9,7 +9,7 @@ export function sortableDataFrame(data: DataFrame): SortableDataFrame {
     return data
   }
 
-  const { header, numRows, getCell } = data
+  const { header, numRows, getCell, getRowNumber } = data
 
   const wrappedHeader = header.slice() // Create a shallow copy of the header to avoid mutating the original
 
@@ -19,10 +19,10 @@ export function sortableDataFrame(data: DataFrame): SortableDataFrame {
 
   const eventTarget = createEventTarget<DataFrameEvents>()
 
-  function wrappedGetRowNumber({ row, orderBy }: { row: number, orderBy?: OrderBy }): ResolvedValue<number> | undefined {
+  function getUpstreamRow({ row, orderBy }: { row: number, orderBy?: OrderBy }): ResolvedValue<number> | undefined {
     validateRow({ row, data: { numRows } })
     if (!orderBy || orderBy.length === 0) {
-      // If no orderBy is provided, we can return the row as is.
+      // If no orderBy is provided, we can return the upstream row number.
       return { value: row }
     }
     validateOrderBy({ header, orderBy })
@@ -35,35 +35,36 @@ export function sortableDataFrame(data: DataFrame): SortableDataFrame {
     return { value: rowNumber }
   }
 
-  function wrappedGetCell({ row, column, orderBy }: { row: number, column: string, orderBy?: OrderBy }): ResolvedValue | undefined {
-    const rowNumber = wrappedGetRowNumber({ row, orderBy })
-    if (!rowNumber) {
+  function wrappedGetRowNumber({ row, orderBy }: { row: number, orderBy?: OrderBy }): ResolvedValue<number> | undefined {
+    validateRow({ row, data: { numRows } })
+    const upstreamRow = getUpstreamRow({ row, orderBy })
+    if (!upstreamRow) {
       // If we can't resolve the unsorted row, we return undefined.
       return undefined
     }
-    return getCell({ row: rowNumber.value, column })
+    return getRowNumber({ row: upstreamRow.value })
   }
 
-  async function wrappedFetch(args: { rowStart: number, rowEnd: number, columns?: string[], orderBy?: OrderBy, signal?: AbortSignal }): Promise<void> {
-    const { orderBy, ...rest } = args
+  function wrappedGetCell({ row, column, orderBy }: { row: number, column: string, orderBy?: OrderBy }): ResolvedValue | undefined {
+    const upstreamRow = getUpstreamRow({ row, orderBy })
+    if (!upstreamRow) {
+      // If we can't resolve the unsorted row, we return undefined.
+      return undefined
+    }
+    return getCell({ row: upstreamRow.value, column })
+  }
+
+  async function wrappedFetch({ rowStart, rowEnd, columns, orderBy, signal }: { rowStart: number, rowEnd: number, columns?: string[], orderBy?: OrderBy, signal?: AbortSignal }): Promise<void> {
+    validateFetchParams({ rowStart, rowEnd, columns, data: { numRows, header } })
     if (!orderBy || orderBy.length === 0) {
       // If orderBy is not provided, we can fetch the data without sorting.
-      return data.fetch(rest)
+      return data.fetch({ rowStart, rowEnd, columns, signal })
     }
-
-    const { rowStart, rowEnd, columns, signal } = rest
-
-    if (rowStart < 0 || rowEnd > numRows || rowStart > rowEnd) {
-      throw new Error(`Invalid range: [${rowStart}, ${rowEnd}) for numRows: ${numRows}.`)
-    }
+    validateOrderBy({ header, orderBy })
     if (rowStart === rowEnd) {
       // If the range is empty, we can return.
       return
     }
-    if (columns?.some((column) => !header.includes(column))) {
-      throw new Error(`Invalid columns: ${columns.join(', ')}. Must be a subset of the header: ${header.join(', ')}.`)
-    }
-    validateOrderBy({ header, orderBy })
 
     // Ensure row numbers are available
     const indexes = await fetchIndexes({
@@ -165,9 +166,7 @@ async function fetchOrderByWithRanks({ orderBy, signal, ranksByColumn, setRanks,
     } else {
       promises.push(
         data.fetch({ rowStart: 0, rowEnd: data.numRows, columns: [column], signal }).then(() => {
-          if (signal?.aborted) {
-            throw new DOMException('Fetch aborted', 'AbortError')
-          }
+          checkSignal(signal)
           // Get the values
           const columnValues = Array.from({ length: data.numRows }, (_, row) => {
             const cell = data.getCell({ row, column })
