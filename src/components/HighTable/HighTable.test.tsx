@@ -1445,10 +1445,17 @@ describe('When data is a twice-sampled dataframe', () => {
     await user.keyboard(' ')
     expect(onSelectionChange).toHaveBeenCalledWith({ ranges: [{ start: 114, end: 115 }], anchor: 114 })
     onSelectionChange.mockClear()
-    // move the focus three rows down and shift+select
+    // move the focus two rows down and shift+select
     await user.keyboard('{ArrowDown}{ArrowDown}')
     await user.keyboard('{Shift>} {/Shift}')
     expect(onSelectionChange).toHaveBeenCalledWith({ ranges: [{ start: 114, end: 115 }, { start: 120, end: 121 }, { start: 126, end: 127 } ], anchor: 126 })
+    // move the focus one row down and shift+select
+    await user.keyboard('{ArrowDown}')
+    await user.keyboard('{Shift>} {/Shift}')
+    expect(onSelectionChange).toHaveBeenCalledWith({ ranges: [{ start: 114, end: 115 }, { start: 120, end: 121 }, { start: 126, end: 127 }, { start: 132, end: 133 } ], anchor: 132 })
+    // shift+select
+    await user.keyboard('{Shift>} {/Shift}')
+    expect(onSelectionChange).toHaveBeenCalledWith({ ranges: [{ start: 114, end: 115 }, { start: 120, end: 121 }, { start: 126, end: 127 } ], anchor: 132 })
   })
   it('the sorted table extends the selection when Shift+Clicking on a row number cell', async () => {
     const onSelectionChange = vi.fn()
@@ -1458,10 +1465,17 @@ describe('When data is a twice-sampled dataframe', () => {
     await user.keyboard(' ')
     expect(onSelectionChange).toHaveBeenCalledWith({ ranges: [{ start: 882, end: 883 }], anchor: 882 })
     onSelectionChange.mockClear()
-    // move the focus three rows down and shift+select
+    // move the focus two rows down and shift+select
     await user.keyboard('{ArrowDown}{ArrowDown}')
     await user.keyboard('{Shift>} {/Shift}')
     expect(onSelectionChange).toHaveBeenCalledWith({ ranges: [{ start: 870, end: 871 }, { start: 876, end: 877 }, { start: 882, end: 883 } ], anchor: 870 })
+    // move the focus one row down and shift+select
+    await user.keyboard('{ArrowDown}')
+    await user.keyboard('{Shift>} {/Shift}')
+    expect(onSelectionChange).toHaveBeenCalledWith({ ranges: [{ start: 864, end: 865 }, { start: 870, end: 871 }, { start: 876, end: 877 }, { start: 882, end: 883 } ], anchor: 864 })
+    // shift+select
+    await user.keyboard('{Shift>} {/Shift}')
+    expect(onSelectionChange).toHaveBeenCalledWith({ ranges: [{ start: 870, end: 871 }, { start: 876, end: 877 }, { start: 882, end: 883 } ], anchor: 864 })
   })
   it('toggling all the rows selects all the sampled rows', async () => {
     const onSelectionChange = vi.fn()

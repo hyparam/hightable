@@ -70,7 +70,8 @@ type PropsData = Omit<Props, 'data'>
 function HighTableData(props: PropsData) {
   const { data, key, version } = useData()
   const { numRows } = data
-  const { cacheKey, orderBy, onOrderByChange, selection, onSelectionChange } = props
+  // TODO(SL): onError could be in a context, as we might want to use it everywhere
+  const { cacheKey, orderBy, onOrderByChange, selection, onSelectionChange, onError } = props
 
   return (
     /* Create a new set of widths if the data has changed, but keep it if only the number of rows changed */
@@ -78,7 +79,7 @@ function HighTableData(props: PropsData) {
       {/* Create a new context if the dataframe changes, to flush the cache (ranks and indexes) */}
       <OrderByProvider key={key} orderBy={orderBy} onOrderByChange={onOrderByChange} disabled={!data.sortable}>
         {/* Create a new selection context if the dataframe has changed */}
-        <SelectionProvider key={key} selection={selection} onSelectionChange={onSelectionChange} data={data}>
+        <SelectionProvider key={key} selection={selection} onSelectionChange={onSelectionChange} data={data} onError={onError}>
           {/* Create a new navigation context if the dataframe has changed, because the focused cell might not exist anymore */}
           <CellsNavigationProvider key={key} colCount={data.header.length + 1} rowCount={numRows + 1} rowPadding={props.padding ?? defaultPadding}>
             <PortalContainerProvider>
@@ -129,7 +130,7 @@ export function HighTableInner({
   const { containerRef } = usePortalContainer()
   const { setAvailableWidth } = useColumnStates()
   const { orderBy, onOrderByChange } = useOrderBy()
-  const { selection, toggleAllRows, onTableKeyDown: onSelectionTableKeyDown, allRowsSelected, isRowSelected, toggleRowNumber, toggleRangeToRowNumber } = useSelection()
+  const { selectable, toggleAllRows, onTableKeyDown: onSelectionTableKeyDown, allRowsSelected, isRowSelected, toggleRowNumber, toggleRangeToRowNumber } = useSelection()
   const columns = useTableConfig(data, columnConfiguration)
   // local state
   const [rowsRange, setRowsRange] = useState<RowsRange>({ start: 0, end: 0 })
@@ -141,14 +142,14 @@ export function HighTableInner({
   }, [onNavigationTableKeyDown, onSelectionTableKeyDown])
 
   const getOnCheckboxPress = useCallback(({ row, rowNumber }: { row: number, rowNumber?: number }) => {
-    if (rowNumber === undefined) {
+    if (rowNumber === undefined || !toggleRowNumber || !toggleRangeToRowNumber) {
       return undefined
     }
-    return async ({ shiftKey }: { shiftKey: boolean }) => {
+    return ({ shiftKey }: { shiftKey: boolean }) => {
       if (shiftKey) {
-        await toggleRangeToRowNumber?.({ row, rowNumber })
+        toggleRangeToRowNumber({ row, rowNumber })
       } else {
-        toggleRowNumber?.({ rowNumber })
+        toggleRowNumber({ rowNumber })
       }
     }
   }, [toggleRowNumber, toggleRangeToRowNumber])
@@ -341,7 +342,7 @@ export function HighTableInner({
             aria-readonly={true}
             aria-colcount={ariaColCount}
             aria-rowcount={ariaRowCount}
-            aria-multiselectable={selection !== undefined}
+            aria-multiselectable={selectable}
             role='grid'
             style={{ top: `${offsetTop}px` }}
             onKeyDown={onTableKeyDown}
@@ -379,7 +380,7 @@ export function HighTableInner({
               })}
               {slice.rowContents.map(({ row, rowNumber, cells }) => {
                 const ariaRowIndex = row + ariaOffset
-                const selected = isRowSelected?.(rowNumber)
+                const selected = isRowSelected?.({ rowNumber })
                 // The row key includes the version, to rerender the row again when the data changes (e.g. when the user scrolls, or when the data has been fetched)
                 const rowKey = `${version}-${row}`
                 return (

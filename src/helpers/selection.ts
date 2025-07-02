@@ -58,29 +58,6 @@ export function isSelected({ ranges, index }: { ranges: Ranges, index: number })
   return ranges.some(range => range.start <= index && index < range.end)
 }
 
-export function areAllSelected({ ranges, length }: { ranges: Ranges, length: number }): boolean {
-  if (!areValidRanges(ranges)) {
-    throw new Error('Invalid ranges')
-  }
-  if (length && !isValidIndex(length)) {
-    throw new Error('Invalid length')
-  }
-  return ranges.length === 1 && 0 in ranges && ranges[0].start === 0 && ranges[0].end === length
-}
-
-export function toggleAll({ ranges, length }: { ranges: Ranges, length: number }): Ranges {
-  if (!areValidRanges(ranges)) {
-    throw new Error('Invalid ranges')
-  }
-  if (length && !isValidIndex(length)) {
-    throw new Error('Invalid length')
-  }
-  if (!length || areAllSelected({ ranges, length })) {
-    return []
-  }
-  return [{ start: 0, end: length }]
-}
-
 export function selectRange({ ranges, range }: { ranges: Ranges, range: Range }): Ranges {
   if (!areValidRanges(ranges)) {
     throw new Error('Invalid ranges')

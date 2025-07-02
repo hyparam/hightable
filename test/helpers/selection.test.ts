@@ -1,5 +1,5 @@
 import { describe, expect, it, test } from 'vitest'
-import { areAllSelected, areValidRanges, isSelected, isValidIndex, isValidRange, selectRange, toggleAll, toggleIndex, toggleIndexInSelection, unselectRange } from '../../src/helpers/selection.js'
+import { areValidRanges, isSelected, isValidIndex, isValidRange, selectRange, toggleIndex, toggleIndexInSelection, unselectRange } from '../../src/helpers/selection.js'
 
 describe('an index', () => {
   test('is a positive integer', () => {
@@ -109,41 +109,6 @@ describe('isSelected', () => {
   })
   test('should throw an error if the selection is invalid', () => {
     expect(() => isSelected({ ranges: [{ start: 1, end: 0 }], index: 0 })).toThrow('Invalid ranges')
-  })
-})
-
-describe('areAllSelected', () => {
-  test('should return true if all indices are selected', () => {
-    expect(areAllSelected({ ranges: [{ start: 0, end: 3 }], length: 3 })).toBe(true)
-    expect(areAllSelected({ ranges: [{ start: 0, end: 1 }], length: 3 })).toBe(false)
-    expect(areAllSelected({ ranges: [{ start: 1, end: 3 }], length: 3 })).toBe(false)
-  })
-  test('should throw an error if the selection is invalid', () => {
-    expect(() => areAllSelected({ ranges: [{ start: 1, end: 0 }], length: 0 })).toThrow('Invalid ranges')
-  })
-  test('should throw an error if the length is invalid', () => {
-    expect(() => areAllSelected({ ranges: [], length: -1 })).toThrow('Invalid length')
-  })
-  test('should return false if the length is zero', () => {
-    expect(areAllSelected({ ranges: [], length: 0 })).toBe(false)
-  })
-})
-
-describe('toggleAll', () => {
-  test('should return an empty selection if all indices are selected', () => {
-    expect(toggleAll({ ranges: [{ start: 0, end: 3 }], length: 3 })).toEqual([])
-  })
-  test('should return a selection with all indices if none are selected', () => {
-    expect(toggleAll({ ranges: [], length: 3 })).toEqual([{ start: 0, end: 3 }])
-  })
-  test('should return a selection with all indices if some are selected', () => {
-    expect(toggleAll({ ranges: [{ start: 0, end: 1 }], length: 3 })).toEqual([{ start: 0, end: 3 }])
-  })
-  test('should throw an error if the selection is invalid', () => {
-    expect(() => toggleAll({ ranges: [{ start: 1, end: 0 }], length: 0 })).toThrow('Invalid ranges')
-  })
-  test('should throw an error if the length is invalid', () => {
-    expect(() => toggleAll({ ranges: [], length: -1 })).toThrow('Invalid length')
   })
 })
 

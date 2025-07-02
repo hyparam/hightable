@@ -4,7 +4,7 @@ import { useCellNavigation } from '../../hooks/useCellsNavigation'
 interface Props {
   selected?: boolean
   rowNumber?: number
-  onCheckboxPress?: ({ shiftKey }: { shiftKey: boolean }) => Promise<void>
+  onCheckboxPress?: ({ shiftKey }: { shiftKey: boolean }) => void
   showCheckBox?: boolean
   style?: CSSProperties
   ariaColIndex: number
@@ -22,20 +22,14 @@ export default function RowHeader({ onCheckboxPress, style, ariaColIndex, ariaRo
   const { tabIndex, navigateToCell } = useCellNavigation({ ref, ariaColIndex, ariaRowIndex })
   const handleClick = useCallback((event: MouseEvent) => {
     navigateToCell()
-    onCheckboxPress?.({ shiftKey: event.shiftKey }).catch((error) => {
-      // Handle the error, e.g., log it or show a notification + handle signal abort gracefully
-      console.error('Error handling checkbox press:', error)
-    })
+    onCheckboxPress?.({ shiftKey: event.shiftKey })
   }, [onCheckboxPress, navigateToCell])
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault()
       // TODO: let the event propagate?
       event.stopPropagation()
-      onCheckboxPress?.({ shiftKey: event.shiftKey }).catch((error) => {
-        // Handle the error, e.g., log it or show a notification + handle signal abort gracefully
-        console.error('Error handling checkbox press:', error)
-      })
+      onCheckboxPress?.({ shiftKey: event.shiftKey })
     }
   }, [onCheckboxPress])
   const disabledCheckbox = onCheckboxPress === undefined
