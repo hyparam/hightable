@@ -325,8 +325,9 @@ export function HighTableInner({
     return {
       rowContents,
       hasCompleteRow,
+      version,
     }
-  }, [data, rows, orderBy])
+  }, [data, rows, orderBy, version])
 
   // don't render table if header is empty
   if (!columns.length) return
@@ -383,8 +384,7 @@ export function HighTableInner({
               {slice.rowContents.map(({ row, rowNumber, cells }) => {
                 const ariaRowIndex = row + ariaOffset
                 const selected = isRowSelected?.({ rowNumber })
-                // The row key includes the version, to rerender the row again when the data changes (e.g. when the user scrolls, or when the data has been fetched)
-                const rowKey = `${version}-${row}`
+                const rowKey = `${row}`
                 return (
                   <Row
                     key={rowKey}

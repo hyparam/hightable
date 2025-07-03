@@ -36,15 +36,6 @@ export function DataProvider({ children, data }: DataProviderProps) {
   const [previousData, setPreviousData] = useState<DataFrame>(data)
   const [version, setVersion] = useState(0)
 
-  // TODO(SL): restore once we better handle error? (create an ErrorBoundary context -> call onError() and provide a default data context?)
-  // const [previousNumRows, setPreviousNumRows] = useState<number>(data.numRows)
-  // if (!isValidNumRows(data.numRows)) {
-  //   throw new Error(`Invalid numRows: ${data.numRows}. It must be a non-negative integer.`)
-  // }
-  // if (data.numRows !== previousNumRows) {
-  //   throw new Error(`Data numRows changed from ${previousNumRows} to ${data.numRows}. This is not allowed. You must create a new DataFrame instance.`)
-  // }
-
   useEffect(() => {
     function onResolve() {
       setVersion(prev => prev + 1)
@@ -58,7 +49,6 @@ export function DataProvider({ children, data }: DataProviderProps) {
   if (data !== previousData) {
     setKey(getRandomKey())
     setPreviousData(data)
-    // setPreviousNumRows(data.numRows)
     setVersion(0)
   }
 
