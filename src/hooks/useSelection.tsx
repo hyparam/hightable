@@ -74,7 +74,7 @@ export function SelectionProvider({ children, data, onError, selection: inputSel
       return undefined
     }
     return ({ row, rowNumber }: { row: number, rowNumber: number }) => {
-      // TODO(SL!): set a "pending" state
+      // TODO(SL): set a "pending" state
       abortPreviousGesture()
       toggleRange(
         { data, row, rowNumber, selection, orderBy, signal: abortController.current?.signal, rowByRowNumberAndOrderBy }
@@ -93,7 +93,7 @@ export function SelectionProvider({ children, data, onError, selection: inputSel
   const toggleAllRows = useMemo(() => {
     if (!selection || !onSelectionChange) return
     return () => {
-      // TODO(SL!): set a "pending" state
+      // TODO(SL): set a "pending" state
       abortPreviousGesture()
       // toggle a range to the row number
       toggleAll(
