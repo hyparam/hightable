@@ -5,12 +5,13 @@ interface Props {
   checked?: boolean
   children?: ReactNode
   onCheckboxPress?: () => void
+  pendingSelectionGesture?: boolean
   style?: CSSProperties
   ariaColIndex: number
   ariaRowIndex: number
 }
 
-function TableCorner({ children, checked, onCheckboxPress, style, ariaColIndex, ariaRowIndex }: Props, ref: ForwardedRef<Pick<HTMLTableCellElement, 'offsetWidth'>>) {
+function TableCorner({ children, checked, onCheckboxPress, pendingSelectionGesture, style, ariaColIndex, ariaRowIndex }: Props, ref: ForwardedRef<Pick<HTMLTableCellElement, 'offsetWidth'>>) {
   const cellRef = useRef<HTMLTableCellElement>(null)
   useImperativeHandle(ref, () => {
     return {
@@ -55,6 +56,7 @@ function TableCorner({ children, checked, onCheckboxPress, style, ariaColIndex, 
             onChange={onChange}
             readOnly={disabledCheckbox}
             disabled={disabledCheckbox}
+            aria-busy={pendingSelectionGesture}
             checked={checked}
             role="presentation"
             tabIndex={-1}

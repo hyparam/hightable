@@ -5,6 +5,7 @@ interface Props {
   selected?: boolean
   rowNumber?: number
   onCheckboxPress?: ({ shiftKey }: { shiftKey: boolean }) => void
+  pendingSelectionGesture?: boolean
   showCheckBox?: boolean
   style?: CSSProperties
   ariaColIndex: number
@@ -17,7 +18,7 @@ function formatRowNumber(rowIndex?: number): string {
   return (rowIndex + 1).toLocaleString('en-US')
 }
 
-export default function RowHeader({ onCheckboxPress, style, ariaColIndex, ariaRowIndex, selected, rowNumber }: Props) {
+export default function RowHeader({ onCheckboxPress, pendingSelectionGesture, style, ariaColIndex, ariaRowIndex, selected, rowNumber }: Props) {
   const ref = useRef<HTMLTableCellElement>(null)
   const { tabIndex, navigateToCell } = useCellNavigation({ ref, ariaColIndex, ariaRowIndex })
   const handleClick = useCallback((event: MouseEvent) => {
@@ -57,6 +58,7 @@ export default function RowHeader({ onCheckboxPress, style, ariaColIndex, ariaRo
         onChange={onChange}
         readOnly={disabledCheckbox}
         disabled={disabledCheckbox}
+        aria-busy={pendingSelectionGesture}
         checked={selected}
         role="presentation"
         tabIndex={-1}

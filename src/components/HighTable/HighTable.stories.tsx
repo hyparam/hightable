@@ -173,9 +173,10 @@ function createLegacyData(): DataFrameV1 {
 }
 
 function createLegacyDelayedData(): DataFrameV1 {
+  const numRows = 500
   return {
     header: ['ID', 'Count'],
-    numRows: 50,
+    numRows,
     rows: ({ start, end }) => Array.from({ length: end - start }, (_, innerIndex) => {
       const index = innerIndex + start
       const ms = index % 3 === 0 ? 100 * Math.floor(10 * Math.random()) :
@@ -185,7 +186,7 @@ function createLegacyDelayedData(): DataFrameV1 {
         index: wrapPromise(delay(index, ms)),
         cells: {
           ID: wrapPromise(delay(`row ${index}`, ms)),
-          Count: wrapPromise(delay(50 - index, ms)),
+          Count: wrapPromise(delay(numRows - index, ms)),
         },
       }
     }),
@@ -237,6 +238,19 @@ export const EmptySelectable: Story = {
   },
 }
 export const Placeholders: Story = {
+  render: (args) => {
+    const [selection, onSelectionChange] = useState<Selection>({
+      ranges: [{ start: 1, end: 3 }, { start: 5, end: 7 }],
+      anchor: 5,
+    })
+    return (
+      <HighTable
+        {...args}
+        selection={selection}
+        onSelectionChange={onSelectionChange}
+      />
+    )
+  },
   args: {
     data: sortableDataFrame(createDelayedData()),
   },
@@ -342,11 +356,37 @@ export const ReadOnlySelection: Story = {
 }
 
 export const LegacySortable: Story = {
+  render: (args) => {
+    const [selection, onSelectionChange] = useState<Selection>({
+      ranges: [{ start: 1, end: 3 }, { start: 5, end: 7 }],
+      anchor: 5,
+    })
+    return (
+      <HighTable
+        {...args}
+        selection={selection}
+        onSelectionChange={onSelectionChange}
+      />
+    )
+  },
   args: {
     data: sortableDataFrame(convertV1ToDataFrame(createLegacyData())),
   },
 }
 export const LegacyPlaceholders: Story = {
+  render: (args) => {
+    const [selection, onSelectionChange] = useState<Selection>({
+      ranges: [{ start: 1, end: 3 }, { start: 5, end: 7 }],
+      anchor: 5,
+    })
+    return (
+      <HighTable
+        {...args}
+        selection={selection}
+        onSelectionChange={onSelectionChange}
+      />
+    )
+  },
   args: {
     data: sortableDataFrame(convertV1ToDataFrame(createLegacyDelayedData())),
   },

@@ -130,7 +130,7 @@ export function HighTableInner({
   const { containerRef } = usePortalContainer()
   const { setAvailableWidth } = useColumnStates()
   const { orderBy, onOrderByChange } = useOrderBy()
-  const { selectable, toggleAllRows, onTableKeyDown: onSelectionTableKeyDown, allRowsSelected, isRowSelected, toggleRowNumber, toggleRangeToRowNumber } = useSelection()
+  const { selectable, toggleAllRows, pendingSelectionGesture, onTableKeyDown: onSelectionTableKeyDown, allRowsSelected, isRowSelected, toggleRowNumber, toggleRangeToRowNumber } = useSelection()
   const columns = useTableConfig(data, columnConfiguration)
   // local state
   const [rowsRange, setRowsRange] = useState<RowsRange>({ start: 0, end: 0 })
@@ -353,6 +353,7 @@ export function HighTableInner({
                 <TableCorner
                   onCheckboxPress={toggleAllRows}
                   checked={allRowsSelected}
+                  pendingSelectionGesture={pendingSelectionGesture}
                   style={cornerStyle}
                   ariaColIndex={1}
                   ariaRowIndex={1}
@@ -396,6 +397,7 @@ export function HighTableInner({
                       selected={selected}
                       rowNumber={rowNumber}
                       onCheckboxPress={getOnCheckboxPress({ rowNumber, row })}
+                      pendingSelectionGesture={pendingSelectionGesture}
                       ariaColIndex={1}
                       ariaRowIndex={ariaRowIndex}
                     />

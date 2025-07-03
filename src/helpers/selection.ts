@@ -194,3 +194,7 @@ export function toggleIndex({ ranges, index }: { ranges: Ranges, index: number }
 export function toggleIndexInSelection({ selection, index }: { selection: Selection, index: number }): Selection {
   return { ranges: toggleIndex({ ranges: selection.ranges, index }), anchor: index }
 }
+
+export function countSelectedRows({ selection }: { selection: Selection }): number {
+  return selection.ranges.reduce((count, range) => count + (range.end - range.start), 0)
+}
