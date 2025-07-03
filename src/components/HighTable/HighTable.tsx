@@ -343,6 +343,7 @@ export function HighTableInner({
             aria-colcount={ariaColCount}
             aria-rowcount={ariaRowCount}
             aria-multiselectable={selectable}
+            aria-busy={pendingSelectionGesture /* TODO(SL): add other busy states? Used only for tests right now */}
             role='grid'
             style={{ top: `${offsetTop}px` }}
             onKeyDown={onTableKeyDown}

@@ -481,10 +481,13 @@ describe('in controlled selection state (selection and onSelection props), ', ()
     expect(getAllByRole('row', { selected: true })).toHaveLength(1)
   })
 
-  it('the table is marked as multiselectable', () => {
+  it('the table is marked as multiselectable', async () => {
     const selection = { ranges: [] }
     const onSelectionChange = vi.fn()
     const { getByRole } = render(<HighTable data={data} selection={selection} onSelectionChange={onSelectionChange}/>)
+    await waitFor(() => {
+      expect(getByRole('grid').getAttribute('aria-busy')).toBe('false')
+    })
     const table = getByRole('grid')
     expect(table.getAttribute('aria-multiselectable')).toBe('true')
   })
@@ -493,7 +496,10 @@ describe('in controlled selection state (selection and onSelection props), ', ()
     const start = 2
     const selection = { ranges: [{ start, end: start + 1 }], anchor: start }
     const onSelectionChange = vi.fn()
-    const { getAllByRole, findByRole, rerender } = render(<HighTable data={data} selection={selection} onSelectionChange={onSelectionChange}/>)
+    const { getAllByRole, findByRole, rerender, getByRole } = render(<HighTable data={data} selection={selection} onSelectionChange={onSelectionChange}/>)
+    await waitFor(() => {
+      expect(getByRole('grid').getAttribute('aria-busy')).toBe('false')
+    })
     // await because we have to wait for the data to be fetched first
     await findByRole('row', { selected: true })
     expect(onSelectionChange).not.toHaveBeenCalled()
@@ -502,6 +508,9 @@ describe('in controlled selection state (selection and onSelection props), ', ()
     const other = 5
     const newSelection = { ranges: [{ start: other, end: other + 1 }], anchor: other }
     rerender(<HighTable data={data} selection={newSelection} onSelectionChange={onSelectionChange}/>)
+    await waitFor(() => {
+      expect(getByRole('grid').getAttribute('aria-busy')).toBe('false')
+    })
     // no need to await because the data is already fetched
     const selectedRows = getAllByRole('row', { selected: true })
     expect(selectedRows).toHaveLength(1)
@@ -515,7 +524,10 @@ describe('in controlled selection state (selection and onSelection props), ', ()
     const onSelectionChange = vi.fn()
     console.warn = vi.fn()
 
-    const { queryByRole, findByRole, rerender } = render(<HighTable data={data} selection={selection} onSelectionChange={onSelectionChange}/>)
+    const { getByRole, queryByRole, findByRole, rerender } = render(<HighTable data={data} selection={selection} onSelectionChange={onSelectionChange}/>)
+    await waitFor(() => {
+      expect(getByRole('grid').getAttribute('aria-busy')).toBe('false')
+    })
     // await because we have to wait for the data to be fetched first
     await findByRole('row', { selected: true })
     expect(console.warn).not.toHaveBeenCalled()
@@ -531,7 +543,10 @@ describe('in controlled selection state (selection and onSelection props), ', ()
     const start = 2
     const selection = { ranges: [{ start, end: start + 1 }], anchor: start }
     const onSelectionChange = vi.fn()
-    const { rerender, findByRole, queryByRole } = render(<HighTable data={data} selection={selection} onSelectionChange={onSelectionChange}/>)
+    const { rerender, findByRole, getByRole, queryByRole } = render(<HighTable data={data} selection={selection} onSelectionChange={onSelectionChange}/>)
+    await waitFor(() => {
+      expect(getByRole('grid').getAttribute('aria-busy')).toBe('false')
+    })
     // await because we have to wait for the data to be fetched first
     const cell = await findByRole('cell', { name: 'row 2' })
     const row = cell.closest('[role="row"]')
@@ -558,7 +573,10 @@ describe('in controlled selection state (selection and onSelection props), ', ()
     const start = 2
     const selection = { ranges: [] }
     const onSelectionChange = vi.fn()
-    const { user, findByRole, queryByRole } = render(<HighTable data={data} selection={selection} onSelectionChange={onSelectionChange}/>)
+    const { user, findByRole, getByRole, queryByRole } = render(<HighTable data={data} selection={selection} onSelectionChange={onSelectionChange}/>)
+    await waitFor(() => {
+      expect(getByRole('grid').getAttribute('aria-busy')).toBe('false')
+    })
     // await because we have to wait for the data to be fetched first
     const cell = await findByRole('cell', { name: 'row 2' })
     expect(onSelectionChange).not.toHaveBeenCalled()
@@ -657,9 +675,12 @@ describe('in controlled selection state, read-only (selection prop), ', () => {
     expect(getAllByRole('row', { selected: true })).toHaveLength(1)
   })
 
-  it('the table is marked as multiselectable', () => {
+  it('the table is marked as multiselectable', async () => {
     const selection = { ranges: [] }
     const { getByRole } = render(<HighTable data={data} selection={selection}/>)
+    await waitFor(() => {
+      expect(getByRole('grid').getAttribute('aria-busy')).toBe('false')
+    })
     const table = getByRole('grid')
     expect(table.getAttribute('aria-multiselectable')).toBe('true')
   })
@@ -667,13 +688,19 @@ describe('in controlled selection state, read-only (selection prop), ', () => {
   it('HighTable shows the new selection if updated', async () => {
     const start = 2
     const selection = { ranges: [{ start, end: start + 1 }], anchor: start }
-    const { getAllByRole, findByRole, rerender } = render(<HighTable data={data} selection={selection}/>)
+    const { getAllByRole, findByRole, rerender, getByRole } = render(<HighTable data={data} selection={selection}/>)
+    await waitFor(() => {
+      expect(getByRole('grid').getAttribute('aria-busy')).toBe('false')
+    })
     // await because we have to wait for the data to be fetched first
     await findByRole('row', { selected: true })
 
     const other = 5
     const newSelection = { ranges: [{ start: other, end: other + 1 }], anchor: other }
     rerender(<HighTable data={data} selection={newSelection}/>)
+    await waitFor(() => {
+      expect(getByRole('grid').getAttribute('aria-busy')).toBe('false')
+    })
     // no need to await because the data is already fetched
     const selectedRows = getAllByRole('row', { selected: true })
     expect(selectedRows).toHaveLength(1)
@@ -748,9 +775,12 @@ describe('in uncontrolled selection state (onSelection prop), ', () => {
     expect(onSelectionChange).not.toHaveBeenCalled()
   })
 
-  it('the table is marked as multiselectable', () => {
+  it('the table is marked as multiselectable', async () => {
     const onSelectionChange = vi.fn()
     const { getByRole } = render(<HighTable data={data} onSelectionChange={onSelectionChange}/>)
+    await waitFor(() => {
+      expect(getByRole('grid').getAttribute('aria-busy')).toBe('false')
+    })
     const table = getByRole('grid')
     expect(table.getAttribute('aria-multiselectable')).toBe('true')
   })

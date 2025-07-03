@@ -40,7 +40,7 @@ export function SelectionProvider({ children, data, onError, selection: inputSel
   })
 
   const [rowByRowNumberAndOrderBy] = useState<Map<string, Map<number, number | undefined>>>(() => new Map())
-  const [allRowsSelected, setAllRowsSelected] = useState<boolean | undefined>(undefined)
+  const [allRowsSelected, setAllRowsSelected] = useState<boolean | undefined>(areAllSelected({ data, selection }))
   const { orderBy } = useOrderBy()
 
   const [gesture, setGesture] = useState<Gesture | undefined>(undefined)
@@ -191,12 +191,8 @@ export function SelectionProvider({ children, data, onError, selection: inputSel
     const gesture = startGesture()
     const { signal } = gesture.controller
     fetchAreAllSelected({ data, selection, signal })
-      .then((areAllSelected) => {
-        setAllRowsSelected(areAllSelected)
-      })
-      .finally(() => {
-        stopGesture({ gesture })
-      })
+      .finally(() => { stopGesture({ gesture }) })
+      .then((areAllSelected) => { setAllRowsSelected(areAllSelected) })
       .catch((error: unknown) => {
         if (error instanceof Error && error.name === 'AbortError') {
           // the request was aborted, do nothing
@@ -320,7 +316,10 @@ async function toggleAll({ data, selection, signal }: { data: DataFrame, selecti
   return { ranges }
 }
 
-async function fetchAreAllSelected({ data, selection, signal }: { data: DataFrame, selection: Selection, signal?: AbortSignal }): Promise<boolean> {
+function areAllSelected({ data, selection }: { data: DataFrame, selection?: Selection }): false | undefined {
+  if (!selection) {
+    return false
+  }
   if (data.numRows === 0) {
     return false
   }
@@ -329,6 +328,15 @@ async function fetchAreAllSelected({ data, selection, signal }: { data: DataFram
     return false
   }
   // the opposite is not true, because a rows selection can be shared between dataframes (think a dataframe and a sampled dataframe)
+
+  // At that point, we don't know: it requires an async operation to check if all rows are selected
+}
+
+async function fetchAreAllSelected({ data, selection, signal }: { data: DataFrame, selection: Selection, signal?: AbortSignal }): Promise<boolean> {
+  const syncAnswer = areAllSelected({ data, selection })
+  if (syncAnswer !== undefined) {
+    return syncAnswer
+  }
   // fetch all the row numbers in the table
   const rowNumbers = await fetchRowNumbers({ data, rowStart: 0, rowEnd: data.numRows, signal })
   // check if all these row numbers are in the selection
