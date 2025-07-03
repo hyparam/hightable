@@ -56,33 +56,43 @@ export function sortableDataFrame(data: DataFrame): SortableDataFrame {
 
   async function wrappedFetch({ rowStart, rowEnd, columns, orderBy, signal }: { rowStart: number, rowEnd: number, columns?: string[], orderBy?: OrderBy, signal?: AbortSignal }): Promise<void> {
     validateFetchParams({ rowStart, rowEnd, columns, data: { numRows, header } })
-    if (!orderBy || orderBy.length === 0) {
-      // If orderBy is not provided, we can fetch the data without sorting.
-      return data.fetch({ rowStart, rowEnd, columns, signal })
+    function callback() {
+      eventTarget.dispatchEvent(new CustomEvent('resolve'))
     }
-    validateOrderBy({ header, orderBy })
-    if (rowStart === rowEnd) {
-      // If the range is empty, we can return.
-      return
-    }
+    data.eventTarget?.addEventListener('resolve', callback)
 
-    // Ensure row numbers are available
-    const indexes = await fetchIndexes({
-      orderBy,
-      signal,
-      ranksByColumn,
-      indexes: indexesByOrderBy.get(serializeOrderBy(orderBy)),
-      setIndexes: ({ orderBy, indexes }) => {
+    try {
+      if (!orderBy || orderBy.length === 0) {
+        // If orderBy is not provided, we can fetch the data without sorting.
+        await data.fetch({ rowStart, rowEnd, columns, signal })
+        return
+      }
+      validateOrderBy({ header, orderBy })
+      if (rowStart === rowEnd) {
+        // If the range is empty, we can return.
+        return
+      }
+
+      // Ensure row numbers are available
+      const indexes = await fetchIndexes({
+        orderBy,
+        signal,
+        ranksByColumn,
+        indexes: indexesByOrderBy.get(serializeOrderBy(orderBy)),
+        setIndexes: ({ orderBy, indexes }) => {
         // Store the indexes in the map.
-        indexesByOrderBy.set(serializeOrderBy(orderBy), indexes)
-        // Notify the event target that the indexes have been updated.
-        eventTarget.dispatchEvent(new CustomEvent('resolve'))
-      },
-      data,
-    })
-    // Ensure cells are available
-    if (columns && columns.length > 0) {
-      await fetchFromIndexes({ columns, signal, indexes: indexes.slice(rowStart, rowEnd), fetch: data.fetch })
+          indexesByOrderBy.set(serializeOrderBy(orderBy), indexes)
+          // Notify the event target that the indexes have been updated.
+          eventTarget.dispatchEvent(new CustomEvent('resolve'))
+        },
+        data,
+      })
+      // Ensure cells are available
+      if (columns && columns.length > 0) {
+        await fetchFromIndexes({ columns, signal, indexes: indexes.slice(rowStart, rowEnd), fetch: data.fetch })
+      }
+    } finally {
+      data.eventTarget?.removeEventListener('resolve', callback)
     }
   }
 

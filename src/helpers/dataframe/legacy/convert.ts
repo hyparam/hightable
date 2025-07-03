@@ -2,7 +2,6 @@ import { createEventTarget } from '../../typedEventTarget.js'
 import { checkSignal, validateColumn, validateFetchParams, validateRow } from '../helpers.js'
 import { DataFrame, DataFrameEvents, ResolvedValue, UnsortableDataFrame, sortableDataFrame } from '../index.js'
 import { DataFrameV1 } from './dataframeV1.js'
-import { awaitRows } from './row.js'
 
 export function convertV1ToDataFrame(data: DataFrameV1): DataFrame {
   const unsortableDataFrame = convertV1ToUnsortableDataFrame(data)
@@ -40,25 +39,39 @@ export function convertV1ToUnsortableDataFrame(data: DataFrameV1): UnsortableDat
     validateFetchParams({ rowStart, rowEnd, columns, data: { numRows, header } })
     checkSignal(signal)
 
-    const rows = await awaitRows(data.rows({ start: rowStart, end: rowEnd }))
-    checkSignal(signal)
+    const asyncRows = data.rows({ start: rowStart, end: rowEnd })
 
-    for (const [i, row] of rows.entries()) {
+    const promises: Promise<any>[] = []
+    for (const [i, asyncRow] of asyncRows.entries()) {
       const rowIndex = rowStart + i
-      const { index: rowNumber, cells } = row
-      rowNumbersCache.set(rowIndex, { value: rowNumber })
+      const { index, cells } = asyncRow
+      promises.push(index.then(rowNumber => {
+        checkSignal(signal)
+        const cachedRowNumber = rowNumbersCache.get(rowIndex)
+        if (!cachedRowNumber || cachedRowNumber.value !== rowNumber) {
+          rowNumbersCache.set(rowIndex, { value: rowNumber })
+          eventTarget.dispatchEvent(new CustomEvent('resolve'))
+        }
+      }))
       for (const column of header) {
+        if (cells[column] === undefined) {
+          continue
+        }
         const cell = cells[column]
-        if (cell === undefined) {
-          continue // skip undefined cells
-        }
-        if (!cellsCache.has(column)) {
-          cellsCache.set(column, new Map())
-        }
-        cellsCache.get(column)?.set(rowIndex, { value: cell })
+        promises.push(cell.then(value => {
+          checkSignal(signal)
+          if (!cellsCache.has(column)) {
+            cellsCache.set(column, new Map())
+          }
+          const cachedCell = cellsCache.get(column)?.get(rowIndex)
+          if (!cachedCell || cachedCell.value !== value) {
+            cellsCache.get(column)?.set(rowIndex, { value })
+            eventTarget.dispatchEvent(new CustomEvent('resolve'))
+          }
+        }))
       }
     }
-    eventTarget.dispatchEvent(new CustomEvent('resolve'))
+    await Promise.all(promises)
   }
 
   return {

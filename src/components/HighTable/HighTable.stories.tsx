@@ -2,6 +2,8 @@ import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useState } from 'react'
 import { checkSignal, createGetRowNumber, createStaticFetch, validateColumn, validateFetchParams, validateRow } from '../../helpers/dataframe/helpers.js'
 import { DataFrameEvents, UnsortableDataFrame, arrayDataFrame } from '../../helpers/dataframe/index.js'
+import { DataFrameV1, convertV1ToDataFrame } from '../../helpers/dataframe/legacy/index.js'
+import { wrapPromise, wrapResolved } from '../../helpers/dataframe/legacy/promise.js'
 import { sortableDataFrame } from '../../helpers/dataframe/sort.js'
 import type { ResolvedValue } from '../../helpers/dataframe/types.js'
 import type { Selection } from '../../helpers/selection.js'
@@ -40,10 +42,10 @@ function createData(): UnsortableDataFrame {
   }
 }
 
+function delay<T>(value: T, ms: number): Promise<T> {
+  return new Promise(resolve => setTimeout(() => { resolve(value) }, ms))
+}
 function createDelayedData(): UnsortableDataFrame {
-  function delay<T>(value: T, ms: number): Promise<T> {
-    return new Promise(resolve => setTimeout(() => { resolve(value) }, ms))
-  }
   const header = ['ID', 'Count']
   const numRows = 500
   const cache = new Map([
@@ -144,6 +146,49 @@ function createEmptyData(): UnsortableDataFrame {
   return {
     ...props,
     fetch: createStaticFetch(props),
+  }
+}
+
+function createLegacyData(): DataFrameV1 {
+  return {
+    header: ['ID', 'Count', 'Double', 'Constant', 'Value1', 'Value2', 'Value3'],
+    numRows: 1000,
+    rows: ({ start, end }) => Array.from({ length: end - start }, (_, i) => {
+      const index = i + start
+      const count = 1000 - index
+      return {
+        index: wrapResolved(index),
+        cells: {
+          ID: wrapResolved(`row ${index}`),
+          Count: wrapResolved(count),
+          Double: wrapResolved(count * 2),
+          Constant: wrapResolved(42),
+          Value1: wrapResolved(Math.floor(100 * random(135 + index))),
+          Value2: wrapResolved(Math.floor(100 * random(648 + index))),
+          Value3: wrapResolved(Math.floor(100 * random(315 + index))),
+        },
+      }
+    }),
+  }
+}
+
+function createLegacyDelayedData(): DataFrameV1 {
+  return {
+    header: ['ID', 'Count'],
+    numRows: 50,
+    rows: ({ start, end }) => Array.from({ length: end - start }, (_, innerIndex) => {
+      const index = innerIndex + start
+      const ms = index % 3 === 0 ? 100 * Math.floor(10 * Math.random()) :
+        index % 3 === 1 ? 20 * Math.floor(10 * Math.random()) :
+          500
+      return {
+        index: wrapPromise(delay(index, ms)),
+        cells: {
+          ID: wrapPromise(delay(`row ${index}`, ms)),
+          Count: wrapPromise(delay(50 - index, ms)),
+        },
+      }
+    }),
   }
 }
 
@@ -293,5 +338,16 @@ export const ReadOnlySelection: Story = {
   },
   args: {
     data: sortableDataFrame(createData()),
+  },
+}
+
+export const LegacySortable: Story = {
+  args: {
+    data: sortableDataFrame(convertV1ToDataFrame(createLegacyData())),
+  },
+}
+export const LegacyPlaceholders: Story = {
+  args: {
+    data: sortableDataFrame(convertV1ToDataFrame(createLegacyDelayedData())),
   },
 }
