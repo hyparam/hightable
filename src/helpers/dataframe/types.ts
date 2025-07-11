@@ -21,6 +21,7 @@ export interface DataFrameEvents {
 export interface UnsortableDataFrame {
   numRows: number
   header: string[]
+  metadata?: Record<string, any>
   sortable?: false
 
   getCell({ row, column }: {row: number, column: string}): ResolvedValue | undefined

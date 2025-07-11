@@ -112,6 +112,7 @@ DataFrame is defined as:
 interface DataFrame {
   header: string[];
   numRows: number;
+  metadata?: Record<string, any>; // optional metadata for the DataFrame
   // rows are 0-indexed, excludes the header, end is exclusive
   // if orderBy is defined, start and end are applied on the sorted rows
   getRowNumber({ row, orderBy }: { row: number, orderBy?: OrderBy }): ResolvedValue<number> | undefined
