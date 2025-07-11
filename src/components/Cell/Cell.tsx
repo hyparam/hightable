@@ -1,48 +1,58 @@
 import { KeyboardEvent, MouseEvent, useCallback, useMemo, useRef } from 'react'
+import { ResolvedValue } from '../../helpers/dataframe/index.js'
 import { useCellNavigation } from '../../hooks/useCellsNavigation.js'
 import { useColumnStates } from '../../hooks/useColumnStates.js'
 
 interface Props {
-  onDoubleClick?: (event: MouseEvent) => void
-  onMouseDown?: (event: MouseEvent) => void
-  onKeyDown?: (event: KeyboardEvent) => void
-  stringify: (value: unknown) => string | undefined
-  value: any
-  columnIndex: number
-  hasResolved: boolean
   ariaColIndex: number
   ariaRowIndex: number
-  dataRowIndex?: number
+  columnIndex: number
+  stringify: (value: unknown) => string | undefined
+  cell?: ResolvedValue
   className?: string
+  onDoubleClickCell?: (event: MouseEvent, col: number, row: number) => void
+  onMouseDownCell?: (event: MouseEvent, col: number, row: number) => void
+  onKeyDownCell?: (event: KeyboardEvent, col: number, row: number) => void // for accessibility, it should be passed if onDoubleClickCell is passed. It can handle more than that action though.
+  rowNumber?: number // the row index in the original data, undefined if the value has not been fetched yet
 }
 
 /**
  * Render a table cell <td> with title and optional custom rendering
  *
- * @param props
- * @param props.value cell value
- * @param props.columnIndex column index in the dataframe (0-based)
- * @param props.onDoubleClick double click callback
- * @param props.onMouseDown mouse down callback
- * @param props.onKeyDown key down callback
- * @param props.stringify function to stringify the value
- * @param props.hasResolved function to get the column style
- * @param props.ariaColIndex aria col index
- * @param props.ariaRowIndex aria row index
- * @param props.dataRowIndex optional, index of the row in the dataframe (0-based)
- * @param props.className optional class name
+ * @param {Object} props
+ * @param {number} props.ariaColIndex aria col index
+ * @param {number} props.ariaRowIndex aria row index
+ * @param {number} props.columnIndex column index in the table (0-based)
+ * @param {function} props.stringify function to stringify the value
+ * @param {ResolvedValue} [props.cell] cell value, undefined if the value has not been fetched yet
+ * @param {string} [props.className] class name
+ * @param {function} [props.onDoubleClick] double click callback
+ * @param {function} [props.onMouseDown] mouse down callback
+ * @param {function} [props.onKeyDown] key down callback
+ * @param {number} [props.rowNumber] the row index in the original data, undefined if the value has not been fetched yet
  */
-export default function Cell({ onDoubleClick, onMouseDown, onKeyDown, stringify, columnIndex, value, hasResolved, className, ariaColIndex, ariaRowIndex, dataRowIndex }: Props) {
+export default function Cell({ cell, onDoubleClickCell, onMouseDownCell, onKeyDownCell, stringify, columnIndex, className, ariaColIndex, ariaRowIndex, rowNumber }: Props) {
   const ref = useRef<HTMLTableCellElement>(null)
   const { tabIndex, navigateToCell } = useCellNavigation({ ref, ariaColIndex, ariaRowIndex })
+
   const handleMouseDown = useCallback((event: MouseEvent) => {
     navigateToCell()
-    onMouseDown?.(event)
-  }, [onMouseDown, navigateToCell])
+    if (onMouseDownCell && rowNumber !== undefined) {
+      onMouseDownCell(event, columnIndex, rowNumber)
+    }
+  }, [navigateToCell, onMouseDownCell, rowNumber, columnIndex])
   const handleDoubleClick = useCallback((event: MouseEvent) => {
     navigateToCell()
-    onDoubleClick?.(event)
-  }, [onDoubleClick, navigateToCell])
+    if (onDoubleClickCell && rowNumber !== undefined) {
+      onDoubleClickCell(event, columnIndex, rowNumber)
+    }
+  }, [navigateToCell, onDoubleClickCell, rowNumber, columnIndex])
+  const handleKeyDown = useCallback((event: KeyboardEvent) => {
+    // No need to navigate to the cell when using the keyboard, it is already focused
+    if (onKeyDownCell && rowNumber !== undefined) {
+      onKeyDownCell(event, columnIndex, rowNumber)
+    }
+  }, [onKeyDownCell, rowNumber, columnIndex])
 
   // Get the column width from the context
   const { getColumnStyle } = useColumnStates()
@@ -50,8 +60,8 @@ export default function Cell({ onDoubleClick, onMouseDown, onKeyDown, stringify,
 
   // render as truncated text
   const str = useMemo(() => {
-    return stringify(value)
-  }, [stringify, value])
+    return stringify(cell?.value)
+  }, [stringify, cell])
   const title = useMemo(() => {
     if (str === undefined ) {
       return undefined
@@ -67,14 +77,14 @@ export default function Cell({ onDoubleClick, onMouseDown, onKeyDown, stringify,
     <td
       ref={ref}
       role="cell"
-      aria-busy={!hasResolved}
+      aria-busy={cell === undefined}
       aria-rowindex={ariaRowIndex}
       aria-colindex={ariaColIndex}
-      data-rowindex={dataRowIndex}
+      data-rownumber={rowNumber}
       tabIndex={tabIndex}
       onDoubleClick={handleDoubleClick}
       onMouseDown={handleMouseDown}
-      onKeyDown={onKeyDown}
+      onKeyDown={handleKeyDown}
       style={columnStyle}
       className={className}
       title={title}>

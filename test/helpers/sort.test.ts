@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { areEqualOrderBy, partitionOrderBy, toggleColumn } from '../../src/helpers/sort.js'
+import { areEqualOrderBy, computeRanks, partitionOrderBy, toggleColumn, validateOrderBy } from '../../src/helpers/sort.js'
 
 const nameAsc = { column: 'name', direction: 'ascending' as const }
 const nameDesc = { column: 'name', direction: 'descending' as const }
@@ -52,5 +52,36 @@ describe('toggleColumn', () => {
     expect(toggleColumn('name', [nameDesc])).toEqual([])
     expect(toggleColumn('name', [nameDesc, ageAsc])).toEqual([ageAsc])
     expect(toggleColumn('name', [nameDesc, nameAsc])).toEqual([nameAsc])
+  })
+})
+
+describe('validateOrderBy', () => {
+  it('should not throw if the orderBy is valid', () => {
+    expect(() => { validateOrderBy({ header: ['name', 'age'], orderBy: [nameAsc, ageAsc] }) }).not.toThrow()
+    expect(() => { validateOrderBy({ header: ['name', 'age'], orderBy: [nameDesc, ageAsc] }) }).not.toThrow()
+  })
+  it('should throw if the orderBy contains an invalid column', () => {
+    expect(() => { validateOrderBy({ header: ['name', 'age'], orderBy: [idAsc] }) }).toThrow('Invalid orderBy field: id')
+    expect(() => { validateOrderBy({ header: ['age'], orderBy: [nameAsc, idAsc] }) }).toThrow('Invalid orderBy field: name, id')
+  })
+})
+
+describe('computeRanks', () => {
+  it('should return different indexes when all the values are different', () => {
+    const values = [3, 1, 2, 4 ]
+    const ranks = computeRanks(values)
+    expect(ranks).toEqual([2, 0, 1, 3])
+  })
+
+  it('should return equal indexes when the values are the same', () => {
+    const values = [2, 3, 1, 1]
+    const ranks = computeRanks(values)
+    expect(ranks).toEqual([2, 3, 0, 0])
+  })
+
+  it('should handle strings', () => {
+    const values = ['b', 'c', 'a', 'a']
+    const ranks = computeRanks(values)
+    expect(ranks).toEqual([2, 3, 0, 0])
   })
 })
