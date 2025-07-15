@@ -1,19 +1,17 @@
-import { ReactNode, createContext, useContext, useState } from 'react'
-import { DataFrame } from '../helpers/dataframe.js'
+import { ReactNode, createContext, useContext, useEffect, useState } from 'react'
+import { DataFrame, arrayDataFrame } from '../helpers/dataframe/index.js'
 
 interface DataContextType {
   data: DataFrame,
   key: string,
+  version: number,
 }
 
 function getDefaultDataContext(): DataContextType {
   return {
-    data: {
-      numRows: 0,
-      header: [],
-      rows: () => [],
-    },
+    data: arrayDataFrame([]),
     key: 'default',
+    version: 0,
   }
 }
 
@@ -28,20 +26,37 @@ function getRandomKey(): string {
   return crypto.randomUUID()
 }
 
+// function isValidNumRows(row: number): boolean {
+//   return Number.isInteger(row) && row >= 0
+// }
+
 export function DataProvider({ children, data }: DataProviderProps) {
   // We want a string key to identify the data.
   const [key, setKey] = useState<string>(getRandomKey())
   const [previousData, setPreviousData] = useState<DataFrame>(data)
+  const [version, setVersion] = useState(0)
+
+  useEffect(() => {
+    function onResolve() {
+      setVersion(prev => prev + 1)
+    }
+    data.eventTarget?.addEventListener('resolve', onResolve)
+    return () => {
+      data.eventTarget?.removeEventListener('resolve', onResolve)
+    }
+  }, [data])
 
   if (data !== previousData) {
     setKey(getRandomKey())
     setPreviousData(data)
+    setVersion(0)
   }
 
   return (
     <DataContext.Provider value={{
       data,
       key,
+      version,
     }}>
       {children}
     </DataContext.Provider>

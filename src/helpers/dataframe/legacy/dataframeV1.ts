@@ -1,6 +1,6 @@
-import { wrapResolved } from '../utils/promise.js'
+import { OrderBy } from '../../sort.js'
+import { wrapResolved } from './promise.js'
 import { AsyncRow, Cells, asyncRows } from './row.js'
-import { OrderBy } from './sort.js'
 
 /**
  * Function that gets values in a column.
@@ -19,7 +19,7 @@ export type GetColumn = ({ column, start, end }: { column: string, start?: numbe
 /**
  * Streamable row data
  */
-export interface DataFrame {
+export interface DataFrameV1 {
   header: string[]
   numRows: number
   // Rows are 0-indexed, excludes the header, end is exclusive
@@ -32,7 +32,7 @@ export interface DataFrame {
 }
 
 /**
- * Return getColumn() function to apply on a DataFrame.
+ * Return getColumn() function to apply on a DataFrameV1.
  *
  * Uses df.getColumn() if provided. Otherwise, it creates a naive implementation that
  * fetches full rows (AsyncRow) then extracts the column values.
@@ -42,10 +42,10 @@ export interface DataFrame {
  * const getColumn = getGetColumn(rowCache(data))
  * ```
  *
- * @param data DataFrame to add getColumn method to
+ * @param data DataFrameV1 to add getColumn method to
  * @returns getColumn function
  */
-export function getGetColumn(data: DataFrame): GetColumn {
+export function getGetColumn(data: DataFrameV1): GetColumn {
   if (data.getColumn) return data.getColumn
   return function getColumn({ column, start = 0, end = data.numRows }): Promise<any[]> {
     if (!data.header.includes(column)) {
@@ -59,7 +59,7 @@ export function getGetColumn(data: DataFrame): GetColumn {
 // we can get the descending order replacing the rank with numRows - rank - 1. It's not exactly the rank of
 // the descending order, because the rank is the first, not the last, of the ties. But it's enough for the
 // purpose of sorting.
-export async function getRanks({ data, column }: {data: DataFrame, column: string}): Promise<number[]> {
+export async function getRanks({ data, column }: {data: DataFrameV1, column: string}): Promise<number[]> {
   if (!data.header.includes(column)) {
     throw new Error(`Invalid column: ${column}`)
   }
@@ -106,16 +106,16 @@ export function computeDataIndexes(orderBy: { direction: 'ascending' | 'descendi
   return dataIndexes
 }
 
-export function getUnsortedRanks({ data }: { data: DataFrame }): Promise<number[]> {
+export function getUnsortedRanks({ data }: { data: DataFrameV1 }): Promise<number[]> {
   const { numRows } = data
   const ranks = Array.from({ length: numRows }, (_, i) => i)
   return Promise.resolve(ranks)
 }
 
 /**
- * Wraps a DataFrame to make it sortable.
+ * Wraps a DataFrameV1 to make it sortable.
  *
- * If the DataFrame is already sortable, it will return the original DataFrame.
+ * If the DataFrameV1 is already sortable, it will return the original DataFrameV1.
  *
  * It takes advantage of cached rows to sort the data faster:
  * ```
@@ -124,10 +124,10 @@ export function getUnsortedRanks({ data }: { data: DataFrame }): Promise<number[
  *
  * If .getColumn() exists, it's used to sort the rows by the provided column.
  *
- * @param data DataFrame to make sortable
- * @returns DataFrame with sortable rows
+ * @param data DataFrameV1 to make sortable
+ * @returns DataFrameV1 with sortable rows
  */
-export function sortableDataFrame(data: DataFrame): DataFrame {
+export function sortableDataFrame(data: DataFrameV1): DataFrameV1 {
   if (data.sortable) return data // already sortable
 
   // TODO(SL): call addGetColumn() to cache the rows if needed
@@ -175,7 +175,7 @@ export function sortableDataFrame(data: DataFrame): DataFrame {
   }
 }
 
-export function arrayDataFrame(data: Cells[]): DataFrame {
+export function arrayDataFrame(data: Cells[]): DataFrameV1 {
   if (!(0 in data)) {
     return { header: [], numRows: 0, rows: () => [], getColumn: () => Promise.resolve([]) }
   }
