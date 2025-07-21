@@ -1,6 +1,6 @@
 import HighTable from './components/HighTable/HighTable.js'
 export { arrayDataFrame, filterDataFrame, sortableDataFrame, convertV1ToDataFrame } from './helpers/dataframe/index.js'
-export type { DataFrame, DataFrameEvents } from './helpers/dataframe/index.js'
+export type { DataFrame, DataFrameEvents, UnsortableDataFrame, SortableDataFrame } from './helpers/dataframe/index.js'
 export { resolvablePromise, wrapPromise, wrapResolved } from './helpers/dataframe/legacy/promise.js'
 export type { ResolvablePromise } from './helpers/dataframe/legacy/promise.js'
 export { asyncRows, awaitRow, awaitRows, resolvableRow } from './helpers/dataframe/legacy/row.js'
@@ -12,3 +12,4 @@ export type { CustomEventTarget, TypedCustomEvent } from './helpers/typedEventTa
 export { stringify } from './utils/stringify.js'
 export { HighTable }
 export default HighTable
+export type { DataFrameV1 } from './helpers/dataframe/legacy/dataframeV1.js'
