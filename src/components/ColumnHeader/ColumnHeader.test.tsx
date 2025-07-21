@@ -57,19 +57,19 @@ describe('ColumnHeader', () => {
     expect(getOffsetWidth).not.toHaveBeenCalled()
   })
 
-  it('measures the width if dataReady is true', () => {
-    render(<table><thead><tr><ColumnHeader columnName="test" {...defaultProps} dataReady={true} /></tr></thead></table>)
+  it('measures the width if canMeasureWidth is true', () => {
+    render(<table><thead><tr><ColumnHeader columnName="test" {...defaultProps} canMeasureWidth={true} /></tr></thead></table>)
     expect(getOffsetWidth).toHaveBeenCalled()
   })
 
-  it('measures the width again if dataReady toggles to true', () => {
-    const { rerender } = render(<table><thead><tr><ColumnHeader columnName="test" {...defaultProps} dataReady={true} /></tr></thead></table>)
+  it('measures the width again if canMeasureWidth toggles to true', () => {
+    const { rerender } = render(<table><thead><tr><ColumnHeader columnName="test" {...defaultProps} canMeasureWidth={true} /></tr></thead></table>)
     expect(getOffsetWidth).toHaveBeenCalledTimes(1)
     // new data is being loaded
-    rerender(<table><thead><tr><ColumnHeader columnName="test" {...defaultProps} dataReady={false} /></tr></thead></table>)
+    rerender(<table><thead><tr><ColumnHeader columnName="test" {...defaultProps} canMeasureWidth={false} /></tr></thead></table>)
     expect(getOffsetWidth).toHaveBeenCalledTimes(1)
     // new data is ready
-    rerender(<table><thead><tr><ColumnHeader columnName="test" {...defaultProps} dataReady={true} /></tr></thead></table>)
+    rerender(<table><thead><tr><ColumnHeader columnName="test" {...defaultProps} canMeasureWidth={true} /></tr></thead></table>)
     expect(getOffsetWidth).toHaveBeenCalledTimes(2)
   })
 
