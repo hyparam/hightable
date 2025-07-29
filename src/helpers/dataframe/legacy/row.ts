@@ -1,3 +1,4 @@
+import type { Cells } from '../index.js'
 import { ResolvablePromise, WrappedPromise, resolvablePromise } from './promise.js'
 
 /**
@@ -11,8 +12,6 @@ export interface AsyncRow {
   cells: Record<string, WrappedPromise<any>>
   index: WrappedPromise<number>
 }
-
-export type Cells = Record<string, any>
 
 /**
  * A row where each cell is a resolved value.

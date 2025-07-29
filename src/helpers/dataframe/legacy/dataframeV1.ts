@@ -1,6 +1,7 @@
 import { OrderBy } from '../../sort.js'
+import type { Cells } from '../index.js'
 import { wrapResolved } from './promise.js'
-import { AsyncRow, Cells, asyncRows } from './row.js'
+import { AsyncRow, asyncRows } from './row.js'
 
 /**
  * Function that gets values in a column.
