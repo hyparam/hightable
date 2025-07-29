@@ -1,13 +1,35 @@
 # CHANGELOG
 
-## [0.17.2](https://github.com/hyparam/hightable/compare/v0.17.1...HEAD)
+## [Unreleased](https://github.com/hyparam/hightable/compare/v0.18.0...HEAD)
+
+## [0.18.0](https://github.com/hyparam/hightable/compare/v0.17.2...v0.18.0) - 2025-07-29
+
+### Changed
+
+- **Breaking** change the DataFrame interface.
+  - the previous Dataframe interface is now called `DataFrameV1`, and a conversion function `convertV1ToDataFrame` is provided to convert it to the new format.
+  - the functions `rowCache` and `getGetColumn` are deprecated and removed.
+  - the functions `asyncRows`, `awaitRow`, `awaitRows`, `resolvableRow`, `resolvablePromise`, `wrapPromise`, and `wrapResolved`, and the types `ResolvablePromise`, `AsyncRow`, `Cells`, `PartialRow`, `ResolvableRow`, `Row` are deprecated, but still provided.
+  - the DataFrame interface is now the union of `UnsortableDataFrame` and `SortableDataFrame`. It is recommended to use them to be explicit about the support of sorting.
+- the DataFrame interface now relies on the `fetch` method that must be called to fill the cache, and the `getCell` and `getRowNumber` methods that give synchronous access to the cached data. It means that the new DataFrame is not row oriented anymore and handle the data at the cell level. It also provides an `eventTarget` field to listen to the `resolve` events sent when the data is fetched. Also note that the `fetch` method accepts an `AbortSignal` option to abort a fetch request. See the [README](README.md) for more details.
+- new functions and types are provided:
+  - `filterDataFrame` to derive a new DataFrame using a filter function.
+  - `createEventTarget` to create an event target that can be used in a DataFrame.
+  - `DataFrameEvents`, `CustomEventTarget` and `TypedCustomEvent` to handle custom events in a DataFrame.
+
+### Fixed
+
+- fix an error when clicking "select all" on an empty dataframe ([#216](https://github.com/hyparam/hightable/pull/216)).
+- ensure the row numbers column has always a minimum width, even for an empty dataframe ([#216](https://github.com/hyparam/hightable/pull/216)).
+
+## [0.17.2](https://github.com/hyparam/hightable/compare/v0.17.1...v0.17.2) - 2025-06-17
 
 ### Added
 
 - Added sortable option to the columnConfiguration property
   - Currently disable only, sortable: true will be ignored
 
-## [0.17.1](https://github.com/hyparam/hightable/compare/v0.17.0...v0.17.1)
+## [0.17.1](https://github.com/hyparam/hightable/compare/v0.17.0...v0.17.1) - 2025-06-13
 
 ### Added
 
