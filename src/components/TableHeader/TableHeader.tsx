@@ -1,13 +1,13 @@
 import { useCallback, useMemo } from 'react'
 import { OrderBy, toggleColumn } from '../../helpers/sort.js'
-import ColumnHeader from '../ColumnHeader/ColumnHeader.js'
 import { ColumnDescriptor } from '../../hooks/useTableConfig.js'
+import ColumnHeader from '../ColumnHeader/ColumnHeader.js'
 
 interface TableHeaderProps {
   columnDescriptors: ColumnDescriptor[]
   orderBy?: OrderBy // array of column order by clauses. If undefined, the table is unordered, the sort elements are hidden and the interactions are disabled.
   onOrderByChange?: (orderBy: OrderBy) => void // callback to call when a user interaction changes the order. The interactions are disabled if undefined.
-  dataReady: boolean
+  canMeasureWidth: boolean // indicates if the width of the columns can be measured.
   ariaRowIndex: number // aria row index for the header
   columnClassNames?: (string | undefined)[] // array of class names for each column
 }
@@ -16,7 +16,7 @@ interface TableHeaderProps {
  * Render a header for a table.
  */
 export default function TableHeader({
-  columnDescriptors, orderBy, onOrderByChange, dataReady, ariaRowIndex, columnClassNames = [],
+  columnDescriptors, orderBy, onOrderByChange, canMeasureWidth, ariaRowIndex, columnClassNames = [],
 }: TableHeaderProps) {
   // Function to handle click for changing orderBy
   const getOnOrderByClick = useCallback((columnHeader: string) => {
@@ -40,7 +40,7 @@ export default function TableHeader({
       // The ColumnHeader component width is controlled by the parent
       <ColumnHeader
         key={columnIndex}
-        dataReady={dataReady}
+        canMeasureWidth={canMeasureWidth}
         direction={orderByColumn.get(name)?.direction}
         orderByIndex={orderByColumn.get(name)?.index}
         orderBySize={orderBy?.length}

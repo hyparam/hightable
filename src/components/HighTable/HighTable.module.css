@@ -443,6 +443,15 @@
     background: #f9f4ff; /* redundant with td:first-child, but allows to force the background if it has been overridden with a logo */
   }
 
+  /* pending selection gesture */
+  thead td:first-child,
+  tbody [role="rowheader"] {
+    & input[type="checkbox"][aria-busy="true"] {
+      pointer-events: none;
+      opacity: 0.5;
+    }
+  }
+
   /* pending cell state */
   tbody td[aria-busy="true"] {
     position: relative;

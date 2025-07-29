@@ -1,10 +1,9 @@
-import React from 'react'
-import { afterEach, describe, expect, it } from 'vitest'
 import { cleanup, renderHook } from '@testing-library/react'
+import { afterEach, describe, expect, it } from 'vitest'
 
-import { useTableConfig } from '../../src/hooks/useTableConfig'
 import { ColumnConfiguration } from '../../src/helpers/columnConfiguration'
-import { DataFrame } from '../../src/helpers/dataframe'
+import { DataFrame } from '../../src/helpers/dataframe/index.js'
+import { useTableConfig } from '../../src/hooks/useTableConfig'
 
 afterEach(cleanup)
 

@@ -17,6 +17,7 @@ HighTable is a virtualized table component for React, designed to efficiently di
  - **Asynchronous Data Loading**: Fetches data on-demand as the user scrolls, supporting datasets of any size.
  - **Column Sorting**: Optional support for sorting data by columns.
  - **Column Resizing**: Allows for resizing columns to fit the available space and auto-sizing.
+ - **Row Selection**: Supports selecting multiple rows using shift+click.
  - **Event Handling**: Supports double-click events on cells.
  - **Loading Placeholder**: Displays animated loading indicator per-cell.
 
@@ -38,10 +39,11 @@ HighTable uses a data model called `DataFrame`, which defines how data is fetche
 
  - `header`: An array of strings representing the column names.
  - `numRows`: The total number of rows in the dataset.
- - `rows`: An asynchronous function that fetches rows. It should accept start and end row indices and return an array of row objects.
- - `sortable` (optional): A boolean indicating whether the table supports column sorting.
-
-Each row object should be a mapping of column names to cell values.
+ - `getRowNumber`: A function that returns the row number for a given row index. If not resolved yet, it returns undefined.
+ - `getCell`: A function that returns the value of a cell at a specific row and column. If not resolved yet, it returns undefined.
+ - `eventTarget`: An optional event target which must dispatch the event `resolve` when a cell or row number is resolved. This can be used to trigger re-renders or other side effects.
+ - `fetch`: An asynchronous function that fetches cells and row numbers, for a range of rows and columns. It should only fetch the missing data, and once the data is fetched, `getRowNumber` and `getCell` should return the resolved values. It is responsible for dispaching the `resolve` event (once or multiple times) on the `eventTarget` when the data is ready.
+ - `sortable` (optional): A boolean indicating whether the table supports column sorting. If so, `getRowNumber`, `getCell` and `fetch` accept an additional `orderBy` parameter.
 
 ## Usage
 
@@ -50,14 +52,30 @@ Here's a basic example of how to use HighTable in your React application:
 ```jsx
 import HighTable from 'hightable'
 
+const eventTarget = new EventTarget()
+const cache = new Map()
+const store = (cells) => {
+  for (const [col, values] of Object.entries(cells)) {
+    if (!cache.has(col)) cache.set(col, new Map())
+    for (const [row, value] of Object.entries(values)) {
+      cache.get(col).set(Number(row), ({value}))
+    }
+  }
+}
 const dataframe = {
   header: ['ID', 'Name', 'Email'],
   numRows: 1000000,
-  rows(start, end, orderBy) {
-    // fetch rows from your data source here
-    return fetchRowsFromServer(start, end, orderBy)
-  },
-  sortable: true,
+  getRowNumber: ({ row }) => ({ value: rowIndex }),
+  getCell: ({ row, col }) => cache.get(col).get(row),
+  eventTarget,
+  fetch({row, column}) {
+    // fetch cell data from your data source here
+    const cells = await fetchCellData(row, col)
+    // store the fetched data in the cache
+    store(cells)
+    // dispatch the resolve event to notify the table that the data is ready
+    eventTarget.dispatchEvent(new CustomEvent('resolve'))
+  }
 }
 
 function App() {
@@ -92,12 +110,24 @@ DataFrame is defined as:
 
 ```typescript
 interface DataFrame {
-  header: string[]
-  numRows: number
+  header: string[];
+  numRows: number;
+  metadata?: Record<string, any>; // optional metadata for the DataFrame
   // rows are 0-indexed, excludes the header, end is exclusive
   // if orderBy is defined, start and end are applied on the sorted rows
-  rows(start: number, end: number, orderBy?: string): AsyncRow[]
-  sortable?: boolean
+  getRowNumber({ row, orderBy }: { row: number, orderBy?: OrderBy }): ResolvedValue<number> | undefined
+  getCell({ row, column, orderBy }: {row: number, column: string, orderBy?: OrderBy}): ResolvedValue | undefined
+  fetch({ rowStart, rowEnd, columns, orderBy, signal }: { rowStart: number, rowEnd: number, columns?: string[], orderBy?: OrderBy, signal?: AbortSignal }): Promise<void>
+  eventTarget?: EventTarget;
+  sortable?: boolean;
+}
+```
+
+ResolvedValue is defined as:
+
+```typescript
+type ResolvedValue<T = any> = {
+  value: T; // resolved value
 }
 ```
 
@@ -156,49 +186,33 @@ import { sortedDataFrame } from 'hightable'
 const sortableDf = sortableDataFrame(df)
 ```
 
-## Async DataFrame
+## Legacy DataFrame format
 
-HighTable supports async loading of individual cells. Dataframes return future cell data to the table as `AsyncRow[]`.
+The legacy DataFrame format can still be used, but it is not recommended for new projects. It has the following structure:
 
-You can use the helper `asyncRows` (or the lower level `resolvableRow` and `wrapPromise`) to create the async rows. Their cells and index are Promises, with a field `resolved` set to the resolved value (or `rejected` set to the reason) when settled.
-
-High-level example:
-
-```javascript
-import { asyncRows } from 'hightable'
-const header = ['a', 'b']
-const numRows = 10
-// transform Promise<Row[]> to AsyncRow[]
-const rows = asyncRows(fetchRows(...), numRows, header)
-const dataframe = {
-  header,
-  numRows,
-  rows(start, end) {
-    return rows.slice(start, end)
-  },
+```ts
+export interface DataFrameV1 {
+  header: string[]
+  numRows: number
+  rows({ start, end, orderBy }: { start: number, end: number, orderBy?: OrderBy }): AsyncRow[]
+  getColumn?: GetColumn
+  sortable?: boolean
 }
 ```
 
-Low-level example:
+HighTable provides a helper function to convert the legacy DataFrame format to the new format:
 
 ```javascript
-import { resolvableRow } from 'hightable'
-const dataframe = {
-  header: ['a', 'b'],
-  numRows: 10,
-  rows(start, end) {
-    // resolvableRow makes a row where each column value is a wrapped promise with .resolve() and .reject() methods;
-    // the row also contains a wrapped promise for the row index
-    const futureRows = Array.from({ length: end - start }, () => resolvableRow(this.header))
-    for (let row = start; row < end; row++) {
-      for (const col of this.header) {
-        fetchCell(row, col).then(value => futureRows[row - start].cells[col].resolve(value))
-      }
-      futureRows[row - start].index.resolve(row)
-    }
-    return futureRows
-  },
+import { convertV1ToDataFrame } from 'hightable/helpers/dataframe/legacy/index.js'
+const legacyDataFrame = {
+  header: ['ID', 'Name', 'Email'],
+  numRows: 1000000,
+  rows({ start, end }) {
+    // fetch rows from your data source here
+    return fetchRowsFromServer(start, end)
+  }
 }
+const dataframe = convertV1ToDataFrame(legacyDataFrame)
 ```
 
 ## Styling

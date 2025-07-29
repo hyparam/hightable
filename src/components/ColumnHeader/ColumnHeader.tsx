@@ -15,7 +15,7 @@ interface Props {
   columnName: string
   columnConfig: ColumnConfig
   children?: ReactNode
-  dataReady?: boolean
+  canMeasureWidth?: boolean
   direction?: Direction
   onClick?: () => void
   orderByIndex?: number // index of the column in the orderBy array (0-based)
@@ -25,7 +25,7 @@ interface Props {
   className?: string // optional class name
 }
 
-export default function ColumnHeader({ columnIndex, columnName, columnConfig, dataReady, direction, onClick, orderByIndex, orderBySize, ariaColIndex, ariaRowIndex, className, children }: Props) {
+export default function ColumnHeader({ columnIndex, columnName, columnConfig, canMeasureWidth, direction, onClick, orderByIndex, orderBySize, ariaColIndex, ariaRowIndex, className, children }: Props) {
   const ref = useRef<HTMLTableCellElement>(null)
   const { tabIndex, navigateToCell } = useCellNavigation({ ref, ariaColIndex, ariaRowIndex })
   const { sortable, headerComponent } = columnConfig
@@ -48,7 +48,7 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, da
   // Measure default column width when data is ready, if no width is set
   useEffect(() => {
     const element = ref.current
-    if (dataReady && element && width === undefined) {
+    if (canMeasureWidth && element && width === undefined) {
       const measured = getOffsetWidth(element)
       if (isNaN(measured)) {
         // browserless unit tests get NaN
@@ -56,7 +56,7 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, da
       }
       measureWidth?.({ columnIndex, measured })
     }
-  }, [dataReady, measureWidth, width, columnIndex])
+  }, [canMeasureWidth, measureWidth, width, columnIndex])
 
   const autoResize = useCallback(() => {
     const element = ref.current

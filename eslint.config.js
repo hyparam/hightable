@@ -72,7 +72,7 @@ export default typescript.config(
       'space-infix-ops': 'error',
       // typescript
       '@typescript-eslint/restrict-template-expressions': 'off',
-      '@typescript-eslint/no-unused-vars': 'warn',
+      '@typescript-eslint/no-unused-vars': ['warn', { 'ignoreRestSiblings': true }],
       '@typescript-eslint/require-await': 'warn',
       // allow using any - see row.ts - it's not easy to replace with unknown for example
       '@typescript-eslint/no-explicit-any': 'off',

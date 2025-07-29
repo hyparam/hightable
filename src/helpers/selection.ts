@@ -1,5 +1,3 @@
-import { DataFrame, computeDataIndexes, getRanks, getUnsortedRanks } from './dataframe.js'
-import { OrderBy } from './sort.js'
 
 /**
  * A selection is modelled as an array of ordered and non-overlapping ranges.
@@ -60,29 +58,6 @@ export function isSelected({ ranges, index }: { ranges: Ranges, index: number })
   return ranges.some(range => range.start <= index && index < range.end)
 }
 
-export function areAllSelected({ ranges, length }: { ranges: Ranges, length: number }): boolean {
-  if (!areValidRanges(ranges)) {
-    throw new Error('Invalid ranges')
-  }
-  if (length && !isValidIndex(length)) {
-    throw new Error('Invalid length')
-  }
-  return ranges.length === 1 && 0 in ranges && ranges[0].start === 0 && ranges[0].end === length
-}
-
-export function toggleAll({ ranges, length }: { ranges: Ranges, length: number }): Ranges {
-  if (!areValidRanges(ranges)) {
-    throw new Error('Invalid ranges')
-  }
-  if (length && !isValidIndex(length)) {
-    throw new Error('Invalid length')
-  }
-  if (!length || areAllSelected({ ranges, length })) {
-    return []
-  }
-  return [{ start: 0, end: length }]
-}
-
 export function selectRange({ ranges, range }: { ranges: Ranges, range: Range }): Ranges {
   if (!areValidRanges(ranges)) {
     throw new Error('Invalid ranges')
@@ -137,6 +112,9 @@ export function selectRange({ ranges, range }: { ranges: Ranges, range: Range })
 
 export function selectIndex({ ranges, index }: { ranges: Ranges, index: number }): Ranges {
   return selectRange({ ranges, range: { start: index, end: index + 1 } })
+}
+export function unselectIndex({ ranges, index }: { ranges: Ranges, index: number }): Ranges {
+  return unselectRange({ ranges, range: { start: index, end: index + 1 } })
 }
 
 export function unselectRange({ ranges, range }: { ranges: Ranges, range: Range }): Ranges {
@@ -194,51 +172,6 @@ export function unselectRange({ ranges, range }: { ranges: Ranges, range: Range 
   return newRanges
 }
 
-/**
- * Extend selection state from anchor to index (selecting or unselecting the range).
- * Both bounds are inclusive.
- * It will handle the shift+click behavior. anchor is the first index clicked, index is the last index clicked.
- *
- * If anchor is equal to index, the row is toggled instead.
- *
- * @param {Object} params
- * @param {Ranges} params.ranges - The current selection ranges.
- * @param {number} params.anchor - The anchor index (inclusive).
- * @param {number} params.index - The index to extend the selection to (inclusive).
- *
- * @returns {Ranges} The new selection ranges.
- */
-export function extendFromAnchor({ ranges, anchor, index }: { ranges: Ranges, anchor?: number, index: number }): Ranges {
-  if (!areValidRanges(ranges)) {
-    throw new Error('Invalid ranges')
-  }
-  if (anchor === undefined) {
-    // no anchor to start the range, no operation
-    return ranges
-  }
-  if (!isValidIndex(anchor)) {
-    throw new Error('Invalid anchor')
-  }
-  if (!isValidIndex(index)) {
-    throw new Error('Invalid index')
-  }
-  if (anchor === index) {
-    // no range to extend, toggle the index
-    return toggleIndex({ ranges, index })
-  }
-  const range = anchor < index ? { start: anchor, end: index + 1 } : { start: index, end: anchor + 1 }
-  if (!isValidRange(range)) {
-    throw new Error('Invalid range')
-  }
-  if (isSelected({ ranges, index: anchor })) {
-    // select the rest of the range
-    return selectRange({ ranges, range })
-  } else {
-    // unselect the rest of the range
-    return unselectRange({ ranges, range })
-  }
-}
-
 export function toggleIndex({ ranges, index }: { ranges: Ranges, index: number }): Ranges {
   if (!isValidIndex(index)) {
     throw new Error('Invalid index')
@@ -262,159 +195,6 @@ export function toggleIndexInSelection({ selection, index }: { selection: Select
   return { ranges: toggleIndex({ ranges: selection.ranges, index }), anchor: index }
 }
 
-/**
- * Extend the selection state from the anchor to the index (selecting or unselecting the range).
- * Both bounds are inclusive.
- *
- * The anchor is updated to the index.
- *
- * @param {Object} params
- * @param {Selection} params.selection - The current selection state.
- * @param {number} params.index - The index to toggle.
- *
- * @returns {Selection} The new selection state.
- */
-export function toggleRangeInSelection({ selection, index }: { selection: Selection, index: number }): Selection {
-  return { ranges: extendFromAnchor({ ranges: selection.ranges, anchor: selection.anchor, index }), anchor: index }
-}
-
-/**
- * Compute the table indexes from the data indexes.
- *
- * @param {number[]} permutationIndexes - The data frame index of each row of the sorted table (dataIndexes[tableIndex] = dataIndex).
- *
- * @returns {number[]} The index of each row in the sorted table (tableIndexes[dataIndex] = tableIndex).
- */
-export function invertPermutationIndexes(permutationIndexes: number[]): number[] {
-  const numIndexes = permutationIndexes.length
-  const invertedIndexes = Array<number>(numIndexes).fill(-1)
-  permutationIndexes.forEach((index, invertedIndex) => {
-    if (index < 0 || index >= numIndexes) {
-      throw new Error('Invalid index: out of bounds')
-    }
-    if (!Number.isInteger(index)) {
-      throw new Error('Invalid index: not an integer')
-    }
-    if (invertedIndexes[index] !== -1) {
-      throw new Error('Duplicate index')
-    }
-    invertedIndexes[index] = invertedIndex
-  })
-  return invertedIndexes
-}
-
-/**
- * Get an element from an array, or raise if it's outside of the range.
- *
- * @param {Object} params
- * @param {number} params.index - The index of the element.
- * @param {T[]} params.array - The array of elements (array[index] = element).
- *
- * @returns {T} The element.
- */
-export function getElement<T>({ index, array }: {index: number, array: T[]}): T {
-  const element = array[index]
-  if (element === undefined) {
-    throw new Error('Data index not found in the data frame')
-  }
-  return element
-}
-
-/**
- * Convert a selection between two domains, using a permutation array.
- *
- * @param {Object} params
- * @param {Selection} params.selection - A selection of indexes.
- * @param {number[]} params.permutationIndexes - An array that maps every index to another index (permutationIndexes[index] = permutedIndex).
- *
- * @returns {Selection} A selection of permuted indexes.
- */
-export function convertSelection({ selection, permutationIndexes }: { selection: Selection, permutationIndexes: number[] }): Selection {
-  const numElements = permutationIndexes.length
-  const { ranges, anchor } = selection
-  if (!areValidRanges(selection.ranges)) {
-    throw new Error('Invalid ranges')
-  }
-  if (anchor !== undefined && !isValidIndex(anchor)) {
-    throw new Error('Invalid anchor')
-  }
-  let nextRanges: Ranges = []
-  if (ranges.length === 0) {
-    // empty selection
-    nextRanges = []
-  } else if (ranges.length === 1 && 0 in ranges && ranges[0].start === 0 && ranges[0].end === numElements) {
-    // all rows selected
-    nextRanges = [{ start: 0, end: numElements }]
-  } else {
-    // naive implementation, could be optimized
-    for (const range of ranges) {
-      const { start, end } = range
-      for (let index = start; index < end; index++) {
-        nextRanges = selectIndex({ ranges: nextRanges, index: getElement({ index, array: permutationIndexes }) })
-      }
-    }
-  }
-  const nextAnchor = anchor !== undefined ? getElement({ index: anchor, array: permutationIndexes }) : undefined
-  return { ranges: nextRanges, anchor: nextAnchor }
-}
-
-/**
- * Compute the new selection state after a shift-click (range toggle) on the row with the given table index,
- * when the rows are sorted.
- *
- * The selection is extended from the anchor to the index. This
- * range is done in the visual space of the user, ie: between the rows as they appear in the table.
- *
- * The new anchor is the row with the given table index.
- *
- * If the rows are sorted, the indexes are converted from data domain to table domain and vice versa,
- * which requires the sort index of the data frame. If not available, it must be computed, which is
- * an async operation that can be expensive.
- *
- * @param {Object} params
- * @param {number} params.tableIndex - The index of the row in the table (table domain, sorted row indexes).
- * @param {Selection} params.selection - The current selection state (data domain, row indexes).
- * @param {OrderBy} params.orderBy - The order if the rows are sorted.
- * @param {DataFrame} params.data - The data frame.
- * @param {Map<string,number[]>} params.ranks - The map of ranks for each column of the data frame (they can be missing, if so thay will be populated in this function).
- * @param {function} params.setColumnRanks - A function to update the map of column ranks.
- */
-export async function toggleRangeInTable({
-  tableIndex,
-  selection,
-  orderBy,
-  data,
-  ranksMap,
-  setRanksMap,
-}: { tableIndex: number, selection: Selection, orderBy: OrderBy, data: DataFrame, ranksMap: Map<string, Promise<number[]>>, setRanksMap: (setter: (ranksMap: Map<string, Promise<number[]>>) => Map<string, Promise<number[]>>) => void }): Promise<Selection> {
-  // Extend the selection from the anchor to the index with sorted data
-  // Convert the indexes to work in the data domain before converting back.
-  if (!data.sortable) {
-    throw new Error('Data frame is not sortable')
-  }
-  const orderByWithDefaultSort = [...orderBy, { column: '', direction: 'ascending' as const }]
-  const orderByWithRanksPromises = orderByWithDefaultSort.map(({ column, direction }) => {
-    return {
-      column,
-      direction,
-      ranks: ranksMap.get(column) ?? (column === '' ? getUnsortedRanks({ data }) : getRanks({ data, column })),
-    }
-  })
-  if (orderByWithRanksPromises.some(({ column }) => !ranksMap.has(column))) {
-    setRanksMap(ranksMap => {
-      const nextRanksMap = new Map(ranksMap)
-      orderByWithRanksPromises.forEach(({ column, ranks }) => nextRanksMap.set(column, ranks))
-      return nextRanksMap
-    })
-  }
-  const orderByWithRanks = await Promise.all(orderByWithRanksPromises.map(async ({ column, direction, ranks }) => ({ column, direction, ranks: await ranks })))
-
-  const dataIndexes = computeDataIndexes(orderByWithRanks)
-  const tableIndexes = invertPermutationIndexes(dataIndexes)
-  const tableSelection = convertSelection({ selection, permutationIndexes: tableIndexes })
-  const { ranges, anchor } = tableSelection
-  const newAnchor = tableIndex
-  const newTableSelection = { ranges: extendFromAnchor({ ranges, anchor, index: tableIndex }), anchor: newAnchor }
-  const newDataSelection = convertSelection({ selection: newTableSelection, permutationIndexes: dataIndexes })
-  return newDataSelection
+export function countSelectedRows({ selection }: { selection: Selection }): number {
+  return selection.ranges.reduce((count, range) => count + (range.end - range.start), 0)
 }
