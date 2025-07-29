@@ -1,6 +1,12 @@
 # CHANGELOG
 
-## [Unreleased](https://github.com/hyparam/hightable/compare/v0.18.0...HEAD)
+## [Unreleased](https://github.com/hyparam/hightable/compare/v0.18.1...HEAD)
+
+## [0.18.1](https://github.com/hyparam/hightable/compare/v0.18.0...v0.18.1) - 2025-07-29
+
+### Added
+
+- export type `ResolvedValue` ([#225](https://github.com/hyparam/hightable/pull/225)).
 
 ## [0.18.0](https://github.com/hyparam/hightable/compare/v0.17.2...v0.18.0) - 2025-07-29
 
