@@ -1,5 +1,5 @@
 import HighTable from './components/HighTable/HighTable.js'
-export { arrayDataFrame, convertV1ToDataFrame, filterDataFrame, sortableDataFrame } from './helpers/dataframe/index.js'
+export { arrayDataFrame, checkSignal, convertV1ToDataFrame, createGetRowNumber, createStaticFetch, filterDataFrame, sortableDataFrame, validateColumn, validateFetchParams, validateRow } from './helpers/dataframe/index.js'
 export type { Cells, DataFrame, DataFrameEvents, ResolvedValue, SortableDataFrame, UnsortableDataFrame } from './helpers/dataframe/index.js'
 export { resolvablePromise, wrapPromise, wrapResolved } from './helpers/dataframe/legacy/promise.js'
 export type { ResolvablePromise } from './helpers/dataframe/legacy/promise.js'
