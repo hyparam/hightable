@@ -1,6 +1,12 @@
 # CHANGELOG
 
-## [Unreleased](https://github.com/hyparam/hightable/compare/v0.18.1...HEAD)
+## [Unreleased](https://github.com/hyparam/hightable/compare/v0.18.2...HEAD)
+
+## [0.18.2](https://github.com/hyparam/hightable/compare/v0.18.1...v0.18.2) - 2025-08-01
+
+### Added
+
+- export dataframe helper functions like `checkSignal`, `validateColumn` or `validateRow` ([#233](https://github.com/hyparam/hightable/pull/233)).
 
 ## [0.18.1](https://github.com/hyparam/hightable/compare/v0.18.0...v0.18.1) - 2025-07-29
 
