@@ -1,7 +1,14 @@
-import { KeyboardEvent, MouseEvent, useCallback, useMemo, useRef } from 'react'
+import { KeyboardEvent, MouseEvent, ReactNode, useCallback, useMemo, useRef } from 'react'
 import { ResolvedValue } from '../../helpers/dataframe/index.js'
 import { useCellNavigation } from '../../hooks/useCellsNavigation.js'
 import { useColumnStates } from '../../hooks/useColumnStates.js'
+
+export interface CellContentProps {
+  stringify: (value: unknown) => string | undefined
+  cell?: ResolvedValue
+  col: number
+  row?: number // the row index in the original data, undefined if the value has not been fetched yet
+}
 
 interface Props {
   ariaColIndex: number
@@ -14,6 +21,7 @@ interface Props {
   onMouseDownCell?: (event: MouseEvent, col: number, row: number) => void
   onKeyDownCell?: (event: KeyboardEvent, col: number, row: number) => void // for accessibility, it should be passed if onDoubleClickCell is passed. It can handle more than that action though.
   rowNumber?: number // the row index in the original data, undefined if the value has not been fetched yet
+  renderCellContent?: (props: CellContentProps) => ReactNode // custom cell content component, if not provided, the default stringified value will be used
 }
 
 /**
@@ -31,7 +39,7 @@ interface Props {
  * @param {function} [props.onKeyDown] key down callback
  * @param {number} [props.rowNumber] the row index in the original data, undefined if the value has not been fetched yet
  */
-export default function Cell({ cell, onDoubleClickCell, onMouseDownCell, onKeyDownCell, stringify, columnIndex, className, ariaColIndex, ariaRowIndex, rowNumber }: Props) {
+export default function Cell({ cell, onDoubleClickCell, onMouseDownCell, onKeyDownCell, stringify, columnIndex, className, ariaColIndex, ariaRowIndex, rowNumber, renderCellContent }: Props) {
   const ref = useRef<HTMLTableCellElement>(null)
   const { tabIndex, navigateToCell } = useCellNavigation({ ref, ariaColIndex, ariaRowIndex })
 
@@ -73,6 +81,9 @@ export default function Cell({ cell, onDoubleClickCell, onMouseDownCell, onKeyDo
       return str
     }
   }, [str])
+  const content = useMemo(() => {
+    return renderCellContent?.({ cell, stringify, col: columnIndex, row: rowNumber }) ?? str
+  }, [cell, stringify, columnIndex, rowNumber, renderCellContent, str])
   return (
     <td
       ref={ref}
@@ -88,7 +99,7 @@ export default function Cell({ cell, onDoubleClickCell, onMouseDownCell, onKeyDo
       style={columnStyle}
       className={className}
       title={title}>
-      {str}
+      {content}
     </td>
   )
 }
