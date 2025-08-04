@@ -1,4 +1,4 @@
-import { CSSProperties, KeyboardEvent, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { CSSProperties, KeyboardEvent, MouseEvent, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ColumnConfiguration } from '../../helpers/columnConfiguration.js'
 import { DataFrame } from '../../helpers/dataframe/index.js'
 import { Selection } from '../../helpers/selection.js'
@@ -12,12 +12,13 @@ import { PortalContainerProvider, usePortalContainer } from '../../hooks/usePort
 import { SelectionProvider, useSelection } from '../../hooks/useSelection.js'
 import { useTableConfig } from '../../hooks/useTableConfig.js'
 import { stringify as stringifyDefault } from '../../utils/stringify.js'
-import Cell from '../Cell/Cell.js'
+import Cell, { type CellContentProps } from '../Cell/Cell.js'
 import Row from '../Row/Row.js'
 import RowHeader from '../RowHeader/RowHeader.js'
 import TableCorner from '../TableCorner/TableCorner.js'
 import TableHeader from '../TableHeader/TableHeader.js'
 import styles from './HighTable.module.css'
+export { type CellContentProps } from '../Cell/Cell.js'
 
 const rowHeight = 33 // row height px
 const minWidth = 50 // minimum width of a cell in px, used to compute the column widths
@@ -42,6 +43,7 @@ interface Props {
   className?: string // additional class names for the component
   columnClassNames?: (string | undefined)[] // list of additional class names for the header and cells of each column. The index in this array corresponds to the column index in columns
   styled?: boolean // use styled component? (default true)
+  renderCellContent?: (props: CellContentProps) => ReactNode // custom cell content component, if not provided, the default CellContent will be used
 }
 
 const defaultPadding = 20
@@ -122,6 +124,7 @@ export function HighTableInner({
   styled = true,
   columnConfiguration,
   version,
+  renderCellContent,
 }: PropsInner) {
   // contexts
   const { data } = useData()
@@ -415,6 +418,7 @@ export function HighTableInner({
                         ariaRowIndex={ariaRowIndex}
                         cell={cell}
                         rowNumber={rowNumber}
+                        renderCellContent={renderCellContent}
                       />
                     })}
                   </Row>
