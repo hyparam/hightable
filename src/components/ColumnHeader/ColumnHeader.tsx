@@ -139,7 +139,6 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
       }
       <ColumnResizer
         forceWidth={forceColumnWidth}
-        minWidth={columnConfig.minWidth}
         autoResize={autoResize}
         width={width}
         tabIndex={tabIndex}
