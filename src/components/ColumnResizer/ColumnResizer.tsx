@@ -8,17 +8,16 @@ interface InitialPointerState {
 
 interface Props {
   autoResize?: () => void
-  forceWidth?: (width: number, minWidth?: number) => void
+  forceWidth?: (width: number) => void
   width?: number
   tabIndex?: number
   navigateToCell?: () => void
-  minWidth?: number
 }
 
 const smallStep = 10
 const bigStep = 100
 
-export default function ColumnResizer({ autoResize, forceWidth, width, tabIndex, navigateToCell, minWidth }: Props) {
+export default function ColumnResizer({ autoResize, forceWidth, width, tabIndex, navigateToCell }: Props) {
   const [initialPointerState, setInitialPointerState] = useState<InitialPointerState | undefined>(undefined)
   const [activeKeyboard, setActiveKeyboard] = useState<boolean>(false)
 
@@ -59,8 +58,8 @@ export default function ColumnResizer({ autoResize, forceWidth, width, tabIndex,
     if (!initialPointerState || event.pointerId !== initialPointerState.pointerId) {
       return
     }
-    forceWidth?.(initialPointerState.width - initialPointerState.clientX + event.clientX, minWidth)
-  }, [forceWidth, initialPointerState, minWidth])
+    forceWidth?.(initialPointerState.width - initialPointerState.clientX + event.clientX)
+  }, [forceWidth, initialPointerState])
 
   // Handle pointer up to end resizing
   const handlePointerUp = useCallback((event: PointerEvent<HTMLSpanElement>) => {

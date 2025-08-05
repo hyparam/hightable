@@ -41,9 +41,9 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
   const columnStyle = getColumnStyle?.(columnIndex)
   const dataFixedWidth = isFixedColumn?.(columnIndex) === true ? true : undefined
   const width = getColumnWidth?.(columnIndex)
-  const forceColumnWidth = useCallback((width: number, minWidth?: number) => {
-    forceWidth?.({ columnIndex, width, minWidth })
-  }, [forceWidth, columnIndex])
+  const forceColumnWidth = useCallback((width: number) => {
+    forceWidth?.({ columnIndex, width, minWidth: columnConfig.minWidth })
+  }, [forceWidth, columnIndex, columnConfig.minWidth])
 
   // Measure default column width when data is ready, if no width is set
   useEffect(() => {
