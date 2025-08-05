@@ -326,8 +326,8 @@ export const HeaderComponentWithMinWidth: Story = {
         headerComponent:
           <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             Double Value
-            <button 
-              type="button" 
+            <button
+              type="button"
               onClick={() => { alert('This column has a 200px minimum width!') }}
               style={{ fontSize: '11px', padding: '2px 6px' }}
             >
