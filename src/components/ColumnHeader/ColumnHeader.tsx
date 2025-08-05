@@ -41,8 +41,8 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
   const columnStyle = getColumnStyle?.(columnIndex)
   const dataFixedWidth = isFixedColumn?.(columnIndex) === true ? true : undefined
   const width = getColumnWidth?.(columnIndex)
-  const forceColumnWidth = useCallback((width: number) => {
-    forceWidth?.({ columnIndex, width })
+  const forceColumnWidth = useCallback((width: number, minWidth?: number) => {
+    forceWidth?.({ columnIndex, width, minWidth })
   }, [forceWidth, columnIndex])
 
   // Measure default column width when data is ready, if no width is set
@@ -139,6 +139,7 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
       }
       <ColumnResizer
         forceWidth={forceColumnWidth}
+        minWidth={columnConfig.minWidth}
         autoResize={autoResize}
         width={width}
         tabIndex={tabIndex}

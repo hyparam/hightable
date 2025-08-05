@@ -4,7 +4,7 @@ import React from 'react'
 export interface ColumnConfig {
   headerComponent?: React.ReactNode;
   sortable?: boolean;
-  // width?: number;
+  minWidth?: number;
   // hideable?: boolean;
   // filters: Some filter structure
   // cellRenderer?: (value: unknown, row: Row) => React.ReactNode;
