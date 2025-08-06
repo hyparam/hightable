@@ -1,6 +1,10 @@
 # CHANGELOG
 
-## [Unreleased](https://github.com/hyparam/hightable/compare/v0.18.2...HEAD)
+## [0.18.3](https://github.com/hyparam/hightable/compare/v0.18.2...HEAD)
+
+### Added
+
+- minWidth to the column configuration option to override global min width
 
 ## [0.18.2](https://github.com/hyparam/hightable/compare/v0.18.1...v0.18.2) - 2025-08-01
 
