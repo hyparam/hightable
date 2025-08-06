@@ -299,6 +299,46 @@ export const HeaderComponent: Story = {
     },
   },
 }
+export const HeaderComponentWithMinWidth: Story = {
+  args: {
+    data: createData(),
+    columnConfiguration: {
+      ID: {
+        minWidth: 150,
+        headerComponent:
+          <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <strong>ID</strong>
+            <span style={{ fontSize: '12px', color: '#666' }}>(min: 150px)</span>
+          </span>
+        ,
+      },
+      Count: {
+        minWidth: 80,
+        headerComponent:
+          <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            Count
+            <span style={{ fontSize: '12px', color: '#666' }}>(min: 80px)</span>
+          </span>
+        ,
+      },
+      Double: {
+        minWidth: 200,
+        headerComponent:
+          <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            Double Value
+            <button
+              type="button"
+              onClick={() => { alert('This column has a 200px minimum width!') }}
+              style={{ fontSize: '11px', padding: '2px 6px' }}
+            >
+              Info
+            </button>
+          </span>
+        ,
+      },
+    },
+  },
+}
 export const NonSortableColunns: Story = {
   args: {
     data: sortableDataFrame(createData()),

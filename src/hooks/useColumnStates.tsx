@@ -9,7 +9,7 @@ interface ColumnStatesContextType {
   getColumnStyle?: (columnIndex: number) => CSSProperties
   isFixedColumn?: (columnIndex: number) => boolean // returns true if the column has a fixed width
   setAvailableWidth?: (width: number) => void // used to set the width of the wrapper element
-  forceWidth?: (options: { columnIndex: number; width: number }) => void // used to set a fixed width for a column (will be stored and overrides the auto width)
+  forceWidth?: (options: { columnIndex: number; width: number, minWidth?: number }) => void // used to set a fixed width for a column (will be stored and overrides the auto width)
   measureWidth?: (options: { columnIndex: number; measured: number }) => void // used to set the measured width (and adjust all the measured columns)
   removeWidth?: (options: { columnIndex: number }) => void // used to remove the width of a column, so it can be measured again
 }
@@ -34,8 +34,9 @@ export function ColumnStatesProvider({ children, localStorageKey, numColumns, mi
   const [availableWidth, setAvailableWidth] = useState<number>(0)
   // ^ TODO: add a validation for availableWidth?
 
-  const clamp = useCallback((width: number) => {
-    return Math.floor(Math.max(width, minWidth))
+  const clamp = useCallback((width: number, configMinWidth?: number) => {
+    const minWidthToUse = configMinWidth ?? minWidth
+    return Math.floor(Math.max(width, minWidthToUse))
   }, [minWidth])
 
   // An array of column states
@@ -83,14 +84,14 @@ export function ColumnStatesProvider({ children, localStorageKey, numColumns, mi
     return hasFixedWidth(columnStates?.[columnIndex])
   }, [columnStates])
 
-  const forceWidth = useCallback(({ columnIndex, width }: { columnIndex: number; width: number }) => {
+  const forceWidth = useCallback(({ columnIndex, width, minWidth }: { columnIndex: number; width: number; minWidth?: number }) => {
     if (!isValidWidth(width) || !isValidIndex(columnIndex)) {
       return
     }
     setColumnStates(columnStates => {
       const nextColumnStates = [...columnStates ?? []]
       // clamp the width
-      nextColumnStates[columnIndex] = { ...nextColumnStates[columnIndex] ?? {}, width: clamp(width), measured: undefined }
+      nextColumnStates[columnIndex] = { ...nextColumnStates[columnIndex] ?? {}, width: clamp(width, minWidth), measured: undefined }
       // don't adjust other columns
       return nextColumnStates
     })

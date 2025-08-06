@@ -44,6 +44,25 @@ describe('useTableConfig', () => {
     `)
   })
 
+  it('includes minWidth in column configuration', () => {
+    const df = {
+      header: ['id', 'name'],
+      sortable: false,
+    } as DataFrame
+
+    const columnConfiguration: ColumnConfiguration = {
+      name: { minWidth: 150 },
+    }
+
+    const { result } = renderHook(() =>
+      useTableConfig(df, columnConfiguration)
+    )
+
+    const [, nameCol] = result.current
+    expect(nameCol.key).toBe('name')
+    expect(nameCol.minWidth).toBe(150)
+  })
+
   it('overrides dataframe sortable with column specific value', () => {
     const df = {
       header: ['id', 'name', 'status'],

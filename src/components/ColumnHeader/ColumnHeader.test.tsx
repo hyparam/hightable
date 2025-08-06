@@ -147,6 +147,63 @@ describe('ColumnHeader', () => {
     expect(header.style.maxWidth).toEqual(`${savedWidth + delta}px`)
   })
 
+  it('respects column-specific minWidth when resizing', async () => {
+    const savedWidth = 50
+    const columnMinWidth = 30
+    localStorage.setItem(cacheKey, JSON.stringify([{ width: savedWidth }]))
+
+    const columnConfig = { minWidth: columnMinWidth }
+    const props = { ...defaultProps, columnConfig }
+
+    const { user, getByRole } = render(<ColumnStatesProvider localStorageKey={cacheKey} numColumns={1} minWidth={10}>
+      <table><thead><tr><ColumnHeader columnName="test" {...props} /></tr></thead></table>
+    </ColumnStatesProvider>)
+
+    const header = getByRole('columnheader')
+    const resizeHandle = getByRole('spinbutton')
+
+    // Try to resize to below column minWidth (but above global minWidth)
+    const x = 150
+    const delta = -30 // This would make width 20, which is below column minWidth of 30
+    await user.pointer([
+      { keys: '[MouseLeft>]', target: resizeHandle, coords: { x, y: 0 } },
+      { coords: { x: x + delta, y: 0 } },
+      { keys: '[/MouseLeft]' },
+    ])
+
+    // Should be clamped to column minWidth (30), not global minWidth (10)
+    expect(header.style.maxWidth).toEqual(`${columnMinWidth}px`)
+  })
+
+  it('uses global minWidth when column minWidth is less than global minWidth', async () => {
+    const savedWidth = 50
+    const globalMinWidth = 30
+    const columnMinWidth = 20 // Less than global minWidth
+    localStorage.setItem(cacheKey, JSON.stringify([{ width: savedWidth }]))
+
+    const columnConfig = { minWidth: columnMinWidth }
+    const props = { ...defaultProps, columnConfig }
+
+    const { user, getByRole } = render(<ColumnStatesProvider localStorageKey={cacheKey} numColumns={1} minWidth={globalMinWidth}>
+      <table><thead><tr><ColumnHeader columnName="test" {...props} /></tr></thead></table>
+    </ColumnStatesProvider>)
+
+    const header = getByRole('columnheader')
+    const resizeHandle = getByRole('spinbutton')
+
+    // Try to resize to below both minWidths
+    const x = 150
+    const delta = -35 // This would make width 15, which is below both minWidths
+    await user.pointer([
+      { keys: '[MouseLeft>]', target: resizeHandle, coords: { x, y: 0 } },
+      { coords: { x: x + delta, y: 0 } },
+      { keys: '[/MouseLeft]' },
+    ])
+
+    // Should be clamped to global minWidth (30) since it's larger than column minWidth (20)
+    expect(header.style.maxWidth).toEqual(`${columnMinWidth}px`)
+  })
+
   it('reloads column width when localStorageKey changes', () => {
     const cacheKey2 = 'key-2'
     const width1 = 150

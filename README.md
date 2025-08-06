@@ -157,6 +157,7 @@ ColumnConfig is defined as:
 ```typescript
 interface ColumnConfig {
   headerComponent?: React.ReactNode; // allows overriding column header cell with custom component
+  minWidth?: number; // overrides the global column min width, useful for components with ui elements
 }
 ```
 
