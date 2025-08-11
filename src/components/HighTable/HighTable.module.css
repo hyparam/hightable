@@ -290,6 +290,7 @@
     border-bottom: 1px solid #ddd;
     border-right: 1px solid #ddd;
     height: 32px;
+    line-height: 1.5;
     /* prevent columns expanding - limits the initial and autoresized width */
     max-width: 40rem;
     padding: 4px var(--cell-horizontal-padding);
