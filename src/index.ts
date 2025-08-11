@@ -1,4 +1,5 @@
 import HighTable from './components/HighTable/HighTable.js'
+export { type CellContentProps } from './components/HighTable/HighTable.js'
 export { arrayDataFrame, checkSignal, convertV1ToDataFrame, createGetRowNumber, createStaticFetch, filterDataFrame, sortableDataFrame, validateColumn, validateFetchParams, validateRow } from './helpers/dataframe/index.js'
 export type { Cells, DataFrame, DataFrameEvents, ResolvedValue, SortableDataFrame, UnsortableDataFrame } from './helpers/dataframe/index.js'
 export { resolvablePromise, wrapPromise, wrapResolved } from './helpers/dataframe/legacy/promise.js'

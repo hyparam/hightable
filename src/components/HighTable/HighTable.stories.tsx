@@ -9,6 +9,7 @@ import type { ResolvedValue } from '../../helpers/dataframe/types.js'
 import type { Selection } from '../../helpers/selection.js'
 import type { OrderBy } from '../../helpers/sort.js'
 import { createEventTarget } from '../../helpers/typedEventTarget.js'
+import type { CellContentProps } from './HighTable.js'
 import HighTable from './HighTable.js'
 
 function random(seed: number) {
@@ -191,6 +192,15 @@ function createLegacyDelayedData(): DataFrameV1 {
       }
     }),
   }
+}
+
+function CustomCellContent({ cell, row, col, stringify }: CellContentProps) {
+  return (
+    <span>
+      <strong>{`Cell at row ${row}, col ${col}: `}</strong>
+      {stringify(cell?.value)}
+    </span>
+  )
 }
 
 const meta: Meta<typeof HighTable> = {
@@ -429,5 +439,11 @@ export const LegacyPlaceholders: Story = {
   },
   args: {
     data: sortableDataFrame(convertV1ToDataFrame(createLegacyDelayedData())),
+  },
+}
+export const CustomCellRenderer: Story = {
+  args: {
+    data: createData(),
+    renderCellContent: CustomCellContent,
   },
 }
