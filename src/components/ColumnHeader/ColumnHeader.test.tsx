@@ -222,45 +222,45 @@ describe('ColumnHeader', () => {
     expect(header.style.maxWidth).toEqual(`${width2}px`)
   })
 
-  it('call onClick (eg. to change orderBy) when clicking on the header, but not when clicking on the resize handle', async () => {
-    const onClick = vi.fn()
-    const { user, getByRole } = render(<table><thead><tr><ColumnHeader columnName="test" {...defaultProps} onClick={onClick} /></tr></thead></table>)
+  it('call toggleOrderBy (eg. to change orderBy) when clicking on the header, but not when clicking on the resize handle', async () => {
+    const toggleOrderBy = vi.fn()
+    const { user, getByRole } = render(<table><thead><tr><ColumnHeader columnName="test" {...defaultProps} toggleOrderBy={toggleOrderBy} /></tr></thead></table>)
     const header = getByRole('columnheader')
     const resizeHandle = getByRole('spinbutton')
     await user.click(resizeHandle)
-    expect(onClick).not.toHaveBeenCalled()
+    expect(toggleOrderBy).not.toHaveBeenCalled()
     await user.click(header)
-    expect(onClick).toHaveBeenCalled()
+    expect(toggleOrderBy).toHaveBeenCalled()
   })
 
-  it.for(['{ }', '{Enter}'])('call onClick (eg. to change orderBy) when pressing "%s" while the header is focused', async (key) => {
-    const onClick = vi.fn()
-    const { user, getByRole } = render(<table><thead><tr><ColumnHeader columnName="test" {...defaultProps} onClick={onClick} /></tr></thead></table>)
+  it.for(['{ }', '{Enter}'])('call toggleOrderBy (eg. to change orderBy) when pressing "%s" while the header is focused', async (key) => {
+    const toggleOrderBy = vi.fn()
+    const { user, getByRole } = render(<table><thead><tr><ColumnHeader columnName="test" {...defaultProps} toggleOrderBy={toggleOrderBy} /></tr></thead></table>)
     const header = getByRole('columnheader')
     header.focus()
     await user.keyboard(key)
-    expect(onClick).toHaveBeenCalled()
+    expect(toggleOrderBy).toHaveBeenCalled()
   })
 
-  it('does not call onClick when clicking on the header when sortable is set to false', async () => {
-    const onClick = vi.fn()
+  it('does not call toggleOrderBy when clicking on the header when sortable is set to false', async () => {
+    const toggleOrderBy = vi.fn()
     const props = { ...defaultProps, sortable: false }
-    const { user, getByRole } = render(<table><thead><tr><ColumnHeader columnName="test" {...props} onClick={onClick} /></tr></thead></table>)
+    const { user, getByRole } = render(<table><thead><tr><ColumnHeader columnName="test" {...props} toggleOrderBy={toggleOrderBy} /></tr></thead></table>)
     const header = getByRole('columnheader')
     const resizeHandle = getByRole('spinbutton')
     await user.click(resizeHandle)
-    expect(onClick).not.toHaveBeenCalled()
+    expect(toggleOrderBy).not.toHaveBeenCalled()
     await user.click(header)
-    expect(onClick).toHaveBeenCalled()
+    expect(toggleOrderBy).toHaveBeenCalled()
   })
 
-  it.for(['{ }', '{Enter}'])('does not call onClick when pressing "%s" while the header is focused', async (key) => {
-    const onClick = vi.fn()
+  it.for(['{ }', '{Enter}'])('does not call toggleOrderBy when pressing "%s" while the header is focused', async (key) => {
+    const toggleOrderBy = vi.fn()
     const props = { ...defaultProps, sortable: false }
-    const { user, getByRole } = render(<table><thead><tr><ColumnHeader columnName="test" {...props} onClick={onClick} /></tr></thead></table>)
+    const { user, getByRole } = render(<table><thead><tr><ColumnHeader columnName="test" {...props} toggleOrderBy={toggleOrderBy} /></tr></thead></table>)
     const header = getByRole('columnheader')
     header.focus()
     await user.keyboard(key)
-    expect(onClick).toHaveBeenCalled()
+    expect(toggleOrderBy).toHaveBeenCalled()
   })
 })

@@ -8,7 +8,7 @@ describe('ColumnMenu', () => {
     isOpen: true,
     position: { left: 100, top: 100 },
     columnIndex: 0,
-    onToggle: vi.fn(),
+    close: vi.fn(),
   }
 
   beforeEach(() => {
@@ -111,15 +111,15 @@ describe('ColumnMenu', () => {
       expect(menuItem.getAttribute('type')).toBe('button')
     })
 
-    it('calls onClick when sort button is clicked', async () => {
-      const onClick = vi.fn()
+    it('calls toggleOrderBy when sort button is clicked', async () => {
+      const toggleOrderBy = vi.fn()
       const { user, getByRole } = render(
-        <ColumnMenu {...defaultProps} sortable={true} onClick={onClick} />
+        <ColumnMenu {...defaultProps} sortable={true} toggleOrderBy={toggleOrderBy} />
       )
 
       const sortButton = getByRole('menuitem')
       await user.click(sortButton)
-      expect(onClick).toHaveBeenCalled()
+      expect(toggleOrderBy).toHaveBeenCalled()
     })
 
     it('focuses button when clicked', async () => {
@@ -141,33 +141,33 @@ describe('ColumnMenu', () => {
       menu.focus()
       await user.keyboard('{Escape}')
 
-      expect(defaultProps.onToggle).toHaveBeenCalled()
+      expect(defaultProps.close).toHaveBeenCalled()
     })
 
-    it('calls onClick on Enter key when sortable', async () => {
-      const onClick = vi.fn()
+    it('calls toggleOrderBy on Enter key when sortable', async () => {
+      const toggleOrderBy = vi.fn()
       const { user, getByRole } = render(
-        <ColumnMenu {...defaultProps} sortable={true} onClick={onClick} />
+        <ColumnMenu {...defaultProps} sortable={true} toggleOrderBy={toggleOrderBy} />
       )
 
       const sortButton = getByRole('menuitem')
       sortButton.focus()
       await user.keyboard('{Enter}')
 
-      expect(onClick).toHaveBeenCalled()
+      expect(toggleOrderBy).toHaveBeenCalled()
     })
 
-    it('calls onClick on Space key when sortable', async () => {
-      const onClick = vi.fn()
+    it('calls toggleOrderBy on Space key when sortable', async () => {
+      const toggleOrderBy = vi.fn()
       const { user, getByRole } = render(
-        <ColumnMenu {...defaultProps} sortable={true} onClick={onClick} />
+        <ColumnMenu {...defaultProps} sortable={true} toggleOrderBy={toggleOrderBy} />
       )
 
       const sortButton = getByRole('menuitem')
       sortButton.focus()
       await user.keyboard('{ }')
 
-      expect(onClick).toHaveBeenCalled()
+      expect(toggleOrderBy).toHaveBeenCalled()
     })
 
     // TODO(SL): really test the navigation. For now, it works the same if the key is pressed or not. The menu only has one item, so the keys are useless.
@@ -314,7 +314,7 @@ describe('ColumnMenu', () => {
 
       if (overlay) {
         await user.click(overlay)
-        expect(defaultProps.onToggle).toHaveBeenCalled()
+        expect(defaultProps.close).toHaveBeenCalled()
       }
     })
   })
@@ -333,7 +333,7 @@ describe('ColumnMenu', () => {
   })
 
   describe('Edge cases', () => {
-    it('works without onClick handler', () => {
+    it('works without toggleOrderBy handler', () => {
       const { getByRole } = render(
         <ColumnMenu {...defaultProps} sortable={true} />
       )

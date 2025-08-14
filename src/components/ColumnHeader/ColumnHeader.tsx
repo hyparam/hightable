@@ -17,7 +17,7 @@ interface Props {
   children?: ReactNode
   canMeasureWidth?: boolean
   direction?: Direction
-  onClick?: () => void
+  toggleOrderBy?: () => void
   orderByIndex?: number // index of the column in the orderBy array (0-based)
   orderBySize?: number // size of the orderBy array
   ariaColIndex: number // aria col index for the header
@@ -25,16 +25,16 @@ interface Props {
   className?: string // optional class name
 }
 
-export default function ColumnHeader({ columnIndex, columnName, columnConfig, canMeasureWidth, direction, onClick, orderByIndex, orderBySize, ariaColIndex, ariaRowIndex, className, children }: Props) {
+export default function ColumnHeader({ columnIndex, columnName, columnConfig, canMeasureWidth, direction, toggleOrderBy, orderByIndex, orderBySize, ariaColIndex, ariaRowIndex, className, children }: Props) {
   const ref = useRef<HTMLTableCellElement>(null)
   const { tabIndex, navigateToCell } = useCellNavigation({ ref, ariaColIndex, ariaRowIndex })
   const { sortable, headerComponent } = columnConfig
-  const { isOpen, position, menuId, handleToggle, handleMenuClick } = useColumnMenu(ref, navigateToCell)
+  const { isOpen, position, menuId, close, handleMenuClick } = useColumnMenu(ref, navigateToCell)
 
   const handleClick = useCallback(() => {
     navigateToCell()
-    if (sortable) onClick?.()
-  }, [onClick, navigateToCell, sortable])
+    if (sortable) toggleOrderBy?.()
+  }, [toggleOrderBy, navigateToCell, sortable])
 
   // Get the column width from the context
   const { getColumnStyle, isFixedColumn, getColumnWidth, measureWidth, forceWidth, removeWidth } = useColumnStates()
@@ -102,9 +102,9 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault()
       e.stopPropagation()
-      onClick?.()
+      toggleOrderBy?.()
     }
-  }, [onClick])
+  }, [toggleOrderBy])
 
   return (
     <th
@@ -150,8 +150,8 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
         position={position}
         direction={direction}
         sortable={sortable}
-        onClick={onClick}
-        onToggle={handleToggle}
+        toggleOrderBy={toggleOrderBy}
+        close={close}
         id={menuId}
       />
     </th>

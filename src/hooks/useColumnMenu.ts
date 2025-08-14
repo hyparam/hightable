@@ -8,8 +8,8 @@ export function useColumnMenu(
   const [isOpen, setIsOpen] = useState(false)
   const menuId = useId()
 
-  const handleToggle = useCallback(() => {
-    setIsOpen((current) => !current)
+  const close = useCallback(() => {
+    setIsOpen(false)
   }, [])
 
   const handleMenuClick = useCallback(
@@ -34,7 +34,7 @@ export function useColumnMenu(
     isOpen,
     position,
     menuId,
-    handleToggle,
+    close,
     handleMenuClick,
   }
 }

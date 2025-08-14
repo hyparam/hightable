@@ -19,7 +19,7 @@ export default function TableHeader({
   columnDescriptors, orderBy, onOrderByChange, canMeasureWidth, ariaRowIndex, columnClassNames = [],
 }: TableHeaderProps) {
   // Function to handle click for changing orderBy
-  const getOnOrderByClick = useCallback((columnHeader: string) => {
+  const getToggleOrderBy = useCallback((columnHeader: string) => {
     if (!onOrderByChange || !orderBy) return undefined
     return () => {
       onOrderByChange(toggleColumn(columnHeader, orderBy))
@@ -44,7 +44,7 @@ export default function TableHeader({
         direction={orderByColumn.get(name)?.direction}
         orderByIndex={orderByColumn.get(name)?.index}
         orderBySize={orderBy?.length}
-        onClick={getOnOrderByClick(name)}
+        toggleOrderBy={getToggleOrderBy(name)}
         columnName={name}
         columnIndex={columnIndex}
         className={columnClassNames[columnIndex]}

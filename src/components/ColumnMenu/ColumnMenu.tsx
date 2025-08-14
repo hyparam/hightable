@@ -65,8 +65,8 @@ interface ColumnMenuProps {
   }
   direction?: Direction
   sortable?: boolean
-  onClick?: () => void
-  onToggle: () => void
+  toggleOrderBy?: () => void
+  close: () => void
   id?: string
 }
 
@@ -76,8 +76,8 @@ export default function ColumnMenu({
   position,
   direction,
   sortable,
-  onClick,
-  onToggle,
+  toggleOrderBy,
+  close,
   id,
 }: ColumnMenuProps) {
   const { containerRef } = usePortalContainer()
@@ -92,7 +92,7 @@ export default function ColumnMenu({
     e.stopPropagation()
     switch (e.key) {
     case 'Escape':
-      onToggle()
+      close()
       break
     case 'Enter':
     case ' ':
@@ -116,15 +116,15 @@ export default function ColumnMenu({
       navigateFocus(e.shiftKey ? 'previous' : 'next')
       break
     }
-  }, [navigateFocus, onToggle] )
+  }, [navigateFocus, close])
 
   const handleOverlayClick = useCallback(
     (e: MouseEvent<HTMLDivElement>) => {
       e.preventDefault()
       e.stopPropagation()
-      onToggle()
+      close()
     },
-    [onToggle]
+    [close]
   )
 
   const onWrapperClick = useCallback((e: MouseEvent<HTMLDivElement>) => {
@@ -156,7 +156,7 @@ export default function ColumnMenu({
       >
         <div role='presentation' id={labelId} aria-hidden="true">{columnName}</div>
         {sortable && <MenuItem
-          onClick={onClick}
+          onClick={toggleOrderBy}
           label={sortDirection}
         />}
       </div>
