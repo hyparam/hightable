@@ -1,4 +1,4 @@
-import { KeyboardEvent, MouseEvent, useCallback, useId, useRef } from 'react'
+import { KeyboardEvent, MouseEvent, ReactNode, useCallback, useId, useMemo, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { Direction } from '../../helpers/sort'
 import { useFocusManagement } from '../../hooks/useFocusManagement'
@@ -13,6 +13,20 @@ function getSortDirection(direction?: Direction) {
   default:
     return 'No sort'
   }
+}
+
+interface MenuGroupProps {
+  title: string
+  children: ReactNode
+}
+
+function MenuGroup({ title, children }: MenuGroupProps) {
+  return (
+    <>
+      <div role='separator'>{title}</div>
+      {children}
+    </>
+  )
 }
 
 interface MenuItemProps {
@@ -66,6 +80,8 @@ interface ColumnMenuProps {
   direction?: Direction
   sortable?: boolean
   toggleOrderBy?: () => void
+  hideColumn?: () => void // returns a function to hide the column, or undefined if the column cannot be hidden
+  showAllColumns?: () => void // returns a function to show all columns, or undefined
   close: () => void
   id?: string
 }
@@ -77,6 +93,8 @@ export default function ColumnMenu({
   direction,
   sortable,
   toggleOrderBy,
+  hideColumn,
+  showAllColumns,
   close,
   id,
 }: ColumnMenuProps) {
@@ -134,11 +152,35 @@ export default function ColumnMenu({
     e.stopPropagation()
   }, [])
 
+  const hideColumnAndClose = useMemo(() => {
+    if (!hideColumn) {
+      return undefined
+    }
+    return () => {
+      hideColumn()
+      // TODO(SL): we must decide where to put the focus once the menu is closed, since the column will disappear
+      close()
+    }
+  }, [hideColumn, close])
+
+  const showAllColumnsAndClose = useMemo(() => {
+    if (!showAllColumns) {
+      return undefined
+    }
+    return () => {
+      showAllColumns()
+      // no need to handle the focus here, since the column will still exist.
+      close()
+    }
+  }, [showAllColumns, close])
+
   if (!isOpen) {
     return null
   }
 
   const sortDirection = getSortDirection(direction)
+
+  const showVisibilityGroup = !(!hideColumnAndClose && !showAllColumnsAndClose)
 
   return createPortal(
     <>
@@ -155,10 +197,30 @@ export default function ColumnMenu({
         onClick={onWrapperClick}
       >
         <div role='presentation' id={labelId} aria-hidden="true">{columnName}</div>
-        {sortable && <MenuItem
-          onClick={toggleOrderBy}
-          label={sortDirection}
-        />}
+        {sortable &&
+          <MenuGroup title="Sort order">
+            <MenuItem
+              onClick={toggleOrderBy}
+              label={sortDirection}
+            />
+          </MenuGroup>
+        }
+        {showVisibilityGroup &&
+          <MenuGroup title="Visibility">
+            {hideColumnAndClose &&
+              <MenuItem
+                onClick={hideColumnAndClose}
+                label={'Hide column'}
+              />
+            }
+            {showAllColumnsAndClose &&
+              <MenuItem
+                onClick={showAllColumnsAndClose}
+                label="Show all columns"
+              />
+            }
+          </MenuGroup>
+        }
       </div>
     </>,
     containerRef.current ?? document.body

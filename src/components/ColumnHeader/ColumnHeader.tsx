@@ -6,6 +6,7 @@ import { getOffsetWidth } from '../../helpers/width.js'
 import { useCellNavigation } from '../../hooks/useCellsNavigation.js'
 import { useColumnMenu } from '../../hooks/useColumnMenu.js'
 import { useColumnWidths } from '../../hooks/useColumnWidths.js'
+import { useColumnVisibilityStates } from '../../hooks/useColumnVisibilityStates.js'
 import ColumnMenu from '../ColumnMenu/ColumnMenu.js'
 import ColumnMenuButton from '../ColumnMenuButton/ColumnMenuButton.js'
 import ColumnResizer from '../ColumnResizer/ColumnResizer.js'
@@ -30,11 +31,21 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
   const { tabIndex, navigateToCell } = useCellNavigation({ ref, ariaColIndex, ariaRowIndex })
   const { sortable, headerComponent } = columnConfig
   const { isOpen, position, menuId, close, handleMenuClick } = useColumnMenu(ref, navigateToCell)
+  const { getHideColumn, showAllColumns } = useColumnVisibilityStates()
 
   const handleClick = useCallback(() => {
     navigateToCell()
     if (sortable) toggleOrderBy?.()
   }, [toggleOrderBy, navigateToCell, sortable])
+
+  const hideColumn = useMemo(() => {
+    return getHideColumn?.(columnIndex)
+  }, [getHideColumn, columnIndex])
+
+  const isMenuEnabled = useMemo(() => {
+    const hideMenu = !sortable && !hideColumn && !showAllColumns
+    return !hideMenu
+  }, [sortable, hideColumn, showAllColumns])
 
   // Get the column width from the context
   const { getColumnStyle, isFixedColumn, getColumnWidth, measureWidth, forceWidth, removeWidth } = useColumnWidths()
@@ -127,7 +138,7 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
       data-fixed-width={dataFixedWidth}
     >
       {headerComponent ?? children}
-      {sortable &&
+      {isMenuEnabled &&
         <ColumnMenuButton
           onClick={handleMenuClick}
           onEscape={navigateToCell}
@@ -151,6 +162,8 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
         direction={direction}
         sortable={sortable}
         toggleOrderBy={toggleOrderBy}
+        hideColumn={hideColumn}
+        showAllColumns={showAllColumns}
         close={close}
         id={menuId}
       />

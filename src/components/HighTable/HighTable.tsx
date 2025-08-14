@@ -6,6 +6,7 @@ import { OrderBy } from '../../helpers/sort.js'
 import { cellStyle, getClientWidth, getOffsetWidth } from '../../helpers/width.js'
 import { CellsNavigationProvider, useCellsNavigation } from '../../hooks/useCellsNavigation.js'
 import { ColumnWidthsProvider, useColumnWidths } from '../../hooks/useColumnWidths.js'
+import { ColumnVisibilityStatesProvider, useColumnVisibilityStates } from '../../hooks/useColumnVisibilityStates.js'
 import { DataProvider, useData } from '../../hooks/useData.js'
 import { OrderByProvider, useOrderBy } from '../../hooks/useOrderBy.js'
 import { PortalContainerProvider, usePortalContainer } from '../../hooks/usePortalContainer.js'
@@ -50,8 +51,10 @@ const defaultPadding = 20
 export const defaultOverscan = 20
 const ariaOffset = 2 // 1-based index, +1 for the header
 
-const formatVersion = '1' // increase in case of breaking changes in the column widths format
-export const columnWidthsSuffix = `:${formatVersion}:column:widths` // suffix used to store the column widths in local storage
+const columnWidthsFormatVersion = '1' // increase in case of breaking changes in the column widths format
+export const columnWidthsSuffix = `:${columnWidthsFormatVersion}:column:widths` // suffix used to store the column widths in local storage
+const columnVisibilityStatesFormatVersion = '1' // increase in case of breaking changes in the column widths format
+export const columnVisibilityStatesSuffix = `:${columnVisibilityStatesFormatVersion}:column:visibility` // suffix used to store the columns vsibility in local storage
 
 /**
  * Render a table with streaming rows on demand from a DataFrame.
@@ -80,18 +83,21 @@ function HighTableData(props: PropsData) {
   return (
     /* Create a new set of widths if the data has changed, but keep it if only the number of rows changed */
     <ColumnWidthsProvider key={cacheKey ?? key} localStorageKey={cacheKey ? `${cacheKey}${columnWidthsSuffix}` : undefined} numColumns={data.header.length} minWidth={minWidth}>
-      {/* Create a new context if the dataframe changes, to flush the cache (ranks and indexes) */}
-      <OrderByProvider key={key} orderBy={orderBy} onOrderByChange={onOrderByChange} disabled={!data.sortable}>
-        {/* Create a new selection context if the dataframe has changed */}
-        <SelectionProvider key={key} selection={selection} onSelectionChange={onSelectionChange} data={data} onError={onError}>
-          {/* Create a new navigation context if the dataframe has changed, because the focused cell might not exist anymore */}
-          <CellsNavigationProvider key={key} colCount={data.header.length + 1} rowCount={numRows + 1} rowPadding={props.padding ?? defaultPadding}>
-            <PortalContainerProvider>
-              <HighTableInner version={version} {...props} />
-            </PortalContainerProvider>
-          </CellsNavigationProvider>
-        </SelectionProvider>
-      </OrderByProvider>
+      {/* Create a new set of hidden columns if the data has changed, but keep it if only the number of rows changed */}
+      <ColumnVisibilityStatesProvider key={cacheKey ?? key} localStorageKey={cacheKey ? `${cacheKey}${columnVisibilityStatesSuffix}` : undefined} numColumns={data.header.length}>
+        {/* Create a new context if the dataframe changes, to flush the cache (ranks and indexes) */}
+        <OrderByProvider key={key} orderBy={orderBy} onOrderByChange={onOrderByChange} disabled={!data.sortable}>
+          {/* Create a new selection context if the dataframe has changed */}
+          <SelectionProvider key={key} selection={selection} onSelectionChange={onSelectionChange} data={data} onError={onError}>
+            {/* Create a new navigation context if the dataframe has changed, because the focused cell might not exist anymore */}
+            <CellsNavigationProvider key={key} colCount={data.header.length + 1} rowCount={numRows + 1} rowPadding={props.padding ?? defaultPadding}>
+              <PortalContainerProvider>
+                <HighTableInner version={version} {...props} />
+              </PortalContainerProvider>
+            </CellsNavigationProvider>
+          </SelectionProvider>
+        </OrderByProvider>
+      </ColumnVisibilityStatesProvider>
     </ColumnWidthsProvider>
   )
 }
@@ -134,12 +140,19 @@ export function HighTableInner({
   const { enterCellsNavigation, setEnterCellsNavigation, onTableKeyDown: onNavigationTableKeyDown, onScrollKeyDown, cellPosition, focusFirstCell } = useCellsNavigation()
   const { containerRef } = usePortalContainer()
   const { setAvailableWidth } = useColumnWidths()
+  const { isHiddenColumn } = useColumnVisibilityStates()
   const { orderBy, onOrderByChange } = useOrderBy()
   const { selectable, toggleAllRows, pendingSelectionGesture, onTableKeyDown: onSelectionTableKeyDown, allRowsSelected, isRowSelected, toggleRowNumber, toggleRangeToRowNumber } = useSelection()
-  const columns = useTableConfig(data, columnConfiguration)
+  const allColumns = useTableConfig(data, columnConfiguration)
   // local state
   const [rowsRange, setRowsRange] = useState<RowsRange>({ start: 0, end: 0 })
   const [lastCellPosition, setLastCellPosition] = useState(cellPosition)
+
+  const columns = useMemo(() => {
+    return allColumns.filter((_, index) => {
+      return !isHiddenColumn?.(index)
+    })
+  }, [allColumns, isHiddenColumn])
 
   const onTableKeyDown = useCallback((event: KeyboardEvent) => {
     onNavigationTableKeyDown?.(event)
@@ -226,7 +239,7 @@ export function HighTableInner({
       data.fetch({
         rowStart: start,
         rowEnd: end,
-        columns: data.header,
+        columns: columns.map((column) => column.key),
         orderBy,
         signal: abortController.signal,
       }).catch((error: unknown) => {
@@ -266,7 +279,7 @@ export function HighTableInner({
       window.removeEventListener('resize', handleScroll)
       window.removeEventListener('resize', reportWidth)
     }
-  }, [numRows, overscan, padding, scrollHeight, setAvailableWidth, data, orderBy, onError])
+  }, [numRows, overscan, padding, scrollHeight, setAvailableWidth, data, orderBy, onError, columns])
 
   // focus table on mount, or on later changes, so arrow keys work
   // Note that the dependency upon data and nowRows was removed, because focusFirstCell should depend on them
@@ -314,7 +327,7 @@ export function HighTableInner({
     let hasCompleteRow = false
     const rowContents = rows.map((row) => {
       const rowNumber = data.getRowNumber({ row, orderBy })?.value
-      const cells = data.header.map((column, columnIndex) => {
+      const cells = columns.map(({ key: column }, columnIndex) => {
         const cell = data.getCell({ row, column, orderBy })
         return { columnIndex, cell }
       })
@@ -332,7 +345,7 @@ export function HighTableInner({
       hasCompleteRow,
       version,
     }
-  }, [data, rows, orderBy, version])
+  }, [data, columns, rows, orderBy, version])
 
   // don't render table if header is empty
   if (!columns.length) return
