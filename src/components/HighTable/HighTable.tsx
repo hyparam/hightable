@@ -316,7 +316,7 @@ export function HighTableInner({
         const cell = data.getCell({ row, column, orderBy })
         return { columnIndex, cell }
       })
-      if (cells.every(({ cell }) => cell?.value !== undefined)) {
+      if (cells.every(({ cell }) => cell !== undefined)) {
         hasCompleteRow = true
       }
       return {
