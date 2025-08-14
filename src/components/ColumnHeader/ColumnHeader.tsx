@@ -5,7 +5,7 @@ import { Direction } from '../../helpers/sort.js'
 import { getOffsetWidth } from '../../helpers/width.js'
 import { useCellNavigation } from '../../hooks/useCellsNavigation.js'
 import { useColumnMenu } from '../../hooks/useColumnMenu.js'
-import { useColumnStates } from '../../hooks/useColumnStates.js'
+import { useColumnWidths } from '../../hooks/useColumnWidths.js'
 import ColumnMenu from '../ColumnMenu/ColumnMenu.js'
 import ColumnMenuButton from '../ColumnMenuButton/ColumnMenuButton.js'
 import ColumnResizer from '../ColumnResizer/ColumnResizer.js'
@@ -37,7 +37,7 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
   }, [toggleOrderBy, navigateToCell, sortable])
 
   // Get the column width from the context
-  const { getColumnStyle, isFixedColumn, getColumnWidth, measureWidth, forceWidth, removeWidth } = useColumnStates()
+  const { getColumnStyle, isFixedColumn, getColumnWidth, measureWidth, forceWidth, removeWidth } = useColumnWidths()
   const columnStyle = getColumnStyle?.(columnIndex)
   const dataFixedWidth = isFixedColumn?.(columnIndex) === true ? true : undefined
   const width = getColumnWidth?.(columnIndex)

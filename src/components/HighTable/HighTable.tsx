@@ -5,7 +5,7 @@ import { Selection } from '../../helpers/selection.js'
 import { OrderBy } from '../../helpers/sort.js'
 import { cellStyle, getClientWidth, getOffsetWidth } from '../../helpers/width.js'
 import { CellsNavigationProvider, useCellsNavigation } from '../../hooks/useCellsNavigation.js'
-import { ColumnStatesProvider, useColumnStates } from '../../hooks/useColumnStates.js'
+import { ColumnWidthsProvider, useColumnWidths } from '../../hooks/useColumnWidths.js'
 import { DataProvider, useData } from '../../hooks/useData.js'
 import { OrderByProvider, useOrderBy } from '../../hooks/useOrderBy.js'
 import { PortalContainerProvider, usePortalContainer } from '../../hooks/usePortalContainer.js'
@@ -49,7 +49,9 @@ interface Props {
 const defaultPadding = 20
 export const defaultOverscan = 20
 const ariaOffset = 2 // 1-based index, +1 for the header
-export const columnStatesSuffix = ':column:states' // suffix used to store the column states in local storage
+
+const formatVersion = '1' // increase in case of breaking changes in the column widths format
+export const columnWidthsSuffix = `:${formatVersion}:column:widths` // suffix used to store the column widths in local storage
 
 /**
  * Render a table with streaming rows on demand from a DataFrame.
@@ -77,7 +79,7 @@ function HighTableData(props: PropsData) {
 
   return (
     /* Create a new set of widths if the data has changed, but keep it if only the number of rows changed */
-    <ColumnStatesProvider key={cacheKey ?? key} localStorageKey={cacheKey ? `${cacheKey}${columnStatesSuffix}` : undefined} numColumns={data.header.length} minWidth={minWidth}>
+    <ColumnWidthsProvider key={cacheKey ?? key} localStorageKey={cacheKey ? `${cacheKey}${columnWidthsSuffix}` : undefined} numColumns={data.header.length} minWidth={minWidth}>
       {/* Create a new context if the dataframe changes, to flush the cache (ranks and indexes) */}
       <OrderByProvider key={key} orderBy={orderBy} onOrderByChange={onOrderByChange} disabled={!data.sortable}>
         {/* Create a new selection context if the dataframe has changed */}
@@ -90,7 +92,7 @@ function HighTableData(props: PropsData) {
           </CellsNavigationProvider>
         </SelectionProvider>
       </OrderByProvider>
-    </ColumnStatesProvider>
+    </ColumnWidthsProvider>
   )
 }
 
@@ -131,7 +133,7 @@ export function HighTableInner({
   const { numRows } = data
   const { enterCellsNavigation, setEnterCellsNavigation, onTableKeyDown: onNavigationTableKeyDown, onScrollKeyDown, cellPosition, focusFirstCell } = useCellsNavigation()
   const { containerRef } = usePortalContainer()
-  const { setAvailableWidth } = useColumnStates()
+  const { setAvailableWidth } = useColumnWidths()
   const { orderBy, onOrderByChange } = useOrderBy()
   const { selectable, toggleAllRows, pendingSelectionGesture, onTableKeyDown: onSelectionTableKeyDown, allRowsSelected, isRowSelected, toggleRowNumber, toggleRangeToRowNumber } = useSelection()
   const columns = useTableConfig(data, columnConfiguration)

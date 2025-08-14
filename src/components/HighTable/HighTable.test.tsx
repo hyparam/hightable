@@ -5,9 +5,9 @@ import { createGetRowNumber, createStaticFetch, validateColumn, validateFetchPar
 import { DataFrame, DataFrameEvents, UnsortableDataFrame, filterDataFrame } from '../../helpers/dataframe/index.js'
 import { sortableDataFrame } from '../../helpers/dataframe/sort.js'
 import { createEventTarget } from '../../helpers/typedEventTarget.js'
-import { MaybeColumnState } from '../../hooks/useColumnStates.js'
+import { MaybeColumnWidth } from '../../helpers/width.js'
 import { render } from '../../utils/userEvent.js'
-import HighTable, { columnStatesSuffix, defaultOverscan } from './HighTable.js'
+import HighTable, { columnWidthsSuffix, defaultOverscan } from './HighTable.js'
 
 Element.prototype.scrollIntoView = vi.fn()
 
@@ -1005,8 +1005,8 @@ describe('in disabled selection state (neither selection nor onSelection props),
 const initialWidth = 62 // initial width of the columns, in pixels, above the default minimal width of 50px
 const getOffsetWidth = vi.fn(() => initialWidth)
 const getClientWidth = vi.fn(() => 1000) // used to get the width of the table - let's give space
-const keyItem = `key${columnStatesSuffix}`
-const undefinedItem = `undefined${columnStatesSuffix}`
+const keyItem = `key${columnWidthsSuffix}`
+const undefinedItem = `undefined${columnWidthsSuffix}`
 vi.mock(import('../../helpers/width.js'), async (importOriginal ) => {
   const actual = await importOriginal()
   return {
@@ -1029,11 +1029,11 @@ describe('HighTable localstorage', () => {
     expect(getClientWidth).toHaveBeenCalled()
     const json = localStorage.getItem(keyItem)
     expect(json).not.toEqual(null)
-    const columnStates = JSON.parse(json ?? '[]') as MaybeColumnState[] // TODO: we could check the type of the column states
-    expect(columnStates).toHaveLength(4) // 4 columns
-    columnStates.forEach((columnState) => {
-      expect(columnState?.measured).toBeUndefined() // the measured field is not stored
-      expect(columnState?.width).toBeUndefined() // no columns is fixed
+    const columnWidths = JSON.parse(json ?? '[]') as MaybeColumnWidth[] // TODO: we could check the type of the column widths
+    expect(columnWidths).toHaveLength(4) // 4 columns
+    columnWidths.forEach((columnWidth) => {
+      expect(columnWidth?.measured).toBeUndefined() // the measured field is not stored
+      expect(columnWidth?.width).toBeUndefined() // no columns is fixed
     })
   })
   it('saves nothing on initialization if cacheKey is not provided', () => {
@@ -1071,11 +1071,11 @@ describe('HighTable localstorage', () => {
 
     const json = localStorage.getItem(keyItem)
     expect(json).not.toEqual(null)
-    const columnStates = JSON.parse(json ?? '[]') as MaybeColumnState[]
-    expect(columnStates).toHaveLength(4) // 4 columns
-    columnStates.forEach((columnState) => {
-      expect(columnState?.measured).toBeUndefined() // the measured field is not stored
-      expect(columnState?.width).toBeDefined() // all columns should have been adjusted to some width
+    const columnWidths = JSON.parse(json ?? '[]') as MaybeColumnWidth[]
+    expect(columnWidths).toHaveLength(4) // 4 columns
+    columnWidths.forEach((columnWidth) => {
+      expect(columnWidth?.measured).toBeUndefined() // the measured field is not stored
+      expect(columnWidth?.width).toBeDefined() // all columns should have been adjusted to some width
     })
   })
   it('the previous data is used or updated if new data are loaded', () => {
@@ -1093,7 +1093,7 @@ describe('HighTable localstorage', () => {
     if (!header) {
       throw new Error('Header should not be null')
     }
-    expect(localStorage.getItem(`${otherKey}${columnStatesSuffix}`)).not.toEqual(localStorage.getItem(keyItem))
+    expect(localStorage.getItem(`${otherKey}${columnWidthsSuffix}`)).not.toEqual(localStorage.getItem(keyItem))
     expect(header.style.maxWidth).not.toEqual(`${savedWidth}px`)
   })
 })

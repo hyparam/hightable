@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { ColumnStatesProvider } from '../../hooks/useColumnStates.js'
+import { ColumnWidthsProvider } from '../../hooks/useColumnWidths.js'
 import { render } from '../../utils/userEvent.js'
 import ColumnHeader from './ColumnHeader.js'
 
@@ -77,9 +77,9 @@ describe('ColumnHeader', () => {
     const savedWidth = 42
     localStorage.setItem(cacheKey, JSON.stringify([{ width: savedWidth }]))
 
-    const { getByRole } = render(<ColumnStatesProvider localStorageKey={cacheKey} numColumns={1} minWidth={10}>
+    const { getByRole } = render(<ColumnWidthsProvider localStorageKey={cacheKey} numColumns={1} minWidth={10}>
       <table><thead><tr><ColumnHeader columnName="test" {...defaultProps}/></tr></thead></table>
-    </ColumnStatesProvider>)
+    </ColumnWidthsProvider>)
     const header = getByRole('columnheader')
     expect(header.style.maxWidth).toEqual(`${savedWidth}px`)
   })
@@ -90,9 +90,9 @@ describe('ColumnHeader', () => {
   ])('clamps loaded column width from localStorage when localStorageKey is provided', ({ savedWidth, minWidth, expected }) => {
     localStorage.setItem(cacheKey, JSON.stringify([{ width: savedWidth }]))
 
-    const { getByRole } = render(<ColumnStatesProvider localStorageKey={cacheKey} numColumns={1} minWidth={minWidth}>
+    const { getByRole } = render(<ColumnWidthsProvider localStorageKey={cacheKey} numColumns={1} minWidth={minWidth}>
       <table><thead><tr><ColumnHeader columnName="test" {...defaultProps}/></tr></thead></table>
-    </ColumnStatesProvider>)
+    </ColumnWidthsProvider>)
     const header = getByRole('columnheader')
     expect(header.style.maxWidth).toEqual(expected)
   })
@@ -103,9 +103,9 @@ describe('ColumnHeader', () => {
     const minWidth = 10
     localStorage.setItem(cacheKey, JSON.stringify([{ width: savedWidth }]))
 
-    const { user, getByRole } = render(<ColumnStatesProvider localStorageKey={cacheKey} numColumns={1} minWidth={minWidth}>
+    const { user, getByRole } = render(<ColumnWidthsProvider localStorageKey={cacheKey} numColumns={1} minWidth={minWidth}>
       <table><thead><tr><ColumnHeader columnName="test" {...defaultProps} /></tr></thead></table>
-    </ColumnStatesProvider>)
+    </ColumnWidthsProvider>)
     const header = getByRole('columnheader')
     const resizeHandle = getByRole('spinbutton')
 
@@ -125,9 +125,9 @@ describe('ColumnHeader', () => {
     const savedWidth = 42
     localStorage.setItem(cacheKey, JSON.stringify([{ width: savedWidth }]))
 
-    const { user, getByRole } = render(<ColumnStatesProvider localStorageKey={cacheKey} numColumns={1} minWidth={10}>
+    const { user, getByRole } = render(<ColumnWidthsProvider localStorageKey={cacheKey} numColumns={1} minWidth={10}>
       <table><thead><tr><ColumnHeader columnName="test" {...defaultProps} /></tr></thead></table>
-    </ColumnStatesProvider>)
+    </ColumnWidthsProvider>)
 
     // Simulate resizing the column
     const header = getByRole('columnheader')
@@ -155,9 +155,9 @@ describe('ColumnHeader', () => {
     const columnConfig = { minWidth: columnMinWidth }
     const props = { ...defaultProps, columnConfig }
 
-    const { user, getByRole } = render(<ColumnStatesProvider localStorageKey={cacheKey} numColumns={1} minWidth={10}>
+    const { user, getByRole } = render(<ColumnWidthsProvider localStorageKey={cacheKey} numColumns={1} minWidth={10}>
       <table><thead><tr><ColumnHeader columnName="test" {...props} /></tr></thead></table>
-    </ColumnStatesProvider>)
+    </ColumnWidthsProvider>)
 
     const header = getByRole('columnheader')
     const resizeHandle = getByRole('spinbutton')
@@ -184,9 +184,9 @@ describe('ColumnHeader', () => {
     const columnConfig = { minWidth: columnMinWidth }
     const props = { ...defaultProps, columnConfig }
 
-    const { user, getByRole } = render(<ColumnStatesProvider localStorageKey={cacheKey} numColumns={1} minWidth={globalMinWidth}>
+    const { user, getByRole } = render(<ColumnWidthsProvider localStorageKey={cacheKey} numColumns={1} minWidth={globalMinWidth}>
       <table><thead><tr><ColumnHeader columnName="test" {...props} /></tr></thead></table>
-    </ColumnStatesProvider>)
+    </ColumnWidthsProvider>)
 
     const header = getByRole('columnheader')
     const resizeHandle = getByRole('spinbutton')
@@ -211,14 +211,14 @@ describe('ColumnHeader', () => {
     const width2 = 300
     localStorage.setItem(cacheKey2, JSON.stringify([{ width: width2 }]))
 
-    const { rerender, getByRole } = render(<ColumnStatesProvider localStorageKey={cacheKey} numColumns={1} minWidth={10}>
+    const { rerender, getByRole } = render(<ColumnWidthsProvider localStorageKey={cacheKey} numColumns={1} minWidth={10}>
       <table><thead><tr><ColumnHeader columnName="test" {...defaultProps} /></tr></thead></table>
-    </ColumnStatesProvider>)
+    </ColumnWidthsProvider>)
     const header = getByRole('columnheader')
     expect(header.style.maxWidth).toEqual(`${width1}px`)
-    rerender(<ColumnStatesProvider localStorageKey={cacheKey2} numColumns={1} minWidth={10}>
+    rerender(<ColumnWidthsProvider localStorageKey={cacheKey2} numColumns={1} minWidth={10}>
       <table><thead><tr><ColumnHeader columnName="test" {...defaultProps} /></tr></thead></table>
-    </ColumnStatesProvider>)
+    </ColumnWidthsProvider>)
     expect(header.style.maxWidth).toEqual(`${width2}px`)
   })
 
