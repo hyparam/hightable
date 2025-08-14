@@ -1,6 +1,7 @@
 import { KeyboardEvent, MouseEvent, ReactNode, useCallback, useId, useMemo, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { Direction } from '../../helpers/sort'
+import { useCellsNavigation } from '../../hooks/useCellsNavigation'
 import { useFocusManagement } from '../../hooks/useFocusManagement'
 import { usePortalContainer } from '../../hooks/usePortalContainer'
 
@@ -104,6 +105,7 @@ export default function ColumnMenu({
   const labelId = useId()
 
   const { navigateFocus } = useFocusManagement(isOpen, menuRef)
+  const { focusFirstCell } = useCellsNavigation()
 
   const handleKeyDown = useCallback((e: KeyboardEvent<HTMLDivElement>) => {
     e.preventDefault()
@@ -158,10 +160,11 @@ export default function ColumnMenu({
     }
     return () => {
       hideColumn()
-      // TODO(SL): we must decide where to put the focus once the menu is closed, since the column will disappear
+      // We focus the top left cell, which will always exist, because this column will disappear
+      focusFirstCell?.()
       close()
     }
-  }, [hideColumn, close])
+  }, [hideColumn, close, focusFirstCell])
 
   const showAllColumnsAndClose = useMemo(() => {
     if (!showAllColumns) {
