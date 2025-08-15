@@ -5,9 +5,9 @@ import { createGetRowNumber, createStaticFetch, validateColumn, validateFetchPar
 import { DataFrame, DataFrameEvents, UnsortableDataFrame, filterDataFrame } from '../../helpers/dataframe/index.js'
 import { sortableDataFrame } from '../../helpers/dataframe/sort.js'
 import { createEventTarget } from '../../helpers/typedEventTarget.js'
-import { MaybeColumnState } from '../../hooks/useColumnStates.js'
+import { MaybeColumnWidth } from '../../helpers/width.js'
 import { render } from '../../utils/userEvent.js'
-import HighTable, { columnStatesSuffix, defaultOverscan } from './HighTable.js'
+import HighTable, { columnWidthsSuffix, defaultOverscan } from './HighTable.js'
 
 Element.prototype.scrollIntoView = vi.fn()
 
@@ -1005,8 +1005,8 @@ describe('in disabled selection state (neither selection nor onSelection props),
 const initialWidth = 62 // initial width of the columns, in pixels, above the default minimal width of 50px
 const getOffsetWidth = vi.fn(() => initialWidth)
 const getClientWidth = vi.fn(() => 1000) // used to get the width of the table - let's give space
-const keyItem = `key${columnStatesSuffix}`
-const undefinedItem = `undefined${columnStatesSuffix}`
+const keyItem = `key${columnWidthsSuffix}`
+const undefinedItem = `undefined${columnWidthsSuffix}`
 vi.mock(import('../../helpers/width.js'), async (importOriginal ) => {
   const actual = await importOriginal()
   return {
@@ -1029,11 +1029,11 @@ describe('HighTable localstorage', () => {
     expect(getClientWidth).toHaveBeenCalled()
     const json = localStorage.getItem(keyItem)
     expect(json).not.toEqual(null)
-    const columnStates = JSON.parse(json ?? '[]') as MaybeColumnState[] // TODO: we could check the type of the column states
-    expect(columnStates).toHaveLength(4) // 4 columns
-    columnStates.forEach((columnState) => {
-      expect(columnState?.measured).toBeUndefined() // the measured field is not stored
-      expect(columnState?.width).toBeUndefined() // no columns is fixed
+    const columnWidths = JSON.parse(json ?? '[]') as MaybeColumnWidth[] // TODO: we could check the type of the column widths
+    expect(columnWidths).toHaveLength(4) // 4 columns
+    columnWidths.forEach((columnWidth) => {
+      expect(columnWidth?.measured).toBeUndefined() // the measured field is not stored
+      expect(columnWidth?.width).toBeUndefined() // no columns is fixed
     })
   })
   it('saves nothing on initialization if cacheKey is not provided', () => {
@@ -1071,11 +1071,11 @@ describe('HighTable localstorage', () => {
 
     const json = localStorage.getItem(keyItem)
     expect(json).not.toEqual(null)
-    const columnStates = JSON.parse(json ?? '[]') as MaybeColumnState[]
-    expect(columnStates).toHaveLength(4) // 4 columns
-    columnStates.forEach((columnState) => {
-      expect(columnState?.measured).toBeUndefined() // the measured field is not stored
-      expect(columnState?.width).toBeDefined() // all columns should have been adjusted to some width
+    const columnWidths = JSON.parse(json ?? '[]') as MaybeColumnWidth[]
+    expect(columnWidths).toHaveLength(4) // 4 columns
+    columnWidths.forEach((columnWidth) => {
+      expect(columnWidth?.measured).toBeUndefined() // the measured field is not stored
+      expect(columnWidth?.width).toBeDefined() // all columns should have been adjusted to some width
     })
   })
   it('the previous data is used or updated if new data are loaded', () => {
@@ -1093,7 +1093,7 @@ describe('HighTable localstorage', () => {
     if (!header) {
       throw new Error('Header should not be null')
     }
-    expect(localStorage.getItem(`${otherKey}${columnStatesSuffix}`)).not.toEqual(localStorage.getItem(keyItem))
+    expect(localStorage.getItem(`${otherKey}${columnWidthsSuffix}`)).not.toEqual(localStorage.getItem(keyItem))
     expect(header.style.maxWidth).not.toEqual(`${savedWidth}px`)
   })
 })
@@ -1220,18 +1220,32 @@ describe('Navigating Hightable with the keyboard', () => {
   })
 
   describe('When a header cell is focused', () => {
-    it('the column resizer and the header cell are focusable', async () => {
+    it('the column resizer, the menu button and the header cell are focusable', async () => {
       const { user } = render(<HighTable data={data} />)
       // go to the header cell (ID)
       await user.keyboard('{ArrowRight}')
       const cell = document.activeElement
+      // Tab focuses the menu button
+      await user.keyboard('{Tab}')
+      let focusedElement = document.activeElement
+      if (!focusedElement) {
+        throw new Error('Focused element not found')
+      }
+      expect(focusedElement.tagName.toLowerCase()).toBe('button')
       // Tab focuses the column resizer
       await user.keyboard('{Tab}')
-      const focusedElement = document.activeElement
+      focusedElement = document.activeElement
       if (!focusedElement) {
         throw new Error('Focused element not found')
       }
       expect(focusedElement.getAttribute('role')).toBe('spinbutton')
+      // Shift+Tab focuses the menu button again
+      await user.keyboard('{Shift>}{Tab}{/Shift}')
+      focusedElement = document.activeElement
+      if (!focusedElement) {
+        throw new Error('Focused element not found')
+      }
+      expect(focusedElement.tagName.toLowerCase()).toBe('button')
       // Shift+Tab focuses the header cell again
       await user.keyboard('{Shift>}{Tab}{/Shift}')
       expect(document.activeElement).toBe(cell)
@@ -1242,7 +1256,7 @@ describe('Navigating Hightable with the keyboard', () => {
       // go to the column resizer
       await user.keyboard('{ArrowRight}')
       const cell = document.activeElement
-      await user.keyboard('{Tab}')
+      await user.keyboard('{Tab}{Tab}')
       // press Enter to activate the column resizer
       const spinbutton = document.activeElement
       if (!spinbutton) {
@@ -1258,7 +1272,7 @@ describe('Navigating Hightable with the keyboard', () => {
     it('the column resizer changes the column width when ArrowRight, ArrowLeft, ArrowUp, ArrowDown, ArrowPageUp, ArrowPageDown and Home are pressed', async () => {
       const { user } = render(<HighTable data={data} />)
       // go to the column resizer
-      await user.keyboard('{ArrowRight}{Tab}')
+      await user.keyboard('{ArrowRight}{Tab}{Tab}')
       const spinbutton = document.activeElement
       if (!spinbutton) {
         throw new Error('Spinbutton is null')
@@ -1289,7 +1303,7 @@ describe('Navigating Hightable with the keyboard', () => {
       // go to the column resizer
       await user.keyboard('{ArrowRight}')
       const cell = document.activeElement
-      await user.keyboard('{Tab}')
+      await user.keyboard('{Tab}{Tab}')
       const spinbutton = document.activeElement
       if (!spinbutton) {
         throw new Error('Spinbutton is null')
@@ -1313,7 +1327,7 @@ describe('Navigating Hightable with the keyboard', () => {
     it.for(['{ }', '{Enter}'])('the column resizer toggles back to adjustable column when %s is pressed if previously autosized', async (key) => {
       const { user } = render(<HighTable data={data} />)
       // go to the column resizer
-      await user.keyboard('{ArrowRight}{Tab}')
+      await user.keyboard('{ArrowRight}{Tab}{Tab}')
       const spinbutton = document.activeElement
       if (!spinbutton) {
         throw new Error('Spinbutton is null')
@@ -1323,7 +1337,7 @@ describe('Navigating Hightable with the keyboard', () => {
       await user.keyboard(key)
       expect(spinbutton.getAttribute('aria-valuenow')).not.toBe(initialValue)
       // focus the resizer again
-      await user.keyboard('{Tab}')
+      await user.keyboard('{Tab}{Tab}')
       // press the key
       await user.keyboard(key)
       // already autosized - toggles to adjustable width

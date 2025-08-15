@@ -1,6 +1,7 @@
-import { KeyboardEvent, MouseEvent, useCallback, useId, useRef } from 'react'
+import { KeyboardEvent, MouseEvent, ReactNode, useCallback, useId, useMemo, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { Direction } from '../../helpers/sort'
+import { useCellsNavigation } from '../../hooks/useCellsNavigation'
 import { useFocusManagement } from '../../hooks/useFocusManagement'
 import { usePortalContainer } from '../../hooks/usePortalContainer'
 
@@ -13,6 +14,20 @@ function getSortDirection(direction?: Direction) {
   default:
     return 'No sort'
   }
+}
+
+interface MenuGroupProps {
+  title: string
+  children: ReactNode
+}
+
+function MenuGroup({ title, children }: MenuGroupProps) {
+  return (
+    <>
+      <div role='separator'>{title}</div>
+      {children}
+    </>
+  )
 }
 
 interface MenuItemProps {
@@ -65,8 +80,10 @@ interface ColumnMenuProps {
   }
   direction?: Direction
   sortable?: boolean
-  onClick?: () => void
-  onToggle: () => void
+  toggleOrderBy?: () => void
+  hideColumn?: () => void // returns a function to hide the column, or undefined if the column cannot be hidden
+  showAllColumns?: () => void // returns a function to show all columns, or undefined
+  close: () => void
   id?: string
 }
 
@@ -76,8 +93,10 @@ export default function ColumnMenu({
   position,
   direction,
   sortable,
-  onClick,
-  onToggle,
+  toggleOrderBy,
+  hideColumn,
+  showAllColumns,
+  close,
   id,
 }: ColumnMenuProps) {
   const { containerRef } = usePortalContainer()
@@ -86,13 +105,14 @@ export default function ColumnMenu({
   const labelId = useId()
 
   const { navigateFocus } = useFocusManagement(isOpen, menuRef)
+  const { focusFirstCell } = useCellsNavigation()
 
   const handleKeyDown = useCallback((e: KeyboardEvent<HTMLDivElement>) => {
     e.preventDefault()
     e.stopPropagation()
     switch (e.key) {
     case 'Escape':
-      onToggle()
+      close()
       break
     case 'Enter':
     case ' ':
@@ -116,15 +136,15 @@ export default function ColumnMenu({
       navigateFocus(e.shiftKey ? 'previous' : 'next')
       break
     }
-  }, [navigateFocus, onToggle] )
+  }, [navigateFocus, close])
 
   const handleOverlayClick = useCallback(
     (e: MouseEvent<HTMLDivElement>) => {
       e.preventDefault()
       e.stopPropagation()
-      onToggle()
+      close()
     },
-    [onToggle]
+    [close]
   )
 
   const onWrapperClick = useCallback((e: MouseEvent<HTMLDivElement>) => {
@@ -134,11 +154,36 @@ export default function ColumnMenu({
     e.stopPropagation()
   }, [])
 
+  const hideColumnAndClose = useMemo(() => {
+    if (!hideColumn) {
+      return undefined
+    }
+    return () => {
+      hideColumn()
+      // We focus the top left cell, which will always exist, because this column will disappear
+      focusFirstCell?.()
+      close()
+    }
+  }, [hideColumn, close, focusFirstCell])
+
+  const showAllColumnsAndClose = useMemo(() => {
+    if (!showAllColumns) {
+      return undefined
+    }
+    return () => {
+      showAllColumns()
+      // no need to handle the focus here, since the column will still exist.
+      close()
+    }
+  }, [showAllColumns, close])
+
   if (!isOpen) {
     return null
   }
 
   const sortDirection = getSortDirection(direction)
+
+  const showVisibilityGroup = !(!hideColumnAndClose && !showAllColumnsAndClose)
 
   return createPortal(
     <>
@@ -155,10 +200,30 @@ export default function ColumnMenu({
         onClick={onWrapperClick}
       >
         <div role='presentation' id={labelId} aria-hidden="true">{columnName}</div>
-        {sortable && <MenuItem
-          onClick={onClick}
-          label={sortDirection}
-        />}
+        {sortable &&
+          <MenuGroup title="Sort order">
+            <MenuItem
+              onClick={toggleOrderBy}
+              label={sortDirection}
+            />
+          </MenuGroup>
+        }
+        {showVisibilityGroup &&
+          <MenuGroup title="Visibility">
+            {hideColumnAndClose &&
+              <MenuItem
+                onClick={hideColumnAndClose}
+                label={'Hide column'}
+              />
+            }
+            {showAllColumnsAndClose &&
+              <MenuItem
+                onClick={showAllColumnsAndClose}
+                label="Show all columns"
+              />
+            }
+          </MenuGroup>
+        }
       </div>
     </>,
     containerRef.current ?? document.body

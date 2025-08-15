@@ -89,7 +89,7 @@
     th {
       & > button {
         position: absolute;
-        right: 12px;
+        right: 6px;
         top: 50%;
         transform: translateY(-50%);
         width: 20px;
@@ -339,6 +339,16 @@
     & > [role="presentation"] {
       padding: 4px 12px 8px;
       font-weight: bold;
+      border-style: solid;
+      border-color: var(--light-border-color);
+      border-width: 0 0 1px 0;
+    }
+
+    & > [role="separator"] {
+      display: block;
+      width: 100%;
+      text-align: left;
+      padding: 4px 12px;
     }
 
     & > [role="menuitem"] {

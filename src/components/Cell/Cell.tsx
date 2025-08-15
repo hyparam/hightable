@@ -1,7 +1,7 @@
 import { KeyboardEvent, MouseEvent, ReactNode, useCallback, useMemo, useRef } from 'react'
 import { ResolvedValue } from '../../helpers/dataframe/index.js'
 import { useCellNavigation } from '../../hooks/useCellsNavigation.js'
-import { useColumnStates } from '../../hooks/useColumnStates.js'
+import { useColumnWidths } from '../../hooks/useColumnWidths.js'
 
 export interface CellContentProps {
   stringify: (value: unknown) => string | undefined
@@ -63,7 +63,7 @@ export default function Cell({ cell, onDoubleClickCell, onMouseDownCell, onKeyDo
   }, [onKeyDownCell, rowNumber, columnIndex])
 
   // Get the column width from the context
-  const { getColumnStyle } = useColumnStates()
+  const { getColumnStyle } = useColumnWidths()
   const columnStyle = getColumnStyle?.(columnIndex)
 
   // render as truncated text

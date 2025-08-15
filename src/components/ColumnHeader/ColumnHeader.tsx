@@ -5,7 +5,8 @@ import { Direction } from '../../helpers/sort.js'
 import { getOffsetWidth } from '../../helpers/width.js'
 import { useCellNavigation } from '../../hooks/useCellsNavigation.js'
 import { useColumnMenu } from '../../hooks/useColumnMenu.js'
-import { useColumnStates } from '../../hooks/useColumnStates.js'
+import { useColumnWidths } from '../../hooks/useColumnWidths.js'
+import { useColumnVisibilityStates } from '../../hooks/useColumnVisibilityStates.js'
 import ColumnMenu from '../ColumnMenu/ColumnMenu.js'
 import ColumnMenuButton from '../ColumnMenuButton/ColumnMenuButton.js'
 import ColumnResizer from '../ColumnResizer/ColumnResizer.js'
@@ -17,7 +18,7 @@ interface Props {
   children?: ReactNode
   canMeasureWidth?: boolean
   direction?: Direction
-  onClick?: () => void
+  toggleOrderBy?: () => void
   orderByIndex?: number // index of the column in the orderBy array (0-based)
   orderBySize?: number // size of the orderBy array
   ariaColIndex: number // aria col index for the header
@@ -25,19 +26,29 @@ interface Props {
   className?: string // optional class name
 }
 
-export default function ColumnHeader({ columnIndex, columnName, columnConfig, canMeasureWidth, direction, onClick, orderByIndex, orderBySize, ariaColIndex, ariaRowIndex, className, children }: Props) {
+export default function ColumnHeader({ columnIndex, columnName, columnConfig, canMeasureWidth, direction, toggleOrderBy, orderByIndex, orderBySize, ariaColIndex, ariaRowIndex, className, children }: Props) {
   const ref = useRef<HTMLTableCellElement>(null)
   const { tabIndex, navigateToCell } = useCellNavigation({ ref, ariaColIndex, ariaRowIndex })
   const { sortable, headerComponent } = columnConfig
-  const { isOpen, position, menuId, handleToggle, handleMenuClick } = useColumnMenu(ref, navigateToCell)
+  const { isOpen, position, menuId, close, handleMenuClick } = useColumnMenu(ref, navigateToCell)
+  const { getHideColumn, showAllColumns } = useColumnVisibilityStates()
 
   const handleClick = useCallback(() => {
     navigateToCell()
-    if (sortable) onClick?.()
-  }, [onClick, navigateToCell, sortable])
+    if (sortable) toggleOrderBy?.()
+  }, [toggleOrderBy, navigateToCell, sortable])
+
+  const hideColumn = useMemo(() => {
+    return getHideColumn?.(columnIndex)
+  }, [getHideColumn, columnIndex])
+
+  const isMenuEnabled = useMemo(() => {
+    const hideMenu = !sortable && !hideColumn && !showAllColumns
+    return !hideMenu
+  }, [sortable, hideColumn, showAllColumns])
 
   // Get the column width from the context
-  const { getColumnStyle, isFixedColumn, getColumnWidth, measureWidth, forceWidth, removeWidth } = useColumnStates()
+  const { getColumnStyle, isFixedColumn, getColumnWidth, measureWidth, forceWidth, removeWidth } = useColumnWidths()
   const columnStyle = getColumnStyle?.(columnIndex)
   const dataFixedWidth = isFixedColumn?.(columnIndex) === true ? true : undefined
   const width = getColumnWidth?.(columnIndex)
@@ -102,9 +113,9 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault()
       e.stopPropagation()
-      onClick?.()
+      toggleOrderBy?.()
     }
-  }, [onClick])
+  }, [toggleOrderBy])
 
   return (
     <th
@@ -127,7 +138,7 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
       data-fixed-width={dataFixedWidth}
     >
       {headerComponent ?? children}
-      {sortable &&
+      {isMenuEnabled &&
         <ColumnMenuButton
           onClick={handleMenuClick}
           onEscape={navigateToCell}
@@ -150,8 +161,10 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
         position={position}
         direction={direction}
         sortable={sortable}
-        onClick={onClick}
-        onToggle={handleToggle}
+        toggleOrderBy={toggleOrderBy}
+        hideColumn={hideColumn}
+        showAllColumns={showAllColumns}
+        close={close}
         id={menuId}
       />
     </th>

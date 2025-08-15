@@ -2,9 +2,7 @@ import { CSSProperties, ReactNode, createContext, useCallback, useContext, useMe
 import { MaybeColumnWidth, adjustMeasuredWidths, cellStyle, hasFixedWidth, isValidWidth } from '../helpers/width.js'
 import { useLocalStorageState } from './useLocalStorageState.js'
 
-export type MaybeColumnState = MaybeColumnWidth
-
-interface ColumnStatesContextType {
+interface ColumnWidthsContextType {
   getColumnWidth?: (columnIndex: number) => number | undefined
   getColumnStyle?: (columnIndex: number) => CSSProperties
   isFixedColumn?: (columnIndex: number) => boolean // returns true if the column has a fixed width
@@ -14,16 +12,16 @@ interface ColumnStatesContextType {
   removeWidth?: (options: { columnIndex: number }) => void // used to remove the width of a column, so it can be measured again
 }
 
-export const ColumnStatesContext = createContext<ColumnStatesContextType>({})
+export const ColumnWidthsContext = createContext<ColumnWidthsContextType>({})
 
-interface ColumnStatesProviderProps {
+interface ColumnWidthsProviderProps {
   localStorageKey?: string // optional key to use for local storage (no local storage if not provided)
   numColumns: number // number of columns (used to initialize the widths array, and compute the widths)
   minWidth: number // minimum width for a column in pixels
   children: ReactNode
 }
 
-export function ColumnStatesProvider({ children, localStorageKey, numColumns, minWidth }: ColumnStatesProviderProps) {
+export function ColumnWidthsProvider({ children, localStorageKey, numColumns, minWidth }: ColumnWidthsProviderProps) {
   if (!isValidWidth(minWidth)) {
     throw new Error(`Invalid minWidth: ${minWidth}. It must be a positive number.`)
   }
@@ -39,31 +37,31 @@ export function ColumnStatesProvider({ children, localStorageKey, numColumns, mi
     return Math.floor(Math.max(width, minWidthToUse))
   }, [minWidth])
 
-  // An array of column states
+  // An array of column widths
   // The index is the column rank in the header (0-based)
   // The array is uninitialized so that we don't have to know the number of columns in advance
-  const [columnStates, setColumnStates] = useLocalStorageState<MaybeColumnState[]>({ key: localStorageKey, parse, stringify })
-  function stringify(columnStates: MaybeColumnState[]) {
+  const [columnWidths, setColumnWidths] = useLocalStorageState<MaybeColumnWidth[]>({ key: localStorageKey, parse, stringify })
+  function stringify(columnWidths: MaybeColumnWidth[]) {
     // only save the fixed widths
-    const columnStatesWithoutMeasured = columnStates.map(columnState => {
-      return hasFixedWidth(columnState) ? { width: columnState.width } : undefined
+    const columnWidthsWithoutMeasured = columnWidths.map(columnWidth => {
+      return hasFixedWidth(columnWidth) ? { width: columnWidth.width } : undefined
     })
-    return JSON.stringify(columnStatesWithoutMeasured)
+    return JSON.stringify(columnWidthsWithoutMeasured)
   }
-  function parse(json: string): MaybeColumnState[] {
-    const columnStates = JSON.parse(json)
-    if (!Array.isArray(columnStates)) {
+  function parse(json: string): MaybeColumnWidth[] {
+    const columnWidths = JSON.parse(json)
+    if (!Array.isArray(columnWidths)) {
       return []
     }
     // only keep the width field, and ensure the width is clamped
-    return columnStates.map((columnState: unknown) => {
-      if (columnState === null || columnState === undefined) {
+    return columnWidths.map((columnWidth: unknown) => {
+      if (columnWidth === null || columnWidth === undefined) {
         return undefined
       }
-      if (typeof columnState !== 'object' || !('width' in columnState)) {
+      if (typeof columnWidth !== 'object' || !('width' in columnWidth)) {
         return undefined
       }
-      const width = isValidWidth(columnState.width) ? clamp(columnState.width) : undefined
+      const width = isValidWidth(columnWidth.width) ? clamp(columnWidth.width) : undefined
       return { width }
     })
   }
@@ -73,56 +71,56 @@ export function ColumnStatesProvider({ children, localStorageKey, numColumns, mi
   }, [numColumns])
 
   const getColumnWidth = useCallback((columnIndex: number) => {
-    return columnStates?.[columnIndex]?.width
-  }, [columnStates])
+    return columnWidths?.[columnIndex]?.width
+  }, [columnWidths])
 
   const getColumnStyle = useCallback((columnIndex: number) => {
     return cellStyle(getColumnWidth(columnIndex))
   }, [getColumnWidth])
 
   const isFixedColumn = useCallback((columnIndex: number) => {
-    return hasFixedWidth(columnStates?.[columnIndex])
-  }, [columnStates])
+    return hasFixedWidth(columnWidths?.[columnIndex])
+  }, [columnWidths])
 
   const forceWidth = useCallback(({ columnIndex, width, minWidth }: { columnIndex: number; width: number; minWidth?: number }) => {
     if (!isValidWidth(width) || !isValidIndex(columnIndex)) {
       return
     }
-    setColumnStates(columnStates => {
-      const nextColumnStates = [...columnStates ?? []]
+    setColumnWidths(columnWidths => {
+      const nextColumnWidths = [...columnWidths ?? []]
       // clamp the width
-      nextColumnStates[columnIndex] = { ...nextColumnStates[columnIndex] ?? {}, width: clamp(width, minWidth), measured: undefined }
+      nextColumnWidths[columnIndex] = { ...nextColumnWidths[columnIndex] ?? {}, width: clamp(width, minWidth), measured: undefined }
       // don't adjust other columns
-      return nextColumnStates
+      return nextColumnWidths
     })
-  }, [clamp, isValidIndex, setColumnStates])
+  }, [clamp, isValidIndex, setColumnWidths])
 
   const measureWidth = useCallback(({ columnIndex, measured }: { columnIndex: number; measured: number }) => {
     if (!isValidWidth(measured) || !isValidIndex(columnIndex)) {
       return
     }
     // Set the measured width
-    setColumnStates(columnStates => {
+    setColumnWidths(columnWidths => {
       // remove the computed width for all the columns with a 'measured' field
-      const nextColumnStates = [...columnStates ?? []]
-      nextColumnStates[columnIndex] = { ...nextColumnStates[columnIndex] ?? {}, measured: clamp(measured), width: undefined }
+      const nextColumnWidths = [...columnWidths ?? []]
+      nextColumnWidths[columnIndex] = { ...nextColumnWidths[columnIndex] ?? {}, measured: clamp(measured), width: undefined }
       // compute the adjusted widths
-      return adjustMeasuredWidths({ columnWidths: nextColumnStates, availableWidth, clamp, numColumns })
+      return adjustMeasuredWidths({ columnWidths: nextColumnWidths, availableWidth, clamp, numColumns })
     })
-  }, [availableWidth, clamp, isValidIndex, numColumns, setColumnStates])
+  }, [availableWidth, clamp, isValidIndex, numColumns, setColumnWidths])
 
   const removeWidth = useCallback(({ columnIndex }: { columnIndex: number }) => {
     if (!isValidIndex(columnIndex)) {
       return
     }
     // Set the undefined width
-    setColumnStates(columnStates => {
-      const nextColumnStates = [...columnStates ?? []]
-      nextColumnStates[columnIndex] = { ...nextColumnStates[columnIndex] ?? {}, measured: undefined, width: undefined }
+    setColumnWidths(columnWidths => {
+      const nextColumnWidths = [...columnWidths ?? []]
+      nextColumnWidths[columnIndex] = { ...nextColumnWidths[columnIndex] ?? {}, measured: undefined, width: undefined }
       // don't compute anything
-      return nextColumnStates
+      return nextColumnWidths
     })
-  }, [isValidIndex, setColumnStates])
+  }, [isValidIndex, setColumnWidths])
 
   const value = useMemo(() => {
     return {
@@ -137,12 +135,12 @@ export function ColumnStatesProvider({ children, localStorageKey, numColumns, mi
   }, [getColumnWidth, getColumnStyle, isFixedColumn, setAvailableWidth, forceWidth, measureWidth, removeWidth])
 
   return (
-    <ColumnStatesContext.Provider value={value}>
+    <ColumnWidthsContext.Provider value={value}>
       {children}
-    </ColumnStatesContext.Provider>
+    </ColumnWidthsContext.Provider>
   )
 }
 
-export function useColumnStates() {
-  return useContext(ColumnStatesContext)
+export function useColumnWidths() {
+  return useContext(ColumnWidthsContext)
 }

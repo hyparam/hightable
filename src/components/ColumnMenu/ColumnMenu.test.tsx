@@ -8,7 +8,7 @@ describe('ColumnMenu', () => {
     isOpen: true,
     position: { left: 100, top: 100 },
     columnIndex: 0,
-    onToggle: vi.fn(),
+    close: vi.fn(),
   }
 
   beforeEach(() => {
@@ -100,6 +100,51 @@ describe('ColumnMenu', () => {
     })
   })
 
+  describe('Visibility options', () => {
+    it('renders hide column option when hideColumn is provided', () => {
+      const hideColumn = vi.fn()
+      const { getByText } = render(
+        <ColumnMenu {...defaultProps} hideColumn={hideColumn} />
+      )
+      const hideOption = getByText('Hide column')
+      expect(hideOption).toBeDefined()
+      hideOption.click()
+      expect(hideColumn).toHaveBeenCalled()
+    })
+    it('does not render hide column option when hideColumn is not provided', () => {
+      const { queryByText } = render(<ColumnMenu {...defaultProps} />)
+
+      expect(queryByText('Hide column')).toBeNull()
+    })
+    it('renders show all columns option when showAllColumns is provided', () => {
+      const showAllColumns = vi.fn()
+      const { getByText } = render(
+        <ColumnMenu {...defaultProps} showAllColumns={showAllColumns} />
+      )
+      const showOption = getByText('Show all columns')
+      expect(showOption).toBeDefined()
+      showOption.click()
+      expect(showAllColumns).toHaveBeenCalled()
+    })
+    it('does not render show all columns option when showAllColumns is not provided', () => {
+      const { queryByText } = render(<ColumnMenu {...defaultProps} />)
+      expect(queryByText('Show all columns')).toBeNull()
+    })
+    it('render both hide and show options when both are provided', () => {
+      const hideColumn = vi.fn()
+      const showAllColumns = vi.fn()
+      const { getByText } = render(
+        <ColumnMenu
+          {...defaultProps}
+          hideColumn={hideColumn}
+          showAllColumns={showAllColumns}
+        />
+      )
+      expect(getByText('Hide column')).toBeDefined()
+      expect(getByText('Show all columns')).toBeDefined()
+    })
+  })
+
   describe('MenuItem component', () => {
     it('renders with correct ARIA attributes', () => {
       const { getByRole } = render(
@@ -111,15 +156,15 @@ describe('ColumnMenu', () => {
       expect(menuItem.getAttribute('type')).toBe('button')
     })
 
-    it('calls onClick when sort button is clicked', async () => {
-      const onClick = vi.fn()
+    it('calls toggleOrderBy when sort button is clicked', async () => {
+      const toggleOrderBy = vi.fn()
       const { user, getByRole } = render(
-        <ColumnMenu {...defaultProps} sortable={true} onClick={onClick} />
+        <ColumnMenu {...defaultProps} sortable={true} toggleOrderBy={toggleOrderBy} />
       )
 
       const sortButton = getByRole('menuitem')
       await user.click(sortButton)
-      expect(onClick).toHaveBeenCalled()
+      expect(toggleOrderBy).toHaveBeenCalled()
     })
 
     it('focuses button when clicked', async () => {
@@ -141,40 +186,40 @@ describe('ColumnMenu', () => {
       menu.focus()
       await user.keyboard('{Escape}')
 
-      expect(defaultProps.onToggle).toHaveBeenCalled()
+      expect(defaultProps.close).toHaveBeenCalled()
     })
 
-    it('calls onClick on Enter key when sortable', async () => {
-      const onClick = vi.fn()
+    it('calls toggleOrderBy on Enter key when sortable', async () => {
+      const toggleOrderBy = vi.fn()
       const { user, getByRole } = render(
-        <ColumnMenu {...defaultProps} sortable={true} onClick={onClick} />
+        <ColumnMenu {...defaultProps} sortable={true} toggleOrderBy={toggleOrderBy} />
       )
 
       const sortButton = getByRole('menuitem')
       sortButton.focus()
       await user.keyboard('{Enter}')
 
-      expect(onClick).toHaveBeenCalled()
+      expect(toggleOrderBy).toHaveBeenCalled()
     })
 
-    it('calls onClick on Space key when sortable', async () => {
-      const onClick = vi.fn()
+    it('calls toggleOrderBy on Space key when sortable', async () => {
+      const toggleOrderBy = vi.fn()
       const { user, getByRole } = render(
-        <ColumnMenu {...defaultProps} sortable={true} onClick={onClick} />
+        <ColumnMenu {...defaultProps} sortable={true} toggleOrderBy={toggleOrderBy} />
       )
 
       const sortButton = getByRole('menuitem')
       sortButton.focus()
       await user.keyboard('{ }')
 
-      expect(onClick).toHaveBeenCalled()
+      expect(toggleOrderBy).toHaveBeenCalled()
     })
 
-    // TODO(SL): really test the navigation. For now, it works the same if the key is pressed or not. The menu only has one item, so the keys are useless.
+    // TODO(SL): really test the navigation. For now, it works the same if the key is pressed or not.
     describe('Arrow key navigation', () => {
       it('handles ArrowUp key', async () => {
         const { user, getByRole } = render(
-          <ColumnMenu {...defaultProps} sortable={true} />
+          <ColumnMenu {...defaultProps} sortable={true} hideColumn={() => undefined} />
         )
 
         const menu = getByRole('menu')
@@ -222,7 +267,7 @@ describe('ColumnMenu', () => {
       })
     })
 
-    // TODO(SL): really test the navigation. For now, it works the same if the key is pressed or not. The menu only has one item, so the keys are useless.
+    // TODO(SL): really test the navigation. For now, it works the same if the key is pressed or not.
     describe('Tab navigation', () => {
       it('handles Tab key', async () => {
         const { user, getByRole } = render(
@@ -249,7 +294,7 @@ describe('ColumnMenu', () => {
       })
     })
 
-    // TODO(SL): really test the navigation. For now, it works the same if the key is pressed or not. The menu only has one item, so the keys are useless.
+    // TODO(SL): really test the navigation. For now, it works the same if the key is pressed or not.
     describe('Home/End keys', () => {
       it('handles Home key', async () => {
         const { user, getByRole } = render(
@@ -314,7 +359,7 @@ describe('ColumnMenu', () => {
 
       if (overlay) {
         await user.click(overlay)
-        expect(defaultProps.onToggle).toHaveBeenCalled()
+        expect(defaultProps.close).toHaveBeenCalled()
       }
     })
   })
@@ -333,7 +378,7 @@ describe('ColumnMenu', () => {
   })
 
   describe('Edge cases', () => {
-    it('works without onClick handler', () => {
+    it('works without toggleOrderBy handler', () => {
       const { getByRole } = render(
         <ColumnMenu {...defaultProps} sortable={true} />
       )
