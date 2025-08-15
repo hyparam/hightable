@@ -57,14 +57,14 @@ export function ColumnVisibilityStatesProvider({ children, localStorageKey, numC
     return columnVisibilityStates?.[columnIndex]?.hidden === true
   }, [columnVisibilityStates])
 
-  const { numberOfVisibleColumns, numberOfHiddenColumns } = useMemo(() => {
-    let numberOfVisibleColumns = 0
+  const { numberOfHiddenColumns, numberOfVisibleColumns } = useMemo(() => {
+    let numberOfHiddenColumns = 0
     for (let i = 0; i < numColumns; i++) {
-      if (!isHiddenColumn(i)) {
-        numberOfVisibleColumns++
+      if (isHiddenColumn(i)) {
+        numberOfHiddenColumns++
       }
     }
-    return { numberOfVisibleColumns, numberOfHiddenColumns: numColumns - numberOfVisibleColumns }
+    return { numberOfHiddenColumns, numberOfVisibleColumns: numColumns - numberOfHiddenColumns }
   }, [numColumns, isHiddenColumn])
 
   const canBeHidden = useCallback((columnIndex: number) => {
@@ -79,7 +79,6 @@ export function ColumnVisibilityStatesProvider({ children, localStorageKey, numC
       setColumnVisibilityStates(columnVisibilityStates => {
         const nextColumnVisibilityStates = [...columnVisibilityStates ?? []]
         nextColumnVisibilityStates[columnIndex] = { hidden: true }
-        console.log({ columnVisibilityStates, nextColumnVisibilityStates, columnIndex })
         return nextColumnVisibilityStates
       })
     }
@@ -90,9 +89,9 @@ export function ColumnVisibilityStatesProvider({ children, localStorageKey, numC
       return undefined
     }
     return () => {
-      setColumnVisibilityStates([...Array(numColumns).fill(undefined)])
+      setColumnVisibilityStates(undefined)
     }
-  }, [numberOfHiddenColumns, setColumnVisibilityStates, numColumns])
+  }, [numberOfHiddenColumns, setColumnVisibilityStates])
 
   const value = useMemo(() => {
     return {

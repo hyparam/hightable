@@ -100,6 +100,51 @@ describe('ColumnMenu', () => {
     })
   })
 
+  describe('Visibility options', () => {
+    it('renders hide column option when hideColumn is provided', () => {
+      const hideColumn = vi.fn()
+      const { getByText } = render(
+        <ColumnMenu {...defaultProps} hideColumn={hideColumn} />
+      )
+      const hideOption = getByText('Hide column')
+      expect(hideOption).toBeDefined()
+      hideOption.click()
+      expect(hideColumn).toHaveBeenCalled()
+    })
+    it('does not render hide column option when hideColumn is not provided', () => {
+      const { queryByText } = render(<ColumnMenu {...defaultProps} />)
+
+      expect(queryByText('Hide column')).toBeNull()
+    })
+    it('renders show all columns option when showAllColumns is provided', () => {
+      const showAllColumns = vi.fn()
+      const { getByText } = render(
+        <ColumnMenu {...defaultProps} showAllColumns={showAllColumns} />
+      )
+      const showOption = getByText('Show all columns')
+      expect(showOption).toBeDefined()
+      showOption.click()
+      expect(showAllColumns).toHaveBeenCalled()
+    })
+    it('does not render show all columns option when showAllColumns is not provided', () => {
+      const { queryByText } = render(<ColumnMenu {...defaultProps} />)
+      expect(queryByText('Show all columns')).toBeNull()
+    })
+    it('render both hide and show options when both are provided', () => {
+      const hideColumn = vi.fn()
+      const showAllColumns = vi.fn()
+      const { getByText } = render(
+        <ColumnMenu
+          {...defaultProps}
+          hideColumn={hideColumn}
+          showAllColumns={showAllColumns}
+        />
+      )
+      expect(getByText('Hide column')).toBeDefined()
+      expect(getByText('Show all columns')).toBeDefined()
+    })
+  })
+
   describe('MenuItem component', () => {
     it('renders with correct ARIA attributes', () => {
       const { getByRole } = render(
@@ -170,11 +215,11 @@ describe('ColumnMenu', () => {
       expect(toggleOrderBy).toHaveBeenCalled()
     })
 
-    // TODO(SL): really test the navigation. For now, it works the same if the key is pressed or not. The menu only has one item, so the keys are useless.
+    // TODO(SL): really test the navigation. For now, it works the same if the key is pressed or not.
     describe('Arrow key navigation', () => {
       it('handles ArrowUp key', async () => {
         const { user, getByRole } = render(
-          <ColumnMenu {...defaultProps} sortable={true} />
+          <ColumnMenu {...defaultProps} sortable={true} hideColumn={() => undefined} />
         )
 
         const menu = getByRole('menu')
@@ -222,7 +267,7 @@ describe('ColumnMenu', () => {
       })
     })
 
-    // TODO(SL): really test the navigation. For now, it works the same if the key is pressed or not. The menu only has one item, so the keys are useless.
+    // TODO(SL): really test the navigation. For now, it works the same if the key is pressed or not.
     describe('Tab navigation', () => {
       it('handles Tab key', async () => {
         const { user, getByRole } = render(
@@ -249,7 +294,7 @@ describe('ColumnMenu', () => {
       })
     })
 
-    // TODO(SL): really test the navigation. For now, it works the same if the key is pressed or not. The menu only has one item, so the keys are useless.
+    // TODO(SL): really test the navigation. For now, it works the same if the key is pressed or not.
     describe('Home/End keys', () => {
       it('handles Home key', async () => {
         const { user, getByRole } = render(

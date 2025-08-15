@@ -5,9 +5,10 @@ import { createGetRowNumber, createStaticFetch, validateColumn, validateFetchPar
 import { DataFrame, DataFrameEvents, UnsortableDataFrame, filterDataFrame } from '../../helpers/dataframe/index.js'
 import { sortableDataFrame } from '../../helpers/dataframe/sort.js'
 import { createEventTarget } from '../../helpers/typedEventTarget.js'
+import { MaybeHiddenColumn } from '../../hooks/useColumnVisibilityStates.js'
 import { MaybeColumnWidth } from '../../helpers/width.js'
 import { render } from '../../utils/userEvent.js'
-import HighTable, { columnWidthsSuffix, defaultOverscan } from './HighTable.js'
+import HighTable, { columnVisibilityStatesSuffix, columnWidthsSuffix, defaultOverscan } from './HighTable.js'
 
 Element.prototype.scrollIntoView = vi.fn()
 
