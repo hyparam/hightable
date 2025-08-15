@@ -36,6 +36,11 @@ export default function ColumnResizer({ autoResize, forceWidth, width, tabIndex,
 
   // Handle pointer down to start resizing
   const handlePointerDown = useCallback((event: PointerEvent<HTMLSpanElement>) => {
+    // only call handler if it's the left button (on mouse), and no control/meta key is pressed
+    if (event.button !== 0 || event.ctrlKey || event.metaKey) {
+      return
+    }
+
     navigateToCell?.()
     event.stopPropagation()
 
