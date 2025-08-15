@@ -103,6 +103,7 @@ interface TableProps {
   selection?: Selection; // selection state (if defined, the component selection is controlled by the parent)
   onSelectionChange?: (selection: Selection) => void; // selection change handler
   columnConfiguration?: Record<string, ColumnConfig>; // allows for additional configuration of columns
+  onColumnsVisibilityChange?: (columnVisibilityStates: MaybeHiddenColumn[]) => void; // columns visibility change handler
 }
 ```
 

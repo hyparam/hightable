@@ -6,7 +6,7 @@ import { OrderBy } from '../../helpers/sort.js'
 import { cellStyle, getClientWidth, getOffsetWidth } from '../../helpers/width.js'
 import { CellsNavigationProvider, useCellsNavigation } from '../../hooks/useCellsNavigation.js'
 import { ColumnWidthsProvider, useColumnWidths } from '../../hooks/useColumnWidths.js'
-import { ColumnVisibilityStatesProvider, useColumnVisibilityStates } from '../../hooks/useColumnVisibilityStates.js'
+import { ColumnVisibilityStatesProvider, type MaybeHiddenColumn, useColumnVisibilityStates } from '../../hooks/useColumnVisibilityStates.js'
 import { DataProvider, useData } from '../../hooks/useData.js'
 import { OrderByProvider, useOrderBy } from '../../hooks/useOrderBy.js'
 import { PortalContainerProvider, usePortalContainer } from '../../hooks/usePortalContainer.js'
@@ -40,6 +40,7 @@ interface Props {
   onOrderByChange?: (orderBy: OrderBy) => void // callback to call when a user interaction changes the order. The interactions are disabled if undefined.
   selection?: Selection // selection and anchor rows, expressed as data indexes (not as indexes in the table). If undefined, the selection is hidden and the interactions are disabled.
   onSelectionChange?: (selection: Selection) => void // callback to call when a user interaction changes the selection. The selection is expressed as data indexes (not as indexes in the table). The interactions are disabled if undefined.
+  onColumnsVisibilityChange?: (columns: MaybeHiddenColumn[]) => void // callback which is called whenever the set of hidden columns changes.
   stringify?: (value: unknown) => string | undefined
   className?: string // additional class names for the component
   columnClassNames?: (string | undefined)[] // list of additional class names for the header and cells of each column. The index in this array corresponds to the column index in columns
@@ -78,13 +79,13 @@ function HighTableData(props: PropsData) {
   const { data, key, version } = useData()
   const { numRows } = data
   // TODO(SL): onError could be in a context, as we might want to use it everywhere
-  const { cacheKey, orderBy, onOrderByChange, selection, onSelectionChange, onError } = props
+  const { cacheKey, orderBy, onOrderByChange, selection, onSelectionChange, onError, onColumnsVisibilityChange } = props
 
   return (
     /* Create a new set of widths if the data has changed, but keep it if only the number of rows changed */
     <ColumnWidthsProvider key={cacheKey ?? key} localStorageKey={cacheKey ? `${cacheKey}${columnWidthsSuffix}` : undefined} numColumns={data.header.length} minWidth={minWidth}>
       {/* Create a new set of hidden columns if the data has changed, but keep it if only the number of rows changed */}
-      <ColumnVisibilityStatesProvider key={cacheKey ?? key} localStorageKey={cacheKey ? `${cacheKey}${columnVisibilityStatesSuffix}` : undefined} numColumns={data.header.length}>
+      <ColumnVisibilityStatesProvider key={cacheKey ?? key} localStorageKey={cacheKey ? `${cacheKey}${columnVisibilityStatesSuffix}` : undefined} numColumns={data.header.length} onColumnsVisibilityChange={onColumnsVisibilityChange}>
         {/* Create a new context if the dataframe changes, to flush the cache (ranks and indexes) */}
         <OrderByProvider key={key} orderBy={orderBy} onOrderByChange={onOrderByChange} disabled={!data.sortable}>
           {/* Create a new selection context if the dataframe has changed */}
