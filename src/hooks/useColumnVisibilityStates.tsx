@@ -12,6 +12,7 @@ export const ColumnVisibilityStatesContext = createContext<ColumnVisibilityState
 interface ColumnVisibilityStatesProviderProps {
   localStorageKey?: string // optional key to use for local storage (no local storage if not provided)
   numColumns: number // number of columns (used to initialize the visibility states array)
+  onColumnsVisibilityChange?: (columns: MaybeHiddenColumn[]) => void // callback which is called whenever the set of hidden columns changes.
   children: ReactNode
 }
 
@@ -20,7 +21,7 @@ export interface HiddenColumn {
 }
 export type MaybeHiddenColumn = HiddenColumn | undefined
 
-export function ColumnVisibilityStatesProvider({ children, localStorageKey, numColumns }: ColumnVisibilityStatesProviderProps) {
+export function ColumnVisibilityStatesProvider({ children, localStorageKey, numColumns, onColumnsVisibilityChange }: ColumnVisibilityStatesProviderProps) {
   if (!Number.isInteger(numColumns) || numColumns < 0) {
     throw new Error(`Invalid numColumns: ${numColumns}. It must be a positive integer.`)
   }
@@ -79,10 +80,11 @@ export function ColumnVisibilityStatesProvider({ children, localStorageKey, numC
       setColumnVisibilityStates(columnVisibilityStates => {
         const nextColumnVisibilityStates = [...columnVisibilityStates ?? []]
         nextColumnVisibilityStates[columnIndex] = { hidden: true }
+        onColumnsVisibilityChange?.(nextColumnVisibilityStates)
         return nextColumnVisibilityStates
       })
     }
-  }, [canBeHidden, isValidIndex, setColumnVisibilityStates])
+  }, [canBeHidden, isValidIndex, setColumnVisibilityStates, onColumnsVisibilityChange])
 
   const showAllColumns = useMemo(() => {
     if (numberOfHiddenColumns === 0) {
@@ -90,8 +92,9 @@ export function ColumnVisibilityStatesProvider({ children, localStorageKey, numC
     }
     return () => {
       setColumnVisibilityStates(undefined)
+      onColumnsVisibilityChange?.([])
     }
-  }, [numberOfHiddenColumns, setColumnVisibilityStates])
+  }, [numberOfHiddenColumns, setColumnVisibilityStates, onColumnsVisibilityChange])
 
   const value = useMemo(() => {
     return {
