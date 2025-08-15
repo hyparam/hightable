@@ -1220,18 +1220,32 @@ describe('Navigating Hightable with the keyboard', () => {
   })
 
   describe('When a header cell is focused', () => {
-    it('the column resizer and the header cell are focusable', async () => {
+    it('the column resizer, the menu button and the header cell are focusable', async () => {
       const { user } = render(<HighTable data={data} />)
       // go to the header cell (ID)
       await user.keyboard('{ArrowRight}')
       const cell = document.activeElement
+      // Tab focuses the menu button
+      await user.keyboard('{Tab}')
+      let focusedElement = document.activeElement
+      if (!focusedElement) {
+        throw new Error('Focused element not found')
+      }
+      expect(focusedElement.tagName.toLowerCase()).toBe('button')
       // Tab focuses the column resizer
       await user.keyboard('{Tab}')
-      const focusedElement = document.activeElement
+      focusedElement = document.activeElement
       if (!focusedElement) {
         throw new Error('Focused element not found')
       }
       expect(focusedElement.getAttribute('role')).toBe('spinbutton')
+      // Shift+Tab focuses the menu button again
+      await user.keyboard('{Shift>}{Tab}{/Shift}')
+      focusedElement = document.activeElement
+      if (!focusedElement) {
+        throw new Error('Focused element not found')
+      }
+      expect(focusedElement.tagName.toLowerCase()).toBe('button')
       // Shift+Tab focuses the header cell again
       await user.keyboard('{Shift>}{Tab}{/Shift}')
       expect(document.activeElement).toBe(cell)
@@ -1242,7 +1256,7 @@ describe('Navigating Hightable with the keyboard', () => {
       // go to the column resizer
       await user.keyboard('{ArrowRight}')
       const cell = document.activeElement
-      await user.keyboard('{Tab}')
+      await user.keyboard('{Tab}{Tab}')
       // press Enter to activate the column resizer
       const spinbutton = document.activeElement
       if (!spinbutton) {
@@ -1258,7 +1272,7 @@ describe('Navigating Hightable with the keyboard', () => {
     it('the column resizer changes the column width when ArrowRight, ArrowLeft, ArrowUp, ArrowDown, ArrowPageUp, ArrowPageDown and Home are pressed', async () => {
       const { user } = render(<HighTable data={data} />)
       // go to the column resizer
-      await user.keyboard('{ArrowRight}{Tab}')
+      await user.keyboard('{ArrowRight}{Tab}{Tab}')
       const spinbutton = document.activeElement
       if (!spinbutton) {
         throw new Error('Spinbutton is null')
@@ -1289,7 +1303,7 @@ describe('Navigating Hightable with the keyboard', () => {
       // go to the column resizer
       await user.keyboard('{ArrowRight}')
       const cell = document.activeElement
-      await user.keyboard('{Tab}')
+      await user.keyboard('{Tab}{Tab}')
       const spinbutton = document.activeElement
       if (!spinbutton) {
         throw new Error('Spinbutton is null')
@@ -1313,7 +1327,7 @@ describe('Navigating Hightable with the keyboard', () => {
     it.for(['{ }', '{Enter}'])('the column resizer toggles back to adjustable column when %s is pressed if previously autosized', async (key) => {
       const { user } = render(<HighTable data={data} />)
       // go to the column resizer
-      await user.keyboard('{ArrowRight}{Tab}')
+      await user.keyboard('{ArrowRight}{Tab}{Tab}')
       const spinbutton = document.activeElement
       if (!spinbutton) {
         throw new Error('Spinbutton is null')
@@ -1323,7 +1337,7 @@ describe('Navigating Hightable with the keyboard', () => {
       await user.keyboard(key)
       expect(spinbutton.getAttribute('aria-valuenow')).not.toBe(initialValue)
       // focus the resizer again
-      await user.keyboard('{Tab}')
+      await user.keyboard('{Tab}{Tab}')
       // press the key
       await user.keyboard(key)
       // already autosized - toggles to adjustable width
