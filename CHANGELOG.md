@@ -1,10 +1,28 @@
 # CHANGELOG
 
-## [0.18.3](https://github.com/hyparam/hightable/compare/v0.18.2...HEAD)
+## [0.18.4](https://github.com/hyparam/hightable/compare/v0.18.3...v0.18.4) - 2025-08-15
 
 ### Added
 
-- minWidth to the column configuration option to override global min width
+- hide columns (and show hidden columns) from the column header menu ([#244](https://github.com/hyparam/hightable/pull/244)).
+- new option prop, `renderCellContent`, to customize cells rendering ([#236](https://github.com/hyparam/hightable/pull/236)).
+- new option prop, `onColumnsVisibilityChange`, to get the list of hidden columns ([#246](https://github.com/hyparam/hightable/pull/246)).
+
+### Fixed
+
+- fix row height when the text includes emojis ([#237](https://github.com/hyparam/hightable/pull/237)).
+- fix columns width when a column only contains undefined values ([#245](https://github.com/hyparam/hightable/pull/245)).
+- only resize the columns on left click ([#247](https://github.com/hyparam/hightable/pull/247)).
+
+### Refactored
+
+- updated dev dependencies ([#248](https://github.com/hyparam/hightable/pull/248)).
+
+## [0.18.3](https://github.com/hyparam/hightable/compare/v0.18.2...v0.18.3) - 2025-08-06
+
+### Added
+
+- minWidth to the column configuration option to override global min width ([#238](https://github.com/hyparam/hightable/pull/238)).
 
 ## [0.18.2](https://github.com/hyparam/hightable/compare/v0.18.1...v0.18.2) - 2025-08-01
 
