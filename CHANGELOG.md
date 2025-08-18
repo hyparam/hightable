@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## [0.18.5](https://github.com/hyparam/hightable/compare/v0.18.4...v0.18.5) - 2025-08-18
+
+### Fixed
+
+- preserve the metadata when sorting or filtering a dataframe ([#251](https://github.com/hyparam/hightable/pull/251)).
+
 ## [0.18.4](https://github.com/hyparam/hightable/compare/v0.18.3...v0.18.4) - 2025-08-15
 
 ### Added
