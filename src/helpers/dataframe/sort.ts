@@ -1,6 +1,6 @@
 import { OrderBy, computeRanks, serializeOrderBy, validateOrderBy } from '../sort.js'
 import { createEventTarget } from '../typedEventTarget.js'
-import { checkSignal, validateFetchParams, validateRow } from './helpers.js'
+import { checkSignal, validateColumn, validateFetchParams, validateRow } from './helpers.js'
 import { DataFrame, DataFrameEvents, ResolvedValue, SortableDataFrame } from './types.js'
 
 export function sortableDataFrame(data: DataFrame): SortableDataFrame {
@@ -47,6 +47,8 @@ export function sortableDataFrame(data: DataFrame): SortableDataFrame {
   }
 
   function wrappedGetCell({ row, column, orderBy }: { row: number, column: string, orderBy?: OrderBy }): ResolvedValue | undefined {
+    validateColumn({ column, data: { header } })
+    validateRow({ row, data: { numRows } })
     const upstreamRow = getUpstreamRow({ row, orderBy })
     if (!upstreamRow) {
       // If we can't resolve the unsorted row, we return undefined.
