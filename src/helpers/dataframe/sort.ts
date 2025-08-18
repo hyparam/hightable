@@ -9,9 +9,10 @@ export function sortableDataFrame(data: DataFrame): SortableDataFrame {
     return data
   }
 
-  const { header, numRows, getCell, getRowNumber } = data
+  const { header, numRows, getCell, getRowNumber, metadata } = data
 
-  const wrappedHeader = header.slice() // Create a shallow copy of the header to avoid mutating the original
+  const wrappedHeader = header.slice() // Create a copy of the header to avoid mutating the original
+  const wrappedMetadata = structuredClone(metadata) // Create a deep copy of the metadata to avoid mutating the original
 
   // The cache cannot be erased. Create a new data frame if needed.
   const ranksByColumn = new Map<string, number[]>()
@@ -98,6 +99,7 @@ export function sortableDataFrame(data: DataFrame): SortableDataFrame {
 
   return {
     sortable: true,
+    metadata: wrappedMetadata,
     numRows,
     header: wrappedHeader,
     getRowNumber: wrappedGetRowNumber,

@@ -6,7 +6,8 @@ import type { DataFrame, DataFrameEvents, UnsortableDataFrame } from './types.js
 export function filterDataFrame({ data, filter }: {data: DataFrame, filter: ({ row }: { row: number }) => boolean}): UnsortableDataFrame {
   const upstreamRows = Array.from({ length: data.numRows }, (_, upstreamRow) => upstreamRow).filter(upstreamRow => filter({ row: upstreamRow }))
   const numRows = upstreamRows.length
-  const header = data.header.slice()
+  const header = data.header.slice() // Create a copy of the header to avoid mutating the original
+  const metadata = structuredClone(data.metadata) // Create a deep copy of the metadata to avoid mutating the original
   const eventTarget = createEventTarget<DataFrameEvents>()
   function getUpstreamRow({ row }: { row: number }) {
     validateRow({ row, data: { numRows } })
@@ -42,6 +43,7 @@ export function filterDataFrame({ data, filter }: {data: DataFrame, filter: ({ r
   }
 
   return {
+    metadata,
     header,
     numRows,
     getRowNumber,
