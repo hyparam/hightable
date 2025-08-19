@@ -42,7 +42,7 @@ HighTable uses a data model called `DataFrame`, which defines how data is fetche
  - `getRowNumber`: A function that returns the row number for a given row index. If not resolved yet, it returns undefined.
  - `getCell`: A function that returns the value of a cell at a specific row and column. If not resolved yet, it returns undefined.
  - `eventTarget`: An optional event target which must dispatch the event `resolve` when a cell or row number is resolved. This can be used to trigger re-renders or other side effects.
- - `fetch`: An asynchronous function that fetches cells and row numbers, for a range of rows and columns. It should only fetch the missing data, and once the data is fetched, `getRowNumber` and `getCell` should return the resolved values. It is responsible for dispaching the `resolve` event (once or multiple times) on the `eventTarget` when the data is ready.
+ - `fetch`: An optional asynchronous function that fetches cells and row numbers, for a range of rows and columns. It should only fetch the missing data, and once the data is fetched, `getRowNumber` and `getCell` should return the resolved values. It is responsible for dispaching the `resolve` event (once or multiple times) on the `eventTarget` when the data is ready.
  - `sortable` (optional): A boolean indicating whether the table supports column sorting. If so, `getRowNumber`, `getCell` and `fetch` accept an additional `orderBy` parameter.
 
 ## Usage
@@ -110,15 +110,15 @@ interface TableProps {
 DataFrame is defined as:
 
 ```typescript
-interface DataFrame {
+interface DataFrame<M = Record<string, any>> {
   header: string[];
   numRows: number;
-  metadata?: Record<string, any>; // optional metadata for the DataFrame
+  metadata?: M; // optional metadata for the DataFrame - use the generic type for increased type safety
   // rows are 0-indexed, excludes the header, end is exclusive
   // if orderBy is defined, start and end are applied on the sorted rows
   getRowNumber({ row, orderBy }: { row: number, orderBy?: OrderBy }): ResolvedValue<number> | undefined
   getCell({ row, column, orderBy }: {row: number, column: string, orderBy?: OrderBy}): ResolvedValue | undefined
-  fetch({ rowStart, rowEnd, columns, orderBy, signal }: { rowStart: number, rowEnd: number, columns?: string[], orderBy?: OrderBy, signal?: AbortSignal }): Promise<void>
+  fetch?: ({ rowStart, rowEnd, columns, orderBy, signal }: { rowStart: number, rowEnd: number, columns?: string[], orderBy?: OrderBy, signal?: AbortSignal }): Promise<void>
   eventTarget?: EventTarget;
   sortable?: boolean;
 }
