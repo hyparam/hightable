@@ -42,13 +42,13 @@ export function filterDataFrame({ data, filter }: {data: DataFrame, filter: ({ r
 
   if (upstreamFetch !== undefined) {
     const eventTarget = createEventTarget<DataFrameEvents>()
-    function callback() {
-      eventTarget.dispatchEvent(new CustomEvent('resolve'))
-    }
     const fetch: UnsortableFetch = async function({ rowStart, rowEnd, columns, signal }: { rowStart: number, rowEnd: number, columns?: string[], signal?: AbortSignal }) {
       validateFetchParams({ rowStart, rowEnd, columns, data: { numRows, header } })
       checkSignal(signal)
 
+      function callback() {
+        eventTarget.dispatchEvent(new CustomEvent('resolve'))
+      }
       try {
         data.eventTarget?.addEventListener('resolve', callback)
         // The upstream rows are ordered, so we can fetch them by continuous ranges.
