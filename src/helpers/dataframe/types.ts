@@ -30,7 +30,7 @@ export interface UnsortableDataFrame<M = Record<string, any>> {
     row: number, // row index in the dataframe
   }): ResolvedValue<number> | undefined
 
-  fetch: ({ rowStart, rowEnd, columns, signal }: { rowStart: number, rowEnd: number, columns?: string[], signal?: AbortSignal }) => Promise<void>
+  fetch?: ({ rowStart, rowEnd, columns, signal }: { rowStart: number, rowEnd: number, columns?: string[], signal?: AbortSignal }) => Promise<void>
 
   // emits events, defined in DataFrameEvents
   //
@@ -84,7 +84,7 @@ export interface SortableDataFrame extends Omit<UnsortableDataFrame, 'sortable'>
   //
   // static data frames can return a Promise that resolves immediately.
   // rowEnd is exclusive
-  fetch: ({ rowStart, rowEnd, columns, orderBy, signal }: { rowStart: number, rowEnd: number, columns?: string[], orderBy?: OrderBy, signal?: AbortSignal }) => Promise<void>
+  fetch?: ({ rowStart, rowEnd, columns, orderBy, signal }: { rowStart: number, rowEnd: number, columns?: string[], orderBy?: OrderBy, signal?: AbortSignal }) => Promise<void>
 }
 
 /**
