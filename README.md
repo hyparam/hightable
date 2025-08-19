@@ -68,7 +68,7 @@ const dataframe = {
   getRowNumber: ({ row }) => ({ value: rowIndex }),
   getCell: ({ row, col }) => cache.get(col).get(row),
   eventTarget,
-  fetch({row, column}) {
+  async fetch({row, column}) {
     // fetch cell data from your data source here
     const cells = await fetchCellData(row, col)
     // store the fetched data in the cache
@@ -118,7 +118,7 @@ interface DataFrame<M = Record<string, any>> {
   // if orderBy is defined, start and end are applied on the sorted rows
   getRowNumber({ row, orderBy }: { row: number, orderBy?: OrderBy }): ResolvedValue<number> | undefined
   getCell({ row, column, orderBy }: {row: number, column: string, orderBy?: OrderBy}): ResolvedValue | undefined
-  fetch?: ({ rowStart, rowEnd, columns, orderBy, signal }: { rowStart: number, rowEnd: number, columns?: string[], orderBy?: OrderBy, signal?: AbortSignal }): Promise<void>
+  fetch?: ({ rowStart, rowEnd, columns, orderBy, signal }: { rowStart: number, rowEnd: number, columns?: string[], orderBy?: OrderBy, signal?: AbortSignal }) => Promise<void>
   eventTarget?: EventTarget;
   sortable?: boolean;
 }

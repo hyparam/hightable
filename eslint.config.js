@@ -40,7 +40,7 @@ export default typescript.config(
       }],
       'eol-last': 'error',
       eqeqeq: 'error',
-      'func-style': ['error', 'declaration'],
+      'func-style': ['error', 'declaration', { 'allowTypeAnnotation': true }],
       indent: ['error', 2],
       'key-spacing': 'error',
       'no-constant-condition': 'off',

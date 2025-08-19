@@ -224,7 +224,7 @@ export function useSelection(): SelectionContextType {
 
 // fetch the row numbers in the range
 async function fetchRowNumbers({ data, rowStart, rowEnd, orderBy, signal }: { data: DataFrame, rowStart: number, rowEnd: number, orderBy?: OrderBy, signal?: AbortSignal }) {
-  await data.fetch({ rowStart, rowEnd, orderBy, signal })
+  await data.fetch?.({ rowStart, rowEnd, orderBy, signal })
   const rowNumbers = Array.from({ length: rowEnd - rowStart }, (_, i) => {
     const row = i + rowStart
     const rowNumber = data.getRowNumber({ row, orderBy })?.value
@@ -250,7 +250,7 @@ async function fetchRow({ data, rowNumber, orderBy, signal, rowByRowNumberAndOrd
   const rowByRowNumber = new Map<number, number | undefined>()
   // get all the row numbers in the table
   // TODO(SL): instead of doing everything in one fetch, we could loop, or maybe do a Promise.race between groups of rows
-  await data.fetch({ rowStart: 0, rowEnd: numRows, orderBy, signal })
+  await data.fetch?.({ rowStart: 0, rowEnd: numRows, orderBy, signal })
   // fill the Map
   for (let i = 0; i < numRows; i++) {
     const rowNumber = data.getRowNumber({ row: i, orderBy })?.value

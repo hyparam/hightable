@@ -1,4 +1,4 @@
-import { createStaticFetch, validateColumn, validateRow } from './helpers.js'
+import { validateColumn, validateRow } from './helpers.js'
 import type { ResolvedValue, UnsortableDataFrame } from './types.js'
 
 export function arrayDataFrame(array: Record<string, any>[], rowNumbers?: number[]): UnsortableDataFrame {
@@ -39,11 +39,5 @@ export function arrayDataFrame(array: Record<string, any>[], rowNumbers?: number
     return { value: cells[column] }
   }
 
-  return {
-    numRows,
-    header,
-    getRowNumber,
-    getCell,
-    fetch: createStaticFetch({ getRowNumber, getCell, numRows, header }),
-  }
+  return { numRows, header, getRowNumber, getCell }
 }

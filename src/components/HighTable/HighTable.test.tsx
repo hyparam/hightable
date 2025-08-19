@@ -1,7 +1,7 @@
 import { act, fireEvent, waitFor, within } from '@testing-library/react'
 import { UserEvent } from '@testing-library/user-event'
 import { Mock, beforeEach, describe, expect, it, vi } from 'vitest'
-import { createGetRowNumber, createStaticFetch, validateColumn, validateFetchParams, validateRow } from '../../helpers/dataframe/helpers.js'
+import { createGetRowNumber, validateColumn, validateFetchParams, validateRow } from '../../helpers/dataframe/helpers.js'
 import { DataFrame, DataFrameEvents, UnsortableDataFrame, filterDataFrame } from '../../helpers/dataframe/index.js'
 import { sortableDataFrame } from '../../helpers/dataframe/sort.js'
 import { createEventTarget } from '../../helpers/typedEventTarget.js'
@@ -30,11 +30,7 @@ function createData(): UnsortableDataFrame {
       return { value: count * 3 }
     }
   }
-  const props = { header, numRows, getCell, getRowNumber }
-  return {
-    ...props,
-    fetch: createStaticFetch(props),
-  }
+  return { header, numRows, getCell, getRowNumber }
 }
 
 function createOtherData(): UnsortableDataFrame {
@@ -50,15 +46,11 @@ function createOtherData(): UnsortableDataFrame {
       return { value: 1000 - row }
     }
   }
-  const props = { header, numRows, getCell, getRowNumber }
-  return {
-    ...props,
-    fetch: createStaticFetch(props),
-  }
+  return { header, numRows, getCell, getRowNumber }
 }
 
 interface MockedUnsortableDataFrame extends UnsortableDataFrame {
-  fetch: Mock<UnsortableDataFrame['fetch']>
+  fetch: Mock<Exclude<UnsortableDataFrame['fetch'], undefined>>
   getCell: Mock<UnsortableDataFrame['getCell']>
 }
 function createMockData(): MockedUnsortableDataFrame {
@@ -81,7 +73,7 @@ function createMockData(): MockedUnsortableDataFrame {
   const props = { header, numRows, getCell, getRowNumber }
   return {
     ...props,
-    fetch: vi.fn(createStaticFetch(props)),
+    fetch: vi.fn(() => Promise.resolve()),
   }
 }
 

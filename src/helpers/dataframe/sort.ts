@@ -67,7 +67,7 @@ export function sortableDataFrame(data: DataFrame): SortableDataFrame {
     try {
       if (!orderBy || orderBy.length === 0) {
         // If orderBy is not provided, we can fetch the data without sorting.
-        await data.fetch({ rowStart, rowEnd, columns, signal })
+        await data.fetch?.({ rowStart, rowEnd, columns, signal })
         return
       }
       validateOrderBy({ header, orderBy })
@@ -83,15 +83,16 @@ export function sortableDataFrame(data: DataFrame): SortableDataFrame {
         ranksByColumn,
         indexes: indexesByOrderBy.get(serializeOrderBy(orderBy)),
         setIndexes: ({ orderBy, indexes }) => {
-        // Store the indexes in the map.
+          // Store the indexes in the map.
           indexesByOrderBy.set(serializeOrderBy(orderBy), indexes)
           // Notify the event target that the indexes have been updated.
           eventTarget.dispatchEvent(new CustomEvent('resolve'))
         },
         data,
       })
+
       // Ensure cells are available
-      if (columns && columns.length > 0) {
+      if (columns && columns.length > 0 && data.fetch) {
         await fetchFromIndexes({ columns, signal, indexes: indexes.slice(rowStart, rowEnd), fetch: data.fetch })
       }
     } finally {
@@ -111,7 +112,7 @@ export function sortableDataFrame(data: DataFrame): SortableDataFrame {
   }
 }
 
-async function fetchFromIndexes({ columns, indexes, signal, fetch }: { columns?: string[], indexes: number[], signal?: AbortSignal, fetch: DataFrame['fetch'] }): Promise<void> {
+async function fetchFromIndexes({ columns, indexes, signal, fetch }: { columns?: string[], indexes: number[], signal?: AbortSignal, fetch: Exclude<DataFrame['fetch'], undefined> }): Promise<void> {
   // Fetch the data for every index, grouping the fetches by consecutive rows.
   const rowNumberIndexes = indexes.sort()
   const promises: (void | Promise<void>)[] = []
@@ -179,7 +180,11 @@ async function fetchOrderByWithRanks({ orderBy, signal, ranksByColumn, setRanks,
       orderByWithRanks[i] = { direction, ranks: columnRanks }
     } else {
       promises.push(
-        data.fetch({ rowStart: 0, rowEnd: data.numRows, columns: [column], signal }).then(() => {
+        (
+          data.fetch ?
+            data.fetch({ rowStart: 0, rowEnd: data.numRows, columns: [column], signal }) :
+            Promise.resolve() // if fetch is not defined, resolve immediately
+        ).then(() => {
           checkSignal(signal)
           // Get the values
           const columnValues = Array.from({ length: data.numRows }, (_, row) => {

@@ -1,5 +1,17 @@
 # CHANGELOG
 
+## [Unreleased](https://github.com/hyparam/hightable/compare/v0.18....HEAD)
+
+### Changed
+
+- **Breaking** make `eventTarget` and `fetch` fields optional in `DataFrame`
+- **Breaking** remove the `createStaticFetch` helper function, which is not needed anymore now that `fetch` is optional.
+- make `DataFrame` generic to pass the metadata type
+
+### Refactored
+
+- remove the unused `cloneEventTarget` function. It was not exported.
+
 ## [0.18.5](https://github.com/hyparam/hightable/compare/v0.18.4...v0.18.5) - 2025-08-18
 
 ### Fixed

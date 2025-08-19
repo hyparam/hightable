@@ -237,19 +237,21 @@ export function HighTableInner({
       if (end - start > 1000) throw new Error(`attempted to render too many rows ${end - start} table must be contained in a scrollable div`)
 
       setRowsRange({ start, end })
-      data.fetch({
-        rowStart: start,
-        rowEnd: end,
-        columns: columns.map((column) => column.key),
-        orderBy,
-        signal: abortController.signal,
-      }).catch((error: unknown) => {
-        if (error instanceof DOMException && error.name === 'AbortError') {
-          // fetch was aborted, ignore the error
-          return
-        }
-        onError(error) // report the error to the parent component
-      })
+      if (data.fetch) {
+        data.fetch({
+          rowStart: start,
+          rowEnd: end,
+          columns: columns.map((column) => column.key),
+          orderBy,
+          signal: abortController.signal,
+        }).catch((error: unknown) => {
+          if (error instanceof DOMException && error.name === 'AbortError') {
+            // fetch was aborted, ignore the error
+            return
+          }
+          onError(error) // report the error to the parent component
+        })
+      }
     }
 
     /**
