@@ -18,10 +18,10 @@ export interface DataFrameEvents {
  *
  * The data frame does not support sorting, and the `sortable` property is set to false.
  */
-export interface UnsortableDataFrame {
+export interface UnsortableDataFrame<M = Record<string, any>> {
   numRows: number
   header: string[]
-  metadata?: Record<string, any>
+  metadata?: M
   sortable?: false
 
   getCell({ row, column }: {row: number, column: string}): ResolvedValue | undefined
@@ -32,6 +32,15 @@ export interface UnsortableDataFrame {
 
   fetch: ({ rowStart, rowEnd, columns, signal }: { rowStart: number, rowEnd: number, columns?: string[], signal?: AbortSignal }) => Promise<void>
 
+  // emits events, defined in DataFrameEvents
+  //
+  // listen to an event:
+  // eventTarget.addEventListener('resolve', (event) => {
+  //   console.log('A new cell has resolved')
+  // })
+  //
+  // publish an event:
+  // eventTarget.dispatchEvent(new CustomEvent('resolve'))
   eventTarget?: CustomEventTarget<DataFrameEvents>
 }
 
@@ -76,17 +85,6 @@ export interface SortableDataFrame extends Omit<UnsortableDataFrame, 'sortable'>
   // static data frames can return a Promise that resolves immediately.
   // rowEnd is exclusive
   fetch: ({ rowStart, rowEnd, columns, orderBy, signal }: { rowStart: number, rowEnd: number, columns?: string[], orderBy?: OrderBy, signal?: AbortSignal }) => Promise<void>
-
-  // emits events, defined in DataFrameEvents
-  //
-  // listen to an event:
-  // eventTarget.addEventListener('resolve', (event) => {
-  //   console.log('A new cell has resolved')
-  // })
-  //
-  // publish an event:
-  // eventTarget.dispatchEvent(new CustomEvent('resolve'))
-  eventTarget: CustomEventTarget<DataFrameEvents>
 }
 
 /**
@@ -94,6 +92,6 @@ export interface SortableDataFrame extends Omit<UnsortableDataFrame, 'sortable'>
  *
  * The data can be fetched in chunks, and the table can subscribe to changes using the eventTarget.
  *
- * It can be sorted or unsorted, see the `sortable` property.
+ * It can be sorted if the `sortable` property is true.
  */
 export type DataFrame = SortableDataFrame | UnsortableDataFrame
