@@ -45,23 +45,17 @@ export function filterDataFrame({ data, filter }: {data: DataFrame, filter: ({ r
     function callback() {
       eventTarget.dispatchEvent(new CustomEvent('resolve'))
     }
-    const hasEventTarget = data.eventTarget !== undefined
     const fetch: UnsortableFetch = async function({ rowStart, rowEnd, columns, signal }: { rowStart: number, rowEnd: number, columns?: string[], signal?: AbortSignal }) {
       validateFetchParams({ rowStart, rowEnd, columns, data: { numRows, header } })
       checkSignal(signal)
 
-      data.eventTarget?.addEventListener('resolve', callback)
-
       try {
+        data.eventTarget?.addEventListener('resolve', callback)
         // The upstream rows are ordered, so we can fetch them by continuous ranges.
         const ranges = getContinuousRanges(upstreamRows.slice(rowStart, rowEnd))
         const promises = ranges.map((range) => upstreamFetch({ ...range, columns, signal }).then(() => {
           checkSignal(signal)
-
-          // Don't dispatch a 'resolve' event if the data frame already does it.
-          if (!hasEventTarget) {
-            eventTarget.dispatchEvent(new CustomEvent('resolve'))
-          }
+          eventTarget.dispatchEvent(new CustomEvent('resolve'))
         }))
         await Promise.all(promises)
       } finally {
