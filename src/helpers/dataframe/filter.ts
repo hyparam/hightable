@@ -4,7 +4,7 @@ import type { DataFrame, DataFrameEvents, Fetch } from './types.js'
 import { type OrderBy, validateOrderBy } from '../sort.js'
 
 // return an unsortable data frame: we can call sortableDataFrame on it later, so that we sort on a small subset of the data
-export function filterDataFrame({ data, filter }: {data: DataFrame, filter: ({ row }: { row: number }) => boolean}): DataFrame {
+export function filterDataFrame<M, C>({ data, filter }: {data: DataFrame<M, C>, filter: ({ row }: { row: number }) => boolean}): DataFrame<M, C> {
   const upstreamRows = Array.from({ length: data.numRows }, (_, upstreamRow) => upstreamRow).filter(upstreamRow => filter({ row: upstreamRow }))
   const numRows = upstreamRows.length
   const columnDescriptors = data.columnDescriptors.map((columnDescriptor) => ({ ...columnDescriptor, sortable: false }))
@@ -25,7 +25,7 @@ export function filterDataFrame({ data, filter }: {data: DataFrame, filter: ({ r
     return data.getRowNumber({ row: upstreamRow })
   }
   function getCell({ row, column, orderBy }: { row: number, column: string, orderBy?: OrderBy }) {
-    validateColumn({ column, data: { columnDescriptors } })
+    validateColumn<C>({ column, data: { columnDescriptors } })
     validateRow({ row, data: { numRows } })
     validateOrderBy({ orderBy })
     const upstreamRow = getUpstreamRow({ row })
@@ -33,7 +33,7 @@ export function filterDataFrame({ data, filter }: {data: DataFrame, filter: ({ r
   }
 
   const { fetch: upstreamFetch } = data
-  const df: DataFrame = {
+  const df: DataFrame<M, C> = {
     metadata,
     columnDescriptors,
     numRows,
@@ -44,7 +44,7 @@ export function filterDataFrame({ data, filter }: {data: DataFrame, filter: ({ r
   if (upstreamFetch !== undefined) {
     const eventTarget = createEventTarget<DataFrameEvents>()
     const fetch: Fetch = async function({ rowStart, rowEnd, columns, orderBy, signal }: { rowStart: number, rowEnd: number, columns?: string[], orderBy?: OrderBy, signal?: AbortSignal }) {
-      validateFetchParams({ rowStart, rowEnd, columns, orderBy, data: { numRows, columnDescriptors } })
+      validateFetchParams<C>({ rowStart, rowEnd, columns, orderBy, data: { numRows, columnDescriptors } })
       checkSignal(signal)
 
       function callback() {

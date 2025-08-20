@@ -17,8 +17,8 @@ function getDefaultDataContext(): DataContextType {
 
 export const DataContext = createContext<DataContextType>(getDefaultDataContext())
 
-interface DataProviderProps {
-  data: DataFrame,
+interface DataProviderProps<M, C> {
+  data: DataFrame<M, C>,
   children: ReactNode
 }
 
@@ -30,10 +30,10 @@ function getRandomKey(): string {
 //   return Number.isInteger(row) && row >= 0
 // }
 
-export function DataProvider({ children, data }: DataProviderProps) {
+export function DataProvider<M, C>({ children, data }: DataProviderProps<M, C>) {
   // We want a string key to identify the data.
   const [key, setKey] = useState<string>(getRandomKey())
-  const [previousData, setPreviousData] = useState<DataFrame>(data)
+  const [previousData, setPreviousData] = useState<DataFrame<M, C>>(data)
   const [version, setVersion] = useState(0)
 
   useEffect(() => {
