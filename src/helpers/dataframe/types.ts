@@ -11,49 +11,29 @@ export interface DataFrameEvents {
   'resolve': undefined;
 }
 
-/**
- * UnsortableDataFrame is an interface for a data structure that represents a table of unmutable data.
- *
- * The data can be fetched in chunks, and the table can subscribe to changes using the eventTarget.
- *
- * The data frame does not support sorting, and the `sortable` property is set to false.
- */
-export interface UnsortableDataFrame<M = Record<string, any>> {
-  numRows: number
-  header: string[]
-  metadata?: M
-  sortable?: false
-
-  getCell({ row, column }: {row: number, column: string}): ResolvedValue | undefined
-
-  getRowNumber({ row }: {
-    row: number, // row index in the dataframe
-  }): ResolvedValue<number> | undefined
-
-  fetch?: ({ rowStart, rowEnd, columns, signal }: { rowStart: number, rowEnd: number, columns?: string[], signal?: AbortSignal }) => Promise<void>
-
-  // emits events, defined in DataFrameEvents
-  //
-  // listen to an event:
-  // eventTarget.addEventListener('resolve', (event) => {
-  //   console.log('A new cell has resolved')
-  // })
-  //
-  // publish an event:
-  // eventTarget.dispatchEvent(new CustomEvent('resolve'))
-  eventTarget?: CustomEventTarget<DataFrameEvents>
+export interface ColumnDescriptor {
+  name: string;
+  sortable?: boolean;
 }
 
+export type Fetch = ({ rowStart, rowEnd, columns, orderBy, signal }: { rowStart: number, rowEnd: number, columns?: string[], orderBy?: OrderBy, signal?: AbortSignal }) => Promise<void>
+
 /**
- * SortableDataFrame is an interface for a data structure that represents a table of unmutable data.
+ * DataFrame is an interface for a data structure that represents a table of unmutable data.
  *
  * The data can be fetched in chunks, and the table can subscribe to changes using the eventTarget.
  *
- * It can be sorted.
+ * The methods getCell, getRowNumber, and fetch should respect the columns' `sortable` property:
+ * - sort along the sortable columns when `orderBy` is provided,
+ * - throw an error if a column within `orderBy` is not sortable.
  */
-export interface SortableDataFrame extends Omit<UnsortableDataFrame, 'sortable'> {
-  sortable: true
+export interface DataFrame<M = Record<string, any>> {
+  numRows: number
+  // TODO(SL): rename back to header? (`columns` might be confusing as it's a parameter of the fetch method)
+  columnDescriptors: readonly ColumnDescriptor[]
+  metadata?: M
 
+  // Returns the cell value.
   // undefined means pending, ResolvedValue is a boxed value type (so we can distinguish undefined from pending)
   // getCell does NOT initiate a fetch, it just returns resolved data
   getCell({ row, column, orderBy }: {row: number, column: string, orderBy?: OrderBy}): ResolvedValue | undefined
@@ -82,16 +62,21 @@ export interface SortableDataFrame extends Omit<UnsortableDataFrame, 'sortable'>
   //
   // Note that it does not return the data.
   //
-  // static data frames can return a Promise that resolves immediately.
   // rowEnd is exclusive
-  fetch?: ({ rowStart, rowEnd, columns, orderBy, signal }: { rowStart: number, rowEnd: number, columns?: string[], orderBy?: OrderBy, signal?: AbortSignal }) => Promise<void>
-}
+  //
+  // For static data frames, fetch can be undefined.
+  fetch?: Fetch
 
-/**
- * DataFrame is an interface for a data structure that represents a table of unmutable data.
- *
- * The data can be fetched in chunks, and the table can subscribe to changes using the eventTarget.
- *
- * It can be sorted if the `sortable` property is true.
- */
-export type DataFrame = SortableDataFrame | UnsortableDataFrame
+  // emits events, defined in DataFrameEvents
+  //
+  // listen to an event:
+  // eventTarget.addEventListener('resolve', (event) => {
+  //   console.log('A new cell has resolved')
+  // })
+  //
+  // publish an event:
+  // eventTarget.dispatchEvent(new CustomEvent('resolve'))
+  //
+  // For static data frames, eventTarget can be undefined.
+  eventTarget?: CustomEventTarget<DataFrameEvents>
+}

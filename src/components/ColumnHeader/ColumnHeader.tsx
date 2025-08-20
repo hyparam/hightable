@@ -1,6 +1,6 @@
 import { KeyboardEvent, ReactNode, useCallback, useEffect, useMemo, useRef } from 'react'
 import { flushSync } from 'react-dom'
-import { ColumnConfig } from '../../helpers/columnConfiguration.js'
+import type { ColumnParameters } from '../../hooks/useTableConfig.js'
 import { Direction } from '../../helpers/sort.js'
 import { getOffsetWidth } from '../../helpers/width.js'
 import { useCellNavigation } from '../../hooks/useCellsNavigation.js'
@@ -14,7 +14,7 @@ import ColumnResizer from '../ColumnResizer/ColumnResizer.js'
 interface Props {
   columnIndex: number // index of the column in the dataframe (0-based)
   columnName: string
-  columnConfig: ColumnConfig
+  columnConfig: Omit<ColumnParameters, 'name' | 'index'> // column configuration, excluding name and index
   children?: ReactNode
   canMeasureWidth?: boolean
   direction?: Direction

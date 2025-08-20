@@ -1,19 +1,24 @@
+import { OrderBy, validateOrderBy } from '../sort.js'
 import { DataFrame, ResolvedValue } from './types.js'
 
-export function createGetRowNumber({ numRows }: {numRows: number}) {
-  return ({ row }: { row: number }): ResolvedValue<number> => {
+export function createGetRowNumber({ numRows }: { numRows: number }) {
+  return ({ row, orderBy }: { row: number, orderBy?: OrderBy }): ResolvedValue<number> => {
     validateRow({ row, data: { numRows } })
+    validateOrderBy({ orderBy })
     return { value: row }
   }
 }
 
-export function validateFetchParams({ rowStart, rowEnd, columns, data: { numRows, header } }: {rowStart: number, rowEnd: number, columns?: string[], data: Pick<DataFrame, 'numRows' | 'header'>}): void {
-  if (rowStart < 0 || rowEnd > numRows || !Number.isInteger(rowStart) || !Number.isInteger(rowEnd) || rowStart > rowEnd) {
-    throw new Error(`Invalid row range: ${rowStart} - ${rowEnd}, numRows: ${numRows}`)
+export function validateFetchParams({ rowStart, rowEnd, columns, orderBy, data }: {rowStart: number, rowEnd: number, columns?: string[], orderBy?: OrderBy, data: Pick<DataFrame, 'numRows' | 'columnDescriptors'>}): void {
+  if (rowStart < 0 || rowEnd > data.numRows || !Number.isInteger(rowStart) || !Number.isInteger(rowEnd) || rowStart > rowEnd) {
+    throw new Error(`Invalid row range: ${rowStart} - ${rowEnd}, numRows: ${data.numRows}`)
   }
-  if (columns?.some(column => !header.includes(column))) {
-    throw new Error(`Invalid columns: ${columns.join(', ')}. Available columns: ${header.join(', ')}`)
+  const columnNames = data.columnDescriptors.map(c => c.name)
+  if (columns?.some(column => !columnNames.includes(column))) {
+    throw new Error(`Invalid columns: ${columns.join(', ')}. Available columns: ${columnNames.join(', ')}`)
   }
+  const sortableColumns = new Set(data.columnDescriptors.filter(c => c.sortable).map(c => c.name))
+  validateOrderBy({ orderBy, sortableColumns })
 }
 
 export function validateRow({ row, data: { numRows } }: {row: number, data: Pick<DataFrame, 'numRows'>}): void {
@@ -22,9 +27,10 @@ export function validateRow({ row, data: { numRows } }: {row: number, data: Pick
   }
 }
 
-export function validateColumn({ column, data: { header } }: {column: string, data: Pick<DataFrame, 'header'>}): void {
-  if (!header.includes(column)) {
-    throw new Error(`Invalid column: ${column}. Available columns: ${header.join(', ')}`)
+export function validateColumn({ column, data: { columnDescriptors } }: { column: string, data: Pick<DataFrame, 'columnDescriptors'> }): void {
+  const columnNames = columnDescriptors.map(c => c.name)
+  if (!columnNames.includes(column)) {
+    throw new Error(`Invalid column: ${column}. Available columns: ${columnNames.join(', ')}`)
   }
 }
 

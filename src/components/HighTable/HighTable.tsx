@@ -83,15 +83,15 @@ function HighTableData(props: PropsData) {
 
   return (
     /* Create a new set of widths if the data has changed, but keep it if only the number of rows changed */
-    <ColumnWidthsProvider key={cacheKey ?? key} localStorageKey={cacheKey ? `${cacheKey}${columnWidthsSuffix}` : undefined} numColumns={data.header.length} minWidth={minWidth}>
+    <ColumnWidthsProvider key={cacheKey ?? key} localStorageKey={cacheKey ? `${cacheKey}${columnWidthsSuffix}` : undefined} numColumns={data.columnDescriptors.length} minWidth={minWidth}>
       {/* Create a new set of hidden columns if the data has changed, but keep it if only the number of rows changed */}
-      <ColumnVisibilityStatesProvider key={cacheKey ?? key} localStorageKey={cacheKey ? `${cacheKey}${columnVisibilityStatesSuffix}` : undefined} numColumns={data.header.length} onColumnsVisibilityChange={onColumnsVisibilityChange}>
+      <ColumnVisibilityStatesProvider key={cacheKey ?? key} localStorageKey={cacheKey ? `${cacheKey}${columnVisibilityStatesSuffix}` : undefined} numColumns={data.columnDescriptors.length} onColumnsVisibilityChange={onColumnsVisibilityChange}>
         {/* Create a new context if the dataframe changes, to flush the cache (ranks and indexes) */}
-        <OrderByProvider key={key} orderBy={orderBy} onOrderByChange={onOrderByChange} disabled={!data.sortable}>
+        <OrderByProvider key={key} orderBy={orderBy} onOrderByChange={onOrderByChange}>
           {/* Create a new selection context if the dataframe has changed */}
           <SelectionProvider key={key} selection={selection} onSelectionChange={onSelectionChange} data={data} onError={onError}>
             {/* Create a new navigation context if the dataframe has changed, because the focused cell might not exist anymore */}
-            <CellsNavigationProvider key={key} colCount={data.header.length + 1} rowCount={numRows + 1} rowPadding={props.padding ?? defaultPadding}>
+            <CellsNavigationProvider key={key} colCount={data.columnDescriptors.length + 1} rowCount={numRows + 1} rowPadding={props.padding ?? defaultPadding}>
               <PortalContainerProvider>
                 <HighTableInner version={version} {...props} />
               </PortalContainerProvider>
@@ -144,16 +144,16 @@ export function HighTableInner({
   const { isHiddenColumn } = useColumnVisibilityStates()
   const { orderBy, onOrderByChange } = useOrderBy()
   const { selectable, toggleAllRows, pendingSelectionGesture, onTableKeyDown: onSelectionTableKeyDown, allRowsSelected, isRowSelected, toggleRowNumber, toggleRangeToRowNumber } = useSelection()
-  const allColumns = useTableConfig(data, columnConfiguration)
+  const allColumnsParameters = useTableConfig(data, columnConfiguration)
   // local state
   const [rowsRange, setRowsRange] = useState<RowsRange>({ start: 0, end: 0 })
   const [lastCellPosition, setLastCellPosition] = useState(cellPosition)
 
-  const columns = useMemo(() => {
-    return allColumns.filter((_, index) => {
+  const columnsParameters = useMemo(() => {
+    return allColumnsParameters.filter((_, index) => {
       return !isHiddenColumn?.(index)
     })
-  }, [allColumns, isHiddenColumn])
+  }, [allColumnsParameters, isHiddenColumn])
 
   const onTableKeyDown = useCallback((event: KeyboardEvent) => {
     onNavigationTableKeyDown?.(event)
@@ -241,7 +241,7 @@ export function HighTableInner({
         data.fetch({
           rowStart: start,
           rowEnd: end,
-          columns: columns.map((column) => column.key),
+          columns: columnsParameters.map(({ name }) => name),
           orderBy,
           signal: abortController.signal,
         }).catch((error: unknown) => {
@@ -282,7 +282,7 @@ export function HighTableInner({
       window.removeEventListener('resize', handleScroll)
       window.removeEventListener('resize', reportWidth)
     }
-  }, [numRows, overscan, padding, scrollHeight, setAvailableWidth, data, orderBy, onError, columns])
+  }, [numRows, overscan, padding, scrollHeight, setAvailableWidth, data, orderBy, onError, columnsParameters])
 
   // focus table on mount, or on later changes, so arrow keys work
   // Note that the dependency upon data and nowRows was removed, because focusFirstCell should depend on them
@@ -330,7 +330,7 @@ export function HighTableInner({
     let hasCompleteRow = false
     const rowContents = rows.map((row) => {
       const rowNumber = data.getRowNumber({ row, orderBy })?.value
-      const cells = columns.map(({ key: column }, columnIndex) => {
+      const cells = columnsParameters.map(({ name: column }, columnIndex) => {
         const cell = data.getCell({ row, column, orderBy })
         return { columnIndex, cell }
       })
@@ -348,12 +348,12 @@ export function HighTableInner({
       hasCompleteRow,
       version,
     }
-  }, [data, columns, rows, orderBy, version])
+  }, [data, columnsParameters, rows, orderBy, version])
 
   // don't render table if header is empty
-  if (!columns.length) return
+  if (!columnsParameters.length) return
 
-  const ariaColCount = columns.length + 1 // don't forget the selection column
+  const ariaColCount = columnsParameters.length + 1 // don't forget the selection column
   const ariaRowCount = numRows + 1 // don't forget the header row
   return (
     <div ref={containerRef} className={`${styles.hightable} ${styled ? styles.styled : ''} ${className}`}>
@@ -384,7 +384,7 @@ export function HighTableInner({
                 />
                 <TableHeader
                   canMeasureWidth={slice.hasCompleteRow}
-                  columnDescriptors={columns}
+                  columnsParameters={columnsParameters}
                   orderBy={orderBy}
                   onOrderByChange={onOrderByChange}
                   columnClassNames={columnClassNames}

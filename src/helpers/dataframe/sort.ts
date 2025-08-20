@@ -1,18 +1,29 @@
 import { OrderBy, computeRanks, serializeOrderBy, validateOrderBy } from '../sort.js'
 import { createEventTarget } from '../typedEventTarget.js'
 import { checkSignal, validateColumn, validateFetchParams, validateRow } from './helpers.js'
-import { DataFrame, DataFrameEvents, ResolvedValue, SortableDataFrame } from './types.js'
+import { DataFrame, DataFrameEvents, ResolvedValue } from './types.js'
 
-export function sortableDataFrame(data: DataFrame): SortableDataFrame {
-  if (data.sortable) {
-    // If the data frame is already sortable, we can return it as is.
+export function sortableDataFrame(data: DataFrame, options?: {sortableColumns?: Set<string>}): DataFrame {
+  // If sortableColumns is not provided, make all columns sortable.
+  const sortableColumns = options?.sortableColumns ?? new Set(data.columnDescriptors.map(c => c.name))
+  // Validate that all sortable columns are present in the header.
+  for (const column of sortableColumns) {
+    validateColumn({ column, data: { columnDescriptors: data.columnDescriptors } })
+  }
+  // If the dataframe already respects the sortableColumns, we can return it as is.
+  if (data.columnDescriptors.every(({ name, sortable }) => {
+    if (sortableColumns.has(name)) {
+      return sortable === true // If the column is in sortableColumns, it should be sortable
+    }
+    return sortable === false || sortable === undefined // If the column is not in sortableColumns, it should not be sortable
+  })) {
+    // TODO(SL): we should return a clone of the data frame (and we should provide a helper function to clone a dataframe).
     return data
   }
 
-  const { header, numRows, getCell, getRowNumber, metadata } = data
-
-  const wrappedHeader = header.slice() // Create a copy of the header to avoid mutating the original
-  const wrappedMetadata = structuredClone(metadata) // Create a deep copy of the metadata to avoid mutating the original
+  const { numRows } = data
+  const columnDescriptors = data.columnDescriptors.map(({ name }) => ({ name, sortable: sortableColumns.has(name) }))
+  const metadata = structuredClone(data.metadata) // Create a deep copy of the metadata to avoid mutating the original
 
   // The cache cannot be erased. Create a new data frame if needed.
   const ranksByColumn = new Map<string, number[]>()
@@ -20,13 +31,13 @@ export function sortableDataFrame(data: DataFrame): SortableDataFrame {
 
   const eventTarget = createEventTarget<DataFrameEvents>()
 
-  function getUpstreamRow({ row, orderBy }: { row: number, orderBy?: OrderBy }): ResolvedValue<number> | undefined {
+  const getUpstreamRow: ({ row, orderBy }: { row: number, orderBy?: OrderBy }) => ResolvedValue<number> | undefined = function({ row, orderBy }) {
     validateRow({ row, data: { numRows } })
+    validateOrderBy({ sortableColumns, orderBy })
     if (!orderBy || orderBy.length === 0) {
       // If no orderBy is provided, we can return the upstream row number.
       return { value: row }
     }
-    validateOrderBy({ header, orderBy })
     const serializedOrderBy = serializeOrderBy(orderBy)
     const indexes = indexesByOrderBy.get(serializedOrderBy)
     const rowNumber = indexes?.[row]
@@ -36,29 +47,29 @@ export function sortableDataFrame(data: DataFrame): SortableDataFrame {
     return { value: rowNumber }
   }
 
-  function wrappedGetRowNumber({ row, orderBy }: { row: number, orderBy?: OrderBy }): ResolvedValue<number> | undefined {
+  const getRowNumber: ({ row, orderBy }: { row: number, orderBy?: OrderBy }) => ResolvedValue<number> | undefined = function({ row, orderBy }) {
     validateRow({ row, data: { numRows } })
     const upstreamRow = getUpstreamRow({ row, orderBy })
     if (!upstreamRow) {
       // If we can't resolve the unsorted row, we return undefined.
       return undefined
     }
-    return getRowNumber({ row: upstreamRow.value })
+    return data.getRowNumber({ row: upstreamRow.value })
   }
 
-  function wrappedGetCell({ row, column, orderBy }: { row: number, column: string, orderBy?: OrderBy }): ResolvedValue | undefined {
-    validateColumn({ column, data: { header } })
+  const getCell: ({ row, column, orderBy }: { row: number, column: string, orderBy?: OrderBy }) => ResolvedValue | undefined = function({ row, column, orderBy }){
+    validateColumn({ column, data: { columnDescriptors } })
     validateRow({ row, data: { numRows } })
     const upstreamRow = getUpstreamRow({ row, orderBy })
     if (!upstreamRow) {
       // If we can't resolve the unsorted row, we return undefined.
       return undefined
     }
-    return getCell({ row: upstreamRow.value, column })
+    return data.getCell({ row: upstreamRow.value, column })
   }
 
-  async function wrappedFetch({ rowStart, rowEnd, columns, orderBy, signal }: { rowStart: number, rowEnd: number, columns?: string[], orderBy?: OrderBy, signal?: AbortSignal }): Promise<void> {
-    validateFetchParams({ rowStart, rowEnd, columns, data: { numRows, header } })
+  const fetch: ({ rowStart, rowEnd, columns, orderBy, signal }: { rowStart: number, rowEnd: number, columns?: string[], orderBy?: OrderBy, signal?: AbortSignal }) => Promise<void> = async function ({ rowStart, rowEnd, columns, orderBy, signal }){
+    validateFetchParams({ rowStart, rowEnd, columns, orderBy, data: { numRows, columnDescriptors } })
     function callback() {
       eventTarget.dispatchEvent(new CustomEvent('resolve'))
     }
@@ -70,7 +81,6 @@ export function sortableDataFrame(data: DataFrame): SortableDataFrame {
         await data.fetch?.({ rowStart, rowEnd, columns, signal })
         return
       }
-      validateOrderBy({ header, orderBy })
       if (rowStart === rowEnd) {
         // If the range is empty, we can return.
         return
@@ -100,16 +110,7 @@ export function sortableDataFrame(data: DataFrame): SortableDataFrame {
     }
   }
 
-  return {
-    sortable: true,
-    metadata: wrappedMetadata,
-    numRows,
-    header: wrappedHeader,
-    getRowNumber: wrappedGetRowNumber,
-    getCell: wrappedGetCell,
-    fetch: wrappedFetch,
-    eventTarget,
-  }
+  return { metadata, numRows, columnDescriptors, getRowNumber, getCell, fetch, eventTarget }
 }
 
 async function fetchFromIndexes({ columns, indexes, signal, fetch }: { columns?: string[], indexes: number[], signal?: AbortSignal, fetch: Exclude<DataFrame['fetch'], undefined> }): Promise<void> {
@@ -172,9 +173,7 @@ async function fetchOrderByWithRanks({ orderBy, signal, ranksByColumn, setRanks,
   const promises: Promise<any>[] = []
 
   for (const [i, { column, direction }] of orderBy.entries()) {
-    if (!data.header.includes(column)) {
-      throw new Error(`Invalid column: ${column}`)
-    }
+    validateColumn({ column, data: { columnDescriptors: data.columnDescriptors } })
     const columnRanks = ranksByColumn?.get(column)
     if (columnRanks) {
       orderByWithRanks[i] = { direction, ranks: columnRanks }

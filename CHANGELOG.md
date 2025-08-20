@@ -4,7 +4,12 @@
 
 ### Changed
 
+- **Breaking** the `header` field is replaced with `columns` in `DataFrame`. It is an array of objects with the following properties:
+  - `name`: the column name
+  - `sortable`: whether the column is sortable (default: `false`)
+- **Breaking** the `getCell`, `getRowNumber` and `fetch` methods must handle and validate (using `validateOrderBy` for example) the optional `orderBy` parameter.
 - **Breaking** make `eventTarget` and `fetch` fields optional in `DataFrame`
+- **Breaking** remove the intermediary `UnsortableDataFrame` and `SortableDataFrame` types.
 - **Breaking** remove the `createStaticFetch` helper function, which is not needed anymore now that `fetch` is optional.
 - make `DataFrame` generic to pass the metadata type
 

@@ -2,8 +2,9 @@ import { act, fireEvent, waitFor, within } from '@testing-library/react'
 import { UserEvent } from '@testing-library/user-event'
 import { Mock, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createGetRowNumber, validateColumn, validateFetchParams, validateRow } from '../../helpers/dataframe/helpers.js'
-import { DataFrame, DataFrameEvents, UnsortableDataFrame, filterDataFrame } from '../../helpers/dataframe/index.js'
+import { DataFrame, DataFrameEvents, Fetch, filterDataFrame } from '../../helpers/dataframe/index.js'
 import { sortableDataFrame } from '../../helpers/dataframe/sort.js'
+import { OrderBy, validateOrderBy } from '../../helpers/sort.js'
 import { createEventTarget } from '../../helpers/typedEventTarget.js'
 import { MaybeColumnWidth } from '../../helpers/width.js'
 import { render } from '../../utils/userEvent.js'
@@ -11,14 +12,15 @@ import HighTable, { columnWidthsSuffix, defaultOverscan } from './HighTable.js'
 
 Element.prototype.scrollIntoView = vi.fn()
 
-const dataHeader = ['ID', 'Count', 'Double', 'Triple']
-function createData(): UnsortableDataFrame {
-  const header = dataHeader
+const dataColumnDescriptors = ['ID', 'Count', 'Double', 'Triple'].map(name => ({ name }))
+function createData(): DataFrame {
+  const columnDescriptors = dataColumnDescriptors
   const numRows = 1000
   const getRowNumber = createGetRowNumber({ numRows })
-  function getCell({ row, column }: { row: number, column: string }) {
-    validateColumn({ column, data: { header } })
+  function getCell({ row, column, orderBy }: { row: number, column: string, orderBy?: OrderBy }) {
+    validateColumn({ column, data: { columnDescriptors } })
     validateRow({ row, data: { numRows } })
+    validateOrderBy({ orderBy })
     const count = numRows - row
     if (column === 'ID') {
       return { value: `row ${row}` }
@@ -30,33 +32,37 @@ function createData(): UnsortableDataFrame {
       return { value: count * 3 }
     }
   }
-  return { header, numRows, getCell, getRowNumber }
+  return { columnDescriptors, numRows, getCell, getRowNumber }
 }
 
-function createOtherData(): UnsortableDataFrame {
-  const header = ['ID', 'Count']
+function createOtherData(): DataFrame {
+  const columnDescriptors = ['ID', 'Count'].map(name => ({ name }))
   const numRows = 1000
   const getRowNumber = createGetRowNumber({ numRows: 1000 })
-  function getCell({ row, column }: { row: number, column: string }) {
-    validateColumn({ column, data: { header } })
+  function getCell({ row, column, orderBy }: { row: number, column: string, orderBy?: OrderBy }) {
+    validateColumn({ column, data: { columnDescriptors } })
     validateRow({ row, data: { numRows } })
+    validateOrderBy({ orderBy })
     if (column === 'ID') {
       return { value: `other ${row}` }
     } else if (column === 'Count') {
       return { value: 1000 - row }
     }
   }
-  return { header, numRows, getCell, getRowNumber }
+  return { columnDescriptors, numRows, getCell, getRowNumber }
 }
 
-interface MockedUnsortableDataFrame extends UnsortableDataFrame {
-  fetch: Mock<Exclude<UnsortableDataFrame['fetch'], undefined>>
-  getCell: Mock<UnsortableDataFrame['getCell']>
+interface MockedUnsortableDataFrame extends DataFrame {
+  fetch: Mock<Fetch>
+  getCell: Mock<DataFrame['getCell']>
 }
 function createMockData(): MockedUnsortableDataFrame {
   const numRows = 100
-  const header = ['ID', 'Name', 'Age']
-  const getCell = vi.fn(({ row, column }: { row: number, column: string }) => {
+  const columnDescriptors = ['ID', 'Name', 'Age'].map(name => ({ name }))
+  const getCell = vi.fn(({ row, column, orderBy }: { row: number, column: string, orderBy?: OrderBy }) => {
+    validateColumn({ column, data: { columnDescriptors } })
+    validateRow({ row, data: { numRows } })
+    validateOrderBy({ orderBy })
     if (row < 0 || row >= 1000) {
       throw new Error(`Invalid row index: ${row}`)
     }
@@ -70,9 +76,11 @@ function createMockData(): MockedUnsortableDataFrame {
     throw new Error(`Unknown column: ${column}`)
   })
   const getRowNumber = createGetRowNumber({ numRows })
-  const props = { header, numRows, getCell, getRowNumber }
   return {
-    ...props,
+    columnDescriptors,
+    numRows,
+    getCell,
+    getRowNumber,
     fetch: vi.fn(() => Promise.resolve()),
   }
 }
@@ -95,9 +103,9 @@ describe('HighTable', () => {
     const { getByText } = render(<HighTable data={mockData} />)
     await waitFor(() => {
       expect(getByText('ID')).toBeDefined()
-      expect(mockData.getCell).toHaveBeenCalledWith({ row: 0, column: 'ID' })
-      expect(mockData.getCell).toHaveBeenCalledWith({ row: 23, column: 'Age' })
-      expect(mockData.getCell).not.toHaveBeenCalledWith({ row: 24, column: 'Age' })
+      expect(mockData.getCell).toHaveBeenCalledWith({ row: 0, column: 'ID', orderBy: [] })
+      expect(mockData.getCell).toHaveBeenCalledWith({ row: 23, column: 'Age', orderBy: [] })
+      expect(mockData.getCell).not.toHaveBeenCalledWith({ row: 24, column: 'Age', orderBy: [] })
     })
   })
 
@@ -105,8 +113,8 @@ describe('HighTable', () => {
     const { getByText } = render(<HighTable data={mockData} overscan={10} />)
     await waitFor(() => {
       expect(getByText('ID')).toBeDefined()
-      expect(mockData.getCell).toHaveBeenCalledWith({ row: 13, column: 'Age' })
-      expect(mockData.getCell).not.toHaveBeenCalledWith({ row: 14, column: 'Age' })
+      expect(mockData.getCell).toHaveBeenCalledWith({ row: 13, column: 'Age', orderBy: [] })
+      expect(mockData.getCell).not.toHaveBeenCalledWith({ row: 14, column: 'Age', orderBy: [] })
     })
   })
 
@@ -119,8 +127,8 @@ describe('HighTable', () => {
     const { getByLabelText } = render(<HighTable className="myclass" data={mockData} />)
     const scrollDiv = getByLabelText('Virtual-scroll table')
     await waitFor(() => {
-      expect(mockData.getCell).toHaveBeenCalledWith({ row: 23, column: 'Age' })
-      expect(mockData.getCell).not.toHaveBeenCalledWith({ row: 24, column: 'Age' })
+      expect(mockData.getCell).toHaveBeenCalledWith({ row: 23, column: 'Age', orderBy: [] })
+      expect(mockData.getCell).not.toHaveBeenCalledWith({ row: 24, column: 'Age', orderBy: [] })
     })
 
     act(() => {
@@ -130,7 +138,7 @@ describe('HighTable', () => {
     })
 
     await waitFor(() => {
-      expect(mockData.getCell).toHaveBeenCalledWith({ row: 24, column: 'Age' })
+      expect(mockData.getCell).toHaveBeenCalledWith({ row: 24, column: 'Age', orderBy: [] })
     })
   })
 
@@ -185,10 +193,11 @@ describe('with async data, HighTable', () => {
     const signalAborted: boolean[] = []
     const eventTarget = createEventTarget<DataFrameEvents>()
     const numRows = 1000
-    const header = ['ID', 'Name', 'Age']
-    function getCell({ row, column }: { row: number, column: string }) {
+    const columnDescriptors = ['ID', 'Name', 'Age'].map(name => ({ name }))
+    function getCell({ row, column, orderBy }: { row: number, column: string, orderBy?: OrderBy }) {
       validateRow({ row, data: { numRows } })
-      validateColumn({ column, data: { header } })
+      validateColumn({ column, data: { columnDescriptors } })
+      validateOrderBy({ orderBy })
       if (!asyncDataFetched[row]) {
         return undefined
       }
@@ -200,8 +209,9 @@ describe('with async data, HighTable', () => {
         return { value: 20 + row % 50 }
       }
     }
-    function getRowNumber({ row }: { row: number }) {
+    function getRowNumber({ row, orderBy }: { row: number, orderBy?: OrderBy }) {
       validateRow({ row, data: { numRows } })
+      validateOrderBy({ orderBy })
       if (!asyncDataFetched[row]) {
         return undefined
       }
@@ -209,13 +219,13 @@ describe('with async data, HighTable', () => {
     }
 
     return {
-      header,
+      columnDescriptors,
       numRows,
       getRowNumber,
       getCell: vi.fn(getCell),
-      fetch: vi.fn(async ({ rowStart, rowEnd, columns, signal }: { rowStart: number, rowEnd: number, columns?: string[], signal?: AbortSignal }) => {
+      fetch: vi.fn(async ({ rowStart, rowEnd, columns, orderBy, signal }: { rowStart: number, rowEnd: number, columns?: string[], orderBy?: OrderBy, signal?: AbortSignal }) => {
         // Validation
-        validateFetchParams({ rowStart, rowEnd, columns, data: { numRows, header } })
+        validateFetchParams({ rowStart, rowEnd, columns, orderBy, data: { numRows, columnDescriptors } })
         await new Promise(resolve => setTimeout(resolve, ms))
         if (signal?.aborted) {
           signalAborted.push(true)
@@ -256,10 +266,10 @@ describe('with async data, HighTable', () => {
     const { getByText } = render(<HighTable data={asyncData} />)
     await waitFor(() => {
       expect(getByText('ID')).toBeDefined()
-      expect(asyncData.fetch).toHaveBeenCalledExactlyOnceWith({ rowStart: 0, rowEnd, columns: ['ID', 'Name', 'Age'], orderBy: undefined, signal: expect.any(AbortSignal) })
-      expect(asyncData.getCell).toHaveBeenCalledWith({ row: 0, column: 'ID' })
-      expect(asyncData.getCell).toHaveBeenCalledWith({ row: rowEnd - 1, column: 'Age' })
-      expect(asyncData.getCell).not.toHaveBeenCalledWith({ row: rowEnd, column: 'Age' })
+      expect(asyncData.fetch).toHaveBeenCalledExactlyOnceWith({ rowStart: 0, rowEnd, columns: ['ID', 'Name', 'Age'], orderBy: [], signal: expect.any(AbortSignal) })
+      expect(asyncData.getCell).toHaveBeenCalledWith({ row: 0, column: 'ID', orderBy: [] })
+      expect(asyncData.getCell).toHaveBeenCalledWith({ row: rowEnd - 1, column: 'Age', orderBy: [] })
+      expect(asyncData.getCell).not.toHaveBeenCalledWith({ row: rowEnd, column: 'Age', orderBy: [] })
     })
   })
 
@@ -270,9 +280,9 @@ describe('with async data, HighTable', () => {
     const { getByText } = render(<HighTable data={asyncData} overscan={overscan} />)
     await waitFor(() => {
       expect(getByText('ID')).toBeDefined()
-      expect(asyncData.fetch).toHaveBeenCalledExactlyOnceWith({ rowStart: 0, rowEnd, columns: ['ID', 'Name', 'Age'], orderBy: undefined, signal: expect.any(AbortSignal) })
-      expect(asyncData.getCell).toHaveBeenCalledWith({ row: rowEnd - 1, column: 'Age' })
-      expect(asyncData.getCell).not.toHaveBeenCalledWith({ row: rowEnd, column: 'Age' })
+      expect(asyncData.fetch).toHaveBeenCalledExactlyOnceWith({ rowStart: 0, rowEnd, columns: ['ID', 'Name', 'Age'], orderBy: [], signal: expect.any(AbortSignal) })
+      expect(asyncData.getCell).toHaveBeenCalledWith({ row: rowEnd - 1, column: 'Age', orderBy: [] })
+      expect(asyncData.getCell).not.toHaveBeenCalledWith({ row: rowEnd, column: 'Age', orderBy: [] })
     })
   })
 
@@ -290,8 +300,8 @@ describe('with async data, HighTable', () => {
     const { getByLabelText, findByRole, queryByRole } = render(<HighTable className="myclass" data={asyncData} />)
     const scrollDiv = getByLabelText('Virtual-scroll table')
     await waitFor(() => {
-      expect(asyncData.getCell).toHaveBeenCalledWith({ row: 23, column: 'Age' })
-      expect(asyncData.getCell).not.toHaveBeenCalledWith({ row: 24, column: 'Age' })
+      expect(asyncData.getCell).toHaveBeenCalledWith({ row: 23, column: 'Age', orderBy: [] })
+      expect(asyncData.getCell).not.toHaveBeenCalledWith({ row: 24, column: 'Age', orderBy: [] })
     })
     await expect(findByRole('cell', { name: 'async 0' })).resolves.toBeDefined()
     expect(queryByRole('cell', { name: 'async 24' })).toBeNull()
@@ -303,7 +313,7 @@ describe('with async data, HighTable', () => {
     })
 
     await waitFor(() => {
-      expect(asyncData.getCell).toHaveBeenCalledWith({ row: 24, column: 'Age' })
+      expect(asyncData.getCell).toHaveBeenCalledWith({ row: 24, column: 'Age', orderBy: [] })
     })
     await expect(findByRole('cell', { name: 'async 24' })).resolves.toBeDefined()
     expect(queryByRole('cell', { name: 'async 50' })).toBeNull()
@@ -314,7 +324,7 @@ describe('with async data, HighTable', () => {
       fireEvent.scroll(scrollDiv, { target: { scrollTop: 1500 } })
     })
     await waitFor(() => {
-      expect(asyncData.getCell).toHaveBeenCalledWith({ row: 50, column: 'Age' })
+      expect(asyncData.getCell).toHaveBeenCalledWith({ row: 50, column: 'Age', orderBy: [] })
     })
     await expect(findByRole('cell', { name: 'async 50' })).resolves.toBeDefined()
 
@@ -344,7 +354,7 @@ describe('with async data, HighTable', () => {
       fireEvent.scroll(scrollDiv, { target: { scrollTop: 1500 } })
     })
     await waitFor(() => {
-      expect(asyncData.getCell).toHaveBeenCalledWith({ row: 50, column: 'Age' })
+      expect(asyncData.getCell).toHaveBeenCalledWith({ row: 50, column: 'Age', orderBy: [] })
     })
     await expect(findByRole('cell', { name: 'async 50' })).resolves.toBeDefined()
 
@@ -354,7 +364,7 @@ describe('with async data, HighTable', () => {
 })
 
 describe('When sorted, HighTable', () => {
-  let data: UnsortableDataFrame
+  let data: DataFrame
   beforeEach(() => {
     vi.clearAllMocks()
     data = createData()
@@ -454,8 +464,8 @@ describe('When sorted, HighTable', () => {
 })
 
 describe('in controlled selection state (selection and onSelection props), ', () => {
-  let data: UnsortableDataFrame
-  let otherData: UnsortableDataFrame
+  let data: DataFrame
+  let otherData: DataFrame
   beforeEach(() => {
     vi.clearAllMocks()
     data = createData()
@@ -649,8 +659,8 @@ describe('in controlled selection state (selection and onSelection props), ', ()
 })
 
 describe('in controlled selection state, read-only (selection prop), ', () => {
-  let data: UnsortableDataFrame
-  let otherData: UnsortableDataFrame
+  let data: DataFrame
+  let otherData: DataFrame
   beforeEach(() => {
     vi.clearAllMocks()
     data = createData()
@@ -750,8 +760,8 @@ describe('in controlled selection state, read-only (selection prop), ', () => {
 })
 
 describe('in uncontrolled selection state (onSelection prop), ', () => {
-  let data: UnsortableDataFrame
-  let otherData: UnsortableDataFrame
+  let data: DataFrame
+  let otherData: DataFrame
   beforeEach(() => {
     vi.clearAllMocks()
     data = createData()
@@ -954,7 +964,7 @@ describe('in uncontrolled selection state (onSelection prop), ', () => {
 })
 
 describe('in disabled selection state (neither selection nor onSelection props), ', () => {
-  let data: UnsortableDataFrame
+  let data: DataFrame
   beforeEach(() => {
     vi.clearAllMocks()
     data = createData()
@@ -1007,8 +1017,8 @@ vi.mock(import('../../helpers/width.js'), async (importOriginal ) => {
     getClientWidth: () => getClientWidth(),
   }})
 describe('HighTable localstorage', () => {
-  let data: UnsortableDataFrame
-  let otherData: UnsortableDataFrame
+  let data: DataFrame
+  let otherData: DataFrame
   beforeEach(() => {
     vi.clearAllMocks()
     data = createData()
@@ -1091,7 +1101,7 @@ describe('HighTable localstorage', () => {
 })
 
 describe('Navigating Hightable with the keyboard', () => {
-  let data: UnsortableDataFrame
+  let data: DataFrame
   beforeEach(() => {
     vi.clearAllMocks()
     data = createData()
@@ -1169,7 +1179,7 @@ describe('Navigating Hightable with the keyboard', () => {
   const firstRow = 1
   // const lastRow = data.numRows + 1 // see comments below
   const firstCol = 1
-  const lastCol = dataHeader.length + 1
+  const lastCol = dataColumnDescriptors.length + 1
   describe('When the cell (4,3) is focused', () => {
     it.each([
       ['{ArrowRight}', rowIndex, colIndex + 1],
@@ -1339,7 +1349,7 @@ describe('Navigating Hightable with the keyboard', () => {
 })
 
 describe('When the table scroller is focused', () => {
-  let data: UnsortableDataFrame
+  let data: DataFrame
   beforeEach(() => {
     vi.clearAllMocks()
     data = createData()

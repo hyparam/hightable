@@ -140,7 +140,7 @@ export function sortableDataFrame(data: DataFrameV1): DataFrameV1 {
     rows({ start, end, orderBy }): AsyncRow[] {
       if (orderBy && orderBy.length > 0) {
         if (orderBy.some(({ column }) => !data.header.includes(column)) ){
-          throw new Error(`Invalid orderBy field: ${orderBy.map(({ column }) => column).join(', ')}`)
+          throw new Error(`Unsortable columns in orderBy field: ${orderBy.map(({ column }) => column).join(', ')}`)
         }
         // TODO(SL): only fetch ranks if needed?
         // To get a consistent order in case of ties, we append a fake column orderby, to sort by the ascending indexes of the rows in the last case

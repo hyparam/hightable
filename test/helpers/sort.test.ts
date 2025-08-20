@@ -56,13 +56,14 @@ describe('toggleColumn', () => {
 })
 
 describe('validateOrderBy', () => {
+  const sortableColumns = new Set(['name', 'age'])
   it('should not throw if the orderBy is valid', () => {
-    expect(() => { validateOrderBy({ header: ['name', 'age'], orderBy: [nameAsc, ageAsc] }) }).not.toThrow()
-    expect(() => { validateOrderBy({ header: ['name', 'age'], orderBy: [nameDesc, ageAsc] }) }).not.toThrow()
+    expect(() => { validateOrderBy({ sortableColumns, orderBy: [nameAsc, ageAsc] }) }).not.toThrow()
+    expect(() => { validateOrderBy({ sortableColumns, orderBy: [nameDesc, ageAsc] }) }).not.toThrow()
   })
   it('should throw if the orderBy contains an invalid column', () => {
-    expect(() => { validateOrderBy({ header: ['name', 'age'], orderBy: [idAsc] }) }).toThrow('Invalid orderBy field: id')
-    expect(() => { validateOrderBy({ header: ['age'], orderBy: [nameAsc, idAsc] }) }).toThrow('Invalid orderBy field: name, id')
+    expect(() => { validateOrderBy({ sortableColumns, orderBy: [idAsc] }) }).toThrow('Unsortable columns in orderBy field: id')
+    expect(() => { validateOrderBy({ sortableColumns: new Set(['age']), orderBy: [nameAsc, idAsc] }) }).toThrow('Unsortable columns in orderBy field: name, id')
   })
 })
 
