@@ -11,6 +11,7 @@
 - **Breaking** make `eventTarget` and `fetch` fields optional in `DataFrame`
 - **Breaking** remove the intermediary `UnsortableDataFrame` and `SortableDataFrame` types.
 - **Breaking** remove the `createStaticFetch` helper function, which is not needed anymore now that `fetch` is optional.
+- **Breaking** remove the `sortable` field in `columnConfiguration` prop.
 - make `DataFrame` generic to pass the metadata type
 
 ### Refactored
