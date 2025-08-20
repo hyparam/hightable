@@ -43,9 +43,9 @@ describe('arrayDataFrame', () => {
     }).toThrow('Invalid row index: 0')
   })
 
-  it('provides fetch', () => {
+  it('does not provides fetch', () => {
     const df = arrayDataFrame([])
-    expect(df.fetch).toBeDefined()
+    expect(df.fetch).toBeUndefined()
   })
 
   it('does not provide an event target', () => {
@@ -92,7 +92,7 @@ describe('sortableDataFrame', () => {
   it('should return data sorted by column "age" in ascending order', async () => {
     const df = sortableDataFrame(data)
     const orderBy = [{ column: 'age', direction: 'ascending' as const }]
-    await df.fetch({ orderBy, rowStart: 0, rowEnd: 4, columns: ['name'] })
+    await df.fetch?.({ orderBy, rowStart: 0, rowEnd: 4, columns: ['name'] })
     expect(df.getCell({ row: 0, column: 'name', orderBy })?.value).toBe('Bob')
     expect(df.getCell({ row: 1, column: 'name', orderBy })?.value).toBe('Dani')
     expect(df.getCell({ row: 2, column: 'name', orderBy })?.value).toBe('Charlie')
@@ -102,7 +102,7 @@ describe('sortableDataFrame', () => {
   it('should return data sorted by column "age" in descending order, using the data index in case of ties', async () => {
     const df = sortableDataFrame(data)
     const orderBy = [{ column: 'age', direction: 'descending' as const }]
-    await df.fetch({ orderBy, rowStart: 0, rowEnd: 4, columns: ['name'] })
+    await df.fetch?.({ orderBy, rowStart: 0, rowEnd: 4, columns: ['name'] })
     expect(df.getCell({ row: 0, column: 'name', orderBy })?.value).toBe('Alice')
     expect(df.getCell({ row: 1, column: 'name', orderBy })?.value).toBe('Charlie')
     expect(df.getCell({ row: 2, column: 'name', orderBy })?.value).toBe('Bob')
@@ -112,7 +112,7 @@ describe('sortableDataFrame', () => {
   it('should return data sorted by columns "age" in ascending order and "name" in descending order', async () => {
     const df = sortableDataFrame(data)
     const orderBy = [{ column: 'age', direction: 'ascending' as const }, { column: 'name', direction: 'descending' as const }]
-    await df.fetch({ orderBy, rowStart: 0, rowEnd: 4, columns: ['name'] })
+    await df.fetch?.({ orderBy, rowStart: 0, rowEnd: 4, columns: ['name'] })
     expect(df.getCell({ row: 0, column: 'name', orderBy })?.value).toBe('Dani')
     expect(df.getCell({ row: 1, column: 'name', orderBy })?.value).toBe('Bob')
     expect(df.getCell({ row: 2, column: 'name', orderBy })?.value).toBe('Charlie')
@@ -122,7 +122,7 @@ describe('sortableDataFrame', () => {
   it('should throw for invalid orderBy field', async () => {
     const df = sortableDataFrame(data)
     const orderBy = [{ column: 'invalid', direction: 'ascending' as const }]
-    await expect(df.fetch({ orderBy, rowStart: 0, rowEnd: 4, columns: ['name'] })).rejects.toThrow('Invalid orderBy field: invalid')
+    await expect(df.fetch?.({ orderBy, rowStart: 0, rowEnd: 4, columns: ['name'] })).rejects.toThrow('Invalid orderBy field: invalid')
   })
 })
 
@@ -155,7 +155,7 @@ describe('filtered data', () => {
   it('should return ordered data when sorted', async () => {
     const df = createSampledDataFrame()
     const orderBy = [{ column: 'name', direction: 'descending' as const }]
-    await df.fetch({ orderBy, rowStart: 0, rowEnd: 2, columns: ['name'] })
+    await df.fetch?.({ orderBy, rowStart: 0, rowEnd: 2, columns: ['name'] })
     expect(df.getCell({ row: 0, column: 'name', orderBy })?.value).toBe('Dani')
     expect(df.getCell({ row: 1, column: 'name', orderBy })?.value).toBe('Alice')
   })

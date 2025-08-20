@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useState } from 'react'
-import { checkSignal, createGetRowNumber, createStaticFetch, validateColumn, validateFetchParams, validateRow } from '../../helpers/dataframe/helpers.js'
+import { checkSignal, createGetRowNumber, validateColumn, validateFetchParams, validateRow } from '../../helpers/dataframe/helpers.js'
 import { DataFrameEvents, UnsortableDataFrame, arrayDataFrame } from '../../helpers/dataframe/index.js'
 import { DataFrameV1, convertV1ToDataFrame } from '../../helpers/dataframe/legacy/index.js'
 import { wrapPromise, wrapResolved } from '../../helpers/dataframe/legacy/promise.js'
@@ -36,11 +36,7 @@ function createData(): UnsortableDataFrame {
     }
   }
   const getRowNumber = createGetRowNumber({ numRows })
-  const dataProps = { header, numRows, getCell, getRowNumber }
-  return {
-    ...dataProps,
-    fetch: createStaticFetch(dataProps),
-  }
+  return { header, numRows, getCell, getRowNumber }
 }
 
 function delay<T>(value: T, ms: number): Promise<T> {
@@ -143,11 +139,7 @@ function createEmptyData(): UnsortableDataFrame {
     validateRow({ row, data: { numRows } })
     return undefined
   }
-  const props = { header, numRows, getRowNumber, getCell }
-  return {
-    ...props,
-    fetch: createStaticFetch(props),
-  }
+  return { header, numRows, getRowNumber, getCell }
 }
 
 function createLegacyData(): DataFrameV1 {

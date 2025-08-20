@@ -1,6 +1,6 @@
 export { arrayDataFrame } from './array.js'
 export { filterDataFrame } from './filter.js'
-export { checkSignal, createGetRowNumber, createStaticFetch, validateColumn, validateFetchParams, validateRow } from './helpers.js'
+export { checkSignal, createGetRowNumber, validateColumn, validateFetchParams, validateRow } from './helpers.js'
 export { convertV1ToDataFrame } from './legacy/convert.js'
 export { fetchIndexes, sortableDataFrame } from './sort.js'
 export type { Cells, DataFrame, DataFrameEvents, ResolvedValue, SortableDataFrame, UnsortableDataFrame } from './types.js'
