@@ -11,9 +11,10 @@ export interface DataFrameEvents {
   'resolve': undefined;
 }
 
-export interface ColumnDescriptor {
+export interface ColumnDescriptor<C = Record<string, any>> {
   name: string;
   sortable?: boolean;
+  metadata?: C
 }
 
 export type Fetch = ({ rowStart, rowEnd, columns, orderBy, signal }: { rowStart: number, rowEnd: number, columns?: string[], orderBy?: OrderBy, signal?: AbortSignal }) => Promise<void>
@@ -27,10 +28,10 @@ export type Fetch = ({ rowStart, rowEnd, columns, orderBy, signal }: { rowStart:
  * - sort along the sortable columns when `orderBy` is provided,
  * - throw an error if a column within `orderBy` is not sortable.
  */
-export interface DataFrame<M = Record<string, any>> {
+export interface DataFrame<M = Record<string, any>, C = Record<string, any>> {
   numRows: number
   // TODO(SL): rename back to header? (`columns` might be confusing as it's a parameter of the fetch method)
-  columnDescriptors: readonly ColumnDescriptor[]
+  columnDescriptors: readonly ColumnDescriptor<C>[]
   metadata?: M
 
   // Returns the cell value.
