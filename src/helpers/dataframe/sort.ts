@@ -1,9 +1,11 @@
 import { OrderBy, computeRanks, serializeOrderBy, validateOrderBy } from '../sort.js'
 import { createEventTarget } from '../typedEventTarget.js'
 import { checkSignal, validateColumn, validateFetchParams, validateRow } from './helpers.js'
-import { DataFrame, DataFrameEvents, ResolvedValue } from './types.js'
+import { DataFrame, DataFrameEvents, Obj, ResolvedValue } from './types.js'
 
-export function sortableDataFrame<M, C>(data: DataFrame<M, C>, options?: {sortableColumns?: Set<string>}): DataFrame<M, C> {
+export function sortableDataFrame<M extends Obj, C extends Obj>(
+  data: DataFrame<M, C>, options?: { sortableColumns?: Set<string> }
+): DataFrame<M, C> {
   // If sortableColumns is not provided, make all columns sortable.
   const sortableColumns = options?.sortableColumns ?? new Set(data.columnDescriptors.map(c => c.name))
   // Validate that all sortable columns are present in the header.
@@ -22,7 +24,11 @@ export function sortableDataFrame<M, C>(data: DataFrame<M, C>, options?: {sortab
   }
 
   const { numRows } = data
-  const columnDescriptors = data.columnDescriptors.map(({ name }) => ({ name, sortable: sortableColumns.has(name) }))
+  const columnDescriptors = data.columnDescriptors.map(({ name, metadata }) => ({
+    name,
+    sortable: sortableColumns.has(name),
+    metadata: structuredClone(metadata), // Create a deep copy of the column metadata to avoid mutating the original
+  }))
   const metadata = structuredClone(data.metadata) // Create a deep copy of the metadata to avoid mutating the original
 
   // The cache cannot be erased. Create a new data frame if needed.
@@ -143,7 +149,9 @@ type OrderByWithRanks = {
   ranks: number[]
 }[]
 
-export async function fetchIndexes<M, C>({ orderBy, signal, ranksByColumn, setRanks, indexes, setIndexes, data }: { orderBy: OrderBy, signal?: AbortSignal, ranksByColumn?: Map<string, number[]>, setRanks?: ({ column, ranks }: {column: string, ranks: number[]}) => void, indexes?: number[], setIndexes?: ({ orderBy, indexes }: { orderBy: OrderBy, indexes: number[] }) => void, data: DataFrame<M, C> }): Promise<number[]> {
+export async function fetchIndexes<M extends Obj, C extends Obj>(
+  { orderBy, signal, ranksByColumn, setRanks, indexes, setIndexes, data }: { orderBy: OrderBy, signal?: AbortSignal, ranksByColumn?: Map<string, number[]>, setRanks?: ({ column, ranks }: { column: string, ranks: number[] }) => void, indexes?: number[], setIndexes?: ({ orderBy, indexes }: { orderBy: OrderBy, indexes: number[] }) => void, data: DataFrame<M, C> }
+): Promise<number[]> {
   if (!indexes) {
     // If the indexes are not cached, we need to compute them.
     // First, we fetch the ranks for each column in the orderBy.
@@ -168,7 +176,9 @@ export async function fetchIndexes<M, C>({ orderBy, signal, ranksByColumn, setRa
  *
  * @returns {Promise<{ direction: 'ascending' | 'descending', ranks: number[] }[]>} A promise that resolves to an array of objects containing the direction and ranks for each column in the orderBy.
  */
-async function fetchOrderByWithRanks<M, C>({ orderBy, signal, ranksByColumn, setRanks, data }: {orderBy: OrderBy, signal?: AbortSignal, ranksByColumn?: Map<string, number[]>, setRanks?: ({ column, ranks }: {column: string, ranks: number[]}) => void, data: DataFrame<M, C> }): Promise<OrderByWithRanks> {
+async function fetchOrderByWithRanks<M extends Obj, C extends Obj>(
+  { orderBy, signal, ranksByColumn, setRanks, data }: { orderBy: OrderBy, signal?: AbortSignal, ranksByColumn?: Map<string, number[]>, setRanks?: ({ column, ranks }: { column: string, ranks: number[] }) => void, data: DataFrame<M, C> }
+): Promise<OrderByWithRanks> {
   const orderByWithRanks: OrderByWithRanks = []
   const promises: Promise<any>[] = []
 

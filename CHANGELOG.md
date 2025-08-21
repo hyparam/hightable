@@ -4,15 +4,16 @@
 
 ### Changed
 
-- **Breaking** the `header` field is replaced with `columns` in `DataFrame`. It is an array of objects with the following properties:
-  - `name`: the column name
-  - `sortable`: whether the column is sortable (default: `false`)
+- **Breaking** the `header` field is replaced with `columnDescriptors` in `DataFrame`. It is an array of objects with the following properties:
+  - `name`: the column name.
+  - `sortable`: whether the column is sortable (default: `false`).
+  - `metadata`: optional metadata for the column, which can be used to store additional information about the column. Not used by HighTable.
 - **Breaking** the `getCell`, `getRowNumber` and `fetch` methods must handle and validate (using `validateOrderBy` for example) the optional `orderBy` parameter.
-- **Breaking** make `eventTarget` and `fetch` fields optional in `DataFrame`
+- **Breaking** make `eventTarget` and `fetch` fields optional in `DataFrame`.
 - **Breaking** remove the intermediary `UnsortableDataFrame` and `SortableDataFrame` types.
 - **Breaking** remove the `createStaticFetch` helper function, which is not needed anymore now that `fetch` is optional.
 - **Breaking** remove the `sortable` field in `columnConfiguration` prop.
-- make `DataFrame` generic to pass the metadata type
+- make `DataFrame` generic to pass the optional `.metadata` and `.columnDescriptors[].metadata` types.
 
 ### Refactored
 

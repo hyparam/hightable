@@ -9,11 +9,15 @@ import { createEventTarget } from '../../helpers/typedEventTarget.js'
 import { MaybeColumnWidth } from '../../helpers/width.js'
 import { render } from '../../utils/userEvent.js'
 import HighTable, { columnWidthsSuffix, defaultOverscan } from './HighTable.js'
+import type { Obj } from '../../helpers/dataframe/types.js'
 
 Element.prototype.scrollIntoView = vi.fn()
 
-const dataColumnDescriptors = ['ID', 'Count', 'Double', 'Triple'].map(name => ({ name }))
-function createData(): DataFrame {
+const dataColumnDescriptors = ['ID', 'Count', 'Double', 'Triple'].map(name => ({
+  name,
+  metadata: { type: 'test' }, // This metadata has no purpose other than testing the types
+}))
+function createData(): DataFrame<Obj, { type: string }> {
   const columnDescriptors = dataColumnDescriptors
   const numRows = 1000
   const getRowNumber = createGetRowNumber({ numRows })
@@ -35,8 +39,9 @@ function createData(): DataFrame {
   return { columnDescriptors, numRows, getCell, getRowNumber }
 }
 
-function createOtherData(): DataFrame {
-  const columnDescriptors = ['ID', 'Count'].map(name => ({ name }))
+function createOtherData(): DataFrame<{ description: string }> {
+  const metadata = { description: 'dataframe metadata' } // This metadata has no purpose other than testing the types
+  const columnDescriptors = ['ID', 'Count'].map(name => ({ name, metadata: { somekey: 'OK' } }))
   const numRows = 1000
   const getRowNumber = createGetRowNumber({ numRows: 1000 })
   function getCell({ row, column, orderBy }: { row: number, column: string, orderBy?: OrderBy }) {
@@ -49,7 +54,7 @@ function createOtherData(): DataFrame {
       return { value: 1000 - row }
     }
   }
-  return { columnDescriptors, numRows, getCell, getRowNumber }
+  return { metadata, columnDescriptors, numRows, getCell, getRowNumber }
 }
 
 interface MockedUnsortableDataFrame extends DataFrame {

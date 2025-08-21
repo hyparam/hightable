@@ -9,7 +9,7 @@ export function createGetRowNumber({ numRows }: { numRows: number }) {
   }
 }
 
-export function validateFetchParams<C>({ rowStart, rowEnd, columns, orderBy, data }: {rowStart: number, rowEnd: number, columns?: string[], orderBy?: OrderBy, data: Pick<DataFrame<any, C>, 'numRows' | 'columnDescriptors'>}): void {
+export function validateFetchParams({ rowStart, rowEnd, columns, orderBy, data }: {rowStart: number, rowEnd: number, columns?: string[], orderBy?: OrderBy, data: Pick<DataFrame, 'numRows' | 'columnDescriptors'>}): void {
   if (rowStart < 0 || rowEnd > data.numRows || !Number.isInteger(rowStart) || !Number.isInteger(rowEnd) || rowStart > rowEnd) {
     throw new Error(`Invalid row range: ${rowStart} - ${rowEnd}, numRows: ${data.numRows}`)
   }
@@ -27,7 +27,7 @@ export function validateRow({ row, data: { numRows } }: {row: number, data: Pick
   }
 }
 
-export function validateColumn<C>({ column, data: { columnDescriptors } }: { column: string, data: Pick<DataFrame<any, C>, 'columnDescriptors'> }): void {
+export function validateColumn({ column, data: { columnDescriptors } }: { column: string, data: Pick<DataFrame, 'columnDescriptors'> }): void {
   const columnNames = columnDescriptors.map(c => c.name)
   if (!columnNames.includes(column)) {
     throw new Error(`Invalid column: ${column}. Available columns: ${columnNames.join(', ')}`)

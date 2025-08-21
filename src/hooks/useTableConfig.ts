@@ -3,7 +3,8 @@ import { useMemo } from 'react'
 import { ColumnConfig, ColumnConfiguration } from '../helpers/columnConfiguration.js'
 import { ColumnDescriptor, DataFrame } from '../helpers/dataframe/index.js'
 
-export interface ColumnParameters extends ColumnConfig, ColumnDescriptor {
+// The column parameters don't include the `metadata` field from `ColumnDescriptor`
+export interface ColumnParameters extends ColumnConfig, Omit<ColumnDescriptor, 'metadata'> {
   index: number; // position in current order
 }
 

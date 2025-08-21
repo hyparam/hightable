@@ -1,7 +1,9 @@
 import type { OrderBy } from '../sort.js'
 import type { CustomEventTarget } from '../typedEventTarget.js'
 
-export type Cells = Record<string, any>
+export type Obj = Record<string, any>
+
+export type Cells = Obj
 
 export interface ResolvedValue<T = any> {
   value: T
@@ -11,7 +13,7 @@ export interface DataFrameEvents {
   'resolve': undefined;
 }
 
-export interface ColumnDescriptor<C = Record<string, any>> {
+export interface ColumnDescriptor<C extends Obj = Obj> {
   name: string;
   sortable?: boolean;
   metadata?: C
@@ -28,7 +30,7 @@ export type Fetch = ({ rowStart, rowEnd, columns, orderBy, signal }: { rowStart:
  * - sort along the sortable columns when `orderBy` is provided,
  * - throw an error if a column within `orderBy` is not sortable.
  */
-export interface DataFrame<M = Record<string, any>, C = Record<string, any>> {
+export interface DataFrame<M extends Obj = Obj, C extends Obj = Obj> {
   numRows: number
   // TODO(SL): rename back to header? (`columns` might be confusing as it's a parameter of the fetch method)
   columnDescriptors: readonly ColumnDescriptor<C>[]

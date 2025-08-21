@@ -110,7 +110,7 @@ interface TableProps {
 DataFrame is defined as:
 
 ```typescript
-interface DataFrame<M = Record<string, any>, C = Record<string, any>> {
+interface DataFrame<M extends Record<string, any>, C extends Record<string, any>> {
   columnDescriptors: ColumnDescriptor<C>[];
   numRows: number;
   metadata?: M; // optional metadata for the DataFrame - use the generic type for increased type safety
@@ -127,7 +127,7 @@ interface DataFrame<M = Record<string, any>, C = Record<string, any>> {
 ColumnDescriptor is defined as:
 
 ```typescript
-interface ColumnDescriptor<C = Record<string, any>> {
+interface ColumnDescriptor<C extends Record<string, any>> {
   name: string; // column name
   sortable?: boolean; // is the column sortable?
   metadata?: C; // custom metadata extendable by the user
