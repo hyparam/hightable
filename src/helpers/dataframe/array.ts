@@ -1,6 +1,6 @@
-import { validateColumn, validateRow } from './helpers.js'
+import { validateGetCellParams, validateGetRowNumberParams } from './helpers.js'
 import type { DataFrame, Obj, ResolvedValue } from './types.js'
-import { type OrderBy, validateOrderBy } from '../sort.js'
+import type { OrderBy } from '../sort.js'
 
 export function arrayDataFrame<M extends Obj, C extends Obj>(
   array: Record<string, any>[], rowNumbers?: number[], { metadata, columnsMetadata }: { metadata?: M, columnsMetadata?: C[] } = {}
@@ -21,8 +21,7 @@ export function arrayDataFrame<M extends Obj, C extends Obj>(
   }
 
   function getRowNumber({ row, orderBy }: { row: number, orderBy?: OrderBy }): ResolvedValue<number> {
-    validateRow({ row, data: { numRows } })
-    validateOrderBy({ orderBy })
+    validateGetRowNumberParams({ row, orderBy, data: { numRows, columnDescriptors } })
     if (!rowNumbers) {
       return { value: row }
     }
@@ -33,9 +32,7 @@ export function arrayDataFrame<M extends Obj, C extends Obj>(
   }
 
   function getCell({ row, column, orderBy }: { row: number, column: string, orderBy?: OrderBy }): ResolvedValue | undefined {
-    validateRow({ row, data: { numRows } })
-    validateColumn({ column, data: { columnDescriptors } })
-    validateOrderBy({ orderBy })
+    validateGetCellParams({ column, row, orderBy, data: { numRows, columnDescriptors } })
     const cells = array[row]
     if (!cells) {
       throw new Error(`Row ${row} not found in data`)

@@ -1,8 +1,8 @@
 import { createEventTarget } from '../../typedEventTarget.js'
-import { checkSignal, getContinuousRanges, validateColumn, validateFetchParams, validateRow } from '../helpers.js'
+import { checkSignal, getContinuousRanges, validateFetchParams, validateGetCellParams, validateGetRowNumberParams } from '../helpers.js'
 import { DataFrame, DataFrameEvents, ResolvedValue, sortableDataFrame } from '../index.js'
 import { DataFrameV1 } from './dataframeV1.js'
-import { type OrderBy, validateOrderBy } from '../../sort.js'
+import type { OrderBy } from '../../sort.js'
 
 export function convertV1ToDataFrame(data: DataFrameV1): DataFrame {
   const unsortableDataFrame = convertV1ToUnsortableDataFrame(data)
@@ -26,15 +26,12 @@ export function convertV1ToUnsortableDataFrame(data: DataFrameV1): DataFrame {
   const cellsCache = new Map<string, Map<number, ResolvedValue>>()
 
   function getRowNumber({ row, orderBy }: { row: number, orderBy?: OrderBy }): ResolvedValue<number> | undefined {
-    validateRow({ row, data: { numRows } })
-    validateOrderBy({ orderBy })
+    validateGetRowNumberParams({ row, orderBy, data: { numRows, columnDescriptors } })
     return rowNumbersCache.get(row)
   }
 
   function getCell({ row, column, orderBy }: { row: number, column: string, orderBy?: OrderBy }): ResolvedValue | undefined {
-    validateRow({ row, data: { numRows } })
-    validateColumn({ column, data: { columnDescriptors } })
-    validateOrderBy({ orderBy })
+    validateGetCellParams({ column, row, orderBy, data: { numRows, columnDescriptors } })
     return cellsCache.get(column)?.get(row)
   }
 

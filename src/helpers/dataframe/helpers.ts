@@ -1,12 +1,26 @@
-import { OrderBy, validateOrderBy } from '../sort.js'
+import { OrderBy, validateOrderByAgainstSortableColumns } from '../sort.js'
 import { DataFrame, ResolvedValue } from './types.js'
 
 export function createGetRowNumber({ numRows }: { numRows: number }) {
   return ({ row, orderBy }: { row: number, orderBy?: OrderBy }): ResolvedValue<number> => {
     validateRow({ row, data: { numRows } })
-    validateOrderBy({ orderBy })
+    // orderBy is not supported in this function, so we throw if orderBy is defined.
+    if (orderBy && orderBy.length > 0) {
+      throw new Error('orderBy is not supported in this getRowNumber implementation.')
+    }
     return { value: row }
   }
+}
+
+export function validateGetRowNumberParams({ row, orderBy, data }: {row: number, orderBy?: OrderBy, data: Pick<DataFrame, 'numRows' | 'columnDescriptors'>}): void {
+  validateRow({ row, data: { numRows: data.numRows } })
+  validateOrderBy({ orderBy, data: { columnDescriptors: data.columnDescriptors } })
+}
+
+export function validateGetCellParams({ row, column, orderBy, data }: { row: number, column: string, orderBy?: OrderBy, data: Pick<DataFrame, 'numRows' | 'columnDescriptors'> }): void {
+  validateRow({ row, data: { numRows: data.numRows } })
+  validateColumn({ column, data: { columnDescriptors: data.columnDescriptors } })
+  validateOrderBy({ orderBy, data: { columnDescriptors: data.columnDescriptors } })
 }
 
 export function validateFetchParams({ rowStart, rowEnd, columns, orderBy, data }: {rowStart: number, rowEnd: number, columns?: string[], orderBy?: OrderBy, data: Pick<DataFrame, 'numRows' | 'columnDescriptors'>}): void {
@@ -17,11 +31,10 @@ export function validateFetchParams({ rowStart, rowEnd, columns, orderBy, data }
   if (columns?.some(column => !columnNames.includes(column))) {
     throw new Error(`Invalid columns: ${columns.join(', ')}. Available columns: ${columnNames.join(', ')}`)
   }
-  const sortableColumns = new Set(data.columnDescriptors.filter(c => c.sortable).map(c => c.name))
-  validateOrderBy({ orderBy, sortableColumns })
+  validateOrderBy({ orderBy, data })
 }
 
-export function validateRow({ row, data: { numRows } }: {row: number, data: Pick<DataFrame, 'numRows'>}): void {
+export function validateRow({ row, data: { numRows } }: { row: number, data: Pick<DataFrame, 'numRows'> }): void {
   if (row < 0 || row >= numRows || !Number.isInteger(row)) {
     throw new Error(`Invalid row index: ${row}, numRows: ${numRows}`)
   }
@@ -32,6 +45,11 @@ export function validateColumn({ column, data: { columnDescriptors } }: { column
   if (!columnNames.includes(column)) {
     throw new Error(`Invalid column: ${column}. Available columns: ${columnNames.join(', ')}`)
   }
+}
+
+export function validateOrderBy({ orderBy, data: { columnDescriptors } }: { orderBy?: OrderBy, data: Pick<DataFrame, 'columnDescriptors'> }): void {
+  const sortableColumns = new Set(columnDescriptors.filter(c => c.sortable).map(c => c.name))
+  validateOrderByAgainstSortableColumns({ orderBy, sortableColumns })
 }
 
 export function checkSignal(signal?: AbortSignal): void {

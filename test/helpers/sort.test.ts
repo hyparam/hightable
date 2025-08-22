@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { areEqualOrderBy, computeRanks, partitionOrderBy, toggleColumn, validateOrderBy } from '../../src/helpers/sort.js'
+import { areEqualOrderBy, computeRanks, partitionOrderBy, toggleColumn, validateOrderByAgainstSortableColumns } from '../../src/helpers/sort.js'
 
 const nameAsc = { column: 'name', direction: 'ascending' as const }
 const nameDesc = { column: 'name', direction: 'descending' as const }
@@ -55,15 +55,15 @@ describe('toggleColumn', () => {
   })
 })
 
-describe('validateOrderBy', () => {
+describe('validateOrderByAgainstSortableColumns', () => {
   const sortableColumns = new Set(['name', 'age'])
   it('should not throw if the orderBy is valid', () => {
-    expect(() => { validateOrderBy({ sortableColumns, orderBy: [nameAsc, ageAsc] }) }).not.toThrow()
-    expect(() => { validateOrderBy({ sortableColumns, orderBy: [nameDesc, ageAsc] }) }).not.toThrow()
+    expect(() => { validateOrderByAgainstSortableColumns({ sortableColumns, orderBy: [nameAsc, ageAsc] }) }).not.toThrow()
+    expect(() => { validateOrderByAgainstSortableColumns({ sortableColumns, orderBy: [nameDesc, ageAsc] }) }).not.toThrow()
   })
   it('should throw if the orderBy contains an invalid column', () => {
-    expect(() => { validateOrderBy({ sortableColumns, orderBy: [idAsc] }) }).toThrow('Unsortable columns in orderBy field: id')
-    expect(() => { validateOrderBy({ sortableColumns: new Set(['age']), orderBy: [nameAsc, idAsc] }) }).toThrow('Unsortable columns in orderBy field: name, id')
+    expect(() => { validateOrderByAgainstSortableColumns({ sortableColumns, orderBy: [idAsc] }) }).toThrow('Unsortable columns in orderBy field: id')
+    expect(() => { validateOrderByAgainstSortableColumns({ sortableColumns: new Set(['age']), orderBy: [nameAsc, idAsc] }) }).toThrow('Unsortable columns in orderBy field: name, id')
   })
 })
 
