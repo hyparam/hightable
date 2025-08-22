@@ -1,4 +1,4 @@
-import { OrderBy, computeRanks, serializeOrderBy, validateOrderBy } from '../sort.js'
+import { OrderBy, computeRanks, serializeOrderBy, validateOrderByAgainstSortableColumns } from '../sort.js'
 import { createEventTarget } from '../typedEventTarget.js'
 import { checkSignal, validateColumn, validateFetchParams, validateRow } from './helpers.js'
 import { DataFrame, DataFrameEvents, Obj, ResolvedValue } from './types.js'
@@ -39,7 +39,7 @@ export function sortableDataFrame<M extends Obj, C extends Obj>(
 
   const getUpstreamRow: ({ row, orderBy }: { row: number, orderBy?: OrderBy }) => ResolvedValue<number> | undefined = function({ row, orderBy }) {
     validateRow({ row, data: { numRows } })
-    validateOrderBy({ sortableColumns, orderBy })
+    validateOrderByAgainstSortableColumns({ orderBy, sortableColumns })
     if (!orderBy || orderBy.length === 0) {
       // If no orderBy is provided, we can return the upstream row number.
       return { value: row }

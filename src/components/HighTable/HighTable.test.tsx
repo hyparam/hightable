@@ -1,10 +1,10 @@
 import { act, fireEvent, waitFor, within } from '@testing-library/react'
 import { UserEvent } from '@testing-library/user-event'
 import { Mock, beforeEach, describe, expect, it, vi } from 'vitest'
-import { createGetRowNumber, validateColumn, validateFetchParams, validateRow } from '../../helpers/dataframe/helpers.js'
+import { createGetRowNumber, validateFetchParams, validateGetCellParams, validateGetRowNumberParams } from '../../helpers/dataframe/helpers.js'
 import { DataFrame, DataFrameEvents, Fetch, filterDataFrame } from '../../helpers/dataframe/index.js'
 import { sortableDataFrame } from '../../helpers/dataframe/sort.js'
-import { OrderBy, validateOrderBy } from '../../helpers/sort.js'
+import { OrderBy } from '../../helpers/sort.js'
 import { createEventTarget } from '../../helpers/typedEventTarget.js'
 import { MaybeColumnWidth } from '../../helpers/width.js'
 import { render } from '../../utils/userEvent.js'
@@ -22,9 +22,7 @@ function createData(): DataFrame<Obj, { type: string }> {
   const numRows = 1000
   const getRowNumber = createGetRowNumber({ numRows })
   function getCell({ row, column, orderBy }: { row: number, column: string, orderBy?: OrderBy }) {
-    validateColumn({ column, data: { columnDescriptors } })
-    validateRow({ row, data: { numRows } })
-    validateOrderBy({ orderBy })
+    validateGetCellParams({ column, row, orderBy, data: { numRows, columnDescriptors } })
     const count = numRows - row
     if (column === 'ID') {
       return { value: `row ${row}` }
@@ -45,9 +43,7 @@ function createOtherData(): DataFrame<{ description: string }> {
   const numRows = 1000
   const getRowNumber = createGetRowNumber({ numRows: 1000 })
   function getCell({ row, column, orderBy }: { row: number, column: string, orderBy?: OrderBy }) {
-    validateColumn({ column, data: { columnDescriptors } })
-    validateRow({ row, data: { numRows } })
-    validateOrderBy({ orderBy })
+    validateGetCellParams({ column, row, orderBy, data: { numRows, columnDescriptors } })
     if (column === 'ID') {
       return { value: `other ${row}` }
     } else if (column === 'Count') {
@@ -65,9 +61,7 @@ function createMockData(): MockedUnsortableDataFrame {
   const numRows = 100
   const columnDescriptors = ['ID', 'Name', 'Age'].map(name => ({ name }))
   const getCell = vi.fn(({ row, column, orderBy }: { row: number, column: string, orderBy?: OrderBy }) => {
-    validateColumn({ column, data: { columnDescriptors } })
-    validateRow({ row, data: { numRows } })
-    validateOrderBy({ orderBy })
+    validateGetCellParams({ column, row, orderBy, data: { numRows, columnDescriptors } })
     if (row < 0 || row >= 1000) {
       throw new Error(`Invalid row index: ${row}`)
     }
@@ -200,9 +194,7 @@ describe('with async data, HighTable', () => {
     const numRows = 1000
     const columnDescriptors = ['ID', 'Name', 'Age'].map(name => ({ name }))
     function getCell({ row, column, orderBy }: { row: number, column: string, orderBy?: OrderBy }) {
-      validateRow({ row, data: { numRows } })
-      validateColumn({ column, data: { columnDescriptors } })
-      validateOrderBy({ orderBy })
+      validateGetCellParams({ column, row, orderBy, data: { numRows, columnDescriptors } })
       if (!asyncDataFetched[row]) {
         return undefined
       }
@@ -215,8 +207,7 @@ describe('with async data, HighTable', () => {
       }
     }
     function getRowNumber({ row, orderBy }: { row: number, orderBy?: OrderBy }) {
-      validateRow({ row, data: { numRows } })
-      validateOrderBy({ orderBy })
+      validateGetRowNumberParams({ row, orderBy, data: { numRows, columnDescriptors } })
       if (!asyncDataFetched[row]) {
         return undefined
       }

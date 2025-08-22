@@ -1,13 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useState } from 'react'
-import { checkSignal, createGetRowNumber, validateColumn, validateFetchParams, validateRow } from '../../helpers/dataframe/helpers.js'
+import { checkSignal, createGetRowNumber, validateFetchParams, validateGetCellParams } from '../../helpers/dataframe/helpers.js'
 import { DataFrame, DataFrameEvents, arrayDataFrame } from '../../helpers/dataframe/index.js'
 import { DataFrameV1, convertV1ToDataFrame } from '../../helpers/dataframe/legacy/index.js'
 import { wrapPromise, wrapResolved } from '../../helpers/dataframe/legacy/promise.js'
 import { sortableDataFrame } from '../../helpers/dataframe/sort.js'
 import type { Fetch, ResolvedValue } from '../../helpers/dataframe/types.js'
 import type { Selection } from '../../helpers/selection.js'
-import { type OrderBy, validateOrderBy } from '../../helpers/sort.js'
+import type { OrderBy } from '../../helpers/sort.js'
 import { createEventTarget } from '../../helpers/typedEventTarget.js'
 import type { CellContentProps } from './HighTable.js'
 import HighTable from './HighTable.js'
@@ -21,9 +21,7 @@ function createUnsortableData(): DataFrame {
   const numRows = 1000
   const columnDescriptors = ['ID', 'Count', 'Double', 'Constant', 'Value1', 'Value2', 'Value3', 'Undefined'].map(name => ({ name }))
   function getCell({ row, column, orderBy }: { row: number, column: string, orderBy?: OrderBy }): ResolvedValue | undefined {
-    validateColumn({ column, data: { columnDescriptors } })
-    validateRow({ row, data: { numRows } })
-    validateOrderBy({ orderBy })
+    validateGetCellParams({ row, column, orderBy, data: { numRows, columnDescriptors } })
     const count = numRows - row
     return {
       value: column === 'ID' ? `row ${row}` :
@@ -52,9 +50,7 @@ function createDelayedUnsortableData(): DataFrame {
   ])
   const getRowNumber = createGetRowNumber({ numRows: numRows })
   function getCell({ row, column, orderBy }: { row: number, column: string, orderBy?: OrderBy }): ResolvedValue | undefined {
-    validateColumn({ column, data: { columnDescriptors } })
-    validateRow({ row, data: { numRows } })
-    validateOrderBy({ orderBy })
+    validateGetCellParams({ row, column, orderBy, data: { numRows, columnDescriptors } })
     return cache.get(column)?.[row]
   }
   const eventTarget = createEventTarget<DataFrameEvents>()
@@ -136,10 +132,8 @@ function createEmptyData(): DataFrame {
   const numRows = 0
   const columnDescriptors = ['ID', 'Count', 'Double', 'Constant', 'Value1', 'Value2', 'Value3'].map(name => ({ name }))
   const getRowNumber = createGetRowNumber({ numRows })
-  function getCell({ row, column, orderBy }: {row: number, column: string, orderBy?: OrderBy}): undefined {
-    validateColumn({ column, data: { columnDescriptors } })
-    validateRow({ row, data: { numRows } })
-    validateOrderBy({ orderBy })
+  function getCell({ row, column, orderBy }: { row: number, column: string, orderBy?: OrderBy }): undefined {
+    validateGetCellParams({ row, column, orderBy, data: { numRows, columnDescriptors } })
     return undefined
   }
   return { columnDescriptors, numRows, getRowNumber, getCell }

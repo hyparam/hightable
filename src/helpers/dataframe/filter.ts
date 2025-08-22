@@ -1,7 +1,7 @@
 import { createEventTarget } from '../typedEventTarget.js'
-import { checkSignal, getContinuousRanges, validateColumn, validateFetchParams, validateRow } from './helpers.js'
+import { checkSignal, getContinuousRanges, validateFetchParams, validateGetCellParams, validateGetRowNumberParams, validateRow } from './helpers.js'
 import type { DataFrame, DataFrameEvents, Fetch, Obj } from './types.js'
-import { type OrderBy, validateOrderBy } from '../sort.js'
+import type { OrderBy } from '../sort.js'
 
 // return an unsortable data frame: we can call sortableDataFrame on it later, so that we sort on a small subset of the data
 export function filterDataFrame<M extends Obj, C extends Obj>(
@@ -25,15 +25,12 @@ export function filterDataFrame<M extends Obj, C extends Obj>(
     return upstreamRow
   }
   function getRowNumber({ row, orderBy }: { row: number, orderBy?: OrderBy }) {
-    validateRow({ row, data: { numRows } })
-    validateOrderBy({ orderBy })
+    validateGetRowNumberParams({ row, orderBy, data: { numRows, columnDescriptors } })
     const upstreamRow = getUpstreamRow({ row })
     return data.getRowNumber({ row: upstreamRow })
   }
   function getCell({ row, column, orderBy }: { row: number, column: string, orderBy?: OrderBy }) {
-    validateColumn({ column, data: { columnDescriptors } })
-    validateRow({ row, data: { numRows } })
-    validateOrderBy({ orderBy })
+    validateGetCellParams({ column, row, orderBy, data: { numRows, columnDescriptors } })
     const upstreamRow = getUpstreamRow({ row })
     return data.getCell({ row: upstreamRow, column })
   }
