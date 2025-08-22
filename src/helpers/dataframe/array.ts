@@ -1,9 +1,16 @@
 import { validateColumn, validateRow } from './helpers.js'
-import type { ResolvedValue, UnsortableDataFrame } from './types.js'
+import type { DataFrame, Obj, ResolvedValue } from './types.js'
+import { type OrderBy, validateOrderBy } from '../sort.js'
 
-export function arrayDataFrame(array: Record<string, any>[], rowNumbers?: number[]): UnsortableDataFrame {
+export function arrayDataFrame<M extends Obj, C extends Obj>(
+  array: Record<string, any>[], rowNumbers?: number[], { metadata, columnsMetadata }: { metadata?: M, columnsMetadata?: C[] } = {}
+): DataFrame<M, C> {
   // beware: we don't copy the array, so it must not be mutated after this point.
-  const header = 0 in array ? Object.keys(array[0]) : []
+  const firstRowColumns = 0 in array ? Object.keys(array[0]) : []
+  if (columnsMetadata && columnsMetadata.length !== firstRowColumns.length) {
+    throw new Error(`Columns metadata length (${columnsMetadata.length}) does not match the number of columns in the array (${firstRowColumns.length})`)
+  }
+  const columnDescriptors = firstRowColumns.map((name, i) => ({ name, metadata: columnsMetadata?.[i] }))
   const numRows = array.length
   if (rowNumbers && rowNumbers.length !== numRows) {
     throw new Error(`Row numbers length (${rowNumbers.length}) does not match the number of rows in the array (${numRows})`)
@@ -13,8 +20,9 @@ export function arrayDataFrame(array: Record<string, any>[], rowNumbers?: number
     throw new Error(`Row numbers must be non-negative integers, but got: ${rowNumbers.join(', ')}`)
   }
 
-  function getRowNumber({ row }: { row: number }): ResolvedValue<number> {
+  function getRowNumber({ row, orderBy }: { row: number, orderBy?: OrderBy }): ResolvedValue<number> {
     validateRow({ row, data: { numRows } })
+    validateOrderBy({ orderBy })
     if (!rowNumbers) {
       return { value: row }
     }
@@ -24,9 +32,10 @@ export function arrayDataFrame(array: Record<string, any>[], rowNumbers?: number
     return { value: rowNumbers[row] }
   }
 
-  function getCell({ row, column }: { row: number, column: string }): ResolvedValue | undefined {
+  function getCell({ row, column, orderBy }: { row: number, column: string, orderBy?: OrderBy }): ResolvedValue | undefined {
     validateRow({ row, data: { numRows } })
-    validateColumn({ column, data: { header } })
+    validateColumn({ column, data: { columnDescriptors } })
+    validateOrderBy({ orderBy })
     const cells = array[row]
     if (!cells) {
       throw new Error(`Row ${row} not found in data`)
@@ -39,5 +48,5 @@ export function arrayDataFrame(array: Record<string, any>[], rowNumbers?: number
     return { value: cells[column] }
   }
 
-  return { numRows, header, getRowNumber, getCell }
+  return { metadata, numRows, columnDescriptors, getRowNumber, getCell }
 }

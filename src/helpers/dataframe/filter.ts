@@ -1,14 +1,19 @@
 import { createEventTarget } from '../typedEventTarget.js'
 import { checkSignal, getContinuousRanges, validateColumn, validateFetchParams, validateRow } from './helpers.js'
-import type { DataFrame, DataFrameEvents, UnsortableDataFrame } from './types.js'
-
-type UnsortableFetch = Exclude<UnsortableDataFrame['fetch'], undefined>
+import type { DataFrame, DataFrameEvents, Fetch, Obj } from './types.js'
+import { type OrderBy, validateOrderBy } from '../sort.js'
 
 // return an unsortable data frame: we can call sortableDataFrame on it later, so that we sort on a small subset of the data
-export function filterDataFrame({ data, filter }: {data: DataFrame, filter: ({ row }: { row: number }) => boolean}): UnsortableDataFrame {
+export function filterDataFrame<M extends Obj, C extends Obj>(
+  { data, filter }: { data: DataFrame<M, C>, filter: ({ row }: { row: number }) => boolean }
+): DataFrame<M, C> {
   const upstreamRows = Array.from({ length: data.numRows }, (_, upstreamRow) => upstreamRow).filter(upstreamRow => filter({ row: upstreamRow }))
   const numRows = upstreamRows.length
-  const header = data.header.slice() // Create a copy of the header to avoid mutating the original
+  const columnDescriptors = data.columnDescriptors.map(({ name, metadata }) => ({
+    name,
+    sortable: false,
+    metadata: structuredClone(metadata), // Create a deep copy of the column metadata to avoid mutating the original
+  }))
   const metadata = structuredClone(data.metadata) // Create a deep copy of the metadata to avoid mutating the original
   function getUpstreamRow({ row }: { row: number }) {
     validateRow({ row, data: { numRows } })
@@ -19,22 +24,24 @@ export function filterDataFrame({ data, filter }: {data: DataFrame, filter: ({ r
     }
     return upstreamRow
   }
-  function getRowNumber({ row }: { row: number }) {
+  function getRowNumber({ row, orderBy }: { row: number, orderBy?: OrderBy }) {
     validateRow({ row, data: { numRows } })
+    validateOrderBy({ orderBy })
     const upstreamRow = getUpstreamRow({ row })
     return data.getRowNumber({ row: upstreamRow })
   }
-  function getCell({ row, column }: { row: number, column: string }) {
-    validateColumn({ column, data: { header } })
+  function getCell({ row, column, orderBy }: { row: number, column: string, orderBy?: OrderBy }) {
+    validateColumn({ column, data: { columnDescriptors } })
     validateRow({ row, data: { numRows } })
+    validateOrderBy({ orderBy })
     const upstreamRow = getUpstreamRow({ row })
     return data.getCell({ row: upstreamRow, column })
   }
 
   const { fetch: upstreamFetch } = data
-  const df: UnsortableDataFrame = {
+  const df: DataFrame<M, C> = {
     metadata,
-    header,
+    columnDescriptors,
     numRows,
     getRowNumber,
     getCell,
@@ -42,8 +49,8 @@ export function filterDataFrame({ data, filter }: {data: DataFrame, filter: ({ r
 
   if (upstreamFetch !== undefined) {
     const eventTarget = createEventTarget<DataFrameEvents>()
-    const fetch: UnsortableFetch = async function({ rowStart, rowEnd, columns, signal }: { rowStart: number, rowEnd: number, columns?: string[], signal?: AbortSignal }) {
-      validateFetchParams({ rowStart, rowEnd, columns, data: { numRows, header } })
+    const fetch: Fetch = async function({ rowStart, rowEnd, columns, orderBy, signal }: { rowStart: number, rowEnd: number, columns?: string[], orderBy?: OrderBy, signal?: AbortSignal }) {
+      validateFetchParams({ rowStart, rowEnd, columns, orderBy, data: { numRows, columnDescriptors } })
       checkSignal(signal)
 
       function callback() {

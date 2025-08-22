@@ -11,10 +11,11 @@ export function serializeOrderBy(orderBy: OrderBy): string {
   return JSON.stringify(orderBy)
 }
 
-export function validateOrderBy({ header, orderBy }: {header: string[], orderBy: OrderBy}): void {
-  const unknownColumns = orderBy.map(({ column }) => column).filter(column => !header.includes(column))
-  if (unknownColumns.length > 0) {
-    throw new Error(`Invalid orderBy field: ${unknownColumns.join(', ')}`)
+export function validateOrderBy({ sortableColumns, orderBy }: { sortableColumns?: Set<string>, orderBy?: OrderBy }): void {
+  if (!orderBy) return
+  const unsortableColumns = orderBy.map(({ column }) => column).filter(column => !sortableColumns?.has(column))
+  if (unsortableColumns.length > 0) {
+    throw new Error(`Unsortable columns in orderBy field: ${unsortableColumns.join(', ')}`)
   }
 }
 

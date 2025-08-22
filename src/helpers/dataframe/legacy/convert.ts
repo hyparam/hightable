@@ -1,7 +1,8 @@
 import { createEventTarget } from '../../typedEventTarget.js'
 import { checkSignal, getContinuousRanges, validateColumn, validateFetchParams, validateRow } from '../helpers.js'
-import { DataFrame, DataFrameEvents, ResolvedValue, UnsortableDataFrame, sortableDataFrame } from '../index.js'
+import { DataFrame, DataFrameEvents, ResolvedValue, sortableDataFrame } from '../index.js'
 import { DataFrameV1 } from './dataframeV1.js'
+import { type OrderBy, validateOrderBy } from '../../sort.js'
 
 export function convertV1ToDataFrame(data: DataFrameV1): DataFrame {
   const unsortableDataFrame = convertV1ToUnsortableDataFrame(data)
@@ -14,8 +15,8 @@ export function convertV1ToDataFrame(data: DataFrameV1): DataFrame {
   return sortableDataFrame(unsortableDataFrame)
 }
 
-export function convertV1ToUnsortableDataFrame(data: DataFrameV1): UnsortableDataFrame {
-  const header = data.header.slice()
+export function convertV1ToUnsortableDataFrame(data: DataFrameV1): DataFrame {
+  const columnDescriptors = data.header.map(name => ({ name }))
   const { numRows } = data
 
   const eventTarget = createEventTarget<DataFrameEvents>()
@@ -24,19 +25,21 @@ export function convertV1ToUnsortableDataFrame(data: DataFrameV1): UnsortableDat
   const rowNumbersCache = new Map<number, ResolvedValue<number>>()
   const cellsCache = new Map<string, Map<number, ResolvedValue>>()
 
-  function getRowNumber({ row }: { row: number }): ResolvedValue<number> | undefined {
+  function getRowNumber({ row, orderBy }: { row: number, orderBy?: OrderBy }): ResolvedValue<number> | undefined {
     validateRow({ row, data: { numRows } })
+    validateOrderBy({ orderBy })
     return rowNumbersCache.get(row)
   }
 
-  function getCell({ row, column }: { row: number, column: string }): ResolvedValue | undefined {
+  function getCell({ row, column, orderBy }: { row: number, column: string, orderBy?: OrderBy }): ResolvedValue | undefined {
     validateRow({ row, data: { numRows } })
-    validateColumn({ column, data: { header } })
+    validateColumn({ column, data: { columnDescriptors } })
+    validateOrderBy({ orderBy })
     return cellsCache.get(column)?.get(row)
   }
 
-  async function fetch({ rowStart, rowEnd, columns, signal }: { rowStart: number, rowEnd: number, columns?: string[], signal?: AbortSignal }): Promise<void> {
-    validateFetchParams({ rowStart, rowEnd, columns, data: { numRows, header } })
+  async function fetch({ rowStart, rowEnd, columns, orderBy, signal }: { rowStart: number, rowEnd: number, columns?: string[], orderBy?: OrderBy, signal?: AbortSignal }): Promise<void> {
+    validateFetchParams({ rowStart, rowEnd, columns, orderBy, data: { numRows, columnDescriptors } })
     checkSignal(signal)
 
     // only fetch the required rows and columns
@@ -65,7 +68,7 @@ export function convertV1ToUnsortableDataFrame(data: DataFrameV1): UnsortableDat
             eventTarget.dispatchEvent(new CustomEvent('resolve'))
           }
         }))
-        for (const column of header) {
+        for (const column of columnDescriptors.map(c => c.name)) {
           if (cells[column] === undefined) {
             continue
           }
@@ -88,7 +91,7 @@ export function convertV1ToUnsortableDataFrame(data: DataFrameV1): UnsortableDat
   }
 
   return {
-    header,
+    columnDescriptors,
     numRows,
     getRowNumber,
     getCell,

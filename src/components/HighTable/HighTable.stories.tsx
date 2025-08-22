@@ -1,13 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useState } from 'react'
 import { checkSignal, createGetRowNumber, validateColumn, validateFetchParams, validateRow } from '../../helpers/dataframe/helpers.js'
-import { DataFrameEvents, UnsortableDataFrame, arrayDataFrame } from '../../helpers/dataframe/index.js'
+import { DataFrame, DataFrameEvents, arrayDataFrame } from '../../helpers/dataframe/index.js'
 import { DataFrameV1, convertV1ToDataFrame } from '../../helpers/dataframe/legacy/index.js'
 import { wrapPromise, wrapResolved } from '../../helpers/dataframe/legacy/promise.js'
 import { sortableDataFrame } from '../../helpers/dataframe/sort.js'
-import type { ResolvedValue } from '../../helpers/dataframe/types.js'
+import type { Fetch, ResolvedValue } from '../../helpers/dataframe/types.js'
 import type { Selection } from '../../helpers/selection.js'
-import type { OrderBy } from '../../helpers/sort.js'
+import { type OrderBy, validateOrderBy } from '../../helpers/sort.js'
 import { createEventTarget } from '../../helpers/typedEventTarget.js'
 import type { CellContentProps } from './HighTable.js'
 import HighTable from './HighTable.js'
@@ -17,12 +17,13 @@ function random(seed: number) {
   return x - Math.floor(x)
 }
 
-function createData(): UnsortableDataFrame {
+function createUnsortableData(): DataFrame {
   const numRows = 1000
-  const header = ['ID', 'Count', 'Double', 'Constant', 'Value1', 'Value2', 'Value3', 'Undefined']
-  function getCell({ row, column }: { row: number, column: string }) {
-    validateColumn({ column, data: { header } })
+  const columnDescriptors = ['ID', 'Count', 'Double', 'Constant', 'Value1', 'Value2', 'Value3', 'Undefined'].map(name => ({ name }))
+  function getCell({ row, column, orderBy }: { row: number, column: string, orderBy?: OrderBy }): ResolvedValue | undefined {
+    validateColumn({ column, data: { columnDescriptors } })
     validateRow({ row, data: { numRows } })
+    validateOrderBy({ orderBy })
     const count = numRows - row
     return {
       value: column === 'ID' ? `row ${row}` :
@@ -36,29 +37,30 @@ function createData(): UnsortableDataFrame {
     }
   }
   const getRowNumber = createGetRowNumber({ numRows })
-  return { header, numRows, getCell, getRowNumber }
+  return { columnDescriptors, numRows, getCell, getRowNumber }
 }
 
 function delay<T>(value: T, ms: number): Promise<T> {
   return new Promise(resolve => setTimeout(() => { resolve(value) }, ms))
 }
-function createDelayedData(): UnsortableDataFrame {
-  const header = ['ID', 'Count']
+function createDelayedUnsortableData(): DataFrame {
+  const columnDescriptors = ['ID', 'Count'].map(name => ({ name }))
   const numRows = 500
   const cache = new Map([
     ['ID', Array<ResolvedValue | undefined>(numRows).fill(undefined)],
     ['Count', Array<ResolvedValue | undefined>(numRows).fill(undefined)],
   ])
   const getRowNumber = createGetRowNumber({ numRows: numRows })
-  function getCell({ row, column }: { row: number, column: string }): ResolvedValue | undefined {
-    validateColumn({ column, data: { header } })
+  function getCell({ row, column, orderBy }: { row: number, column: string, orderBy?: OrderBy }): ResolvedValue | undefined {
+    validateColumn({ column, data: { columnDescriptors } })
     validateRow({ row, data: { numRows } })
+    validateOrderBy({ orderBy })
     return cache.get(column)?.[row]
   }
   const eventTarget = createEventTarget<DataFrameEvents>()
-  async function fetch({ rowStart, rowEnd, columns, signal }: { rowStart: number, rowEnd: number, columns?: string[], signal?: AbortSignal }) {
+  const fetch: Fetch = async function({ rowStart, rowEnd, columns, orderBy, signal }: { rowStart: number, rowEnd: number, columns?: string[], orderBy?: OrderBy, signal?: AbortSignal }) {
     checkSignal(signal)
-    validateFetchParams({ rowStart, rowEnd, columns, data: { numRows, header } })
+    validateFetchParams({ rowStart, rowEnd, columns, orderBy, data: { numRows, columnDescriptors } })
     const columnPromises: Promise<any>[] = []
     for (const column of columns ?? []) {
       const valuePromises: Promise<any>[] = []
@@ -89,7 +91,7 @@ function createDelayedData(): UnsortableDataFrame {
     await Promise.all(columnPromises)
   }
   return {
-    header,
+    columnDescriptors,
     numRows,
     getCell,
     getRowNumber,
@@ -100,7 +102,7 @@ function createDelayedData(): UnsortableDataFrame {
 
 const longString = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum'
 
-function createLongStringsData(): UnsortableDataFrame {
+function createLongStringsData(): DataFrame {
   return arrayDataFrame(Array.from({ length: 1000 }, (_, index) => {
     return {
       ID: `row ${index}`,
@@ -111,7 +113,7 @@ function createLongStringsData(): UnsortableDataFrame {
   }))
 }
 
-function createManyColumnsData(): UnsortableDataFrame {
+function createManyColumnsData(): DataFrame {
   return arrayDataFrame(Array.from({ length: 1000 }, (_, index) => {
     return {
       ID1: `row ${index} A`,
@@ -130,16 +132,17 @@ function createManyColumnsData(): UnsortableDataFrame {
   }))
 }
 
-function createEmptyData(): UnsortableDataFrame {
+function createEmptyData(): DataFrame {
   const numRows = 0
-  const header = ['ID', 'Count', 'Double', 'Constant', 'Value1', 'Value2', 'Value3']
+  const columnDescriptors = ['ID', 'Count', 'Double', 'Constant', 'Value1', 'Value2', 'Value3'].map(name => ({ name }))
   const getRowNumber = createGetRowNumber({ numRows })
-  function getCell({ row, column }: {row: number, column: string}): undefined {
-    validateColumn({ column, data: { header } })
+  function getCell({ row, column, orderBy }: {row: number, column: string, orderBy?: OrderBy}): undefined {
+    validateColumn({ column, data: { columnDescriptors } })
     validateRow({ row, data: { numRows } })
+    validateOrderBy({ orderBy })
     return undefined
   }
-  return { header, numRows, getRowNumber, getCell }
+  return { columnDescriptors, numRows, getRowNumber, getCell }
 }
 
 function createLegacyData(): DataFrameV1 {
@@ -203,18 +206,18 @@ type Story = StoryObj<typeof HighTable>;
 
 export const Default: Story = {
   args: {
-    data: createData(),
+    data: createUnsortableData(),
   },
 }
 export const Unstyled: Story = {
   args: {
-    data: createData(),
+    data: createUnsortableData(),
     styled: false,
   },
 }
 export const Sortable: Story = {
   args: {
-    data: sortableDataFrame(createData()),
+    data: sortableDataFrame(createUnsortableData()),
   },
 }
 export const Empty: Story = {
@@ -254,7 +257,7 @@ export const Placeholders: Story = {
     )
   },
   args: {
-    data: sortableDataFrame(createDelayedData()),
+    data: sortableDataFrame(createDelayedUnsortableData()),
   },
 }
 export const MultiSort: Story = {
@@ -273,12 +276,12 @@ export const MultiSort: Story = {
     )
   },
   args: {
-    data: sortableDataFrame(createData()),
+    data: sortableDataFrame(createUnsortableData()),
   },
 }
 export const CustomHeaderStyle: Story = {
   args: {
-    data: createData(),
+    data: createUnsortableData(),
     // See .storybook/global.css for the CSS rule
     // .custom-hightable thead th.delegated {
     //   background-color: #ffe9a9;
@@ -289,7 +292,7 @@ export const CustomHeaderStyle: Story = {
 }
 export const HeaderComponent: Story = {
   args: {
-    data: createData(),
+    data: createUnsortableData(),
     columnConfiguration: {
       Double: {
         headerComponent:
@@ -303,7 +306,7 @@ export const HeaderComponent: Story = {
 }
 export const HeaderComponentWithMinWidth: Story = {
   args: {
-    data: createData(),
+    data: createUnsortableData(),
     columnConfiguration: {
       ID: {
         minWidth: 150,
@@ -343,12 +346,8 @@ export const HeaderComponentWithMinWidth: Story = {
 }
 export const NonSortableColunns: Story = {
   args: {
-    data: sortableDataFrame(createData()),
-    columnConfiguration: {
-      Double: {
-        sortable: false,
-      },
-    },
+    // all columns are sortable, but "Double"
+    data: sortableDataFrame(createUnsortableData(), { sortableColumns: new Set(['ID', 'Count', 'Constant', 'Value1', 'Value2', 'Value3', 'Undefined']) }),
   },
 }
 export const LongStrings: Story = {
@@ -376,7 +375,7 @@ export const RowsSelection: Story = {
     )
   },
   args: {
-    data: sortableDataFrame(createData()),
+    data: sortableDataFrame(createUnsortableData()),
   },
 }
 export const ReadOnlySelection: Story = {
@@ -393,7 +392,7 @@ export const ReadOnlySelection: Story = {
     )
   },
   args: {
-    data: sortableDataFrame(createData()),
+    data: sortableDataFrame(createUnsortableData()),
   },
 }
 
@@ -435,7 +434,7 @@ export const LegacyPlaceholders: Story = {
 }
 export const CustomCellRenderer: Story = {
   args: {
-    data: createData(),
+    data: createUnsortableData(),
     renderCellContent: CustomCellContent,
   },
 }

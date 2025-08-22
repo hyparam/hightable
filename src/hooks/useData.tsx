@@ -1,5 +1,5 @@
 import { ReactNode, createContext, useContext, useEffect, useState } from 'react'
-import { DataFrame, arrayDataFrame } from '../helpers/dataframe/index.js'
+import { DataFrame, Obj, arrayDataFrame } from '../helpers/dataframe/index.js'
 
 interface DataContextType {
   data: DataFrame,
@@ -17,8 +17,8 @@ function getDefaultDataContext(): DataContextType {
 
 export const DataContext = createContext<DataContextType>(getDefaultDataContext())
 
-interface DataProviderProps {
-  data: DataFrame,
+interface DataProviderProps<M extends Obj, C extends Obj> {
+  data: DataFrame<M, C>,
   children: ReactNode
 }
 
@@ -26,14 +26,10 @@ function getRandomKey(): string {
   return crypto.randomUUID()
 }
 
-// function isValidNumRows(row: number): boolean {
-//   return Number.isInteger(row) && row >= 0
-// }
-
-export function DataProvider({ children, data }: DataProviderProps) {
+export function DataProvider<M extends Obj, C extends Obj>({ children, data }: DataProviderProps<M, C>) {
   // We want a string key to identify the data.
   const [key, setKey] = useState<string>(getRandomKey())
-  const [previousData, setPreviousData] = useState<DataFrame>(data)
+  const [previousData, setPreviousData] = useState<DataFrame<M, C>>(data)
   const [version, setVersion] = useState(0)
 
   useEffect(() => {

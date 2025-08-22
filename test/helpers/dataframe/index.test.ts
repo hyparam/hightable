@@ -8,9 +8,9 @@ describe('arrayDataFrame', () => {
     { id: 3, name: 'Charlie', age: 35 },
   ]
 
-  it('should create a DataFrame with correct header and numRows', () => {
+  it('should create a DataFrame with correct colummn descriptors and numRows', () => {
     const df = arrayDataFrame(testData)
-    expect(df.header).toEqual(['id', 'name', 'age'])
+    expect(df.columnDescriptors).toEqual(['id', 'name', 'age'].map(name => ({ name })))
     expect(df.numRows).toBe(3)
   })
 
@@ -36,7 +36,7 @@ describe('arrayDataFrame', () => {
 
   it('should throw if accessing data from an empty array', () => {
     const df = arrayDataFrame([])
-    expect(df.header).toEqual([])
+    expect(df.columnDescriptors).toEqual([])
     expect(df.numRows).toBe(0)
     expect(() => {
       df.getCell({ row: 0, column: 'name' } )
@@ -64,14 +64,14 @@ describe('sortableDataFrame', () => {
   ]
   const data = arrayDataFrame(array)
 
-  it('should set sortable to true', () => {
+  it('should set sortable to true to all columns', () => {
     const df = sortableDataFrame(data)
-    expect(df.sortable).toBe(true)
+    expect(df.columnDescriptors.every(({ sortable }) => sortable)).toBe(true)
   })
 
-  it('should preserve header and numRows', () => {
+  it('should preserve column names and numRows', () => {
     const df = sortableDataFrame(data)
-    expect(df.header).toEqual(data.header)
+    expect(df.columnDescriptors.map(({ name }) => name)).toEqual(data.columnDescriptors.map(({ name }) => name))
     expect(df.numRows).toBe(data.numRows)
   })
 
@@ -122,7 +122,7 @@ describe('sortableDataFrame', () => {
   it('should throw for invalid orderBy field', async () => {
     const df = sortableDataFrame(data)
     const orderBy = [{ column: 'invalid', direction: 'ascending' as const }]
-    await expect(df.fetch?.({ orderBy, rowStart: 0, rowEnd: 4, columns: ['name'] })).rejects.toThrow('Invalid orderBy field: invalid')
+    await expect(df.fetch?.({ orderBy, rowStart: 0, rowEnd: 4, columns: ['name'] })).rejects.toThrow('Unsortable columns in orderBy field: invalid')
   })
 })
 

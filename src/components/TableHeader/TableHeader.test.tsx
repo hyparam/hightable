@@ -4,7 +4,7 @@ import { render } from '../../utils/userEvent.js'
 import TableHeader from './TableHeader.js'
 
 describe('TableHeader', () => {
-  const columnDescriptors = [{ key: 'Name', index: 0, sortable: true }, { key: 'Age', index: 1, sortable: true }, { key: 'Address', index: 2, sortable: true }]
+  const columnsParameters = [{ name: 'Name', index: 0, sortable: true }, { name: 'Age', index: 1, sortable: true }, { name: 'Address', index: 2, sortable: true }]
   const canMeasureWidth = true
 
   beforeEach(() => {
@@ -15,12 +15,12 @@ describe('TableHeader', () => {
     const { getByText } = render(<table><thead><tr>
       <TableHeader
         canMeasureWidth={canMeasureWidth}
-        columnDescriptors={columnDescriptors}
+        columnsParameters={columnsParameters}
         ariaRowIndex={1}
       />
     </tr></thead></table>)
-    columnDescriptors.forEach(descriptor => {
-      expect(getByText(descriptor.key)).toBeDefined()
+    columnsParameters.forEach(descriptor => {
+      expect(getByText(descriptor.name)).toBeDefined()
     })
   })
 
@@ -28,7 +28,7 @@ describe('TableHeader', () => {
     const onOrderByChange = vi.fn()
     const { user, getByText } = render(<table><thead><tr>
       <TableHeader
-        columnDescriptors={columnDescriptors}
+        columnsParameters={columnsParameters}
         orderBy={[]}
         onOrderByChange={onOrderByChange}
         canMeasureWidth={canMeasureWidth}
@@ -46,7 +46,7 @@ describe('TableHeader', () => {
     const onOrderByChange = vi.fn()
     const { user, getByText } = render(<table><thead><tr>
       <TableHeader
-        columnDescriptors={columnDescriptors}
+        columnsParameters={columnsParameters}
         onOrderByChange={onOrderByChange}
         orderBy={[{ column: 'Age', direction: 'ascending' }]}
         canMeasureWidth={canMeasureWidth}
@@ -64,7 +64,7 @@ describe('TableHeader', () => {
     const onOrderByChange = vi.fn()
     const { user, getByText } = render(<table><thead><tr>
       <TableHeader
-        columnDescriptors={columnDescriptors}
+        columnsParameters={columnsParameters}
         onOrderByChange={onOrderByChange}
         orderBy={[{ column: 'Age', direction: 'descending' }]}
         canMeasureWidth={canMeasureWidth}
@@ -82,7 +82,7 @@ describe('TableHeader', () => {
     const onOrderByChange = vi.fn()
     const { user, getByText } = render(<table><thead><tr>
       <TableHeader
-        columnDescriptors={columnDescriptors}
+        columnsParameters={columnsParameters}
         onOrderByChange={onOrderByChange}
         orderBy={[{ column: 'Age', direction: 'ascending' }]}
         canMeasureWidth={canMeasureWidth}
@@ -104,7 +104,7 @@ describe('TableHeader', () => {
           <thead>
             <tr>
               <TableHeader
-                columnDescriptors={columnDescriptors}
+                columnsParameters={columnsParameters}
                 canMeasureWidth={canMeasureWidth}
                 ariaRowIndex={1}
                 onOrderByChange={onOrderByChange}
@@ -142,7 +142,7 @@ describe('TableHeader', () => {
           <thead>
             <tr>
               <TableHeader
-                columnDescriptors={columnDescriptors}
+                columnsParameters={columnsParameters}
                 canMeasureWidth={canMeasureWidth}
                 ariaRowIndex={1}
                 onOrderByChange={onOrderByChange}

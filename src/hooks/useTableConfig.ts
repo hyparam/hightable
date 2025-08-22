@@ -1,32 +1,27 @@
 // src/hooks/useTableConfig.ts
 import { useMemo } from 'react'
 import { ColumnConfig, ColumnConfiguration } from '../helpers/columnConfiguration.js'
-import { DataFrame } from '../helpers/dataframe/index.js'
+import { ColumnDescriptor, DataFrame } from '../helpers/dataframe/index.js'
 
-export interface ColumnDescriptor extends ColumnConfig {
-  key: string; // column name
+// The column parameters don't include the `metadata` field from `ColumnDescriptor`
+export interface ColumnParameters extends ColumnConfig, Omit<ColumnDescriptor, 'metadata'> {
   index: number; // position in current order
 }
 
 export function useTableConfig(
-  df: DataFrame,
+  df: Pick<DataFrame, 'columnDescriptors'>,
   config?: ColumnConfiguration
-): ColumnDescriptor[] {
+): ColumnParameters[] {
   return useMemo(() => {
-    const { header } = df
-    const inHeader = new Set(header)
+    const { columnDescriptors } = df
+    const inHeader = new Set(columnDescriptors.map(c => c.name))
 
-    // Until dataframe 2.0 only allow disabling sort via UI, cannot directly enable sort
-    if (config?.sortable) {
-      console.warn('Currently enabling sort via sortable is not implemented, value will be ignored')
-      delete config.sortable
-    }
     // Build descriptors following DataFrame.header order
-    const cols: ColumnDescriptor[] = header.map((key, i) => ({
-      key,
+    const cols: ColumnParameters[] = columnDescriptors.map(({ name, sortable }, i) => ({
+      name,
       index: i,
-      sortable: df.sortable ?? false, // Set sortable to dataframe's value by default
-      ...config?.[key] ?? {},
+      sortable: sortable ?? false, // Default to false if not specified
+      ...config?.[name] ?? {},
     }))
 
     if (config) {

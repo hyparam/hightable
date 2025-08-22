@@ -8,23 +8,21 @@ import { useTableConfig } from '../../src/hooks/useTableConfig'
 afterEach(cleanup)
 
 describe('useTableConfig', () => {
-  it('returns descriptors in DataFrame header order', () => {
+  it('returns parameters in DataFrame column descriptors order', () => {
     const df = {
-      header: ['id', 'name', 'status'],
-      sortable: false,
-    } as DataFrame
+      columnDescriptors: ['id', 'name', 'status'].map(name => ({ name })),
+    } as Pick<DataFrame, 'columnDescriptors'>
 
     const { result } = renderHook(() => useTableConfig(df, undefined))
 
-    expect(result.current.map(c => c.key)).toEqual(df.header)
+    expect(result.current.map(c => c.name)).toEqual(df.columnDescriptors.map(c => c.name))
     expect(result.current.map(c => c.index)).toEqual([0, 1, 2])
   })
 
-  it('merges columnConfiguration props into descriptors', () => {
+  it('merges columnConfiguration props into parameters', () => {
     const df = {
-      header: ['id', 'name', 'status'],
-      sortable: false,
-    } as DataFrame
+      columnDescriptors: ['id', 'name', 'status'].map(name => ({ name })),
+    } as Pick<DataFrame, 'columnDescriptors'>
 
     const columnConfiguration: ColumnConfiguration = {
       name: { headerComponent: <strong>Name</strong> },
@@ -35,7 +33,7 @@ describe('useTableConfig', () => {
     )
 
     const [, nameCol] = result.current
-    expect(nameCol.key).toBe('name')
+    expect(nameCol.name).toBe('name')
     expect(nameCol.sortable).toBe(false)
     expect(nameCol.headerComponent).toMatchInlineSnapshot(`
       <strong>
@@ -46,9 +44,8 @@ describe('useTableConfig', () => {
 
   it('includes minWidth in column configuration', () => {
     const df = {
-      header: ['id', 'name'],
-      sortable: false,
-    } as DataFrame
+      columnDescriptors: ['id', 'name'].map(name => ({ name })),
+    } as Pick<DataFrame, 'columnDescriptors'>
 
     const columnConfiguration: ColumnConfiguration = {
       name: { minWidth: 150 },
@@ -59,26 +56,32 @@ describe('useTableConfig', () => {
     )
 
     const [, nameCol] = result.current
-    expect(nameCol.key).toBe('name')
+    expect(nameCol.name).toBe('name')
     expect(nameCol.minWidth).toBe(150)
   })
 
-  it('overrides dataframe sortable with column specific value', () => {
+  it('uses dataframe column descriptor sortable value', () => {
     const df = {
-      header: ['id', 'name', 'status'],
-      sortable: false,
-    } as DataFrame
+      columnDescriptors: [
+        { name: 'id' },
+        { name: 'name', sortable: true },
+        { name: 'status' },
+      ],
+    } as Pick<DataFrame, 'columnDescriptors'>
 
     const columnConfiguration: ColumnConfiguration = {
-      name: { headerComponent: <strong>Name</strong>, sortable: true },
+      name: { headerComponent: <strong>Name</strong> },
     }
 
     const { result } = renderHook(() =>
       useTableConfig(df, columnConfiguration)
     )
 
-    const [, nameCol] = result.current
-    expect(nameCol.key).toBe('name')
+    const [idCol, nameCol] = result.current
+    expect(idCol.name).toBe('id')
+    expect(idCol.sortable).toBe(false)
+    expect(idCol.headerComponent).toBeUndefined()
+    expect(nameCol.name).toBe('name')
     expect(nameCol.sortable).toBe(true)
     expect(nameCol.headerComponent).toMatchInlineSnapshot(`
       <strong>
@@ -87,11 +90,10 @@ describe('useTableConfig', () => {
     `)
   })
 
-  it('ignores configuration keys that are not in DataFrame.header', () => {
+  it('ignores configuration keys that are not in DataFrame.columnDescriptors', () => {
     const df = {
-      header: ['id'],
-      sortable: false,
-    } as DataFrame
+      columnDescriptors: [{ name: 'id' }],
+    } as Pick<DataFrame, 'columnDescriptors'>
     const columnConfiguration = {
       id: { width: 50 },
       extraneous: { width: 123 },
@@ -102,17 +104,16 @@ describe('useTableConfig', () => {
     )
 
     expect(result.current).toHaveLength(1)
-    expect(result.current[0].key).toBe('id')
+    expect(result.current[0].name).toBe('id')
   })
 
   it('returns a stable reference when inputs are unchanged', () => {
     const df = {
-      header: ['id'],
-      sortable: false,
-    } as DataFrame
+      columnDescriptors: [{ name: 'id' }],
+    } as Pick<DataFrame, 'columnDescriptors'>
 
     const { result, rerender } = renderHook(
-      ({ d, c }: { d: DataFrame; c?: ColumnConfiguration }) =>
+      ({ d, c }: { d: Pick<DataFrame, 'columnDescriptors'>; c?: ColumnConfiguration }) =>
         useTableConfig(d, c),
       { initialProps: { d: df, c: undefined } }
     )
