@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## [0.19.1](https://github.com/hyparam/hightable/compare/v0.19.0...v0.19.1) - 2025-08-22
+
+### Added
+
+- export `validateGetCellParams`, `validateGetRowNumberParams` and `validateOrderBy` helpers ([#260](https://github.com/hyparam/hightable/pull/260)).
+
+### Fixed
+
+- fix orderBy validation ([#259](https://github.com/hyparam/hightable/pull/259))
+
 ## [0.19.0](https://github.com/hyparam/hightable/compare/v0.18.5...v0.19.0) - 2025-08-22
 
 ### Changed
