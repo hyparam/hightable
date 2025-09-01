@@ -14,9 +14,9 @@ export interface DataFrameEvents {
 }
 
 export interface ColumnDescriptor<C extends Obj = Obj> {
-  name: string;
-  sortable?: boolean;
-  metadata?: C
+  name: string; // column name
+  sortable?: boolean; // is the column sortable? Defaults to false
+  metadata?: C // custom metadata extendable by the user
 }
 
 export type Fetch = ({ rowStart, rowEnd, columns, orderBy, signal }: { rowStart: number, rowEnd: number, columns?: string[], orderBy?: OrderBy, signal?: AbortSignal }) => Promise<void>
