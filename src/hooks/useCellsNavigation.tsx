@@ -50,7 +50,13 @@ export function CellsNavigationProvider({ colCount, rowCount, rowPadding, childr
 
   const onTableKeyDown = useCallback((event: KeyboardEvent) => {
     const { key } = event
-    const ctrl = event.ctrlKey || event.metaKey
+    const ctrl = event.ctrlKey
+    const meta = event.metaKey
+    const shift = event.shiftKey
+    // if the user is pressing Meta or Shift, do not handle the event
+    if (meta || shift) {
+      return
+    }
     if (key === 'ArrowRight') {
       if (ctrl) {
         setColIndex(colCount)
