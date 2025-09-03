@@ -1,6 +1,5 @@
-import { createEventTarget } from '../../typedEventTarget.js'
 import { checkSignal, getContinuousRanges, validateFetchParams, validateGetCellParams, validateGetRowNumberParams } from '../helpers.js'
-import { DataFrame, DataFrameEvents, ResolvedValue, sortableDataFrame } from '../index.js'
+import { DataFrame, ResolvedValue, sortableDataFrame } from '../index.js'
 import { DataFrameV1 } from './dataframeV1.js'
 import type { OrderBy } from '../../sort.js'
 
@@ -18,8 +17,6 @@ export function convertV1ToDataFrame(data: DataFrameV1): DataFrame {
 export function convertV1ToUnsortableDataFrame(data: DataFrameV1): DataFrame {
   const columnDescriptors = data.header.map(name => ({ name }))
   const { numRows } = data
-
-  const eventTarget = createEventTarget<DataFrameEvents>()
 
   // Create a local cache for the row numbers and the cells.
   const rowNumbersCache = new Map<number, ResolvedValue<number>>()
@@ -62,7 +59,6 @@ export function convertV1ToUnsortableDataFrame(data: DataFrameV1): DataFrame {
           const cachedRowNumber = rowNumbersCache.get(rowIndex)
           if (!cachedRowNumber || cachedRowNumber.value !== rowNumber) {
             rowNumbersCache.set(rowIndex, { value: rowNumber })
-            eventTarget.dispatchEvent(new CustomEvent('resolve'))
           }
         }))
         for (const column of columnDescriptors.map(c => c.name)) {
@@ -78,7 +74,6 @@ export function convertV1ToUnsortableDataFrame(data: DataFrameV1): DataFrame {
             const cachedCell = cellsCache.get(column)?.get(rowIndex)
             if (!cachedCell || cachedCell.value !== value) {
               cellsCache.get(column)?.set(rowIndex, { value })
-              eventTarget.dispatchEvent(new CustomEvent('resolve'))
             }
           }))
         }
@@ -93,6 +88,5 @@ export function convertV1ToUnsortableDataFrame(data: DataFrameV1): DataFrame {
     getRowNumber,
     getCell,
     fetch,
-    eventTarget,
   }
 }

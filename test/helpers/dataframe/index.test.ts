@@ -48,9 +48,9 @@ describe('arrayDataFrame', () => {
     expect(df.fetch).toBeUndefined()
   })
 
-  it('does not provide an event target', () => {
+  it('does not provide registerCellListener by default', () => {
     const df = arrayDataFrame([])
-    expect(df.eventTarget).toBeUndefined()
+    expect(df.registerCellListener).toBeUndefined()
   })
 
 })

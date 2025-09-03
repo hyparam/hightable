@@ -1,5 +1,4 @@
 import type { OrderBy } from '../sort.js'
-import type { CustomEventTarget } from '../typedEventTarget.js'
 
 export type Obj = Record<string, any>
 
@@ -7,10 +6,6 @@ export type Cells = Obj
 
 export interface ResolvedValue<T = any> {
   value: T
-}
-
-export interface DataFrameEvents {
-  'resolve': undefined;
 }
 
 export interface ColumnDescriptor<C extends Obj = Obj> {
@@ -59,10 +54,6 @@ export interface DataFrame<M extends Obj = Obj, C extends Obj = Obj> {
   //
   // It rejects on the first error, which can be the signal abort (it must throw `AbortError`).
   //
-  // It's responsible for dispatching the "resolve" event when data has resolved
-  // (ie: when some new data is available synchronously with the methods `getCell` and `getRowNumber`).
-  // It can dispatch the events multiple times if the data is fetched in chunks.
-  //
   // Note that it does not return the data.
   //
   // rowEnd is exclusive
@@ -70,16 +61,6 @@ export interface DataFrame<M extends Obj = Obj, C extends Obj = Obj> {
   // For static data frames, fetch can be undefined.
   fetch?: Fetch
 
-  // emits events, defined in DataFrameEvents
-  //
-  // listen to an event:
-  // eventTarget.addEventListener('resolve', (event) => {
-  //   console.log('A new cell has resolved')
-  // })
-  //
-  // publish an event:
-  // eventTarget.dispatchEvent(new CustomEvent('resolve'))
-  //
-  // For static data frames, eventTarget can be undefined.
-  eventTarget?: CustomEventTarget<DataFrameEvents>
+  // Optional cache listener for dataframes that support caching
+  registerCellListener?: (callback: () => void) => () => void
 }

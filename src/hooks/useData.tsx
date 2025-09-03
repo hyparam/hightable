@@ -33,12 +33,12 @@ export function DataProvider<M extends Obj, C extends Obj>({ children, data }: D
   const [version, setVersion] = useState(0)
 
   useEffect(() => {
-    function onResolve() {
-      setVersion(prev => prev + 1)
-    }
-    data.eventTarget?.addEventListener('resolve', onResolve)
-    return () => {
-      data.eventTarget?.removeEventListener('resolve', onResolve)
+    // Check if the data has a registerCellListener (from useDataFrameCache)
+    if (data.registerCellListener) {
+      const unregister = data.registerCellListener(() => {
+        setVersion(prev => prev + 1)
+      })
+      return unregister
     }
   }, [data])
 

@@ -1,4 +1,6 @@
 export { arrayDataFrame } from './array.js'
+export { createDataFrameCache } from './cache.js'
+export type { CellListener, DataFrameCache } from './cache.js'
 export { filterDataFrame } from './filter.js'
 export { checkSignal, createGetRowNumber, validateColumn, validateFetchParams, validateGetCellParams, validateGetRowNumberParams, validateOrderBy, validateRow } from './helpers.js'
 export { convertV1ToDataFrame } from './legacy/convert.js'
