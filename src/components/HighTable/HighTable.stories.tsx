@@ -9,6 +9,7 @@ import type { Fetch, ResolvedValue } from '../../helpers/dataframe/types.js'
 import type { Selection } from '../../helpers/selection.js'
 import type { OrderBy } from '../../helpers/sort.js'
 import { createEventTarget } from '../../helpers/typedEventTarget.js'
+import { useDataFrameCache } from '../../hooks/useDataFrameCache.js'
 import type { CellContentProps } from './HighTable.js'
 import HighTable from './HighTable.js'
 
@@ -388,6 +389,48 @@ export const ReadOnlySelection: Story = {
   args: {
     data: sortableDataFrame(createUnsortableData()),
   },
+}
+
+function AsyncDataWithHook() {
+  const columnDescriptors = ['ID', 'Count'].map(name => ({ name }))
+  const numRows = 500
+
+  const { dataframe, setCell } = useDataFrameCache({
+    numRows,
+    columnDescriptors,
+    fetch: async ({ rowStart, rowEnd, columns, orderBy, signal }) => {
+      checkSignal(signal)
+      validateFetchParams({ rowStart, rowEnd, columns, orderBy, data: { numRows, columnDescriptors } })
+
+      for (const column of columns ?? []) {
+        for (let row = rowStart; row < rowEnd; row++) {
+          // Simulate variable delay times
+          const rowMs = row % 3 === 0 ? 10 * Math.floor(10 * Math.random()) :
+            row % 3 === 1 ? 20 * Math.floor(10 * Math.random()) :
+              500
+          const ms = rowMs * (column === 'ID' ? 1 : 2)
+          const resolvedValue = column === 'ID' ? `row ${row}` : numRows - row
+
+          delay(resolvedValue, ms).then((value) => {
+            checkSignal(signal)
+            setCell(row, column, value)
+          }).catch((error) => {
+            if (error instanceof DOMException && error.name === 'AbortError') {
+              // Ignore abort errors
+              return
+            }
+            throw error
+          })
+        }
+      }
+    },
+  }
+
+  return <HighTable data={dataframe} />
+}
+
+export const AsyncDataWithCache: Story = {
+  render: () => <AsyncDataWithHook />,
 }
 
 export const LegacySortable: Story = {

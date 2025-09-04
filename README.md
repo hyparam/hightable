@@ -41,15 +41,55 @@ HighTable uses a data model called `DataFrame`, which defines how data is fetche
  - `numRows`: The total number of rows in the dataset.
  - `getRowNumber`: A function that returns the row number for a given row index. If not resolved yet, it returns undefined.
  - `getCell`: A function that returns the value of a cell at a specific row and column. If not resolved yet, it returns undefined.
- - `eventTarget`: An optional event target which must dispatch the event `resolve` when a cell or row number is resolved. This can be used to trigger re-renders or other side effects.
- - `fetch`: An optional asynchronous function that fetches cells and row numbers, for a range of rows and columns. It should only fetch the missing data, and once the data is fetched, `getRowNumber` and `getCell` should return the resolved values. It is responsible for dispaching the `resolve` event (once or multiple times) on the `eventTarget` when the data is ready.
+  - `fetch`: An optional asynchronous function that fetches cells and row numbers, for a range of rows and columns. It should only fetch the missing data, and once the data is fetched, `getRowNumber` and `getCell` should return the resolved values. When using `useDataFrameCache`, call `setCell` to store fetched data.
 
 ## Usage
 
 Here's a basic example of how to use HighTable in your React application:
 
 ```jsx
-import HighTable from 'hightable'
+import HighTable, { useDataFrameCache } from 'hightable'
+
+function App() {
+  const { dataframe, setCell } = useDataFrameCache({
+    numRows: 1000000,
+    columnDescriptors: [{name: 'ID'}, {name: 'Name'}, {name: 'Email'}],
+    async fetch({ rowStart, rowEnd, columns, orderBy, signal }) {
+      // fetch cell data from your data source here
+      for (let row = rowStart; row < rowEnd; row++) {
+        for (const column of columns ?? []) {
+          // Simulate async data fetching
+          const value = await fetchCellData(row, column)
+          // store the fetched data in the cache
+          setCell(row, column, value)
+        }
+      }
+    }
+  })
+
+  return (
+    <HighTable
+      data={dataframe}
+      onError={console.error}
+    />
+  )
+}
+
+// Example fetch function
+async function fetchCellData(row, column) {
+  // Your data fetching logic here
+  return column === 'ID' ? `row-${row}` : 
+         column === 'Name' ? `User ${row}` :
+         `${column.toLowerCase()}${row}@example.com`
+}
+```
+
+### Alternative: Manual Cache Management
+
+If you need more control over caching, you can still manage the cache manually:
+
+```jsx
+import HighTable, { createGetRowNumber } from 'hightable'
 
 const eventTarget = new EventTarget()
 const cache = new Map()
@@ -61,15 +101,16 @@ const store = (cells) => {
     }
   }
 }
+
 const dataframe = {
   columnDescriptors: [{name: 'ID'}, {name: 'Name'}, {name: 'Email'}],
   numRows: 1000000,
-  getRowNumber: ({ row }) => ({ value: rowIndex }),
-  getCell: ({ row, col }) => cache.get(col).get(row),
+  getRowNumber: createGetRowNumber({ numRows: 1000000 }),
+  getCell: ({ row, column }) => cache.get(column)?.get(row),
   eventTarget,
-  async fetch({row, column}) {
+  async fetch({ rowStart, rowEnd, columns, orderBy, signal }) {
     // fetch cell data from your data source here
-    const cells = await fetchCellData(row, col)
+    const cells = await fetchCellData(rowStart, rowEnd, columns)
     // store the fetched data in the cache
     store(cells)
     // dispatch the resolve event to notify the table that the data is ready

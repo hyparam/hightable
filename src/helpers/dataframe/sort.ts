@@ -1,7 +1,6 @@
 import { OrderBy, computeRanks, serializeOrderBy, validateOrderByAgainstSortableColumns } from '../sort.js'
-import { createEventTarget } from '../typedEventTarget.js'
 import { checkSignal, validateColumn, validateFetchParams, validateRow } from './helpers.js'
-import { DataFrame, DataFrameEvents, Obj, ResolvedValue } from './types.js'
+import { DataFrame, Obj, ResolvedValue } from './types.js'
 
 export function sortableDataFrame<M extends Obj, C extends Obj>(
   data: DataFrame<M, C>, options?: { sortableColumns?: Set<string> }
@@ -35,7 +34,6 @@ export function sortableDataFrame<M extends Obj, C extends Obj>(
   const ranksByColumn = new Map<string, number[]>()
   const indexesByOrderBy = new Map<string, number[]>()
 
-  const eventTarget = createEventTarget<DataFrameEvents>()
 
   const getUpstreamRow: ({ row, orderBy }: { row: number, orderBy?: OrderBy }) => ResolvedValue<number> | undefined = function({ row, orderBy }) {
     validateRow({ row, data: { numRows } })
@@ -76,10 +74,6 @@ export function sortableDataFrame<M extends Obj, C extends Obj>(
 
   const fetch: ({ rowStart, rowEnd, columns, orderBy, signal }: { rowStart: number, rowEnd: number, columns?: string[], orderBy?: OrderBy, signal?: AbortSignal }) => Promise<void> = async function ({ rowStart, rowEnd, columns, orderBy, signal }){
     validateFetchParams({ rowStart, rowEnd, columns, orderBy, data: { numRows, columnDescriptors } })
-    function callback() {
-      eventTarget.dispatchEvent(new CustomEvent('resolve'))
-    }
-    data.eventTarget?.addEventListener('resolve', callback)
 
     try {
       if (!orderBy || orderBy.length === 0) {
@@ -101,8 +95,6 @@ export function sortableDataFrame<M extends Obj, C extends Obj>(
         setIndexes: ({ orderBy, indexes }) => {
           // Store the indexes in the map.
           indexesByOrderBy.set(serializeOrderBy(orderBy), indexes)
-          // Notify the event target that the indexes have been updated.
-          eventTarget.dispatchEvent(new CustomEvent('resolve'))
         },
         data,
       })
@@ -112,11 +104,11 @@ export function sortableDataFrame<M extends Obj, C extends Obj>(
         await fetchFromIndexes({ columns, signal, indexes: indexes.slice(rowStart, rowEnd), fetch: data.fetch })
       }
     } finally {
-      data.eventTarget?.removeEventListener('resolve', callback)
+      // No cleanup needed
     }
   }
 
-  return { metadata, numRows, columnDescriptors, getRowNumber, getCell, fetch, eventTarget }
+  return { metadata, numRows, columnDescriptors, getRowNumber, getCell, fetch }
 }
 
 async function fetchFromIndexes({ columns, indexes, signal, fetch }: { columns?: string[], indexes: number[], signal?: AbortSignal, fetch: Exclude<DataFrame['fetch'], undefined> }): Promise<void> {

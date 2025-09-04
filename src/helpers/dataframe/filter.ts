@@ -1,6 +1,5 @@
-import { createEventTarget } from '../typedEventTarget.js'
 import { checkSignal, getContinuousRanges, validateFetchParams, validateGetCellParams, validateGetRowNumberParams, validateRow } from './helpers.js'
-import type { DataFrame, DataFrameEvents, Fetch, Obj } from './types.js'
+import type { DataFrame, Fetch, Obj } from './types.js'
 import type { OrderBy } from '../sort.js'
 
 // return an unsortable data frame: we can call sortableDataFrame on it later, so that we sort on a small subset of the data
@@ -45,28 +44,15 @@ export function filterDataFrame<M extends Obj, C extends Obj>(
   }
 
   if (upstreamFetch !== undefined) {
-    const eventTarget = createEventTarget<DataFrameEvents>()
     const fetch: Fetch = async function({ rowStart, rowEnd, columns, orderBy, signal }: { rowStart: number, rowEnd: number, columns?: string[], orderBy?: OrderBy, signal?: AbortSignal }) {
       validateFetchParams({ rowStart, rowEnd, columns, orderBy, data: { numRows, columnDescriptors } })
       checkSignal(signal)
 
-      function callback() {
-        eventTarget.dispatchEvent(new CustomEvent('resolve'))
-      }
-      try {
-        data.eventTarget?.addEventListener('resolve', callback)
-        // The upstream rows are ordered, so we can fetch them by continuous ranges.
-        const ranges = getContinuousRanges(upstreamRows.slice(rowStart, rowEnd))
-        const promises = ranges.map((range) => upstreamFetch({ ...range, columns, signal }).then(() => {
-          checkSignal(signal)
-          eventTarget.dispatchEvent(new CustomEvent('resolve'))
-        }))
-        await Promise.all(promises)
-      } finally {
-        data.eventTarget?.removeEventListener('resolve', callback)
-      }
+      // The upstream rows are ordered, so we can fetch them by continuous ranges.
+      const ranges = getContinuousRanges(upstreamRows.slice(rowStart, rowEnd))
+      const promises = ranges.map((range) => upstreamFetch({ ...range, columns, signal }))
+      await Promise.all(promises)
     }
-    df.eventTarget = eventTarget
     df.fetch = fetch
   }
 

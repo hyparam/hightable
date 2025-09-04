@@ -1,7 +1,7 @@
 import HighTable from './components/HighTable/HighTable.js'
 export { type CellContentProps } from './components/HighTable/HighTable.js'
-export { arrayDataFrame, checkSignal, convertV1ToDataFrame, createGetRowNumber, filterDataFrame, sortableDataFrame, validateColumn, validateFetchParams, validateGetCellParams, validateGetRowNumberParams, validateOrderBy, validateRow } from './helpers/dataframe/index.js'
-export type { Cells, DataFrame, DataFrameEvents, ResolvedValue } from './helpers/dataframe/index.js'
+export { arrayDataFrame, checkSignal, convertV1ToDataFrame, createDataFrameCache, createGetRowNumber, filterDataFrame, sortableDataFrame, validateColumn, validateFetchParams, validateGetCellParams, validateGetRowNumberParams, validateOrderBy, validateRow } from './helpers/dataframe/index.js'
+export type { CellListener, Cells, DataFrame, DataFrameCache, DataFrameEvents, ResolvedValue } from './helpers/dataframe/index.js'
 export { resolvablePromise, wrapPromise, wrapResolved } from './helpers/dataframe/legacy/promise.js'
 export type { ResolvablePromise } from './helpers/dataframe/legacy/promise.js'
 export { asyncRows, awaitRow, awaitRows, resolvableRow } from './helpers/dataframe/legacy/row.js'
@@ -10,6 +10,7 @@ export type { Selection } from './helpers/selection.js'
 export type { OrderBy } from './helpers/sort.js'
 export { createEventTarget } from './helpers/typedEventTarget.js'
 export type { CustomEventTarget, TypedCustomEvent } from './helpers/typedEventTarget.js'
+export { useDataFrameCache } from './hooks/useDataFrameCache.js'
 export { stringify } from './utils/stringify.js'
 export { HighTable }
 export default HighTable
