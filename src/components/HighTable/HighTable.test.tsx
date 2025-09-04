@@ -1208,8 +1208,9 @@ describe('Navigating Hightable with the keyboard', () => {
       // ['{Control>}{End}{End}{End}{End}{/Control}', lastRow, lastCol], // Cannot be tested because it relies on scroll
 
       // do nothing
-      ['{Shift>}{ArrowLeft}{/Shift}', rowIndex, colIndex], // no op
+      ['{Alt>}{ArrowLeft}{/Alt}', rowIndex, colIndex], // no op
       ['{Meta>}{ArrowLeft}{/Meta}', rowIndex, colIndex], // no op
+      ['{Shift>}{ArrowLeft}{/Shift}', rowIndex, colIndex], // no op
     ])('pressing "%s" moves the focus to the cell (%s, %s)', async (key, expectedRowIndex, expectedColIndex) => {
       const { user } = render(<HighTable data={data} padding={pageSize} />)
       // focus the cell (4, 3)

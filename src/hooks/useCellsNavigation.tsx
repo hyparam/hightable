@@ -49,45 +49,42 @@ export function CellsNavigationProvider({ colCount, rowCount, rowPadding, childr
   const [enterCellsNavigation, setEnterCellsNavigation] = useState(false)
 
   const onTableKeyDown = useCallback((event: KeyboardEvent) => {
-    const { key } = event
-    const ctrl = event.ctrlKey
-    const meta = event.metaKey
-    const shift = event.shiftKey
-    // if the user is pressing Meta or Shift, do not handle the event
-    if (meta || shift) {
+    const { key, altKey, ctrlKey, metaKey, shiftKey } = event
+    // if the user is pressing Alt, Meta or Shift, do not handle the event
+    if (altKey || metaKey || shiftKey) {
       return
     }
     if (key === 'ArrowRight') {
-      if (ctrl) {
+      if (ctrlKey) {
         setColIndex(colCount)
       } else {
         setColIndex((prev) => prev < colCount ? prev + 1 : prev)
       }
     } else if (key === 'ArrowLeft') {
-      if (ctrl) {
+      if (ctrlKey) {
         setColIndex(1)
       } else {
         setColIndex((prev) => prev > 1 ? prev - 1 : prev)
       }
     } else if (key === 'ArrowDown') {
-      if (ctrl) {
+      if (ctrlKey) {
         setRowIndex(rowCount)
       } else {
         setRowIndex((prev) => prev < rowCount ? prev + 1 : prev)
       }
     } else if (key === 'ArrowUp') {
-      if (ctrl) {
+      if (ctrlKey) {
         setRowIndex(1)
       } else {
         setRowIndex((prev) => prev > 1 ? prev - 1 : prev)
       }
     } else if (key === 'Home') {
-      if (ctrl) {
+      if (ctrlKey) {
         setRowIndex(1)
       }
       setColIndex(1)
     } else if (key === 'End') {
-      if (ctrl) {
+      if (ctrlKey) {
         setRowIndex(rowCount)
       }
       setColIndex(colCount)
