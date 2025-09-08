@@ -62,6 +62,17 @@ export function toggleColumn(column: string, orderBy: OrderBy): OrderBy {
   return [{ column, direction: 'ascending' }, ...prefix, ...suffix]
 }
 
+export function toggleColumnExclusive(column: string, orderBy: OrderBy): OrderBy {
+  const { item } = partitionOrderBy(orderBy, column)
+  if (item) {
+    if (item.direction === 'ascending') {
+      return [{ column, direction: 'descending' }]
+    }
+    return []
+  }
+  return [{ column, direction: 'ascending' }]
+}
+
 // TODO(SL): test
 export function computeRanks(values: any[]): number[] {
   const valuesWithIndex = values.map((value, index) => ({ value, index }))

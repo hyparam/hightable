@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react'
-import { OrderBy, toggleColumn } from '../../helpers/sort.js'
+import { OrderBy, toggleColumn, toggleColumnExclusive } from '../../helpers/sort.js'
+import { useData } from '../../hooks/useData.js'
 import { ColumnParameters } from '../../hooks/useTableConfig.js'
 import ColumnHeader from '../ColumnHeader/ColumnHeader.js'
 
@@ -18,12 +19,15 @@ interface TableHeaderProps {
 export default function TableHeader({
   columnsParameters, orderBy, onOrderByChange, canMeasureWidth, ariaRowIndex, columnClassNames = [],
 }: TableHeaderProps) {
+  const { data } = useData()
+  const exclusiveSort = data.metadata?.exclusiveSort === true
   // Function to handle click for changing orderBy
   const getToggleOrderBy = useCallback((columnHeader: string) => {
     if (!onOrderByChange || !orderBy) return undefined
     return () => {
-      onOrderByChange(toggleColumn(columnHeader, orderBy))
-    }}, [orderBy, onOrderByChange]
+      const next = exclusiveSort ? toggleColumnExclusive(columnHeader, orderBy) : toggleColumn(columnHeader, orderBy)
+      onOrderByChange(next)
+    }}, [orderBy, onOrderByChange, exclusiveSort]
   )
 
   const orderByColumn = useMemo(() => {

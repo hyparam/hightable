@@ -4,7 +4,7 @@ import { checkSignal, validateColumn, validateFetchParams, validateRow } from '.
 import { DataFrame, DataFrameEvents, Obj, ResolvedValue } from './types.js'
 
 export function sortableDataFrame<M extends Obj, C extends Obj>(
-  data: DataFrame<M, C>, options?: { sortableColumns?: Set<string> }
+  data: DataFrame<M, C>, options?: { sortableColumns?: Set<string>, exclusiveSort?: boolean }
 ): DataFrame<M, C> {
   // If sortableColumns is not provided, make all columns sortable.
   const sortableColumns = options?.sortableColumns ?? new Set(data.columnDescriptors.map(c => c.name))
@@ -29,7 +29,10 @@ export function sortableDataFrame<M extends Obj, C extends Obj>(
     sortable: sortableColumns.has(name),
     metadata: structuredClone(metadata), // Create a deep copy of the column metadata to avoid mutating the original
   }))
-  const metadata = structuredClone(data.metadata) // Create a deep copy of the metadata to avoid mutating the original
+  let metadata: any = structuredClone(data.metadata) // Create a deep copy of the metadata to avoid mutating the original
+  if (options && 'exclusiveSort' in options) {
+    metadata = { ...metadata ?? {}, exclusiveSort: options.exclusiveSort }
+  }
 
   // The cache cannot be erased. Create a new data frame if needed.
   const ranksByColumn = new Map<string, number[]>()
