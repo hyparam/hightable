@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## [0.19.3](https://github.com/hyparam/hightable/compare/v0.19.2...v0.19.3) - 2025-09-09
+
+### Added
+
+- add DataFrame field `exclusiveSort` to limit sorting to one column ([#267](https://github.com/hyparam/hightable/pull/267)).
+
 ## [0.19.2](https://github.com/hyparam/hightable/compare/v0.19.1...v0.19.2) - 2025-09-09
 
 ### Added
