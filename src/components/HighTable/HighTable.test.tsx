@@ -1,4 +1,5 @@
-import { act, fireEvent, waitFor, within } from '@testing-library/react'
+import { act } from 'react'
+import { fireEvent, waitFor, within } from '@testing-library/react'
 import { UserEvent } from '@testing-library/user-event'
 import { Mock, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createGetRowNumber, validateFetchParams, validateGetCellParams, validateGetRowNumberParams } from '../../helpers/dataframe/helpers.js'

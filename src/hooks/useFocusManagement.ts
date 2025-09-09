@@ -25,7 +25,7 @@ const FOCUSABLE_SELECTOR =
  * @example
  * ```tsx
  * function DropdownMenu({ isOpen }: { isOpen: boolean }) {
- *   const menuRef = useRef<HTMLDivElement>(null)
+ *   const menuRef = useRef<HTMLDivElement | null>(null)
  *   const { getFocusableElements } = useFocusManagement(isOpen, menuRef)
  *
  *   return (

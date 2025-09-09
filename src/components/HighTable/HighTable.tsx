@@ -178,8 +178,8 @@ export function HighTableInner({
   const scrollHeight = (numRows + 1) * rowHeight
   const offsetTop = Math.max(0, rowsRange.start - padding) * rowHeight
 
-  const tableCornerRef = useRef<Pick<HTMLTableCellElement, 'offsetWidth'>>(null)
-  const scrollRef = useRef<HTMLDivElement>(null)
+  const tableCornerRef = useRef<Pick<HTMLTableCellElement, 'offsetWidth'> | null>(null)
+  const scrollRef = useRef<HTMLDivElement | null>(null)
 
   // scroll vertically to the focused cell if needed
   useEffect(() => {
