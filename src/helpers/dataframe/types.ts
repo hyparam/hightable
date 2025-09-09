@@ -37,6 +37,7 @@ export interface DataFrame<M extends Obj = Obj, C extends Obj = Obj> {
   metadata?: M
 
   // If true, only one column can be sorted at a time, and any update to orderBy will replace the previous one.
+  // Defaults to false.
   exclusiveSort?: boolean
 
   // Returns the cell value.

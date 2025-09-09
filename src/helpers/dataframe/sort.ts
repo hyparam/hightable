@@ -20,6 +20,7 @@ export function sortableDataFrame<M extends Obj, C extends Obj>(
     }
     return sortable === false || sortable === undefined // If the column is not in sortableColumns, it should not be sortable
   })) {
+    // TODO(SL): we should return a clone of the data frame (and we should provide a helper function to clone a dataframe).
     if (options && 'exclusiveSort' in options && data.exclusiveSort !== options.exclusiveSort) {
       return { ...data, exclusiveSort: options.exclusiveSort }
     }
