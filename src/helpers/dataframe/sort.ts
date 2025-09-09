@@ -33,7 +33,7 @@ export function sortableDataFrame<M extends Obj, C extends Obj>(
     sortable: sortableColumns.has(name),
     metadata: structuredClone(metadata), // Create a deep copy of the column metadata to avoid mutating the original
   }))
-  const metadata: any = structuredClone(data.metadata) // Create a deep copy of the metadata to avoid mutating the original
+  const metadata = structuredClone(data.metadata) // Create a deep copy of the metadata to avoid mutating the original
 
   // The cache cannot be erased. Create a new data frame if needed.
   const ranksByColumn = new Map<string, number[]>()
