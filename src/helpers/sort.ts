@@ -11,11 +11,14 @@ export function serializeOrderBy(orderBy: OrderBy): string {
   return JSON.stringify(orderBy)
 }
 
-export function validateOrderByAgainstSortableColumns({ sortableColumns, orderBy }: { sortableColumns?: Set<string>, orderBy?: OrderBy }): void {
+export function validateOrderByAgainstSortableColumns({ sortableColumns, orderBy, exclusiveSort }: { sortableColumns?: Set<string>, orderBy?: OrderBy, exclusiveSort?: boolean }): void {
   if (!orderBy) return
   const unsortableColumns = orderBy.map(({ column }) => column).filter(column => !sortableColumns?.has(column))
   if (unsortableColumns.length > 0) {
     throw new Error(`Unsortable columns in orderBy field: ${unsortableColumns.join(', ')}`)
+  }
+  if (exclusiveSort && orderBy.length > 1) {
+    throw new Error('DataFrame is exclusiveSort, but orderBy contains multiple columns')
   }
 }
 
@@ -60,6 +63,17 @@ export function toggleColumn(column: string, orderBy: OrderBy): OrderBy {
   }
   // the column is not the principal column. Set it as the principal column with ascending direction
   return [{ column, direction: 'ascending' }, ...prefix, ...suffix]
+}
+
+export function toggleColumnExclusive(column: string, orderBy: OrderBy): OrderBy {
+  const { item } = partitionOrderBy(orderBy, column)
+  if (item) {
+    if (item.direction === 'ascending') {
+      return [{ column, direction: 'descending' }]
+    }
+    return []
+  }
+  return [{ column, direction: 'ascending' }]
 }
 
 // TODO(SL): test

@@ -344,6 +344,21 @@ export const NonSortableColunns: Story = {
     data: sortableDataFrame(createUnsortableData(), { sortableColumns: new Set(['ID', 'Count', 'Constant', 'Value1', 'Value2', 'Value3', 'Undefined']) }),
   },
 }
+export const ExclusiveSort: Story = {
+  render: (args) => {
+    const [orderBy, setOrderBy] = useState<OrderBy>([])
+    return (
+      <HighTable
+        {...args}
+        orderBy={orderBy}
+        onOrderByChange={setOrderBy}
+      />
+    )
+  },
+  args: {
+    data: sortableDataFrame(createUnsortableData(), { exclusiveSort: true }),
+  },
+}
 export const LongStrings: Story = {
   args: {
     data: sortableDataFrame(createLongStringsData()),
