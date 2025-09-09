@@ -1,5 +1,20 @@
 # CHANGELOG
 
+## [0.19.2](https://github.com/hyparam/hightable/compare/v0.19.1...v0.19.2) - 2025-09-09
+
+### Added
+
+- extend support to React 19 ([#269](https://github.com/hyparam/hightable/pull/269)).
+
+### Fixed
+
+- ignore Alt, Shift and Meta keys when navigating the cells ([#264](https://github.com/hyparam/hightable/pull/264)).
+
+### Refactored
+
+- updated the README and comments ([#262](https://github.com/hyparam/hightable/pull/262)).
+
+
 ## [0.19.1](https://github.com/hyparam/hightable/compare/v0.19.0...v0.19.1) - 2025-08-22
 
 ### Added
