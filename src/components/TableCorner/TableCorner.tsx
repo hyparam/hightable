@@ -12,7 +12,7 @@ interface Props {
 }
 
 function TableCorner({ children, checked, onCheckboxPress, pendingSelectionGesture, style, ariaColIndex, ariaRowIndex }: Props, ref: ForwardedRef<Pick<HTMLTableCellElement, 'offsetWidth'>>) {
-  const cellRef = useRef<HTMLTableCellElement>(null)
+  const cellRef = useRef<HTMLTableCellElement | null>(null)
   useImperativeHandle(ref, () => {
     return {
       get offsetWidth() {

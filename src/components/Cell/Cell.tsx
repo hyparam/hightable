@@ -40,7 +40,7 @@ interface Props {
  * @param {number} [props.rowNumber] the row index in the original data, undefined if the value has not been fetched yet
  */
 export default function Cell({ cell, onDoubleClickCell, onMouseDownCell, onKeyDownCell, stringify, columnIndex, className, ariaColIndex, ariaRowIndex, rowNumber, renderCellContent }: Props) {
-  const ref = useRef<HTMLTableCellElement>(null)
+  const ref = useRef<HTMLTableCellElement | null>(null)
   const { tabIndex, navigateToCell } = useCellNavigation({ ref, ariaColIndex, ariaRowIndex })
 
   const handleMouseDown = useCallback((event: MouseEvent) => {

@@ -101,7 +101,7 @@ export default function ColumnMenu({
 }: ColumnMenuProps) {
   const { containerRef } = usePortalContainer()
   const { top, left } = position
-  const menuRef = useRef<HTMLDivElement>(null)
+  const menuRef = useRef<HTMLDivElement | null>(null)
   const labelId = useId()
 
   const { navigateFocus } = useFocusManagement(isOpen, menuRef)
