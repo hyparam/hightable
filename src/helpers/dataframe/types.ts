@@ -36,6 +36,9 @@ export interface DataFrame<M extends Obj = Obj, C extends Obj = Obj> {
   columnDescriptors: readonly ColumnDescriptor<C>[]
   metadata?: M
 
+  // If true, only one column can be sorted at a time, and any update to orderBy will replace the previous one.
+  exclusiveSort?: boolean
+
   // Returns the cell value.
   // undefined means pending, ResolvedValue is a boxed value type (so we can distinguish undefined from pending)
   // getCell does NOT initiate a fetch, it just returns resolved data

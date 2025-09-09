@@ -8,6 +8,7 @@ export function sortableDataFrame<M extends Obj, C extends Obj>(
 ): DataFrame<M, C> {
   // If sortableColumns is not provided, make all columns sortable.
   const sortableColumns = options?.sortableColumns ?? new Set(data.columnDescriptors.map(c => c.name))
+  const exclusiveSort = options?.exclusiveSort ?? data.exclusiveSort
   // Validate that all sortable columns are present in the header.
   for (const column of sortableColumns) {
     validateColumn({ column, data: { columnDescriptors: data.columnDescriptors } })
@@ -19,7 +20,9 @@ export function sortableDataFrame<M extends Obj, C extends Obj>(
     }
     return sortable === false || sortable === undefined // If the column is not in sortableColumns, it should not be sortable
   })) {
-    // TODO(SL): we should return a clone of the data frame (and we should provide a helper function to clone a dataframe).
+    if (options && 'exclusiveSort' in options && data.exclusiveSort !== options.exclusiveSort) {
+      return { ...data, exclusiveSort: options.exclusiveSort }
+    }
     return data
   }
 
@@ -29,10 +32,7 @@ export function sortableDataFrame<M extends Obj, C extends Obj>(
     sortable: sortableColumns.has(name),
     metadata: structuredClone(metadata), // Create a deep copy of the column metadata to avoid mutating the original
   }))
-  let metadata: any = structuredClone(data.metadata) // Create a deep copy of the metadata to avoid mutating the original
-  if (options && 'exclusiveSort' in options) {
-    metadata = { ...metadata ?? {}, exclusiveSort: options.exclusiveSort }
-  }
+  const metadata: any = structuredClone(data.metadata) // Create a deep copy of the metadata to avoid mutating the original
 
   // The cache cannot be erased. Create a new data frame if needed.
   const ranksByColumn = new Map<string, number[]>()
@@ -42,7 +42,7 @@ export function sortableDataFrame<M extends Obj, C extends Obj>(
 
   const getUpstreamRow: ({ row, orderBy }: { row: number, orderBy?: OrderBy }) => ResolvedValue<number> | undefined = function({ row, orderBy }) {
     validateRow({ row, data: { numRows } })
-    validateOrderByAgainstSortableColumns({ orderBy, sortableColumns })
+    validateOrderByAgainstSortableColumns({ orderBy, sortableColumns, exclusiveSort })
     if (!orderBy || orderBy.length === 0) {
       // If no orderBy is provided, we can return the upstream row number.
       return { value: row }
@@ -119,7 +119,7 @@ export function sortableDataFrame<M extends Obj, C extends Obj>(
     }
   }
 
-  return { metadata, numRows, columnDescriptors, getRowNumber, getCell, fetch, eventTarget }
+  return { metadata, numRows, columnDescriptors, getRowNumber, getCell, fetch, eventTarget, exclusiveSort }
 }
 
 async function fetchFromIndexes({ columns, indexes, signal, fetch }: { columns?: string[], indexes: number[], signal?: AbortSignal, fetch: Exclude<DataFrame['fetch'], undefined> }): Promise<void> {

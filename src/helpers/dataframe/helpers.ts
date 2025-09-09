@@ -47,9 +47,9 @@ export function validateColumn({ column, data: { columnDescriptors } }: { column
   }
 }
 
-export function validateOrderBy({ orderBy, data: { columnDescriptors } }: { orderBy?: OrderBy, data: Pick<DataFrame, 'columnDescriptors'> }): void {
+export function validateOrderBy({ orderBy, data: { columnDescriptors, exclusiveSort } }: { orderBy?: OrderBy, data: Pick<DataFrame, 'columnDescriptors' | 'exclusiveSort'> }): void {
   const sortableColumns = new Set(columnDescriptors.filter(c => c.sortable).map(c => c.name))
-  validateOrderByAgainstSortableColumns({ orderBy, sortableColumns })
+  validateOrderByAgainstSortableColumns({ orderBy, sortableColumns, exclusiveSort })
 }
 
 export function checkSignal(signal?: AbortSignal): void {

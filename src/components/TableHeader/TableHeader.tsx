@@ -20,7 +20,7 @@ export default function TableHeader({
   columnsParameters, orderBy, onOrderByChange, canMeasureWidth, ariaRowIndex, columnClassNames = [],
 }: TableHeaderProps) {
   const { data } = useData()
-  const exclusiveSort = data.metadata?.exclusiveSort === true
+  const exclusiveSort = data.exclusiveSort === true
   // Function to handle click for changing orderBy
   const getToggleOrderBy = useCallback((columnHeader: string) => {
     if (!onOrderByChange || !orderBy) return undefined
