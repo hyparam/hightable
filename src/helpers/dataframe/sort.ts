@@ -126,7 +126,7 @@ export function sortableDataFrame<M extends Obj, C extends Obj>(
 async function fetchFromIndexes({ columns, indexes, signal, fetch }: { columns?: string[], indexes: number[], signal?: AbortSignal, fetch: Exclude<DataFrame['fetch'], undefined> }): Promise<void> {
   // Fetch the data for every index, grouping the fetches by consecutive rows.
   const rowNumberIndexes = indexes.sort()
-  const promises: (void | Promise<void>)[] = []
+  const promises: Promise<void>[] = []
   let range: [number, number] | undefined = undefined
   for (const row of rowNumberIndexes) {
     if (range === undefined) {

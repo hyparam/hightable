@@ -52,7 +52,7 @@ export function getGetColumn(data: DataFrameV1): GetColumn {
     if (!data.header.includes(column)) {
       throw new Error(`Invalid column: ${column}`)
     }
-    return Promise.all(data.rows({ start, end }).map(row => row.cells[column]))
+    return Promise.all(data.rows({ start, end }).map(row => row.cells[column]).filter(d => d !== undefined))
   }
 }
 
@@ -157,7 +157,7 @@ export function sortableDataFrame(data: DataFrameV1): DataFrameV1 {
         // TODO(SL): avoid sorting along the whole columns, maybe sort only the slice, and expand if needed
         const indexes = Promise.all(orderByWithRanks).then(computeDataIndexes)
         const indexesSlice = indexes.then(indexes => indexes.slice(start, end))
-        const rowsSlice = indexesSlice.then(indexes => Promise.all(
+        const rowsSlice = indexesSlice.then(indexes =>
           // TODO(SL): optimize to fetch groups of rows instead of individual rows?
           indexes.map(i => {
             const asyncRowInArray = data.rows({ start: i, end: i + 1 })
@@ -166,7 +166,7 @@ export function sortableDataFrame(data: DataFrameV1): DataFrameV1 {
             }
             return asyncRowInArray[0]
           })
-        ))
+        )
         return asyncRows(rowsSlice, end - start, data.header)
       } else {
         return data.rows({ start, end })
