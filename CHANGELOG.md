@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## [unpublished](https://github.com/hyparam/hightable/compare/v0.19.4...HEAD)
+
+### Refactored
+
+- update dev dependencies ([#274](https://github.com/hyparam/hightable/pull/274)).
+- fix two incoherences with Promise.all and one type ([#274](https://github.com/hyparam/hightable/pull/274)).
+
+## [0.19.4](https://github.com/hyparam/hightable/compare/v0.19.3...v0.19.4) - 2025-09-12
+
+### Added
+
+- export `Direction` type ([#272](http://github.com/hyparam/hightable/pull/272)).
+
 ## [0.19.3](https://github.com/hyparam/hightable/compare/v0.19.2...v0.19.3) - 2025-09-09
 
 ### Added
@@ -19,7 +32,6 @@
 ### Refactored
 
 - updated the README and comments ([#262](https://github.com/hyparam/hightable/pull/262)).
-
 
 ## [0.19.1](https://github.com/hyparam/hightable/compare/v0.19.0...v0.19.1) - 2025-08-22
 
