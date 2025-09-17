@@ -52,7 +52,7 @@ export function getGetColumn(data: DataFrameV1): GetColumn {
     if (!data.header.includes(column)) {
       throw new Error(`Invalid column: ${column}`)
     }
-    return Promise.all(data.rows({ start, end }).map(row => row.cells[column]).filter(d => d !== undefined))
+    return Promise.all(data.rows({ start, end }).map(row => row.cells[column] ?? Promise.resolve(undefined)))
   }
 }
 
