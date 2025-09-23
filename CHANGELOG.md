@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## [0.19.6](https://github.com/hyparam/hightable/compare/v0.19.5...v0.19.6) - 2025-09-23
+
+### Fixed
+
+- fix the color of the column menu items, to prevent them from being styled by the default button styles ([#276](https://github.com/hyparam/hightable/pull/276)).
+
+### Refactored
+
+- use CSS variables for all the colors: ([#276](https://github.com/hyparam/hightable/pull/276)).
+- move the HighTable.module.css file to the src folder, for better visibility ([#276](https://github.com/hyparam/hightable/pull/276)).
+
 ## [0.19.5](https://github.com/hyparam/hightable/compare/v0.19.4...v0.19.5) - 2025-09-17
 
 ### Refactored
