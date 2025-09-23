@@ -195,32 +195,33 @@
   --focus-border-width: 2px;
   --row-label-width: 36px;
   --cell-horizontal-padding: 10px;
+  --resizer-border-width: 4px;
 
-  --text-color-1: #444;
-  --text-color-2: #d5d4d6;
+  --text-color-1: #000;
+  --text-color-2: #444;
   --text-color-3: #6d6d6d;
-  --text-color-4: #000;
-  --header-color: var(--text-color-1);
-  --menu-color: var(--text-color-1);
-  --menu-item-color: var(--text-color-1);
-  --menu-button-color: var(--text-color-1);
-  --secondary-sort-icon-color: var(--text-color-2);
+  --text-color-4: #d5d4d6;
+  --header-color: var(--text-color-2);
+  --menu-color: var(--text-color-2);
+  --menu-item-color: var(--text-color-2);
+  --menu-button-color: var(--text-color-2);
   --primary-sort-icon-color: inherit;
+  --secondary-sort-icon-color: var(--text-color-4);
   --row-number-color: var(--text-color-3);
-  --text-color: var(--text-color-4);
+  --text-color: var(--text-color-1);
 
   /* TODO(SL): reduce the number of colors */
-  --background-color-1: #f1f1f3;
-  --background-color-2: #aab;
   --background-color-3: #ddd;
-  --background-color-4: #f9f4ff;
-  --background-color-5: #fff;
-  --accent-background-color-1: #efeef6;
-  --accent-background-color-2: #dbdbe5;
-  --accent-background-color-3: #fbf7bf;
-  --accent-background-color-4: #f1edbb;
   --accent-background-color-5: #ccd;
+  --accent-background-color-2: #dbdbe5;
+  --accent-background-color-1: #efeef6;
+  --background-color-1: #f1f1f3;
+  --accent-background-color-4: #f1edbb;
+  --background-color-4: #f9f4ff;
+  --accent-background-color-3: #fbf7bf;
+  --background-color-5: #fff;
   --background-color: var(--background-color-5);
+  --accent-background-color-6: #9d9cd5;
   --focus-background-color: var(--accent-background-color-1); /* keep --focus-background-color for compatibility */
   --focusable-background-color: var(--background-color-1); /* keep --focusable-background-color for compatibility */
   --header-background-color: var(--background-color-1);
@@ -229,15 +230,14 @@
   --menu-button-hovered-background-color: var(--accent-background-color-2);
   --menu-button-focused-background-color: var(--accent-background-color-2);
   --menu-item-background-color: var(--background-color-5);
-  --resizer-hovered-background-color: var(--background-color-2);
-  --resizer-focused-background-color: var(--background-color-2);
-  --resizer-busy-background-color: var(--background-color-3);
+  --menu-item-hovered-background-color: var(--background-color-1);
   --row-number-background-color: var(--background-color-1);
   --row-number-hovered-background-color: var(--accent-background-color-5);
   --row-number-selected-background-color: var(--accent-background-color-4);
   --row-hovered-background-color: var(--accent-background-color-2);
   --row-selected-background-color: var(--accent-background-color-3);
   --corner-cell-background-color: var(--background-color-4);
+  --resize-indicator-background-color: var(--accent-background-color-6);
 
   --cell-busy-background: linear-gradient(
       60deg,
@@ -246,22 +246,23 @@
       rgba(0, 0, 0, 0.05) 75%
     );
 
-  --border-color-1: #ddd;
   --light-border-color: #c9c9c9; /* keep --light-border-color for compatibility */
-  --border-color-2: var(--light-border-color);
-  --border-color-3: #ccc;
+  --border-color-1: #666;
+  --border-color-2: #bbb;
+  --border-color-3: var(--light-border-color);
+  --border-color-4: #ddd;
   --accent-border-color-1: #706fb1;
-  --accent-border-color-2: #666;
-  --accent-border-color-3: #bbb;
+  --accent-border-color-2: #9d9cd5;
   --top-border-color: var(--accent-border-color-1); /* keep --top-border-color for compatibility */
   --focus-border-color: var(--accent-border-color-1); /* keep --focus-border-color for compatibility */
-  --focusable-border-color: var(--accent-border-color-2); /* keep --focusable-border-color for compatibility */
-  --cell-border-color: var(--border-color-1);
-  --cell-hovered-right-border-color: var(--accent-border-color-3);
-  --header-bottom-border-color: var(--border-color-2);
-  --menu-border-color: var(--border-color-2);
-  --menu-inner-border-color: var(--border-color-2);
-  --row-number-right-border-color: var(--border-color-1);
+  --focusable-border-color: var(--border-color-1); /* keep --focusable-border-color for compatibility */
+  --cell-border-color: var(--border-color-4);
+  --cell-hovered-right-border-color: var(--border-color-2);
+  --header-bottom-border-color: var(--border-color-3);
+  --menu-border-color: var(--border-color-3);
+  --menu-inner-border-color: var(--border-color-3);
+  --resizer-hovered-right-border-color: var(--accent-border-color-2);
+  --row-number-right-border-color: var(--border-color-4);
   --row-number-hovered-right-border-color: var(--border-color-3);
   --corner-cell-right-border-color: var(--border-color-3);
 
@@ -322,12 +323,12 @@
       &[data-fixed-width="true"]::before {
         /* fixed width columns - show a detail*/
         position: absolute;
-        right: var(--cell-horizontal-padding);
+        right: calc(var(--resizer-border-width) + 2px);
         top: 4px;
         width: 4px;
         height: 4px;
         border-radius: 50%;
-        background-color: var(--top-border-color);
+        background-color: var(--resize-indicator-background-color);
         content: "";
       }
     }
@@ -366,8 +367,8 @@
     &[tabindex="0"] {
       outline-style: solid;
       outline-color: var(--focusable-border-color);
-      outline-width: 1px;
-      outline-offset: -1px;
+      outline-width: var(--focus-border-width);;
+      outline-offset: calc(0px - var(--focus-border-width));
       background-color: var(--focusable-background-color);
     }
     /* focused cell: when the current navigation cell is focused. It should never be another cell */
@@ -375,7 +376,7 @@
       outline-style: solid;
       outline-color: var(--focus-border-color);
       outline-width: var(--focus-border-width);
-      outline-offset: -2px;
+      outline-offset: calc(0px - var(--focus-border-width));
       background-color: var(--focus-background-color);
     }
   }
@@ -429,7 +430,7 @@
       cursor: pointer;
 
       &:hover {
-        background-color: var(--focusable-background-color);
+        background-color: var(--menu-item-hovered-background-color);
       }
     }
   }
@@ -477,18 +478,14 @@
   thead [role="spinbutton"] {
     background-color: transparent;
     transition: background-color 0.2s ease;
-    &:hover {
-      background-color: var(--resizer-hovered-background-color);
+    &:focus, &:hover {
+      border-right-color: var(--resizer-hovered-right-border-color);
+      border-width: 0 var(--resizer-border-width) 0 0;
+      border-style: solid;
+      margin: 1px 1px 0 1px;
     }
     &:focus {
-      outline-style: solid;
-      outline-color: var(--focus-border-color);
-      outline-width: var(--focus-border-width);
-      outline-offset: -2px;
-      background-color: var(--resizer-focused-background-color);
-    }
-    &[aria-busy="true"] {
-      background-color: var(--resizer-busy-background-color);
+      outline-style: none;
     }
   }
 
