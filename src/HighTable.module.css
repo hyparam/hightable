@@ -260,6 +260,7 @@
   --menu-border-color: var(--border-color-2);
   --menu-inner-border-color: var(--border-color-2);
   --row-number-right-border-color: var(--border-color-1);
+  --row-number-hovered-right-border-color: var(--border-color-3);
   --corner-cell-right-border-color: var(--border-color-3);
 
   .top-border {
@@ -505,9 +506,11 @@
     background-color: var(--corner-cell-background-color);
     border-right: 1px solid var(--corner-cell-right-border-color);
     box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.2);
-  }
-  thead td:first-child[aria-disabled="false"] {
-    background: var(--corner-cell-background-color); /* redundant with td:first-child, but allows to force the background if it has been overridden with a logo */
+
+    &[aria-checked="true"] {
+      background-image: none; /* allows to force the background if it has been overridden with a logo */
+      background-color: var(--corner-cell-background-color);
+    }
   }
 
   /* pending selection gesture */
@@ -563,12 +566,13 @@
   @media (hover: hover) {
     tbody tr:hover {
       background-color: var(--row-hovered-background-color);
-    }
-    tbody tr:hover td {
-      border-right-color: var(--cell-hovered-right-border-color);
-    }
-    tbody tr:hover td:first-child {
-      background-color: var(--row-number-hovered-background-color);
+      td {
+        border-right-color: var(--cell-hovered-right-border-color);
+      }
+      th[role="rowheader"] {
+        background-color: var(--row-number-hovered-background-color);
+        border-right-color: var(--row-number-hovered-right-border-color);
+      }
     }
   }
 
