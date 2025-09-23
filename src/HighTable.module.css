@@ -232,9 +232,9 @@
   --resizer-busy-background-color: var(--background-color-3);
   --row-number-background-color: var(--background-color-1);
   --row-number-hovered-background-color: var(--accent-background-color-5);
+  --row-number-selected-background-color: var(--accent-background-color-4);
   --row-hovered-background-color: var(--accent-background-color-2);
-  --row-background-color: var(--tertiary-accent-background-color-3);
-  --selected-row-number-background-color: var(--accent-background-color-4);
+  --row-selected-background-color: var(--tertiary-accent-background-color-3);
   --corner-cell-background-color: var(--background-color-4);
 
   --cell-busy-background: linear-gradient(
@@ -493,10 +493,10 @@
   }
   /* highlight the selected rows */
   tr[aria-selected="true"] {
-    background-color: var(--selected-row-background-color);
+    background-color: var(--row-selected-background-color);
   }
   tr[aria-selected="true"] [role="rowheader"] {
-    background-color: var(--selected-row-number-background-color);
+    background-color: var(--row-number-selected-background-color);
   }
 
   /* table corner */
