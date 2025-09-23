@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## [0.19.7](https://github.com/hyparam/hightable/compare/v0.19.6...v0.19.7) - 2025-09-23
+
+### Fixed
+
+- fix CSS rules to be more precise ([#279](https://github.com/hyparam/hightable/pull/279)).
+
+### Refactored
+
+- upgrade develpment dependencies: ([#278](https://github.com/hyparam/hightable/pull/278)).
+
 ## [0.19.6](https://github.com/hyparam/hightable/compare/v0.19.5...v0.19.6) - 2025-09-23
 
 ### Fixed
