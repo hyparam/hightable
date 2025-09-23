@@ -18,7 +18,7 @@ import Row from '../Row/Row.js'
 import RowHeader from '../RowHeader/RowHeader.js'
 import TableCorner from '../TableCorner/TableCorner.js'
 import TableHeader from '../TableHeader/TableHeader.js'
-import styles from './HighTable.module.css'
+import styles from '../../HighTable.module.css'
 export { type CellContentProps } from '../Cell/Cell.js'
 
 const rowHeight = 33 // row height px
