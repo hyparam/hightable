@@ -535,13 +535,3 @@
     background-position: 120px 0;
   }
 }
-
-@keyframes shimmer {
-  0%,
-  100% {
-    background-color: #6fb176;
-  }
-  50% {
-    background-color: #adc6b0;
-  }
-}
