@@ -228,7 +228,7 @@
   --menu-button-background-color: var(--background-color-1);
   --menu-button-hovered-background-color: var(--accent-background-color-2);
   --menu-button-focused-background-color: var(--accent-background-color-2);
-  --menu-item-background-color: var(--background-color-4);
+  --menu-item-background-color: var(--background-color-5);
   --resizer-hovered-background-color: var(--background-color-2);
   --resizer-focused-background-color: var(--background-color-2);
   --resizer-busy-background-color: var(--background-color-3);
