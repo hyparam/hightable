@@ -221,6 +221,7 @@
   --accent-background-color-3: #fbf7bf;
   --background-color-5: #fff;
   --background-color: var(--background-color-5);
+  --accent-background-color-6: #9d9cd5;
   --focus-background-color: var(--accent-background-color-1); /* keep --focus-background-color for compatibility */
   --focusable-background-color: var(--background-color-1); /* keep --focusable-background-color for compatibility */
   --header-background-color: var(--background-color-1);
@@ -236,6 +237,7 @@
   --row-hovered-background-color: var(--accent-background-color-2);
   --row-selected-background-color: var(--accent-background-color-3);
   --corner-cell-background-color: var(--background-color-4);
+  --resize-indicator-background-color: var(--accent-background-color-6);
 
   --cell-busy-background: linear-gradient(
       60deg,
@@ -326,7 +328,7 @@
         width: 4px;
         height: 4px;
         border-radius: 50%;
-        background-color: var(--top-border-color);
+        background-color: var(--resize-indicator-background-color);
         content: "";
       }
     }
