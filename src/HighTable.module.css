@@ -255,7 +255,7 @@
   --focus-border-color: var(--accent-border-color-1); /* keep --focus-border-color for compatibility */
   --focusable-border-color: var(--accent-border-color-2); /* keep --focusable-border-color for compatibility */
   --cell-border-color: var(--border-color-1);
-  --cell-hovered-right-border-color: var(--accent-border-color-3)
+  --cell-hovered-right-border-color: var(--accent-border-color-3);
   --header-bottom-border-color: var(--border-color-2);
   --menu-border-color: var(--border-color-2);
   --menu-inner-border-color: var(--border-color-2);
@@ -568,7 +568,7 @@
       border-right-color: var(--cell-hovered-right-border-color);
     }
     tbody tr:hover td:first-child {
-      background-color: var(--row-number-hovered-background-color)
+      background-color: var(--row-number-hovered-background-color);
     }
   }
 
