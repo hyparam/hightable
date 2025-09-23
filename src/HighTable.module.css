@@ -234,7 +234,7 @@
   --row-number-hovered-background-color: var(--accent-background-color-5);
   --row-number-selected-background-color: var(--accent-background-color-4);
   --row-hovered-background-color: var(--accent-background-color-2);
-  --row-selected-background-color: var(--tertiary-accent-background-color-3);
+  --row-selected-background-color: var(--accent-background-color-3);
   --corner-cell-background-color: var(--background-color-4);
 
   --cell-busy-background: linear-gradient(
