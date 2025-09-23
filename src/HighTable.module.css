@@ -197,47 +197,50 @@
   --cell-horizontal-padding: 10px;
   --resizer-border-width: 4px;
 
-  --text-color-1: #000;
-  --text-color-2: #444;
-  --text-color-3: #6d6d6d;
-  --text-color-4: #d5d4d6;
-  --header-color: var(--text-color-2);
-  --menu-color: var(--text-color-2);
-  --menu-item-color: var(--text-color-2);
-  --menu-button-color: var(--text-color-2);
-  --primary-sort-icon-color: inherit;
-  --secondary-sort-icon-color: var(--text-color-4);
-  --row-number-color: var(--text-color-3);
-  --text-color: var(--text-color-1);
+  --color-1: #000;
+  --color-2: #444;
+  --color-3: #666;
+  --color-5: #bbb;
+  --color-7: #ccc;
+  --color-8: #ddd;
+  --color-9: #f0f0f0;
+  --color-10: #fff;
 
-  /* TODO(SL): reduce the number of colors */
-  --background-color-3: #ddd;
-  --accent-background-color-5: #ccd;
-  --accent-background-color-2: #dbdbe5;
-  --accent-background-color-1: #efeef6;
-  --background-color-1: #f1f1f3;
-  --accent-background-color-4: #f1edbb;
-  --background-color-4: #f9f4ff;
-  --accent-background-color-3: #fbf7bf;
-  --background-color-5: #fff;
-  --background-color: var(--background-color-5);
-  --accent-background-color-6: #9d9cd5;
-  --focus-background-color: var(--accent-background-color-1); /* keep --focus-background-color for compatibility */
-  --focusable-background-color: var(--background-color-1); /* keep --focusable-background-color for compatibility */
-  --header-background-color: var(--background-color-1);
-  --menu-background-color: var(--background-color-1);
-  --menu-button-background-color: var(--background-color-1);
-  --menu-button-hovered-background-color: var(--accent-background-color-2);
-  --menu-button-focused-background-color: var(--accent-background-color-2);
-  --menu-item-background-color: var(--background-color-5);
-  --menu-item-hovered-background-color: var(--background-color-1);
-  --row-number-background-color: var(--background-color-1);
-  --row-number-hovered-background-color: var(--accent-background-color-5);
-  --row-number-selected-background-color: var(--accent-background-color-4);
-  --row-hovered-background-color: var(--accent-background-color-2);
-  --row-selected-background-color: var(--accent-background-color-3);
-  --corner-cell-background-color: var(--background-color-4);
-  --resize-indicator-background-color: var(--accent-background-color-6);
+  --accent-1: #706fb1;
+  --accent-2: #9d9cd5;
+  --accent-3: #ccd;
+  --accent-4: #dbdbe5;
+  --accent-5: #efeef6;
+  
+  --highlight-1: #f1edbb;
+  --highlight-2: #fbf7bf;
+  
+  --header-color: var(--color-2);
+  --menu-color: var(--color-2);
+  --menu-item-color: var(--color-2);
+  --menu-button-color: var(--color-2);
+  --primary-sort-icon-color: inherit;
+  --secondary-sort-icon-color: var(--color-8);
+  --row-number-color: var(--color-3);
+  --text-color: var(--color-1);
+
+  --focus-background-color: var(--accent-5);
+  --focusable-background-color: var(--color-9);
+  --background-color: var(--color-10);
+  --header-background-color: var(--color-9);
+  --menu-background-color: var(--color-9);
+  --menu-button-background-color: var(--color-9);
+  --menu-button-hovered-background-color: var(--accent-4);
+  --menu-button-focused-background-color: var(--accent-4);
+  --menu-item-background-color: var(--color-10);
+  --menu-item-hovered-background-color: var(--color-9);
+  --row-number-background-color: var(--color-9);
+  --row-number-hovered-background-color: var(--accent-3);
+  --row-number-selected-background-color: var(--highlight-1);
+  --row-hovered-background-color: var(--accent-4);
+  --row-selected-background-color: var(--highlight-2);
+  --corner-cell-background-color: var(--color-9);
+  --resize-indicator-background-color: var(--accent-2);
 
   --cell-busy-background: linear-gradient(
       60deg,
@@ -246,25 +249,17 @@
       rgba(0, 0, 0, 0.05) 75%
     );
 
-  --light-border-color: #c9c9c9; /* keep --light-border-color for compatibility */
-  --border-color-1: #666;
-  --border-color-2: #bbb;
-  --border-color-3: var(--light-border-color);
-  --border-color-4: #ddd;
-  --accent-border-color-1: #706fb1;
-  --accent-border-color-2: #9d9cd5;
-  --top-border-color: var(--accent-border-color-1); /* keep --top-border-color for compatibility */
-  --focus-border-color: var(--accent-border-color-1); /* keep --focus-border-color for compatibility */
-  --focusable-border-color: var(--border-color-1); /* keep --focusable-border-color for compatibility */
-  --cell-border-color: var(--border-color-4);
-  --cell-hovered-right-border-color: var(--border-color-2);
-  --header-bottom-border-color: var(--border-color-3);
-  --menu-border-color: var(--border-color-3);
-  --menu-inner-border-color: var(--border-color-3);
-  --resizer-hovered-right-border-color: var(--accent-border-color-2);
-  --row-number-right-border-color: var(--border-color-4);
-  --row-number-hovered-right-border-color: var(--border-color-3);
-  --corner-cell-right-border-color: var(--border-color-3);
+  --top-border-color: var(--accent-1);
+  --focus-border-color: var(--accent-1);
+  --focusable-border-color: var(--color-3);
+  --cell-border-color: var(--color-8);
+  --cell-hovered-right-border-color: var(--color-5);
+  --header-bottom-border-color: var(--color-7);
+  --menu-border-color: var(--color-7);
+  --menu-inner-border-color: var(--color-7);
+  --resizer-hovered-right-border-color: var(--accent-2);
+  --row-number-hovered-right-border-color: var(--color-7);
+  --corner-cell-right-border-color: var(--color-7);
 
   & {
     isolation: isolate;
