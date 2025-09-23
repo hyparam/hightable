@@ -195,17 +195,71 @@
   --table-scroll-outline-z-index: calc(var(--header-z-index) + 4);
 
   --top-border-height: 2px;
+  --focus-border-width: 2px;
+  --row-label-width: 36px;
   --cell-horizontal-padding: 10px;
 
-  --top-border-color: #706fb1;
-  --focus-border-width: 2px;
-  --focus-border-color: #706fb1;
-  --focus-background-color: #efeef6;
-  --focusable-border-color: #666;
-  --focusable-background-color: #f1f1f3;
-  --light-border-color: #c9c9c9;
+  --text-color-1: #444;
+  --text-color-2: #d5d4d6;
+  --text-color-3: #6d6d6d;
+  --header-color: var(--text-color-1);
+  --menu-color: var(--text-color-1);
+  --menu-button-color: var(--text-color-1);
+  --secondary-sort-icon-color: var(--text-color-2);
+  --primary-sort-icon-color: inherit;
+  --row-number-color: var(--text-color-3);
 
-  --row-label-width: 36px;
+  /* TODO(SL): reduce the number of colors */
+  --background-color-1: #f1f1f3;
+  --background-color-2: #aab;
+  --background-color-3: #ddd;
+  --background-color-4: #f9f4ff;
+  --accent-background-color-1: #efeef6;
+  --accent-background-color-2: #dbdbe5;
+  --accent-background-color-3: #fbf7bf;
+  --accent-background-color-4: #f1edbb;
+  --accent-background-color-5: #ccd;
+  --focus-background-color: var(--accent-background-color-1); /* keep --focus-background-color for compatibility */
+  --focusable-background-color: var(--background-color-1); /* keep --focusable-background-color for compatibility */
+  --header-background-color: var(--background-color-1);
+  --menu-background-color: var(--background-color-1);
+  --menu-button-background-color: var(--background-color-1);
+  --menu-button-hovered-background-color: var(--accent-background-color-2);
+  --menu-button-focused-background-color: var(--accent-background-color-2);
+  --resizer-hovered-background-color: var(--background-color-2);
+  --resizer-focused-background-color: var(--background-color-2);
+  --resizer-busy-background-color: var(--background-color-3);
+  --row-number-background-color: var(--background-color-1);
+  --row-number-hovered-background-color: var(--accent-background-color-5);
+  --row-hovered-background-color: var(--accent-background-color-2);
+  --row-background-color: var(--tertiary-accent-background-color-3);
+  --selected-row-number-background-color: var(--accent-background-color-4);
+  --corner-cell-background-color: var(--background-color-4);
+
+  --cell-busy-background: linear-gradient(
+      60deg,
+      rgba(0, 0, 0, 0.05) 25%,
+      rgba(0, 0, 0, 0.08) 50%,
+      rgba(0, 0, 0, 0.05) 75%
+    );
+
+  --border-color-1: #ddd;
+  --light-border-color: #c9c9c9; /* keep --light-border-color for compatibility */
+  --border-color-2: var(--light-border-color);
+  --border-color-3: #ccc;
+  --accent-border-color-1: #706fb1;
+  --accent-border-color-2: #666;
+  --accent-border-color-3: #bbb;
+  --top-border-color: var(--accent-border-color-1); /* keep --top-border-color for compatibility */
+  --focus-border-color: var(--accent-border-color-1); /* keep --focus-border-color for compatibility */
+  --focusable-border-color: var(--accent-border-color-2); /* keep --focusable-border-color for compatibility */
+  --cell-border-color: var(--border-color-1);
+  --cell-hovered-right-border-color: var(--accent-border-color-3)
+  --header-bottom-border-color: var(--border-color-2);
+  --menu-border-color: var(--border-color-2);
+  --menu-inner-border-color: var(--border-color-2);
+  --row-number-right-border-color: var(--border-color-1);
+  --corner-cell-right-border-color: var(--border-color-3);
 
   .top-border {
     border-top: var(--top-border-height) solid var(--top-border-color);
@@ -243,9 +297,9 @@
 
   thead {
     th {
-      background-color: #f1f1f3;
-      border-bottom: 2px solid var(--light-border-color);
-      color: #444;
+      background-color: var(--header-background-color);
+      border-bottom: 2px solid var(--header-bottom-border-color);
+      color: var(--header-color);
       height: 20px;
       padding-top: 4px;
       padding-bottom: 4px;
@@ -274,21 +328,21 @@
     top: 4px;
     padding-left: 2px;
     background: none;
-    color: #d5d4d6;
+    color: var(--secondary-sort-icon-color);
     display: block;
     width: 2rem;
     text-align: center;
   }
 
   th[data-order-by-index="0"]::after {
-    color: inherit;
+    color: var(--primary-sort-icon-color);
   }
 
   /* cells */
   th,
   td {
-    border-bottom: 1px solid #ddd;
-    border-right: 1px solid #ddd;
+    border-bottom: 1px solid var(--cell-border-color);
+    border-right: 1px solid var(--cell-border-color);
     height: 32px;
     line-height: 1.5;
     /* prevent columns expanding - limits the initial and autoresized width */
@@ -319,13 +373,13 @@
   /* column menu (in portal) */
   div[role="menu"] {
     margin-top: 4px;
-    background-color: var(--focusable-background-color);
-    border: 1px solid var(--light-border-color);
+    background-color: var(--menu-background-color);
+    border: 1px solid var(--menu-border-color);
     border-radius: 4px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     min-width: 150px;
     font-size: 0.875rem;
-    color: #444;
+    color: var(--menu-color);
     padding: 4px 0;
 
     &:focus,
@@ -340,7 +394,7 @@
       padding: 4px 12px 8px;
       font-weight: bold;
       border-style: solid;
-      border-color: var(--light-border-color);
+      border-color: var(--menu-inner-border-color);
       border-width: 0 0 1px 0;
     }
 
@@ -357,7 +411,7 @@
       text-align: left;
       padding: 8px 12px;
       border-style: solid;
-      border-color: var(--light-border-color);
+      border-color: var(--menu-inner-border-color);
       border-width: 1px 0;
       background-color: white;
       cursor: pointer;
@@ -380,20 +434,20 @@
         transition: opacity 0.2s ease;
         border-radius: 50%;
         border: none;
-        background-color: #f1f1f3;
+        background-color: var(--menu-button-background-color);
 
         &:focus {
           outline-style: solid;
           outline-color: var(--focus-border-color);
           outline-width: var(--focus-border-width);
           outline-offset: -2px;
-          background-color: #dbdbe5;
+          background-color: var(--menu-button-focused-background-color);
         }
 
         & > span {
           font-size: 0.875rem;
           line-height: 1;
-          color: #444;
+          color: var(--menu-button-color);
           font-weight: bold;
         }
       }
@@ -401,7 +455,7 @@
       & > button:focus,
       & > button:focus-visible,
       & > button[aria-expanded="true"] {
-        background-color: #dbdbe5;
+        background-color: var(--menu-button-hovered-background-color);
         opacity: 1;
       }
     }
@@ -412,46 +466,46 @@
     background-color: transparent;
     transition: background-color 0.2s ease;
     &:hover {
-      background-color: #aab;
+      background-color: var(--resizer-hovered-background-color);
     }
     &:focus {
       outline-style: solid;
       outline-color: var(--focus-border-color);
       outline-width: var(--focus-border-width);
       outline-offset: -2px;
-      background-color: #aab;
+      background-color: var(--resizer-focused-background-color);
     }
     &[aria-busy="true"] {
-      background-color: #ddd;
+      background-color: var(--resizer-busy-background-color);
     }
   }
 
   /* row numbers */
   tbody [role="rowheader"] {
-    background-color: #f1f1f3;
-    border-right: 1px solid #ddd;
-    color: #6d6d6d;
+    background-color: var(--row-number-background-color);
+    border-right: 1px solid var(--row-number-right-border-color);
+    color: var(--row-number-color);
     font-size: 0.68rem;
     padding: 0 2px;
     text-align: center;
   }
   /* highlight the selected rows */
   tr[aria-selected="true"] {
-    background-color: #fbf7bf;
+    background-color: var(--selected-row-background-color);
   }
   tr[aria-selected="true"] [role="rowheader"] {
-    background-color: #f1edbb;
+    background-color: var(--selected-row-number-background-color);
   }
 
   /* table corner */
   /* TODO: find a better selector for the table corner */
   thead td:first-child {
-    background-color: #f9f4ff;
-    border-right: 1px solid #ccc;
+    background-color: var(--corner-cell-background-color);
+    border-right: 1px solid var(--corner-cell-right-border-color);
     box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.2);
   }
   thead td:first-child[aria-disabled="false"] {
-    background: #f9f4ff; /* redundant with td:first-child, but allows to force the background if it has been overridden with a logo */
+    background: var(--corner-cell-background-color); /* redundant with td:first-child, but allows to force the background if it has been overridden with a logo */
   }
 
   /* pending selection gesture */
@@ -476,12 +530,7 @@
     right: 8px;
     bottom: 8px;
     border-radius: 4px;
-    background: linear-gradient(
-      60deg,
-      rgba(0, 0, 0, 0.05) 25%,
-      rgba(0, 0, 0, 0.08) 50%,
-      rgba(0, 0, 0, 0.05) 75%
-    );
+    background: var(--cell-busy-background);
     background-size: 120px 100%;
     animation: textshimmer 3s infinite linear;
   }
@@ -511,19 +560,19 @@
   /* don't hover on mobile */
   @media (hover: hover) {
     tbody tr:hover {
-      background-color: #dbdbe5;
+      background-color: var(--row-hovered-background-color);
     }
     tbody tr:hover td {
-      border-right-color: #bbb;
+      border-right-color: var(--cell-hovered-right-border-color);
     }
     tbody tr:hover td:first-child {
-      background-color: #ccd;
+      background-color: var(--row-number-hovered-background-color)
     }
   }
 
   /* mock row numbers */
   /* Note that this class cannot be easily overriden by custom CSS. Use the variable to change the background. */
-  --mock-row-label-background: #f1f1f3;
+  --mock-row-label-background: var(--row-number-background-color);
   --mock-row-label-top: var(--top-border-height, 0);
 }
 
