@@ -197,50 +197,50 @@
   --cell-horizontal-padding: 10px;
   --resizer-border-width: 4px;
 
-  --color-1: #000;
-  --color-2: #444;
-  --color-3: #666;
-  --color-5: #bbb;
-  --color-7: #ccc;
-  --color-8: #ddd;
-  --color-9: #f0f0f0;
-  --color-10: #fff;
+  --hy-color-1: #000;
+  --hy-color-2: #444;
+  --hy-color-3: #666;
+  --hy-color-5: #bbb;
+  --hy-color-7: #ccc;
+  --hy-color-8: #ddd;
+  --hy-color-9: #f0f0f0;
+  --hy-color-10: #fff;
 
-  --accent-1: #706fb1;
-  --accent-2: #9d9cd5;
-  --accent-3: #ccd;
-  --accent-4: #dbdbe5;
-  --accent-5: #efeef6;
+  --hy-accent-1: #706fb1;
+  --hy-accent-2: #9d9cd5;
+  --hy-accent-3: #ccd;
+  --hy-accent-4: #dbdbe5;
+  --hy-accent-5: #efeef6;
   
-  --highlight-1: #f1edbb;
-  --highlight-2: #fbf7bf;
+  --hy-highlight-1: #f1edbb;
+  --hy-highlight-2: #fbf7bf;
   
-  --header-color: var(--color-2);
-  --menu-color: var(--color-2);
-  --menu-item-color: var(--color-2);
-  --menu-button-color: var(--color-2);
+  --header-color: var(--hy-color-2);
+  --menu-color: var(--hy-color-2);
+  --menu-item-color: var(--hy-color-2);
+  --menu-button-color: var(--hy-color-2);
   --primary-sort-icon-color: inherit;
-  --secondary-sort-icon-color: var(--color-8);
-  --row-number-color: var(--color-3);
-  --text-color: var(--color-1);
+  --secondary-sort-icon-color: var(--hy-color-8);
+  --row-number-color: var(--hy-color-3);
+  --text-color: var(--hy-color-1);
 
-  --focus-background-color: var(--accent-5);
-  --focusable-background-color: var(--color-9);
-  --background-color: var(--color-10);
-  --header-background-color: var(--color-9);
-  --menu-background-color: var(--color-9);
-  --menu-button-background-color: var(--color-9);
-  --menu-button-hovered-background-color: var(--accent-4);
-  --menu-button-focused-background-color: var(--accent-4);
-  --menu-item-background-color: var(--color-10);
-  --menu-item-hovered-background-color: var(--color-9);
-  --row-number-background-color: var(--color-9);
-  --row-number-hovered-background-color: var(--accent-3);
-  --row-number-selected-background-color: var(--highlight-1);
-  --row-hovered-background-color: var(--accent-4);
-  --row-selected-background-color: var(--highlight-2);
-  --corner-cell-background-color: var(--color-9);
-  --resize-indicator-background-color: var(--accent-2);
+  --focus-background-color: var(--hy-accent-5);
+  --focusable-background-color: var(--hy-color-9);
+  --background-color: var(--hy-color-10);
+  --header-background-color: var(--hy-color-9);
+  --menu-background-color: var(--hy-color-9);
+  --menu-button-background-color: var(--hy-color-9);
+  --menu-button-hovered-background-color: var(--hy-accent-4);
+  --menu-button-focused-background-color: var(--hy-accent-4);
+  --menu-item-background-color: var(--hy-color-10);
+  --menu-item-hovered-background-color: var(--hy-color-9);
+  --row-number-background-color: var(--hy-color-9);
+  --row-number-hovered-background-color: var(--hy-accent-3);
+  --row-number-selected-background-color: var(--hy-highlight-1);
+  --row-hovered-background-color: var(--hy-accent-4);
+  --row-selected-background-color: var(--hy-highlight-2);
+  --corner-cell-background-color: var(--hy-color-9);
+  --resize-indicator-background-color: var(--hy-accent-2);
 
   --cell-busy-background: linear-gradient(
       60deg,
@@ -249,17 +249,17 @@
       rgba(0, 0, 0, 0.05) 75%
     );
 
-  --top-border-color: var(--accent-1);
-  --focus-border-color: var(--accent-1);
-  --focusable-border-color: var(--color-3);
-  --cell-border-color: var(--color-8);
-  --cell-hovered-right-border-color: var(--color-5);
-  --header-bottom-border-color: var(--color-7);
-  --menu-border-color: var(--color-7);
-  --menu-inner-border-color: var(--color-7);
-  --resizer-hovered-right-border-color: var(--accent-2);
-  --row-number-hovered-right-border-color: var(--color-7);
-  --corner-cell-right-border-color: var(--color-7);
+  --top-border-color: var(--hy-accent-1);
+  --focus-border-color: var(--hy-accent-1);
+  --focusable-border-color: var(--hy-color-3);
+  --cell-border-color: var(--hy-color-8);
+  --cell-hovered-right-border-color: var(--hy-color-5);
+  --header-bottom-border-color: var(--hy-color-7);
+  --menu-border-color: var(--hy-color-7);
+  --menu-inner-border-color: var(--hy-color-7);
+  --resizer-hovered-right-border-color: var(--hy-accent-2);
+  --row-number-hovered-right-border-color: var(--hy-color-7);
+  --corner-cell-right-border-color: var(--hy-color-7);
 
   & {
     isolation: isolate;
