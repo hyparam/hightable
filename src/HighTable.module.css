@@ -508,7 +508,7 @@
     box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.2);
 
     &[aria-checked="true"] {
-      background: revert;
+      background-image: none; /* allows to force the background if it has been overridden with a logo */
       background-color: var(--corner-cell-background-color);
     }
   }
@@ -569,7 +569,7 @@
       td {
         border-right-color: var(--cell-hovered-right-border-color);
       }
-      [role="rowheader"] {
+      th[role="rowheader"] {
         background-color: var(--row-number-hovered-background-color);
         border-right-color: var(--row-number-hovered-right-border-color);
       }
