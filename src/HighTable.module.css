@@ -183,9 +183,6 @@
 
 /* styling */
 .styled {
-  & {
-    isolation: isolate;
-  }
   --header-z-index: 10;
   --header-background-z-index: calc(var(--header-z-index) - 1);
   --header-spinbutton-z-index: calc(var(--header-z-index) + 1);
@@ -202,6 +199,7 @@
   --text-color-1: #444;
   --text-color-2: #d5d4d6;
   --text-color-3: #6d6d6d;
+  --text-color-4: #000;
   --header-color: var(--text-color-1);
   --menu-color: var(--text-color-1);
   --menu-item-color: var(--text-color-1);
@@ -209,17 +207,20 @@
   --secondary-sort-icon-color: var(--text-color-2);
   --primary-sort-icon-color: inherit;
   --row-number-color: var(--text-color-3);
+  --text-color: var(--text-color-4);
 
   /* TODO(SL): reduce the number of colors */
   --background-color-1: #f1f1f3;
   --background-color-2: #aab;
   --background-color-3: #ddd;
   --background-color-4: #f9f4ff;
+  --background-color-5: #fff;
   --accent-background-color-1: #efeef6;
   --accent-background-color-2: #dbdbe5;
   --accent-background-color-3: #fbf7bf;
   --accent-background-color-4: #f1edbb;
   --accent-background-color-5: #ccd;
+  --background-color: var(--background-color-5);
   --focus-background-color: var(--accent-background-color-1); /* keep --focus-background-color for compatibility */
   --focusable-background-color: var(--background-color-1); /* keep --focusable-background-color for compatibility */
   --header-background-color: var(--background-color-1);
@@ -227,6 +228,7 @@
   --menu-button-background-color: var(--background-color-1);
   --menu-button-hovered-background-color: var(--accent-background-color-2);
   --menu-button-focused-background-color: var(--accent-background-color-2);
+  --menu-item-background-color: var(--background-color-5);
   --resizer-hovered-background-color: var(--background-color-2);
   --resizer-focused-background-color: var(--background-color-2);
   --resizer-busy-background-color: var(--background-color-3);
@@ -262,6 +264,12 @@
   --row-number-right-border-color: var(--border-color-1);
   --row-number-hovered-right-border-color: var(--border-color-3);
   --corner-cell-right-border-color: var(--border-color-3);
+
+  & {
+    isolation: isolate;
+    color: var(--text-color);
+    background-color: var(--background-color);
+  }
 
   .top-border {
     border-top: var(--top-border-height) solid var(--top-border-color);
@@ -416,7 +424,8 @@
       border-style: solid;
       border-color: var(--menu-inner-border-color);
       border-width: 1px 0;
-      background-color: white;
+      border-radius: 0;
+      background-color: var(--menu-item-background-color);
       cursor: pointer;
 
       &:hover {
