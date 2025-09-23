@@ -204,6 +204,7 @@
   --text-color-3: #6d6d6d;
   --header-color: var(--text-color-1);
   --menu-color: var(--text-color-1);
+  --menu-item-color: var(--text-color-1);
   --menu-button-color: var(--text-color-1);
   --secondary-sort-icon-color: var(--text-color-2);
   --primary-sort-icon-color: inherit;
@@ -410,6 +411,7 @@
       width: 100%;
       text-align: left;
       padding: 8px 12px;
+      color: var(--menu-item-color);
       border-style: solid;
       border-color: var(--menu-inner-border-color);
       border-width: 1px 0;
