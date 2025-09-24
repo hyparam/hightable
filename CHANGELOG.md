@@ -1,5 +1,27 @@
 # CHANGELOG
 
+## [0.20.0](https://github.com/hyparam/hightable/compare/v0.19.7...v0.20.0) - 2025-09-24
+
+### Added
+
+- explicitly set the table background and text color ([#281](https://github.com/hyparam/hightable/pull/281)).
+
+### Changed
+
+- more discrete color and size for the column resizer and resized column indicator ([#282](https://github.com/hyparam/hightable/pull/282)).
+
+### Removed
+
+- **Breaking** removed the `--light-border-color` CSS variable ([#283](https://github.com/hyparam/hightable/pull/283)).
+
+### Fixed
+
+- fix the column menu items background and border radius ([#281](https://github.com/hyparam/hightable/pull/281)).
+
+### Refactored
+
+- extract and sort the colors in CSS variables ([#283](https://github.com/hyparam/hightable/pull/283)).
+
 ## [0.19.7](https://github.com/hyparam/hightable/compare/v0.19.6...v0.19.7) - 2025-09-23
 
 ### Fixed
