@@ -6,7 +6,7 @@ interface ColumnWidthsContextType {
   getColumnWidth?: (columnIndex: number) => number | undefined
   getColumnStyle?: (columnIndex: number) => CSSProperties
   isFixedColumn?: (columnIndex: number) => boolean // returns true if the column has a fixed width
-  setAvailableWidth?: (width: number) => void // used to set the width of the wrapper element
+  setAvailableWidthAndAdjustMeasured?: (width: number) => void // used to set the width of the wrapper element, and update the measured columns
   forceWidth?: (options: { columnIndex: number; width: number, minWidth?: number }) => void // used to set a fixed width for a column (will be stored and overrides the auto width)
   measureWidth?: (options: { columnIndex: number; measured: number }) => void // used to set the measured width (and adjust all the measured columns)
   removeWidth?: (options: { columnIndex: number }) => void // used to remove the width of a column, so it can be measured again
@@ -30,7 +30,6 @@ export function ColumnWidthsProvider({ children, localStorageKey, numColumns, mi
   }
 
   const [availableWidth, setAvailableWidth] = useState<number>(0)
-  // ^ TODO: add a validation for availableWidth?
 
   const clamp = useCallback((width: number, configMinWidth?: number) => {
     const minWidthToUse = configMinWidth ?? minWidth
@@ -122,17 +121,28 @@ export function ColumnWidthsProvider({ children, localStorageKey, numColumns, mi
     })
   }, [isValidIndex, setColumnWidths])
 
+  const setAvailableWidthAndAdjustMeasured = useCallback((nextAvailableWidth: number) => {
+    if (!isValidWidth(nextAvailableWidth)) {
+      return
+    }
+    setAvailableWidth(nextAvailableWidth)
+    setColumnWidths(columnWidths => {
+      // compute the adjusted widths
+      return adjustMeasuredWidths({ columnWidths: columnWidths ?? [], availableWidth: nextAvailableWidth, clamp, numColumns })
+    })
+  }, [clamp, numColumns, setColumnWidths])
+
   const value = useMemo(() => {
     return {
       getColumnWidth,
       getColumnStyle,
       isFixedColumn,
-      setAvailableWidth,
+      setAvailableWidthAndAdjustMeasured,
       forceWidth,
       measureWidth,
       removeWidth,
     }
-  }, [getColumnWidth, getColumnStyle, isFixedColumn, setAvailableWidth, forceWidth, measureWidth, removeWidth])
+  }, [getColumnWidth, getColumnStyle, isFixedColumn, setAvailableWidthAndAdjustMeasured, forceWidth, measureWidth, removeWidth])
 
   return (
     <ColumnWidthsContext.Provider value={value}>
