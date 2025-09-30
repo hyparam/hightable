@@ -140,7 +140,7 @@ export function HighTableInner({
   const { numRows } = data
   const { enterCellsNavigation, setEnterCellsNavigation, onTableKeyDown: onNavigationTableKeyDown, onScrollKeyDown, cellPosition, focusFirstCell } = useCellsNavigation()
   const { containerRef } = usePortalContainer()
-  const { setAvailableWidth } = useColumnWidths()
+  const { setAvailableWidthAndAdjustMeasured } = useColumnWidths()
   const { isHiddenColumn } = useColumnVisibilityStates()
   const { orderBy, onOrderByChange } = useOrderBy()
   const { selectable, toggleAllRows, pendingSelectionGesture, onTableKeyDown: onSelectionTableKeyDown, allRowsSelected, isRowSelected, toggleRowNumber, toggleRangeToRowNumber } = useSelection()
@@ -262,7 +262,7 @@ export function HighTableInner({
         // we use the scrollRef client width, because we're interested in the content area
         const tableWidth = getClientWidth(scrollRef.current)
         const leftColumnWidth = getOffsetWidth(tableCornerRef.current)
-        setAvailableWidth?.(tableWidth - leftColumnWidth)
+        setAvailableWidthAndAdjustMeasured?.(tableWidth - leftColumnWidth)
       }
     }
 
@@ -282,7 +282,7 @@ export function HighTableInner({
       window.removeEventListener('resize', handleScroll)
       window.removeEventListener('resize', reportWidth)
     }
-  }, [numRows, overscan, padding, scrollHeight, setAvailableWidth, data, orderBy, onError, columnsParameters])
+  }, [numRows, overscan, padding, scrollHeight, setAvailableWidthAndAdjustMeasured, data, orderBy, onError, columnsParameters])
 
   // focus table on mount, or on later changes, so arrow keys work
   // Note that the dependency upon data and nowRows was removed, because focusFirstCell should depend on them
