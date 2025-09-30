@@ -266,7 +266,8 @@ export function HighTableInner({
       }
     }
 
-    const resizeObserver = new ResizeObserver((entries) => {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    const resizeObserver = ResizeObserver && new ResizeObserver((entries) => {
       for (const entry of entries) {
         if (entry.target === scrollRef.current) {
           handleScroll()
@@ -284,16 +285,19 @@ export function HighTableInner({
 
     if (scroller) {
       scroller.addEventListener('scroll', handleScroll)
-      resizeObserver.observe(scroller)
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      resizeObserver?.observe(scroller)
     }
 
     return () => {
       abortController?.abort() // cancel the fetches if any
       if (scroller) {
         scroller.removeEventListener('scroll', handleScroll)
-        resizeObserver.unobserve(scroller)
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        resizeObserver?.unobserve(scroller)
       }
-      resizeObserver.disconnect()
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      resizeObserver?.disconnect()
     }
   }, [numRows, overscan, padding, scrollHeight, setAvailableWidthAndAdjustMeasured, data, orderBy, onError, columnsParameters])
 
