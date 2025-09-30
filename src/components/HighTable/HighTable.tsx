@@ -209,7 +209,7 @@ export function HighTableInner({
     }
   }, [cellPosition, rowsRange, lastCellPosition, padding, enterCellsNavigation, setEnterCellsNavigation])
 
-  // handle scrolling and window resizing
+  // handle scrolling and component resizing
   useEffect(() => {
     let abortController: AbortController | undefined = undefined
 
@@ -220,7 +220,7 @@ export function HighTableInner({
       // abort the previous fetches if any
       abortController?.abort()
       abortController = new AbortController()
-      // view window height (0 is not allowed - the syntax is verbose, but makes it clear)
+      // view height (0 is not allowed - the syntax is verbose, but makes it clear)
       const currentClientHeight = scrollRef.current?.clientHeight
       const clientHeight = currentClientHeight === undefined || currentClientHeight === 0 ? 100 : currentClientHeight
       // scroll position
@@ -266,21 +266,34 @@ export function HighTableInner({
       }
     }
 
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.target === scrollRef.current) {
+          handleScroll()
+          reportWidth()
+        }
+      }
+    })
+
     // run once
     handleScroll()
     reportWidth()
 
     // listeners
     const scroller = scrollRef.current
-    scroller?.addEventListener('scroll', handleScroll)
-    window.addEventListener('resize', handleScroll)
-    window.addEventListener('resize', reportWidth)
+
+    if (scroller) {
+      scroller.addEventListener('scroll', handleScroll)
+      resizeObserver.observe(scroller)
+    }
 
     return () => {
       abortController?.abort() // cancel the fetches if any
-      scroller?.removeEventListener('scroll', handleScroll)
-      window.removeEventListener('resize', handleScroll)
-      window.removeEventListener('resize', reportWidth)
+      if (scroller) {
+        scroller.removeEventListener('scroll', handleScroll)
+        resizeObserver.unobserve(scroller)
+      }
+      resizeObserver.disconnect()
     }
   }, [numRows, overscan, padding, scrollHeight, setAvailableWidthAndAdjustMeasured, data, orderBy, onError, columnsParameters])
 
