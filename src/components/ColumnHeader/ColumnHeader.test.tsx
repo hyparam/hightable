@@ -57,20 +57,23 @@ describe('ColumnHeader', () => {
     expect(getOffsetWidth).not.toHaveBeenCalled()
   })
 
-  it('measures the width if canMeasureWidth is true', () => {
-    render(<table><thead><tr><ColumnHeader columnName="test" {...defaultProps} canMeasureWidth={true} /></tr></thead></table>)
+  it('measures the width if widthMeasureCount is defined', () => {
+    render(<table><thead><tr><ColumnHeader columnName="test" {...defaultProps} widthMeasureCount={0} /></tr></thead></table>)
     expect(getOffsetWidth).toHaveBeenCalled()
   })
 
-  it('measures the width again if canMeasureWidth toggles to true', () => {
-    const { rerender } = render(<table><thead><tr><ColumnHeader columnName="test" {...defaultProps} canMeasureWidth={true} /></tr></thead></table>)
+  it('measures the width again if widthMeasureCount changes and is defined', () => {
+    const { rerender } = render(<table><thead><tr><ColumnHeader columnName="test" {...defaultProps} widthMeasureCount={0} /></tr></thead></table>)
     expect(getOffsetWidth).toHaveBeenCalledTimes(1)
     // new data is being loaded
-    rerender(<table><thead><tr><ColumnHeader columnName="test" {...defaultProps} canMeasureWidth={false} /></tr></thead></table>)
+    rerender(<table><thead><tr><ColumnHeader columnName="test" {...defaultProps} widthMeasureCount={undefined} /></tr></thead></table>)
     expect(getOffsetWidth).toHaveBeenCalledTimes(1)
     // new data is ready
-    rerender(<table><thead><tr><ColumnHeader columnName="test" {...defaultProps} canMeasureWidth={true} /></tr></thead></table>)
+    rerender(<table><thead><tr><ColumnHeader columnName="test" {...defaultProps} widthMeasureCount={0} /></tr></thead></table>)
     expect(getOffsetWidth).toHaveBeenCalledTimes(2)
+    // new data is ready
+    rerender(<table><thead><tr><ColumnHeader columnName="test" {...defaultProps} widthMeasureCount={1} /></tr></thead></table>)
+    expect(getOffsetWidth).toHaveBeenCalledTimes(3)
   })
 
   it('loads column width from localStorage when localStorageKey is provided', () => {

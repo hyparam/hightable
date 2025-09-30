@@ -148,6 +148,7 @@ export function HighTableInner({
   // local state
   const [rowsRange, setRowsRange] = useState<RowsRange>({ start: 0, end: 0 })
   const [lastCellPosition, setLastCellPosition] = useState(cellPosition)
+  const [widthMeasureCount, setWidthMeasureCount] = useState<number | undefined>(undefined)
 
   const columnsParameters = useMemo(() => {
     return allColumnsParameters.filter((_, index) => {
@@ -327,28 +328,32 @@ export function HighTableInner({
   // Prepare the slice of data to render
   // TODO(SL): also compute progress percentage here, to show a loading indicator
   const slice = useMemo(() => {
-    let hasCompleteRow = false
     const rowContents = rows.map((row) => {
       const rowNumber = data.getRowNumber({ row, orderBy })?.value
       const cells = columnsParameters.map(({ name: column }, columnIndex) => {
         const cell = data.getCell({ row, column, orderBy })
         return { columnIndex, cell }
       })
-      if (cells.every(({ cell }) => cell !== undefined)) {
-        hasCompleteRow = true
-      }
       return {
         row,
         rowNumber,
         cells,
       }
     })
+
     return {
       rowContents,
-      hasCompleteRow,
-      version,
+      hasCompleteRow: rowContents.length > 0 && rowContents.some(({ cells }) => cells.every(({ cell }) => cell !== undefined)),
+      version, // not used, but forces a recompute when the data changes
     }
   }, [data, columnsParameters, rows, orderBy, version])
+
+  // also update state to trigger a width measure if needed
+  if (!slice.hasCompleteRow && widthMeasureCount !== undefined) {
+    setWidthMeasureCount(undefined) // no complete row, don't measure
+  } else if (slice.hasCompleteRow && widthMeasureCount === undefined) {
+    setWidthMeasureCount(0) // at least one complete row, trigger a measure
+  }
 
   // don't render table if header is empty
   if (!columnsParameters.length) return
@@ -383,7 +388,7 @@ export function HighTableInner({
                   ref={tableCornerRef}
                 />
                 <TableHeader
-                  canMeasureWidth={slice.hasCompleteRow}
+                  widthMeasureCount={widthMeasureCount}
                   columnsParameters={columnsParameters}
                   orderBy={orderBy}
                   onOrderByChange={onOrderByChange}

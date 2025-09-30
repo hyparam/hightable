@@ -5,7 +5,7 @@ import TableHeader from './TableHeader.js'
 
 describe('TableHeader', () => {
   const columnsParameters = [{ name: 'Name', index: 0, sortable: true }, { name: 'Age', index: 1, sortable: true }, { name: 'Address', index: 2, sortable: true }]
-  const canMeasureWidth = true
+  const widthMeasureCount = 0
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -14,7 +14,7 @@ describe('TableHeader', () => {
   it('renders table headers correctly', () => {
     const { getByText } = render(<table><thead><tr>
       <TableHeader
-        canMeasureWidth={canMeasureWidth}
+        widthMeasureCount={widthMeasureCount}
         columnsParameters={columnsParameters}
         ariaRowIndex={1}
       />
@@ -31,7 +31,7 @@ describe('TableHeader', () => {
         columnsParameters={columnsParameters}
         orderBy={[]}
         onOrderByChange={onOrderByChange}
-        canMeasureWidth={canMeasureWidth}
+        widthMeasureCount={widthMeasureCount}
         ariaRowIndex={1}
       />
     </tr></thead></table>)
@@ -49,7 +49,7 @@ describe('TableHeader', () => {
         columnsParameters={columnsParameters}
         onOrderByChange={onOrderByChange}
         orderBy={[{ column: 'Age', direction: 'ascending' }]}
-        canMeasureWidth={canMeasureWidth}
+        widthMeasureCount={widthMeasureCount}
         ariaRowIndex={1}
       />
     </tr></thead></table>)
@@ -67,7 +67,7 @@ describe('TableHeader', () => {
         columnsParameters={columnsParameters}
         onOrderByChange={onOrderByChange}
         orderBy={[{ column: 'Age', direction: 'descending' }]}
-        canMeasureWidth={canMeasureWidth}
+        widthMeasureCount={widthMeasureCount}
         ariaRowIndex={1}
       />
     </tr></thead></table>)
@@ -85,7 +85,7 @@ describe('TableHeader', () => {
         columnsParameters={columnsParameters}
         onOrderByChange={onOrderByChange}
         orderBy={[{ column: 'Age', direction: 'ascending' }]}
-        canMeasureWidth={canMeasureWidth}
+        widthMeasureCount={widthMeasureCount}
         ariaRowIndex={1}
       />
     </tr></thead></table>)
@@ -105,7 +105,7 @@ describe('TableHeader', () => {
             <tr>
               <TableHeader
                 columnsParameters={columnsParameters}
-                canMeasureWidth={canMeasureWidth}
+                widthMeasureCount={widthMeasureCount}
                 ariaRowIndex={1}
                 onOrderByChange={onOrderByChange}
                 orderBy={[]}
@@ -143,7 +143,7 @@ describe('TableHeader', () => {
             <tr>
               <TableHeader
                 columnsParameters={columnsParameters}
-                canMeasureWidth={canMeasureWidth}
+                widthMeasureCount={widthMeasureCount}
                 ariaRowIndex={1}
                 onOrderByChange={onOrderByChange}
                 orderBy={[]}
