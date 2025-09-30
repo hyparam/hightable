@@ -51,18 +51,18 @@ function getTotalWidth(widthGroups: WidthGroup[]): number {
 export function adjustMeasuredWidths({
   columnWidths,
   availableWidth,
-  clamp,
+  clampMin,
   numColumns,
 }: {
   columnWidths: MaybeColumnWidth[]
   availableWidth?: number
-  clamp: (width: number) => number
+  clampMin: (width: number) => number
   numColumns: number
 }) {
   if (!isValidWidth(availableWidth)) {
     return columnWidths
   }
-  const minWidth = clamp(0)
+  const minWidth = clampMin(0)
   const numMeasuredColumns = columnWidths.filter(c => c?.measured !== undefined).length
   if (numMeasuredColumns === 0) {
     // no measured columns, nothing to adjust
@@ -89,7 +89,7 @@ export function adjustMeasuredWidths({
   }
   const minReducedWidthMargin = 5 // leave some margin for rounding errors
   const multiplier = numColumns <= 3 ? 1 / numColumns : 0.3 // 30% so that 4 or more columns will overflow
-  const minReducedWidth = clamp(multiplier * remainingWidth - minReducedWidthMargin)
+  const minReducedWidth = clampMin(multiplier * remainingWidth - minReducedWidthMargin)
 
   // Group measured column indexes by width in a Map
   const indexesByWidth = new Map<number, number[]>()

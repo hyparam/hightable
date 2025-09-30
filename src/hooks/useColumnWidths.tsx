@@ -31,7 +31,7 @@ export function ColumnWidthsProvider({ children, localStorageKey, numColumns, mi
 
   const [availableWidth, setAvailableWidth] = useState<number>(0)
 
-  const clamp = useCallback((width: number, configMinWidth?: number) => {
+  const clampMin = useCallback((width: number, configMinWidth?: number) => {
     const minWidthToUse = configMinWidth ?? minWidth
     return Math.floor(Math.max(width, minWidthToUse))
   }, [minWidth])
@@ -52,7 +52,7 @@ export function ColumnWidthsProvider({ children, localStorageKey, numColumns, mi
     if (!Array.isArray(columnWidths)) {
       return []
     }
-    // only keep the width field, and ensure the width is clamped
+    // only keep the width field, and ensure the width is clamped above the min
     return columnWidths.map((columnWidth: unknown) => {
       if (columnWidth === null || columnWidth === undefined) {
         return undefined
@@ -60,7 +60,7 @@ export function ColumnWidthsProvider({ children, localStorageKey, numColumns, mi
       if (typeof columnWidth !== 'object' || !('width' in columnWidth)) {
         return undefined
       }
-      const width = isValidWidth(columnWidth.width) ? clamp(columnWidth.width) : undefined
+      const width = isValidWidth(columnWidth.width) ? clampMin(columnWidth.width) : undefined
       return { width }
     })
   }
@@ -87,12 +87,12 @@ export function ColumnWidthsProvider({ children, localStorageKey, numColumns, mi
     }
     setColumnWidths(columnWidths => {
       const nextColumnWidths = [...columnWidths ?? []]
-      // clamp the width
-      nextColumnWidths[columnIndex] = { ...nextColumnWidths[columnIndex] ?? {}, width: clamp(width, minWidth), measured: undefined }
+      // clamp the width above the min
+      nextColumnWidths[columnIndex] = { ...nextColumnWidths[columnIndex] ?? {}, width: clampMin(width, minWidth), measured: undefined }
       // don't adjust other columns
       return nextColumnWidths
     })
-  }, [clamp, isValidIndex, setColumnWidths])
+  }, [clampMin, isValidIndex, setColumnWidths])
 
   const measureWidth = useCallback(({ columnIndex, measured }: { columnIndex: number; measured: number }) => {
     if (!isValidWidth(measured) || !isValidIndex(columnIndex)) {
@@ -102,11 +102,11 @@ export function ColumnWidthsProvider({ children, localStorageKey, numColumns, mi
     setColumnWidths(columnWidths => {
       // remove the computed width for all the columns with a 'measured' field
       const nextColumnWidths = [...columnWidths ?? []]
-      nextColumnWidths[columnIndex] = { ...nextColumnWidths[columnIndex] ?? {}, measured: clamp(measured), width: undefined }
+      nextColumnWidths[columnIndex] = { ...nextColumnWidths[columnIndex] ?? {}, measured: clampMin(measured), width: undefined }
       // compute the adjusted widths
-      return adjustMeasuredWidths({ columnWidths: nextColumnWidths, availableWidth, clamp, numColumns })
+      return adjustMeasuredWidths({ columnWidths: nextColumnWidths, availableWidth, clampMin, numColumns })
     })
-  }, [availableWidth, clamp, isValidIndex, numColumns, setColumnWidths])
+  }, [availableWidth, clampMin, isValidIndex, numColumns, setColumnWidths])
 
   const removeWidth = useCallback(({ columnIndex }: { columnIndex: number }) => {
     if (!isValidIndex(columnIndex)) {
@@ -128,9 +128,9 @@ export function ColumnWidthsProvider({ children, localStorageKey, numColumns, mi
     setAvailableWidth(nextAvailableWidth)
     setColumnWidths(columnWidths => {
       // compute the adjusted widths
-      return adjustMeasuredWidths({ columnWidths: columnWidths ?? [], availableWidth: nextAvailableWidth, clamp, numColumns })
+      return adjustMeasuredWidths({ columnWidths: columnWidths ?? [], availableWidth: nextAvailableWidth, clampMin, numColumns })
     })
-  }, [clamp, numColumns, setColumnWidths])
+  }, [clampMin, numColumns, setColumnWidths])
 
   const value = useMemo(() => {
     return {
