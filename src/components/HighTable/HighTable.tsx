@@ -267,7 +267,7 @@ export function HighTableInner({
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    const resizeObserver = ResizeObserver && new ResizeObserver((entries) => {
+    const resizeObserver = window.ResizeObserver && new window.ResizeObserver((entries) => {
       for (const entry of entries) {
         if (entry.target === scrollRef.current) {
           handleScroll()
