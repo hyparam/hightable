@@ -47,22 +47,24 @@ function getTotalWidth(widthGroups: WidthGroup[]): number {
 
 /**
  * Adjusts the widths of the measured columns to fill the available width.
+ *
+ * Only reduce sizes, don't increase them. The measured width is the maximum width.
  */
 export function adjustMeasuredWidths({
   columnWidths,
   availableWidth,
-  clamp,
+  clampMin,
   numColumns,
 }: {
   columnWidths: MaybeColumnWidth[]
   availableWidth?: number
-  clamp: (width: number) => number
+  clampMin: (width: number) => number
   numColumns: number
 }) {
   if (!isValidWidth(availableWidth)) {
     return columnWidths
   }
-  const minWidth = clamp(0)
+  const minWidth = clampMin(0)
   const numMeasuredColumns = columnWidths.filter(c => c?.measured !== undefined).length
   if (numMeasuredColumns === 0) {
     // no measured columns, nothing to adjust
@@ -76,31 +78,28 @@ export function adjustMeasuredWidths({
       // ignore measured columns
       continue
     }
-    if (columnWidth?.width === undefined) {
-      // no info, we assume the width is minWidth
-      remainingWidth -= minWidth
-      continue
-    }
-    remainingWidth -= columnWidth.width
+    // use fixed width, or minWidth if width is unknown
+    remainingWidth -= columnWidth?.width ?? minWidth
   }
   if (columnWidths.length < numColumns) {
     // if there are fewer columns than numColumns, we assume the missing columns have a width of minWidth
     remainingWidth -= (numColumns - columnWidths.length) * minWidth
   }
-  const minReducedWidthMargin = 5 // leave some margin for rounding errors
+  const minReducedWidthMargin = 15 // leave some margin for rounding errors
   const multiplier = numColumns <= 3 ? 1 / numColumns : 0.3 // 30% so that 4 or more columns will overflow
-  const minReducedWidth = clamp(multiplier * remainingWidth - minReducedWidthMargin)
+  const minReducedWidth = clampMin(multiplier * remainingWidth - minReducedWidthMargin)
 
   // Group measured column indexes by width in a Map
   const indexesByWidth = new Map<number, number[]>()
   for (const [columnIndex, columnWidth] of columnWidths.entries()) {
     if (columnWidth?.measured !== undefined) {
       const { measured } = columnWidth
-      const array = indexesByWidth.get(measured)
+      const clampedMeasured = clampMin(measured)
+      const array = indexesByWidth.get(clampedMeasured)
       if (array) {
         array.push(columnIndex)
       } else {
-        indexesByWidth.set(measured, [columnIndex])
+        indexesByWidth.set(clampedMeasured, [columnIndex])
       }
     }
   }
@@ -114,24 +113,10 @@ export function adjustMeasuredWidths({
   // - applying the second largest width to the largest column(s), if possible
   // - else, reducing the largest column(s) to minReducedWidth
   // We stop when the total width is below the target width, or when we cannot reduce any more.
-  //
-  // If we succeed in reducing below the target width, we add the remaining space to all the widths equally
-
   let i = 0
   while (orderedWidthGroups.length > 0 && i < 100) {
     // safeguard against infinite loop
     i++
-
-    const currentWidth = getTotalWidth(orderedWidthGroups)
-    if (currentWidth <= remainingWidth) {
-      // the current widths are below the target, the loop has ended
-      // Increase the widths equally to fill the remaining space
-      const delta = Math.floor((remainingWidth - currentWidth) / numMeasuredColumns)
-      for (const group of orderedWidthGroups) {
-        group.width = clamp(group.width + delta)
-      }
-      break
-    }
 
     // The current width is still above the target width.
     // The priority is to reduce the width of the widest columns (the last item in state)
@@ -147,20 +132,20 @@ export function adjustMeasuredWidths({
       break
     }
 
-    // we cannot go below minReducedWidth, we let state as is
-    if (last.width <= minReducedWidth) {
-      break
-    }
+    const totalWidth = getTotalWidth(orderedWidthGroups)
+    const idealNewWidth = clampMin(last.width - (totalWidth - remainingWidth) / last.indexes.length)
+    const newWidth = Math.min(last.width, Math.max(idealNewWidth, minReducedWidth, previous?.width ?? 0))
 
-    if (previous === undefined || previous.width < minReducedWidth) {
-      // decrease the largest width to minReducedWidth
-      last.width = minReducedWidth
-    } else {
-      // decrease the largest width to the second largest width
-      // (and merge the states)
+    if (newWidth === previous?.width) {
+      // reduce to the second largest width and merge the states
       orderedWidthGroups.pop()
       previous.indexes.push(...last.indexes)
+      continue
     }
+
+    // cannot reduce any more
+    last.width = newWidth
+    break
   }
 
   // fill the adjusted widths
@@ -168,7 +153,7 @@ export function adjustMeasuredWidths({
   for (const { width, indexes } of orderedWidthGroups) {
     for (const index of indexes) {
       const columnWidth = {
-        width: width,
+        width,
         measured: columnWidths[index]?.measured, // keep the measured width if it exists (it should)
       }
       columnWidths[index] = columnWidth
@@ -176,9 +161,10 @@ export function adjustMeasuredWidths({
       remainingWidth -= width
     }
   }
-  // add the missing pixels to the last column
-  if (lastColumnWidth !== undefined && remainingWidth > 0) {
-    lastColumnWidth.width = clamp(lastColumnWidth.width + remainingWidth)
+  // add to last, if missing is less than minReducedWidthMargin
+  const totalWidth = getTotalWidth(orderedWidthGroups)
+  if (lastColumnWidth !== undefined && remainingWidth > 0 && remainingWidth < minReducedWidthMargin && totalWidth < availableWidth) {
+    lastColumnWidth.width += remainingWidth
   }
 
   return columnWidths
