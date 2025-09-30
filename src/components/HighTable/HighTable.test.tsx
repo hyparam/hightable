@@ -1286,18 +1286,18 @@ describe('Navigating Hightable with the keyboard', () => {
         throw new Error('aria-valuenow should not be null')
       }
       // the column measurement is mocked
-      await user.keyboard('{ArrowRight}')
-      expect(spinbutton.getAttribute('aria-valuenow')).toBe((+value + 10).toString())
-      await user.keyboard('{ArrowLeft}{ArrowLeft}{ArrowLeft}')
-      expect(spinbutton.getAttribute('aria-valuenow')).toBe((+value - 20).toString())
+      await user.keyboard('{ArrowRight}{ArrowRight}{ArrowRight}')
+      expect(spinbutton.getAttribute('aria-valuenow')).toBe((+value + 30).toString())
+      await user.keyboard('{ArrowLeft}')
+      expect(spinbutton.getAttribute('aria-valuenow')).toBe((+value + 20).toString())
       await user.keyboard('{ArrowUp}')
-      expect(spinbutton.getAttribute('aria-valuenow')).toBe((+value - 10).toString())
+      expect(spinbutton.getAttribute('aria-valuenow')).toBe((+value + 30).toString())
       await user.keyboard('{ArrowDown}')
-      expect(spinbutton.getAttribute('aria-valuenow')).toBe((+value - 20).toString())
+      expect(spinbutton.getAttribute('aria-valuenow')).toBe((+value + 20).toString())
       await user.keyboard('{PageUp}')
-      expect(spinbutton.getAttribute('aria-valuenow')).toBe((+value + 80).toString())
+      expect(spinbutton.getAttribute('aria-valuenow')).toBe((+value + 120).toString())
       await user.keyboard('{PageDown}')
-      expect(spinbutton.getAttribute('aria-valuenow')).toBe((+value - 20).toString())
+      expect(spinbutton.getAttribute('aria-valuenow')).toBe((+value + 20).toString())
       await user.keyboard('{Home}')
       expect(spinbutton.getAttribute('aria-valuenow')).toBe((50).toString()) // min width is hardcoded to 50px
     })
@@ -1312,6 +1312,7 @@ describe('Navigating Hightable with the keyboard', () => {
       if (!spinbutton) {
         throw new Error('Spinbutton is null')
       }
+      // The initial value is autosized
       const value = spinbutton.getAttribute('aria-valuenow')
       if (value === null) {
         throw new Error('aria-valuenow should not be null')
@@ -1324,7 +1325,7 @@ describe('Navigating Hightable with the keyboard', () => {
         throw new Error('aria-valuenow should not be null')
       }
       // the autosized column width (smart fit) is less than the default adjusted width
-      expect(+valueNow).toBeLessThan(+value)
+      expect(+valueNow).toEqual(+value)
       expect(document.activeElement).toBe(cell)
     })
 
@@ -1336,10 +1337,11 @@ describe('Navigating Hightable with the keyboard', () => {
       if (!spinbutton) {
         throw new Error('Spinbutton is null')
       }
+      // The initial value is autosized
       const initialValue = spinbutton.getAttribute('aria-valuenow')
       // autoresize
       await user.keyboard(key)
-      expect(spinbutton.getAttribute('aria-valuenow')).not.toBe(initialValue)
+      expect(spinbutton.getAttribute('aria-valuenow')).toBe(initialValue)
       // focus the resizer again
       await user.keyboard('{Tab}{Tab}')
       // press the key
