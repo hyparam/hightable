@@ -1,19 +1,34 @@
 import { cleanup, renderHook } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
+import type { ReactNode } from 'react'
 
-import { ColumnConfiguration } from '../../src/helpers/columnConfiguration'
+import { ColumnConfiguration } from '../../src/helpers/columnConfiguration.js'
 import { DataFrame } from '../../src/helpers/dataframe/index.js'
-import { useTableConfig } from '../../src/hooks/useTableConfig'
+import { ColumnParametersProvider, useColumnParameters } from '../../src/hooks/useColumnParameters.js'
 
 afterEach(cleanup)
 
-describe('useTableConfig', () => {
+function createWrapper(data: Pick<DataFrame, 'columnDescriptors'>, columnConfiguration?: ColumnConfiguration) {
+  function wrapper({ children }: { children: ReactNode }) {
+    return (
+      <ColumnParametersProvider data={data} columnConfiguration={columnConfiguration}>
+        {children}
+      </ColumnParametersProvider>
+    )
+  }
+  return wrapper
+}
+
+describe('useColumnParameters', () => {
   it('returns parameters in DataFrame column descriptors order', () => {
     const df = {
       columnDescriptors: ['id', 'name', 'status'].map(name => ({ name })),
     } as Pick<DataFrame, 'columnDescriptors'>
 
-    const { result } = renderHook(() => useTableConfig(df, undefined))
+    const { result } = renderHook(
+      () => useColumnParameters(),
+      { wrapper: createWrapper(df) }
+    )
 
     expect(result.current.map(c => c.name)).toEqual(df.columnDescriptors.map(c => c.name))
     expect(result.current.map(c => c.index)).toEqual([0, 1, 2])
@@ -28,8 +43,9 @@ describe('useTableConfig', () => {
       name: { headerComponent: <strong>Name</strong> },
     }
 
-    const { result } = renderHook(() =>
-      useTableConfig(df, columnConfiguration)
+    const { result } = renderHook(
+      () => useColumnParameters(),
+      { wrapper: createWrapper(df, columnConfiguration) }
     )
 
     const [, nameCol] = result.current
@@ -51,8 +67,9 @@ describe('useTableConfig', () => {
       name: { minWidth: 150 },
     }
 
-    const { result } = renderHook(() =>
-      useTableConfig(df, columnConfiguration)
+    const { result } = renderHook(
+      () => useColumnParameters(),
+      { wrapper: createWrapper(df, columnConfiguration) }
     )
 
     const [, nameCol] = result.current
@@ -73,8 +90,9 @@ describe('useTableConfig', () => {
       name: { headerComponent: <strong>Name</strong> },
     }
 
-    const { result } = renderHook(() =>
-      useTableConfig(df, columnConfiguration)
+    const { result } = renderHook(
+      () => useColumnParameters(),
+      { wrapper: createWrapper(df, columnConfiguration) }
     )
 
     const [idCol, nameCol] = result.current
@@ -99,8 +117,9 @@ describe('useTableConfig', () => {
       extraneous: { width: 123 },
     } as unknown as ColumnConfiguration // stray key on purpose
 
-    const { result } = renderHook(() =>
-      useTableConfig(df, columnConfiguration)
+    const { result } = renderHook(
+      () => useColumnParameters(),
+      { wrapper: createWrapper(df, columnConfiguration) }
     )
 
     expect(result.current).toHaveLength(1)
@@ -113,13 +132,12 @@ describe('useTableConfig', () => {
     } as Pick<DataFrame, 'columnDescriptors'>
 
     const { result, rerender } = renderHook(
-      ({ d, c }: { d: Pick<DataFrame, 'columnDescriptors'>; c?: ColumnConfiguration }) =>
-        useTableConfig(d, c),
-      { initialProps: { d: df, c: undefined } }
+      () => useColumnParameters(),
+      { wrapper: createWrapper(df) }
     )
 
     const first = result.current
-    rerender({ d: df, c: undefined })
+    rerender()
 
     // React memo should give us the same array instance
     expect(result.current).toBe(first)

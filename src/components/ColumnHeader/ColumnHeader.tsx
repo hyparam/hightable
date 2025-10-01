@@ -1,6 +1,6 @@
 import { KeyboardEvent, ReactNode, useCallback, useEffect, useMemo, useRef } from 'react'
 import { flushSync } from 'react-dom'
-import type { ColumnParameters } from '../../hooks/useTableConfig.js'
+import type { ColumnParameters } from '../../hooks/useColumnParameters.js'
 import { Direction } from '../../helpers/sort.js'
 import { getOffsetWidth } from '../../helpers/width.js'
 import { useCellNavigation } from '../../hooks/useCellsNavigation.js'

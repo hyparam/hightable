@@ -5,13 +5,13 @@ import { Selection } from '../../helpers/selection.js'
 import { OrderBy } from '../../helpers/sort.js'
 import { cellStyle, getClientWidth, getOffsetWidth } from '../../helpers/width.js'
 import { CellsNavigationProvider, useCellsNavigation } from '../../hooks/useCellsNavigation.js'
+import { ColumnParametersProvider, useColumnParameters } from '../../hooks/useColumnParameters.js'
 import { ColumnWidthsProvider, useColumnWidths } from '../../hooks/useColumnWidths.js'
 import { ColumnVisibilityStatesProvider, type MaybeHiddenColumn, useColumnVisibilityStates } from '../../hooks/useColumnVisibilityStates.js'
 import { DataProvider, useData } from '../../hooks/useData.js'
 import { OrderByProvider, useOrderBy } from '../../hooks/useOrderBy.js'
 import { PortalContainerProvider, usePortalContainer } from '../../hooks/usePortalContainer.js'
 import { SelectionProvider, useSelection } from '../../hooks/useSelection.js'
-import { useTableConfig } from '../../hooks/useTableConfig.js'
 import { stringify as stringifyDefault } from '../../utils/stringify.js'
 import Cell, { type CellContentProps } from '../Cell/Cell.js'
 import Row from '../Row/Row.js'
@@ -82,28 +82,31 @@ function HighTableData(props: PropsData) {
   const { cacheKey, orderBy, onOrderByChange, selection, onSelectionChange, onError, onColumnsVisibilityChange } = props
 
   return (
-    /* Create a new set of widths if the data has changed, but keep it if only the number of rows changed */
-    <ColumnWidthsProvider key={cacheKey ?? key} localStorageKey={cacheKey ? `${cacheKey}${columnWidthsSuffix}` : undefined} numColumns={data.columnDescriptors.length} minWidth={minWidth}>
-      {/* Create a new set of hidden columns if the data has changed, but keep it if only the number of rows changed */}
-      <ColumnVisibilityStatesProvider key={cacheKey ?? key} localStorageKey={cacheKey ? `${cacheKey}${columnVisibilityStatesSuffix}` : undefined} numColumns={data.columnDescriptors.length} onColumnsVisibilityChange={onColumnsVisibilityChange}>
-        {/* Create a new context if the dataframe changes, to flush the cache (ranks and indexes) */}
-        <OrderByProvider key={key} orderBy={orderBy} onOrderByChange={onOrderByChange}>
-          {/* Create a new selection context if the dataframe has changed */}
-          <SelectionProvider key={key} selection={selection} onSelectionChange={onSelectionChange} data={data} onError={onError}>
-            {/* Create a new navigation context if the dataframe has changed, because the focused cell might not exist anymore */}
-            <CellsNavigationProvider key={key} colCount={data.columnDescriptors.length + 1} rowCount={numRows + 1} rowPadding={props.padding ?? defaultPadding}>
-              <PortalContainerProvider>
-                <HighTableInner version={version} {...props} />
-              </PortalContainerProvider>
-            </CellsNavigationProvider>
-          </SelectionProvider>
-        </OrderByProvider>
-      </ColumnVisibilityStatesProvider>
-    </ColumnWidthsProvider>
+    /* Provide the column configuration to the table */
+    <ColumnParametersProvider columnConfiguration={props.columnConfiguration} data={data}>
+      {/* Create a new set of widths if the data has changed, but keep it if only the number of rows changed */}
+      <ColumnWidthsProvider key={cacheKey ?? key} localStorageKey={cacheKey ? `${cacheKey}${columnWidthsSuffix}` : undefined} numColumns={data.columnDescriptors.length} minWidth={minWidth}>
+        {/* Create a new set of hidden columns if the data has changed, but keep it if only the number of rows changed */}
+        <ColumnVisibilityStatesProvider key={cacheKey ?? key} localStorageKey={cacheKey ? `${cacheKey}${columnVisibilityStatesSuffix}` : undefined} numColumns={data.columnDescriptors.length} onColumnsVisibilityChange={onColumnsVisibilityChange}>
+          {/* Create a new context if the dataframe changes, to flush the cache (ranks and indexes) */}
+          <OrderByProvider key={key} orderBy={orderBy} onOrderByChange={onOrderByChange}>
+            {/* Create a new selection context if the dataframe has changed */}
+            <SelectionProvider key={key} selection={selection} onSelectionChange={onSelectionChange} data={data} onError={onError}>
+              {/* Create a new navigation context if the dataframe has changed, because the focused cell might not exist anymore */}
+              <CellsNavigationProvider key={key} colCount={data.columnDescriptors.length + 1} rowCount={numRows + 1} rowPadding={props.padding ?? defaultPadding}>
+                <PortalContainerProvider>
+                  <HighTableInner version={version} {...props} />
+                </PortalContainerProvider>
+              </CellsNavigationProvider>
+            </SelectionProvider>
+          </OrderByProvider>
+        </ColumnVisibilityStatesProvider>
+      </ColumnWidthsProvider>
+    </ColumnParametersProvider>
   )
 }
 
-type PropsInner = Omit<PropsData, 'orderBy' | 'onOrderByChange' | 'selection' | 'onSelectionChange'> & {
+type PropsInner = Omit<PropsData, 'orderBy' | 'onOrderByChange' | 'selection' | 'onSelectionChange' | 'columnConfiguration'> & {
   version: number // version of the data frame, used to re-render the component when the data changes
 }
 
@@ -131,7 +134,6 @@ export function HighTableInner({
   className = '',
   columnClassNames = [],
   styled = true,
-  columnConfiguration,
   version,
   renderCellContent,
 }: PropsInner) {
@@ -144,7 +146,7 @@ export function HighTableInner({
   const { isHiddenColumn } = useColumnVisibilityStates()
   const { orderBy, onOrderByChange } = useOrderBy()
   const { selectable, toggleAllRows, pendingSelectionGesture, onTableKeyDown: onSelectionTableKeyDown, allRowsSelected, isRowSelected, toggleRowNumber, toggleRangeToRowNumber } = useSelection()
-  const allColumnsParameters = useTableConfig(data, columnConfiguration)
+  const allColumnsParameters = useColumnParameters()
   // local state
   const [rowsRange, setRowsRange] = useState<RowsRange>({ start: 0, end: 0 })
   const [lastCellPosition, setLastCellPosition] = useState(cellPosition)
