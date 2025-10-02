@@ -105,12 +105,7 @@ export function ColumnWidthsProvider({ children, localStorageKey, numColumns, mi
   function parse(json: string): (number | undefined)[] {
     const value: unknown = JSON.parse(json)
     return !Array.isArray(value) ? [] : value.map((element: unknown) => {
-      return element
-        && typeof element === 'object'
-        && 'fixedWidth' in element
-        && typeof element.fixedWidth === 'number'
-        ? element.fixedWidth
-        : undefined
+      return typeof element === 'number' ? element : undefined
     })
   }
   // Reference to the value of the fixed widths, to use in useEffect without being a dependency
@@ -183,13 +178,7 @@ export function ColumnWidthsProvider({ children, localStorageKey, numColumns, mi
     // update the fixed and measured widths, in case the minimum width changed
     checkFixedWidths()
     checkMeasuredWidths()
-    try {
-      setAdjustedWidths(adjustWidths({ fixedWidths: fixedWidthsRef.current, measuredWidths, maxTotalWidth, numColumns, getMinWidth }))
-    } catch (e) {
-      // TODO(SL): remove the try/catch when everything is stable
-      console.debug('Error adjusting column widths:', e)
-      setAdjustedWidths(undefined)
-    }
+    setAdjustedWidths(adjustWidths({ fixedWidths: fixedWidthsRef.current, measuredWidths, maxTotalWidth, numColumns, getMinWidth }))
   }, [numColumns, measuredWidths, maxTotalWidth, getMinWidth, checkFixedWidths, checkMeasuredWidths])
 
   const getWidth = useCallback((columnIndex: number) => {
@@ -255,8 +244,8 @@ function adjustWidths({
   getMinWidth: (columnIndex?: number) => number
   numColumns: number
 }): (number | undefined)[] {
-  if (!isValidWidth(maxTotalWidth)) {
-    throw new Error(`Invalid maxTotalWidth: ${maxTotalWidth}.`)
+  if (maxTotalWidth === undefined) {
+    return []
   }
   if (!measuredWidths || measuredWidths.every(c => c === undefined)) {
     // no measured columns, nothing to adjust
@@ -287,9 +276,6 @@ function adjustWidths({
         Math.floor(value / maxAdjustmentRatio),
         minAdjustedWidth
       ) // we don't want to shrink a column too much
-      // if (value < minWidth) {
-      //   throw new Error(`Incoherent measured width for column ${index}: ${value} < minWidth ${minWidth}`)
-      // }
       if (value < minWidth) {
         // cannot be adjusted, skip
         continue
@@ -323,6 +309,7 @@ function adjustWidths({
     }
     const { width, columns } = largestGroup
     if (columns.length === 0) {
+      // Should not happen
       throw new Error(`Incoherent width group with no columns: ${width}`)
     }
 
