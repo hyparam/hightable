@@ -4,7 +4,10 @@ import { useColumnMinWidths } from './useColumnParameters.js'
 import { useLocalStorageState } from './useLocalStorageState.js'
 
 const defaultMinWidth = 50 // minimum width of a cell in px, used to compute the column widths
-const snapDistance = 20 // if the remaining excedent is below that value, we add it to the last adjusted column
+const snapDistance = 10 // if a small space remains to the right of the last column after shrinking widths, it's filled by expanding some columns
+const maxAdjustmentRatio = 3 // when adjusting, we don't want to shrink a column too much. It's the maximum ratio between the measured width and the adjusted width
+const minAdjustedWidth = 150 // when adjusting, we don't want to shrink a column too much. It's the minimum adjusted width
+// TODO(SL): let config.minAdjustedWidth override minAdjustedWidth the same way config.minWidth does for minWidth?
 
 /**
  * The width of a column depends on several factors.
@@ -15,7 +18,7 @@ const snapDistance = 20 // if the remaining excedent is below that value, we add
  * - the available width in the table (depends on the component resizes)
  * Others are a state:
  * - the fixed width, when a user resizes the column (note: it is stored in the local storage, and we don't adjust other columns when setting a fixed column)
- * - the measured width (obtained by releasing any restriction on the column and measuring the content width)
+ * - the measured width (obtained by releasing any restriction on the column and measuring the content width - CSS max-width and other rules apply)
  * - the adjusted width, computed to fill the available width when there are measured columns - not set if the column has a fixed width
  *
  * The width must be at least the minimum width. There is no maximum width.
@@ -24,11 +27,11 @@ const snapDistance = 20 // if the remaining excedent is below that value, we add
  * 1. fixed width
  * 2. measured width
  * 3. adjusted width (if the column has been measured, and had to be adjusted)
- * 4. undefined (free width)
+ * 4. undefined (free width, respects the CSS style rules if any)
  *
- * If any of the factors change, the widths of all the columns are recomputed. Special rule:
+ * If any of the factors change, the widths of all the columns are recomputed. Special rules:
  * - if a fixed or measured width does not respect the minimum width anymore, it is deleted.
- * - when a fixed width is set, the other columns are not adjusted, to avoid weird behavior
+ * - when a column is resized manually (ie. fixed), the other columns remain unchanged and are not adjusted.
  */
 
 interface ColumnWidthsContextType {
@@ -271,105 +274,104 @@ function adjustWidths({
   }
   let excedent = totalWidth - maxTotalWidth
 
-  if (excedent > 0) {
-    // TODO(SL): re apply these detail
-    // const minReducedWidthMargin = 15 // leave some margin for rounding errors
-    // const minReducedWidth = clampMin(multiplier * remainingWidth - minReducedWidthMargin)
-    // const multiplier = columns.length <= 3 ? 1 / columns.length : 0.3
-    // const clampedWidth = numColumns < 4 ? 0 : maxTotalWidth * 0.3 // 30% so that 4 or more columns will overflow
-    const clampedWidth = 0
+  if (excedent <= 0) {
+    return []
+  }
 
-    // Group measured column indexes by width in a Map
-    const columnsByWidth = new Map<number, { index: number; minWidth: number; adjustedWidth?: number }[]>()
-    for (const [index, value] of measuredWidths.entries()) {
-      if (value !== undefined) {
-        const minWidth = getMinWidth(index)
-        if (value < minWidth) {
-          throw new Error(`Incoherent measured width for column ${index}: ${value} < minWidth ${minWidth}`)
-        }
-        if (value === minWidth) {
-          // cannot be adjusted, skip
-          continue
-        }
-        const array = columnsByWidth.get(value)
-        if (array) {
-          array.push({ index, minWidth })
-        } else {
-          columnsByWidth.set(value, [{ index, minWidth }])
-        }
+  // Group measured column indexes by width in a Map
+  const columnsByWidth = new Map<number, { index: number; minWidth: number; adjustedWidth?: number }[]>()
+  for (const [index, value] of measuredWidths.entries()) {
+    if (value !== undefined) {
+      const minWidth = Math.max(
+        getMinWidth(index),
+        Math.floor(value / maxAdjustmentRatio),
+        minAdjustedWidth
+      ) // we don't want to shrink a column too much
+      // if (value < minWidth) {
+      //   throw new Error(`Incoherent measured width for column ${index}: ${value} < minWidth ${minWidth}`)
+      // }
+      if (value < minWidth) {
+        // cannot be adjusted, skip
+        continue
+      }
+      const array = columnsByWidth.get(value)
+      if (array) {
+        array.push({ index, minWidth })
+      } else {
+        columnsByWidth.set(value, [{ index, minWidth }])
       }
     }
-    // Convert to width groups ({width, columns}), and sort by width (ascending)
-    const orderedWidthGroups = [...columnsByWidth.entries()].map<WidthGroup>(
-      ([width, columns]) => ({ width, columns })
-    ).sort((a, b) => a.width - b.width)
+  }
+  // Convert to width groups ({width, columns}), and sort by width (ascending)
+  const orderedWidthGroups = [...columnsByWidth.entries()].map<WidthGroup>(
+    ([width, columns]) => ({ width, columns })
+  ).sort((a, b) => a.width - b.width)
 
-    // we try to decrease the width of the widest column(s), then the second largest one(s), etc
-    // until reaching the target (the max total width).
-    // We stop when the total width is below the target width, or when we cannot reduce any more.
-    let i = 0
-    while (orderedWidthGroups.length > 0 && i < 100 && excedent > 0) { // TODO(SL): remove the limit
-      // safeguard against infinite loop
-      i++
+  // we try to decrease the width of the widest column(s), then the second largest one(s), etc
+  // until reaching the target (the max total width).
+  // We stop when the total width is below the target width, or when we cannot reduce any more.
+  let i = 0
+  while (orderedWidthGroups.length > 0 && i < 100 && excedent > 0) { // TODO(SL): remove the limit
+    // safeguard against infinite loop
+    i++
 
-      // Get the largest width group
-      const largestGroup = orderedWidthGroups.pop()
-      if (largestGroup === undefined) {
-        // should not happen due to the while condition, but it ensures the type
-        break
-      }
-      const { width, columns } = largestGroup
-      if (columns.length === 0) {
-        throw new Error(`Incoherent width group with no columns: ${width}`)
-      }
+    // Get the largest width group
+    const largestGroup = orderedWidthGroups.pop()
+    if (largestGroup === undefined) {
+      // should not happen due to the while condition, but it ensures the type
+      break
+    }
+    const { width, columns } = largestGroup
+    if (columns.length === 0) {
+      throw new Error(`Incoherent width group with no columns: ${width}`)
+    }
 
-      // Get the second largest width group (if any)
-      const secondLargestGroup = orderedWidthGroups.pop()
+    // Get the second largest width group (if any)
+    const secondLargestGroup = orderedWidthGroups.pop()
 
-      // Compute the minimum width we can reduce to
-      const minGroupWidth = Math.max(...columns.map(c => c.minWidth))
-      const minWidth = secondLargestGroup === undefined ? minGroupWidth : Math.max(minGroupWidth, secondLargestGroup.width)
+    // Compute the minimum width we can reduce to
+    const minGroupWidth = Math.max(...columns.map(c => c.minWidth))
+    const minWidth = secondLargestGroup === undefined ? minGroupWidth : Math.max(minGroupWidth, secondLargestGroup.width)
 
-      // Compute the ideal new width if we could reduce all columns equally
-      const idealNewWidth = Math.max(clampedWidth, Math.ceil(width - excedent / columns.length))
+    // Compute the ideal new width if we could reduce all columns equally
+    const idealNewWidth = Math.ceil(width - excedent / columns.length)
 
-      if (idealNewWidth >= minWidth) {
-        // we can reduce to the ideal new width and finish
-        for (const column of columns) {
-          adjustedWidths[column.index] = idealNewWidth
-        }
-        excedent -= (width - idealNewWidth) * columns.length
-        // All done
-        break
-      }
-
-      // cannot reduce to the ideal new width, reduce to the minimum width
+    if (idealNewWidth >= minWidth) {
+      // we can reduce to the ideal new width and finish
       for (const column of columns) {
-        adjustedWidths[column.index] = minWidth
+        adjustedWidths[column.index] = idealNewWidth
       }
-      excedent -= (width - minWidth) * columns.length
+      excedent -= (width - idealNewWidth) * columns.length
+      // All done
+      break
+    }
 
-      // keep only the columns that can still be shrinked (can be empty)
-      const remainingColumns = columns.filter(c => c.minWidth < minWidth)
+    // cannot reduce to the ideal new width, reduce to the minimum width
+    for (const column of columns) {
+      adjustedWidths[column.index] = minWidth
+    }
+    excedent -= (width - minWidth) * columns.length
 
-      // re-add the groups
-      if (secondLargestGroup?.width === minWidth) {
-        // merge
-        orderedWidthGroups.push({ width: minWidth, columns: [...secondLargestGroup.columns, ...remainingColumns] })
-      } else {
-        // add the second largest group back (if any)
-        if (secondLargestGroup !== undefined) {
-          orderedWidthGroups.push(secondLargestGroup)
-        }
-        // add the remaining columns as a new group (if any)
-        if (remainingColumns.length > 0) {
-          orderedWidthGroups.push({ width: minWidth, columns: remainingColumns })
-        }
+    // keep only the columns that can still be shrinked (can be empty)
+    const remainingColumns = columns.filter(c => c.minWidth < minWidth)
+
+    // re-add the groups
+    if (secondLargestGroup?.width === minWidth) {
+      // merge
+      orderedWidthGroups.push({ width: minWidth, columns: [...secondLargestGroup.columns, ...remainingColumns] })
+    } else {
+      // add the second largest group back (if any)
+      if (secondLargestGroup !== undefined) {
+        orderedWidthGroups.push(secondLargestGroup)
+      }
+      // add the remaining columns as a new group (if any)
+      if (remainingColumns.length > 0) {
+        orderedWidthGroups.push({ width: minWidth, columns: remainingColumns })
       }
     }
   }
 
-  // If we exit the loop with excedent < 0, and it's below a threshold, we add it to some column to snap to the right border
+  // If we exit the loop with excedent < 0, and it's below a threshold, we add it to some columns to snap to the right border
   if (excedent < 0 && excedent > -snapDistance) {
     const availableColumns = adjustedWidths.map((adjustedWidth, index) => {
       const fixedWidth = fixedWidths?.[index]
