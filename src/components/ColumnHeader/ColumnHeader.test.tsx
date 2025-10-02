@@ -1,9 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+import { ColumnParametersProvider } from '../../hooks/useColumnParameters.js'
 import { ColumnWidthsProvider } from '../../hooks/useColumnWidths.js'
 import { render } from '../../utils/userEvent.js'
 import ColumnHeader from './ColumnHeader.js'
-
 import { getOffsetWidth } from '../../helpers/width.js'
+
 vi.mock('../../helpers/width.js', { spy: true })
 
 vi.stubGlobal('localStorage', (() => {
@@ -58,24 +60,34 @@ describe('ColumnHeader', () => {
   })
 
   it('measures the width if canMeasureWidth is true', () => {
-    render(<table><thead><tr><ColumnHeader columnName="test" {...defaultProps} canMeasureWidth={true} /></tr></thead></table>)
+    render(<ColumnWidthsProvider numColumns={1} minWidth={10}>
+      <table><thead><tr><ColumnHeader columnName="test" {...defaultProps} canMeasureWidth={true} /></tr></thead></table>
+    </ColumnWidthsProvider>)
     expect(getOffsetWidth).toHaveBeenCalled()
   })
 
-  it('measures the width again if canMeasureWidth toggles to true', () => {
-    const { rerender } = render(<table><thead><tr><ColumnHeader columnName="test" {...defaultProps} canMeasureWidth={true} /></tr></thead></table>)
-    expect(getOffsetWidth).toHaveBeenCalledTimes(1)
-    // new data is being loaded
-    rerender(<table><thead><tr><ColumnHeader columnName="test" {...defaultProps} canMeasureWidth={false} /></tr></thead></table>)
-    expect(getOffsetWidth).toHaveBeenCalledTimes(1)
-    // new data is ready
-    rerender(<table><thead><tr><ColumnHeader columnName="test" {...defaultProps} canMeasureWidth={true} /></tr></thead></table>)
-    expect(getOffsetWidth).toHaveBeenCalledTimes(2)
-  })
+  // TODO(SL): the widths must be reset if the dataframe changes (or if the cache key changes, maybe), not if canMeasureWidth changes
+  // -> move the test elsewhere?
+  // it('measures the width again if canMeasureWidth toggles to true', () => {
+  //   const { rerender } = render(<ColumnWidthsProvider numColumns={1} minWidth={10}>
+  //     <table><thead><tr><ColumnHeader columnName="test" {...defaultProps} canMeasureWidth={true} /></tr></thead></table>
+  //   </ColumnWidthsProvider>)
+  //   expect(getOffsetWidth).toHaveBeenCalledTimes(1)
+  //   // new data is being loaded
+  //   rerender(<ColumnWidthsProvider numColumns={1} minWidth={10}><table><thead><tr><ColumnHeader columnName="test" {...defaultProps} canMeasureWidth={false} /></tr></thead></table>
+  //   </ColumnWidthsProvider>)
+  //   expect(getOffsetWidth).toHaveBeenCalledTimes(1)
+  //   // new data is ready
+  //   rerender(<ColumnWidthsProvider numColumns={1} minWidth={10}>
+  //     <table><thead><tr><ColumnHeader columnName="test" {...defaultProps} canMeasureWidth={true} /></tr></thead></table>
+  //   </ColumnWidthsProvider>)
+
+  //   expect(getOffsetWidth).toHaveBeenCalledTimes(2)
+  // })
 
   it('loads column width from localStorage when localStorageKey is provided', () => {
     const savedWidth = 42
-    localStorage.setItem(cacheKey, JSON.stringify([{ width: savedWidth }]))
+    localStorage.setItem(cacheKey, JSON.stringify([savedWidth]))
 
     const { getByRole } = render(<ColumnWidthsProvider localStorageKey={cacheKey} numColumns={1} minWidth={10}>
       <table><thead><tr><ColumnHeader columnName="test" {...defaultProps}/></tr></thead></table>
@@ -85,10 +97,11 @@ describe('ColumnHeader', () => {
   })
 
   it.for([
-    { savedWidth: 5, minWidth: 10, expected: '10px' },
-    { savedWidth: 50, minWidth: 10, expected: '50px' },
+    { savedWidth: 9, minWidth: 10, expected: '' }, // saved widths smaller than minWidth are ignored
+    { savedWidth: 10, minWidth: 10, expected: '10px' },
+    { savedWidth: 11, minWidth: 10, expected: '11px' },
   ])('clamps loaded column width from localStorage when localStorageKey is provided', ({ savedWidth, minWidth, expected }) => {
-    localStorage.setItem(cacheKey, JSON.stringify([{ width: savedWidth }]))
+    localStorage.setItem(cacheKey, JSON.stringify([savedWidth]))
 
     const { getByRole } = render(<ColumnWidthsProvider localStorageKey={cacheKey} numColumns={1} minWidth={minWidth}>
       <table><thead><tr><ColumnHeader columnName="test" {...defaultProps}/></tr></thead></table>
@@ -101,10 +114,10 @@ describe('ColumnHeader', () => {
     // Set the initial width
     const savedWidth = 42
     const minWidth = 10
-    localStorage.setItem(cacheKey, JSON.stringify([{ width: savedWidth }]))
+    localStorage.setItem(cacheKey, JSON.stringify([savedWidth]))
 
     const { user, getByRole } = render(<ColumnWidthsProvider localStorageKey={cacheKey} numColumns={1} minWidth={minWidth}>
-      <table><thead><tr><ColumnHeader columnName="test" {...defaultProps} /></tr></thead></table>
+      <table><thead><tr><ColumnHeader columnName="test" canMeasureWidth={true} {...defaultProps} /></tr></thead></table>
     </ColumnWidthsProvider>)
     const header = getByRole('columnheader')
     const resizeHandle = getByRole('spinbutton')
@@ -123,7 +136,7 @@ describe('ColumnHeader', () => {
   it('handles mouse click and drag on resize handle to resize', async () => {
     // Set the initial width
     const savedWidth = 42
-    localStorage.setItem(cacheKey, JSON.stringify([{ width: savedWidth }]))
+    localStorage.setItem(cacheKey, JSON.stringify([savedWidth]))
 
     const { user, getByRole } = render(<ColumnWidthsProvider localStorageKey={cacheKey} numColumns={1} minWidth={10}>
       <table><thead><tr><ColumnHeader columnName="test" {...defaultProps} /></tr></thead></table>
@@ -150,17 +163,20 @@ describe('ColumnHeader', () => {
   it('respects column-specific minWidth when resizing', async () => {
     const savedWidth = 50
     const columnMinWidth = 30
-    localStorage.setItem(cacheKey, JSON.stringify([{ width: savedWidth }]))
+    localStorage.setItem(cacheKey, JSON.stringify([savedWidth]))
 
-    const columnConfig = { minWidth: columnMinWidth }
-    const props = { ...defaultProps, columnConfig }
+    const columnConfiguration = { test: { minWidth: columnMinWidth } }
+    const data = { columnDescriptors: [{ name: 'test' }] }
 
-    const { user, getByRole } = render(<ColumnWidthsProvider localStorageKey={cacheKey} numColumns={1} minWidth={10}>
-      <table><thead><tr><ColumnHeader columnName="test" {...props} /></tr></thead></table>
-    </ColumnWidthsProvider>)
+    const { user, getByRole } = render(<ColumnParametersProvider columnConfiguration={columnConfiguration} data={data}>
+      <ColumnWidthsProvider localStorageKey={cacheKey} numColumns={1} minWidth={10}>
+        <table><thead><tr><ColumnHeader columnName="test" canMeasureWidth={true} {...defaultProps} /></tr></thead></table>
+      </ColumnWidthsProvider>
+    </ColumnParametersProvider>)
 
     const header = getByRole('columnheader')
     const resizeHandle = getByRole('spinbutton')
+    expect(header.style.maxWidth).toEqual(`${savedWidth}px`)
 
     // Try to resize to below column minWidth (but above global minWidth)
     const x = 150
@@ -179,14 +195,16 @@ describe('ColumnHeader', () => {
     const savedWidth = 50
     const globalMinWidth = 30
     const columnMinWidth = 20 // Less than global minWidth
-    localStorage.setItem(cacheKey, JSON.stringify([{ width: savedWidth }]))
+    localStorage.setItem(cacheKey, JSON.stringify([savedWidth]))
 
-    const columnConfig = { minWidth: columnMinWidth }
-    const props = { ...defaultProps, columnConfig }
+    const columnConfiguration = { test: { minWidth: columnMinWidth } }
+    const data = { columnDescriptors: [{ name: 'test' }] }
 
-    const { user, getByRole } = render(<ColumnWidthsProvider localStorageKey={cacheKey} numColumns={1} minWidth={globalMinWidth}>
-      <table><thead><tr><ColumnHeader columnName="test" {...props} /></tr></thead></table>
-    </ColumnWidthsProvider>)
+    const { user, getByRole } = render(<ColumnParametersProvider columnConfiguration={columnConfiguration} data={data}>
+      <ColumnWidthsProvider localStorageKey={cacheKey} numColumns={1} minWidth={globalMinWidth}>
+        <table><thead><tr><ColumnHeader columnName="test" canMeasureWidth={true} {...defaultProps} /></tr></thead></table>
+      </ColumnWidthsProvider>
+    </ColumnParametersProvider>)
 
     const header = getByRole('columnheader')
     const resizeHandle = getByRole('spinbutton')
@@ -207,9 +225,9 @@ describe('ColumnHeader', () => {
   it('reloads column width when localStorageKey changes', () => {
     const cacheKey2 = 'key-2'
     const width1 = 150
-    localStorage.setItem(cacheKey, JSON.stringify([{ width: width1 }]))
+    localStorage.setItem(cacheKey, JSON.stringify([width1]))
     const width2 = 300
-    localStorage.setItem(cacheKey2, JSON.stringify([{ width: width2 }]))
+    localStorage.setItem(cacheKey2, JSON.stringify([width2]))
 
     const { rerender, getByRole } = render(<ColumnWidthsProvider localStorageKey={cacheKey} numColumns={1} minWidth={10}>
       <table><thead><tr><ColumnHeader columnName="test" {...defaultProps} /></tr></thead></table>

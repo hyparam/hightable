@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react'
 import { OrderBy, toggleColumn, toggleColumnExclusive } from '../../helpers/sort.js'
 import { useData } from '../../hooks/useData.js'
-import { ColumnParameters } from '../../hooks/useTableConfig.js'
+import { ColumnParameters } from '../../hooks/useColumnParameters.js'
 import ColumnHeader from '../ColumnHeader/ColumnHeader.js'
 
 interface TableHeaderProps {

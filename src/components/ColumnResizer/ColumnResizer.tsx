@@ -8,7 +8,7 @@ interface InitialPointerState {
 
 interface Props {
   autoResize?: () => void
-  forceWidth?: (width: number) => void
+  resizeTo?: (width: number) => void
   width?: number
   tabIndex?: number
   navigateToCell?: () => void
@@ -17,7 +17,7 @@ interface Props {
 const smallStep = 10
 const bigStep = 100
 
-export default function ColumnResizer({ autoResize, forceWidth, width, tabIndex, navigateToCell }: Props) {
+export default function ColumnResizer({ autoResize, resizeTo, width, tabIndex, navigateToCell }: Props) {
   const [initialPointerState, setInitialPointerState] = useState<InitialPointerState | undefined>(undefined)
   const [activeKeyboard, setActiveKeyboard] = useState<boolean>(false)
 
@@ -63,8 +63,8 @@ export default function ColumnResizer({ autoResize, forceWidth, width, tabIndex,
     if (!initialPointerState || event.pointerId !== initialPointerState.pointerId) {
       return
     }
-    forceWidth?.(initialPointerState.width - initialPointerState.clientX + event.clientX)
-  }, [forceWidth, initialPointerState])
+    resizeTo?.(initialPointerState.width - initialPointerState.clientX + event.clientX)
+  }, [resizeTo, initialPointerState])
 
   // Handle pointer up to end resizing
   const handlePointerUp = useCallback((event: PointerEvent<HTMLSpanElement>) => {
@@ -118,18 +118,18 @@ export default function ColumnResizer({ autoResize, forceWidth, width, tabIndex,
       return
     }
     if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
-      forceWidth?.(width + smallStep)
+      resizeTo?.(width + smallStep)
     } else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
-      forceWidth?.(width - smallStep)
+      resizeTo?.(width - smallStep)
     } else if (e.key === 'PageUp') {
-      forceWidth?.(width + bigStep)
+      resizeTo?.(width + bigStep)
     } else if (e.key === 'PageDown') {
-      forceWidth?.(width - bigStep)
+      resizeTo?.(width - bigStep)
     } else if (e.key === 'Home') {
       // reset to 0 (it will be clamped to a minimum width)
-      forceWidth?.(0)
+      resizeTo?.(0)
     } // no 'End' key handling because the resizer has no max width
-  }, [autoResizeAndRemoveFocus, initialPointerState, forceWidth, width, activeKeyboard, navigateToCell])
+  }, [autoResizeAndRemoveFocus, initialPointerState, resizeTo, width, activeKeyboard, navigateToCell])
 
   const ariaBusy = initialPointerState !== undefined || activeKeyboard
 
