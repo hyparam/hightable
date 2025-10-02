@@ -51,3 +51,11 @@ export function ColumnParametersProvider({ columnConfiguration, data, children }
 export function useColumnParameters(): ColumnParameters[] {
   return useContext(ColumnParametersContext)
 }
+
+export function useColumnMinWidths(): (number | undefined)[] {
+  const columnParameters = useColumnParameters()
+  const minWidths = useMemo(() => {
+    return columnParameters.map(col => col.minWidth)
+  }, [columnParameters])
+  return minWidths
+}

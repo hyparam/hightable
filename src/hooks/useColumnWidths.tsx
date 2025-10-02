@@ -1,6 +1,6 @@
 import { CSSProperties, ReactNode, createContext, useCallback, useContext, useMemo, useState } from 'react'
 import { cellStyle } from '../helpers/width.js'
-import { useColumnParameters } from './useColumnParameters.js'
+import { useColumnMinWidths } from './useColumnParameters.js'
 import { useLocalStorageState } from './useLocalStorageState.js'
 
 const defaultMinWidth = 50 // minimum width of a cell in px, used to compute the column widths
@@ -67,10 +67,10 @@ export function ColumnWidthsProvider({ children, localStorageKey, numColumns, mi
   if (!isValidWidth(minWidth)) {
     throw new Error(`Invalid minWidth: ${minWidth}. It must be a positive number.`)
   }
-  const columnParameters = useColumnParameters()
+  const columnMinWidths = useColumnMinWidths()
   const getMinWidth = useCallback((columnIndex?: number) => {
-    return (isValidIndex(columnIndex) ? columnParameters[columnIndex]?.minWidth : undefined) ?? minWidth
-  }, [isValidIndex, columnParameters, minWidth])
+    return (isValidIndex(columnIndex) ? columnMinWidths[columnIndex] : undefined) ?? minWidth
+  }, [isValidIndex, columnMinWidths, minWidth])
   const removeBadWidths = useCallback((widths?: (number | undefined)[]) => {
     if (!widths) {
       return widths
