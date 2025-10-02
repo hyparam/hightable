@@ -48,48 +48,40 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
   }, [sortable, hideColumn, showAllColumns])
 
   // Get the column width from the context
-  const { getColumnStyle, isFixedColumn, getColumnWidth, measureWidth, forceWidth, removeWidth } = useColumnWidths()
-  const columnStyle = getColumnStyle?.(columnIndex)
-  const dataFixedWidth = isFixedColumn?.(columnIndex) === true ? true : undefined
-  const width = getColumnWidth?.(columnIndex)
-  const forceColumnWidth = useCallback((width: number) => {
-    forceWidth?.({ columnIndex, width, minWidth: columnConfig.minWidth })
-  }, [forceWidth, columnIndex, columnConfig.minWidth])
+  const { getStyle, getDataFixedWidth, getWidth, setMeasuredWidth, setFixedWidth, releaseWidth } = useColumnWidths()
+  const columnStyle = getStyle?.(columnIndex)
+  const dataFixedWidth = getDataFixedWidth?.(columnIndex)
+  const width = getWidth?.(columnIndex)
+
+  const resizeTo = useCallback((value: number) => {
+    setFixedWidth?.({ columnIndex, value })
+  }, [setFixedWidth, columnIndex])
+
+  const tryToMeasureWidth = useCallback(() => {
+    const element = ref.current
+    if (canMeasureWidth && element && width === undefined && setMeasuredWidth) {
+      const value = getOffsetWidth(element)
+      if (isNaN(value)) {
+        // browserless unit tests get NaN
+        return
+      }
+      setMeasuredWidth({ columnIndex, value })
+    }
+  }, [canMeasureWidth, setMeasuredWidth, width, columnIndex])
 
   // Measure default column width when data is ready, if no width is set
   useEffect(() => {
-    const element = ref.current
-    if (canMeasureWidth && element && width === undefined) {
-      const measured = getOffsetWidth(element)
-      if (isNaN(measured)) {
-        // browserless unit tests get NaN
-        return
-      }
-      measureWidth?.({ columnIndex, measured })
-    }
-  }, [canMeasureWidth, measureWidth, width, columnIndex])
+    tryToMeasureWidth()
+  }, [tryToMeasureWidth])
 
   const autoResize = useCallback(() => {
-    const element = ref.current
-    if (element && measureWidth && forceWidth && removeWidth) {
-      // Remove the width, let it size naturally, and then measure it
+    if (releaseWidth) {
       flushSync(() => {
-        removeWidth({ columnIndex })
+        releaseWidth({ columnIndex })
       })
-      const measured = getOffsetWidth(element)
-      if (isNaN(measured)) {
-        // browserless unit tests get NaN
-        return
-      }
-      if (dataFixedWidth && width === measured) {
-        // If the width is already set and matches the measured width, toggle from fixed width to adjustable width
-        measureWidth({ columnIndex, measured })
-      } else {
-        forceWidth({ columnIndex, width: measured })
-      }
-
+      tryToMeasureWidth() // TODO(SL): remove and let the effect handle it?
     }
-  }, [measureWidth, forceWidth, removeWidth, columnIndex, dataFixedWidth, width])
+  }, [tryToMeasureWidth, releaseWidth, columnIndex])
 
   const description = useMemo(() => {
     if (!sortable) {
@@ -149,7 +141,7 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
         />
       }
       <ColumnResizer
-        forceWidth={forceColumnWidth}
+        resizeTo={resizeTo}
         autoResize={autoResize}
         width={width}
         tabIndex={tabIndex}

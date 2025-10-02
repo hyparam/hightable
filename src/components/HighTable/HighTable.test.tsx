@@ -7,7 +7,7 @@ import { DataFrame, DataFrameEvents, Fetch, filterDataFrame } from '../../helper
 import { sortableDataFrame } from '../../helpers/dataframe/sort.js'
 import { OrderBy } from '../../helpers/sort.js'
 import { createEventTarget } from '../../helpers/typedEventTarget.js'
-import { MaybeColumnWidth } from '../../helpers/width.js'
+import { MaybeColumnWidth } from '../../hooks/useColumnWidths.js'
 import { render } from '../../utils/userEvent.js'
 import HighTable, { columnWidthsSuffix, defaultOverscan } from './HighTable.js'
 import type { Obj } from '../../helpers/dataframe/types.js'

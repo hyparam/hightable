@@ -22,7 +22,6 @@ import styles from '../../HighTable.module.css'
 export { type CellContentProps } from '../Cell/Cell.js'
 
 const rowHeight = 33 // row height px
-const minWidth = 50 // minimum width of a cell in px, used to compute the column widths
 
 interface Props {
   data: DataFrame
@@ -85,7 +84,7 @@ function HighTableData(props: PropsData) {
     /* Provide the column configuration to the table */
     <ColumnParametersProvider columnConfiguration={props.columnConfiguration} data={data}>
       {/* Create a new set of widths if the data has changed, but keep it if only the number of rows changed */}
-      <ColumnWidthsProvider key={cacheKey ?? key} localStorageKey={cacheKey ? `${cacheKey}${columnWidthsSuffix}` : undefined} numColumns={data.columnDescriptors.length} minWidth={minWidth}>
+      <ColumnWidthsProvider key={cacheKey ?? key} localStorageKey={cacheKey ? `${cacheKey}${columnWidthsSuffix}` : undefined} numColumns={data.columnDescriptors.length}>
         {/* Create a new set of hidden columns if the data has changed, but keep it if only the number of rows changed */}
         <ColumnVisibilityStatesProvider key={cacheKey ?? key} localStorageKey={cacheKey ? `${cacheKey}${columnVisibilityStatesSuffix}` : undefined} numColumns={data.columnDescriptors.length} onColumnsVisibilityChange={onColumnsVisibilityChange}>
           {/* Create a new context if the dataframe changes, to flush the cache (ranks and indexes) */}
@@ -142,7 +141,7 @@ export function HighTableInner({
   const { numRows } = data
   const { enterCellsNavigation, setEnterCellsNavigation, onTableKeyDown: onNavigationTableKeyDown, onScrollKeyDown, cellPosition, focusFirstCell } = useCellsNavigation()
   const { containerRef } = usePortalContainer()
-  const { setAvailableWidthAndAdjustMeasured } = useColumnWidths()
+  const { setAvailableWidth } = useColumnWidths()
   const { isHiddenColumn } = useColumnVisibilityStates()
   const { orderBy, onOrderByChange } = useOrderBy()
   const { selectable, toggleAllRows, pendingSelectionGesture, onTableKeyDown: onSelectionTableKeyDown, allRowsSelected, isRowSelected, toggleRowNumber, toggleRangeToRowNumber } = useSelection()
@@ -264,7 +263,7 @@ export function HighTableInner({
         // we use the scrollRef client width, because we're interested in the content area
         const tableWidth = getClientWidth(scrollRef.current)
         const leftColumnWidth = getOffsetWidth(tableCornerRef.current)
-        setAvailableWidthAndAdjustMeasured?.(tableWidth - leftColumnWidth)
+        setAvailableWidth?.(tableWidth - leftColumnWidth)
       }
     }
 
@@ -301,7 +300,7 @@ export function HighTableInner({
       // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       resizeObserver?.disconnect()
     }
-  }, [numRows, overscan, padding, scrollHeight, setAvailableWidthAndAdjustMeasured, data, orderBy, onError, columnsParameters])
+  }, [numRows, overscan, padding, scrollHeight, setAvailableWidth, data, orderBy, onError, columnsParameters])
 
   // focus table on mount, or on later changes, so arrow keys work
   // Note that the dependency upon data and nowRows was removed, because focusFirstCell should depend on them
