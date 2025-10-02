@@ -339,7 +339,7 @@ function adjustWidths({
     }
     excedent -= (width - minWidth) * columns.length
 
-    // keep only the columns that can still be shrinked (can be empty)
+    // keep only the columns that can still be shrunk (can be empty)
     const remainingColumns = columns.filter(c => c.minWidth < minWidth)
 
     // re-add the groups
