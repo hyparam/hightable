@@ -54,7 +54,7 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
   const width = getWidth?.(columnIndex)
 
   const resizeTo = useCallback((value: number) => {
-    setFixedWidth?.({ columnIndex, value })
+    setFixedWidth?.(columnIndex, value)
   }, [setFixedWidth, columnIndex])
 
   const tryToMeasureWidth = useCallback(() => {
@@ -65,7 +65,7 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
         // browserless unit tests get NaN
         return
       }
-      setMeasuredWidth({ columnIndex, value })
+      setMeasuredWidth(columnIndex, value)
     }
   }, [canMeasureWidth, setMeasuredWidth, width, columnIndex])
 
@@ -77,7 +77,7 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
   const autoResize = useCallback(() => {
     if (releaseWidth) {
       flushSync(() => {
-        releaseWidth({ columnIndex })
+        releaseWidth(columnIndex)
       })
       tryToMeasureWidth() // TODO(SL): remove and let the effect handle it?
     }
