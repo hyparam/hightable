@@ -1,4 +1,4 @@
-import { CSSProperties, ReactNode, createContext, useCallback, useContext, useMemo, useState } from 'react'
+import { CSSProperties, ReactNode, createContext, use, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { cellStyle } from '../helpers/width.js'
 import { useColumnMinWidths } from './useColumnParameters.js'
 import { useLocalStorageState } from './useLocalStorageState.js'
@@ -101,7 +101,7 @@ export function ColumnWidthsProvider({ children, localStorageKey, numColumns, mi
 
   // Fixed widths
   // The array is uninitialized so that we don't have to know the number of columns in advance
-  const [fixedWidths, setFixedWidths] = useLocalStorageState<(number | undefined)[]>({ key: localStorageKey, parse, stringify: JSON.stringify })
+  const [fixedWidths, _setFixedWidths] = useLocalStorageState<(number | undefined)[]>({ key: localStorageKey, parse, stringify: JSON.stringify })
   function parse(json: string): (number | undefined)[] {
     const value: unknown = JSON.parse(json)
     return !Array.isArray(value) ? [] : value.map((element: unknown) => {
@@ -113,6 +113,16 @@ export function ColumnWidthsProvider({ children, localStorageKey, numColumns, mi
         : undefined
     })
   }
+  // Reference to the value of the fixed widths, to use in useEffect without being a dependency
+  // (we don't want to adjust other widths when fixed widths change)
+  const fixedWidthsRef = useRef<(number | undefined)[]>(fixedWidths)
+  const setFixedWidths = useCallback((updater: (widths: (number | undefined)[] | undefined) => (number | undefined)[] | undefined) => {
+    _setFixedWidths(widths => {
+      const nextWidths = updater(widths)
+      fixedWidthsRef.current = nextWidths ?? []
+      return nextWidths
+    })
+  }, [_setFixedWidths])
   const setFixedWidth = useCallback(({ columnIndex, value }: { columnIndex: number; value: number; }) => {
     if (!isValidWidth(value) || !isValidIndex(columnIndex)) {
       return
@@ -166,22 +176,24 @@ export function ColumnWidthsProvider({ children, localStorageKey, numColumns, mi
   }, [isValidIndex, setFixedWidths, setMeasuredWidths])
 
   // Adjusted widths
-  const adjustedWidths = useMemo(() => {
+  const [adjustedWidths, setAdjustedWidths] = useState<(number | undefined)[]>()
+
+  useEffect(() => {
     // update the fixed and measured widths, in case the minimum width changed
     checkFixedWidths()
     checkMeasuredWidths()
     try {
-      return adjustWidths({ fixedWidths, measuredWidths, maxTotalWidth, numColumns, getMinWidth })
+      setAdjustedWidths(adjustWidths({ fixedWidths: fixedWidthsRef.current, measuredWidths, maxTotalWidth, numColumns, getMinWidth }))
     } catch (e) {
       // TODO(SL): remove the try/catch when everything is stable
       console.debug('Error adjusting column widths:', e)
-      return []
+      setAdjustedWidths(undefined)
     }
-  }, [numColumns, fixedWidths, measuredWidths, maxTotalWidth, getMinWidth, checkFixedWidths, checkMeasuredWidths])
+  }, [numColumns, measuredWidths, maxTotalWidth, getMinWidth, checkFixedWidths, checkMeasuredWidths])
 
   const getWidth = useCallback((columnIndex: number) => {
     if (isValidIndex(columnIndex)) {
-      return fixedWidths?.[columnIndex] ?? adjustedWidths[columnIndex] ?? measuredWidths?.[columnIndex]
+      return fixedWidths?.[columnIndex] ?? adjustedWidths?.[columnIndex] ?? measuredWidths?.[columnIndex]
     }
   }, [isValidIndex, fixedWidths, measuredWidths, adjustedWidths])
 
