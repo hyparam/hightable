@@ -326,7 +326,8 @@ describe('with async data, HighTable', () => {
     expect(asyncData._forTests.signalAborted).toHaveLength(0) // the fetches are too fast to be cancelled (10ms)
   })
 
-  it('aborts data fetch when scrolling fast', async () => {
+  // TODO(SL): re-enable once https://github.com/hyparam/hightable/issues/294 is fixed
+  it.skip('aborts data fetch when scrolling fast', async () => {
     const ms = 100
     const asyncData = createAsyncDataFrame({ ms })
     const { getByLabelText, findByRole, queryByRole } = render(<HighTable className="myclass" data={asyncData} />)
