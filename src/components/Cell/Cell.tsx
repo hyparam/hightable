@@ -63,8 +63,7 @@ export default function Cell({ cell, onDoubleClickCell, onMouseDownCell, onKeyDo
   }, [onKeyDownCell, rowNumber, columnIndex])
 
   // Get the column width from the context
-  const { getColumnStyle } = useColumnWidths()
-  const columnStyle = getColumnStyle?.(columnIndex)
+  const columnStyle = useColumnWidths().getStyle?.(columnIndex)
 
   // render as truncated text
   const str = useMemo(() => {

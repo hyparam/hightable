@@ -5,13 +5,13 @@ import { Selection } from '../../helpers/selection.js'
 import { OrderBy } from '../../helpers/sort.js'
 import { cellStyle, getClientWidth, getOffsetWidth } from '../../helpers/width.js'
 import { CellsNavigationProvider, useCellsNavigation } from '../../hooks/useCellsNavigation.js'
+import { ColumnParametersProvider, useColumnParameters } from '../../hooks/useColumnParameters.js'
 import { ColumnWidthsProvider, useColumnWidths } from '../../hooks/useColumnWidths.js'
 import { ColumnVisibilityStatesProvider, type MaybeHiddenColumn, useColumnVisibilityStates } from '../../hooks/useColumnVisibilityStates.js'
 import { DataProvider, useData } from '../../hooks/useData.js'
 import { OrderByProvider, useOrderBy } from '../../hooks/useOrderBy.js'
 import { PortalContainerProvider, usePortalContainer } from '../../hooks/usePortalContainer.js'
 import { SelectionProvider, useSelection } from '../../hooks/useSelection.js'
-import { useTableConfig } from '../../hooks/useTableConfig.js'
 import { stringify as stringifyDefault } from '../../utils/stringify.js'
 import Cell, { type CellContentProps } from '../Cell/Cell.js'
 import Row from '../Row/Row.js'
@@ -22,7 +22,6 @@ import styles from '../../HighTable.module.css'
 export { type CellContentProps } from '../Cell/Cell.js'
 
 const rowHeight = 33 // row height px
-const minWidth = 50 // minimum width of a cell in px, used to compute the column widths
 
 interface Props {
   data: DataFrame
@@ -52,7 +51,7 @@ const defaultPadding = 20
 export const defaultOverscan = 20
 const ariaOffset = 2 // 1-based index, +1 for the header
 
-const columnWidthsFormatVersion = '1' // increase in case of breaking changes in the column widths format
+const columnWidthsFormatVersion = '2' // increase in case of breaking changes in the column widths format
 export const columnWidthsSuffix = `:${columnWidthsFormatVersion}:column:widths` // suffix used to store the column widths in local storage
 const columnVisibilityStatesFormatVersion = '1' // increase in case of breaking changes in the column widths format
 export const columnVisibilityStatesSuffix = `:${columnVisibilityStatesFormatVersion}:column:visibility` // suffix used to store the columns vsibility in local storage
@@ -82,28 +81,31 @@ function HighTableData(props: PropsData) {
   const { cacheKey, orderBy, onOrderByChange, selection, onSelectionChange, onError, onColumnsVisibilityChange } = props
 
   return (
-    /* Create a new set of widths if the data has changed, but keep it if only the number of rows changed */
-    <ColumnWidthsProvider key={cacheKey ?? key} localStorageKey={cacheKey ? `${cacheKey}${columnWidthsSuffix}` : undefined} numColumns={data.columnDescriptors.length} minWidth={minWidth}>
-      {/* Create a new set of hidden columns if the data has changed, but keep it if only the number of rows changed */}
-      <ColumnVisibilityStatesProvider key={cacheKey ?? key} localStorageKey={cacheKey ? `${cacheKey}${columnVisibilityStatesSuffix}` : undefined} numColumns={data.columnDescriptors.length} onColumnsVisibilityChange={onColumnsVisibilityChange}>
-        {/* Create a new context if the dataframe changes, to flush the cache (ranks and indexes) */}
-        <OrderByProvider key={key} orderBy={orderBy} onOrderByChange={onOrderByChange}>
-          {/* Create a new selection context if the dataframe has changed */}
-          <SelectionProvider key={key} selection={selection} onSelectionChange={onSelectionChange} data={data} onError={onError}>
-            {/* Create a new navigation context if the dataframe has changed, because the focused cell might not exist anymore */}
-            <CellsNavigationProvider key={key} colCount={data.columnDescriptors.length + 1} rowCount={numRows + 1} rowPadding={props.padding ?? defaultPadding}>
-              <PortalContainerProvider>
-                <HighTableInner version={version} {...props} />
-              </PortalContainerProvider>
-            </CellsNavigationProvider>
-          </SelectionProvider>
-        </OrderByProvider>
-      </ColumnVisibilityStatesProvider>
-    </ColumnWidthsProvider>
+    /* Provide the column configuration to the table */
+    <ColumnParametersProvider columnConfiguration={props.columnConfiguration} data={data}>
+      {/* Create a new set of widths if the data has changed, but keep it if only the number of rows changed */}
+      <ColumnWidthsProvider key={cacheKey ?? key} localStorageKey={cacheKey ? `${cacheKey}${columnWidthsSuffix}` : undefined} numColumns={data.columnDescriptors.length}>
+        {/* Create a new set of hidden columns if the data has changed, but keep it if only the number of rows changed */}
+        <ColumnVisibilityStatesProvider key={cacheKey ?? key} localStorageKey={cacheKey ? `${cacheKey}${columnVisibilityStatesSuffix}` : undefined} numColumns={data.columnDescriptors.length} onColumnsVisibilityChange={onColumnsVisibilityChange}>
+          {/* Create a new context if the dataframe changes, to flush the cache (ranks and indexes) */}
+          <OrderByProvider key={key} orderBy={orderBy} onOrderByChange={onOrderByChange}>
+            {/* Create a new selection context if the dataframe has changed */}
+            <SelectionProvider key={key} selection={selection} onSelectionChange={onSelectionChange} data={data} onError={onError}>
+              {/* Create a new navigation context if the dataframe has changed, because the focused cell might not exist anymore */}
+              <CellsNavigationProvider key={key} colCount={data.columnDescriptors.length + 1} rowCount={numRows + 1} rowPadding={props.padding ?? defaultPadding}>
+                <PortalContainerProvider>
+                  <HighTableInner version={version} {...props} />
+                </PortalContainerProvider>
+              </CellsNavigationProvider>
+            </SelectionProvider>
+          </OrderByProvider>
+        </ColumnVisibilityStatesProvider>
+      </ColumnWidthsProvider>
+    </ColumnParametersProvider>
   )
 }
 
-type PropsInner = Omit<PropsData, 'orderBy' | 'onOrderByChange' | 'selection' | 'onSelectionChange'> & {
+type PropsInner = Omit<PropsData, 'orderBy' | 'onOrderByChange' | 'selection' | 'onSelectionChange' | 'columnConfiguration'> & {
   version: number // version of the data frame, used to re-render the component when the data changes
 }
 
@@ -131,7 +133,6 @@ export function HighTableInner({
   className = '',
   columnClassNames = [],
   styled = true,
-  columnConfiguration,
   version,
   renderCellContent,
 }: PropsInner) {
@@ -140,11 +141,11 @@ export function HighTableInner({
   const { numRows } = data
   const { enterCellsNavigation, setEnterCellsNavigation, onTableKeyDown: onNavigationTableKeyDown, onScrollKeyDown, cellPosition, focusFirstCell } = useCellsNavigation()
   const { containerRef } = usePortalContainer()
-  const { setAvailableWidthAndAdjustMeasured } = useColumnWidths()
+  const { setAvailableWidth } = useColumnWidths()
   const { isHiddenColumn } = useColumnVisibilityStates()
   const { orderBy, onOrderByChange } = useOrderBy()
   const { selectable, toggleAllRows, pendingSelectionGesture, onTableKeyDown: onSelectionTableKeyDown, allRowsSelected, isRowSelected, toggleRowNumber, toggleRangeToRowNumber } = useSelection()
-  const allColumnsParameters = useTableConfig(data, columnConfiguration)
+  const allColumnsParameters = useColumnParameters()
   // local state
   const [rowsRange, setRowsRange] = useState<RowsRange>({ start: 0, end: 0 })
   const [lastCellPosition, setLastCellPosition] = useState(cellPosition)
@@ -262,7 +263,7 @@ export function HighTableInner({
         // we use the scrollRef client width, because we're interested in the content area
         const tableWidth = getClientWidth(scrollRef.current)
         const leftColumnWidth = getOffsetWidth(tableCornerRef.current)
-        setAvailableWidthAndAdjustMeasured?.(tableWidth - leftColumnWidth)
+        setAvailableWidth?.(tableWidth - leftColumnWidth)
       }
     }
 
@@ -299,7 +300,7 @@ export function HighTableInner({
       // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       resizeObserver?.disconnect()
     }
-  }, [numRows, overscan, padding, scrollHeight, setAvailableWidthAndAdjustMeasured, data, orderBy, onError, columnsParameters])
+  }, [numRows, overscan, padding, scrollHeight, setAvailableWidth, data, orderBy, onError, columnsParameters])
 
   // focus table on mount, or on later changes, so arrow keys work
   // Note that the dependency upon data and nowRows was removed, because focusFirstCell should depend on them

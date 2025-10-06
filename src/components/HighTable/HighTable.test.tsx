@@ -7,7 +7,6 @@ import { DataFrame, DataFrameEvents, Fetch, filterDataFrame } from '../../helper
 import { sortableDataFrame } from '../../helpers/dataframe/sort.js'
 import { OrderBy } from '../../helpers/sort.js'
 import { createEventTarget } from '../../helpers/typedEventTarget.js'
-import { MaybeColumnWidth } from '../../helpers/width.js'
 import { render } from '../../utils/userEvent.js'
 import HighTable, { columnWidthsSuffix, defaultOverscan } from './HighTable.js'
 import type { Obj } from '../../helpers/dataframe/types.js'
@@ -1005,7 +1004,6 @@ const initialWidth = 62 // initial width of the columns, in pixels, above the de
 const getOffsetWidth = vi.fn(() => initialWidth)
 const getClientWidth = vi.fn(() => 1000) // used to get the width of the table - let's give space
 const keyItem = `key${columnWidthsSuffix}`
-const undefinedItem = `undefined${columnWidthsSuffix}`
 vi.mock(import('../../helpers/width.js'), async (importOriginal ) => {
   const actual = await importOriginal()
   return {
@@ -1022,31 +1020,17 @@ describe('HighTable localstorage', () => {
     otherData = createOtherData()
   })
 
-  it('only saves the fixed widths', () => {
+  it('does not save anything in localstorage if no fixed widths', () => {
     localStorage.clear()
     render(<HighTable data={data} cacheKey="key" />)
     expect(getClientWidth).toHaveBeenCalled()
     const json = localStorage.getItem(keyItem)
-    expect(json).not.toEqual(null)
-    const columnWidths = JSON.parse(json ?? '[]') as MaybeColumnWidth[] // TODO: we could check the type of the column widths
-    expect(columnWidths).toHaveLength(4) // 4 columns
-    columnWidths.forEach((columnWidth) => {
-      expect(columnWidth?.measured).toBeUndefined() // the measured field is not stored
-      expect(columnWidth?.width).toBeUndefined() // no columns is fixed
-    })
-  })
-  it('saves nothing on initialization if cacheKey is not provided', () => {
-    localStorage.clear()
-    render(<HighTable data={data} />)
-    expect(getClientWidth).toHaveBeenCalled()
-    expect(localStorage.getItem(keyItem)).toBeNull()
-    expect(localStorage.getItem(undefinedItem)).toBeNull()
-    expect(localStorage.length).toBe(0)
+    expect(json).toEqual(null)
   })
   it('is used to load previously saved column widths', () => {
     localStorage.clear()
     const savedWidth = initialWidth * 2
-    const json = JSON.stringify(Array(4).fill({ width: savedWidth }))
+    const json = JSON.stringify(Array(4).fill(savedWidth))
     localStorage.setItem(keyItem, json)
 
     const { getAllByRole } = render(<HighTable data={data} cacheKey="key" />)
@@ -1057,30 +1041,10 @@ describe('HighTable localstorage', () => {
     expect(localStorage.getItem(keyItem)).toEqual(json)
     expect(header.style.maxWidth).toEqual(`${savedWidth}px`)
   })
-  it('it ignores non-fixed column widths in localStorage', () => {
-    localStorage.clear()
-    const savedWidth = initialWidth * 2
-    localStorage.setItem(keyItem, JSON.stringify(Array(4).fill({ width: savedWidth, measured: savedWidth })))
-
-    const { getAllByRole } = render(<HighTable data={data} cacheKey="key" />)
-    const header = getAllByRole('columnheader')[0]
-    if (!header) {
-      throw new Error('Header should not be null')
-    }
-
-    const json = localStorage.getItem(keyItem)
-    expect(json).not.toEqual(null)
-    const columnWidths = JSON.parse(json ?? '[]') as MaybeColumnWidth[]
-    expect(columnWidths).toHaveLength(4) // 4 columns
-    columnWidths.forEach((columnWidth) => {
-      expect(columnWidth?.measured).toBeUndefined() // the measured field is not stored
-      expect(columnWidth?.width).toBeDefined() // all columns should have been adjusted to some width
-    })
-  })
   it('the previous data is used or updated if new data are loaded', () => {
     localStorage.clear()
     const savedWidth = initialWidth * 2
-    const json = JSON.stringify(Array(4).fill({ width: savedWidth }))
+    const json = JSON.stringify(Array(4).fill(savedWidth))
     localStorage.setItem(keyItem, json)
 
     const { getAllByRole, rerender } = render(<HighTable data={data} cacheKey="key" />)
