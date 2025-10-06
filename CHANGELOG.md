@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## [0.20.1](https://github.com/hyparam/hightable/compare/v0.20.0...v0.20.1) - 2025-10-06
+
+### Changed
+
+- adjust columns width on component resize ([#288](https://github.com/hyparam/hightable/pull/288)).
+- change the autosize behavior: don't extend measured width, shrink if needed, but not to less than 33% or 150px, respect the min width configuration ([#289](https://github.com/hyparam/hightable/pull/289) and [#290](https://github.com/hyparam/hightable/pull/290)).
+
+### Refactored
+
+- upgrade develpment dependencies: ([#291](https://github.com/hyparam/hightable/pull/291)).
+
 ## [0.20.0](https://github.com/hyparam/hightable/compare/v0.19.7...v0.20.0) - 2025-09-24
 
 ### Added
