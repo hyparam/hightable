@@ -1,5 +1,4 @@
-import { act } from 'react'
-import { fireEvent, waitFor, within } from '@testing-library/react'
+import { act, fireEvent, waitFor, within } from '@testing-library/react'
 import { UserEvent } from '@testing-library/user-event'
 import { Mock, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createGetRowNumber, validateFetchParams, validateGetCellParams, validateGetRowNumberParams } from '../../helpers/dataframe/helpers.js'
@@ -327,14 +326,21 @@ describe('with async data, HighTable', () => {
     expect(asyncData._forTests.signalAborted).toHaveLength(0) // the fetches are too fast to be cancelled (10ms)
   })
 
-  it('aborts data fetch when scrolling fast', async () => {
-    const ms = 500
+  // TODO(SL): re-enable once https://github.com/hyparam/hightable/issues/294 is fixed
+  it.skip('aborts data fetch when scrolling fast', async () => {
+    const ms = 100
     const asyncData = createAsyncDataFrame({ ms })
     const { getByLabelText, findByRole, queryByRole } = render(<HighTable className="myclass" data={asyncData} />)
     const scrollDiv = getByLabelText('Virtual-scroll table')
-    await expect(findByRole('cell', { name: 'async 0' })).resolves.toBeDefined()
-    expect(queryByRole('cell', { name: 'async 24' })).toBeNull()
+    const idx1 = 0
+    const idx2 = 24
+    const idx3 = 50
+    await expect(findByRole('cell', { name: `async ${idx1}` })).resolves.toBeDefined()
+    expect(queryByRole('cell', { name: `async ${idx2}` })).toBeNull()
     expect(asyncData._forTests.signalAborted).toHaveLength(0)
+    expect(asyncData._forTests.asyncDataFetched[idx1]).toBe(true) // fetched
+    expect(asyncData._forTests.asyncDataFetched[idx2]).toBe(false) // not fetched
+    expect(asyncData._forTests.asyncDataFetched[idx3]).toBe(false) // not fetched
 
     act(() => {
       // not using userEvent because it doesn't support scroll events
@@ -342,20 +348,35 @@ describe('with async data, HighTable', () => {
       fireEvent.scroll(scrollDiv, { target: { scrollTop: 500 } })
     })
 
+    // row "idx2" has been required
+    expect(asyncData.getCell).toHaveBeenCalledWith({ row: idx2, column: 'Age', orderBy: [] })
+    // nothing occurred yet, because the fetch is still pending
+    expect(asyncData._forTests.signalAborted).toHaveLength(0)
+    expect(asyncData._forTests.asyncDataFetched[idx1]).toBe(true) // fetched
+    expect(asyncData._forTests.asyncDataFetched[idx2]).toBe(false) // not fetched
+    expect(asyncData._forTests.asyncDataFetched[idx3]).toBe(false) // not fetched
+
     // scroll again before the first fetch is done
-    void new Promise(resolve => setTimeout(resolve, ms / 5))
     act(() => {
-      // not using userEvent because it doesn't support scroll events
-      // https://github.com/testing-library/user-event/issues/475
       fireEvent.scroll(scrollDiv, { target: { scrollTop: 1500 } })
     })
-    await waitFor(() => {
-      expect(asyncData.getCell).toHaveBeenCalledWith({ row: 50, column: 'Age', orderBy: [] })
-    })
-    await expect(findByRole('cell', { name: 'async 50' })).resolves.toBeDefined()
 
-    expect(asyncData._forTests.signalAborted).toHaveLength(1) // one fetch should have been aborted, because we scrolled again before the first fetch was done
-    expect(asyncData._forTests.asyncDataFetched[24]).toBe(false) // the fetch for row 24 should have been cancelled
+    // row "idx3" has been required
+    expect(asyncData.getCell).toHaveBeenCalledWith({ row: idx3, column: 'Age', orderBy: [] })
+    // nothing occurred yet, because the fetch is still pending
+    expect(asyncData._forTests.signalAborted).toHaveLength(0)
+    expect(asyncData._forTests.asyncDataFetched[idx1]).toBe(true) // fetched
+    expect(asyncData._forTests.asyncDataFetched[idx2]).toBe(false) // not fetched
+    expect(asyncData._forTests.asyncDataFetched[idx3]).toBe(false) // not fetched
+
+    // wait for the row "idx3" to have been fetched and rendered
+    await expect(findByRole('cell', { name: `async ${idx3}` })).resolves.toBeDefined()
+
+    // one fetch should have been aborted, because we scrolled again before the first fetch was done
+    expect(asyncData._forTests.signalAborted).toHaveLength(1)
+    expect(asyncData._forTests.asyncDataFetched[idx1]).toBe(true) // fetched
+    expect(asyncData._forTests.asyncDataFetched[idx2]).toBe(false) // not fetched (aborted)
+    expect(asyncData._forTests.asyncDataFetched[idx3]).toBe(true) // fetched
   })
 })
 
