@@ -344,8 +344,6 @@ describe('with async data, HighTable', () => {
     // scroll again before the first fetch is done
     void new Promise(resolve => setTimeout(resolve, ms / 5))
     act(() => {
-      // not using userEvent because it doesn't support scroll events
-      // https://github.com/testing-library/user-event/issues/475
       fireEvent.scroll(scrollDiv, { target: { scrollTop: 1500 } })
     })
     await waitFor(() => {
