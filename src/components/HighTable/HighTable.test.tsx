@@ -333,7 +333,7 @@ describe('with async data, HighTable', () => {
     const scrollDiv = getByLabelText('Virtual-scroll table')
     const idx1 = 0
     const idx2 = 24
-    const idx3 = 68
+    const idx3 = 50
     await expect(findByRole('cell', { name: `async ${idx1}` })).resolves.toBeDefined()
     expect(queryByRole('cell', { name: `async ${idx2}` })).toBeNull()
     expect(asyncData._forTests.signalAborted).toHaveLength(0)
