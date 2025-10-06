@@ -327,7 +327,7 @@ describe('with async data, HighTable', () => {
   })
 
   it('aborts data fetch when scrolling fast', async () => {
-    const ms = 500
+    const ms = 100
     const asyncData = createAsyncDataFrame({ ms })
     const { getByLabelText, findByRole, queryByRole } = render(<HighTable className="myclass" data={asyncData} />)
     const scrollDiv = getByLabelText('Virtual-scroll table')
