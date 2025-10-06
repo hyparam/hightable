@@ -41,6 +41,6 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
-    testTimeout: 15_000,
+    testTimeout: 15_000, // TODO(SL): remove once https://github.com/hyparam/hightable/issues/292 is fixed
   },
 })
