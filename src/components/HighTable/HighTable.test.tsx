@@ -331,12 +331,15 @@ describe('with async data, HighTable', () => {
     const asyncData = createAsyncDataFrame({ ms })
     const { getByLabelText, findByRole, queryByRole } = render(<HighTable className="myclass" data={asyncData} />)
     const scrollDiv = getByLabelText('Virtual-scroll table')
-    await expect(findByRole('cell', { name: 'async 0' })).resolves.toBeDefined()
-    expect(queryByRole('cell', { name: 'async 24' })).toBeNull()
+    const idx1 = 0
+    const idx2 = 24
+    const idx3 = 68
+    await expect(findByRole('cell', { name: `async ${idx1}` })).resolves.toBeDefined()
+    expect(queryByRole('cell', { name: `async ${idx2}` })).toBeNull()
     expect(asyncData._forTests.signalAborted).toHaveLength(0)
-    expect(asyncData._forTests.asyncDataFetched[0]).toBe(true) // fetched
-    expect(asyncData._forTests.asyncDataFetched[24]).toBe(false) // not fetched
-    expect(asyncData._forTests.asyncDataFetched[30]).toBe(false) // not fetched
+    expect(asyncData._forTests.asyncDataFetched[idx1]).toBe(true) // fetched
+    expect(asyncData._forTests.asyncDataFetched[idx2]).toBe(false) // not fetched
+    expect(asyncData._forTests.asyncDataFetched[idx3]).toBe(false) // not fetched
 
     act(() => {
       // not using userEvent because it doesn't support scroll events
@@ -344,35 +347,35 @@ describe('with async data, HighTable', () => {
       fireEvent.scroll(scrollDiv, { target: { scrollTop: 500 } })
     })
 
-    // row 24 has been required
-    expect(asyncData.getCell).toHaveBeenCalledWith({ row: 24, column: 'Age', orderBy: [] })
+    // row "idx2" has been required
+    expect(asyncData.getCell).toHaveBeenCalledWith({ row: idx2, column: 'Age', orderBy: [] })
     // nothing occurred yet, because the fetch is still pending
     expect(asyncData._forTests.signalAborted).toHaveLength(0)
-    expect(asyncData._forTests.asyncDataFetched[0]).toBe(true) // fetched
-    expect(asyncData._forTests.asyncDataFetched[24]).toBe(false) // not fetched
-    expect(asyncData._forTests.asyncDataFetched[30]).toBe(false) // not fetched
+    expect(asyncData._forTests.asyncDataFetched[idx1]).toBe(true) // fetched
+    expect(asyncData._forTests.asyncDataFetched[idx2]).toBe(false) // not fetched
+    expect(asyncData._forTests.asyncDataFetched[idx3]).toBe(false) // not fetched
 
     // scroll again before the first fetch is done
     act(() => {
       fireEvent.scroll(scrollDiv, { target: { scrollTop: 1500 } })
     })
 
-    // row 30 has been required
-    expect(asyncData.getCell).toHaveBeenCalledWith({ row: 30, column: 'Age', orderBy: [] })
+    // row "idx3" has been required
+    expect(asyncData.getCell).toHaveBeenCalledWith({ row: idx3, column: 'Age', orderBy: [] })
     // nothing occurred yet, because the fetch is still pending
     expect(asyncData._forTests.signalAborted).toHaveLength(0)
-    expect(asyncData._forTests.asyncDataFetched[0]).toBe(true) // fetched
-    expect(asyncData._forTests.asyncDataFetched[24]).toBe(false) // not fetched
-    expect(asyncData._forTests.asyncDataFetched[30]).toBe(false) // not fetched
+    expect(asyncData._forTests.asyncDataFetched[idx1]).toBe(true) // fetched
+    expect(asyncData._forTests.asyncDataFetched[idx2]).toBe(false) // not fetched
+    expect(asyncData._forTests.asyncDataFetched[idx3]).toBe(false) // not fetched
 
-    // wait for the row 30 to have been fetched and rendered
-    await expect(findByRole('cell', { name: 'async 30' })).resolves.toBeDefined()
+    // wait for the row "idx3" to have been fetched and rendered
+    await expect(findByRole('cell', { name: `async ${idx3}` })).resolves.toBeDefined()
 
     // one fetch should have been aborted, because we scrolled again before the first fetch was done
     expect(asyncData._forTests.signalAborted).toHaveLength(1)
-    expect(asyncData._forTests.asyncDataFetched[0]).toBe(true) // fetched
-    expect(asyncData._forTests.asyncDataFetched[24]).toBe(false) // not fetched (aborted)
-    expect(asyncData._forTests.asyncDataFetched[30]).toBe(true) // fetched
+    expect(asyncData._forTests.asyncDataFetched[idx1]).toBe(true) // fetched
+    expect(asyncData._forTests.asyncDataFetched[idx2]).toBe(false) // not fetched (aborted)
+    expect(asyncData._forTests.asyncDataFetched[idx3]).toBe(true) // fetched
   })
 })
 
