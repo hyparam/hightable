@@ -334,6 +334,9 @@ describe('with async data, HighTable', () => {
     await expect(findByRole('cell', { name: 'async 0' })).resolves.toBeDefined()
     expect(queryByRole('cell', { name: 'async 24' })).toBeNull()
     expect(asyncData._forTests.signalAborted).toHaveLength(0)
+    expect(asyncData._forTests.asyncDataFetched[0]).toBe(true) // fetched
+    expect(asyncData._forTests.asyncDataFetched[24]).toBe(false) // not fetched
+    expect(asyncData._forTests.asyncDataFetched[50]).toBe(false) // not fetched
 
     act(() => {
       // not using userEvent because it doesn't support scroll events
@@ -341,17 +344,35 @@ describe('with async data, HighTable', () => {
       fireEvent.scroll(scrollDiv, { target: { scrollTop: 500 } })
     })
 
+    // row 24 has been required
+    expect(asyncData.getCell).toHaveBeenCalledWith({ row: 24, column: 'Age', orderBy: [] })
+    // nothing occurred yet, because the fetch is still pending
+    expect(asyncData._forTests.signalAborted).toHaveLength(0)
+    expect(asyncData._forTests.asyncDataFetched[0]).toBe(true) // fetched
+    expect(asyncData._forTests.asyncDataFetched[24]).toBe(false) // not fetched
+    expect(asyncData._forTests.asyncDataFetched[50]).toBe(false) // not fetched
+
     // scroll again before the first fetch is done
     act(() => {
       fireEvent.scroll(scrollDiv, { target: { scrollTop: 1500 } })
     })
-    await waitFor(() => {
-      expect(asyncData.getCell).toHaveBeenCalledWith({ row: 50, column: 'Age', orderBy: [] })
-    })
+
+    // row 50 has been required
+    expect(asyncData.getCell).toHaveBeenCalledWith({ row: 50, column: 'Age', orderBy: [] })
+    // nothing occurred yet, because the fetch is still pending
+    expect(asyncData._forTests.signalAborted).toHaveLength(0)
+    expect(asyncData._forTests.asyncDataFetched[0]).toBe(true) // fetched
+    expect(asyncData._forTests.asyncDataFetched[24]).toBe(false) // not fetched
+    expect(asyncData._forTests.asyncDataFetched[50]).toBe(false) // not fetched
+
+    // wait for the row 50 to have been fetched and rendered
     await expect(findByRole('cell', { name: 'async 50' })).resolves.toBeDefined()
 
-    expect(asyncData._forTests.signalAborted).toHaveLength(1) // one fetch should have been aborted, because we scrolled again before the first fetch was done
-    expect(asyncData._forTests.asyncDataFetched[24]).toBe(false) // the fetch for row 24 should have been cancelled
+    // one fetch should have been aborted, because we scrolled again before the first fetch was done
+    expect(asyncData._forTests.signalAborted).toHaveLength(1)
+    expect(asyncData._forTests.asyncDataFetched[0]).toBe(true) // fetched
+    expect(asyncData._forTests.asyncDataFetched[24]).toBe(false) // not fetched (aborted)
+    expect(asyncData._forTests.asyncDataFetched[50]).toBe(true) // fetched
   })
 })
 
