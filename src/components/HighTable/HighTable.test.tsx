@@ -342,7 +342,6 @@ describe('with async data, HighTable', () => {
     })
 
     // scroll again before the first fetch is done
-    void new Promise(resolve => setTimeout(resolve, ms / 5))
     act(() => {
       fireEvent.scroll(scrollDiv, { target: { scrollTop: 1500 } })
     })
