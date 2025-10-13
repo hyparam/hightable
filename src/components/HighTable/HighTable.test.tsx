@@ -1,6 +1,6 @@
 import { act, fireEvent, waitFor, within } from '@testing-library/react'
 import { UserEvent } from '@testing-library/user-event'
-import { Mock, beforeEach, describe, expect, it, vi } from 'vitest'
+import { Mock, afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createGetRowNumber, validateFetchParams, validateGetCellParams, validateGetRowNumberParams } from '../../helpers/dataframe/helpers.js'
 import { DataFrame, DataFrameEvents, Fetch, filterDataFrame } from '../../helpers/dataframe/index.js'
 import { sortableDataFrame } from '../../helpers/dataframe/sort.js'
@@ -255,6 +255,10 @@ describe('with async data, HighTable', () => {
     vi.clearAllMocks()
   })
 
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   it('renders initial rows', async () => {
     const rowEnd = defaultOverscan + 4
     const asyncData = createAsyncDataFrame()
@@ -326,53 +330,69 @@ describe('with async data, HighTable', () => {
     expect(asyncData._forTests.signalAborted).toHaveLength(0) // the fetches are too fast to be cancelled (10ms)
   })
 
-  // TODO(SL): re-enable once https://github.com/hyparam/hightable/issues/294 is fixed
-  it.skip('aborts data fetch when scrolling fast', async () => {
+  it('aborts data fetch when scrolling fast', async () => {
+    // Use fake timers to make the test deterministic and fast
+    vi.useFakeTimers()
+
     const ms = 100
     const asyncData = createAsyncDataFrame({ ms })
-    const { getByLabelText, findByRole, queryByRole } = render(<HighTable className="myclass" data={asyncData} />)
+    const { getByLabelText, queryByRole } = render(<HighTable className="myclass" data={asyncData} />)
     const scrollDiv = getByLabelText('Virtual-scroll table')
     const idx1 = 0
     const idx2 = 24
     const idx3 = 50
-    await expect(findByRole('cell', { name: `async ${idx1}` })).resolves.toBeDefined()
+
+    // Wait for initial fetch to complete by advancing timers
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(ms)
+    })
+
+    // Check that first cell is rendered
+    expect(queryByRole('cell', { name: `async ${idx1}` })).not.toBeNull()
     expect(queryByRole('cell', { name: `async ${idx2}` })).toBeNull()
     expect(asyncData._forTests.signalAborted).toHaveLength(0)
     expect(asyncData._forTests.asyncDataFetched[idx1]).toBe(true) // fetched
     expect(asyncData._forTests.asyncDataFetched[idx2]).toBe(false) // not fetched
     expect(asyncData._forTests.asyncDataFetched[idx3]).toBe(false) // not fetched
 
+    // Scroll to trigger second fetch
     act(() => {
       // not using userEvent because it doesn't support scroll events
       // https://github.com/testing-library/user-event/issues/475
       fireEvent.scroll(scrollDiv, { target: { scrollTop: 500 } })
     })
 
-    // row "idx2" has been required
+    // Verify scroll triggered the getCell call for idx2
     expect(asyncData.getCell).toHaveBeenCalledWith({ row: idx2, column: 'Age', orderBy: [] })
+
     // nothing occurred yet, because the fetch is still pending
     expect(asyncData._forTests.signalAborted).toHaveLength(0)
     expect(asyncData._forTests.asyncDataFetched[idx1]).toBe(true) // fetched
     expect(asyncData._forTests.asyncDataFetched[idx2]).toBe(false) // not fetched
     expect(asyncData._forTests.asyncDataFetched[idx3]).toBe(false) // not fetched
 
-    // scroll again before the first fetch is done
+    // Advance time by half to simulate being in the middle of the fetch
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(ms / 2)
+    })
+
+    // Scroll again before the second fetch completes (should abort the previous fetch)
     act(() => {
       fireEvent.scroll(scrollDiv, { target: { scrollTop: 1500 } })
     })
 
-    // row "idx3" has been required
+    // Verify scroll triggered the getCell call for idx3
     expect(asyncData.getCell).toHaveBeenCalledWith({ row: idx3, column: 'Age', orderBy: [] })
-    // nothing occurred yet, because the fetch is still pending
-    expect(asyncData._forTests.signalAborted).toHaveLength(0)
-    expect(asyncData._forTests.asyncDataFetched[idx1]).toBe(true) // fetched
-    expect(asyncData._forTests.asyncDataFetched[idx2]).toBe(false) // not fetched
-    expect(asyncData._forTests.asyncDataFetched[idx3]).toBe(false) // not fetched
 
-    // wait for the row "idx3" to have been fetched and rendered
-    await expect(findByRole('cell', { name: `async ${idx3}` })).resolves.toBeDefined()
+    // Complete the remaining time for the third fetch
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(ms)
+    })
 
-    // one fetch should have been aborted, because we scrolled again before the first fetch was done
+    // Check that row "idx3" has been fetched and rendered
+    expect(queryByRole('cell', { name: `async ${idx3}` })).not.toBeNull()
+
+    // One fetch should have been aborted, because we scrolled again before the second fetch was done
     expect(asyncData._forTests.signalAborted).toHaveLength(1)
     expect(asyncData._forTests.asyncDataFetched[idx1]).toBe(true) // fetched
     expect(asyncData._forTests.asyncDataFetched[idx2]).toBe(false) // not fetched (aborted)
