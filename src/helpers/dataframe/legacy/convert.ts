@@ -60,7 +60,7 @@ export function convertV1ToUnsortableDataFrame(data: DataFrameV1): DataFrame {
         promises.push(index.then(rowNumber => {
           checkSignal(signal)
           const cachedRowNumber = rowNumbersCache.get(rowIndex)
-          if (!cachedRowNumber || cachedRowNumber.value !== rowNumber) {
+          if (cachedRowNumber?.value !== rowNumber) {
             rowNumbersCache.set(rowIndex, { value: rowNumber })
             eventTarget.dispatchEvent(new CustomEvent('resolve'))
           }

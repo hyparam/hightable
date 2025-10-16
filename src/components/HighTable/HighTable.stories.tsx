@@ -74,7 +74,7 @@ function createDelayedUnsortableData(): DataFrame {
           }
           // Cache the resolved value
           const currentCachedCell = cachedColumn[row]
-          if (!currentCachedCell || currentCachedCell.value !== value) {
+          if (currentCachedCell?.value !== value) {
             cachedColumn[row] = { value }
             // Dispatch an event to notify that the cell has been updated
             eventTarget.dispatchEvent(new CustomEvent('resolve'))
