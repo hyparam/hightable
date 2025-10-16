@@ -181,33 +181,33 @@ export function HighTableInner({
 
   const tableCornerRef = useRef<Pick<HTMLTableCellElement, 'offsetWidth'> | null>(null)
   const scrollRef = useRef<HTMLDivElement | null>(null)
+  const [scroller, setScroller] = useState<HTMLDivElement | null>(null)
+  // store the scroll element, to be able to focus it
+  useEffect(() => {
+    setScroller(scrollRef.current)
+  }, [])
 
   // scroll vertically to the focused cell if needed
-  useEffect(() => {
-    // don't scroll if the navigation cell is unchanged
-    // occurs when the user is scrolling with the mouse for example, and the
-    // cell exits the viewport: don't want to scroll back to it
-    if (enterCellsNavigation || lastCellPosition !== cellPosition) {
-      setEnterCellsNavigation?.(false)
-      setLastCellPosition(cellPosition)
-      const row = cellPosition.rowIndex - ariaOffset
-      const scroller = scrollRef.current
-      if (!scroller) {
-      // don't scroll if the scroller is not ready
-        return
-      }
-      let nextScrollTop = scroller.scrollTop
-      // if row outside of the rows range, scroll to the estimated position of the cell,
-      // to wait for the cell to be fetched and rendered
-      if (row < rowsRange.start || row >= rowsRange.end) {
-        nextScrollTop = row * rowHeight
-      }
-      if (nextScrollTop !== scroller.scrollTop) {
-      // scroll to the cell
-        scroller.scrollTop = nextScrollTop
-      }
+  const canScroll = scroller && 'scrollTo' in scroller // check because jsdom doesn't implement scrollTo
+  if (canScroll && (enterCellsNavigation || lastCellPosition !== cellPosition)) {
+    // scroll if the navigation cell changed, or if entering navigation mode
+    // this excludes the case where the whole table is focused (not in cell navigation mode), the user
+    // is scrolling with the mouse or the arrow keys, and the cell exits the viewport: don't want to scroll
+    // back to it
+    setEnterCellsNavigation?.(false)
+    setLastCellPosition(cellPosition)
+    const row = cellPosition.rowIndex - ariaOffset
+    let nextScrollTop = scroller.scrollTop
+    // if row outside of the rows range, scroll to the estimated position of the cell,
+    // to wait for the cell to be fetched and rendered
+    if (row < rowsRange.start || row >= rowsRange.end) {
+      nextScrollTop = row * rowHeight
     }
-  }, [cellPosition, rowsRange, lastCellPosition, padding, enterCellsNavigation, setEnterCellsNavigation])
+    if (nextScrollTop !== scroller.scrollTop) {
+      // scroll to the cell
+      scroller.scrollTo({ top: nextScrollTop, behavior: 'auto' })
+    }
+  }
 
   // handle scrolling and component resizing
   useEffect(() => {
