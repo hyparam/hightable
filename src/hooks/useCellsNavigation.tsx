@@ -108,6 +108,7 @@ export function CellsNavigationProvider({ colCount, rowCount, rowPadding, childr
     const { key } = event
     // the user can scroll with the keyboard using the arrow keys.
     // Only handle the Tab, Enter and Space keys, to enter the cell navigation mode
+    // TODO(SL): exclude other meta keys
     if (key === 'Tab' && !event.shiftKey || key === 'Enter' || key === ' ') {
       // avoid scrolling the table when the user is navigating with the keyboard
       event.stopPropagation()
@@ -124,12 +125,16 @@ export function CellsNavigationProvider({ colCount, rowCount, rowPadding, childr
     setShouldFocus(true)
   }, [])
 
+  const cellPosition = useMemo(() => {
+    return {
+      colIndex,
+      rowIndex,
+    }
+  }, [colIndex, rowIndex])
+
   const value = useMemo(() => {
     return {
-      cellPosition: {
-        colIndex,
-        rowIndex,
-      },
+      cellPosition,
       onTableKeyDown,
       onScrollKeyDown,
       setColIndex,
@@ -140,7 +145,7 @@ export function CellsNavigationProvider({ colCount, rowCount, rowPadding, childr
       setEnterCellsNavigation,
       focusFirstCell,
     }
-  }, [colIndex, rowIndex, onTableKeyDown, onScrollKeyDown, shouldFocus, enterCellsNavigation,
+  }, [cellPosition, onTableKeyDown, onScrollKeyDown, shouldFocus, enterCellsNavigation,
     setEnterCellsNavigation, focusFirstCell])
 
   return (
