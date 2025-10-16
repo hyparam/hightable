@@ -1,5 +1,17 @@
 # CHANGELOG
 
+## [0.20.2](https://github.com/hyparam/hightable/compare/v0.20.1...v0.20.2) - 2025-10-16
+
+### Changed
+
+- fix the scrollbar gutter ([#300](https://github.com/hyparam/hightable/pull/300)).
+
+### Refactored
+
+- fix flaky tests: ([#301](https://github.com/hyparam/hightable/pull/301) - thanks @jpetitcolas).
+- upgrade development dependencies: ([#303](https://github.com/hyparam/hightable/pull/303)).
+- remove useEffect hooks: ([#303](https://github.com/hyparam/hightable/pull/303)).
+
 ## [0.20.1](https://github.com/hyparam/hightable/compare/v0.20.0...v0.20.1) - 2025-10-06
 
 ### Changed
@@ -9,7 +21,7 @@
 
 ### Refactored
 
-- upgrade develpment dependencies: ([#291](https://github.com/hyparam/hightable/pull/291)).
+- upgrade development dependencies: ([#291](https://github.com/hyparam/hightable/pull/291)).
 
 ## [0.20.0](https://github.com/hyparam/hightable/compare/v0.19.7...v0.20.0) - 2025-09-24
 
@@ -41,7 +53,7 @@
 
 ### Refactored
 
-- upgrade develpment dependencies: ([#278](https://github.com/hyparam/hightable/pull/278)).
+- upgrade development dependencies: ([#278](https://github.com/hyparam/hightable/pull/278)).
 
 ## [0.19.6](https://github.com/hyparam/hightable/compare/v0.19.5...v0.19.6) - 2025-09-23
 
