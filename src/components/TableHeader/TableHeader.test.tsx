@@ -1,7 +1,25 @@
+import type { ReactNode } from 'react'
 import { within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { render } from '../../utils/userEvent.js'
+import { render as _render } from '../../utils/userEvent.js'
 import TableHeader from './TableHeader.js'
+import { usePortalContainer } from '../../hooks/usePortalContainer.js'
+
+function ContainerProvider({ children }: { children: ReactNode }) {
+  const { containerRef } = usePortalContainer()
+  return (
+    <div ref={containerRef}>
+      {children}
+    </div>
+  )
+}
+function render(jsx: ReactNode) {
+  return _render(
+    <ContainerProvider>
+      {jsx}
+    </ContainerProvider>
+  )
+}
 
 describe('TableHeader', () => {
   const columnsParameters = [{ name: 'Name', index: 0, sortable: true }, { name: 'Age', index: 1, sortable: true }, { name: 'Address', index: 2, sortable: true }]

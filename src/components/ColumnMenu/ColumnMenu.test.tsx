@@ -1,6 +1,24 @@
+import type { ReactNode } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { render } from '../../utils/userEvent.js'
+import { render as _render } from '../../utils/userEvent.js'
 import ColumnMenu from './ColumnMenu.js'
+import { usePortalContainer } from '../../hooks/usePortalContainer'
+
+function ContainerProvider({ children }: { children: ReactNode }) {
+  const { containerRef } = usePortalContainer()
+  return (
+    <div ref={containerRef}>
+      {children}
+    </div>
+  )
+}
+function render(jsx: ReactNode) {
+  return _render(
+    <ContainerProvider>
+      {jsx}
+    </ContainerProvider>
+  )
+}
 
 describe('ColumnMenu', () => {
   const defaultProps = {
@@ -20,7 +38,7 @@ describe('ColumnMenu', () => {
       const { container } = render(
         <ColumnMenu {...defaultProps} isOpen={false} />
       )
-      expect(container.firstChild).toBeNull()
+      expect(container.firstChild?.firstChild).toBeNull()
     })
 
     it('renders menu with column name when visible', () => {
@@ -79,8 +97,10 @@ describe('ColumnMenu', () => {
 
       expect(getByRole('menuitem').textContent).toBe('Ascending')
 
-      rerender(
-        <ColumnMenu {...defaultProps} sortable={true} direction='descending' />
+      rerender( // We need to set ContainerProvider, because rerender is not wrapped automatically
+        <ContainerProvider>
+          <ColumnMenu {...defaultProps} sortable={true} direction='descending' />
+        </ContainerProvider>
       )
       expect(getByRole('menuitem').textContent).toBe('Descending')
     })

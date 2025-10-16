@@ -1,4 +1,4 @@
-import { KeyboardEvent, MouseEvent, ReactNode, useCallback, useId, useMemo, useRef } from 'react'
+import { KeyboardEvent, MouseEvent, ReactNode, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Direction } from '../../helpers/sort'
 import { useCellsNavigation } from '../../hooks/useCellsNavigation'
@@ -100,6 +100,14 @@ export default function ColumnMenu({
   id,
 }: ColumnMenuProps) {
   const { containerRef } = usePortalContainer()
+  const [container, setContainer] = useState<HTMLElement | undefined>(undefined)
+  useEffect(() => {
+    if (!container && containerRef.current) {
+      // The container should have been set by now
+      setContainer(containerRef.current)
+    }
+  }, [container, containerRef])
+
   const { top, left } = position
   const menuRef = useRef<HTMLDivElement | null>(null)
   const labelId = useId()
@@ -185,6 +193,10 @@ export default function ColumnMenu({
 
   const showVisibilityGroup = !(!hideColumnAndClose && !showAllColumnsAndClose)
 
+  if (!container) {
+    return null
+  }
+
   return createPortal(
     <>
       <Overlay onClick={handleOverlayClick} />
@@ -226,6 +238,6 @@ export default function ColumnMenu({
         }
       </div>
     </>,
-    containerRef.current ?? document.body
+    container
   )
 }
