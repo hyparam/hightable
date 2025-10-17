@@ -100,7 +100,7 @@ describe('HighTable', () => {
   it('renders initial rows', async () => {
     const { getByText } = render(<HighTable data={mockData} />)
     await waitFor(() => {
-      expect(getByText('ID')).toBeDefined()
+      getByText('ID')
       expect(mockData.getCell).toHaveBeenCalledWith({ row: 0, column: 'ID', orderBy: [] })
       expect(mockData.getCell).toHaveBeenCalledWith({ row: 23, column: 'Age', orderBy: [] })
       expect(mockData.getCell).not.toHaveBeenCalledWith({ row: 24, column: 'Age', orderBy: [] })
@@ -110,7 +110,7 @@ describe('HighTable', () => {
   it('uses overscan option', async () => {
     const { getByText } = render(<HighTable data={mockData} overscan={10} />)
     await waitFor(() => {
-      expect(getByText('ID')).toBeDefined()
+      getByText('ID')
       expect(mockData.getCell).toHaveBeenCalledWith({ row: 13, column: 'Age', orderBy: [] })
       expect(mockData.getCell).not.toHaveBeenCalledWith({ row: 14, column: 'Age', orderBy: [] })
     })
@@ -264,7 +264,7 @@ describe('with async data, HighTable', () => {
     const asyncData = createAsyncDataFrame()
     const { getByText } = render(<HighTable data={asyncData} />)
     await waitFor(() => {
-      expect(getByText('ID')).toBeDefined()
+      getByText('ID')
       expect(asyncData.fetch).toHaveBeenCalledExactlyOnceWith({ rowStart: 0, rowEnd, columns: ['ID', 'Name', 'Age'], orderBy: [], signal: expect.any(AbortSignal) })
       expect(asyncData.getCell).toHaveBeenCalledWith({ row: 0, column: 'ID', orderBy: [] })
       expect(asyncData.getCell).toHaveBeenCalledWith({ row: rowEnd - 1, column: 'Age', orderBy: [] })
@@ -278,7 +278,7 @@ describe('with async data, HighTable', () => {
     const asyncData = createAsyncDataFrame()
     const { getByText } = render(<HighTable data={asyncData} overscan={overscan} />)
     await waitFor(() => {
-      expect(getByText('ID')).toBeDefined()
+      getByText('ID')
       expect(asyncData.fetch).toHaveBeenCalledExactlyOnceWith({ rowStart: 0, rowEnd, columns: ['ID', 'Name', 'Age'], orderBy: [], signal: expect.any(AbortSignal) })
       expect(asyncData.getCell).toHaveBeenCalledWith({ row: rowEnd - 1, column: 'Age', orderBy: [] })
       expect(asyncData.getCell).not.toHaveBeenCalledWith({ row: rowEnd, column: 'Age', orderBy: [] })
@@ -291,7 +291,7 @@ describe('with async data, HighTable', () => {
     // initially, the cell is not there because the data is not fetched yet
     expect(queryByRole('cell', { name: 'async 0' })).toBeNull()
     // after some delay, the cell should be there
-    await expect(findByRole('cell', { name: 'async 0' })).resolves.toBeDefined()
+    await findByRole('cell', { name: 'async 0' })
   })
 
   it('handles scroll to load more rows', async () => {
@@ -302,7 +302,7 @@ describe('with async data, HighTable', () => {
       expect(asyncData.getCell).toHaveBeenCalledWith({ row: 23, column: 'Age', orderBy: [] })
       expect(asyncData.getCell).not.toHaveBeenCalledWith({ row: 24, column: 'Age', orderBy: [] })
     })
-    await expect(findByRole('cell', { name: 'async 0' })).resolves.toBeDefined()
+    await findByRole('cell', { name: 'async 0' })
     expect(queryByRole('cell', { name: 'async 24' })).toBeNull()
 
     act(() => {
@@ -314,7 +314,7 @@ describe('with async data, HighTable', () => {
     await waitFor(() => {
       expect(asyncData.getCell).toHaveBeenCalledWith({ row: 24, column: 'Age', orderBy: [] })
     })
-    await expect(findByRole('cell', { name: 'async 24' })).resolves.toBeDefined()
+    await findByRole('cell', { name: 'async 24' })
     expect(queryByRole('cell', { name: 'async 50' })).toBeNull()
 
     act(() => {
@@ -325,7 +325,7 @@ describe('with async data, HighTable', () => {
     await waitFor(() => {
       expect(asyncData.getCell).toHaveBeenCalledWith({ row: 50, column: 'Age', orderBy: [] })
     })
-    await expect(findByRole('cell', { name: 'async 50' })).resolves.toBeDefined()
+    await findByRole('cell', { name: 'async 50' })
 
     expect(asyncData._forTests.signalAborted).toHaveLength(0) // the fetches are too fast to be cancelled (10ms)
   })
@@ -408,13 +408,11 @@ describe('When sorted, HighTable', () => {
   })
 
   function checkRowContents(row: HTMLElement | undefined, rowNumber: string, ID: string, Count: string) {
-    expect(row).toBeDefined()
     if (!row) {
       throw new Error('Row is undefined')
     }
 
     const selectionCell = within(row).getByRole('rowheader')
-    expect(selectionCell).toBeDefined()
     expect(selectionCell.textContent).toBe(rowNumber)
 
     const columns = within(row).getAllByRole('cell')
@@ -426,7 +424,7 @@ describe('When sorted, HighTable', () => {
   it('shows the rows in the right order', async () => {
     const { user, findByRole, getByRole, findAllByRole } = render(<HighTable data={sortableDataFrame(data)} />)
 
-    expect(getByRole('columnheader', { name: 'ID' })).toBeDefined()
+    getByRole('columnheader', { name: 'ID' })
     await findByRole('cell', { name: 'row 0' })
 
     const table = getByRole('grid') // not table! because the table is interactive. See https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Roles/grid_role
@@ -1170,8 +1168,8 @@ describe('Navigating Hightable with the keyboard', () => {
     const focusedElement = document.activeElement
     const rowIndex = focusedElement?.getAttribute('aria-rowindex')
     const colIndex = focusedElement?.getAttribute('aria-colindex')
-    expect(rowIndex).toBeDefined()
-    expect(colIndex).toBeDefined()
+    expect(rowIndex).toBeTruthy()
+    expect(colIndex).toBeTruthy()
     return { rowIndex: Number(rowIndex), colIndex: Number(colIndex) }
   }
 
@@ -1427,8 +1425,6 @@ describe('When the table scroller is focused', () => {
 //         <HighTable data={smallData} />
 //       </ErrorBoundary>
 //     )
-
-//     expect(getByRole('alert'), 'Something went wrong').toBeDefined()
 //   })
 // })
 

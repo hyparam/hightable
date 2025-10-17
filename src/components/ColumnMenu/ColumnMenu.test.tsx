@@ -45,11 +45,9 @@ describe('ColumnMenu', () => {
       const { getByRole, getByText } = render(<ColumnMenu {...defaultProps} />)
 
       const menu = getByRole('menu')
-      expect(menu).toBeDefined()
       const ariaLabelledBy = menu.getAttribute('aria-labelledby')
-      expect(ariaLabelledBy).toBeDefined()
+      expect(ariaLabelledBy).toBeTruthy()
       const labelElement = getByText('Test Column')
-      expect(labelElement).toBeDefined()
       expect(labelElement.getAttribute('id')).toBe(ariaLabelledBy)
     })
 
@@ -75,7 +73,7 @@ describe('ColumnMenu', () => {
       const { container } = render(<ColumnMenu {...defaultProps} />)
 
       const overlay = container.querySelector('[role="presentation"]')
-      expect(overlay).toBeDefined()
+      expect(overlay).toBeTruthy()
     })
   })
 
@@ -86,7 +84,6 @@ describe('ColumnMenu', () => {
       )
 
       const sortButton = getByRole('menuitem')
-      expect(sortButton).toBeDefined()
       expect(sortButton.textContent).toBe('No sort')
     })
 
@@ -127,7 +124,6 @@ describe('ColumnMenu', () => {
         <ColumnMenu {...defaultProps} hideColumn={hideColumn} />
       )
       const hideOption = getByText('Hide column')
-      expect(hideOption).toBeDefined()
       hideOption.click()
       expect(hideColumn).toHaveBeenCalled()
     })
@@ -142,7 +138,6 @@ describe('ColumnMenu', () => {
         <ColumnMenu {...defaultProps} showAllColumns={showAllColumns} />
       )
       const showOption = getByText('Show all columns')
-      expect(showOption).toBeDefined()
       showOption.click()
       expect(showAllColumns).toHaveBeenCalled()
     })
@@ -160,8 +155,8 @@ describe('ColumnMenu', () => {
           showAllColumns={showAllColumns}
         />
       )
-      expect(getByText('Hide column')).toBeDefined()
-      expect(getByText('Show all columns')).toBeDefined()
+      getByText('Hide column')
+      getByText('Show all columns')
     })
   })
 
@@ -247,7 +242,6 @@ describe('ColumnMenu', () => {
         await user.keyboard('{ArrowUp}')
 
         // Navigation should be handled (no specific assertion as useFocusManagement is mocked)
-        expect(menu).toBeDefined()
       })
 
       it('handles ArrowDown key', async () => {
@@ -258,8 +252,6 @@ describe('ColumnMenu', () => {
         const menu = getByRole('menu')
         menu.focus()
         await user.keyboard('{ArrowDown}')
-
-        expect(menu).toBeDefined()
       })
 
       it('handles ArrowLeft key', async () => {
@@ -270,8 +262,6 @@ describe('ColumnMenu', () => {
         const menu = getByRole('menu')
         menu.focus()
         await user.keyboard('{ArrowLeft}')
-
-        expect(menu).toBeDefined()
       })
 
       it('handles ArrowRight key', async () => {
@@ -282,8 +272,6 @@ describe('ColumnMenu', () => {
         const menu = getByRole('menu')
         menu.focus()
         await user.keyboard('{ArrowRight}')
-
-        expect(menu).toBeDefined()
       })
     })
 
@@ -297,8 +285,6 @@ describe('ColumnMenu', () => {
         const menu = getByRole('menu')
         menu.focus()
         await user.keyboard('{Tab}')
-
-        expect(menu).toBeDefined()
       })
 
       it('handles Shift+Tab key', async () => {
@@ -309,8 +295,6 @@ describe('ColumnMenu', () => {
         const menu = getByRole('menu')
         menu.focus()
         await user.keyboard('{Shift>}{Tab}{/Shift}')
-
-        expect(menu).toBeDefined()
       })
     })
 
@@ -324,7 +308,6 @@ describe('ColumnMenu', () => {
         menu.focus()
         await user.keyboard('{Home}')
         // Navigation should be handled (no specific assertion as useFocusManagement is mocked)
-        expect(menu).toBeDefined()
       })
       it('handles End key', async () => {
         const { user, getByRole } = render(
@@ -334,7 +317,6 @@ describe('ColumnMenu', () => {
         menu.focus()
         await user.keyboard('{End}')
         // Navigation should be handled (no specific assertion as useFocusManagement is mocked)
-        expect(menu).toBeDefined()
       })
     })
 
@@ -355,8 +337,6 @@ describe('ColumnMenu', () => {
       await user.keyboard('{ArrowLeft}')
       await user.keyboard('{ArrowRight}')
       await user.keyboard('{Tab}')
-
-      expect(menu).toBeDefined()
     })
 
     it('handles unknown keys with default prevention', async () => {
@@ -365,8 +345,6 @@ describe('ColumnMenu', () => {
       const menu = getByRole('menu')
       menu.focus()
       await user.keyboard('a')
-
-      expect(menu).toBeDefined()
     })
   })
 
@@ -375,7 +353,7 @@ describe('ColumnMenu', () => {
       const { user, container } = render(<ColumnMenu {...defaultProps} />)
 
       const overlay = container.querySelector('[role="presentation"]')
-      expect(overlay).toBeDefined()
+      expect(overlay).toBeTruthy()
 
       if (overlay) {
         await user.click(overlay)
@@ -389,7 +367,6 @@ describe('ColumnMenu', () => {
       const { getByRole } = render(<ColumnMenu {...defaultProps} />)
 
       const menu = getByRole('menu')
-      expect(menu).toBeDefined()
 
       // Menu should not be a direct child of the render container
       // since it's rendered in a portal
@@ -403,8 +380,7 @@ describe('ColumnMenu', () => {
         <ColumnMenu {...defaultProps} sortable={true} />
       )
 
-      const menu = getByRole('menu')
-      expect(menu).toBeDefined()
+      getByRole('menu')
     })
 
     it('handles empty column name', () => {
@@ -419,7 +395,7 @@ describe('ColumnMenu', () => {
       }
 
       const labelElement = menu.querySelector('[role=presentation]')
-      expect(labelElement).toBeDefined()
+      expect(labelElement).toBeTruthy()
       expect(labelElement?.textContent).toBe('')
       expect(labelElement?.getAttribute('id')).toBe(id)
     })
@@ -430,7 +406,7 @@ describe('ColumnMenu', () => {
         <ColumnMenu {...defaultProps} columnName={specialName} />
       )
 
-      expect(getByText(specialName)).toBeDefined()
+      getByText(specialName)
     })
   })
 })

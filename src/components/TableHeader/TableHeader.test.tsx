@@ -38,7 +38,7 @@ describe('TableHeader', () => {
       />
     </tr></thead></table>)
     columnsParameters.forEach(descriptor => {
-      expect(getByText(descriptor.name)).toBeDefined()
+      getByText(descriptor.name)
     })
   })
 
@@ -146,7 +146,7 @@ describe('TableHeader', () => {
 
       // Test integration: menu is properly labeled by column name
       const labelId = menu.getAttribute('aria-labelledby')
-      expect(labelId).toBeDefined()
+      expect(labelId).toBeTruthy()
       if (!labelId) throw new Error('labelId should be defined')
       const label = document.getElementById(labelId)
       if (!label) throw new Error('label element should exist')
@@ -177,10 +177,9 @@ describe('TableHeader', () => {
       })
 
       await user.click(menuButton)
-      const menu = getByRole('menu')
+      getByRole('menu')
 
       // Test integration: menu opens within table and can be closed
-      expect(menu).toBeDefined()
       await user.click(menuButton)
       expect(queryByRole('menu')).toBeNull()
     })
