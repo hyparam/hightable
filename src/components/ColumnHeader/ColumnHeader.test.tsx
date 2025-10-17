@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { act, fireEvent } from '@testing-library/react'
 
 import { ColumnParametersProvider } from '../../hooks/useColumnParameters.js'
 import { ColumnWidthsProvider } from '../../hooks/useColumnWidths.js'
@@ -280,5 +281,29 @@ describe('ColumnHeader', () => {
     header.focus()
     await user.keyboard(key)
     expect(toggleOrderBy).toHaveBeenCalled()
+  })
+
+  it('copies the column name to clipboard on copy event', async () => {
+    const { getByRole } = render(
+      <table>
+        <tbody>
+          <tr>
+            <ColumnHeader
+              columnName="test"
+              {...defaultProps}
+            ></ColumnHeader>
+          </tr>
+        </tbody>
+      </table>
+    )
+    const cell = getByRole('columnheader')
+    cell.focus()
+    act(() => {
+      // using fireEvent instead of userEvent - I cannot find how to do it with userEvent
+      fireEvent.copy(cell)
+    })
+    const text = await navigator.clipboard.readText()
+    expect(text).toBe('test')
+    // Note that the text is not copied if a selection exists. But I don't know how to test that yet.
   })
 })

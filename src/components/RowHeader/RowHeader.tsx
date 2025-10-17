@@ -1,5 +1,6 @@
-import { CSSProperties, ChangeEvent, KeyboardEvent, MouseEvent, useCallback, useRef } from 'react'
+import { CSSProperties, ChangeEvent, KeyboardEvent, MouseEvent, useCallback, useMemo, useRef } from 'react'
 import { useCellNavigation } from '../../hooks/useCellsNavigation'
+import { useOnCopy } from '../../hooks/useOnCopyToClipboard.js'
 
 interface Props {
   selected?: boolean
@@ -34,7 +35,11 @@ export default function RowHeader({ onCheckboxPress, pendingSelectionGesture, st
     }
   }, [onCheckboxPress])
   const disabledCheckbox = onCheckboxPress === undefined
-  const onChange = useCallback((e: ChangeEvent) => {e.preventDefault()}, [])
+  const onChange = useCallback((e: ChangeEvent) => { e.preventDefault() }, [])
+  const str = useMemo(() => {
+    return formatRowNumber(rowNumber)
+  }, [rowNumber])
+  const handleCopy = useOnCopy(str)
 
   return (
     <th
@@ -43,6 +48,7 @@ export default function RowHeader({ onCheckboxPress, pendingSelectionGesture, st
       role="rowheader"
       style={style}
       onClick={handleClick}
+      onCopy={handleCopy}
       onKeyDown={handleKeyDown}
       aria-busy={rowNumber === undefined}
       aria-checked={selected}
@@ -52,7 +58,7 @@ export default function RowHeader({ onCheckboxPress, pendingSelectionGesture, st
       tabIndex={tabIndex}
       data-rownumber={rowNumber}
     >
-      <span>{formatRowNumber(rowNumber)}</span>
+      <span>{str}</span>
       {selected !== undefined && <input
         type='checkbox'
         onChange={onChange}

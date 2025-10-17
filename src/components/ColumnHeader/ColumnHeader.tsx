@@ -7,6 +7,7 @@ import { useCellNavigation } from '../../hooks/useCellsNavigation.js'
 import { useColumnMenu } from '../../hooks/useColumnMenu.js'
 import { useColumnWidths } from '../../hooks/useColumnWidths.js'
 import { useColumnVisibilityStates } from '../../hooks/useColumnVisibilityStates.js'
+import { useOnCopy } from '../../hooks/useOnCopyToClipboard.js'
 import ColumnMenu from '../ColumnMenu/ColumnMenu.js'
 import ColumnMenuButton from '../ColumnMenuButton/ColumnMenuButton.js'
 import ColumnResizer from '../ColumnResizer/ColumnResizer.js'
@@ -108,6 +109,7 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
       toggleOrderBy?.()
     }
   }, [toggleOrderBy])
+  const handleCopy = useOnCopy(columnName)
 
   return (
     <th
@@ -124,6 +126,7 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
       tabIndex={tabIndex}
       title={description}
       onClick={handleClick}
+      onCopy={handleCopy}
       onKeyDown={onKeyDown}
       style={columnStyle}
       className={className}

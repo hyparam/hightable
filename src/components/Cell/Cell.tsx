@@ -2,6 +2,7 @@ import { KeyboardEvent, MouseEvent, ReactNode, useCallback, useMemo, useRef } fr
 import { ResolvedValue } from '../../helpers/dataframe/index.js'
 import { useCellNavigation } from '../../hooks/useCellsNavigation.js'
 import { useColumnWidths } from '../../hooks/useColumnWidths.js'
+import { useOnCopy } from '../../hooks/useOnCopyToClipboard.js'
 
 export interface CellContentProps {
   stringify: (value: unknown) => string | undefined
@@ -43,28 +44,8 @@ export default function Cell({ cell, onDoubleClickCell, onMouseDownCell, onKeyDo
   const ref = useRef<HTMLTableCellElement | null>(null)
   const { tabIndex, navigateToCell } = useCellNavigation({ ref, ariaColIndex, ariaRowIndex })
 
-  const handleMouseDown = useCallback((event: MouseEvent) => {
-    navigateToCell()
-    if (onMouseDownCell && rowNumber !== undefined) {
-      onMouseDownCell(event, columnIndex, rowNumber)
-    }
-  }, [navigateToCell, onMouseDownCell, rowNumber, columnIndex])
-  const handleDoubleClick = useCallback((event: MouseEvent) => {
-    navigateToCell()
-    if (onDoubleClickCell && rowNumber !== undefined) {
-      onDoubleClickCell(event, columnIndex, rowNumber)
-    }
-  }, [navigateToCell, onDoubleClickCell, rowNumber, columnIndex])
-  const handleKeyDown = useCallback((event: KeyboardEvent) => {
-    // No need to navigate to the cell when using the keyboard, it is already focused
-    if (onKeyDownCell && rowNumber !== undefined) {
-      onKeyDownCell(event, columnIndex, rowNumber)
-    }
-  }, [onKeyDownCell, rowNumber, columnIndex])
-
   // Get the column width from the context
   const columnStyle = useColumnWidths().getStyle?.(columnIndex)
-
   // render as truncated text
   const str = useMemo(() => {
     return stringify(cell?.value)
@@ -83,6 +64,27 @@ export default function Cell({ cell, onDoubleClickCell, onMouseDownCell, onKeyDo
   const content = useMemo(() => {
     return renderCellContent?.({ cell, stringify, col: columnIndex, row: rowNumber }) ?? str
   }, [cell, stringify, columnIndex, rowNumber, renderCellContent, str])
+
+  const handleMouseDown = useCallback((event: MouseEvent) => {
+    navigateToCell()
+    if (onMouseDownCell && rowNumber !== undefined) {
+      onMouseDownCell(event, columnIndex, rowNumber)
+    }
+  }, [navigateToCell, onMouseDownCell, rowNumber, columnIndex])
+  const handleDoubleClick = useCallback((event: MouseEvent) => {
+    navigateToCell()
+    if (onDoubleClickCell && rowNumber !== undefined) {
+      onDoubleClickCell(event, columnIndex, rowNumber)
+    }
+  }, [navigateToCell, onDoubleClickCell, rowNumber, columnIndex])
+  const handleKeyDown = useCallback((event: KeyboardEvent) => {
+    // No need to navigate to the cell when using the keyboard, it is already focused
+    if (onKeyDownCell && rowNumber !== undefined) {
+      onKeyDownCell(event, columnIndex, rowNumber)
+    }
+  }, [onKeyDownCell, rowNumber, columnIndex])
+  const handleCopy = useOnCopy(str)
+
   return (
     <td
       ref={ref}
@@ -92,6 +94,7 @@ export default function Cell({ cell, onDoubleClickCell, onMouseDownCell, onKeyDo
       aria-colindex={ariaColIndex}
       data-rownumber={rowNumber}
       tabIndex={tabIndex}
+      onCopy={handleCopy}
       onDoubleClick={handleDoubleClick}
       onMouseDown={handleMouseDown}
       onKeyDown={handleKeyDown}
