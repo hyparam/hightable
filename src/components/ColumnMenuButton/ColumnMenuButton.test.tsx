@@ -17,7 +17,6 @@ describe('ColumnMenuButton', () => {
       const { getByRole } = render(<ColumnMenuButton {...defaultProps} />)
       const button = getByRole('button')
 
-      expect(button).toBeDefined()
       expect(button.getAttribute('aria-label')).toBe('Column menu')
       expect(button.getAttribute('aria-haspopup')).toBe('menu')
       expect(button.getAttribute('aria-expanded')).toBe('false')
@@ -61,7 +60,7 @@ describe('ColumnMenuButton', () => {
       const { getByTestId } = render(
         <ColumnMenuButton {...defaultProps} icon={customIcon} />
       )
-      expect(getByTestId('custom-icon')).toBeDefined()
+      getByTestId('custom-icon')
     })
 
     it('renders with default icon when no icon provided', () => {
@@ -200,7 +199,6 @@ describe('ColumnMenuButton', () => {
       await user.keyboard('{Enter}')
 
       // Should not throw errors
-      expect(button).toBeDefined()
     })
 
     it('works without onEscape handler', async () => {
@@ -213,7 +211,6 @@ describe('ColumnMenuButton', () => {
       await user.keyboard('{Escape}')
 
       // Should not throw errors
-      expect(button).toBeDefined()
     })
 
     it('works without any handlers', async () => {
@@ -226,7 +223,6 @@ describe('ColumnMenuButton', () => {
       await user.keyboard('{Escape}')
 
       // Should not throw errors
-      expect(button).toBeDefined()
     })
   })
 })
