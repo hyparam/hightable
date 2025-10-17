@@ -1,0 +1,17 @@
+import { ClipboardEvent, useCallback } from 'react'
+
+export function useOnCopy(
+  text?: string
+): (event: ClipboardEvent<HTMLTableCellElement>) => void {
+  return useCallback((event: ClipboardEvent<HTMLTableCellElement>) => {
+    const hasSelection = !document.getSelection()?.isCollapsed
+    if (text === undefined || hasSelection) {
+      return
+    }
+    event.preventDefault()
+    navigator.clipboard.writeText(text).catch((err) => {
+      // TODO(SL): handle the error properly
+      console.debug('Failed to write to clipboard: ', err)
+    })
+  }, [text])
+}
