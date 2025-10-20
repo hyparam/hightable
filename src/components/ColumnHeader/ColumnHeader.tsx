@@ -34,7 +34,7 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
   const { isOpen, position, menuId, close, handleMenuClick } = useColumnMenu(ref, navigateToCell)
   const { getHideColumn, showAllColumns } = useColumnVisibilityStates()
 
-  const handleMouseDown = useCallback(() => {
+  const handleClick = useCallback(() => {
     navigateToCell()
     if (sortable) toggleOrderBy?.()
   }, [toggleOrderBy, navigateToCell, sortable])
@@ -125,9 +125,9 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
       aria-colindex={ariaColIndex}
       tabIndex={tabIndex}
       title={description}
+      onClick={handleClick}
       onCopy={handleCopy}
       onKeyDown={onKeyDown}
-      onMouseDown={handleMouseDown}
       style={columnStyle}
       className={className}
       data-fixed-width={dataFixedWidth}
