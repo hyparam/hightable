@@ -42,7 +42,6 @@
     th {
       background-color: transparent;
       position: sticky;
-      user-select: none;
       top: 0;
       z-index: var(--header-z-index, auto);
     }
@@ -115,7 +114,6 @@
   [role="rowheader"] {
     position: sticky;
     left: 0;
-    user-select: none;
     min-width: var(--row-label-width);
     max-width: var(--row-label-width);
     z-index: var(--header-z-index, auto);

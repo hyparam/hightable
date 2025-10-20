@@ -4,8 +4,7 @@ export function useOnCopy(
   text?: string
 ): (event: ClipboardEvent<HTMLTableCellElement>) => void {
   return useCallback((event: ClipboardEvent<HTMLTableCellElement>) => {
-    const hasSelection = !document.getSelection()?.isCollapsed
-    if (text === undefined || hasSelection) {
+    if (text === undefined || !document.getSelection()?.isCollapsed) {
       return
     }
     event.preventDefault()
