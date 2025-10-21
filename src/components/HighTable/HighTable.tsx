@@ -141,7 +141,7 @@ export function HighTableInner({
   const { numRows } = data
   const { enterCellsNavigation, setEnterCellsNavigation, onTableKeyDown: onNavigationTableKeyDown, onScrollKeyDown, cellPosition, focusFirstCell } = useCellsNavigation()
   const { containerRef } = usePortalContainer()
-  const { setAvailableWidth } = useColumnWidths()
+  const { setAvailableWidth, getWidth } = useColumnWidths()
   const { isHiddenColumn } = useColumnVisibilityStates()
   const { orderBy, onOrderByChange } = useOrderBy()
   const { selectable, toggleAllRows, pendingSelectionGesture, onTableKeyDown: onSelectionTableKeyDown, allRowsSelected, isRowSelected, toggleRowNumber, toggleRangeToRowNumber } = useSelection()
@@ -149,12 +149,31 @@ export function HighTableInner({
   // local state
   const [rowsRange, setRowsRange] = useState<RowsRange>({ start: 0, end: 0 })
   const [lastCellPosition, setLastCellPosition] = useState(cellPosition)
+  const [needsHorizontalScroll, setNeedsHorizontalScroll] = useState(false)
+  const [availableScrollerWidth, setAvailableScrollerWidth] = useState<number | undefined>(undefined)
 
   const columnsParameters = useMemo(() => {
     return allColumnsParameters.filter((_, index) => {
       return !isHiddenColumn?.(index)
     })
   }, [allColumnsParameters, isHiddenColumn])
+
+  useEffect(() => {
+    if (availableScrollerWidth === undefined) return
+    const defaultMinWidth = 50
+    const totalEffectiveWidth = columnsParameters.reduce((sum, { index, minWidth }) => {
+      const effective = getWidth?.(index)
+      const fallback = minWidth ?? defaultMinWidth
+      return sum + (effective ?? fallback)
+    }, 0)
+    setNeedsHorizontalScroll(totalEffectiveWidth > availableScrollerWidth)
+    // Add small hysteresis to avoid rapid toggling due to rounding during resize
+    const EPS = 1 // px tolerance
+    const diff = totalEffectiveWidth - availableScrollerWidth
+    setNeedsHorizontalScroll(prev => {
+      return prev ? diff > -EPS : diff > EPS
+    })
+  }, [availableScrollerWidth, columnsParameters, getWidth])
 
   const onTableKeyDown = useCallback((event: KeyboardEvent) => {
     onNavigationTableKeyDown?.(event)
@@ -262,7 +281,9 @@ export function HighTableInner({
         // we use the scrollRef client width, because we're interested in the content area
         const tableWidth = getClientWidth(scrollRef.current)
         const leftColumnWidth = getOffsetWidth(tableCornerRef.current)
-        setAvailableWidth?.(tableWidth - leftColumnWidth)
+        const available = tableWidth - leftColumnWidth
+        setAvailableWidth?.(available)
+        setAvailableScrollerWidth(available)
       }
     }
 
@@ -331,8 +352,9 @@ export function HighTableInner({
     return {
       '--column-header-height': `${rowHeight}px`,
       '--row-number-width': `${rowHeaderWidth}px`,
+      overflowX: needsHorizontalScroll ? 'auto' : 'hidden',
     } as CSSProperties
-  }, [rowHeaderWidth])
+  }, [rowHeaderWidth, needsHorizontalScroll])
   const restrictedOnScrollKeyDown = useCallback((event: KeyboardEvent) => {
     if (event.target !== scrollRef.current) {
       // don't handle the event if the target is not the scroller
