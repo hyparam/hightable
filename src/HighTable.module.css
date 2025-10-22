@@ -16,7 +16,6 @@
   .table-scroll {
     flex: 1;
     overflow: auto;
-    scrollbar-gutter: stable both-edges;
     & > div {
       position: relative;
     }
