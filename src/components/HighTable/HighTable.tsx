@@ -141,7 +141,7 @@ export function HighTableInner({
   const { numRows } = data
   const { enterCellsNavigation, setEnterCellsNavigation, onTableKeyDown: onNavigationTableKeyDown, onScrollKeyDown, cellPosition, focusFirstCell } = useCellsNavigation()
   const { containerRef } = usePortalContainer()
-  const { setAvailableWidth, getWidth } = useColumnWidths()
+  const { setAvailableWidth, setScrollNeedInputs, needsHorizontalScrollDebounced } = useColumnWidths()
   const { isHiddenColumn } = useColumnVisibilityStates()
   const { orderBy, onOrderByChange } = useOrderBy()
   const { selectable, toggleAllRows, pendingSelectionGesture, onTableKeyDown: onSelectionTableKeyDown, allRowsSelected, isRowSelected, toggleRowNumber, toggleRangeToRowNumber } = useSelection()
@@ -149,7 +149,6 @@ export function HighTableInner({
   // local state
   const [rowsRange, setRowsRange] = useState<RowsRange>({ start: 0, end: 0 })
   const [lastCellPosition, setLastCellPosition] = useState(cellPosition)
-  const [needsHorizontalScroll, setNeedsHorizontalScroll] = useState(false)
   const [availableScrollerWidth, setAvailableScrollerWidth] = useState<number | undefined>(undefined)
 
   const columnsParameters = useMemo(() => {
@@ -158,22 +157,15 @@ export function HighTableInner({
     })
   }, [allColumnsParameters, isHiddenColumn])
 
+  const visibleColumnIndexes = useMemo(() => {
+    return columnsParameters.map(({ index }) => index)
+  }, [columnsParameters])
+
   useEffect(() => {
     if (availableScrollerWidth === undefined) return
-    const defaultMinWidth = 50
-    const totalEffectiveWidth = columnsParameters.reduce((sum, { index, minWidth }) => {
-      const effective = getWidth?.(index)
-      const fallback = minWidth ?? defaultMinWidth
-      return sum + (effective ?? fallback)
-    }, 0)
-    setNeedsHorizontalScroll(totalEffectiveWidth > availableScrollerWidth)
-    // Add small hysteresis to avoid rapid toggling due to rounding during resize
-    const EPS = 1 // px tolerance
-    const diff = totalEffectiveWidth - availableScrollerWidth
-    setNeedsHorizontalScroll(prev => {
-      return prev ? diff > -EPS : diff > EPS
-    })
-  }, [availableScrollerWidth, columnsParameters, getWidth])
+    setScrollNeedInputs?.({ columnIndexes: visibleColumnIndexes, availableWidth: availableScrollerWidth, waitMs: 50 })
+  }, [availableScrollerWidth, visibleColumnIndexes, setScrollNeedInputs])
+  const needsHorizontalScroll = needsHorizontalScrollDebounced ?? false
 
   const onTableKeyDown = useCallback((event: KeyboardEvent) => {
     onNavigationTableKeyDown?.(event)

@@ -42,6 +42,10 @@ interface ColumnWidthsContextType {
   setAvailableWidth?: (value: number) => void // used to set the available width in the wrapper element
   setFixedWidth?: (columnIndex: number, value: number) => void // used to set a fixed width for a column (will be stored and overrides the auto width)
   setMeasuredWidth?: (columnIndex: number, value: number) => void // used to set the measured width (and adjust all the measured columns)
+  getEffectiveWidth?: (columnIndex: number) => number // fixed/adjusted/measured, falling back to min width
+  getTotalEffectiveWidth?: (columnIndexes?: number[]) => number // sum of effective widths (all columns if not specified)
+  setScrollNeedInputs?: (args: { columnIndexes: number[]; availableWidth: number; waitMs?: number }) => void
+  needsHorizontalScrollDebounced?: boolean
 }
 
 export const ColumnWidthsContext = createContext<ColumnWidthsContextType>({})
@@ -191,6 +195,68 @@ export function ColumnWidthsProvider({ children, localStorageKey, numColumns, mi
     return cellStyle(getWidth(columnIndex))
   }, [getWidth])
 
+  // Effective width including fallback to min width (no undefined)
+  const getEffectiveWidth = useCallback((columnIndex: number) => {
+    const width = getWidth(columnIndex)
+    return width ?? getMinWidth(columnIndex)
+  }, [getWidth, getMinWidth])
+
+  // Sum of effective widths for provided column indexes, or all columns if not provided
+  const getTotalEffectiveWidth = useCallback((columnIndexes?: number[]) => {
+    const indexes = columnIndexes ?? Array.from({ length: numColumns }, (_, i) => i)
+    let total = 0
+    for (const i of indexes) {
+      total += getEffectiveWidth(i)
+    }
+    return total
+  }, [numColumns, getEffectiveWidth])
+
+  // Debounced API
+  interface ScrollNeedInputs { columnIndexes: number[]; availableWidth: number; waitMs: number }
+  const [scrollNeedInputs, _setScrollNeedInputs] = useState<ScrollNeedInputs | undefined>(undefined)
+  const setScrollNeedInputs = useCallback((args: { columnIndexes: number[]; availableWidth: number; waitMs?: number }) => {
+    _setScrollNeedInputs({ columnIndexes: args.columnIndexes, availableWidth: args.availableWidth, waitMs: args.waitMs ?? 50 })
+  }, [])
+  const [needsHorizontalScrollDebounced, setNeedsHorizontalScrollDebounced] = useState(false)
+  const debounceTimerRef = useRef<number | undefined>(undefined)
+  useEffect(() => {
+    // clear any pending timer on input changes
+    if (debounceTimerRef.current !== undefined) {
+      window.clearTimeout(debounceTimerRef.current)
+      debounceTimerRef.current = undefined
+    }
+    if (!scrollNeedInputs) {
+      setNeedsHorizontalScrollDebounced(false)
+      return
+    }
+    const { columnIndexes, availableWidth, waitMs } = scrollNeedInputs
+    if (!isValidWidth(availableWidth) || columnIndexes.length === 0) {
+      setNeedsHorizontalScrollDebounced(false)
+      return
+    }
+    const total = getTotalEffectiveWidth(columnIndexes)
+    const needNow = total >= availableWidth
+    if (!needNow) {
+      setNeedsHorizontalScrollDebounced(false)
+      return
+    }
+    // If we already show it and still needed, keep it
+    if (needsHorizontalScrollDebounced) {
+      return
+    }
+    // Otherwise, debounce before showing
+    debounceTimerRef.current = window.setTimeout(() => {
+      setNeedsHorizontalScrollDebounced(true)
+      debounceTimerRef.current = undefined
+    }, waitMs)
+    return () => {
+      if (debounceTimerRef.current !== undefined) {
+        window.clearTimeout(debounceTimerRef.current)
+        debounceTimerRef.current = undefined
+      }
+    }
+  }, [scrollNeedInputs, getTotalEffectiveWidth, needsHorizontalScrollDebounced])
+
   const value = useMemo(() => {
     return {
       getWidth,
@@ -200,8 +266,12 @@ export function ColumnWidthsProvider({ children, localStorageKey, numColumns, mi
       setAvailableWidth,
       setFixedWidth,
       setMeasuredWidth,
+      getEffectiveWidth,
+      getTotalEffectiveWidth,
+      setScrollNeedInputs,
+      needsHorizontalScrollDebounced,
     }
-  }, [getWidth, getStyle, getDataFixedWidth, releaseWidth, setAvailableWidth, setFixedWidth, setMeasuredWidth])
+  }, [getWidth, getStyle, getDataFixedWidth, releaseWidth, setAvailableWidth, setFixedWidth, setMeasuredWidth, getEffectiveWidth, getTotalEffectiveWidth, setScrollNeedInputs, needsHorizontalScrollDebounced])
 
   return (
     <ColumnWidthsContext.Provider value={value}>
