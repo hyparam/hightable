@@ -7,6 +7,7 @@ const defaultMinWidth = 50 // minimum width of a cell in px, used to compute the
 const snapDistance = 10 // if a small space remains to the right of the last column after shrinking widths, it's filled by expanding some columns
 const maxAdjustmentRatio = 3 // when adjusting, we don't want to shrink a column too much. It's the maximum ratio between the measured width and the adjusted width
 const minAdjustedWidth = 150 // when adjusting, we don't want to shrink a column too much. It's the minimum adjusted width
+const underfillMargin = 3 // leave 3px unused to avoid showing an unneeded horizontal scrollbar
 // TODO(SL): let config.minAdjustedWidth override minAdjustedWidth the same way config.minWidth does for minWidth?
 
 /**
@@ -261,7 +262,8 @@ function adjustWidths({
     const columnWidth = fixedWidths?.[columnIndex] ?? measuredWidths[columnIndex] ?? getMinWidth(columnIndex)
     totalWidth += columnWidth
   }
-  let excedent = totalWidth - maxTotalWidth
+  // Target slightly less than available to avoid triggering an unneeded scrollbar
+  let excedent = totalWidth - Math.max(0, maxTotalWidth - underfillMargin)
 
   if (excedent <= 0) {
     return []
