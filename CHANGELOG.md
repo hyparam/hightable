@@ -1,5 +1,20 @@
 # CHANGELOG
 
+## [0.20.3](https://github.com/hyparam/hightable/compare/v0.20.2...v0.20.3) - 2025-10-24
+
+### Added
+
+- copy cell contents to clipboard on Ctrl+C / Cmd+C: ([#306](https://github.com/hyparam/hightable/pull/306)).
+
+### Fixed
+
+- fixed the scrollbar gutter: ([#308](https://github.com/hyparam/hightable/pull/308)).
+
+### Refactored
+
+- remove or replace wrong occurrences of .toBeDefined() in tests: ([#305](https://github.com/hyparam/hightable/pull/305)).
+- upgrade development dependencies: ([#309](https://github.com/hyparam/hightable/pull/309)).
+
 ## [0.20.2](https://github.com/hyparam/hightable/compare/v0.20.1...v0.20.2) - 2025-10-16
 
 ### Changed
