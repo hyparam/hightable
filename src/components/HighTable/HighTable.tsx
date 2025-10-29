@@ -184,7 +184,7 @@ export function HighTableInner({
 
   // scroll vertically to the focused cell if needed
   useEffect(() => {
-    if (!enterCellsNavigation && lastCellPosition.rowIndex === cellPosition.rowIndex && lastCellPosition.colIndex === cellPosition.colIndex) {
+    if (!enterCellsNavigation && lastCellPosition === cellPosition) {
     // scroll if the navigation cell changed, or if entering navigation mode
     // this excludes the case where the whole table is focused (not in cell navigation mode), the user
     // is scrolling with the mouse or the arrow keys, and the cell exits the viewport: don't want to scroll
