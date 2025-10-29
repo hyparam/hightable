@@ -8,13 +8,13 @@ export interface CellPosition {
 interface CellsNavigationContextType {
   cellPosition: CellPosition
   shouldFocus: boolean // true if the current cell should be focused
-  enterCellsNavigation?: boolean // true if entering cells navigation mode
+  shouldScroll: boolean // true if the table should scroll to the current cell
   onTableKeyDown?: (event: KeyboardEvent) => void // function to handle keydown events inside the table. It is created only once.
   onScrollKeyDown?: (event: KeyboardEvent) => void // function to handle keydown events outside the table, in the scroll wrapper. It is created only once.
   setColIndex?: (colIndex: number) => void // function to set the column index
   setRowIndex?: (rowIndex: number) => void // function to set the row index
   setShouldFocus?: (shouldFocus: boolean) => void // function to set the shouldFocus state
-  setEnterCellsNavigation?: (enterCellsNavigation: boolean) => void // function to set the enterCellsNavigation state
+  setShouldScroll?: (shouldScroll: boolean) => void // function to set the shouldScroll state
   focusFirstCell?: () => void // function to focus the first cell
 }
 
@@ -24,13 +24,7 @@ const defaultCellsNavigationContext: CellsNavigationContextType = {
     rowIndex: 1, //
   },
   shouldFocus: false,
-  enterCellsNavigation: false,
-  onTableKeyDown: undefined,
-  onScrollKeyDown: undefined,
-  setColIndex: undefined,
-  setRowIndex: undefined,
-  setShouldFocus: undefined,
-  setEnterCellsNavigation: undefined,
+  shouldScroll: false,
 }
 
 export const CellsNavigationContext = createContext<CellsNavigationContextType>(defaultCellsNavigationContext)
@@ -46,7 +40,7 @@ export function CellsNavigationProvider({ colCount, rowCount, rowPadding, childr
   const [colIndex, setColIndex] = useState(defaultCellsNavigationContext.cellPosition.colIndex)
   const [rowIndex, setRowIndex] = useState(defaultCellsNavigationContext.cellPosition.rowIndex)
   const [shouldFocus, setShouldFocus] = useState(false)
-  const [enterCellsNavigation, setEnterCellsNavigation] = useState(false)
+  const [shouldScroll, setShouldScroll] = useState(false)
 
   const onTableKeyDown = useCallback((event: KeyboardEvent) => {
     const { key, altKey, ctrlKey, metaKey, shiftKey } = event
@@ -101,6 +95,7 @@ export function CellsNavigationProvider({ colCount, rowCount, rowPadding, childr
     // avoid scrolling the table when the user is navigating with the keyboard
     event.stopPropagation()
     event.preventDefault()
+    setShouldScroll(true)
     setShouldFocus(true)
   }, [colCount, rowCount, rowPadding])
 
@@ -113,7 +108,7 @@ export function CellsNavigationProvider({ colCount, rowCount, rowPadding, childr
       // avoid scrolling the table when the user is navigating with the keyboard
       event.stopPropagation()
       event.preventDefault()
-      setEnterCellsNavigation(true)
+      setShouldScroll(true)
       setShouldFocus(true)
     }
   }, [])
@@ -121,7 +116,7 @@ export function CellsNavigationProvider({ colCount, rowCount, rowPadding, childr
   const focusFirstCell = useCallback(() => {
     setColIndex(defaultCellsNavigationContext.cellPosition.colIndex)
     setRowIndex(defaultCellsNavigationContext.cellPosition.rowIndex)
-    setEnterCellsNavigation(true)
+    setShouldScroll(true)
     setShouldFocus(true)
   }, [])
 
@@ -141,12 +136,11 @@ export function CellsNavigationProvider({ colCount, rowCount, rowPadding, childr
       setRowIndex,
       shouldFocus,
       setShouldFocus,
-      enterCellsNavigation,
-      setEnterCellsNavigation,
+      shouldScroll,
+      setShouldScroll,
       focusFirstCell,
     }
-  }, [cellPosition, onTableKeyDown, onScrollKeyDown, shouldFocus, enterCellsNavigation,
-    setEnterCellsNavigation, focusFirstCell])
+  }, [cellPosition, onTableKeyDown, onScrollKeyDown, shouldFocus, shouldScroll, focusFirstCell])
 
   return (
     <CellsNavigationContext.Provider value={value}>
