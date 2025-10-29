@@ -187,7 +187,8 @@ export function HighTableInner({
   // back to it
   useEffect(() => {
     const scroller = scrollRef.current
-    if (!shouldScroll || !scroller) {
+    if (!shouldScroll || !scroller || !('scrollTo' in scroller)) {
+      // scrollTo does not exist in jsdom, used in the tests
       return
     }
     setShouldScroll?.(false)
@@ -200,7 +201,7 @@ export function HighTableInner({
     }
     if (nextScrollTop !== scroller.scrollTop) {
       // scroll to the cell
-      scroller.scrollTop = nextScrollTop
+      scroller.scrollTo({ top: nextScrollTop, behavior: 'auto' })
     }
   }, [cellPosition, shouldScroll, rowsRange, setShouldScroll])
 
