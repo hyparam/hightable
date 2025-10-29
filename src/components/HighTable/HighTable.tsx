@@ -181,22 +181,25 @@ export function HighTableInner({
 
   const tableCornerRef = useRef<Pick<HTMLTableCellElement, 'offsetWidth'> | null>(null)
   const scrollRef = useRef<HTMLDivElement | null>(null)
-  const [scroller, setScroller] = useState<HTMLDivElement | null>(null)
-  // store the scroll element, to be able to focus it
-  useEffect(() => {
-    setScroller(scrollRef.current)
-  }, [])
 
   // scroll vertically to the focused cell if needed
-  const canScroll = scroller && 'scrollTo' in scroller // check because jsdom doesn't implement scrollTo
-  if (canScroll && (enterCellsNavigation || lastCellPosition !== cellPosition)) {
+  useEffect(() => {
+    if (!enterCellsNavigation && lastCellPosition.rowIndex === cellPosition.rowIndex && lastCellPosition.colIndex === cellPosition.colIndex) {
     // scroll if the navigation cell changed, or if entering navigation mode
     // this excludes the case where the whole table is focused (not in cell navigation mode), the user
     // is scrolling with the mouse or the arrow keys, and the cell exits the viewport: don't want to scroll
     // back to it
+      return
+    }
     setEnterCellsNavigation?.(false)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLastCellPosition(cellPosition)
     const row = cellPosition.rowIndex - ariaOffset
+    const scroller = scrollRef.current
+    if (!scroller) {
+      // don't scroll if the scroller is not ready
+      return
+    }
     let nextScrollTop = scroller.scrollTop
     // if row outside of the rows range, scroll to the estimated position of the cell,
     // to wait for the cell to be fetched and rendered
@@ -205,9 +208,10 @@ export function HighTableInner({
     }
     if (nextScrollTop !== scroller.scrollTop) {
       // scroll to the cell
-      scroller.scrollTo({ top: nextScrollTop, behavior: 'auto' })
+      scroller.scrollTop = nextScrollTop
+      // scroller.scrollTo({ top: nextScrollTop, behavior: 'auto' })
     }
-  }
+  }, [cellPosition, enterCellsNavigation, rowsRange, setEnterCellsNavigation, lastCellPosition])
 
   // handle scrolling and component resizing
   useEffect(() => {

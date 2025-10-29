@@ -102,10 +102,14 @@ export default function ColumnMenu({
   const { containerRef } = usePortalContainer()
   const [container, setContainer] = useState<HTMLElement | undefined>(undefined)
   useEffect(() => {
-    if (!container && containerRef.current) {
-      // The container should have been set by now
-      setContainer(containerRef.current)
+    if (container) {
+      return
     }
+    if (!containerRef.current) {
+      // The container should have been set by now
+      throw new Error('containerRef is not set')
+    }
+    setContainer(containerRef.current)
   }, [container, containerRef])
 
   const { top, left } = position
