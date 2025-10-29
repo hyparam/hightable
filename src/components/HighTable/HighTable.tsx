@@ -209,7 +209,6 @@ export function HighTableInner({
     if (nextScrollTop !== scroller.scrollTop) {
       // scroll to the cell
       scroller.scrollTop = nextScrollTop
-      // scroller.scrollTo({ top: nextScrollTop, behavior: 'auto' })
     }
   }, [cellPosition, enterCellsNavigation, rowsRange, setEnterCellsNavigation, lastCellPosition])
 
