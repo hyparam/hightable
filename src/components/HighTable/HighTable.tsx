@@ -139,7 +139,7 @@ export function HighTableInner({
   // contexts
   const { data } = useData()
   const { numRows } = data
-  const { enterCellsNavigation, setEnterCellsNavigation, onTableKeyDown: onNavigationTableKeyDown, onScrollKeyDown, cellPosition, focusFirstCell } = useCellsNavigation()
+  const { shouldScroll, setShouldScroll, onTableKeyDown: onNavigationTableKeyDown, onScrollKeyDown, cellPosition, focusFirstCell } = useCellsNavigation()
   const { containerRef } = usePortalContainer()
   const { setAvailableWidth } = useColumnWidths()
   const { isHiddenColumn } = useColumnVisibilityStates()
@@ -148,7 +148,6 @@ export function HighTableInner({
   const allColumnsParameters = useColumnParameters()
   // local state
   const [rowsRange, setRowsRange] = useState<RowsRange>({ start: 0, end: 0 })
-  const [lastCellPosition, setLastCellPosition] = useState(cellPosition)
 
   const columnsParameters = useMemo(() => {
     return allColumnsParameters.filter((_, index) => {
@@ -182,24 +181,17 @@ export function HighTableInner({
   const tableCornerRef = useRef<Pick<HTMLTableCellElement, 'offsetWidth'> | null>(null)
   const scrollRef = useRef<HTMLDivElement | null>(null)
 
-  // scroll vertically to the focused cell if needed
+  // scroll if the navigation cell changed, or if entering navigation mode
+  // this excludes the case where the whole table is focused (not in cell navigation mode), the user
+  // is scrolling with the mouse or the arrow keys, and the cell exits the viewport: don't want to scroll
+  // back to it
   useEffect(() => {
-    if (!enterCellsNavigation && lastCellPosition === cellPosition) {
-      // scroll if the navigation cell changed, or if entering navigation mode
-      // this excludes the case where the whole table is focused (not in cell navigation mode), the user
-      // is scrolling with the mouse or the arrow keys, and the cell exits the viewport: don't want to scroll
-      // back to it
-      return
-    }
-    setEnterCellsNavigation?.(false)
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setLastCellPosition(cellPosition)
-    const row = cellPosition.rowIndex - ariaOffset
     const scroller = scrollRef.current
-    if (!scroller) {
-      // don't scroll if the scroller is not ready
+    if (!shouldScroll || !scroller) {
       return
     }
+    setShouldScroll?.(false)
+    const row = cellPosition.rowIndex - ariaOffset
     let nextScrollTop = scroller.scrollTop
     // if row outside of the rows range, scroll to the estimated position of the cell,
     // to wait for the cell to be fetched and rendered
@@ -210,7 +202,7 @@ export function HighTableInner({
       // scroll to the cell
       scroller.scrollTop = nextScrollTop
     }
-  }, [cellPosition, enterCellsNavigation, rowsRange, setEnterCellsNavigation, lastCellPosition])
+  }, [cellPosition, shouldScroll, rowsRange, setShouldScroll])
 
   // handle scrolling and component resizing
   useEffect(() => {
