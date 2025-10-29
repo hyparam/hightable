@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## [0.20.4](https://github.com/hyparam/hightable/compare/v0.20.3...v0.20.4) - 2025-10-29
+
+### Fixed
+
+- fixed infinite rerender: ([#313](https://github.com/hyparam/hightable/pull/313)).
+
+### Refactored
+
+- upgrade development dependencies: ([#312](https://github.com/hyparam/hightable/pull/312)).
+
 ## [0.20.3](https://github.com/hyparam/hightable/compare/v0.20.2...v0.20.3) - 2025-10-24
 
 ### Added
