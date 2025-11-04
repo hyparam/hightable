@@ -340,16 +340,14 @@ export function HighTableInner({
   // Prepare the slice of data to render
   // TODO(SL): also compute progress percentage here, to show a loading indicator
   const slice = useMemo(() => {
-    let hasCompleteRow = false
+    const canMeasureColumn: Record<string, boolean> = {}
     const rowContents = rows.map((row) => {
       const rowNumber = data.getRowNumber({ row, orderBy })?.value
       const cells = columnsParameters.map(({ name: column }, columnIndex) => {
         const cell = data.getCell({ row, column, orderBy })
+        canMeasureColumn[column] ||= cell !== undefined
         return { columnIndex, cell }
       })
-      if (cells.every(({ cell }) => cell !== undefined)) {
-        hasCompleteRow = true
-      }
       return {
         row,
         rowNumber,
@@ -358,7 +356,7 @@ export function HighTableInner({
     })
     return {
       rowContents,
-      hasCompleteRow,
+      canMeasureColumn,
       version,
     }
   }, [data, columnsParameters, rows, orderBy, version])
@@ -396,7 +394,7 @@ export function HighTableInner({
                   ref={tableCornerRef}
                 />
                 <TableHeader
-                  canMeasureWidth={slice.hasCompleteRow}
+                  canMeasureColumn={slice.canMeasureColumn}
                   columnsParameters={columnsParameters}
                   orderBy={orderBy}
                   onOrderByChange={onOrderByChange}
