@@ -86,7 +86,9 @@
   /* TODO: fix the positioning */
   thead {
     th {
-      & > button {
+      & > button,
+      /* when using functional header API, the button may be nested */
+      .ht-header-controls > button {
         position: absolute;
         right: 6px;
         top: 50%;
@@ -431,7 +433,8 @@
   /* column menu button */
   thead {
     th {
-      & > button {
+      & > button,
+      .ht-header-controls > button {
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -460,7 +463,11 @@
       &:hover > button,
       & > button:focus,
       & > button:focus-visible,
-      & > button[aria-expanded="true"] {
+      & > button[aria-expanded="true"],
+      &:hover .ht-header-controls > button,
+      .ht-header-controls > button:focus,
+      .ht-header-controls > button:focus-visible,
+      .ht-header-controls > button[aria-expanded="true"] {
         background-color: var(--menu-button-hovered-background-color);
         opacity: 1;
       }

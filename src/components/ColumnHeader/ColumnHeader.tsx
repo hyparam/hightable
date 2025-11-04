@@ -30,7 +30,7 @@ interface Props {
 export default function ColumnHeader({ columnIndex, columnName, columnConfig, canMeasureWidth, direction, toggleOrderBy, orderByIndex, orderBySize, ariaColIndex, ariaRowIndex, className, children }: Props) {
   const ref = useRef<HTMLTableCellElement | null>(null)
   const { tabIndex, navigateToCell } = useCellNavigation({ ref, ariaColIndex, ariaRowIndex })
-  const { sortable, headerComponent } = columnConfig
+  const { sortable } = columnConfig
   const { isOpen, position, menuId, close, handleMenuClick } = useColumnMenu(ref, navigateToCell)
   const { getHideColumn, showAllColumns } = useColumnVisibilityStates()
 
@@ -111,6 +111,29 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
   }, [toggleOrderBy])
   const handleCopy = useOnCopy(columnName)
 
+  // Provide built-in controls for functional header overrides
+  const controls = useMemo(() =>
+    <div className="ht-header-controls">
+      {isMenuEnabled &&
+        <ColumnMenuButton
+          onClick={handleMenuClick}
+          onEscape={navigateToCell}
+          tabIndex={tabIndex}
+          isExpanded={isOpen}
+          menuId={menuId}
+          aria-label={`Column menu for ${columnName}`}
+        />
+      }
+    </div>
+  , [isMenuEnabled, handleMenuClick, navigateToCell, tabIndex, isOpen, menuId, columnName])
+
+  const headerContent = useMemo(() => {
+    if (typeof columnConfig.headerComponent === 'function') {
+      return columnConfig.headerComponent(controls)
+    }
+    return columnConfig.headerComponent ?? children
+  }, [columnConfig, controls, children])
+
   return (
     <th
       ref={ref}
@@ -132,16 +155,18 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
       className={className}
       data-fixed-width={dataFixedWidth}
     >
-      {headerComponent ?? children}
-      {isMenuEnabled &&
-        <ColumnMenuButton
-          onClick={handleMenuClick}
-          onEscape={navigateToCell}
-          tabIndex={tabIndex}
-          isExpanded={isOpen}
-          menuId={menuId}
-          aria-label={`Column menu for ${columnName}`}
-        />
+      {headerContent}
+      {typeof columnConfig.headerComponent === 'function' ? null :
+        isMenuEnabled &&
+          <ColumnMenuButton
+            onClick={handleMenuClick}
+            onEscape={navigateToCell}
+            tabIndex={tabIndex}
+            isExpanded={isOpen}
+            menuId={menuId}
+            aria-label={`Column menu for ${columnName}`}
+          />
+
       }
       <ColumnResizer
         resizeTo={resizeTo}

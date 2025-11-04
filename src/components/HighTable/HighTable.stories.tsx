@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { useState } from 'react'
+import { ReactNode, useState } from 'react'
 import { checkSignal, createGetRowNumber, validateFetchParams, validateGetCellParams } from '../../helpers/dataframe/helpers.js'
 import { DataFrame, DataFrameEvents, arrayDataFrame } from '../../helpers/dataframe/index.js'
 import { DataFrameV1, convertV1ToDataFrame } from '../../helpers/dataframe/legacy/index.js'
@@ -293,6 +293,22 @@ export const HeaderComponent: Story = {
           <span>
             Double &nbsp;<button type="button" onClick={() => { alert('Custom function') }}>Button</button>
           </span>
+        ,
+      },
+    },
+  },
+}
+export const FunctionalHeaderComponent: Story = {
+  args: {
+    data: createUnsortableData(),
+    columnConfiguration: {
+      Double: {
+        headerComponent: (controls: ReactNode) =>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
+            <span style={{ whiteSpace: 'nowrap' }}>Text:</span>
+            <button type="button" style={{ background: 'none', border: '1px solid #ccc', padding: '2px 6px', borderRadius: '4px' }} onClick={() => { alert('Confirm') }}>Confirm</button>
+            {controls}
+          </div>
         ,
       },
     },
