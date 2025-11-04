@@ -313,22 +313,14 @@ export function HighTableInner({
   const rows = Array.from({ length: rowsLength }, (_, i) => i + offset)
   const postPadding = Array.from({ length: Math.min(padding, numRows - offset - rowsLength) }, () => [])
 
-  // minimum left column width based on number of rows - it depends on CSS, so it's
-  // only a bottom limit
-  const rowHeaderWidth = useMemo(() => {
-    if (numRows > 0) {
-      return Math.ceil(Math.log10(numRows + 1)) * 4 + 22
-    }
-  }, [numRows])
-  const cornerStyle = useMemo(() => {
-    return cellStyle(rowHeaderWidth)
-  }, [rowHeaderWidth])
   const tableScrollStyle = useMemo(() => {
+    // reserve space for at least 3 characters
+    const numCharacters = Math.max(numRows.toLocaleString('en-US').length, 3)
     return {
       '--column-header-height': `${rowHeight}px`,
-      '--row-number-width': `${rowHeaderWidth}px`,
+      '--row-number-characters': `${numCharacters}`,
     } as CSSProperties
-  }, [rowHeaderWidth])
+  }, [numRows])
   const restrictedOnScrollKeyDown = useCallback((event: KeyboardEvent) => {
     if (event.target !== scrollRef.current) {
       // don't handle the event if the target is not the scroller
@@ -367,9 +359,9 @@ export function HighTableInner({
   const ariaColCount = columnsParameters.length + 1 // don't forget the selection column
   const ariaRowCount = numRows + 1 // don't forget the header row
   return (
-    <div ref={containerRef} className={`${styles.hightable} ${styled ? styles.styled : ''} ${className}`}>
+    <div ref={containerRef} className={`${styles.hightable} ${styled ? styles.styled : ''} ${className}`} style={tableScrollStyle}>
       <div className={styles.topBorder} role="presentation"></div>
-      <div className={styles.tableScroll} ref={scrollRef} role="group" aria-labelledby="caption" style={tableScrollStyle} onKeyDown={restrictedOnScrollKeyDown} tabIndex={0}>
+      <div className={styles.tableScroll} ref={scrollRef} role="group" aria-labelledby="caption" onKeyDown={restrictedOnScrollKeyDown} tabIndex={0}>
         <div style={{ height: `${scrollHeight}px` }}>
           <table
             aria-readonly={true}
@@ -388,7 +380,6 @@ export function HighTableInner({
                   onCheckboxPress={toggleAllRows}
                   checked={allRowsSelected}
                   pendingSelectionGesture={pendingSelectionGesture}
-                  style={cornerStyle}
                   ariaColIndex={1}
                   ariaRowIndex={1}
                   ref={tableCornerRef}
@@ -409,7 +400,7 @@ export function HighTableInner({
                 const ariaRowIndex = row + ariaOffset
                 return (
                   <Row key={row} ariaRowIndex={ariaRowIndex}>
-                    <RowHeader style={cornerStyle} ariaColIndex={1} ariaRowIndex={ariaRowIndex} />
+                    <RowHeader ariaColIndex={1} ariaRowIndex={ariaRowIndex} />
                   </Row>
                 )
               })}
@@ -426,7 +417,6 @@ export function HighTableInner({
                     // title={rowError(row, columns.length)} // TODO(SL): re-enable later?
                   >
                     <RowHeader
-                      style={cornerStyle}
                       selected={selected}
                       rowNumber={rowNumber}
                       onCheckboxPress={getOnCheckboxPress({ rowNumber, row })}
@@ -458,7 +448,7 @@ export function HighTableInner({
                 const ariaRowIndex = row + ariaOffset
                 return (
                   <Row key={row} ariaRowIndex={ariaRowIndex}>
-                    <RowHeader style={cornerStyle} ariaColIndex={1} ariaRowIndex={ariaRowIndex} />
+                    <RowHeader ariaColIndex={1} ariaRowIndex={ariaRowIndex} />
                   </Row>
                 )
               })}
@@ -467,7 +457,7 @@ export function HighTableInner({
         </div>
       </div>
       {/* puts a background behind the row labels column */}
-      <div className={styles.mockRowLabel} style={cornerStyle}>&nbsp;</div>
+      <div className={styles.mockRowLabel}>&nbsp;</div>
     </div>
   )
 }
