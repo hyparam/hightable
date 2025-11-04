@@ -192,6 +192,7 @@
   --top-border-height: 2px;
   --focus-border-width: 2px;
   --row-label-width: 36px;
+  --cell-border-width: 1px;
   --cell-horizontal-padding: 10px;
   --resizer-border-width: 4px;
 
@@ -345,8 +346,8 @@
   /* cells */
   th,
   td {
-    border-bottom: 1px solid var(--cell-border-color);
-    border-right: 1px solid var(--cell-border-color);
+    border-bottom: var(--cell-border-width) solid var(--cell-border-color);
+    border-right: var(--cell-border-width) solid var(--cell-border-color);
     height: 32px;
     line-height: 1.5;
     /* prevent columns expanding - limits the initial and autoresized width */
