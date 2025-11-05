@@ -25,26 +25,27 @@ const rowHeight = 33 // row height px
 
 interface Props {
   data: DataFrame
-  columnConfiguration?: ColumnConfiguration
   cacheKey?: string // used to persist column widths. If undefined, the column widths are not persisted. It is expected to be unique for each table.
-  overscan?: number // number of rows to fetch outside of the viewport
-  padding?: number // number of padding rows to render outside of the viewport
-  focus?: boolean // focus table on mount? (default true)
-  // TODO(SL): replace col: number with col: string?
-  onDoubleClickCell?: (event: MouseEvent, col: number, row: number) => void
-  onMouseDownCell?: (event: MouseEvent, col: number, row: number) => void
-  onKeyDownCell?: (event: KeyboardEvent, col: number, row: number) => void // for accessibility, it should be passed if onDoubleClickCell is passed. It can handle more than that action though.
-  onError?: (error: unknown) => void
-  orderBy?: OrderBy // order used to fetch the rows. If undefined, the table is unordered, the sort controls are hidden and the interactions are disabled. Pass [] to fetch the rows in the original order.
-  onOrderByChange?: (orderBy: OrderBy) => void // callback to call when a user interaction changes the order. The interactions are disabled if undefined.
-  selection?: Selection // selection and anchor rows, expressed as data indexes (not as indexes in the table). If undefined, the selection is hidden and the interactions are disabled.
-  onSelectionChange?: (selection: Selection) => void // callback to call when a user interaction changes the selection. The selection is expressed as data indexes (not as indexes in the table). The interactions are disabled if undefined.
-  onColumnsVisibilityChange?: (columns: MaybeHiddenColumn[]) => void // callback which is called whenever the set of hidden columns changes.
-  stringify?: (value: unknown) => string | undefined
   className?: string // additional class names for the component
   columnClassNames?: (string | undefined)[] // list of additional class names for the header and cells of each column. The index in this array corresponds to the column index in columns
+  columnConfiguration?: ColumnConfiguration
+  focus?: boolean // focus table on mount? (default true)
+  maxRowNumber?: number // maximum row number to display (for row headers). Useful for filtered data. If undefined, the number of rows in the data frame is applied.
+  orderBy?: OrderBy // order used to fetch the rows. If undefined, the table is unordered, the sort controls are hidden and the interactions are disabled. Pass [] to fetch the rows in the original order.
+  overscan?: number // number of rows to fetch outside of the viewport
+  padding?: number // number of padding rows to render outside of the viewport
+  selection?: Selection // selection and anchor rows, expressed as data indexes (not as indexes in the table). If undefined, the selection is hidden and the interactions are disabled.
   styled?: boolean // use styled component? (default true)
+  // TODO(SL): replace col: number with col: string?
+  onColumnsVisibilityChange?: (columns: MaybeHiddenColumn[]) => void // callback which is called whenever the set of hidden columns changes.
+  onDoubleClickCell?: (event: MouseEvent, col: number, row: number) => void
+  onError?: (error: unknown) => void
+  onKeyDownCell?: (event: KeyboardEvent, col: number, row: number) => void // for accessibility, it should be passed if onDoubleClickCell is passed. It can handle more than that action though.
+  onMouseDownCell?: (event: MouseEvent, col: number, row: number) => void
+  onOrderByChange?: (orderBy: OrderBy) => void // callback to call when a user interaction changes the order. The interactions are disabled if undefined.
+  onSelectionChange?: (selection: Selection) => void // callback to call when a user interaction changes the selection. The selection is expressed as data indexes (not as indexes in the table). The interactions are disabled if undefined.
   renderCellContent?: (props: CellContentProps) => ReactNode // custom cell content component, if not provided, the default CellContent will be used
+  stringify?: (value: unknown) => string | undefined
 }
 
 const defaultPadding = 20
@@ -66,7 +67,7 @@ export const columnVisibilityStatesSuffix = `:${columnVisibilityStatesFormatVers
  */
 export default function HighTable(props: Props) {
   return (
-    <DataProvider data={props.data}>
+    <DataProvider data={props.data} maxRowNumber={props.maxRowNumber}>
       <HighTableData {...props} />
     </DataProvider>
   )
@@ -75,7 +76,7 @@ export default function HighTable(props: Props) {
 type PropsData = Omit<Props, 'data'>
 
 function HighTableData(props: PropsData) {
-  const { data, key, version } = useData()
+  const { data, key, version, maxRowNumber } = useData()
   const { numRows } = data
   // TODO(SL): onError could be in a context, as we might want to use it everywhere
   const { cacheKey, orderBy, onOrderByChange, selection, onSelectionChange, onError, onColumnsVisibilityChange } = props
@@ -94,7 +95,7 @@ function HighTableData(props: PropsData) {
               {/* Create a new navigation context if the dataframe has changed, because the focused cell might not exist anymore */}
               <CellsNavigationProvider key={key} colCount={data.columnDescriptors.length + 1} rowCount={numRows + 1} rowPadding={props.padding ?? defaultPadding}>
                 <PortalContainerProvider>
-                  <HighTableInner version={version} {...props} />
+                  <HighTableInner version={version} {...props} maxRowNumber={maxRowNumber} />
                 </PortalContainerProvider>
               </CellsNavigationProvider>
             </SelectionProvider>
@@ -105,8 +106,9 @@ function HighTableData(props: PropsData) {
   )
 }
 
-type PropsInner = Omit<PropsData, 'orderBy' | 'onOrderByChange' | 'selection' | 'onSelectionChange' | 'columnConfiguration'> & {
+type PropsInner = Omit<PropsData, 'orderBy' | 'onOrderByChange' | 'selection' | 'onSelectionChange' | 'columnConfiguration' | 'maxRowNumber'> & {
   version: number // version of the data frame, used to re-render the component when the data changes
+  maxRowNumber: number // maximum row number to display (for row headers).
 }
 
 interface RowsRange {
@@ -135,6 +137,7 @@ export function HighTableInner({
   styled = true,
   version,
   renderCellContent,
+  maxRowNumber,
 }: PropsInner) {
   // contexts
   const { data } = useData()
@@ -315,12 +318,12 @@ export function HighTableInner({
 
   const tableScrollStyle = useMemo(() => {
     // reserve space for at least 3 characters
-    const numCharacters = Math.max(numRows.toLocaleString('en-US').length, 3)
+    const numCharacters = Math.max(maxRowNumber.toLocaleString('en-US').length, 3)
     return {
       '--column-header-height': `${rowHeight}px`,
       '--row-number-characters': `${numCharacters}`,
     } as CSSProperties
-  }, [numRows])
+  }, [maxRowNumber])
   const restrictedOnScrollKeyDown = useCallback((event: KeyboardEvent) => {
     if (event.target !== scrollRef.current) {
       // don't handle the event if the target is not the scroller
