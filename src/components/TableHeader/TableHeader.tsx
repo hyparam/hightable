@@ -8,7 +8,7 @@ interface TableHeaderProps {
   columnsParameters: ColumnParameters[]
   orderBy?: OrderBy // array of column order by clauses. If undefined, the table is unordered, the sort elements are hidden and the interactions are disabled.
   onOrderByChange?: (orderBy: OrderBy) => void // callback to call when a user interaction changes the order. The interactions are disabled if undefined.
-  canMeasureWidth: boolean // indicates if the width of the columns can be measured.
+  canMeasureColumn?: Record<string, boolean> // indicates if the width of a column can be measured.
   ariaRowIndex: number // aria row index for the header
   columnClassNames?: (string | undefined)[] // array of class names for each column
 }
@@ -17,7 +17,7 @@ interface TableHeaderProps {
  * Render a header for a table.
  */
 export default function TableHeader({
-  columnsParameters, orderBy, onOrderByChange, canMeasureWidth, ariaRowIndex, columnClassNames = [],
+  columnsParameters, orderBy, onOrderByChange, canMeasureColumn, ariaRowIndex, columnClassNames = [],
 }: TableHeaderProps) {
   const { data } = useData()
   const exclusiveSort = data.exclusiveSort === true
@@ -44,7 +44,7 @@ export default function TableHeader({
       // The ColumnHeader component width is controlled by the parent
       <ColumnHeader
         key={columnIndex}
-        canMeasureWidth={canMeasureWidth}
+        canMeasureWidth={canMeasureColumn?.[name] === true}
         direction={orderByColumn.get(name)?.direction}
         orderByIndex={orderByColumn.get(name)?.index}
         orderBySize={orderBy?.length}
