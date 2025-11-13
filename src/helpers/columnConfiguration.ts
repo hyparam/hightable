@@ -4,7 +4,7 @@ import React from 'react'
 export interface ColumnConfig {
   headerComponent?: React.ReactNode;
   minWidth?: number;
-  hidden?: boolean; // if true, the column is hidden by default
+  defaultHidden?: boolean;
   // hideable?: boolean;
   // filters: Some filter structure
   // cellRenderer?: (value: unknown, row: Row) => React.ReactNode;

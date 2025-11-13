@@ -95,7 +95,6 @@ export function ColumnVisibilityStatesProvider({ children, localStorageKey, numC
       return undefined
     }
     return () => {
-      // Create an array of all visible columns (all undefined)
       const allVisible = Array.from({ length: numColumns }, () => undefined)
       setColumnVisibilityStates(allVisible)
       onColumnsVisibilityChange?.(allVisible)

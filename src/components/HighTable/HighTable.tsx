@@ -85,7 +85,7 @@ function HighTableData(props: PropsData) {
     if (!props.columnConfiguration) return undefined
     return data.columnDescriptors.map(descriptor => {
       const config = props.columnConfiguration?.[descriptor.name]
-      return config?.hidden ? { hidden: true as const } : undefined
+      return config?.defaultHidden ? { hidden: true as const } : undefined
     })
   }, [props.columnConfiguration, data.columnDescriptors])
 
