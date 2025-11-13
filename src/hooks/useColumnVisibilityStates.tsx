@@ -12,6 +12,7 @@ export const ColumnVisibilityStatesContext = createContext<ColumnVisibilityState
 interface ColumnVisibilityStatesProviderProps {
   localStorageKey?: string // optional key to use for local storage (no local storage if not provided)
   numColumns: number // number of columns (used to initialize the visibility states array)
+  initialVisibilityStates?: MaybeHiddenColumn[] // initial visibility states for columns (used only if no local storage value exists)
   onColumnsVisibilityChange?: (columns: MaybeHiddenColumn[]) => void // callback which is called whenever the set of hidden columns changes.
   children: ReactNode
 }
@@ -21,7 +22,7 @@ export interface HiddenColumn {
 }
 export type MaybeHiddenColumn = HiddenColumn | undefined
 
-export function ColumnVisibilityStatesProvider({ children, localStorageKey, numColumns, onColumnsVisibilityChange }: ColumnVisibilityStatesProviderProps) {
+export function ColumnVisibilityStatesProvider({ children, localStorageKey, numColumns, initialVisibilityStates, onColumnsVisibilityChange }: ColumnVisibilityStatesProviderProps) {
   if (!Number.isInteger(numColumns) || numColumns < 0) {
     throw new Error(`Invalid numColumns: ${numColumns}. It must be a positive integer.`)
   }
@@ -50,13 +51,16 @@ export function ColumnVisibilityStatesProvider({ children, localStorageKey, numC
     })
   }
 
+  // Apply initial visibility states if no persisted state exists
+  const effectiveColumnVisibilityStates = columnVisibilityStates ?? initialVisibilityStates
+
   const isValidIndex = useCallback((index: number) => {
     return Number.isInteger(index) && index >= 0 && index < numColumns
   }, [numColumns])
 
   const isHiddenColumn = useCallback((columnIndex: number) => {
-    return columnVisibilityStates?.[columnIndex]?.hidden === true
-  }, [columnVisibilityStates])
+    return effectiveColumnVisibilityStates?.[columnIndex]?.hidden === true
+  }, [effectiveColumnVisibilityStates])
 
   const { numberOfHiddenColumns, numberOfVisibleColumns } = useMemo(() => {
     let numberOfHiddenColumns = 0
@@ -77,22 +81,23 @@ export function ColumnVisibilityStatesProvider({ children, localStorageKey, numC
       return undefined
     }
     return () => {
-      setColumnVisibilityStates(columnVisibilityStates => {
-        const nextColumnVisibilityStates = [...columnVisibilityStates ?? []]
+      setColumnVisibilityStates(currentStates => {
+        const nextColumnVisibilityStates = [...currentStates ?? initialVisibilityStates ?? []]
         nextColumnVisibilityStates[columnIndex] = { hidden: true }
         onColumnsVisibilityChange?.(nextColumnVisibilityStates)
         return nextColumnVisibilityStates
       })
     }
-  }, [canBeHidden, isValidIndex, setColumnVisibilityStates, onColumnsVisibilityChange])
+  }, [canBeHidden, isValidIndex, setColumnVisibilityStates, onColumnsVisibilityChange, initialVisibilityStates])
 
   const showAllColumns = useMemo(() => {
     if (numberOfHiddenColumns === 0) {
       return undefined
     }
     return () => {
-      setColumnVisibilityStates(undefined)
-      onColumnsVisibilityChange?.([])
+      const allVisible: MaybeHiddenColumn[] = []
+      setColumnVisibilityStates(allVisible)
+      onColumnsVisibilityChange?.(allVisible)
     }
   }, [numberOfHiddenColumns, setColumnVisibilityStates, onColumnsVisibilityChange])
 

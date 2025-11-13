@@ -468,5 +468,20 @@ export const FilteredData: Story = {
   args: {
     data: sortableDataFrame(createFilteredData()),
     maxRowNumber: 10_000 * 1_000,
+
+  },
+}
+export const HiddenColumns: Story = {
+  args: {
+    data: sortableDataFrame(createUnsortableData()),
+    columnConfiguration: {
+      Value1: {
+        initiallyHidden: true,
+      },
+      Value3: {
+        initiallyHidden: true,
+      },
+    },
+    cacheKey: 'hidden-columns-demo',
   },
 }
