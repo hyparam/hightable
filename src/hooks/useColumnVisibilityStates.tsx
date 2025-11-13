@@ -12,6 +12,7 @@ export const ColumnVisibilityStatesContext = createContext<ColumnVisibilityState
 interface ColumnVisibilityStatesProviderProps {
   localStorageKey?: string // optional key to use for local storage (no local storage if not provided)
   numColumns: number // number of columns (used to initialize the visibility states array)
+  initialVisibilityStates?: MaybeHiddenColumn[] // initial visibility states for columns (used only if no local storage value exists)
   onColumnsVisibilityChange?: (columns: MaybeHiddenColumn[]) => void // callback which is called whenever the set of hidden columns changes.
   children: ReactNode
 }
@@ -21,7 +22,7 @@ export interface HiddenColumn {
 }
 export type MaybeHiddenColumn = HiddenColumn | undefined
 
-export function ColumnVisibilityStatesProvider({ children, localStorageKey, numColumns, onColumnsVisibilityChange }: ColumnVisibilityStatesProviderProps) {
+export function ColumnVisibilityStatesProvider({ children, localStorageKey, numColumns, initialVisibilityStates, onColumnsVisibilityChange }: ColumnVisibilityStatesProviderProps) {
   if (!Number.isInteger(numColumns) || numColumns < 0) {
     throw new Error(`Invalid numColumns: ${numColumns}. It must be a positive integer.`)
   }
@@ -29,7 +30,7 @@ export function ColumnVisibilityStatesProvider({ children, localStorageKey, numC
   // An array of column visibility states
   // The index is the column rank in the header (0-based)
   // The array is uninitialized so that we don't have to know the number of columns in advance
-  const [columnVisibilityStates, setColumnVisibilityStates] = useLocalStorageState<MaybeHiddenColumn[]>({ key: localStorageKey, parse, stringify })
+  const [columnVisibilityStates, setColumnVisibilityStates] = useLocalStorageState<MaybeHiddenColumn[]>({ key: localStorageKey, parse, stringify, initialValue: initialVisibilityStates })
   function stringify(columnVisibilityStates: MaybeHiddenColumn[]) {
     return JSON.stringify(columnVisibilityStates)
   }

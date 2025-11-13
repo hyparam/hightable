@@ -81,13 +81,21 @@ function HighTableData(props: PropsData) {
   // TODO(SL): onError could be in a context, as we might want to use it everywhere
   const { cacheKey, orderBy, onOrderByChange, selection, onSelectionChange, onError, onColumnsVisibilityChange } = props
 
+  const initialVisibilityStates = useMemo(() => {
+    if (!props.columnConfiguration) return undefined
+    return data.columnDescriptors.map(descriptor => {
+      const config = props.columnConfiguration?.[descriptor.name]
+      return config?.hidden ? { hidden: true as const } : undefined
+    })
+  }, [props.columnConfiguration, data.columnDescriptors])
+
   return (
     /* Provide the column configuration to the table */
     <ColumnParametersProvider columnConfiguration={props.columnConfiguration} data={data}>
       {/* Create a new set of widths if the data has changed, but keep it if only the number of rows changed */}
       <ColumnWidthsProvider key={cacheKey ?? key} localStorageKey={cacheKey ? `${cacheKey}${columnWidthsSuffix}` : undefined} numColumns={data.columnDescriptors.length}>
         {/* Create a new set of hidden columns if the data has changed, but keep it if only the number of rows changed */}
-        <ColumnVisibilityStatesProvider key={cacheKey ?? key} localStorageKey={cacheKey ? `${cacheKey}${columnVisibilityStatesSuffix}` : undefined} numColumns={data.columnDescriptors.length} onColumnsVisibilityChange={onColumnsVisibilityChange}>
+        <ColumnVisibilityStatesProvider key={cacheKey ?? key} localStorageKey={cacheKey ? `${cacheKey}${columnVisibilityStatesSuffix}` : undefined} numColumns={data.columnDescriptors.length} initialVisibilityStates={initialVisibilityStates} onColumnsVisibilityChange={onColumnsVisibilityChange}>
           {/* Create a new context if the dataframe changes, to flush the cache (ranks and indexes) */}
           <OrderByProvider key={key} orderBy={orderBy} onOrderByChange={onOrderByChange}>
             {/* Create a new selection context if the dataframe has changed */}
