@@ -11,6 +11,7 @@ import { useOnCopy } from '../../hooks/useOnCopyToClipboard.js'
 import ColumnMenu from '../ColumnMenu/ColumnMenu.js'
 import ColumnMenuButton from '../ColumnMenuButton/ColumnMenuButton.js'
 import ColumnResizer from '../ColumnResizer/ColumnResizer.js'
+import styles from '../../HighTable.module.css'
 
 interface Props {
   columnIndex: number // index of the column in the dataframe (0-based)
@@ -112,14 +113,14 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
   const handleCopy = useOnCopy(columnName)
 
   // Provide built-in controls for functional header overrides
-  const controls = useMemo(() => (
-    <div className="ht-header-controls">
-      {sortable && (
-        <span className="ht-sort-indicator" aria-hidden="true">
+  const controls = useMemo(() =>
+    <div className={styles['ht-header-controls']}>
+      {sortable &&
+        <span className={styles['ht-sort-indicator']} aria-hidden="true">
           {direction === 'ascending' ? '⭡' : direction === 'descending' ? '⭣' : '⇅'}
         </span>
-      )}
-      {isMenuEnabled && (
+      }
+      {isMenuEnabled &&
         <ColumnMenuButton
           onClick={handleMenuClick}
           onEscape={navigateToCell}
@@ -128,9 +129,9 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
           menuId={menuId}
           aria-label={`Column menu for ${columnName}`}
         />
-      )}
+      }
     </div>
-  ), [sortable, direction, isMenuEnabled, handleMenuClick, navigateToCell, tabIndex, isOpen, menuId, columnName])
+  , [sortable, direction, isMenuEnabled, handleMenuClick, navigateToCell, tabIndex, isOpen, menuId, columnName])
 
   const headerContent = useMemo(() => {
     const { headerComponent } = columnConfig
@@ -166,8 +167,8 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
     >
       {headerContent}
       {/* Default headers: render legacy direct child menu button to preserve original layout */}
-      {isFunctionalHeader ? null : (
-        isMenuEnabled && (
+      {isFunctionalHeader ? null :
+        isMenuEnabled &&
           <ColumnMenuButton
             onClick={handleMenuClick}
             onEscape={navigateToCell}
@@ -176,8 +177,8 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
             menuId={menuId}
             aria-label={`Column menu for ${columnName}`}
           />
-        )
-      )}
+
+      }
       <ColumnResizer
         resizeTo={resizeTo}
         autoResize={autoResize}
