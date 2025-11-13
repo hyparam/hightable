@@ -62,6 +62,7 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
   const tryToMeasureWidth = useCallback(() => {
     const element = ref.current
     if (canMeasureWidth && element && width === undefined && setMeasuredWidth) {
+      // use offsetWidth, not clientWidth, to include borders
       const value = getOffsetWidth(element)
       if (isNaN(value)) {
         // browserless unit tests get NaN

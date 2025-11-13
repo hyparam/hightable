@@ -1,5 +1,19 @@
 # CHANGELOG
 
+## [0.21.0](https://github.com/hyparam/hightable/compare/v0.20.4...v0.21.0) - 2025-11-06
+
+### Added
+
+- add optional `maxRowNumber` prop to `HighTable` to help autosize the row numbers column on a filtered data frame ([#316](https://github.com/hyparam/hightable/pull/316)).
+
+### Changed
+
+- **Breaking** - autosize the row numbers column, with new CSS variables ([#316](https://github.com/hyparam/hightable/pull/316)).
+
+### Refactored
+
+- upgrade development dependencies: ([#315](https://github.com/hyparam/hightable/pull/315), [#319](https://github.com/hyparam/hightable/pull/319)).
+
 ## [0.20.4](https://github.com/hyparam/hightable/compare/v0.20.3...v0.20.4) - 2025-10-29
 
 ### Fixed

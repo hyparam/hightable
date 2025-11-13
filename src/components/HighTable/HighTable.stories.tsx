@@ -183,6 +183,23 @@ function createLegacyDelayedData(): DataFrameV1 {
   }
 }
 
+function createFilteredData(): DataFrame {
+  const df = arrayDataFrame(Array.from({ length: 1000 }, (_, index) => {
+    return {
+      ID: `row ${index}`,
+      LongString: longString.repeat(10),
+      Value1: Math.floor(100 * random(135 + index)),
+      Value2: Math.floor(100 * random(648 + index)),
+    }
+  }))
+  df.getRowNumber = function ({ row }): ResolvedValue<number> | undefined {
+    return {
+      value: row * 10_000,
+    }
+  }
+  return df
+}
+
 function CustomCellContent({ cell, row, col, stringify }: CellContentProps) {
   return (
     <span>
@@ -463,5 +480,11 @@ export const CustomCellRenderer: Story = {
   args: {
     data: createUnsortableData(),
     renderCellContent: CustomCellContent,
+  },
+}
+export const FilteredData: Story = {
+  args: {
+    data: sortableDataFrame(createFilteredData()),
+    maxRowNumber: 10_000 * 1_000,
   },
 }

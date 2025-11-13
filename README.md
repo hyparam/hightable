@@ -94,15 +94,26 @@ HighTable accepts the following props:
 ```typescript
 interface TableProps {
   data: DataFrame // data provider for the table
+  cacheKey?: string // used to persist column widths. If undefined, the column widths are not persisted. It is expected to be unique for each table.
+  className?: string // additional class name for the table container
+  columnClassNames?: (string | undefined)[] // list of additional class names for the header and cells of each column. The index in this array corresponds to the column index in columns
+  columnConfiguration?: Record<string, ColumnConfig> // allows for additional configuration of columns
   focus?: boolean // focus table on mount? (default true)
-  onDoubleClickCell?: (col: number, row: number) => void // double-click handler
+  maxRowNumber?: number // maximum row number to display (for row headers). Useful for filtered data. If undefined, the number of rows in the data frame is applied.
+  orderBy?: OrderBy // order by column (if defined, the component order is controlled by the parent)
+  overscan?: number // number of rows to fetch outside of the viewport (default 20)
+  padding?: number // number of extra rows to render outside of the viewport (default 20)
+  selection?: Selection // selection state (if defined, the component selection is controlled by the parent)
+  styled?: boolean // use styled component? (default true)
+  onColumnsVisibilityChange?: (columnVisibilityStates: MaybeHiddenColumn[]) => void // columns visibility change handler
+  onDoubleClickCell?: (event: MouseEvent, col: number, row: number) => void // double-click handler
   onError?: (error: Error) => void // error handler
-  orderBy?: OrderBy; // order by column (if defined, the component order is controlled by the parent)
-  onOrderByChange?: (orderBy: OrderBy) => void; // orderBy change handler
-  selection?: Selection; // selection state (if defined, the component selection is controlled by the parent)
-  onSelectionChange?: (selection: Selection) => void; // selection change handler
-  columnConfiguration?: Record<string, ColumnConfig>; // allows for additional configuration of columns
-  onColumnsVisibilityChange?: (columnVisibilityStates: MaybeHiddenColumn[]) => void; // columns visibility change handler
+  onKeyDownCell?: (event: KeyboardEvent, col: number, row: number) => void // key down handler. For accessibility, it should be passed if onDoubleClickCell is passed.
+  onMouseDownCell?: (event: MouseEvent, col: number, row: number) => void // mouse down handler
+  onOrderByChange?: (orderBy: OrderBy) => void // orderBy change handler
+  onSelectionChange?: (selection: Selection) => void // selection change handler
+  renderCellContent?: (props: CellContentProps) => ReactNode // custom cell content component, if not provided, the default CellContent will be used
+  stringify?: (value: unknown) => string | undefined // function to convert cell values to strings for display
 }
 ```
 
@@ -110,15 +121,15 @@ DataFrame is defined as:
 
 ```typescript
 interface DataFrame<M extends Record<string, any>, C extends Record<string, any>> {
-  columnDescriptors: ColumnDescriptor<C>[];
-  numRows: number;
-  metadata?: M; // optional metadata for the DataFrame - use the generic type for increased type safety
+  columnDescriptors: ColumnDescriptor<C>[]
+  numRows: number
+  metadata?: M // optional metadata for the DataFrame - use the generic type for increased type safety
   // rows are 0-indexed, excludes the header, end is exclusive
   // if orderBy is defined, start and end are applied on the sorted rows
   getRowNumber({ row, orderBy }: { row: number, orderBy?: OrderBy }): ResolvedValue<number> | undefined
   getCell({ row, column, orderBy }: {row: number, column: string, orderBy?: OrderBy}): ResolvedValue | undefined
   fetch?: ({ rowStart, rowEnd, columns, orderBy, signal }: { rowStart: number, rowEnd: number, columns?: string[], orderBy?: OrderBy, signal?: AbortSignal }) => Promise<void>
-  eventTarget?: EventTarget;
+  eventTarget?: EventTarget
 }
 ```
 
@@ -126,9 +137,9 @@ ColumnDescriptor is defined as:
 
 ```typescript
 interface ColumnDescriptor<C extends Record<string, any>> {
-  name: string; // column name
-  sortable?: boolean; // is the column sortable? Defaults to false
-  metadata?: C; // custom metadata extendable by the user
+  name: string // column name
+  sortable?: boolean // is the column sortable? Defaults to false
+  metadata?: C // custom metadata extendable by the user
 }
 ```
 
@@ -136,7 +147,7 @@ ResolvedValue is defined as:
 
 ```typescript
 type ResolvedValue<T = any> = {
-  value: T; // resolved value
+  value: T // resolved value
 }
 ```
 
@@ -156,7 +167,7 @@ interface Selection {
   ranges: Array<{
     start: number // inclusive lower limit, positive integer
     end: number // exclusive upper limit, positive integer, strictly greater than start (no zero-length ranges).
-  }>; // the rows selection is an array of row index ranges (0-based). The values are indexes of the virtual table (sorted rows), and thus depend on the order.
+  }> // the rows selection is an array of row index ranges (0-based). The values are indexes of the virtual table (sorted rows), and thus depend on the order.
   anchor?: number // anchor row used as a reference for shift+click selection. It's a virtual table index (sorted), and thus depends on the order.
 }
 ```
@@ -165,8 +176,8 @@ ColumnConfig is defined as:
 
 ```typescript
 interface ColumnConfig {
-  headerComponent?: React.ReactNode; // allows overriding column header cell with custom component
-  minWidth?: number; // overrides the global column min width, useful for components with ui elements
+  headerComponent?: React.ReactNode // allows overriding column header cell with custom component
+  minWidth?: number // overrides the global column min width, useful for components with ui elements
 }
 ```
 
