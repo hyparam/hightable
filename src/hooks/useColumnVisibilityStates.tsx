@@ -30,7 +30,7 @@ export function ColumnVisibilityStatesProvider({ children, localStorageKey, numC
   // An array of column visibility states
   // The index is the column rank in the header (0-based)
   // The array is uninitialized so that we don't have to know the number of columns in advance
-  const [columnVisibilityStates, setColumnVisibilityStates] = useLocalStorageState<MaybeHiddenColumn[]>({ key: localStorageKey, parse, stringify, initialValue: initialVisibilityStates })
+  const [columnVisibilityStates, setColumnVisibilityStates] = useLocalStorageState<MaybeHiddenColumn[]>({ key: localStorageKey, parse, stringify })
   function stringify(columnVisibilityStates: MaybeHiddenColumn[]) {
     return JSON.stringify(columnVisibilityStates)
   }
@@ -51,13 +51,16 @@ export function ColumnVisibilityStatesProvider({ children, localStorageKey, numC
     })
   }
 
+  // Apply initial visibility states if no persisted state exists
+  const effectiveColumnVisibilityStates = columnVisibilityStates ?? initialVisibilityStates
+
   const isValidIndex = useCallback((index: number) => {
     return Number.isInteger(index) && index >= 0 && index < numColumns
   }, [numColumns])
 
   const isHiddenColumn = useCallback((columnIndex: number) => {
-    return columnVisibilityStates?.[columnIndex]?.hidden === true
-  }, [columnVisibilityStates])
+    return effectiveColumnVisibilityStates?.[columnIndex]?.hidden === true
+  }, [effectiveColumnVisibilityStates])
 
   const { numberOfHiddenColumns, numberOfVisibleColumns } = useMemo(() => {
     let numberOfHiddenColumns = 0
@@ -78,24 +81,26 @@ export function ColumnVisibilityStatesProvider({ children, localStorageKey, numC
       return undefined
     }
     return () => {
-      setColumnVisibilityStates(columnVisibilityStates => {
-        const nextColumnVisibilityStates = [...columnVisibilityStates ?? []]
+      setColumnVisibilityStates(currentStates => {
+        const nextColumnVisibilityStates = [...currentStates ?? initialVisibilityStates ?? []]
         nextColumnVisibilityStates[columnIndex] = { hidden: true }
         onColumnsVisibilityChange?.(nextColumnVisibilityStates)
         return nextColumnVisibilityStates
       })
     }
-  }, [canBeHidden, isValidIndex, setColumnVisibilityStates, onColumnsVisibilityChange])
+  }, [canBeHidden, isValidIndex, setColumnVisibilityStates, onColumnsVisibilityChange, initialVisibilityStates])
 
   const showAllColumns = useMemo(() => {
     if (numberOfHiddenColumns === 0) {
       return undefined
     }
     return () => {
-      setColumnVisibilityStates(undefined)
-      onColumnsVisibilityChange?.([])
+      // Create an array of all visible columns (all undefined)
+      const allVisible = Array.from({ length: numColumns }, () => undefined)
+      setColumnVisibilityStates(allVisible)
+      onColumnsVisibilityChange?.(allVisible)
     }
-  }, [numberOfHiddenColumns, setColumnVisibilityStates, onColumnsVisibilityChange])
+  }, [numberOfHiddenColumns, numColumns, setColumnVisibilityStates, onColumnsVisibilityChange])
 
   const value = useMemo(() => {
     return {
