@@ -300,7 +300,7 @@ export const HeaderComponent: Story = {
 }
 export const FunctionalHeaderComponent: Story = {
   args: {
-    data: createUnsortableData(),
+    data: sortableDataFrame(createUnsortableData()),
     columnConfiguration: {
       Double: {
         headerComponent: (controls: ReactNode) =>

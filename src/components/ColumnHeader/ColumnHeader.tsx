@@ -112,9 +112,14 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
   const handleCopy = useOnCopy(columnName)
 
   // Provide built-in controls for functional header overrides
-  const controls = useMemo(() =>
+  const controls = useMemo(() => (
     <div className="ht-header-controls">
-      {isMenuEnabled &&
+      {sortable && (
+        <span className="ht-sort-indicator" aria-hidden="true">
+          {direction === 'ascending' ? '⭡' : direction === 'descending' ? '⭣' : '⇅'}
+        </span>
+      )}
+      {isMenuEnabled && (
         <ColumnMenuButton
           onClick={handleMenuClick}
           onEscape={navigateToCell}
@@ -123,16 +128,19 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
           menuId={menuId}
           aria-label={`Column menu for ${columnName}`}
         />
-      }
+      )}
     </div>
-  , [isMenuEnabled, handleMenuClick, navigateToCell, tabIndex, isOpen, menuId, columnName])
+  ), [sortable, direction, isMenuEnabled, handleMenuClick, navigateToCell, tabIndex, isOpen, menuId, columnName])
 
   const headerContent = useMemo(() => {
-    if (typeof columnConfig.headerComponent === 'function') {
-      return columnConfig.headerComponent(controls)
+    const { headerComponent } = columnConfig
+    if (typeof headerComponent === 'function') {
+      return headerComponent(controls)
     }
-    return columnConfig.headerComponent ?? children
+    return headerComponent ?? children
   }, [columnConfig, controls, children])
+
+  const isFunctionalHeader = useMemo(() => typeof columnConfig.headerComponent === 'function', [columnConfig])
 
   return (
     <th
@@ -142,6 +150,7 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
       aria-sort={direction ?? (sortable ? 'none' : undefined)}
       data-order-by-index={orderBySize !== undefined ? orderByIndex : undefined}
       data-order-by-size={orderBySize}
+      data-functional-header={isFunctionalHeader ? 'true' : undefined}
       aria-label={columnName}
       aria-description={description}
       aria-rowindex={ariaRowIndex}
@@ -156,8 +165,9 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
       data-fixed-width={dataFixedWidth}
     >
       {headerContent}
-      {typeof columnConfig.headerComponent === 'function' ? null :
-        isMenuEnabled &&
+      {/* Default headers: render legacy direct child menu button to preserve original layout */}
+      {isFunctionalHeader ? null : (
+        isMenuEnabled && (
           <ColumnMenuButton
             onClick={handleMenuClick}
             onEscape={navigateToCell}
@@ -166,8 +176,8 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
             menuId={menuId}
             aria-label={`Column menu for ${columnName}`}
           />
-
-      }
+        )
+      )}
       <ColumnResizer
         resizeTo={resizeTo}
         autoResize={autoResize}

@@ -39,6 +39,15 @@
   /* header */
   thead {
     th {
+      /* Default (non-functional) menu button pinned to the right */
+      & > button {
+        position: absolute;
+        right: 6px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 20px;
+        height: 20px;
+      }
       background-color: transparent;
       position: sticky;
       top: 0;
@@ -82,19 +91,43 @@
     z-index: 1000;
   }
 
-  /* column menu button */
-  /* TODO: fix the positioning */
+  /* column header controls: default button vs functional controls cluster */
   thead {
     th {
-      & > button,
-      /* when using functional header API, the button may be nested */
+      /* Default header row layout for non-functional headers */
+      .ht-header-default {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 6px;
+        min-width: 0; /* allow content to shrink */
+      }
+      .ht-header-default .ht-header-label {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      /* Controls container used by functional headers */
+      .ht-header-controls {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        height: 20px;
+      }
+
       .ht-header-controls > button {
-        position: absolute;
-        right: 6px;
-        top: 50%;
-        transform: translateY(-50%);
         width: 20px;
         height: 20px;
+      }
+
+      /* Sort indicator inside controls */
+      .ht-header-controls .ht-sort-indicator {
+        display: inline-block;
+        width: 1.25rem;
+        text-align: center;
+        color: var(--secondary-sort-icon-color);
       }
     }
   }
@@ -310,7 +343,7 @@
       padding-top: 4px;
       padding-bottom: 4px;
 
-      /* sorting is enabled - add space for the sort arrow */
+      /* sorting is enabled - add space for the sort arrow (default headers) */
       &[aria-sort] {
         padding-right: calc(var(--cell-horizontal-padding) + 2.5rem);
       }
@@ -329,6 +362,7 @@
     }
   }
 
+  /* Default headers: sort arrow positioning and coloring */
   th[aria-sort]::after {
     right: calc(var(--cell-horizontal-padding) + 1rem);
     top: 4px;
@@ -341,6 +375,17 @@
   }
 
   th[data-order-by-index="0"]::after {
+    color: var(--primary-sort-icon-color);
+  }
+
+  /* Functional headers: disable default arrow/padding, color inline indicator */
+  thead th[data-functional-header="true"][aria-sort] {
+    padding-right: var(--cell-horizontal-padding);
+  }
+  thead th[data-functional-header="true"][aria-sort]::after {
+    content: none;
+  }
+  thead th[data-functional-header="true"][data-order-by-index="0"] .ht-sort-indicator {
     color: var(--primary-sort-icon-color);
   }
 
