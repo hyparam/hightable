@@ -476,10 +476,10 @@ export const HiddenColumns: Story = {
     data: sortableDataFrame(createUnsortableData()),
     columnConfiguration: {
       Value1: {
-        defaultHidden: true,
+        initiallyHidden: true,
       },
       Value3: {
-        defaultHidden: true,
+        initiallyHidden: true,
       },
     },
     cacheKey: 'hidden-columns-demo',

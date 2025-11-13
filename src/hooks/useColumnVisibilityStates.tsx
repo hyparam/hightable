@@ -95,11 +95,11 @@ export function ColumnVisibilityStatesProvider({ children, localStorageKey, numC
       return undefined
     }
     return () => {
-      const allVisible = Array.from({ length: numColumns }, () => undefined)
+      const allVisible: MaybeHiddenColumn[] = []
       setColumnVisibilityStates(allVisible)
       onColumnsVisibilityChange?.(allVisible)
     }
-  }, [numberOfHiddenColumns, numColumns, setColumnVisibilityStates, onColumnsVisibilityChange])
+  }, [numberOfHiddenColumns, setColumnVisibilityStates, onColumnsVisibilityChange])
 
   const value = useMemo(() => {
     return {
