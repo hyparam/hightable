@@ -304,10 +304,12 @@ export const FunctionalHeaderComponent: Story = {
     columnConfiguration: {
       Double: {
         headerComponent: (controls: ReactNode) =>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
-            <span style={{ whiteSpace: 'nowrap' }}>Text:</span>
-            <button type="button" style={{ background: 'none', border: '1px solid #ccc', padding: '2px 6px', borderRadius: '4px' }} onClick={() => { alert('Confirm') }}>Confirm</button>
-            {controls}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px', minWidth: 0 }}>
+            <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Text:</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+              <button type="button" style={{ background: 'none', border: '1px solid #ccc', padding: '2px 6px', borderRadius: '4px' }} onClick={(e) => { e.stopPropagation(); alert('Confirm') }}>Confirm</button>
+              {controls}
+            </div>
           </div>
         ,
       },
