@@ -1,7 +1,4 @@
 .hightable {
-  /* updated by hightable, based on the number of rows */
-  --row-number-characters: 3;
-
   & {
     display: flex;
     flex: 1;
@@ -22,7 +19,7 @@
     & > div {
       position: relative;
     }
-    /* avoid the row and column headers (sticky) to overlap the current navigation cell when navigating with the keyboard */
+    /* avoid the row and column headers (sticky) to overlap the current navigation cell */
     scroll-padding-inline-start: var(--row-number-width);
     scroll-padding-block-start: var(--column-header-height);
   }
@@ -113,20 +110,20 @@
       }
 
       /* Controls container used by functional headers */
-      .ht-header-controls {
+      & > div[role="group"] {
         display: inline-flex;
         align-items: center;
         gap: 4px;
         height: 20px;
       }
 
-      .ht-header-controls > button {
+      div[role="group"] > button {
         width: 20px;
         height: 20px;
       }
 
       /* Sort indicator inside controls */
-      .ht-header-controls .ht-sort-indicator {
+      div[role="group"] > span[role="img"] {
         display: inline-block;
         width: 1.25rem;
         text-align: center;
@@ -151,8 +148,8 @@
   [role="rowheader"] {
     position: sticky;
     left: 0;
-    min-width: var(--row-number-width);
-    max-width: var(--row-number-width);
+    min-width: var(--row-label-width);
+    max-width: var(--row-label-width);
     z-index: var(--header-z-index, auto);
   }
 
@@ -160,8 +157,8 @@
   /* TODO: find a better selector for the table corner */
   thead td:first-child {
     position: sticky;
-    min-width: var(--row-number-width);
-    max-width: var(--row-number-width);
+    min-width: var(--row-label-width);
+    max-width: var(--row-label-width);
     top: 0;
     left: 0;
     z-index: var(--header-corner-z-index, auto);
@@ -212,8 +209,8 @@
     bottom: 0;
     background: var(--mock-row-label-background, transparent);
     z-index: var(--header-background-z-index, auto);
-    min-width: var(--row-number-width);
-    max-width: var(--row-number-width);
+    min-width: var(--row-label-width);
+    max-width: var(--row-label-width);
   }
 }
 
@@ -229,19 +226,7 @@
 
   --top-border-height: 2px;
   --focus-border-width: 2px;
-  --row-number-size-multiplier: 0.68;
-  --row-number-font-size: calc(var(--row-number-size-multiplier) * 1rem);
-  --row-number-padding-characters: 2;
-  /* 1ch: width of the '0' character in the current font (beware if different fonts are used in the table) */
-  --row-number-width: calc(
-    calc(
-      var(--row-number-characters)
-      + var(--row-number-padding-characters)
-    )
-    * var(--row-number-size-multiplier)
-    * 1ch
-  );
-  --cell-border-width: 1px;
+  --row-label-width: 36px;
   --cell-horizontal-padding: 10px;
   --resizer-border-width: 4px;
 
@@ -400,15 +385,15 @@
   thead th[data-functional-header="true"][aria-sort]::after {
     content: none;
   }
-  thead th[data-functional-header="true"][data-order-by-index="0"] .ht-sort-indicator {
+  thead th[data-functional-header="true"][data-order-by-index="0"] div[role="group"] > span[role="img"] {
     color: var(--primary-sort-icon-color);
   }
 
   /* cells */
   th,
   td {
-    border-bottom: var(--cell-border-width) solid var(--cell-border-color);
-    border-right: var(--cell-border-width) solid var(--cell-border-color);
+    border-bottom: 1px solid var(--cell-border-color);
+    border-right: 1px solid var(--cell-border-color);
     height: 32px;
     line-height: 1.5;
     /* prevent columns expanding - limits the initial and autoresized width */
@@ -494,7 +479,7 @@
   thead {
     th {
       & > button,
-      .ht-header-controls > button {
+      div[role="group"] > button {
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -524,10 +509,10 @@
       & > button:focus,
       & > button:focus-visible,
       & > button[aria-expanded="true"],
-      &:hover .ht-header-controls > button,
-      .ht-header-controls > button:focus,
-      .ht-header-controls > button:focus-visible,
-      .ht-header-controls > button[aria-expanded="true"] {
+      &:hover div[role="group"] > button,
+      div[role="group"] > button:focus,
+      div[role="group"] > button:focus-visible,
+      div[role="group"] > button[aria-expanded="true"] {
         background-color: var(--menu-button-hovered-background-color);
         opacity: 1;
       }
@@ -554,8 +539,8 @@
     background-color: var(--row-number-background-color);
     border-right: 1px solid var(--row-number-right-border-color);
     color: var(--row-number-color);
-    padding: 0;
-    font-size: var(--row-number-font-size);
+    font-size: 0.68rem;
+    padding: 0 2px;
     text-align: center;
   }
   /* highlight the selected rows */

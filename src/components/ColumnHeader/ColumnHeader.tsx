@@ -11,7 +11,6 @@ import { useOnCopy } from '../../hooks/useOnCopyToClipboard.js'
 import ColumnMenu from '../ColumnMenu/ColumnMenu.js'
 import ColumnMenuButton from '../ColumnMenuButton/ColumnMenuButton.js'
 import ColumnResizer from '../ColumnResizer/ColumnResizer.js'
-import styles from '../../HighTable.module.css'
 
 interface Props {
   columnIndex: number // index of the column in the dataframe (0-based)
@@ -115,9 +114,9 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
 
   // If the hightable user provides a custom header component, they can choose where to place these controls inside it
   const controls = useMemo(() =>
-    <div className={styles['ht-header-controls']}>
+    <div role="group">
       {sortable &&
-        <span className={styles['ht-sort-indicator']} aria-hidden="true">
+        <span role="img" aria-hidden="true">
           {direction === 'ascending' ? '⭡' : direction === 'descending' ? '⭣' : '⇅'}
         </span>
       }
