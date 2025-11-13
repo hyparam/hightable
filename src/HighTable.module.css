@@ -343,7 +343,7 @@
       padding-top: 4px;
       padding-bottom: 4px;
 
-      /* sorting is enabled - add space for the sort arrow (default headers) */
+      /* sorting is enabled - add space for the sort arrow */
       &[aria-sort] {
         padding-right: calc(var(--cell-horizontal-padding) + 2.5rem);
       }

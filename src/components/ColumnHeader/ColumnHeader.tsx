@@ -112,7 +112,7 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
   }, [toggleOrderBy])
   const handleCopy = useOnCopy(columnName)
 
-  // Provide built-in controls for functional header overrides
+  // If the hightable user provides a custom header component, they can choose where to place these controls inside it
   const controls = useMemo(() =>
     <div className={styles['ht-header-controls']}>
       {sortable &&
@@ -166,7 +166,6 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
       data-fixed-width={dataFixedWidth}
     >
       {headerContent}
-      {/* Default headers: render legacy direct child menu button to preserve original layout */}
       {isFunctionalHeader ? null :
         isMenuEnabled &&
           <ColumnMenuButton
