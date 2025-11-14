@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## [0.21.1](https://github.com/hyparam/hightable/compare/v0.21.0...v0.21.1) - 2025-11-14
+
+### Added
+
+- New `initiallyHidden` parameter in column configuration to hide a column at start ([#322](https://github.com/hyparam/hightable/pull/322)).
+- `headerComponent` in column configuration can now be a function that receives the header controls, and returns a React node ([#321](https://github.com/hyparam/hightable/pull/321)).
+
+### Refactored
+
+- upgrade development dependencies: ([#323](https://github.com/hyparam/hightable/pull/323).
+
 ## [0.21.0](https://github.com/hyparam/hightable/compare/v0.20.4...v0.21.0) - 2025-11-06
 
 ### Added
