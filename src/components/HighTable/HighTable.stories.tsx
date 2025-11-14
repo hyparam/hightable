@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { useState } from 'react'
+import { ReactNode, useState } from 'react'
 import { checkSignal, createGetRowNumber, validateFetchParams, validateGetCellParams } from '../../helpers/dataframe/helpers.js'
 import { DataFrame, DataFrameEvents, arrayDataFrame } from '../../helpers/dataframe/index.js'
 import { DataFrameV1, convertV1ToDataFrame } from '../../helpers/dataframe/legacy/index.js'
@@ -310,6 +310,24 @@ export const HeaderComponent: Story = {
           <span>
             Double &nbsp;<button type="button" onClick={() => { alert('Custom function') }}>Button</button>
           </span>
+        ,
+      },
+    },
+  },
+}
+export const FunctionalHeaderComponent: Story = {
+  args: {
+    data: sortableDataFrame(createUnsortableData()),
+    columnConfiguration: {
+      Double: {
+        headerComponent: (controls: ReactNode) =>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px', minWidth: 0 }}>
+            <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Text:</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+              <button type="button" style={{ background: 'none', border: '1px solid #ccc', padding: '2px 6px', borderRadius: '4px' }} onClick={(e) => { e.stopPropagation(); alert('Confirm') }}>Confirm</button>
+              {controls}
+            </div>
+          </div>
         ,
       },
     },

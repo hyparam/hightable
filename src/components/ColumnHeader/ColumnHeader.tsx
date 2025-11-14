@@ -30,7 +30,7 @@ interface Props {
 export default function ColumnHeader({ columnIndex, columnName, columnConfig, canMeasureWidth, direction, toggleOrderBy, orderByIndex, orderBySize, ariaColIndex, ariaRowIndex, className, children }: Props) {
   const ref = useRef<HTMLTableCellElement | null>(null)
   const { tabIndex, navigateToCell } = useCellNavigation({ ref, ariaColIndex, ariaRowIndex })
-  const { sortable, headerComponent } = columnConfig
+  const { sortable } = columnConfig
   const { isOpen, position, menuId, close, handleMenuClick } = useColumnMenu(ref, navigateToCell)
   const { getHideColumn, showAllColumns } = useColumnVisibilityStates()
 
@@ -112,6 +112,37 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
   }, [toggleOrderBy])
   const handleCopy = useOnCopy(columnName)
 
+  // If the hightable user provides a custom header component, they can choose where to place these controls inside it
+  const controls = useMemo(() =>
+    <div role="group">
+      {sortable &&
+        <span role="img" aria-hidden="true">
+          {direction === 'ascending' ? '⭡' : direction === 'descending' ? '⭣' : '⇅'}
+        </span>
+      }
+      {isMenuEnabled &&
+        <ColumnMenuButton
+          onClick={handleMenuClick}
+          onEscape={navigateToCell}
+          tabIndex={tabIndex}
+          isExpanded={isOpen}
+          menuId={menuId}
+          aria-label={`Column menu for ${columnName}`}
+        />
+      }
+    </div>
+  , [sortable, direction, isMenuEnabled, handleMenuClick, navigateToCell, tabIndex, isOpen, menuId, columnName])
+
+  const headerContent = useMemo(() => {
+    const { headerComponent } = columnConfig
+    if (typeof headerComponent === 'function') {
+      return headerComponent(controls)
+    }
+    return headerComponent ?? children
+  }, [columnConfig, controls, children])
+
+  const isFunctionalHeader = useMemo(() => typeof columnConfig.headerComponent === 'function', [columnConfig])
+
   return (
     <th
       ref={ref}
@@ -120,6 +151,7 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
       aria-sort={direction ?? (sortable ? 'none' : undefined)}
       data-order-by-index={orderBySize !== undefined ? orderByIndex : undefined}
       data-order-by-size={orderBySize}
+      data-functional-header={isFunctionalHeader ? 'true' : undefined}
       aria-label={columnName}
       aria-description={description}
       aria-rowindex={ariaRowIndex}
@@ -133,16 +165,18 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
       className={className}
       data-fixed-width={dataFixedWidth}
     >
-      {headerComponent ?? children}
-      {isMenuEnabled &&
-        <ColumnMenuButton
-          onClick={handleMenuClick}
-          onEscape={navigateToCell}
-          tabIndex={tabIndex}
-          isExpanded={isOpen}
-          menuId={menuId}
-          aria-label={`Column menu for ${columnName}`}
-        />
+      {headerContent}
+      {isFunctionalHeader ? null :
+        isMenuEnabled &&
+          <ColumnMenuButton
+            onClick={handleMenuClick}
+            onEscape={navigateToCell}
+            tabIndex={tabIndex}
+            isExpanded={isOpen}
+            menuId={menuId}
+            aria-label={`Column menu for ${columnName}`}
+          />
+
       }
       <ColumnResizer
         resizeTo={resizeTo}

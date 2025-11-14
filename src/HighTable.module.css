@@ -1,7 +1,4 @@
 .hightable {
-  /* updated by hightable, based on the number of rows */
-  --row-number-characters: 3;
-
   & {
     display: flex;
     flex: 1;
@@ -22,7 +19,7 @@
     & > div {
       position: relative;
     }
-    /* avoid the row and column headers (sticky) to overlap the current navigation cell when navigating with the keyboard */
+    /* avoid the row and column headers (sticky) to overlap the current navigation cell */
     scroll-padding-inline-start: var(--row-number-width);
     scroll-padding-block-start: var(--column-header-height);
   }
@@ -42,6 +39,15 @@
   /* header */
   thead {
     th {
+      /* Default (non-functional) menu button pinned to the right */
+      & > button {
+        position: absolute;
+        right: 6px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 20px;
+        height: 20px;
+      }
       background-color: transparent;
       position: sticky;
       top: 0;
@@ -85,17 +91,43 @@
     z-index: 1000;
   }
 
-  /* column menu button */
-  /* TODO: fix the positioning */
+  /* column header controls: default button vs functional controls cluster */
   thead {
     th {
-      & > button {
-        position: absolute;
-        right: 6px;
-        top: 50%;
-        transform: translateY(-50%);
+      /* Default header row layout for non-functional headers */
+      .ht-header-default {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 6px;
+        min-width: 0; /* allow content to shrink */
+      }
+      .ht-header-default .ht-header-label {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      /* Controls container used by functional headers */
+      & > div[role="group"] {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        height: 20px;
+      }
+
+      div[role="group"] > button {
         width: 20px;
         height: 20px;
+      }
+
+      /* Sort indicator inside controls */
+      div[role="group"] > span[role="img"] {
+        display: inline-block;
+        width: 1.25rem;
+        text-align: center;
+        color: var(--secondary-sort-icon-color);
       }
     }
   }
@@ -116,8 +148,8 @@
   [role="rowheader"] {
     position: sticky;
     left: 0;
-    min-width: var(--row-number-width);
-    max-width: var(--row-number-width);
+    min-width: var(--row-label-width);
+    max-width: var(--row-label-width);
     z-index: var(--header-z-index, auto);
   }
 
@@ -125,8 +157,8 @@
   /* TODO: find a better selector for the table corner */
   thead td:first-child {
     position: sticky;
-    min-width: var(--row-number-width);
-    max-width: var(--row-number-width);
+    min-width: var(--row-label-width);
+    max-width: var(--row-label-width);
     top: 0;
     left: 0;
     z-index: var(--header-corner-z-index, auto);
@@ -177,8 +209,8 @@
     bottom: 0;
     background: var(--mock-row-label-background, transparent);
     z-index: var(--header-background-z-index, auto);
-    min-width: var(--row-number-width);
-    max-width: var(--row-number-width);
+    min-width: var(--row-label-width);
+    max-width: var(--row-label-width);
   }
 }
 
@@ -194,19 +226,7 @@
 
   --top-border-height: 2px;
   --focus-border-width: 2px;
-  --row-number-size-multiplier: 0.68;
-  --row-number-font-size: calc(var(--row-number-size-multiplier) * 1rem);
-  --row-number-padding-characters: 2;
-  /* 1ch: width of the '0' character in the current font (beware if different fonts are used in the table) */
-  --row-number-width: calc(
-    calc(
-      var(--row-number-characters)
-      + var(--row-number-padding-characters)
-    )
-    * var(--row-number-size-multiplier)
-    * 1ch
-  );
-  --cell-border-width: 1px;
+  --row-label-width: 36px;
   --cell-horizontal-padding: 10px;
   --resizer-border-width: 4px;
 
@@ -342,6 +362,7 @@
     }
   }
 
+  /* Default headers: sort arrow positioning and coloring */
   th[aria-sort]::after {
     right: calc(var(--cell-horizontal-padding) + 1rem);
     top: 4px;
@@ -357,11 +378,22 @@
     color: var(--primary-sort-icon-color);
   }
 
+  /* Functional headers: disable default arrow/padding, color inline indicator */
+  thead th[data-functional-header="true"][aria-sort] {
+    padding-right: var(--cell-horizontal-padding);
+  }
+  thead th[data-functional-header="true"][aria-sort]::after {
+    content: none;
+  }
+  thead th[data-functional-header="true"][data-order-by-index="0"] div[role="group"] > span[role="img"] {
+    color: var(--primary-sort-icon-color);
+  }
+
   /* cells */
   th,
   td {
-    border-bottom: var(--cell-border-width) solid var(--cell-border-color);
-    border-right: var(--cell-border-width) solid var(--cell-border-color);
+    border-bottom: 1px solid var(--cell-border-color);
+    border-right: 1px solid var(--cell-border-color);
     height: 32px;
     line-height: 1.5;
     /* prevent columns expanding - limits the initial and autoresized width */
@@ -446,7 +478,8 @@
   /* column menu button */
   thead {
     th {
-      & > button {
+      & > button,
+      div[role="group"] > button {
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -475,7 +508,11 @@
       &:hover > button,
       & > button:focus,
       & > button:focus-visible,
-      & > button[aria-expanded="true"] {
+      & > button[aria-expanded="true"],
+      &:hover div[role="group"] > button,
+      div[role="group"] > button:focus,
+      div[role="group"] > button:focus-visible,
+      div[role="group"] > button[aria-expanded="true"] {
         background-color: var(--menu-button-hovered-background-color);
         opacity: 1;
       }
@@ -502,8 +539,8 @@
     background-color: var(--row-number-background-color);
     border-right: 1px solid var(--row-number-right-border-color);
     color: var(--row-number-color);
-    padding: 0;
-    font-size: var(--row-number-font-size);
+    font-size: 0.68rem;
+    padding: 0 2px;
     text-align: center;
   }
   /* highlight the selected rows */
