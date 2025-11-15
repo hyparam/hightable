@@ -298,7 +298,11 @@ export const CustomHeaderStyle: Story = {
     //   background-color: #ffe9a9;
     // }
     className: 'custom-hightable',
-    columnClassNames: [undefined, undefined, 'delegated'],
+    columnConfiguration: {
+      Double: {
+        className: 'delegated',
+      },
+    },
   },
 }
 export const HeaderComponent: Story = {

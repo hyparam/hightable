@@ -8,6 +8,7 @@ export interface ColumnConfig {
   headerComponent?: HeaderComponent;
   minWidth?: number;
   initiallyHidden?: boolean;
+  className?: string;
   // hideable?: boolean;
   // filters: Some filter structure
   // cellRenderer?: (value: unknown, row: Row) => React.ReactNode;
