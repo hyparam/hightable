@@ -74,6 +74,7 @@ export default typescript.config(
       '@typescript-eslint/restrict-template-expressions': 'off',
       '@typescript-eslint/no-unused-vars': ['warn', { 'ignoreRestSiblings': true }],
       '@typescript-eslint/require-await': 'warn',
+      '@typescript-eslint/no-deprecated': 'warn',
       // allow using any - see row.ts - it's not easy to replace with unknown for example
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/use-unknown-in-catch-callback-variable': 'off',
