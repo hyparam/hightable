@@ -96,7 +96,6 @@ interface TableProps {
   data: DataFrame // data provider for the table
   cacheKey?: string // used to persist column widths. If undefined, the column widths are not persisted. It is expected to be unique for each table.
   className?: string // additional class name for the table container
-  columnClassNames?: (string | undefined)[] // list of additional class names for the header and cells of each column. The index in this array corresponds to the column index in columns
   columnConfiguration?: Record<string, ColumnConfig> // allows for additional configuration of columns
   focus?: boolean // focus table on mount? (default true)
   maxRowNumber?: number // maximum row number to display (for row headers). Useful for filtered data. If undefined, the number of rows in the data frame is applied.
@@ -178,6 +177,8 @@ ColumnConfig is defined as:
 interface ColumnConfig {
   headerComponent?: React.ReactNode // allows overriding column header cell with custom component
   minWidth?: number // overrides the global column min width, useful for components with ui elements
+  initiallyHidden?: boolean // whether the column should be initially hidden
+  className?: string // additional CSS class name for the header and cells of this column
 }
 ```
 

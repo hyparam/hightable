@@ -27,7 +27,6 @@ interface Props {
   data: DataFrame
   cacheKey?: string // used to persist column widths. If undefined, the column widths are not persisted. It is expected to be unique for each table.
   className?: string // additional class names for the component
-  columnClassNames?: (string | undefined)[] // list of additional class names for the header and cells of each column. The index in this array corresponds to the column index in columns
   columnConfiguration?: ColumnConfiguration
   focus?: boolean // focus table on mount? (default true)
   maxRowNumber?: number // maximum row number to display (for row headers). Useful for filtered data. If undefined, the number of rows in the data frame is applied.
@@ -141,7 +140,6 @@ export function HighTableInner({
   onError = console.error,
   stringify = stringifyDefault,
   className = '',
-  columnClassNames = [],
   styled = true,
   version,
   renderCellContent,
@@ -400,7 +398,6 @@ export function HighTableInner({
                   columnsParameters={columnsParameters}
                   orderBy={orderBy}
                   onOrderByChange={onOrderByChange}
-                  columnClassNames={columnClassNames}
                   ariaRowIndex={1}
                 />
               </Row>
@@ -436,6 +433,7 @@ export function HighTableInner({
                       ariaRowIndex={ariaRowIndex}
                     />
                     {cells.map(({ columnIndex, cell }) => {
+                      const columnClassName = columnsParameters[columnIndex]?.className
                       return <Cell
                         key={columnIndex}
                         onDoubleClickCell={onDoubleClickCell}
@@ -443,7 +441,7 @@ export function HighTableInner({
                         onKeyDownCell={onKeyDownCell}
                         stringify={stringify}
                         columnIndex={columnIndex}
-                        className={columnClassNames[columnIndex]}
+                        className={columnClassName}
                         ariaColIndex={columnIndex + ariaOffset}
                         ariaRowIndex={ariaRowIndex}
                         cell={cell}
