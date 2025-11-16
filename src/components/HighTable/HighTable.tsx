@@ -36,7 +36,7 @@ interface Props {
   selection?: Selection // selection and anchor rows, expressed as data indexes (not as indexes in the table). If undefined, the selection is hidden and the interactions are disabled.
   styled?: boolean // use styled component? (default true)
   // TODO(SL): replace col: number with col: string?
-  onColumnsVisibilityChange?: (columns: MaybeHiddenColumn[]) => void // callback which is called whenever the set of hidden columns changes.
+  onColumnsVisibilityChange?: (columns: Record<string, MaybeHiddenColumn>) => void // callback which is called whenever the set of hidden columns changes.
   onDoubleClickCell?: (event: MouseEvent, col: number, row: number) => void
   onError?: (error: unknown) => void
   onKeyDownCell?: (event: KeyboardEvent, col: number, row: number) => void // for accessibility, it should be passed if onDoubleClickCell is passed. It can handle more than that action though.

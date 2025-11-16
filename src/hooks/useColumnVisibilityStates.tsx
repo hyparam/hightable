@@ -13,7 +13,7 @@ interface ColumnVisibilityStatesProviderProps {
   localStorageKey?: string // optional key to use for local storage (no local storage if not provided)
   columnNames: string[] // array of column names
   initialVisibilityStates?: Record<string, MaybeHiddenColumn> // initial visibility states for columns by name (used only if no local storage value exists)
-  onColumnsVisibilityChange?: (columns: MaybeHiddenColumn[]) => void // callback which is called whenever the set of hidden columns changes.
+  onColumnsVisibilityChange?: (columns: Record<string, MaybeHiddenColumn>) => void // callback which is called whenever the set of hidden columns changes.
   children: ReactNode
 }
 
@@ -77,9 +77,7 @@ export function ColumnVisibilityStatesProvider({ children, localStorageKey, colu
       setColumnVisibilityStates(currentStates => {
         const nextColumnVisibilityStates = { ...currentStates ?? initialVisibilityStates ?? {} }
         nextColumnVisibilityStates[columnName] = { hidden: true }
-        // Convert to array format for backwards compatibility with the callback
-        const arrayFormat = columnNames.map(name => nextColumnVisibilityStates[name])
-        onColumnsVisibilityChange?.(arrayFormat)
+        onColumnsVisibilityChange?.(nextColumnVisibilityStates)
         return nextColumnVisibilityStates
       })
     }
@@ -92,7 +90,7 @@ export function ColumnVisibilityStatesProvider({ children, localStorageKey, colu
     return () => {
       const allVisible: Record<string, MaybeHiddenColumn> = {}
       setColumnVisibilityStates(allVisible)
-      onColumnsVisibilityChange?.([])
+      onColumnsVisibilityChange?.(allVisible)
     }
   }, [numberOfHiddenColumns, setColumnVisibilityStates, onColumnsVisibilityChange])
 
