@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { ReactNode, useState } from 'react'
+import { MouseEvent, ReactNode, useState } from 'react'
 import { checkSignal, createGetRowNumber, validateFetchParams, validateGetCellParams } from '../../helpers/dataframe/helpers.js'
 import { DataFrame, DataFrameEvents, arrayDataFrame } from '../../helpers/dataframe/index.js'
 import { DataFrameV1, convertV1ToDataFrame } from '../../helpers/dataframe/legacy/index.js'
@@ -506,4 +506,22 @@ export const HiddenColumns: Story = {
     },
     cacheKey: 'hidden-columns-demo',
   },
+}
+export const DoubleClickCell: Story = {
+  render: (args) => {
+    const data = sortableDataFrame(createUnsortableData())
+    function handleDoubleClick(_event: MouseEvent, col: number, row: number) {
+      const columnName = data.columnDescriptors[col]?.name ?? 'unknown'
+      const cellValue = data.getCell({ row, column: columnName })?.value
+      alert(`Cell at column "${columnName}" (index ${col}), row ${row}:\n${cellValue}`)
+    }
+    return (
+      <HighTable
+        {...args}
+        data={data}
+        onDoubleClickCell={handleDoubleClick}
+      />
+    )
+  },
+  args: {},
 }

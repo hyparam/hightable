@@ -40,8 +40,8 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
   }, [toggleOrderBy, navigateToCell, sortable])
 
   const hideColumn = useMemo(() => {
-    return getHideColumn?.(columnIndex)
-  }, [getHideColumn, columnIndex])
+    return getHideColumn?.(columnName)
+  }, [getHideColumn, columnName])
 
   const isMenuEnabled = useMemo(() => {
     const hideMenu = !sortable && !hideColumn && !showAllColumns

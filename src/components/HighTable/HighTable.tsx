@@ -53,7 +53,7 @@ const ariaOffset = 2 // 1-based index, +1 for the header
 
 const columnWidthsFormatVersion = '2' // increase in case of breaking changes in the column widths format
 export const columnWidthsSuffix = `:${columnWidthsFormatVersion}:column:widths` // suffix used to store the column widths in local storage
-const columnVisibilityStatesFormatVersion = '1' // increase in case of breaking changes in the column widths format
+const columnVisibilityStatesFormatVersion = '2' // increase in case of breaking changes in the column visibility format (changed from array by index to record by name)
 export const columnVisibilityStatesSuffix = `:${columnVisibilityStatesFormatVersion}:column:visibility` // suffix used to store the columns vsibility in local storage
 
 /**
@@ -80,12 +80,18 @@ function HighTableData(props: PropsData) {
   // TODO(SL): onError could be in a context, as we might want to use it everywhere
   const { cacheKey, orderBy, onOrderByChange, selection, onSelectionChange, onError, onColumnsVisibilityChange } = props
 
+  const columnNames = useMemo(() => data.columnDescriptors.map(d => d.name), [data.columnDescriptors])
+
   const initialVisibilityStates = useMemo(() => {
     if (!props.columnConfiguration) return undefined
-    return data.columnDescriptors.map(descriptor => {
-      const config = props.columnConfiguration?.[descriptor.name]
-      return config?.initiallyHidden ? { hidden: true as const } : undefined
-    })
+    const states: Record<string, { hidden: true } | undefined> = {}
+    for (const descriptor of data.columnDescriptors) {
+      const config = props.columnConfiguration[descriptor.name]
+      if (config?.initiallyHidden) {
+        states[descriptor.name] = { hidden: true as const }
+      }
+    }
+    return states
   }, [props.columnConfiguration, data.columnDescriptors])
 
   return (
@@ -94,7 +100,7 @@ function HighTableData(props: PropsData) {
       {/* Create a new set of widths if the data has changed, but keep it if only the number of rows changed */}
       <ColumnWidthsProvider key={cacheKey ?? key} localStorageKey={cacheKey ? `${cacheKey}${columnWidthsSuffix}` : undefined} numColumns={data.columnDescriptors.length}>
         {/* Create a new set of hidden columns if the data has changed, but keep it if only the number of rows changed */}
-        <ColumnVisibilityStatesProvider key={cacheKey ?? key} localStorageKey={cacheKey ? `${cacheKey}${columnVisibilityStatesSuffix}` : undefined} numColumns={data.columnDescriptors.length} initialVisibilityStates={initialVisibilityStates} onColumnsVisibilityChange={onColumnsVisibilityChange}>
+        <ColumnVisibilityStatesProvider key={cacheKey ?? key} localStorageKey={cacheKey ? `${cacheKey}${columnVisibilityStatesSuffix}` : undefined} columnNames={columnNames} initialVisibilityStates={initialVisibilityStates} onColumnsVisibilityChange={onColumnsVisibilityChange}>
           {/* Create a new context if the dataframe changes, to flush the cache (ranks and indexes) */}
           <OrderByProvider key={key} orderBy={orderBy} onOrderByChange={onOrderByChange}>
             {/* Create a new selection context if the dataframe has changed */}
@@ -159,8 +165,8 @@ export function HighTableInner({
   const [rowsRange, setRowsRange] = useState<RowsRange>({ start: 0, end: 0 })
 
   const columnsParameters = useMemo(() => {
-    return allColumnsParameters.filter((_, index) => {
-      return !isHiddenColumn?.(index)
+    return allColumnsParameters.filter((col) => {
+      return !isHiddenColumn?.(col.name)
     })
   }, [allColumnsParameters, isHiddenColumn])
 
@@ -344,10 +350,10 @@ export function HighTableInner({
     const canMeasureColumn: Record<string, boolean> = {}
     const rowContents = rows.map((row) => {
       const rowNumber = data.getRowNumber({ row, orderBy })?.value
-      const cells = columnsParameters.map(({ name: column }, columnIndex) => {
+      const cells = columnsParameters.map(({ name: column, index: originalColumnIndex }) => {
         const cell = data.getCell({ row, column, orderBy })
         canMeasureColumn[column] ||= cell !== undefined
-        return { columnIndex, cell }
+        return { columnIndex: originalColumnIndex, cell }
       })
       return {
         row,
@@ -432,8 +438,8 @@ export function HighTableInner({
                       ariaColIndex={1}
                       ariaRowIndex={ariaRowIndex}
                     />
-                    {cells.map(({ columnIndex, cell }) => {
-                      const columnClassName = columnsParameters[columnIndex]?.className
+                    {cells.map(({ columnIndex, cell }, visibleColumnIndex) => {
+                      const columnClassName = columnsParameters[visibleColumnIndex]?.className
                       return <Cell
                         key={columnIndex}
                         onDoubleClickCell={onDoubleClickCell}
@@ -441,8 +447,9 @@ export function HighTableInner({
                         onKeyDownCell={onKeyDownCell}
                         stringify={stringify}
                         columnIndex={columnIndex}
+                        visibleColumnIndex={visibleColumnIndex}
                         className={columnClassName}
-                        ariaColIndex={columnIndex + ariaOffset}
+                        ariaColIndex={visibleColumnIndex + ariaOffset}
                         ariaRowIndex={ariaRowIndex}
                         cell={cell}
                         rowNumber={rowNumber}
