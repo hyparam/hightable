@@ -104,7 +104,7 @@ interface TableProps {
   padding?: number // number of extra rows to render outside of the viewport (default 20)
   selection?: Selection // selection state (if defined, the component selection is controlled by the parent)
   styled?: boolean // use styled component? (default true)
-  onColumnsVisibilityChange?: (columnVisibilityStates: MaybeHiddenColumn[]) => void // columns visibility change handler
+  onColumnsVisibilityChange?: (columnVisibilityStates: Record<string, MaybeHiddenColumn>) => void // columns visibility change handler
   onDoubleClickCell?: (event: MouseEvent, col: number, row: number) => void // double-click handler
   onError?: (error: Error) => void // error handler
   onKeyDownCell?: (event: KeyboardEvent, col: number, row: number) => void // key down handler. For accessibility, it should be passed if onDoubleClickCell is passed.

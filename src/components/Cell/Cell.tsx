@@ -14,7 +14,8 @@ export interface CellContentProps {
 interface Props {
   ariaColIndex: number
   ariaRowIndex: number
-  columnIndex: number
+  columnIndex: number // original column index in the dataframe (used for callbacks like onDoubleClickCell)
+  visibleColumnIndex: number // index in the visible columns array (used for styling/widths)
   stringify: (value: unknown) => string | undefined
   cell?: ResolvedValue
   className?: string
@@ -40,12 +41,12 @@ interface Props {
  * @param {function} [props.onKeyDown] key down callback
  * @param {number} [props.rowNumber] the row index in the original data, undefined if the value has not been fetched yet
  */
-export default function Cell({ cell, onDoubleClickCell, onMouseDownCell, onKeyDownCell, stringify, columnIndex, className, ariaColIndex, ariaRowIndex, rowNumber, renderCellContent }: Props) {
+export default function Cell({ cell, onDoubleClickCell, onMouseDownCell, onKeyDownCell, stringify, columnIndex, visibleColumnIndex, className, ariaColIndex, ariaRowIndex, rowNumber, renderCellContent }: Props) {
   const ref = useRef<HTMLTableCellElement | null>(null)
   const { tabIndex, navigateToCell } = useCellNavigation({ ref, ariaColIndex, ariaRowIndex })
 
-  // Get the column width from the context
-  const columnStyle = useColumnWidths().getStyle?.(columnIndex)
+  // Get the column width from the context (use visibleColumnIndex for styling)
+  const columnStyle = useColumnWidths().getStyle?.(visibleColumnIndex)
   // render as truncated text
   const str = useMemo(() => {
     return stringify(cell?.value)

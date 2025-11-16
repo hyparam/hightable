@@ -8,6 +8,7 @@ const rest = {
   ariaColIndex: 1,
   ariaRowIndex: 1,
   columnIndex: 0,
+  visibleColumnIndex: 0,
   stringify: (d: unknown) => d === undefined ? 'undefined' : JSON.stringify(d),
   // Note that HighTable defaults to another stringifier - we don't test this here
 }

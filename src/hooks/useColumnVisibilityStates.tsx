@@ -2,18 +2,18 @@ import { ReactNode, createContext, useCallback, useContext, useMemo } from 'reac
 import { useLocalStorageState } from './useLocalStorageState.js'
 
 interface ColumnVisibilityStatesContextType {
-  getHideColumn?: (columnIndex: number) => undefined | (() => void) // returns a function to hide the column, or undefined if the column cannot be hidden
+  getHideColumn?: (columnName: string) => undefined | (() => void) // returns a function to hide the column, or undefined if the column cannot be hidden
   showAllColumns?: () => void // returns a function to show all columns, or undefined if there are no hidden columns
-  isHiddenColumn?: (columnIndex: number) => boolean // returns true if the column is hidden
+  isHiddenColumn?: (columnName: string) => boolean // returns true if the column is hidden
 }
 
 export const ColumnVisibilityStatesContext = createContext<ColumnVisibilityStatesContextType>({})
 
 interface ColumnVisibilityStatesProviderProps {
   localStorageKey?: string // optional key to use for local storage (no local storage if not provided)
-  numColumns: number // number of columns (used to initialize the visibility states array)
-  initialVisibilityStates?: MaybeHiddenColumn[] // initial visibility states for columns (used only if no local storage value exists)
-  onColumnsVisibilityChange?: (columns: MaybeHiddenColumn[]) => void // callback which is called whenever the set of hidden columns changes.
+  columnNames: string[] // array of column names
+  initialVisibilityStates?: Record<string, MaybeHiddenColumn> // initial visibility states for columns by name (used only if no local storage value exists)
+  onColumnsVisibilityChange?: (columns: Record<string, MaybeHiddenColumn>) => void // callback which is called whenever the set of hidden columns changes.
   children: ReactNode
 }
 
@@ -22,80 +22,73 @@ export interface HiddenColumn {
 }
 export type MaybeHiddenColumn = HiddenColumn | undefined
 
-export function ColumnVisibilityStatesProvider({ children, localStorageKey, numColumns, initialVisibilityStates, onColumnsVisibilityChange }: ColumnVisibilityStatesProviderProps) {
-  if (!Number.isInteger(numColumns) || numColumns < 0) {
-    throw new Error(`Invalid numColumns: ${numColumns}. It must be a positive integer.`)
-  }
+export function ColumnVisibilityStatesProvider({ children, localStorageKey, columnNames, initialVisibilityStates, onColumnsVisibilityChange }: ColumnVisibilityStatesProviderProps) {
+  const numColumns = columnNames.length
 
-  // An array of column visibility states
-  // The index is the column rank in the header (0-based)
-  // The array is uninitialized so that we don't have to know the number of columns in advance
-  const [columnVisibilityStates, setColumnVisibilityStates] = useLocalStorageState<MaybeHiddenColumn[]>({ key: localStorageKey, parse, stringify })
-  function stringify(columnVisibilityStates: MaybeHiddenColumn[]) {
+  // A record of column visibility states keyed by column name
+  const [columnVisibilityStates, setColumnVisibilityStates] = useLocalStorageState<Record<string, MaybeHiddenColumn>>({ key: localStorageKey, parse, stringify })
+  function stringify(columnVisibilityStates: Record<string, MaybeHiddenColumn>) {
     return JSON.stringify(columnVisibilityStates)
   }
-  function parse(json: string): MaybeHiddenColumn[] {
-    const columnVisibilityStates = JSON.parse(json)
-    if (!Array.isArray(columnVisibilityStates)) {
-      return []
+  function parse(json: string): Record<string, MaybeHiddenColumn> {
+    const parsed = JSON.parse(json)
+    if (typeof parsed !== 'object' || parsed === null) {
+      return {}
     }
+    const result: Record<string, MaybeHiddenColumn> = {}
     // only keep the hidden: true fields
-    return columnVisibilityStates.map((columnVisibility: unknown) => {
-      if (columnVisibility === null || columnVisibility === undefined) {
-        return undefined
+    for (const [key, value] of Object.entries(parsed as Record<string, unknown>)) {
+      if (value !== null && value !== undefined && typeof value === 'object' && 'hidden' in value && value.hidden === true) {
+        result[key] = { hidden: true }
       }
-      if (typeof columnVisibility !== 'object' || !('hidden' in columnVisibility) || columnVisibility.hidden !== true) {
-        return undefined
-      }
-      return { hidden: true }
-    })
+    }
+    return result
   }
 
   // Apply initial visibility states if no persisted state exists
-  const effectiveColumnVisibilityStates = columnVisibilityStates ?? initialVisibilityStates
+  const effectiveColumnVisibilityStates = useMemo(
+    () => columnVisibilityStates ?? initialVisibilityStates ?? {},
+    [columnVisibilityStates, initialVisibilityStates]
+  )
 
-  const isValidIndex = useCallback((index: number) => {
-    return Number.isInteger(index) && index >= 0 && index < numColumns
-  }, [numColumns])
-
-  const isHiddenColumn = useCallback((columnIndex: number) => {
-    return effectiveColumnVisibilityStates?.[columnIndex]?.hidden === true
+  const isHiddenColumn = useCallback((columnName: string) => {
+    return effectiveColumnVisibilityStates[columnName]?.hidden === true
   }, [effectiveColumnVisibilityStates])
 
   const { numberOfHiddenColumns, numberOfVisibleColumns } = useMemo(() => {
     let numberOfHiddenColumns = 0
-    for (let i = 0; i < numColumns; i++) {
-      if (isHiddenColumn(i)) {
+    for (const columnName of columnNames) {
+      if (isHiddenColumn(columnName)) {
         numberOfHiddenColumns++
       }
     }
     return { numberOfHiddenColumns, numberOfVisibleColumns: numColumns - numberOfHiddenColumns }
-  }, [numColumns, isHiddenColumn])
+  }, [columnNames, isHiddenColumn, numColumns])
 
-  const canBeHidden = useCallback((columnIndex: number) => {
-    return !isHiddenColumn(columnIndex) && numberOfVisibleColumns > 1
+  const canBeHidden = useCallback((columnName: string) => {
+    return !isHiddenColumn(columnName) && numberOfVisibleColumns > 1
   }, [isHiddenColumn, numberOfVisibleColumns])
 
-  const getHideColumn = useCallback((columnIndex: number ) => {
-    if (!isValidIndex(columnIndex) || !canBeHidden(columnIndex)) {
+  const getHideColumn = useCallback((columnName: string) => {
+    if (!columnNames.includes(columnName) || !canBeHidden(columnName)) {
       return undefined
     }
     return () => {
       setColumnVisibilityStates(currentStates => {
-        const nextColumnVisibilityStates = [...currentStates ?? initialVisibilityStates ?? []]
-        nextColumnVisibilityStates[columnIndex] = { hidden: true }
+        const nextColumnVisibilityStates = { ...currentStates ?? initialVisibilityStates ?? {} }
+        nextColumnVisibilityStates[columnName] = { hidden: true }
         onColumnsVisibilityChange?.(nextColumnVisibilityStates)
         return nextColumnVisibilityStates
       })
     }
-  }, [canBeHidden, isValidIndex, setColumnVisibilityStates, onColumnsVisibilityChange, initialVisibilityStates])
+  }, [canBeHidden, columnNames, setColumnVisibilityStates, onColumnsVisibilityChange, initialVisibilityStates])
 
   const showAllColumns = useMemo(() => {
     if (numberOfHiddenColumns === 0) {
       return undefined
     }
     return () => {
-      const allVisible: MaybeHiddenColumn[] = []
+      const allVisible: Record<string, MaybeHiddenColumn> = {}
       setColumnVisibilityStates(allVisible)
       onColumnsVisibilityChange?.(allVisible)
     }
