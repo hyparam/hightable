@@ -327,7 +327,7 @@ describe('with async data, HighTable', () => {
     })
     await findByRole('cell', { name: 'async 50' })
 
-    expect(asyncData._forTests.signalAborted).toHaveLength(2) // initial setup now causes extra fetches due to column visibility initialization
+    expect(asyncData._forTests.signalAborted).toHaveLength(0) // the fetches are too fast to be cancelled (10ms)
   })
 
   it('aborts data fetch when scrolling fast', async () => {
@@ -393,8 +393,7 @@ describe('with async data, HighTable', () => {
     expect(queryByRole('cell', { name: `async ${idx3}` })).not.toBeNull()
 
     // One fetch should have been aborted, because we scrolled again before the second fetch was done
-    // (plus 1 from initial setup due to column visibility initialization)
-    expect(asyncData._forTests.signalAborted).toHaveLength(2)
+    expect(asyncData._forTests.signalAborted).toHaveLength(1)
     expect(asyncData._forTests.asyncDataFetched[idx1]).toBe(true) // fetched
     expect(asyncData._forTests.asyncDataFetched[idx2]).toBe(false) // not fetched (aborted)
     expect(asyncData._forTests.asyncDataFetched[idx3]).toBe(true) // fetched
