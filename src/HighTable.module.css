@@ -408,8 +408,8 @@
   /* cells */
   th,
   td {
-    border-bottom: 1px solid var(--cell-border-color);
-    border-right: 1px solid var(--cell-border-color);
+    border-bottom: var(--cell-border-width) solid var(--cell-border-color);
+    border-right: var(--cell-border-width) solid var(--cell-border-color);
     height: 32px;
     line-height: 1.5;
     /* prevent columns expanding - limits the initial and autoresized width */
@@ -555,8 +555,8 @@
     background-color: var(--row-number-background-color);
     border-right: 1px solid var(--row-number-right-border-color);
     color: var(--row-number-color);
-    font-size: 0.68rem;
-    padding: 0 2px;
+    padding: 0;
+    font-size: var(--row-number-font-size);
     text-align: center;
   }
   /* highlight the selected rows */
