@@ -1,4 +1,7 @@
 .hightable {
+  /* updated by hightable, based on the number of rows */
+  --row-number-characters: 3;
+
   & {
     display: flex;
     flex: 1;
@@ -148,8 +151,8 @@
   [role="rowheader"] {
     position: sticky;
     left: 0;
-    min-width: var(--row-label-width);
-    max-width: var(--row-label-width);
+    min-width: var(--row-number-width);
+    max-width: var(--row-number-width);
     z-index: var(--header-z-index, auto);
   }
 
@@ -157,8 +160,8 @@
   /* TODO: find a better selector for the table corner */
   thead td:first-child {
     position: sticky;
-    min-width: var(--row-label-width);
-    max-width: var(--row-label-width);
+    min-width: var(--row-number-width);
+    max-width: var(--row-number-width);
     top: 0;
     left: 0;
     z-index: var(--header-corner-z-index, auto);
@@ -209,8 +212,8 @@
     bottom: 0;
     background: var(--mock-row-label-background, transparent);
     z-index: var(--header-background-z-index, auto);
-    min-width: var(--row-label-width);
-    max-width: var(--row-label-width);
+    min-width: var(--row-number-width);
+    max-width: var(--row-number-width);
   }
 }
 
@@ -226,7 +229,20 @@
 
   --top-border-height: 2px;
   --focus-border-width: 2px;
-  --row-label-width: 36px;
+  /* --row-label-width: 36px; */
+  --row-number-size-multiplier: 0.68;
+  --row-number-font-size: calc(var(--row-number-size-multiplier) * 1rem);
+  --row-number-padding-characters: 2;
+  /* 1ch: width of the '0' character in the current font (beware if different fonts are used in the table) */
+  --row-number-width: calc(
+    calc(
+      var(--row-number-characters)
+      + var(--row-number-padding-characters)
+    )
+    * var(--row-number-size-multiplier)
+    * 1ch
+  );
+  --cell-border-width: 1px;
   --cell-horizontal-padding: 10px;
   --resizer-border-width: 4px;
 
