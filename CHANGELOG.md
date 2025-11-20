@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## [0.22.2](https://github.com/hyparam/hightable/compare/v0.22.1...v0.22.2) - 2025-11-18
+
+### Fixed
+
+- restore styles deleted by error in a previous commit ([#328](https://github.com/hyparam/hightable/pull/328)). The affected versions are v0.21.1 and v0.22.0.
+
+## [0.22.1](https://github.com/hyparam/hightable/compare/v0.22.0...v0.22.1) - 2025-11-16
+
+### Changed
+
+- **Breaking** - prop `onColumnsVisibilityChange` now receives an object of type `{ [columnName: string]: { hidden: true } | undefined }` instead of an array of hidden column names ([#327](https://github.com/hyparam/hightable/pull/327)).
+
+
 ## [0.22.0](https://github.com/hyparam/hightable/compare/v0.21.1...v0.22.0) - 2025-11-15
 
 ### Changed
@@ -15,7 +28,7 @@
 
 ### Refactored
 
-- upgrade development dependencies: ([#323](https://github.com/hyparam/hightable/pull/323).
+- upgrade development dependencies: ([#323](https://github.com/hyparam/hightable/pull/323)).
 
 ## [0.21.0](https://github.com/hyparam/hightable/compare/v0.20.4...v0.21.0) - 2025-11-06
 
