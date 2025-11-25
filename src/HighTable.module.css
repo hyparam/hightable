@@ -381,7 +381,8 @@
   /* Default headers: sort arrow positioning and coloring */
   th[aria-sort]::after {
     right: calc(var(--cell-horizontal-padding) + 1rem);
-    top: 4px;
+    top: 50%;
+    transform: translateY(-50%);
     padding-left: 2px;
     background: none;
     color: var(--secondary-sort-icon-color);

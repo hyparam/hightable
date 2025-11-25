@@ -99,3 +99,6 @@ h6 {
 .custom-hightable tbody tr:not(:hover) td.delegated {
   background-color: #ffe9a9;
 }
+.custom-hightable thead th.tall {
+  height: 80px;
+}
