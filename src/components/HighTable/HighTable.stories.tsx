@@ -290,6 +290,17 @@ export const MultiSort: Story = {
     data: sortableDataFrame(createUnsortableData()),
   },
 }
+export const CustomTallHeaderStyle: Story = {
+  args: {
+    data: sortableDataFrame(createUnsortableData()),
+    className: 'custom-hightable',
+    columnConfiguration: {
+      Double: {
+        className: 'tall',
+      },
+    },
+  },
+}
 export const CustomHeaderStyle: Story = {
   args: {
     data: createUnsortableData(),
