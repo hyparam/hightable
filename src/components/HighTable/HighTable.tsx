@@ -405,6 +405,7 @@ export function HighTableInner({
                   orderBy={orderBy}
                   onOrderByChange={onOrderByChange}
                   ariaRowIndex={1}
+                  exclusiveSort={data.exclusiveSort === true}
                 />
               </Row>
             </thead>
