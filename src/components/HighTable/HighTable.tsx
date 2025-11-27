@@ -72,9 +72,7 @@ export default function HighTable(props: Props) {
   )
 }
 
-type PropsData = Omit<Props, 'data'>
-
-function HighTableData(props: PropsData) {
+function HighTableData(props: Omit<Props, 'data'>) {
   const { data, key, version, maxRowNumber } = useData()
   const { numRows } = data
   // TODO(SL): onError could be in a context, as we might want to use it everywhere
