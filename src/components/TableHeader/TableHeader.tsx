@@ -1,25 +1,23 @@
 import { useCallback, useMemo } from 'react'
 import { OrderBy, toggleColumn, toggleColumnExclusive } from '../../helpers/sort.js'
-import { useData } from '../../hooks/useData.js'
 import { ColumnParameters } from '../../hooks/useColumnParameters.js'
 import ColumnHeader from '../ColumnHeader/ColumnHeader.js'
 
 interface TableHeaderProps {
   columnsParameters: ColumnParameters[]
+  ariaRowIndex: number // aria row index for the header
   orderBy?: OrderBy // array of column order by clauses. If undefined, the table is unordered, the sort elements are hidden and the interactions are disabled.
   onOrderByChange?: (orderBy: OrderBy) => void // callback to call when a user interaction changes the order. The interactions are disabled if undefined.
   canMeasureColumn?: Record<string, boolean> // indicates if the width of a column can be measured.
-  ariaRowIndex: number // aria row index for the header
+  exclusiveSort?: boolean // whether to use exclusive sort mode
 }
 
 /**
  * Render a header for a table.
  */
 export default function TableHeader({
-  columnsParameters, orderBy, onOrderByChange, canMeasureColumn, ariaRowIndex,
+  columnsParameters, orderBy, onOrderByChange, canMeasureColumn, ariaRowIndex, exclusiveSort,
 }: TableHeaderProps) {
-  const { data } = useData()
-  const exclusiveSort = data.exclusiveSort === true
   // Function to handle click for changing orderBy
   const getToggleOrderBy = useCallback((columnHeader: string) => {
     if (!onOrderByChange || !orderBy) return undefined
