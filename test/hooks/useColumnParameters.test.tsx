@@ -1,12 +1,10 @@
-import { cleanup, renderHook } from '@testing-library/react'
-import { afterEach, describe, expect, it } from 'vitest'
+import { renderHook } from '@testing-library/react'
+import { describe, expect, it } from 'vitest'
 import type { ReactNode } from 'react'
 
 import { ColumnConfiguration } from '../../src/helpers/columnConfiguration.js'
 import { ColumnDescriptor } from '../../src/helpers/dataframe/index.js'
 import { ColumnParametersProvider, useColumnParameters } from '../../src/hooks/useColumnParameters.js'
-
-afterEach(cleanup)
 
 function createWrapper(columnDescriptors: ColumnDescriptor[], columnConfiguration?: ColumnConfiguration) {
   function wrapper({ children }: { children: ReactNode }) {
