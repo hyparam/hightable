@@ -167,9 +167,9 @@ describe('ColumnHeader', () => {
     localStorage.setItem(cacheKey, JSON.stringify([savedWidth]))
 
     const columnConfiguration = { test: { minWidth: columnMinWidth } }
-    const data = { columnDescriptors: [{ name: 'test' }] }
+    const columnDescriptors = [{ name: 'test' }]
 
-    const { user, getByRole } = render(<ColumnParametersProvider columnConfiguration={columnConfiguration} data={data}>
+    const { user, getByRole } = render(<ColumnParametersProvider columnConfiguration={columnConfiguration} columnDescriptors={columnDescriptors}>
       <ColumnWidthsProvider localStorageKey={cacheKey} numColumns={1} minWidth={10}>
         <table><thead><tr><ColumnHeader columnName="test" canMeasureWidth={true} {...defaultProps} /></tr></thead></table>
       </ColumnWidthsProvider>
@@ -199,9 +199,9 @@ describe('ColumnHeader', () => {
     localStorage.setItem(cacheKey, JSON.stringify([savedWidth]))
 
     const columnConfiguration = { test: { minWidth: columnMinWidth } }
-    const data = { columnDescriptors: [{ name: 'test' }] }
+    const columnDescriptors = [{ name: 'test' }]
 
-    const { user, getByRole } = render(<ColumnParametersProvider columnConfiguration={columnConfiguration} data={data}>
+    const { user, getByRole } = render(<ColumnParametersProvider columnConfiguration={columnConfiguration} columnDescriptors={columnDescriptors}>
       <ColumnWidthsProvider localStorageKey={cacheKey} numColumns={1} minWidth={globalMinWidth}>
         <table><thead><tr><ColumnHeader columnName="test" canMeasureWidth={true} {...defaultProps} /></tr></thead></table>
       </ColumnWidthsProvider>

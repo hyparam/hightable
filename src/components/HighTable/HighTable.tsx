@@ -96,7 +96,7 @@ function HighTableData(props: PropsData) {
 
   return (
     /* Provide the column configuration to the table */
-    <ColumnParametersProvider columnConfiguration={props.columnConfiguration} data={data}>
+    <ColumnParametersProvider columnConfiguration={props.columnConfiguration} columnDescriptors={data.columnDescriptors}>
       {/* Create a new set of widths if the data has changed, but keep it if only the number of rows changed */}
       <ColumnWidthsProvider key={cacheKey ?? key} localStorageKey={cacheKey ? `${cacheKey}${columnWidthsSuffix}` : undefined} numColumns={data.columnDescriptors.length}>
         {/* Create a new set of hidden columns if the data has changed, but keep it if only the number of rows changed */}

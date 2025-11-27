@@ -1,5 +1,5 @@
 import { ColumnConfig, ColumnConfiguration } from '../helpers/columnConfiguration.js'
-import { ColumnDescriptor, DataFrame } from '../helpers/dataframe/index.js'
+import { ColumnDescriptor } from '../helpers/dataframe/index.js'
 import { type ReactNode, createContext, useContext, useMemo } from 'react'
 
 // The column parameters don't include the `metadata` field from `ColumnDescriptor`
@@ -11,13 +11,12 @@ export const ColumnParametersContext = createContext<ColumnParameters[]>([])
 
 interface ColumnParametersProviderProps {
   columnConfiguration?: ColumnConfiguration
-  data: Pick<DataFrame, 'columnDescriptors'>
+  columnDescriptors: ColumnDescriptor[]
   children: ReactNode
 }
 
-export function ColumnParametersProvider({ columnConfiguration, data, children }: ColumnParametersProviderProps) {
+export function ColumnParametersProvider({ columnConfiguration, columnDescriptors, children }: ColumnParametersProviderProps) {
   const value = useMemo(() => {
-    const { columnDescriptors } = data
     const inHeader = new Set(columnDescriptors.map(c => c.name))
 
     // Build descriptors following DataFrame columns order
@@ -39,7 +38,7 @@ export function ColumnParametersProvider({ columnConfiguration, data, children }
     }
 
     return cols
-  }, [data, columnConfiguration])
+  }, [columnDescriptors, columnConfiguration])
 
   return (
     <ColumnParametersContext.Provider value={value}>
