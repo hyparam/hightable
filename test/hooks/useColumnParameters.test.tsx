@@ -3,15 +3,15 @@ import { afterEach, describe, expect, it } from 'vitest'
 import type { ReactNode } from 'react'
 
 import { ColumnConfiguration } from '../../src/helpers/columnConfiguration.js'
-import { DataFrame } from '../../src/helpers/dataframe/index.js'
+import { ColumnDescriptor } from '../../src/helpers/dataframe/index.js'
 import { ColumnParametersProvider, useColumnParameters } from '../../src/hooks/useColumnParameters.js'
 
 afterEach(cleanup)
 
-function createWrapper(data: Pick<DataFrame, 'columnDescriptors'>, columnConfiguration?: ColumnConfiguration) {
+function createWrapper(columnDescriptors: ColumnDescriptor[], columnConfiguration?: ColumnConfiguration) {
   function wrapper({ children }: { children: ReactNode }) {
     return (
-      <ColumnParametersProvider data={data} columnConfiguration={columnConfiguration}>
+      <ColumnParametersProvider columnDescriptors={columnDescriptors} columnConfiguration={columnConfiguration}>
         {children}
       </ColumnParametersProvider>
     )
@@ -21,23 +21,19 @@ function createWrapper(data: Pick<DataFrame, 'columnDescriptors'>, columnConfigu
 
 describe('useColumnParameters', () => {
   it('returns parameters in DataFrame column descriptors order', () => {
-    const df = {
-      columnDescriptors: ['id', 'name', 'status'].map(name => ({ name })),
-    } as Pick<DataFrame, 'columnDescriptors'>
+    const columnDescriptors = ['id', 'name', 'status'].map(name => ({ name }))
 
     const { result } = renderHook(
       () => useColumnParameters(),
-      { wrapper: createWrapper(df) }
+      { wrapper: createWrapper(columnDescriptors) }
     )
 
-    expect(result.current.map(c => c.name)).toEqual(df.columnDescriptors.map(c => c.name))
+    expect(result.current.map(c => c.name)).toEqual(columnDescriptors.map(c => c.name))
     expect(result.current.map(c => c.index)).toEqual([0, 1, 2])
   })
 
   it('merges columnConfiguration props into parameters', () => {
-    const df = {
-      columnDescriptors: ['id', 'name', 'status'].map(name => ({ name })),
-    } as Pick<DataFrame, 'columnDescriptors'>
+    const columnDescriptors = ['id', 'name', 'status'].map(name => ({ name }))
 
     const columnConfiguration: ColumnConfiguration = {
       name: { headerComponent: <strong>Name</strong> },
@@ -45,7 +41,7 @@ describe('useColumnParameters', () => {
 
     const { result } = renderHook(
       () => useColumnParameters(),
-      { wrapper: createWrapper(df, columnConfiguration) }
+      { wrapper: createWrapper(columnDescriptors, columnConfiguration) }
     )
 
     const [, nameCol] = result.current
@@ -59,9 +55,7 @@ describe('useColumnParameters', () => {
   })
 
   it('includes minWidth in column configuration', () => {
-    const df = {
-      columnDescriptors: ['id', 'name'].map(name => ({ name })),
-    } as Pick<DataFrame, 'columnDescriptors'>
+    const columnDescriptors = ['id', 'name'].map(name => ({ name }))
 
     const columnConfiguration: ColumnConfiguration = {
       name: { minWidth: 150 },
@@ -69,7 +63,7 @@ describe('useColumnParameters', () => {
 
     const { result } = renderHook(
       () => useColumnParameters(),
-      { wrapper: createWrapper(df, columnConfiguration) }
+      { wrapper: createWrapper(columnDescriptors, columnConfiguration) }
     )
 
     const [, nameCol] = result.current
@@ -78,13 +72,11 @@ describe('useColumnParameters', () => {
   })
 
   it('uses dataframe column descriptor sortable value', () => {
-    const df = {
-      columnDescriptors: [
-        { name: 'id' },
-        { name: 'name', sortable: true },
-        { name: 'status' },
-      ],
-    } as Pick<DataFrame, 'columnDescriptors'>
+    const columnDescriptors = [
+      { name: 'id' },
+      { name: 'name', sortable: true },
+      { name: 'status' },
+    ]
 
     const columnConfiguration: ColumnConfiguration = {
       name: { headerComponent: <strong>Name</strong> },
@@ -92,7 +84,7 @@ describe('useColumnParameters', () => {
 
     const { result } = renderHook(
       () => useColumnParameters(),
-      { wrapper: createWrapper(df, columnConfiguration) }
+      { wrapper: createWrapper(columnDescriptors, columnConfiguration) }
     )
 
     const [idCol, nameCol] = result.current
@@ -109,9 +101,7 @@ describe('useColumnParameters', () => {
   })
 
   it('ignores configuration keys that are not in DataFrame.columnDescriptors', () => {
-    const df = {
-      columnDescriptors: [{ name: 'id' }],
-    } as Pick<DataFrame, 'columnDescriptors'>
+    const columnDescriptors = [{ name: 'id' }]
     const columnConfiguration = {
       id: { width: 50 },
       extraneous: { width: 123 },
@@ -119,7 +109,7 @@ describe('useColumnParameters', () => {
 
     const { result } = renderHook(
       () => useColumnParameters(),
-      { wrapper: createWrapper(df, columnConfiguration) }
+      { wrapper: createWrapper(columnDescriptors, columnConfiguration) }
     )
 
     expect(result.current).toHaveLength(1)
@@ -127,13 +117,11 @@ describe('useColumnParameters', () => {
   })
 
   it('returns a stable reference when inputs are unchanged', () => {
-    const df = {
-      columnDescriptors: [{ name: 'id' }],
-    } as Pick<DataFrame, 'columnDescriptors'>
+    const columnDescriptors = [{ name: 'id' }]
 
     const { result, rerender } = renderHook(
       () => useColumnParameters(),
-      { wrapper: createWrapper(df) }
+      { wrapper: createWrapper(columnDescriptors) }
     )
 
     const first = result.current
