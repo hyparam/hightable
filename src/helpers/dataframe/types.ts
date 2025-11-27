@@ -33,7 +33,7 @@ export type Fetch = ({ rowStart, rowEnd, columns, orderBy, signal }: { rowStart:
 export interface DataFrame<M extends Obj = Obj, C extends Obj = Obj> {
   numRows: number
   // TODO(SL): rename back to header? (`columns` might be confusing as it's a parameter of the fetch method)
-  columnDescriptors: readonly ColumnDescriptor<C>[]
+  columnDescriptors: ColumnDescriptor<C>[]
   metadata?: M
 
   // If true, only one column can be sorted at a time, and any update to orderBy will replace the previous one.
