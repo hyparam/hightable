@@ -108,7 +108,7 @@ function HighTableData(props: PropsData) {
               {/* Create a new navigation context if the dataframe has changed, because the focused cell might not exist anymore */}
               <CellsNavigationProvider key={key} colCount={data.columnDescriptors.length + 1} rowCount={numRows + 1} rowPadding={props.padding ?? defaultPadding}>
                 <PortalContainerProvider>
-                  <HighTableInner version={version} {...props} maxRowNumber={maxRowNumber} />
+                  <HighTableInner data={data} version={version} {...props} maxRowNumber={maxRowNumber} />
                 </PortalContainerProvider>
               </CellsNavigationProvider>
             </SelectionProvider>
@@ -119,7 +119,7 @@ function HighTableData(props: PropsData) {
   )
 }
 
-type PropsInner = Omit<PropsData, 'orderBy' | 'onOrderByChange' | 'selection' | 'onSelectionChange' | 'columnConfiguration' | 'maxRowNumber'> & {
+type PropsInner = Omit<Props, 'orderBy' | 'onOrderByChange' | 'selection' | 'onSelectionChange' | 'columnConfiguration' | 'maxRowNumber'> & {
   version: number // version of the data frame, used to re-render the component when the data changes
   maxRowNumber: number // maximum row number to display (for row headers).
 }
@@ -137,6 +137,7 @@ interface RowsRange {
  * remove the need to reindent the code if adding a new context provide.
  */
 export function HighTableInner({
+  data,
   overscan = defaultOverscan,
   padding = defaultPadding,
   focus = true,
@@ -152,7 +153,6 @@ export function HighTableInner({
   maxRowNumber,
 }: PropsInner) {
   // contexts
-  const { data } = useData()
   const { numRows } = data
   const { shouldScroll, setShouldScroll, onTableKeyDown: onNavigationTableKeyDown, onScrollKeyDown, cellPosition, focusFirstCell } = useCellsNavigation()
   const { containerRef } = usePortalContainer()
