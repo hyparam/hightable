@@ -37,7 +37,7 @@ npm i hightable
 
 HighTable uses a data model called `DataFrame`, which defines how data is fetched and structured. The `DataFrame` object should have the following properties:
 
- - `header`: An array of strings representing the column names.
+ - `columnDescriptors`: An array of objects representing the column name, if it is sortable, and any metadata.
  - `numRows`: The total number of rows in the dataset. It can be implemented as a getter and a setter that triggers a `numrowschange` event when it changes.
  - `getRowNumber`: A function that returns the row number for a given row index. If not resolved yet, it returns undefined.
  - `getCell`: A function that returns the value of a cell at a specific row and column. If not resolved yet, it returns undefined.

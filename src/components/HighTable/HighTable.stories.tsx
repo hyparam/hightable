@@ -106,7 +106,7 @@ function createVaryingArrayDataFrame({ delay_ms, maxRows }: { delay_ms?: number,
   const df = arrayDataFrame(array)
   // add a new row every delay_ms, until we reach maxRows rows, then update existing rows, then remove rows, and loop
   let i = 0
-  setInterval(() => {
+  const interval = setInterval(() => {
     i++
     const phase = Math.floor(i / maxRows) % 3
     if (phase === 0) {
@@ -125,6 +125,10 @@ function createVaryingArrayDataFrame({ delay_ms, maxRows }: { delay_ms?: number,
     } else {
       // remove the last row
       df._array.pop()
+    }
+    // Stop after i reaches maxRows * 1000
+    if (i >= maxRows * 1000) {
+      clearInterval(interval)
     }
   }, delay_ms)
 
