@@ -1,5 +1,23 @@
 # CHANGELOG
 
+## [0.23.0](https://github.com/hyparam/hightable/compare/v0.22.2...v0.23.0) - 2025-11-28
+
+### Changed
+
+- **Breaking** - pass `exclusiveSort` as an explicit prop of `TableHeader` instead of reading from the data frame ([#334](https://github.com/hyparam/hightable/pull/334)).
+
+### Removed
+
+- **Breaking** - removed `filterDataFrame` helper function ([#336](https://github.com/hyparam/hightable/pull/336)).
+
+### Added
+
+- support updating `numRows` dynamically ([#337](https://github.com/hyparam/hightable/pull/337)).
+
+### Fixed
+
+- fix styles for tall headers ([#331](https://github.com/hyparam/hightable/pull/331)).
+
 ## [0.22.2](https://github.com/hyparam/hightable/compare/v0.22.1...v0.22.2) - 2025-11-18
 
 ### Fixed
