@@ -3,6 +3,17 @@ import { createEventTarget } from '../typedEventTarget.js'
 import { checkSignal, validateColumn, validateFetchParams, validateRow } from './helpers.js'
 import { DataFrame, DataFrameEvents, Obj, ResolvedValue } from './types.js'
 
+/**
+ * Wrap a DataFrame to make it sortable on the specified columns.
+ * This helper might not be efficient for large datasets, use with caution.
+ *
+ * @param data The DataFrame to wrap.
+ * @param options Optional parameters.
+ * @param options.sortableColumns A set of column names that should be sortable. If not provided, all columns are considered sortable.
+ * @param options.exclusiveSort If true, only one column can be sorted at a time, and any update to orderBy will replace the previous one. Defaults to false.
+ *
+ * @returns A new DataFrame that supports sorting on the specified columns.
+ */
 export function sortableDataFrame<M extends Obj, C extends Obj>(
   data: DataFrame<M, C>, options?: { sortableColumns?: Set<string>, exclusiveSort?: boolean }
 ): DataFrame<M, C> {
