@@ -2,10 +2,11 @@ import { ReactNode, createContext, useContext, useEffect, useMemo, useState } fr
 import { DataFrame, Obj, arrayDataFrame } from '../helpers/dataframe/index.js'
 
 interface DataContextType {
-  data: DataFrame,
+  data: Omit<DataFrame, 'numRows'>,
   key: string,
   version: number,
   maxRowNumber: number
+  numRows: number
 }
 
 function getDefaultDataContext(): DataContextType {
@@ -14,6 +15,7 @@ function getDefaultDataContext(): DataContextType {
     key: 'default',
     version: 0,
     maxRowNumber: 0,
+    numRows: 0,
   }
 }
 
@@ -34,14 +36,20 @@ export function DataProvider<M extends Obj, C extends Obj>({ children, data, max
   const [key, setKey] = useState<string>(getRandomKey())
   const [previousData, setPreviousData] = useState<DataFrame<M, C>>(data)
   const [version, setVersion] = useState(0)
+  const [numRows, setNumRows] = useState(data.numRows)
 
   useEffect(() => {
     function onResolve() {
       setVersion(prev => prev + 1)
     }
+    function onNumRowsChange() {
+      setNumRows(data.numRows)
+    }
     data.eventTarget?.addEventListener('resolve', onResolve)
+    data.eventTarget?.addEventListener('numrowschange', onNumRowsChange)
     return () => {
       data.eventTarget?.removeEventListener('resolve', onResolve)
+      data.eventTarget?.removeEventListener('numrowschange', onNumRowsChange)
     }
   }, [data])
 
@@ -52,8 +60,8 @@ export function DataProvider<M extends Obj, C extends Obj>({ children, data, max
   }
 
   const maxRowNumber = useMemo(() => {
-    return propMaxRowNumber ?? data.numRows
-  }, [propMaxRowNumber, data.numRows])
+    return propMaxRowNumber ?? numRows
+  }, [propMaxRowNumber, numRows])
 
   return (
     <DataContext.Provider value={{
@@ -61,6 +69,7 @@ export function DataProvider<M extends Obj, C extends Obj>({ children, data, max
       key,
       version,
       maxRowNumber,
+      numRows,
     }}>
       {children}
     </DataContext.Provider>

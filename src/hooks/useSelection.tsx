@@ -22,7 +22,8 @@ export const SelectionContext = createContext<SelectionContextType>({})
 interface SelectionProviderProps {
   selection?: Selection // selection and anchor rows, expressed as data indexes (not as indexes in the table). If undefined, the selection is hidden and the interactions are disabled.
   onSelectionChange?: (selection: Selection) => void // callback to call when a user interaction changes the selection. The selection is expressed as data indexes (not as indexes in the table). The interactions are disabled if undefined.
-  data: DataFrame
+  data: Omit<DataFrame, 'numRows'>
+  numRows: number
   onError?: (error: unknown) => void
   children: ReactNode
 }
@@ -31,7 +32,8 @@ interface Gesture {
   controller: AbortController // the AbortController used to abort the gesture
 }
 
-export function SelectionProvider({ children, data, onError, selection: inputSelection, onSelectionChange: inputOnSelectionChange }: SelectionProviderProps) {
+export function SelectionProvider({ children, data, numRows, onError, selection: inputSelection, onSelectionChange: inputOnSelectionChange }: SelectionProviderProps) {
+  const [previousNumRows, setPreviousNumRows] = useState(numRows)
   const { value: selection, onChange: onSelectionChange } = useInputState<Selection>({
     value: inputSelection,
     onChange: inputOnSelectionChange,
@@ -40,8 +42,18 @@ export function SelectionProvider({ children, data, onError, selection: inputSel
   })
 
   const [rowByRowNumberAndOrderBy] = useState<Map<string, Map<number, number | undefined>>>(() => new Map())
-  const [allRowsSelected, setAllRowsSelected] = useState<boolean | undefined>(areAllSelected({ data, selection }))
+  const [allRowsSelected, setAllRowsSelected] = useState<boolean | undefined>(areAllSelected({ numRows, selection }))
   const { orderBy } = useOrderBy()
+
+  if (numRows !== previousNumRows) {
+    setPreviousNumRows(numRows)
+    // recompute if all rows are selected
+    setAllRowsSelected(areAllSelected({ numRows, selection }))
+    // we need to clear the cache when numRows changes, because it might be invalid
+    // unfortunately, this has a performance cost since the cache will need to be rebuilt
+    // TODO(SL): find a better way to handle this
+    rowByRowNumberAndOrderBy.clear()
+  }
 
   const [gesture, setGesture] = useState<Gesture | undefined>(undefined)
   const stopGesture = useCallback(({ gesture }: {gesture: Gesture}) => {
@@ -103,7 +115,7 @@ export function SelectionProvider({ children, data, onError, selection: inputSel
     return ({ row, rowNumber }: { row: number, rowNumber: number }) => {
       const gesture = startGesture()
       const { signal } = gesture.controller
-      toggleRange({ data, row, rowNumber, selection, orderBy, signal, rowByRowNumberAndOrderBy })
+      toggleRange({ data, numRows, row, rowNumber, selection, orderBy, signal, rowByRowNumberAndOrderBy })
         .finally(() => { stopGesture({ gesture }) })
         .then((newSelection) => { onSelectionChange(newSelection) })
         .catch((error: unknown) => {
@@ -114,7 +126,7 @@ export function SelectionProvider({ children, data, onError, selection: inputSel
           onError?.(error)
         })
     }
-  }, [onSelectionChange, selection, rowByRowNumberAndOrderBy, data, orderBy, startGesture, stopGesture, onError])
+  }, [onSelectionChange, selection, rowByRowNumberAndOrderBy, data, numRows, orderBy, startGesture, stopGesture, onError])
 
   const toggleAllRows = useMemo(() => {
     if (!selection || !onSelectionChange) return
@@ -122,7 +134,7 @@ export function SelectionProvider({ children, data, onError, selection: inputSel
       const gesture = startGesture()
       const { signal } = gesture.controller
       // toggle a range to the row number
-      toggleAll({ data, selection, signal })
+      toggleAll({ data, numRows, selection, signal })
         .finally(() => { stopGesture({ gesture }) })
         .then((newSelection) => {onSelectionChange(newSelection)})
         .catch((error: unknown) => {
@@ -133,7 +145,7 @@ export function SelectionProvider({ children, data, onError, selection: inputSel
           onError?.(error)
         })
     }
-  }, [onSelectionChange, data, selection, startGesture, stopGesture, onError])
+  }, [onSelectionChange, data, numRows, selection, startGesture, stopGesture, onError])
 
   const onTableKeyDown = useCallback((event: KeyboardEvent) => {
     const { key, shiftKey } = event
@@ -153,7 +165,7 @@ export function SelectionProvider({ children, data, onError, selection: inputSel
       event.preventDefault()
       // only select if selection is enabled, but prevent the default behavior in all cases for consistency
       if (selection && onSelectionChange) {
-        toggleAll({ data, selection, signal })
+        toggleAll({ data, numRows, selection, signal })
           .finally(() => { stopGesture({ gesture }) })
           .then((newSelection) => { onSelectionChange(newSelection) })
           .catch((error: unknown) => {
@@ -172,7 +184,7 @@ export function SelectionProvider({ children, data, onError, selection: inputSel
       }
       const index = Number(target.getAttribute('data-rownumber'))
       const isDataCell = target.getAttribute('role') === 'cell' // the row header cells are handled by the RowHeader component
-      if (!isDataCell || isNaN(index) || !Number.isInteger(index) || index < 0 || index >= data.numRows) {
+      if (!isDataCell || isNaN(index) || !Number.isInteger(index) || index < 0 || index >= numRows) {
         return
       }
       event.preventDefault()
@@ -183,14 +195,14 @@ export function SelectionProvider({ children, data, onError, selection: inputSel
         stopGesture({ gesture })
       }
     }
-  }, [selection, onSelectionChange, startGesture, stopGesture, data, onError])
+  }, [selection, onSelectionChange, startGesture, stopGesture, data, numRows, onError])
 
   useEffect(() => {
     if (!selection) return undefined
     // it's not really a gesture, but we want it to be aborted when a new gesture starts
     const gesture = startGesture()
     const { signal } = gesture.controller
-    fetchAreAllSelected({ data, selection, signal })
+    fetchAreAllSelected({ data, numRows, selection, signal })
       .finally(() => { stopGesture({ gesture }) })
       .then((areAllSelected) => { setAllRowsSelected(areAllSelected) })
       .catch((error: unknown) => {
@@ -200,7 +212,7 @@ export function SelectionProvider({ children, data, onError, selection: inputSel
         }
         onError?.(error)
       })
-  }, [selection, data, startGesture, stopGesture, onError])
+  }, [selection, data, numRows, startGesture, stopGesture, onError])
 
   return (
     <SelectionContext.Provider value={{
@@ -223,7 +235,7 @@ export function useSelection(): SelectionContextType {
 }
 
 // fetch the row numbers in the range
-async function fetchRowNumbers({ data, rowStart, rowEnd, orderBy, signal }: { data: DataFrame, rowStart: number, rowEnd: number, orderBy?: OrderBy, signal?: AbortSignal }) {
+async function fetchRowNumbers({ data, rowStart, rowEnd, orderBy, signal }: { data: Omit<DataFrame, 'numRows'>, rowStart: number, rowEnd: number, orderBy?: OrderBy, signal?: AbortSignal }) {
   await data.fetch?.({ rowStart, rowEnd, orderBy, signal })
   const rowNumbers = Array.from({ length: rowEnd - rowStart }, (_, i) => {
     const row = i + rowStart
@@ -236,9 +248,8 @@ async function fetchRowNumbers({ data, rowStart, rowEnd, orderBy, signal }: { da
   return rowNumbers
 }
 
-async function fetchRow({ data, rowNumber, orderBy, signal, rowByRowNumberAndOrderBy }: { data: DataFrame, rowNumber: number, orderBy?: OrderBy, signal?: AbortSignal, rowByRowNumberAndOrderBy?: Map<string, Map<number, number | undefined>> }) {
+async function fetchRow({ data, numRows, rowNumber, orderBy, signal, rowByRowNumberAndOrderBy }: { data: Omit<DataFrame, 'numRows'>, numRows: number, rowNumber: number, orderBy?: OrderBy, signal?: AbortSignal, rowByRowNumberAndOrderBy?: Map<string, Map<number, number | undefined>> }) {
   checkSignal(signal)
-  const { numRows } = data
   const orderByKey = serializeOrderBy(orderBy ?? [])
   const cachedMap = rowByRowNumberAndOrderBy?.get(orderByKey)
   if (cachedMap) {
@@ -265,7 +276,7 @@ async function fetchRow({ data, rowNumber, orderBy, signal, rowByRowNumberAndOrd
   return rowByRowNumber.get(rowNumber)
 }
 
-async function toggleRange({ data, row, rowNumber, selection, orderBy, signal, rowByRowNumberAndOrderBy }: { data: DataFrame, row: number, rowNumber: number, selection: Selection, orderBy?: OrderBy, signal?: AbortSignal, rowByRowNumberAndOrderBy?: Map<string, Map<number, number | undefined>> }): Promise<Selection> {
+async function toggleRange({ data, numRows, row, rowNumber, selection, orderBy, signal, rowByRowNumberAndOrderBy }: { data: Omit<DataFrame, 'numRows'>, numRows: number, row: number, rowNumber: number, selection: Selection, orderBy?: OrderBy, signal?: AbortSignal, rowByRowNumberAndOrderBy?: Map<string, Map<number, number | undefined>> }): Promise<Selection> {
   const { anchor } = selection
   if (anchor === undefined || anchor === rowNumber) {
     // toggle the row without the anchor
@@ -273,7 +284,7 @@ async function toggleRange({ data, row, rowNumber, selection, orderBy, signal, r
   }
 
   // try to get the tableIndex of the anchor
-  const anchorRow: number | undefined = await fetchRow({ data, rowNumber: anchor, orderBy, signal, rowByRowNumberAndOrderBy })
+  const anchorRow: number | undefined = await fetchRow({ data, numRows, rowNumber: anchor, orderBy, signal, rowByRowNumberAndOrderBy })
 
   if (anchorRow === undefined || anchorRow === row) {
     // Note: anchorRow should be different from row at that point because we already checked anchor === rowNumber above
@@ -302,10 +313,10 @@ async function toggleRange({ data, row, rowNumber, selection, orderBy, signal, r
   return { ranges, anchor: newAnchor }
 }
 
-async function toggleAll({ data, selection, signal }: { data: DataFrame, selection: Selection, signal?: AbortSignal }): Promise<Selection> {
+async function toggleAll({ data, numRows, selection, signal }: { data: Omit<DataFrame, 'numRows'>, numRows: number, selection: Selection, signal?: AbortSignal }): Promise<Selection> {
   // check if all the rows are already selected
-  const areAllSelected = await fetchAreAllSelected({ data, selection, signal })
-  const rowNumbers = await fetchRowNumbers({ data, rowStart: 0, rowEnd: data.numRows, signal })
+  const areAllSelected = await fetchAreAllSelected({ data, numRows, selection, signal })
+  const rowNumbers = await fetchRowNumbers({ data, rowStart: 0, rowEnd: numRows, signal })
 
   let { ranges } = selection
   for (const rowNumber of rowNumbers) {
@@ -316,15 +327,15 @@ async function toggleAll({ data, selection, signal }: { data: DataFrame, selecti
   return { ranges }
 }
 
-function areAllSelected({ data, selection }: { data: DataFrame, selection?: Selection }): false | undefined {
+function areAllSelected({ numRows, selection }: { numRows: number, selection?: Selection }): false | undefined {
   if (!selection) {
     return false
   }
-  if (data.numRows === 0) {
+  if (numRows === 0) {
     return false
   }
   // optimization: if the selection contains less than the total number of rows, we can assume not all rows are selected
-  if (countSelectedRows({ selection }) < data.numRows) {
+  if (countSelectedRows({ selection }) < numRows) {
     return false
   }
   // the opposite is not true, because a rows selection can be shared between dataframes (think a dataframe and a sampled dataframe)
@@ -332,13 +343,13 @@ function areAllSelected({ data, selection }: { data: DataFrame, selection?: Sele
   // At that point, we don't know: it requires an async operation to check if all rows are selected
 }
 
-async function fetchAreAllSelected({ data, selection, signal }: { data: DataFrame, selection: Selection, signal?: AbortSignal }): Promise<boolean> {
-  const syncAnswer = areAllSelected({ data, selection })
+async function fetchAreAllSelected({ data, numRows, selection, signal }: { data: Omit<DataFrame, 'numRows'>, numRows: number, selection: Selection, signal?: AbortSignal }): Promise<boolean> {
+  const syncAnswer = areAllSelected({ numRows, selection })
   if (syncAnswer !== undefined) {
     return syncAnswer
   }
   // fetch all the row numbers in the table
-  const rowNumbers = await fetchRowNumbers({ data, rowStart: 0, rowEnd: data.numRows, signal })
+  const rowNumbers = await fetchRowNumbers({ data, rowStart: 0, rowEnd: numRows, signal })
   // check if all these row numbers are in the selection
   return rowNumbers.length > 0 && rowNumbers.every(rowNumber => isSelected({ ranges: selection.ranges, index: rowNumber }))
 }

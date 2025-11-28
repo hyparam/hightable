@@ -1,9 +1,9 @@
 import { OrderBy, validateOrderByAgainstSortableColumns } from '../sort.js'
 import { DataFrame, ResolvedValue } from './types.js'
 
-export function createGetRowNumber({ numRows }: { numRows: number }) {
+export function createGetRowNumber(data: Pick<DataFrame, 'numRows'>) {
   return ({ row, orderBy }: { row: number, orderBy?: OrderBy }): ResolvedValue<number> => {
-    validateRow({ row, data: { numRows } })
+    validateRow({ row, data: { numRows: data.numRows } })
     // orderBy is not supported in this function, so we throw if orderBy is defined.
     if (orderBy && orderBy.length > 0) {
       throw new Error('orderBy is not supported in this getRowNumber implementation.')
@@ -34,22 +34,22 @@ export function validateFetchParams({ rowStart, rowEnd, columns, orderBy, data }
   validateOrderBy({ orderBy, data })
 }
 
-export function validateRow({ row, data: { numRows } }: { row: number, data: Pick<DataFrame, 'numRows'> }): void {
-  if (row < 0 || row >= numRows || !Number.isInteger(row)) {
-    throw new Error(`Invalid row index: ${row}, numRows: ${numRows}`)
+export function validateRow({ row, data }: { row: number, data: Pick<DataFrame, 'numRows'> }): void {
+  if (row < 0 || row >= data.numRows || !Number.isInteger(row)) {
+    throw new Error(`Invalid row index: ${row}, numRows: ${data.numRows}`)
   }
 }
 
-export function validateColumn({ column, data: { columnDescriptors } }: { column: string, data: Pick<DataFrame, 'columnDescriptors'> }): void {
-  const columnNames = columnDescriptors.map(c => c.name)
+export function validateColumn({ column, data }: { column: string, data: Pick<DataFrame, 'columnDescriptors'> }): void {
+  const columnNames = data.columnDescriptors.map(c => c.name)
   if (!columnNames.includes(column)) {
     throw new Error(`Invalid column: ${column}. Available columns: ${columnNames.join(', ')}`)
   }
 }
 
-export function validateOrderBy({ orderBy, data: { columnDescriptors, exclusiveSort } }: { orderBy?: OrderBy, data: Pick<DataFrame, 'columnDescriptors' | 'exclusiveSort'> }): void {
-  const sortableColumns = new Set(columnDescriptors.filter(c => c.sortable).map(c => c.name))
-  validateOrderByAgainstSortableColumns({ orderBy, sortableColumns, exclusiveSort })
+export function validateOrderBy({ orderBy, data }: { orderBy?: OrderBy, data: Pick<DataFrame, 'columnDescriptors' | 'exclusiveSort'> }): void {
+  const sortableColumns = new Set(data.columnDescriptors.filter(c => c.sortable).map(c => c.name))
+  validateOrderByAgainstSortableColumns({ orderBy, sortableColumns, exclusiveSort: data.exclusiveSort })
 }
 
 export function checkSignal(signal?: AbortSignal): void {

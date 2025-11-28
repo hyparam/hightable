@@ -2,7 +2,7 @@ import { act, fireEvent, waitFor, within } from '@testing-library/react'
 import { UserEvent } from '@testing-library/user-event'
 import { Mock, afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createGetRowNumber, validateFetchParams, validateGetCellParams, validateGetRowNumberParams } from '../../helpers/dataframe/helpers.js'
-import { DataFrame, DataFrameEvents, Fetch } from '../../helpers/dataframe/index.js'
+import { DataFrame, DataFrameEvents, Fetch, arrayDataFrame } from '../../helpers/dataframe/index.js'
 import { sortableDataFrame } from '../../helpers/dataframe/sort.js'
 import { OrderBy } from '../../helpers/sort.js'
 import { createEventTarget } from '../../helpers/typedEventTarget.js'
@@ -1375,55 +1375,30 @@ describe('When the table scroller is focused', () => {
   })
 })
 
-// TODO(SL): restore when we handle errors better
-// describe('When the number of rows is updated', () => {
-//   it('an error is raised', async () => {
-//     const smallData = {
-//       ...data,
-//       numRows: 5,
-//     }
+describe('When the number of rows is updated', () => {
+  it('shows the updated row count', async () => {
+    const array: Record<string, any>[] = [
+      { ID: 'row 0', Value: 10 },
+    ]
+    const data = arrayDataFrame(array)
 
-//     class ErrorBoundary extends Component<{ children: ReactNode }, { lastError: unknown }>{
-//       constructor(props: { children: ReactNode }) {
-//         super(props)
-//         this.state = { lastError: undefined }
-//       }
+    const { findByRole, getByRole, getAllByRole } = render(
+      <HighTable data={data} />
+    )
+    // await because we have to wait for the data to be fetched first
+    await findByRole('cell', { name: 'row 0' })
+    expect(getAllByRole('row')).toHaveLength(2) // +1 for the header row
+    expect(getByRole('grid').getAttribute('aria-rowcount')).toBe('2')
 
-//       static getDerivedStateFromError(error: unknown) {
-//         // Update state so the next render will show the fallback UI.
-//         return { lastError: error }
-//       }
+    // await is required, the sync version does not work
+    // eslint-disable-next-line require-await, @typescript-eslint/require-await
+    await act(async () => {
+      data._array.push({ ID: 'row 1', Value: 20 })
+    })
 
-//       componentDidCatch() {
-//         // Stop the error propagation
-//       }
-
-//       render() {
-//         if (this.state.lastError) {
-//           // You can render any custom fallback UI
-//           return <div role="alert">Something went wrong</div>
-//         }
-
-//         return this.props.children
-//       }
-//     }
-
-//     const { findByRole, getByRole, getAllByRole, rerender } = render(
-//       <ErrorBoundary>
-//         <HighTable data={smallData} />
-//       </ErrorBoundary>
-//     )
-//     // await because we have to wait for the data to be fetched first
-//     await findByRole('cell', { name: 'row 2' })
-//     expect(getAllByRole('row')).toHaveLength(6) // +1 for the header row
-//     expect(getByRole('grid').getAttribute('aria-rowcount')).toBe('6')
-
-//     smallData.numRows = 10
-
-//     rerender(
-//       <ErrorBoundary>
-//         <HighTable data={smallData} />
-//       </ErrorBoundary>
-//     )
-//   })
-// })
+    await waitFor(() => {
+      expect(getAllByRole('row')).toHaveLength(3) // +1 for the header row
+      expect(getByRole('grid').getAttribute('aria-rowcount')).toBe('3')
+    })
+  })
+})

@@ -11,6 +11,7 @@ export interface ResolvedValue<T = any> {
 
 export interface DataFrameEvents {
   'resolve': undefined;
+  'numrowschange': undefined;
 }
 
 export interface ColumnDescriptor<C extends Obj = Obj> {
@@ -31,6 +32,10 @@ export type Fetch = ({ rowStart, rowEnd, columns, orderBy, signal }: { rowStart:
  * - throw an error if a column within `orderBy` is not sortable.
  */
 export interface DataFrame<M extends Obj = Obj, C extends Obj = Obj> {
+  // number of rows in the data frame
+  // trigger a "numrowschange" event when it changes (can be implemented with a getter and a setter, emitting the event on set)
+  // if numRows can change, be careful to take it into account in getCell, getRowNumber and fetch implementations,
+  // for example when validating the row parameter.
   numRows: number
   // TODO(SL): rename back to header? (`columns` might be confusing as it's a parameter of the fetch method)
   columnDescriptors: ColumnDescriptor<C>[]
