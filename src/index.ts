@@ -1,7 +1,7 @@
 import HighTable from './components/HighTable/HighTable.js'
 export { type CellContentProps } from './components/HighTable/HighTable.js'
 export type { ColumnConfig, ColumnConfiguration } from './helpers/columnConfiguration.js'
-export { arrayDataFrame, checkSignal, convertV1ToDataFrame, createGetRowNumber, filterDataFrame, sortableDataFrame, validateColumn, validateFetchParams, validateGetCellParams, validateGetRowNumberParams, validateOrderBy, validateRow } from './helpers/dataframe/index.js'
+export { arrayDataFrame, checkSignal, convertV1ToDataFrame, createGetRowNumber, sortableDataFrame, validateColumn, validateFetchParams, validateGetCellParams, validateGetRowNumberParams, validateOrderBy, validateRow } from './helpers/dataframe/index.js'
 export type { Cells, DataFrame, DataFrameEvents, ResolvedValue } from './helpers/dataframe/index.js'
 export { resolvablePromise, wrapPromise, wrapResolved } from './helpers/dataframe/legacy/promise.js'
 export type { ResolvablePromise } from './helpers/dataframe/legacy/promise.js'
