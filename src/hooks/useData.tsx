@@ -45,11 +45,13 @@ export function DataProvider<M extends Obj, C extends Obj>({ children, data, max
     function onNumRowsChange() {
       setNumRows(data.numRows)
     }
-    data.eventTarget?.addEventListener('resolve', onResolve)
     data.eventTarget?.addEventListener('numrowschange', onNumRowsChange)
+    data.eventTarget?.addEventListener('resolve', onResolve)
+    data.eventTarget?.addEventListener('update', onResolve)
     return () => {
-      data.eventTarget?.removeEventListener('resolve', onResolve)
       data.eventTarget?.removeEventListener('numrowschange', onNumRowsChange)
+      data.eventTarget?.removeEventListener('resolve', onResolve)
+      data.eventTarget?.removeEventListener('update', onResolve)
     }
   }, [data])
 

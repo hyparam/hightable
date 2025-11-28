@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { arrayDataFrame } from '../../../src/helpers/dataframe/index.js'
+import { arrayDataFrame } from '../../../src/helpers/dataframe/array.js'
 
 function createTestData() {
   return [
@@ -68,26 +68,30 @@ describe('arrayDataFrame', () => {
     const df = arrayDataFrame(createTestData())
     const rowListener = vi.fn()
     const resolveListener = vi.fn()
+    const updateListener = vi.fn()
     df.eventTarget?.addEventListener('numrowschange', rowListener)
     df.eventTarget?.addEventListener('resolve', resolveListener)
+    df.eventTarget?.addEventListener('update', updateListener)
 
     expect(df.numRows).toBe(3)
     df._array.push({ id: 4, name: 'Diana', age: 28 })
-    expect(resolveListener).toHaveBeenCalled()
+    expect(updateListener).toHaveBeenCalled()
     expect(rowListener).toHaveBeenCalled()
+    expect(resolveListener).toHaveBeenCalledTimes(0)
     expect(df.numRows).toBe(4)
 
-    // when an array element (a row) is replaced, the "resolve" event is dispatched
+    // when an array element (a row) is replaced, the "update" event is dispatched
     df._array[0] = { id: 1, name: 'Alicia', age: 30 }
-    expect(resolveListener).toHaveBeenCalledTimes(2)
+    expect(updateListener).toHaveBeenCalledTimes(2)
     expect(rowListener).toHaveBeenCalledTimes(1)
+    expect(resolveListener).toHaveBeenCalledTimes(0)
     expect(df.getCell({ row: 0, column: 'name' })?.value).toBe('Alicia')
   })
 
   it('does not dispatch event on change in a cell (deep change)', () => {
     const df = arrayDataFrame(createTestData())
     const resolveListener = vi.fn()
-    df.eventTarget?.addEventListener('resolve', resolveListener)
+    df.eventTarget?.addEventListener('update', resolveListener)
 
     // when a property of an array element (a cell) is changed, no event is dispatched, because the proxy is shallow
     df._array[0].name = 'Alicia'
@@ -102,12 +106,12 @@ describe('arrayDataFrame', () => {
       { id: 3, name: 'Charlie', age: 35 },
     ]
     const df = arrayDataFrame(original)
-    const resolveListener = vi.fn()
-    df.eventTarget?.addEventListener('resolve', resolveListener)
+    const updateListener = vi.fn()
+    df.eventTarget?.addEventListener('update', updateListener)
 
     // when the original array is modified, the event is not dispatched, but the data is updated
     original[0] = { id: 1, name: 'Alicia', age: 30 }
-    expect(resolveListener).toHaveBeenCalledTimes(0)
+    expect(updateListener).toHaveBeenCalledTimes(0)
     expect(df.getCell({ row: 0, column: 'name' })?.value).toBe('Alicia')
   })
 

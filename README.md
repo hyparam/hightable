@@ -41,8 +41,8 @@ HighTable uses a data model called `DataFrame`, which defines how data is fetche
  - `numRows`: The total number of rows in the dataset. It can be implemented as a getter and a setter that triggers a `numrowschange` event when it changes.
  - `getRowNumber`: A function that returns the row number for a given row index. If not resolved yet, it returns undefined.
  - `getCell`: A function that returns the value of a cell at a specific row and column. If not resolved yet, it returns undefined.
- - `eventTarget`: An optional event target which must dispatch the event `resolve` when a cell or row number is resolved, and `numrowschange` when the number of rows changes. This can be used to trigger re-renders or other side effects.
- - `fetch`: An optional asynchronous function that fetches cells and row numbers, for a range of rows and columns. It should only fetch the missing data, and once the data is fetched, `getRowNumber` and `getCell` should return the resolved values. It is responsible for dispaching the `resolve` event (once or multiple times) on the `eventTarget` when the data is ready.
+ - `eventTarget`: An optional event target which must dispatch the event `resolve` when a cell or row number is resolved, `numrowschange` when the number of rows changes, and `update` when the content changes. This can be used to trigger re-renders or other side effects.
+ - `fetch`: An optional asynchronous function that fetches cells and row numbers, for a range of rows and columns. It should only fetch the missing data, and once the data is fetched, `getRowNumber` and `getCell` should return the resolved values (or the updated values, if applicable). It is responsible for dispaching the `resolve` event (once or multiple times) on the `eventTarget` when the data is ready.
 
 ## Usage
 

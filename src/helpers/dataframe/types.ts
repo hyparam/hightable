@@ -9,9 +9,22 @@ export interface ResolvedValue<T = any> {
   value: T
 }
 
+/**
+ * Events emitted by DataFrame instances.
+ */
 export interface DataFrameEvents {
-  'resolve': undefined;
+  /**
+   * Emitted when the number of rows has changed.
+   */
   'numrowschange': undefined;
+  /**
+   * Emitted when a cell value has resolved.
+   */
+  'resolve': undefined;
+  /**
+   * Emitted when some data has been updated (e.g. a cell value).
+   */
+  'update': undefined;
 }
 
 export interface ColumnDescriptor<C extends Obj = Obj> {

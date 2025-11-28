@@ -607,3 +607,22 @@ export const LongVaryingData: Story = {
     data: createVaryingArrayDataFrame({ delay_ms: 10, maxRows: 1500 }),
   },
 }
+
+export const SortedVaryingData: Story = {
+  render: ({ data }) => {
+    const [selection, onSelectionChange] = useState<Selection>({
+      ranges: [],
+    })
+    return (
+      <HighTable
+        data={data}
+        selection={selection}
+        onSelectionChange={onSelectionChange}
+        orderBy={[{ column: 'Value', direction: 'ascending' }]}
+      />
+    )
+  },
+  args: {
+    data: sortableDataFrame(createVaryingArrayDataFrame({ delay_ms: 200, maxRows: 20 })),
+  },
+}

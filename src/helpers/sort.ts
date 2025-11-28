@@ -10,6 +10,9 @@ export type OrderBy = ColumnOrderBy[]
 export function serializeOrderBy(orderBy: OrderBy): string {
   return JSON.stringify(orderBy)
 }
+export function deserializeOrderBy(serialized: string): OrderBy {
+  return JSON.parse(serialized)
+}
 
 export function validateOrderByAgainstSortableColumns({ sortableColumns, orderBy, exclusiveSort }: { sortableColumns?: Set<string>, orderBy?: OrderBy, exclusiveSort?: boolean }): void {
   if (!orderBy) return

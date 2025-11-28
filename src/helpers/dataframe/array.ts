@@ -33,7 +33,7 @@ export function arrayDataFrame<M extends Obj, C extends Obj>(
       if (prop === 'length') {
         eventTarget.dispatchEvent(new CustomEvent('numrowschange'))
       } else {
-        eventTarget.dispatchEvent(new CustomEvent('resolve'))
+        eventTarget.dispatchEvent(new CustomEvent('update'))
       }
       return result
     },
