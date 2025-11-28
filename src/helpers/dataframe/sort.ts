@@ -62,11 +62,15 @@ export function sortableDataFrame<M extends Obj, C extends Obj>(
   }
   data.eventTarget?.addEventListener('update', async () => {
     // the update notification might be delayed if refreshing the caches takes time
+    // it might not be optimal to refresh all caches on every update, but it's the simplest way to ensure consistency
+    // also: during the refresh, the data might be in an inconsistent state
     await refreshCaches()
     eventTarget.dispatchEvent(new CustomEvent('update'))
   })
   data.eventTarget?.addEventListener('numrowschange', async () => {
     // the numrowschange notification might be delayed if refreshing the caches takes time
+    // it might not be optimal to refresh all caches on every update, but it's the simplest way to ensure consistency
+    // also: during the refresh, the data might be in an inconsistent state
     await refreshCaches()
     eventTarget.dispatchEvent(new CustomEvent('numrowschange'))
   })
