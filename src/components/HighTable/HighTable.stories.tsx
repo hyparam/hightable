@@ -96,15 +96,15 @@ function createDelayedUnsortableData(): DataFrame {
   }
 }
 
-function createVaryingArrayDataFrame({ delay, maxRows }: { delay?: number, maxRows?: number } = {}): DataFrame {
-  delay = delay ?? 500
+function createVaryingArrayDataFrame({ delay_ms, maxRows }: { delay_ms?: number, maxRows?: number } = {}): DataFrame {
+  delay_ms = delay_ms ?? 500
   maxRows = maxRows ?? 2
 
   const array: Record<string, any>[] = [
     { ID: 'row 0', Value: Math.floor(100 * random(135 + 0)) },
   ]
   const df = arrayDataFrame(array)
-  // add a new row every 20ms, until we reach maxRows rows, then update existing rows, then remove rows, and loop
+  // add a new row every delay_ms, until we reach maxRows rows, then update existing rows, then remove rows, and loop
   let i = 0
   setInterval(() => {
     i++
@@ -126,7 +126,7 @@ function createVaryingArrayDataFrame({ delay, maxRows }: { delay?: number, maxRo
       // remove the last row
       df._array.pop()
     }
-  }, delay)
+  }, delay_ms)
 
   return df
 }
@@ -586,7 +586,7 @@ export const VaryingData: Story = {
     )
   },
   args: {
-    data: createVaryingArrayDataFrame({ delay: 500, maxRows: 2 }),
+    data: createVaryingArrayDataFrame({ delay_ms: 500, maxRows: 2 }),
   },
 }
 
@@ -604,6 +604,6 @@ export const LongVaryingData: Story = {
     )
   },
   args: {
-    data: createVaryingArrayDataFrame({ delay: 10, maxRows: 1500 }),
+    data: createVaryingArrayDataFrame({ delay_ms: 10, maxRows: 1500 }),
   },
 }
