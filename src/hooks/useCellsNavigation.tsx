@@ -9,8 +9,8 @@ interface CellsNavigationContextType {
   cellPosition: CellPosition
   shouldFocus: boolean // true if the current cell should be focused
   shouldScroll: boolean // true if the table should scroll to the current cell
-  onTableKeyDown?: (event: KeyboardEvent) => void // function to handle keydown events inside the table. It is created only once.
-  onScrollKeyDown?: (event: KeyboardEvent) => void // function to handle keydown events outside the table, in the scroll wrapper. It is created only once.
+  onTableKeyDown?: (event: KeyboardEvent) => void // function to handle keydown events inside the table.
+  onScrollKeyDown?: (event: KeyboardEvent) => void // function to handle keydown events outside the table, in the scroll wrapper.
   setColIndex?: (colIndex: number) => void // function to set the column index
   setRowIndex?: (rowIndex: number) => void // function to set the row index
   setShouldFocus?: (shouldFocus: boolean) => void // function to set the shouldFocus state
@@ -37,10 +37,21 @@ interface CellsNavigationProviderProps {
 }
 
 export function CellsNavigationProvider({ colCount, rowCount, rowPadding, children }: CellsNavigationProviderProps) {
+  const [previousRowCount, setPreviousRowCount] = useState(rowCount)
   const [colIndex, setColIndex] = useState(defaultCellsNavigationContext.cellPosition.colIndex)
   const [rowIndex, setRowIndex] = useState(defaultCellsNavigationContext.cellPosition.rowIndex)
   const [shouldFocus, setShouldFocus] = useState(false)
   const [shouldScroll, setShouldScroll] = useState(false)
+
+  // Reset the cell position if the number of rows has decreased and the current row index is out of bounds
+  if (rowCount !== previousRowCount) {
+    setPreviousRowCount(rowCount)
+    if (rowIndex > rowCount) {
+      // Reset the row index to the last row if it goes out of bounds
+      // Note that we don't force scrolling or focusing
+      setRowIndex(rowCount)
+    }
+  }
 
   const onTableKeyDown = useCallback((event: KeyboardEvent) => {
     const { key, altKey, ctrlKey, metaKey, shiftKey } = event

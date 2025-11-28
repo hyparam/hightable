@@ -96,6 +96,45 @@ function createDelayedUnsortableData(): DataFrame {
   }
 }
 
+function createVaryingArrayDataFrame({ delay_ms, maxRows }: { delay_ms?: number, maxRows?: number } = {}): DataFrame {
+  delay_ms = delay_ms ?? 500
+  maxRows = maxRows ?? 2
+
+  const array: Record<string, any>[] = [
+    { ID: 'row 0', Value: Math.floor(100 * random(135 + 0)) },
+  ]
+  const df = arrayDataFrame(array)
+  // add a new row every delay_ms, until we reach maxRows rows, then update existing rows, then remove rows, and loop
+  let i = 0
+  const interval = setInterval(() => {
+    i++
+    const phase = Math.floor(i / maxRows) % 3
+    if (phase === 0) {
+      // append a row
+      df._array.push({
+        ID: `row ${i}`,
+        Value: Math.floor(100 * random(135 + i)),
+      })
+    } else if (phase === 1) {
+      // update a random row between 0 and maxRows
+      const rowIndex = Math.floor(Math.random() * maxRows)
+      df._array[rowIndex] = {
+        ID: 'updated',
+        Value: Math.floor(100 * random(135 + i)),
+      }
+    } else {
+      // remove the last row
+      df._array.pop()
+    }
+    // Stop after i reaches maxRows * 1000
+    if (i >= maxRows * 1000) {
+      clearInterval(interval)
+    }
+  }, delay_ms)
+
+  return df
+}
+
 const longString = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum'
 
 function createLongStringsData(): DataFrame {
@@ -535,4 +574,59 @@ export const DoubleClickCell: Story = {
     )
   },
   args: {},
+}
+
+export const VaryingData: Story = {
+  render: ({ data }) => {
+    const [selection, onSelectionChange] = useState<Selection>({
+      ranges: [],
+    })
+    return (
+      <HighTable
+        data={data}
+        selection={selection}
+        onSelectionChange={onSelectionChange}
+      />
+    )
+  },
+  args: {
+    data: createVaryingArrayDataFrame({ delay_ms: 500, maxRows: 2 }),
+  },
+}
+
+export const LongVaryingData: Story = {
+  render: ({ data }) => {
+    const [selection, onSelectionChange] = useState<Selection>({
+      ranges: [],
+    })
+    return (
+      <HighTable
+        data={data}
+        selection={selection}
+        onSelectionChange={onSelectionChange}
+      />
+    )
+  },
+  args: {
+    data: createVaryingArrayDataFrame({ delay_ms: 10, maxRows: 1500 }),
+  },
+}
+
+export const SortedVaryingData: Story = {
+  render: ({ data }) => {
+    const [selection, onSelectionChange] = useState<Selection>({
+      ranges: [],
+    })
+    return (
+      <HighTable
+        data={data}
+        selection={selection}
+        onSelectionChange={onSelectionChange}
+        orderBy={[{ column: 'Value', direction: 'ascending' }]}
+      />
+    )
+  },
+  args: {
+    data: sortableDataFrame(createVaryingArrayDataFrame({ delay_ms: 200, maxRows: 20 })),
+  },
 }

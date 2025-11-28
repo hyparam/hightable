@@ -17,7 +17,7 @@ export interface Selection {
   anchor?: number // anchor row used as a reference for shift+click selection.
 }
 
-export function getDefaultSelection() {
+export function getDefaultSelection(): Selection {
   return { ranges: [], anchor: undefined }
 }
 

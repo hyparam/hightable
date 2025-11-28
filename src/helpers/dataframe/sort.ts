@@ -1,8 +1,19 @@
-import { OrderBy, computeRanks, serializeOrderBy, validateOrderByAgainstSortableColumns } from '../sort.js'
+import { OrderBy, computeRanks, deserializeOrderBy, serializeOrderBy, validateOrderByAgainstSortableColumns } from '../sort.js'
 import { createEventTarget } from '../typedEventTarget.js'
 import { checkSignal, validateColumn, validateFetchParams, validateRow } from './helpers.js'
 import { DataFrame, DataFrameEvents, Obj, ResolvedValue } from './types.js'
 
+/**
+ * Wrap a DataFrame to make it sortable on the specified columns.
+ * This helper might not be efficient for large datasets, use with caution.
+ *
+ * @param data The DataFrame to wrap.
+ * @param options Optional parameters.
+ * @param options.sortableColumns A set of column names that should be sortable. If not provided, all columns are considered sortable.
+ * @param options.exclusiveSort If true, only one column can be sorted at a time, and any update to orderBy will replace the previous one. Defaults to false.
+ *
+ * @returns A new DataFrame that supports sorting on the specified columns.
+ */
 export function sortableDataFrame<M extends Obj, C extends Obj>(
   data: DataFrame<M, C>, options?: { sortableColumns?: Set<string>, exclusiveSort?: boolean }
 ): DataFrame<M, C> {
@@ -27,22 +38,57 @@ export function sortableDataFrame<M extends Obj, C extends Obj>(
     return data
   }
 
-  const { numRows } = data
   const columnDescriptors = data.columnDescriptors.map(({ name, metadata }) => ({
     name,
     sortable: sortableColumns.has(name),
     metadata: structuredClone(metadata), // Create a deep copy of the column metadata to avoid mutating the original
   }))
   const metadata = structuredClone(data.metadata) // Create a deep copy of the metadata to avoid mutating the original
-
-  // The cache cannot be erased. Create a new data frame if needed.
-  const ranksByColumn = new Map<string, number[]>()
-  const indexesByOrderBy = new Map<string, number[]>()
-
   const eventTarget = createEventTarget<DataFrameEvents>()
 
-  const getUpstreamRow: ({ row, orderBy }: { row: number, orderBy?: OrderBy }) => ResolvedValue<number> | undefined = function({ row, orderBy }) {
-    validateRow({ row, data: { numRows } })
+  // The cache cannot be erased publicly. But it will be refreshed on each data change
+  const ranksByColumn = new Map<string, number[]>()
+  const indexesByOrderBy = new Map<string, number[]>()
+  function computeCache({ orderBy, signal, refresh }: { orderBy: OrderBy, signal?: AbortSignal, refresh?: boolean }) {
+    return fetchIndexes({
+      orderBy,
+      signal,
+      ranksByColumn,
+      indexes: refresh ? undefined : indexesByOrderBy.get(serializeOrderBy(orderBy)),
+      setIndexes: ({ orderBy, indexes }) => {
+        // Store the indexes in the map.
+        indexesByOrderBy.set(serializeOrderBy(orderBy), indexes)
+        if (!refresh) {
+          // Notify the event target that the indexes have been updated.
+          eventTarget.dispatchEvent(new CustomEvent('resolve'))
+        }
+      },
+      data,
+    })
+  }
+  function refreshCaches() {
+    return Promise.all([...indexesByOrderBy.keys()].map(serializedOrderBy =>
+      computeCache({ orderBy: deserializeOrderBy(serializedOrderBy), refresh: true })
+    ))
+  }
+  data.eventTarget?.addEventListener('update', async () => {
+    // the update notification might be delayed if refreshing the caches takes time
+    // it might not be optimal to refresh all caches on every update, but it's the simplest way to ensure consistency
+    // also: during the refresh, the data might be in an inconsistent state
+    await refreshCaches()
+    eventTarget.dispatchEvent(new CustomEvent('update'))
+  })
+  data.eventTarget?.addEventListener('numrowschange', async () => {
+    // the numrowschange notification might be delayed if refreshing the caches takes time
+    // it might not be optimal to refresh all caches on every update, but it's the simplest way to ensure consistency
+    // also: during the refresh, the data might be in an inconsistent state
+    await refreshCaches()
+    eventTarget.dispatchEvent(new CustomEvent('numrowschange'))
+  })
+
+  const getUpstreamRow: ({ row, orderBy }: { row: number, orderBy?: OrderBy }) => ResolvedValue<number> | undefined = function ({ row, orderBy }) {
+    // numRows: Infinity because the upstream data size can change dynamically.
+    validateRow({ row, data: { numRows: Infinity } })
     validateOrderByAgainstSortableColumns({ orderBy, sortableColumns, exclusiveSort })
     if (!orderBy || orderBy.length === 0) {
       // If no orderBy is provided, we can return the upstream row number.
@@ -57,8 +103,9 @@ export function sortableDataFrame<M extends Obj, C extends Obj>(
     return { value: rowNumber }
   }
 
-  const getRowNumber: ({ row, orderBy }: { row: number, orderBy?: OrderBy }) => ResolvedValue<number> | undefined = function({ row, orderBy }) {
-    validateRow({ row, data: { numRows } })
+  const getRowNumber: ({ row, orderBy }: { row: number, orderBy?: OrderBy }) => ResolvedValue<number> | undefined = function ({ row, orderBy }) {
+    // numRows: Infinity because the upstream data size can change dynamically.
+    validateRow({ row, data: { numRows: Infinity } })
     const upstreamRow = getUpstreamRow({ row, orderBy })
     if (!upstreamRow) {
       // If we can't resolve the unsorted row, we return undefined.
@@ -69,7 +116,8 @@ export function sortableDataFrame<M extends Obj, C extends Obj>(
 
   const getCell: ({ row, column, orderBy }: { row: number, column: string, orderBy?: OrderBy }) => ResolvedValue | undefined = function({ row, column, orderBy }){
     validateColumn({ column, data: { columnDescriptors } })
-    validateRow({ row, data: { numRows } })
+    // numRows: Infinity because the upstream data size can change dynamically.
+    validateRow({ row, data: { numRows: Infinity } })
     const upstreamRow = getUpstreamRow({ row, orderBy })
     if (!upstreamRow) {
       // If we can't resolve the unsorted row, we return undefined.
@@ -78,8 +126,9 @@ export function sortableDataFrame<M extends Obj, C extends Obj>(
     return data.getCell({ row: upstreamRow.value, column })
   }
 
-  const fetch: ({ rowStart, rowEnd, columns, orderBy, signal }: { rowStart: number, rowEnd: number, columns?: string[], orderBy?: OrderBy, signal?: AbortSignal }) => Promise<void> = async function ({ rowStart, rowEnd, columns, orderBy, signal }){
-    validateFetchParams({ rowStart, rowEnd, columns, orderBy, data: { numRows, columnDescriptors } })
+  const fetch: ({ rowStart, rowEnd, columns, orderBy, signal }: { rowStart: number, rowEnd: number, columns?: string[], orderBy?: OrderBy, signal?: AbortSignal }) => Promise<void> = async function ({ rowStart, rowEnd, columns, orderBy, signal }) {
+    // numRows: Infinity because the upstream data size can change dynamically.
+    validateFetchParams({ rowStart, rowEnd, columns, orderBy, data: { numRows: Infinity, columnDescriptors } })
     function callback() {
       eventTarget.dispatchEvent(new CustomEvent('resolve'))
     }
@@ -97,19 +146,7 @@ export function sortableDataFrame<M extends Obj, C extends Obj>(
       }
 
       // Ensure row numbers are available
-      const indexes = await fetchIndexes({
-        orderBy,
-        signal,
-        ranksByColumn,
-        indexes: indexesByOrderBy.get(serializeOrderBy(orderBy)),
-        setIndexes: ({ orderBy, indexes }) => {
-          // Store the indexes in the map.
-          indexesByOrderBy.set(serializeOrderBy(orderBy), indexes)
-          // Notify the event target that the indexes have been updated.
-          eventTarget.dispatchEvent(new CustomEvent('resolve'))
-        },
-        data,
-      })
+      const indexes = await computeCache({ orderBy, signal })
 
       // Ensure cells are available
       if (columns && columns.length > 0 && data.fetch) {
@@ -120,7 +157,18 @@ export function sortableDataFrame<M extends Obj, C extends Obj>(
     }
   }
 
-  return { metadata, numRows, columnDescriptors, getRowNumber, getCell, fetch, eventTarget, exclusiveSort }
+  return {
+    metadata,
+    columnDescriptors,
+    getRowNumber,
+    getCell,
+    fetch,
+    eventTarget,
+    exclusiveSort,
+    get numRows() {
+      return data.numRows
+    },
+  }
 }
 
 async function fetchFromIndexes({ columns, indexes, signal, fetch }: { columns?: string[], indexes: number[], signal?: AbortSignal, fetch: Exclude<DataFrame['fetch'], undefined> }): Promise<void> {

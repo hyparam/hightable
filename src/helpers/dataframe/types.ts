@@ -9,8 +9,22 @@ export interface ResolvedValue<T = any> {
   value: T
 }
 
+/**
+ * Events emitted by DataFrame instances.
+ */
 export interface DataFrameEvents {
+  /**
+   * Emitted when the number of rows has changed.
+   */
+  'numrowschange': undefined;
+  /**
+   * Emitted when a cell value has resolved.
+   */
   'resolve': undefined;
+  /**
+   * Emitted when some data has been updated (e.g. a cell value).
+   */
+  'update': undefined;
 }
 
 export interface ColumnDescriptor<C extends Obj = Obj> {
@@ -31,9 +45,13 @@ export type Fetch = ({ rowStart, rowEnd, columns, orderBy, signal }: { rowStart:
  * - throw an error if a column within `orderBy` is not sortable.
  */
 export interface DataFrame<M extends Obj = Obj, C extends Obj = Obj> {
+  // number of rows in the data frame
+  // trigger a "numrowschange" event when it changes (can be implemented with a getter and a setter, emitting the event on set)
+  // if numRows can change, be careful to take it into account in getCell, getRowNumber and fetch implementations,
+  // for example when validating the row parameter.
   numRows: number
   // TODO(SL): rename back to header? (`columns` might be confusing as it's a parameter of the fetch method)
-  columnDescriptors: readonly ColumnDescriptor<C>[]
+  columnDescriptors: ColumnDescriptor<C>[]
   metadata?: M
 
   // If true, only one column can be sorted at a time, and any update to orderBy will replace the previous one.

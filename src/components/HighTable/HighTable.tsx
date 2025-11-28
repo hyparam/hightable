@@ -75,8 +75,7 @@ export default function HighTable(props: Props) {
 type PropsData = Omit<Props, 'data'>
 
 function HighTableData(props: PropsData) {
-  const { data, key, version, maxRowNumber } = useData()
-  const { numRows } = data
+  const { data, key, version, maxRowNumber, numRows } = useData()
   // TODO(SL): onError could be in a context, as we might want to use it everywhere
   const { cacheKey, orderBy, onOrderByChange, selection, onSelectionChange, onError, onColumnsVisibilityChange } = props
 
@@ -96,7 +95,7 @@ function HighTableData(props: PropsData) {
 
   return (
     /* Provide the column configuration to the table */
-    <ColumnParametersProvider columnConfiguration={props.columnConfiguration} data={data}>
+    <ColumnParametersProvider columnConfiguration={props.columnConfiguration} columnDescriptors={data.columnDescriptors}>
       {/* Create a new set of widths if the data has changed, but keep it if only the number of rows changed */}
       <ColumnWidthsProvider key={cacheKey ?? key} localStorageKey={cacheKey ? `${cacheKey}${columnWidthsSuffix}` : undefined} numColumns={data.columnDescriptors.length}>
         {/* Create a new set of hidden columns if the data has changed, but keep it if only the number of rows changed */}
@@ -104,11 +103,11 @@ function HighTableData(props: PropsData) {
           {/* Create a new context if the dataframe changes, to flush the cache (ranks and indexes) */}
           <OrderByProvider key={key} orderBy={orderBy} onOrderByChange={onOrderByChange}>
             {/* Create a new selection context if the dataframe has changed */}
-            <SelectionProvider key={key} selection={selection} onSelectionChange={onSelectionChange} data={data} onError={onError}>
+            <SelectionProvider key={key} selection={selection} onSelectionChange={onSelectionChange} data={data} numRows={numRows} onError={onError}>
               {/* Create a new navigation context if the dataframe has changed, because the focused cell might not exist anymore */}
               <CellsNavigationProvider key={key} colCount={data.columnDescriptors.length + 1} rowCount={numRows + 1} rowPadding={props.padding ?? defaultPadding}>
-                <PortalContainerProvider>
-                  <HighTableInner version={version} {...props} maxRowNumber={maxRowNumber} />
+                <PortalContainerProvider> {/* TODO(SL): move as the outmost provider? */}
+                  <HighTableInner data={data} numRows={numRows} version={version} {...props} maxRowNumber={maxRowNumber} />
                 </PortalContainerProvider>
               </CellsNavigationProvider>
             </SelectionProvider>
@@ -122,6 +121,8 @@ function HighTableData(props: PropsData) {
 type PropsInner = Omit<PropsData, 'orderBy' | 'onOrderByChange' | 'selection' | 'onSelectionChange' | 'columnConfiguration' | 'maxRowNumber'> & {
   version: number // version of the data frame, used to re-render the component when the data changes
   maxRowNumber: number // maximum row number to display (for row headers).
+  numRows: number // number of rows in the data frame
+  data: Omit<DataFrame, 'numRows'> // data frame without numRows (provided separately)
 }
 
 interface RowsRange {
@@ -137,6 +138,8 @@ interface RowsRange {
  * remove the need to reindent the code if adding a new context provide.
  */
 export function HighTableInner({
+  data,
+  numRows,
   overscan = defaultOverscan,
   padding = defaultPadding,
   focus = true,
@@ -152,8 +155,6 @@ export function HighTableInner({
   maxRowNumber,
 }: PropsInner) {
   // contexts
-  const { data } = useData()
-  const { numRows } = data
   const { shouldScroll, setShouldScroll, onTableKeyDown: onNavigationTableKeyDown, onScrollKeyDown, cellPosition, focusFirstCell } = useCellsNavigation()
   const { containerRef } = usePortalContainer()
   const { setAvailableWidth } = useColumnWidths()
