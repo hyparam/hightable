@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
 import { arrayDataFrame } from '../../../src/helpers/dataframe/index.js'
-import { beforeEach } from 'node:test'
 
 function createTestData() {
   return [
@@ -11,7 +10,7 @@ function createTestData() {
 }
 
 describe('arrayDataFrame', () => {
-  it('should create a DataFrame with correct colummn descriptors and numRows', () => {
+  it('should create a DataFrame with correct column descriptors and numRows', () => {
     const df = arrayDataFrame(createTestData())
     expect(df.columnDescriptors).toEqual(['id', 'name', 'age'].map(name => ({ name })))
     expect(df.numRows).toBe(3)
@@ -42,7 +41,7 @@ describe('arrayDataFrame', () => {
     expect(() => df.getCell({ row: 0, column: 'name' })).toThrow('Invalid column: name')
   })
 
-  it('does not provides fetch', () => {
+  it('does not provide fetch', () => {
     const df = arrayDataFrame([])
     expect(df.fetch).toBeUndefined()
   })
