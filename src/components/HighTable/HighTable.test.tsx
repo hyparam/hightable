@@ -3,7 +3,7 @@ import { Mock, afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createGetRowNumber, validateFetchParams, validateGetCellParams, validateGetRowNumberParams } from '../../helpers/dataframe/helpers.js'
 import { DataFrame, DataFrameEvents, Fetch, arrayDataFrame } from '../../helpers/dataframe/index.js'
 import { sortableDataFrame } from '../../helpers/dataframe/sort.js'
-import { OrderBy } from '../../helpers/sort.js'
+import type { OrderBy } from '../../helpers/sort.js'
 import { createEventTarget } from '../../helpers/typedEventTarget.js'
 import { render } from '../../utils/userEvent.js'
 import HighTable, { columnWidthsSuffix, defaultOverscan } from './HighTable.js'
@@ -11,11 +11,11 @@ import type { Obj } from '../../helpers/dataframe/types.js'
 
 Element.prototype.scrollIntoView = vi.fn()
 
-const dataColumnDescriptors = ['ID', 'Count', 'Double', 'Triple'].map(name => ({
+export const dataColumnDescriptors = ['ID', 'Count', 'Double', 'Triple'].map(name => ({
   name,
   metadata: { type: 'test' }, // This metadata has no purpose other than testing the types
 }))
-function createData(): DataFrame<Obj, { type: string }> {
+export function createData(): DataFrame<Obj, { type: string }> {
   const columnDescriptors = dataColumnDescriptors
   const numRows = 1000
   const getRowNumber = createGetRowNumber({ numRows })
@@ -35,7 +35,7 @@ function createData(): DataFrame<Obj, { type: string }> {
   return { columnDescriptors, numRows, getCell, getRowNumber }
 }
 
-function createOtherData(): DataFrame<{ description: string }> {
+export function createOtherData(): DataFrame<{ description: string }> {
   const metadata = { description: 'dataframe metadata' } // This metadata has no purpose other than testing the types
   const columnDescriptors = ['ID', 'Count'].map(name => ({ name, metadata: { somekey: 'OK' } }))
   const numRows = 1000
