@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## [0.24.0](https://github.com/hyparam/hightable/compare/v0.23.0...v0.24.0) - 2025-11-29
+
+### Changed
+
+- **Breaking** - removed `columnsMetadata` option from `arrayDataFrame` and added `columnDescriptors` option instead ([#338](https://github.com/hyparam/hightable/pull/338)). This allows creating array dataframes with known column names but zero rows.
+
 ## [0.23.0](https://github.com/hyparam/hightable/compare/v0.22.2...v0.23.0) - 2025-11-28
 
 ### Changed
