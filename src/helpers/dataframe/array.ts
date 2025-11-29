@@ -1,5 +1,5 @@
 import { validateGetCellParams, validateGetRowNumberParams } from './helpers.js'
-import type { DataFrame, Obj, ResolvedValue } from './types.js'
+import type { ColumnDescriptor, DataFrame, Obj, ResolvedValue } from './types.js'
 import type { OrderBy } from '../sort.js'
 import type { DataFrameEvents } from './types.js'
 import { createEventTarget } from '../typedEventTarget.js'
@@ -16,13 +16,13 @@ interface ArrayData {
 // Both are exposed in the metadata of the DataFrame if needed.
 // TODO(SL): with a Proxy, we could dispatch events on mutation (of values and length) automatically.
 export function arrayDataFrame<M extends Obj, C extends Obj>(
-  array: Record<string, any>[], rowNumbers?: number[], { metadata, columnsMetadata }: { metadata?: M, columnsMetadata?: C[] } = {}
+  array: Record<string, any>[],
+  rowNumbers?: number[],
+  options: { metadata?: M, columnDescriptors?: ColumnDescriptor<C>[] } = {}
 ): ArrayData & DataFrame<M, C> {
-  const firstRowColumns = 0 in array ? Object.keys(array[0]) : []
-  if (columnsMetadata && columnsMetadata.length !== firstRowColumns.length) {
-    throw new Error(`Columns metadata length (${columnsMetadata.length}) does not match the number of columns in the array (${firstRowColumns.length})`)
-  }
-  const columnDescriptors = firstRowColumns.map((name, i) => ({ name, metadata: columnsMetadata?.[i] }))
+  // Use the keys of the first row as column names if no column descriptors are provided.
+  const columnDescriptors = options.columnDescriptors
+    ?? Object.keys(array[0] ?? {}).map(name => ({ name }))
 
   const eventTarget = createEventTarget<DataFrameEvents>()
 
@@ -42,7 +42,7 @@ export function arrayDataFrame<M extends Obj, C extends Obj>(
   const data = {
     _array: arrayProxy,
     _rowNumbers: rowNumbers,
-    metadata,
+    metadata: options.metadata,
     columnDescriptors,
     getRowNumber,
     getCell,
