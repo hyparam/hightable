@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## [0.24.1](https://github.com/hyparam/hightable/compare/v0.24.0...v0.24.1) - 2025-12-01
+
+### Fixed
+
+- update numRows in data context when data frame changes ([#340](https://github.com/hyparam/hightable/pull/340)).
+
 ## [0.24.0](https://github.com/hyparam/hightable/compare/v0.23.0...v0.24.0) - 2025-11-29
 
 ### Changed
