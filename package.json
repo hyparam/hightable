@@ -1,6 +1,6 @@
 {
   "name": "hightable",
-  "version": "0.24.0",
+  "version": "0.24.1",
   "description": "A dynamic windowed scrolling table component for react",
   "author": "Hyperparam",
   "homepage": "https://hyperparam.app",
@@ -64,7 +64,7 @@
     "storybook": "10.1.2",
     "typescript": "5.9.3",
     "typescript-eslint": "8.48.0",
-    "vite": "7.2.4",
+    "vite": "7.2.6",
     "vitest": "4.0.14"
   },
   "peerDependencies": {
