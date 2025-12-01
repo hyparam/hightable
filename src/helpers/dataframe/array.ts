@@ -13,8 +13,7 @@ interface ArrayData {
 // events as needed ('resolve' and 'numrowschange').
 // We also don't check if rowNumbers have the same length as the array, or if they are valid indices,
 // except when accessing them in getRowNumber. If the array length changes, the user is responsible for updating rowNumbers accordingly.
-// Both are exposed in the metadata of the DataFrame if needed.
-// TODO(SL): with a Proxy, we could dispatch events on mutation (of values and length) automatically.
+// Both are exposed as _array and _rowNumbers if needed. Mutations on _array are proxied to emit events.
 export function arrayDataFrame<M extends Obj, C extends Obj>(
   array: Record<string, any>[],
   rowNumbers?: number[],
@@ -55,8 +54,12 @@ export function arrayDataFrame<M extends Obj, C extends Obj>(
   function getRowNumber({ row, orderBy }: { row: number, orderBy?: OrderBy }): ResolvedValue<number> | undefined {
     // numRows is Infinity because the array size can change dynamically.
     validateGetRowNumberParams({ row, orderBy, data: { numRows: Infinity, columnDescriptors } })
+    // we check against numRows here
     if (!rowNumbers) {
-      return { value: row }
+      if (row < array.length) {
+        return { value: row }
+      }
+      return undefined
     }
     if (rowNumbers[row] === undefined) {
       return undefined

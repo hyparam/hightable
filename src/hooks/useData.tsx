@@ -59,6 +59,7 @@ export function DataProvider<M extends Obj, C extends Obj>({ children, data, max
     setKey(getRandomKey())
     setPreviousData(data)
     setVersion(0)
+    setNumRows(data.numRows)
   }
 
   const maxRowNumber = useMemo(() => {
