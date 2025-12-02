@@ -1,11 +1,11 @@
-import { CSSProperties, KeyboardEvent, MouseEvent, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { CSSProperties, KeyboardEvent, MouseEvent, ReactNode, RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ColumnConfiguration } from '../../helpers/columnConfiguration.js'
 import { DataFrame } from '../../helpers/dataframe/index.js'
 import { Selection } from '../../helpers/selection.js'
 import { OrderBy } from '../../helpers/sort.js'
 import { getClientWidth, getOffsetWidth } from '../../helpers/width.js'
 import { CellsNavigationProvider, useCellsNavigation } from '../../hooks/useCellsNavigation.js'
-import { ColumnParametersProvider, useColumnParameters } from '../../hooks/useColumnParameters.js'
+import { ColumnParameters, ColumnParametersProvider, useColumnParameters } from '../../hooks/useColumnParameters.js'
 import { ColumnWidthsProvider, useColumnWidths } from '../../hooks/useColumnWidths.js'
 import { ColumnVisibilityStatesProvider, type MaybeHiddenColumn, useColumnVisibilityStates } from '../../hooks/useColumnVisibilityStates.js'
 import { DataProvider, useData } from '../../hooks/useData.js'
@@ -107,7 +107,7 @@ function HighTableData(props: PropsData) {
               {/* Create a new navigation context if the dataframe has changed, because the focused cell might not exist anymore */}
               <CellsNavigationProvider key={key} colCount={data.columnDescriptors.length + 1} rowCount={numRows + 1} rowPadding={props.padding ?? defaultPadding}>
                 <PortalContainerProvider> {/* TODO(SL): move as the outmost provider? */}
-                  <HighTableInner data={data} numRows={numRows} version={version} {...props} maxRowNumber={maxRowNumber} />
+                  <ScrollContainer data={data} numRows={numRows} version={version} {...props} maxRowNumber={maxRowNumber} />
                 </PortalContainerProvider>
               </CellsNavigationProvider>
             </SelectionProvider>
@@ -118,11 +118,18 @@ function HighTableData(props: PropsData) {
   )
 }
 
-type PropsInner = Omit<PropsData, 'orderBy' | 'onOrderByChange' | 'selection' | 'onSelectionChange' | 'columnConfiguration' | 'maxRowNumber'> & {
+type ScrollContainerProps = Omit<PropsData, 'orderBy' | 'onOrderByChange' | 'selection' | 'onSelectionChange' | 'columnConfiguration' | 'maxRowNumber'> & {
   version: number // version of the data frame, used to re-render the component when the data changes
   maxRowNumber: number // maximum row number to display (for row headers).
   numRows: number // number of rows in the data frame
   data: Omit<DataFrame, 'numRows'> // data frame without numRows (provided separately)
+}
+
+type TablePartProps = Omit<ScrollContainerProps, 'maxRowNumber' | 'styled' | 'className' | 'overscan' | 'onerror'> & {
+  offsetTop: number // offset top to apply to the table
+  rowsRange: RowsRange // range of rows to render
+  columnsParameters: ColumnParameters[] // parameters of the columns to render
+  tableCornerRef: RefObject<Pick<HTMLTableCellElement, 'offsetWidth'> | null> // ref to the table corner element
 }
 
 interface RowsRange {
@@ -131,13 +138,9 @@ interface RowsRange {
 }
 
 /**
- * The component is a virtual table: only the visible rows are fetched and rendered as HTML <tr> elements.
- *
- * The main purpose of extracting HighTableInner from HighTable is to
- * separate the context providers from the main component. It will also
- * remove the need to reindent the code if adding a new context provide.
+ * Container providing the scrollable area for the table.
  */
-export function HighTableInner({
+export function ScrollContainer({
   data,
   numRows,
   overscan = defaultOverscan,
@@ -153,17 +156,16 @@ export function HighTableInner({
   version,
   renderCellContent,
   maxRowNumber,
-}: PropsInner) {
-  // contexts
-  const { shouldScroll, setShouldScroll, onTableKeyDown: onNavigationTableKeyDown, onScrollKeyDown, cellPosition, focusFirstCell } = useCellsNavigation()
+}: ScrollContainerProps) {
   const { containerRef } = usePortalContainer()
+  const scrollRef = useRef<HTMLDivElement | null>(null)
+  const tableCornerRef = useRef<Pick<HTMLTableCellElement, 'offsetWidth'> | null>(null)
+
+  const { shouldScroll, setShouldScroll, onScrollKeyDown, cellPosition } = useCellsNavigation()
   const { setAvailableWidth } = useColumnWidths()
-  const { isHiddenColumn } = useColumnVisibilityStates()
-  const { orderBy, onOrderByChange } = useOrderBy()
-  const { selectable, toggleAllRows, pendingSelectionGesture, onTableKeyDown: onSelectionTableKeyDown, allRowsSelected, isRowSelected, toggleRowNumber, toggleRangeToRowNumber } = useSelection()
+  const { orderBy } = useOrderBy()
   const allColumnsParameters = useColumnParameters()
-  // local state
-  const [rowsRange, setRowsRange] = useState<RowsRange>({ start: 0, end: 0 })
+  const { isHiddenColumn } = useColumnVisibilityStates()
 
   const columnsParameters = useMemo(() => {
     return allColumnsParameters.filter((col) => {
@@ -171,31 +173,22 @@ export function HighTableInner({
     })
   }, [allColumnsParameters, isHiddenColumn])
 
-  const onTableKeyDown = useCallback((event: KeyboardEvent) => {
-    onNavigationTableKeyDown?.(event)
-    onSelectionTableKeyDown?.(event)
-  }, [onNavigationTableKeyDown, onSelectionTableKeyDown])
-
-  const getOnCheckboxPress = useCallback(({ row, rowNumber }: { row: number, rowNumber?: number }) => {
-    if (rowNumber === undefined || !toggleRowNumber || !toggleRangeToRowNumber) {
-      return undefined
-    }
-    return ({ shiftKey }: { shiftKey: boolean }) => {
-      if (shiftKey) {
-        toggleRangeToRowNumber({ row, rowNumber })
-      } else {
-        toggleRowNumber({ rowNumber })
-      }
-    }
-  }, [toggleRowNumber, toggleRangeToRowNumber])
+  // local state
+  const [rowsRange, setRowsRange] = useState<RowsRange>({ start: 0, end: 0 })
 
   // total scrollable height
   /* TODO: fix the computation on unstyled tables */
   const scrollHeight = (numRows + 1) * rowHeight
   const offsetTop = Math.max(0, rowsRange.start - padding) * rowHeight
 
-  const tableCornerRef = useRef<Pick<HTMLTableCellElement, 'offsetWidth'> | null>(null)
-  const scrollRef = useRef<HTMLDivElement | null>(null)
+  const tableScrollStyle = useMemo(() => {
+    // reserve space for at least 3 characters
+    const numCharacters = Math.max(maxRowNumber.toLocaleString('en-US').length, 3)
+    return {
+      '--column-header-height': `${rowHeight}px`,
+      '--row-number-characters': `${numCharacters}`,
+    } as CSSProperties
+  }, [maxRowNumber])
 
   // scroll if the navigation cell changed, or if entering navigation mode
   // this excludes the case where the whole table is focused (not in cell navigation mode), the user
@@ -313,6 +306,85 @@ export function HighTableInner({
     }
   }, [numRows, overscan, padding, scrollHeight, setAvailableWidth, data, orderBy, onError, columnsParameters])
 
+  const restrictedOnScrollKeyDown = useCallback((event: KeyboardEvent) => {
+    if (event.target !== scrollRef.current) {
+      // don't handle the event if the target is not the scroller
+      return
+    }
+    onScrollKeyDown?.(event)
+  }, [onScrollKeyDown])
+
+  return (
+    <div ref={containerRef} className={`${styles.hightable} ${styled ? styles.styled : ''} ${className}`} style={tableScrollStyle}>
+      <div className={styles.topBorder} role="presentation"></div>
+      <div className={styles.tableScroll} ref={scrollRef} role="group" aria-labelledby="caption" onKeyDown={restrictedOnScrollKeyDown} tabIndex={0}>
+        <div style={{ height: `${scrollHeight}px` }}>
+          <TablePart
+            data={data}
+            numRows={numRows}
+            padding={padding}
+            focus={focus}
+            onDoubleClickCell={onDoubleClickCell}
+            onMouseDownCell={onMouseDownCell}
+            onKeyDownCell={onKeyDownCell}
+            stringify={stringify}
+            version={version}
+            renderCellContent={renderCellContent}
+            offsetTop={offsetTop}
+            rowsRange={rowsRange}
+            columnsParameters={columnsParameters}
+            tableCornerRef={tableCornerRef}
+          />
+        </div>
+      </div>
+      {/* puts a background behind the row labels column */}
+      <div className={styles.mockRowLabel}>&nbsp;</div>
+    </div>
+  )
+}
+
+/**
+ * Only the visible rows are fetched and rendered as HTML <tr> elements.
+ */
+export function TablePart({
+  data,
+  numRows,
+  padding = defaultPadding,
+  focus = true,
+  onDoubleClickCell,
+  onMouseDownCell,
+  onKeyDownCell,
+  stringify = stringifyDefault,
+  version,
+  renderCellContent,
+  offsetTop,
+  rowsRange,
+  columnsParameters,
+  tableCornerRef,
+}: TablePartProps) {
+  // contexts
+  const { onTableKeyDown: onNavigationTableKeyDown, focusFirstCell } = useCellsNavigation()
+  const { orderBy, onOrderByChange } = useOrderBy()
+  const { selectable, toggleAllRows, pendingSelectionGesture, onTableKeyDown: onSelectionTableKeyDown, allRowsSelected, isRowSelected, toggleRowNumber, toggleRangeToRowNumber } = useSelection()
+
+  const onTableKeyDown = useCallback((event: KeyboardEvent) => {
+    onNavigationTableKeyDown?.(event)
+    onSelectionTableKeyDown?.(event)
+  }, [onNavigationTableKeyDown, onSelectionTableKeyDown])
+
+  const getOnCheckboxPress = useCallback(({ row, rowNumber }: { row: number, rowNumber?: number }) => {
+    if (rowNumber === undefined || !toggleRowNumber || !toggleRangeToRowNumber) {
+      return undefined
+    }
+    return ({ shiftKey }: { shiftKey: boolean }) => {
+      if (shiftKey) {
+        toggleRangeToRowNumber({ row, rowNumber })
+      } else {
+        toggleRowNumber({ rowNumber })
+      }
+    }
+  }, [toggleRowNumber, toggleRangeToRowNumber])
+
   // focus table on mount, or on later changes, so arrow keys work
   // Note that the dependency upon data and nowRows was removed, because focusFirstCell should depend on them
   useEffect(() => {
@@ -328,22 +400,6 @@ export function HighTableInner({
   const prePadding = Array.from({ length: Math.min(padding, offset) }, () => [])
   const rows = Array.from({ length: rowsLength }, (_, i) => i + offset)
   const postPadding = Array.from({ length: Math.min(padding, numRows - offset - rowsLength) }, () => [])
-
-  const tableScrollStyle = useMemo(() => {
-    // reserve space for at least 3 characters
-    const numCharacters = Math.max(maxRowNumber.toLocaleString('en-US').length, 3)
-    return {
-      '--column-header-height': `${rowHeight}px`,
-      '--row-number-characters': `${numCharacters}`,
-    } as CSSProperties
-  }, [maxRowNumber])
-  const restrictedOnScrollKeyDown = useCallback((event: KeyboardEvent) => {
-    if (event.target !== scrollRef.current) {
-      // don't handle the event if the target is not the scroller
-      return
-    }
-    onScrollKeyDown?.(event)
-  }, [onScrollKeyDown])
 
   // Prepare the slice of data to render
   // TODO(SL): also compute progress percentage here, to show a loading indicator
@@ -375,107 +431,98 @@ export function HighTableInner({
   const ariaColCount = columnsParameters.length + 1 // don't forget the selection column
   const ariaRowCount = numRows + 1 // don't forget the header row
   return (
-    <div ref={containerRef} className={`${styles.hightable} ${styled ? styles.styled : ''} ${className}`} style={tableScrollStyle}>
-      <div className={styles.topBorder} role="presentation"></div>
-      <div className={styles.tableScroll} ref={scrollRef} role="group" aria-labelledby="caption" onKeyDown={restrictedOnScrollKeyDown} tabIndex={0}>
-        <div style={{ height: `${scrollHeight}px` }}>
-          <table
-            aria-readonly={true}
-            aria-colcount={ariaColCount}
-            aria-rowcount={ariaRowCount}
-            aria-multiselectable={selectable}
-            aria-busy={pendingSelectionGesture /* TODO(SL): add other busy states? Used only for tests right now */}
-            role='grid'
-            style={{ top: `${offsetTop}px` }}
-            onKeyDown={onTableKeyDown}
-          >
-            <caption id="caption" hidden>Virtual-scroll table</caption>
-            <thead role="rowgroup">
-              <Row ariaRowIndex={1} >
-                <TableCorner
-                  onCheckboxPress={toggleAllRows}
-                  checked={allRowsSelected}
-                  pendingSelectionGesture={pendingSelectionGesture}
-                  ariaColIndex={1}
-                  ariaRowIndex={1}
-                  ref={tableCornerRef}
+    <table
+      aria-readonly={true}
+      aria-colcount={ariaColCount}
+      aria-rowcount={ariaRowCount}
+      aria-multiselectable={selectable}
+      aria-busy={pendingSelectionGesture /* TODO(SL): add other busy states? Used only for tests right now */}
+      role='grid'
+      style={{ top: `${offsetTop}px` }}
+      onKeyDown={onTableKeyDown}
+    >
+      <caption id="caption" hidden>Virtual-scroll table</caption>
+      <thead role="rowgroup">
+        <Row ariaRowIndex={1} >
+          <TableCorner
+            onCheckboxPress={toggleAllRows}
+            checked={allRowsSelected}
+            pendingSelectionGesture={pendingSelectionGesture}
+            ariaColIndex={1}
+            ariaRowIndex={1}
+            ref={tableCornerRef}
+          />
+          <TableHeader
+            canMeasureColumn={slice.canMeasureColumn}
+            columnsParameters={columnsParameters}
+            orderBy={orderBy}
+            onOrderByChange={onOrderByChange}
+            ariaRowIndex={1}
+            exclusiveSort={data.exclusiveSort === true}
+          />
+        </Row>
+      </thead>
+      <tbody role="rowgroup">
+        {prePadding.map((_, prePaddingIndex) => {
+          const row = offset - prePadding.length + prePaddingIndex
+          const ariaRowIndex = row + ariaOffset
+          return (
+            <Row key={row} ariaRowIndex={ariaRowIndex}>
+              <RowHeader ariaColIndex={1} ariaRowIndex={ariaRowIndex} />
+            </Row>
+          )
+        })}
+        {slice.rowContents.map(({ row, rowNumber, cells }) => {
+          const ariaRowIndex = row + ariaOffset
+          const selected = isRowSelected?.({ rowNumber })
+          const rowKey = `${row}`
+          return (
+            <Row
+              key={rowKey}
+              ariaRowIndex={ariaRowIndex}
+              selected={selected}
+              rowNumber={rowNumber}
+              // title={rowError(row, columns.length)} // TODO(SL): re-enable later?
+            >
+              <RowHeader
+                selected={selected}
+                rowNumber={rowNumber}
+                onCheckboxPress={getOnCheckboxPress({ rowNumber, row })}
+                pendingSelectionGesture={pendingSelectionGesture}
+                ariaColIndex={1}
+                ariaRowIndex={ariaRowIndex}
+              />
+              {cells.map(({ columnIndex, cell }, visibleColumnIndex) => {
+                const columnClassName = columnsParameters[visibleColumnIndex]?.className
+                return <Cell
+                  key={columnIndex}
+                  onDoubleClickCell={onDoubleClickCell}
+                  onMouseDownCell={onMouseDownCell}
+                  onKeyDownCell={onKeyDownCell}
+                  stringify={stringify}
+                  columnIndex={columnIndex}
+                  visibleColumnIndex={visibleColumnIndex}
+                  className={columnClassName}
+                  ariaColIndex={visibleColumnIndex + ariaOffset}
+                  ariaRowIndex={ariaRowIndex}
+                  cell={cell}
+                  rowNumber={rowNumber}
+                  renderCellContent={renderCellContent}
                 />
-                <TableHeader
-                  canMeasureColumn={slice.canMeasureColumn}
-                  columnsParameters={columnsParameters}
-                  orderBy={orderBy}
-                  onOrderByChange={onOrderByChange}
-                  ariaRowIndex={1}
-                  exclusiveSort={data.exclusiveSort === true}
-                />
-              </Row>
-            </thead>
-            <tbody role="rowgroup">
-              {prePadding.map((_, prePaddingIndex) => {
-                const row = offset - prePadding.length + prePaddingIndex
-                const ariaRowIndex = row + ariaOffset
-                return (
-                  <Row key={row} ariaRowIndex={ariaRowIndex}>
-                    <RowHeader ariaColIndex={1} ariaRowIndex={ariaRowIndex} />
-                  </Row>
-                )
               })}
-              {slice.rowContents.map(({ row, rowNumber, cells }) => {
-                const ariaRowIndex = row + ariaOffset
-                const selected = isRowSelected?.({ rowNumber })
-                const rowKey = `${row}`
-                return (
-                  <Row
-                    key={rowKey}
-                    ariaRowIndex={ariaRowIndex}
-                    selected={selected}
-                    rowNumber={rowNumber}
-                    // title={rowError(row, columns.length)} // TODO(SL): re-enable later?
-                  >
-                    <RowHeader
-                      selected={selected}
-                      rowNumber={rowNumber}
-                      onCheckboxPress={getOnCheckboxPress({ rowNumber, row })}
-                      pendingSelectionGesture={pendingSelectionGesture}
-                      ariaColIndex={1}
-                      ariaRowIndex={ariaRowIndex}
-                    />
-                    {cells.map(({ columnIndex, cell }, visibleColumnIndex) => {
-                      const columnClassName = columnsParameters[visibleColumnIndex]?.className
-                      return <Cell
-                        key={columnIndex}
-                        onDoubleClickCell={onDoubleClickCell}
-                        onMouseDownCell={onMouseDownCell}
-                        onKeyDownCell={onKeyDownCell}
-                        stringify={stringify}
-                        columnIndex={columnIndex}
-                        visibleColumnIndex={visibleColumnIndex}
-                        className={columnClassName}
-                        ariaColIndex={visibleColumnIndex + ariaOffset}
-                        ariaRowIndex={ariaRowIndex}
-                        cell={cell}
-                        rowNumber={rowNumber}
-                        renderCellContent={renderCellContent}
-                      />
-                    })}
-                  </Row>
-                )
-              })}
-              {postPadding.map((_, postPaddingIndex) => {
-                const row = offset + rowsLength + postPaddingIndex
-                const ariaRowIndex = row + ariaOffset
-                return (
-                  <Row key={row} ariaRowIndex={ariaRowIndex}>
-                    <RowHeader ariaColIndex={1} ariaRowIndex={ariaRowIndex} />
-                  </Row>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
-      {/* puts a background behind the row labels column */}
-      <div className={styles.mockRowLabel}>&nbsp;</div>
-    </div>
+            </Row>
+          )
+        })}
+        {postPadding.map((_, postPaddingIndex) => {
+          const row = offset + rowsLength + postPaddingIndex
+          const ariaRowIndex = row + ariaOffset
+          return (
+            <Row key={row} ariaRowIndex={ariaRowIndex}>
+              <RowHeader ariaColIndex={1} ariaRowIndex={ariaRowIndex} />
+            </Row>
+          )
+        })}
+      </tbody>
+    </table>
   )
 }
