@@ -174,7 +174,7 @@ export function ScrollContainer({
   const scrollHeight = (numRows + 1) * rowHeight
   const offsetTop = Math.max(0, rowsRange.start - padding) * rowHeight
 
-  // These styles are required here (not in TablePart) because they affect the scrollable area
+  // These styles are required here (not in TablePortion) because they affect the scrollable area
   // to setup the scroll padding (to avoid sticky headers overlapping the focused cell)
   const tableScrollStyle = useMemo(() => {
     // reserve space for at least 3 characters
@@ -220,21 +220,21 @@ export function ScrollContainer({
       // abort the previous fetches if any
       abortController?.abort()
       abortController = new AbortController()
-      // view height (0 is not allowed - the syntax is verbose, but makes it clear)
-      const currentClientHeight = viewportRef.current?.clientHeight
-      const clientHeight = currentClientHeight === undefined || currentClientHeight === 0 ? 100 : currentClientHeight
+      // viewport height (0 is not allowed - the syntax is verbose, but makes it clear)
+      const currentViewportHeight = viewportRef.current?.clientHeight
+      const viewportHeight = currentViewportHeight === undefined || currentViewportHeight === 0 ? 100 : currentViewportHeight
       // scroll position
       const scrollTop = viewportRef.current?.scrollTop ?? 0
 
       // determine rows to fetch based on current scroll position (indexes refer to the virtual table domain)
       const startView = Math.floor(numRows * scrollTop / scrollHeight)
-      const endView = Math.ceil(numRows * (scrollTop + clientHeight) / scrollHeight)
+      const endView = Math.ceil(numRows * (scrollTop + viewportHeight) / scrollHeight)
       const start = Math.max(0, startView - overscan)
       const end = Math.min(numRows, endView + overscan)
 
       if (isNaN(start)) throw new Error(`invalid start row ${start}`)
       if (isNaN(end)) throw new Error(`invalid end row ${end}`)
-      if (end - start > 1000) throw new Error(`attempted to render too many rows ${end - start} table must be contained in a scrollable div`)
+      if (end - start > 1000) throw new Error(`attempted to render too many rows ${end - start} in the table portion`)
 
       setRowsRange({ start, end })
       if (data.fetch) {
@@ -319,7 +319,7 @@ export function ScrollContainer({
           */}
         <div style={{ height: `${scrollHeight}px`, paddingTop: `${offsetTop}px`, overflowY: 'clip' }}>
           {/* content, positioned vertically to match the viewport */}
-          <TablePart
+          <TablePortion
             data={data}
             numRows={numRows}
             padding={padding}
@@ -340,7 +340,7 @@ export function ScrollContainer({
   )
 }
 
-type TablePartProps = Omit<ScrollContainerProps, 'maxRowNumber' | 'styled' | 'className' | 'overscan' | 'onerror'> & {
+type TablePortionProps = Omit<ScrollContainerProps, 'maxRowNumber' | 'styled' | 'className' | 'overscan' | 'onerror'> & {
   rowsRange: RowsRange // range of rows to render
   columnsParameters: ColumnParameters[] // parameters of the columns to render
   tableCornerRef: RefObject<Pick<HTMLTableCellElement, 'offsetWidth'> | null> // ref to the table corner element
@@ -349,7 +349,7 @@ type TablePartProps = Omit<ScrollContainerProps, 'maxRowNumber' | 'styled' | 'cl
 /**
  * Only the visible rows are fetched and rendered as HTML <tr> elements.
  */
-export function TablePart({
+export function TablePortion({
   data,
   numRows,
   padding = defaultPadding,
@@ -363,7 +363,7 @@ export function TablePart({
   rowsRange,
   columnsParameters,
   tableCornerRef,
-}: TablePartProps) {
+}: TablePortionProps) {
   // contexts
   const { onTableKeyDown: onNavigationTableKeyDown, focusFirstCell } = useCellsNavigation()
   const { orderBy, onOrderByChange } = useOrderBy()
