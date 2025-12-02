@@ -19,16 +19,11 @@
   .table-scroll {
     flex: 1;
     overflow: auto;
-    & > div {
-      position: relative;
-    }
     /* avoid the row and column headers (sticky) to overlap the current navigation cell */
     scroll-padding-inline-start: var(--row-number-width);
     scroll-padding-block-start: var(--column-header-height);
   }
-
   table {
-    position: absolute;
     max-width: 100%;
     overflow-x: auto;
   }
