@@ -151,7 +151,7 @@ export function ScrollContainer({
   maxRowNumber,
 }: ScrollContainerProps) {
   const { containerRef } = usePortalContainer()
-  const scrollRef = useRef<HTMLDivElement | null>(null)
+  const viewportRef = useRef<HTMLDivElement | null>(null)
   const tableCornerRef = useRef<Pick<HTMLTableCellElement, 'offsetWidth'> | null>(null)
 
   const { shouldScroll, setShouldScroll, onScrollKeyDown, cellPosition } = useCellsNavigation()
@@ -188,7 +188,7 @@ export function ScrollContainer({
   // is scrolling with the mouse or the arrow keys, and the cell exits the viewport: don't want to scroll
   // back to it
   useEffect(() => {
-    const scroller = scrollRef.current
+    const scroller = viewportRef.current
     if (!shouldScroll || !scroller || !('scrollTo' in scroller)) {
       // scrollTo does not exist in jsdom, used in the tests
       return
@@ -219,10 +219,10 @@ export function ScrollContainer({
       abortController?.abort()
       abortController = new AbortController()
       // view height (0 is not allowed - the syntax is verbose, but makes it clear)
-      const currentClientHeight = scrollRef.current?.clientHeight
+      const currentClientHeight = viewportRef.current?.clientHeight
       const clientHeight = currentClientHeight === undefined || currentClientHeight === 0 ? 100 : currentClientHeight
       // scroll position
-      const scrollTop = scrollRef.current?.scrollTop ?? 0
+      const scrollTop = viewportRef.current?.scrollTop ?? 0
 
       // determine rows to fetch based on current scroll position (indexes refer to the virtual table domain)
       const startView = Math.floor(numRows * scrollTop / scrollHeight)
@@ -253,12 +253,12 @@ export function ScrollContainer({
     }
 
     /**
-     * Report the scroller width
+     * Report the viewport width
      */
     function reportWidth() {
-      if (scrollRef.current && tableCornerRef.current) {
-        // we use the scrollRef client width, because we're interested in the content area
-        const tableWidth = getClientWidth(scrollRef.current)
+      if (viewportRef.current && tableCornerRef.current) {
+        // we use the viewportRef client width, because we're interested in the content area
+        const tableWidth = getClientWidth(viewportRef.current)
         const leftColumnWidth = getOffsetWidth(tableCornerRef.current)
         setAvailableWidth?.(tableWidth - leftColumnWidth)
       }
@@ -267,7 +267,7 @@ export function ScrollContainer({
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     const resizeObserver = window.ResizeObserver && new window.ResizeObserver((entries) => {
       for (const entry of entries) {
-        if (entry.target === scrollRef.current) {
+        if (entry.target === viewportRef.current) {
           handleScroll()
           reportWidth()
         }
@@ -279,7 +279,7 @@ export function ScrollContainer({
     reportWidth()
 
     // listeners
-    const scroller = scrollRef.current
+    const scroller = viewportRef.current
 
     if (scroller) {
       scroller.addEventListener('scroll', handleScroll)
@@ -300,7 +300,7 @@ export function ScrollContainer({
   }, [numRows, overscan, padding, scrollHeight, setAvailableWidth, data, orderBy, onError, columnsParameters])
 
   const restrictedOnScrollKeyDown = useCallback((event: KeyboardEvent) => {
-    if (event.target !== scrollRef.current) {
+    if (event.target !== viewportRef.current) {
       // don't handle the event if the target is not the scroller
       return
     }
@@ -311,7 +311,7 @@ export function ScrollContainer({
     <div ref={containerRef} className={`${styles.hightable} ${styled ? styles.styled : ''} ${className}`} style={tableScrollStyle}>
       <div className={styles.topBorder} role="presentation"></div>
       {/* viewport, limited height, scrollable */}
-      <div className={styles.tableScroll} ref={scrollRef} role="group" aria-labelledby="caption" onKeyDown={restrictedOnScrollKeyDown} tabIndex={0}>
+      <div className={styles.tableScroll} ref={viewportRef} role="group" aria-labelledby="caption" onKeyDown={restrictedOnScrollKeyDown} tabIndex={0}>
         {/* content canvas, full height */}
         <div style={{ height: `${scrollHeight}px`, paddingTop: `${offsetTop}px`, overflowY: 'clip' }}>
           {/* content, positioned vertically to match the viewport */}
