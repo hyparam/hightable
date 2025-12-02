@@ -312,7 +312,9 @@ export function ScrollContainer({
       <div className={styles.topBorder} role="presentation"></div>
       {/* viewport, limited height, scrollable */}
       <div className={styles.tableScroll} ref={viewportRef} role="group" aria-labelledby="caption" onKeyDown={restrictedOnScrollKeyDown} tabIndex={0}>
-        {/* content canvas, full height */}
+        {/* content canvas, full height.
+          * "overflowY: clip" lets the header cell be sticked to the top of the viewport, while "overflowY: hidden" does not.
+          */}
         <div style={{ height: `${scrollHeight}px`, paddingTop: `${offsetTop}px`, overflowY: 'clip' }}>
           {/* content, positioned vertically to match the viewport */}
           <TablePart
