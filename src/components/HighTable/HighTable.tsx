@@ -295,8 +295,11 @@ function ScrollContainer({
   return (
     <div ref={containerRef} className={`${styles.hightable} ${styled ? styles.styled : ''} ${className}`} style={tableScrollStyle}>
       <div className={styles.topBorder} role="presentation" />
+      {/* viewport, limited height, scrollable */}
       <div className={styles.tableScroll} ref={scrollRef} role="group" aria-labelledby="caption" onKeyDown={restrictedOnScrollKeyDown} tabIndex={0}>
-        <div style={{ height: `${scrollHeight}px`, paddingTop: `${offsetTop}px` }}>
+        {/* content canvas, full height */}
+        <div style={{ height: `${scrollHeight}px`, paddingTop: `${offsetTop}px`, overflowY: 'clip' }}>
+          {/* content, positioned vertically to match the viewport */}
           <TableSlice
             data={data}
             numRows={numRows}
@@ -311,10 +314,10 @@ function ScrollContainer({
             rowsRange={rowsRange}
             columnsParameters={columnsParameters}
           />
+          {/* puts a background behind the row labels column */}
+          <div className={styles.mockRowLabel}>&nbsp;</div>
         </div>
       </div>
-      {/* puts a background behind the row labels column */}
-      <div className={styles.mockRowLabel}>&nbsp;</div>
     </div>
   )
 }
