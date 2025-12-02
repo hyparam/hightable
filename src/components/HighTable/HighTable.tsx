@@ -189,6 +189,8 @@ function ScrollContainer({
   const scrollHeight = (numRows + 1) * rowHeight
   const offsetTop = Math.max(0, rowsRange.start - padding) * rowHeight
 
+  // These styles are required here (not in TablePart) because they affect the scrollable area
+  // to setup the scroll padding (to avoid sticky headers overlapping the focused cell)
   const tableScrollStyle = useMemo(() => {
     // reserve space for at least 3 characters
     const numCharacters = Math.max(maxRowNumber.toLocaleString('en-US').length, 3)
@@ -316,8 +318,6 @@ function ScrollContainer({
             rowsRange={rowsRange}
             columnsParameters={columnsParameters}
           />
-          {/* puts a background behind the row labels column */}
-          <div className={styles.mockRowLabel}>&nbsp;</div>
         </div>
       </div>
     </div>
@@ -408,7 +408,10 @@ function TableSlice({
 
   const ariaColCount = columnsParameters.length + 1 // don't forget the selection column
   const ariaRowCount = numRows + 1 // don't forget the header row
-  return (
+  return <>
+    {/* puts a background behind the row labels column */}
+    <div className={styles.mockRowLabel}>&nbsp;</div>
+    {/* the table */}
     <table
       aria-readonly={true}
       aria-colcount={ariaColCount}
@@ -503,5 +506,5 @@ function TableSlice({
         })}
       </tbody>
     </table>
-  )
+  </>
 }
