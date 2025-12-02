@@ -28,7 +28,7 @@ interface DataProviderProps<M extends Obj, C extends Obj> {
 }
 
 export function DataProvider<M extends Obj, C extends Obj>({ children, data, maxRowNumber: propMaxRowNumber }: DataProviderProps<M, C>) {
-  // We want a string key to identify the data.
+  // The key helps trigger remounts when the data frame changes
   const [key, setKey] = useState<number>(0)
   const [previousData, setPreviousData] = useState<DataFrame<M, C>>(data)
   const [version, setVersion] = useState(0)
