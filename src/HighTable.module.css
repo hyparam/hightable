@@ -18,6 +18,7 @@
   /* Note that this class cannot be easily overriden by custom CSS. It's not really an issue as its role is functional. */
   .table-scroll {
     flex: 1;
+    position: relative;
     overflow: auto;
     /* avoid the row and column headers (sticky) to overlap the current navigation cell */
     scroll-padding-inline-start: var(--row-number-width);
@@ -202,7 +203,7 @@
   .mock-row-label {
     content: "";
     position: absolute;
-    top: var(--mock-row-label-top, 0);
+    top: 0;
     left: 0;
     bottom: 0;
     background: var(--mock-row-label-background, transparent);
@@ -642,7 +643,6 @@
   /* mock row numbers */
   /* Note that this class cannot be easily overriden by custom CSS. Use the variable to change the background. */
   --mock-row-label-background: var(--row-number-background-color);
-  --mock-row-label-top: var(--top-border-height, 0);
 }
 
 @keyframes textshimmer {
