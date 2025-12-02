@@ -189,7 +189,7 @@ function ScrollContainer({
   const scrollHeight = (numRows + 1) * rowHeight
   const offsetTop = Math.max(0, rowsRange.start - padding) * rowHeight
 
-  // These styles are required here (not in TablePart) because they affect the scrollable area
+  // These styles are required here (not in TableSlice) because they affect the scrollable area
   // to setup the scroll padding (to avoid sticky headers overlapping the focused cell)
   const tableScrollStyle = useMemo(() => {
     // reserve space for at least 3 characters
@@ -236,19 +236,19 @@ function ScrollContainer({
       abortController?.abort()
       abortController = new AbortController()
       // view height (0 is not allowed - the syntax is verbose, but makes it clear)
-      const clientHeight = viewportHeight === undefined || viewportHeight === 0 ? 100 : viewportHeight
+      const validViewportHeight = viewportHeight === undefined || viewportHeight === 0 ? 100 : viewportHeight
       // scroll position
       const scrollTop = viewportRef.current?.scrollTop ?? 0
 
       // determine rows to fetch based on current scroll position (indexes refer to the virtual table domain)
       const startView = Math.floor(numRows * scrollTop / scrollHeight)
-      const endView = Math.ceil(numRows * (scrollTop + clientHeight) / scrollHeight)
+      const endView = Math.ceil(numRows * (scrollTop + validViewportHeight) / scrollHeight)
       const start = Math.max(0, startView - overscan)
       const end = Math.min(numRows, endView + overscan)
 
       if (isNaN(start)) throw new Error(`invalid start row ${start}`)
       if (isNaN(end)) throw new Error(`invalid end row ${end}`)
-      if (end - start > 1000) throw new Error(`attempted to render too many rows ${end - start} table must be contained in a scrollable div`)
+      if (end - start > 1000) throw new Error(`attempted to render too many rows ${end - start} in the table slice`)
 
       setRowsRange({ start, end })
       if (data.fetch) {
