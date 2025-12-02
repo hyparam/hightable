@@ -144,8 +144,10 @@ type TableSliceProps = Omit<ScrollContainerProps, 'maxRowNumber' | 'styled' | 'c
   columnsParameters: ColumnParameters[] // parameters of the columns to render
 }
 interface RowsRange {
-  start: number // start index of the rows range (inclusive)
-  end: number // end index of the rows range (exclusive)
+  startFetch: number // first row to fetch (inclusive)
+  endFetch: number // last row to fetch (exclusive)
+  startView: number // first row to show in the viewport (inclusive)
+  endView: number // last row to show in the viewport (exclusive)
 }
 
 /**
@@ -181,13 +183,30 @@ function ScrollContainer({
     })
   }, [allColumnsParameters, isHiddenColumn])
 
-  // local state
-  const [rowsRange, setRowsRange] = useState<RowsRange>({ start: 0, end: 0 })
+  // Rows to fetch: includes the rows inside the viewport plus overscan rows before and after
+  const [rowsRange, setRowsRange] = useState<RowsRange>({ startFetch: 0, endFetch: 0, startView: 0, endView: 0 })
+
+  /**
+   * Scale functions to convert between row indexes and viewport positions. The header is not counted here.
+   * Row index: 0 is the first row, numRows -1 is the last row
+   * Viewport position: 0 is the top of the viewport, in pixels.
+   */
 
   // total scrollable height
-  /* TODO: fix the computation on unstyled tables */
-  const scrollHeight = (numRows + 1) * rowHeight
-  const offsetTop = Math.max(0, rowsRange.start - padding) * rowHeight
+  // TODO(SL) fix the computation on unstyled tables, and variable height rows. For now, we assume all the rows, including header, have the same height.
+  // TODO(SL) apply a threshold at numRows > 100K?
+  const scrollHeight = 100_000 // fixed to 100K pixels, temporarily (instead of numRows * rowHeight)
+  const scale = useMemo(() => scrollHeight / numRows, [numRows])
+  const toViewportPosition = useCallback((row: number) => {
+    return row * scale
+  }, [scale])
+  const toRow = useCallback((viewportPosition: number) => {
+    return viewportPosition / scale
+  }, [scale])
+  // Set the position of the table slice to match the viewport
+  const sliceTop = Math.max(0, toViewportPosition(rowsRange.startView))
+
+  console.log('Render ScrollContainer', { ...rowsRange, sliceTop, scale })
 
   // These styles are required here (not in TableSlice) because they affect the scrollable area
   // to setup the scroll padding (to avoid sticky headers overlapping the focused cell)
@@ -211,13 +230,13 @@ function ScrollContainer({
       return
     }
     setShouldScroll?.(false)
-    const row = cellPosition.rowIndex - ariaOffset
+    const row = cellPosition.rowIndex - ariaOffset // it can be the header row
     // if the row is inside the rows range, nothing to do
-    if (row >= rowsRange.start && row < rowsRange.end) {
+    if (row >= rowsRange.startFetch && row < rowsRange.endFetch) {
       return
     }
     // Scroll to the estimated position of the cell, to wait for the cell to be fetched and rendered
-    const nextScrollTop = row * rowHeight
+    const nextScrollTop = toViewportPosition(row)
     if (nextScrollTop !== viewport.scrollTop) {
       // scroll to the cell
       viewport.scrollTo({ top: nextScrollTop, behavior: 'auto' })
@@ -235,26 +254,29 @@ function ScrollContainer({
       // abort the previous fetches if any
       abortController?.abort()
       abortController = new AbortController()
-      // view height (0 is not allowed - the syntax is verbose, but makes it clear)
-      const validViewportHeight = viewportHeight === undefined || viewportHeight === 0 ? 100 : viewportHeight
+      // viewport height (visible area)
+      const validViewportHeight = Math.max(viewportHeight ?? 100, 100)
+      const visibleRows = Math.ceil(validViewportHeight / rowHeight) - 1 // remove the header, which is always visible
       // scroll position
       const scrollTop = viewportRef.current?.scrollTop ?? 0
 
-      // determine rows to fetch based on current scroll position (indexes refer to the virtual table domain)
-      const startView = Math.floor(numRows * scrollTop / scrollHeight)
-      const endView = Math.ceil(numRows * (scrollTop + validViewportHeight) / scrollHeight)
-      const start = Math.max(0, startView - overscan)
-      const end = Math.min(numRows, endView + overscan)
+      // determine the visible rows
+      const startView = Math.floor(toRow(scrollTop))
+      const endView = startView + visibleRows // TODO(SL): check +1 or not
+      // determine rows to fetch
+      const startFetch = Math.max(0, startView - overscan)
+      const endFetch = Math.min(numRows, endView + overscan)
+      console.log('handleScroll', { validViewportHeight, visibleRows, scrollTop, startView, endView, startFetch, endFetch })
 
-      if (isNaN(start)) throw new Error(`invalid start row ${start}`)
-      if (isNaN(end)) throw new Error(`invalid end row ${end}`)
-      if (end - start > 1000) throw new Error(`attempted to render too many rows ${end - start} in the table slice`)
+      if (isNaN(startFetch)) throw new Error(`invalid start row ${startFetch}`)
+      if (isNaN(endFetch)) throw new Error(`invalid end row ${endFetch}`)
+      if (endFetch - startFetch > 1000) throw new Error(`attempted to render too many rows ${endFetch - startFetch} in the table slice`)
 
-      setRowsRange({ start, end })
+      setRowsRange({ startFetch, endFetch, startView, endView })
       if (data.fetch) {
         data.fetch({
-          rowStart: start,
-          rowEnd: end,
+          rowStart: startFetch,
+          rowEnd: endFetch,
           columns: columnsParameters.map(({ name }) => name),
           orderBy,
           signal: abortController.signal,
@@ -284,7 +306,7 @@ function ScrollContainer({
         viewport.removeEventListener('scroll', handleScroll)
       }
     }
-  }, [numRows, overscan, padding, scrollHeight, data, orderBy, onError, columnsParameters, viewportRef, viewportHeight])
+  }, [numRows, overscan, padding, scrollHeight, data, orderBy, onError, columnsParameters, viewportRef, viewportHeight, toRow])
 
   const restrictedOnScrollKeyDown = useCallback((event: KeyboardEvent) => {
     if (event.target !== viewportRef.current) {
@@ -302,7 +324,7 @@ function ScrollContainer({
         {/* content canvas, full height.
           * "overflowY: clip" lets the header cell be sticked to the top of the viewport, while "overflowY: hidden" does not.
           */}
-        <div style={{ height: `${scrollHeight}px`, paddingTop: `${offsetTop}px`, overflowY: 'clip' }}>
+        <div style={{ height: `${scrollHeight}px`, paddingTop: `${sliceTop}px`, overflowY: 'clip' }}>
           {/* content, positioned vertically to match the viewport */}
           <TableSlice
             data={data}
@@ -373,11 +395,15 @@ function TableSlice({
   }, [focus, focusFirstCell])
 
   // add empty pre and post rows to fill the viewport
-  const offset = rowsRange.start
-  const rowsLength = rowsRange.end - rowsRange.start
+  const offset = rowsRange.startFetch
+  const rowsLength = rowsRange.endFetch - offset
   const prePadding = Array.from({ length: Math.min(padding, offset) }, () => [])
   const rows = Array.from({ length: rowsLength }, (_, i) => i + offset)
-  const postPadding = Array.from({ length: Math.min(padding, numRows - offset - rowsLength) }, () => [])
+  const postPadding = Array.from({ length: Math.min(padding, numRows - rowsRange.endFetch) }, () => [])
+  // The negative margin positions row=startView at the top of the viewport, ie: translates the previous rows
+  const previousRows = prePadding.length + rowsRange.startView - rowsRange.startFetch // we don't account for the header, so that we always see it
+  const marginTop = -Math.max(previousRows * rowHeight, 0)
+  console.log('Render TableSlice', { rowsLength, prePaddingLength: prePadding.length, postPaddingLength: postPadding.length, marginTop })
 
   // Prepare the slice of data to render
   // TODO(SL): also compute progress percentage here, to show a loading indicator (percentage of resolved cells)
@@ -421,6 +447,7 @@ function TableSlice({
         aria-busy={pendingSelectionGesture /* TODO(SL): add other busy states? Used only for tests right now */}
         role="grid"
         onKeyDown={onTableKeyDown}
+        style={{ marginTop: `${marginTop}px` }}
       >
         <caption id="caption" hidden>Virtual-scroll table</caption>
         <thead role="rowgroup">
