@@ -3,7 +3,7 @@ import { DataFrame, Obj, arrayDataFrame } from '../helpers/dataframe/index.js'
 
 interface DataContextType {
   data: Omit<DataFrame, 'numRows'>,
-  key: string,
+  key: number,
   version: number,
   maxRowNumber: number
   numRows: number
@@ -12,7 +12,7 @@ interface DataContextType {
 function getDefaultDataContext(): DataContextType {
   return {
     data: arrayDataFrame([]),
-    key: 'default',
+    key: 0,
     version: 0,
     maxRowNumber: 0,
     numRows: 0,
@@ -27,13 +27,9 @@ interface DataProviderProps<M extends Obj, C extends Obj> {
   children: ReactNode
 }
 
-function getRandomKey(): string {
-  return crypto.randomUUID()
-}
-
 export function DataProvider<M extends Obj, C extends Obj>({ children, data, maxRowNumber: propMaxRowNumber }: DataProviderProps<M, C>) {
-  // We want a string key to identify the data.
-  const [key, setKey] = useState<string>(getRandomKey())
+  // The key helps trigger remounts when the data frame changes
+  const [key, setKey] = useState<number>(0)
   const [previousData, setPreviousData] = useState<DataFrame<M, C>>(data)
   const [version, setVersion] = useState(0)
   const [numRows, setNumRows] = useState(data.numRows)
@@ -56,7 +52,7 @@ export function DataProvider<M extends Obj, C extends Obj>({ children, data, max
   }, [data])
 
   if (data !== previousData) {
-    setKey(getRandomKey())
+    setKey(prevKey => prevKey + 1)
     setPreviousData(data)
     setVersion(0)
     setNumRows(data.numRows)
