@@ -174,7 +174,7 @@ export function ScrollContainer({
   const scrollHeight = (numRows + 1) * rowHeight
   const offsetTop = Math.max(0, rowsRange.start - padding) * rowHeight
 
-  // These styles are required here (not in TablePortion) because they affect the scrollable area
+  // These styles are required here (not in TableSlice) because they affect the scrollable area
   // to setup the scroll padding (to avoid sticky headers overlapping the focused cell)
   const tableScrollStyle = useMemo(() => {
     // reserve space for at least 3 characters
@@ -319,7 +319,7 @@ export function ScrollContainer({
           */}
         <div style={{ height: `${scrollHeight}px`, paddingTop: `${offsetTop}px`, overflowY: 'clip' }}>
           {/* content, positioned vertically to match the viewport */}
-          <TablePortion
+          <TableSlice
             data={data}
             numRows={numRows}
             padding={padding}
@@ -340,7 +340,7 @@ export function ScrollContainer({
   )
 }
 
-type TablePortionProps = Omit<ScrollContainerProps, 'maxRowNumber' | 'styled' | 'className' | 'overscan' | 'onerror'> & {
+type TableSliceProps = Omit<ScrollContainerProps, 'maxRowNumber' | 'styled' | 'className' | 'overscan' | 'onerror'> & {
   rowsRange: RowsRange // range of rows to render
   columnsParameters: ColumnParameters[] // parameters of the columns to render
   tableCornerRef: RefObject<Pick<HTMLTableCellElement, 'offsetWidth'> | null> // ref to the table corner element
@@ -349,7 +349,7 @@ type TablePortionProps = Omit<ScrollContainerProps, 'maxRowNumber' | 'styled' | 
 /**
  * Only the visible rows are fetched and rendered as HTML <tr> elements.
  */
-export function TablePortion({
+export function TableSlice({
   data,
   numRows,
   padding = defaultPadding,
@@ -363,7 +363,7 @@ export function TablePortion({
   rowsRange,
   columnsParameters,
   tableCornerRef,
-}: TablePortionProps) {
+}: TableSliceProps) {
   // contexts
   const { onTableKeyDown: onNavigationTableKeyDown, focusFirstCell } = useCellsNavigation()
   const { orderBy, onOrderByChange } = useOrderBy()
