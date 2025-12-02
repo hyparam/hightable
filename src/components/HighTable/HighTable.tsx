@@ -205,22 +205,22 @@ function ScrollContainer({
   // is scrolling with the mouse or the arrow keys, and the cell exits the viewport: don't want to scroll
   // back to it
   useEffect(() => {
-    const scroller = viewportRef.current
-    if (!shouldScroll || !scroller || !('scrollTo' in scroller)) {
+    const viewport = viewportRef.current
+    if (!shouldScroll || !viewport || !('scrollTo' in viewport)) {
       // scrollTo does not exist in jsdom, used in the tests
       return
     }
     setShouldScroll?.(false)
     const row = cellPosition.rowIndex - ariaOffset
-    let nextScrollTop = scroller.scrollTop
+    let nextScrollTop = viewport.scrollTop
     // if row outside of the rows range, scroll to the estimated position of the cell,
     // to wait for the cell to be fetched and rendered
     if (row < rowsRange.start || row >= rowsRange.end) {
       nextScrollTop = row * rowHeight
     }
-    if (nextScrollTop !== scroller.scrollTop) {
+    if (nextScrollTop !== viewport.scrollTop) {
       // scroll to the cell
-      scroller.scrollTo({ top: nextScrollTop, behavior: 'auto' })
+      viewport.scrollTo({ top: nextScrollTop, behavior: 'auto' })
     }
   }, [cellPosition, shouldScroll, rowsRange, setShouldScroll, viewportRef])
 
@@ -272,23 +272,23 @@ function ScrollContainer({
     handleScroll()
 
     // listeners
-    const scroller = viewportRef.current
+    const viewport = viewportRef.current
 
-    if (scroller) {
-      scroller.addEventListener('scroll', handleScroll)
+    if (viewport) {
+      viewport.addEventListener('scroll', handleScroll)
     }
 
     return () => {
       abortController?.abort() // cancel the fetches if any
-      if (scroller) {
-        scroller.removeEventListener('scroll', handleScroll)
+      if (viewport) {
+        viewport.removeEventListener('scroll', handleScroll)
       }
     }
   }, [numRows, overscan, padding, scrollHeight, data, orderBy, onError, columnsParameters, viewportRef, viewportHeight])
 
   const restrictedOnScrollKeyDown = useCallback((event: KeyboardEvent) => {
     if (event.target !== viewportRef.current) {
-      // don't handle the event if the target is not the scroller
+      // don't handle the event if the target is not the viewport
       return
     }
     onScrollKeyDown?.(event)
