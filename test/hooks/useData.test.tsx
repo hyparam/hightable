@@ -31,7 +31,7 @@ describe('useData', () => {
   it('should provide an empty data frame by default', () => {
     const { data, key, version, maxRowNumber, numRows } = renderHook(() => useData()).result.current
     expect(data.columnDescriptors).toEqual([])
-    expect(key).toBe('default')
+    expect(key).toBe(0)
     expect(data.getRowNumber({ row: 0 })).toBeUndefined()
     expect(() => data.getCell({ row: 0, column: 'a' })).toThrow()
     expect(version).toBe(0)
@@ -43,8 +43,7 @@ describe('useData', () => {
     const { result } = renderHook(() => useData(), { wrapper: createWrapper({ data: df }) })
     const { data, key, version, maxRowNumber, numRows } = result.current
     expect(data).toBe(df)
-    expect(key).not.toBe('default')
-    expect(key.length).toBeGreaterThan(0)
+    expect(key).toBe(0)
     expect(version).toBe(0)
     expect(maxRowNumber).toBe(df.numRows)
     expect(numRows).toBe(df.numRows)
@@ -121,7 +120,7 @@ describe('useData', () => {
     const df1 = arrayDataFrame([{ a: 1 }, { a: 2 }])
     const df2 = arrayDataFrame([{ a: 10 }, { a: 20 }, { a: 30 }])
     const { getByTestId, rerender } = render(<TestComponent data={df1}></TestComponent>)
-    const key1 = getByTestId('key').textContent
+    expect(getByTestId('key').textContent).toBe('0')
     expect(getByTestId('version').textContent).toBe('0')
     expect(getByTestId('numRows').textContent).toBe('2')
     // Change the data frame
@@ -129,7 +128,7 @@ describe('useData', () => {
     await act(async () => {
       rerender(<TestComponent data={df2}></TestComponent>)
     })
-    expect(getByTestId('key').textContent).not.toBe(key1)
+    expect(getByTestId('key').textContent).toBe('1')
     expect(getByTestId('version').textContent).toBe('0')
     expect(getByTestId('numRows').textContent).toBe('3')
   })
