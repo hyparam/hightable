@@ -140,11 +140,9 @@ type ScrollContainerProps = Omit<PropsData, 'orderBy' | 'onOrderByChange' | 'sel
 }
 
 type TableSliceProps = Omit<ScrollContainerProps, 'maxRowNumber' | 'styled' | 'className' | 'overscan' | 'onerror'> & {
-  offsetTop: number // offset top to apply to the table
   rowsRange: RowsRange // range of rows to render
   columnsParameters: ColumnParameters[] // parameters of the columns to render
 }
-
 interface RowsRange {
   start: number // start index of the rows range (inclusive)
   end: number // end index of the rows range (exclusive)
@@ -298,7 +296,7 @@ function ScrollContainer({
     <div ref={containerRef} className={`${styles.hightable} ${styled ? styles.styled : ''} ${className}`} style={tableScrollStyle}>
       <div className={styles.topBorder} role="presentation" />
       <div className={styles.tableScroll} ref={scrollRef} role="group" aria-labelledby="caption" onKeyDown={restrictedOnScrollKeyDown} tabIndex={0}>
-        <div style={{ height: `${scrollHeight}px` }}>
+        <div style={{ height: `${scrollHeight}px`, paddingTop: `${offsetTop}px` }}>
           <TableSlice
             data={data}
             numRows={numRows}
@@ -310,7 +308,6 @@ function ScrollContainer({
             stringify={stringify}
             version={version}
             renderCellContent={renderCellContent}
-            offsetTop={offsetTop}
             rowsRange={rowsRange}
             columnsParameters={columnsParameters}
           />
@@ -336,7 +333,6 @@ function TableSlice({
   stringify = stringifyDefault,
   version,
   renderCellContent,
-  offsetTop,
   rowsRange,
   columnsParameters,
 }: TableSliceProps) {
@@ -363,8 +359,7 @@ function TableSlice({
     }
   }, [toggleRowNumber, toggleRangeToRowNumber])
 
-  // focus table on mount, or on later changes, so arrow keys work
-  // Note that the dependency upon data and nowRows was removed, because focusFirstCell should depend on them
+  // focus table on mount and later changes (when focusFirstCell is updated), so arrow keys work
   useEffect(() => {
     if (focus) {
       // Try focusing the first cell
@@ -380,7 +375,7 @@ function TableSlice({
   const postPadding = Array.from({ length: Math.min(padding, numRows - offset - rowsLength) }, () => [])
 
   // Prepare the slice of data to render
-  // TODO(SL): also compute progress percentage here, to show a loading indicator
+  // TODO(SL): also compute progress percentage here, to show a loading indicator (percentage of resolved cells)
   const slice = useMemo(() => {
     const canMeasureColumn: Record<string, boolean> = {}
     const rowContents = rows.map((row) => {
@@ -416,7 +411,6 @@ function TableSlice({
       aria-multiselectable={selectable}
       aria-busy={pendingSelectionGesture /* TODO(SL): add other busy states? Used only for tests right now */}
       role="grid"
-      style={{ top: `${offsetTop}px` }}
       onKeyDown={onTableKeyDown}
     >
       <caption id="caption" hidden>Virtual-scroll table</caption>
@@ -440,6 +434,7 @@ function TableSlice({
         </Row>
       </thead>
       <tbody role="rowgroup">
+        {/* TODO(SL): split into three tbody? to help position the second one at the scrolling position */}
         {prePadding.map((_, prePaddingIndex) => {
           const row = offset - prePadding.length + prePaddingIndex
           const ariaRowIndex = row + ariaOffset
