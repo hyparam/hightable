@@ -173,7 +173,7 @@ function ScrollContainer({
   const { orderBy } = useContext(OrderByContext)
   const allColumnsParameters = useContext(ColumnParametersContext)
   const { isHiddenColumn } = useContext(ColumnVisibilityStatesContext)
-  const { viewportRef: scrollRef, viewportHeight } = useContext(ViewportContext)
+  const { viewportRef, viewportHeight } = useContext(ViewportContext)
 
   const columnsParameters = useMemo(() => {
     return allColumnsParameters.filter((col) => {
@@ -203,7 +203,7 @@ function ScrollContainer({
   // is scrolling with the mouse or the arrow keys, and the cell exits the viewport: don't want to scroll
   // back to it
   useEffect(() => {
-    const scroller = scrollRef.current
+    const scroller = viewportRef.current
     if (!shouldScroll || !scroller || !('scrollTo' in scroller)) {
       // scrollTo does not exist in jsdom, used in the tests
       return
@@ -220,7 +220,7 @@ function ScrollContainer({
       // scroll to the cell
       scroller.scrollTo({ top: nextScrollTop, behavior: 'auto' })
     }
-  }, [cellPosition, shouldScroll, rowsRange, setShouldScroll, scrollRef])
+  }, [cellPosition, shouldScroll, rowsRange, setShouldScroll, viewportRef])
 
   // handle scrolling and component resizing
   useEffect(() => {
@@ -236,7 +236,7 @@ function ScrollContainer({
       // view height (0 is not allowed - the syntax is verbose, but makes it clear)
       const clientHeight = viewportHeight === undefined || viewportHeight === 0 ? 100 : viewportHeight
       // scroll position
-      const scrollTop = scrollRef.current?.scrollTop ?? 0
+      const scrollTop = viewportRef.current?.scrollTop ?? 0
 
       // determine rows to fetch based on current scroll position (indexes refer to the virtual table domain)
       const startView = Math.floor(numRows * scrollTop / scrollHeight)
@@ -270,7 +270,7 @@ function ScrollContainer({
     handleScroll()
 
     // listeners
-    const scroller = scrollRef.current
+    const scroller = viewportRef.current
 
     if (scroller) {
       scroller.addEventListener('scroll', handleScroll)
@@ -282,21 +282,21 @@ function ScrollContainer({
         scroller.removeEventListener('scroll', handleScroll)
       }
     }
-  }, [numRows, overscan, padding, scrollHeight, data, orderBy, onError, columnsParameters, scrollRef, viewportHeight])
+  }, [numRows, overscan, padding, scrollHeight, data, orderBy, onError, columnsParameters, viewportRef, viewportHeight])
 
   const restrictedOnScrollKeyDown = useCallback((event: KeyboardEvent) => {
-    if (event.target !== scrollRef.current) {
+    if (event.target !== viewportRef.current) {
       // don't handle the event if the target is not the scroller
       return
     }
     onScrollKeyDown?.(event)
-  }, [onScrollKeyDown, scrollRef])
+  }, [onScrollKeyDown, viewportRef])
 
   return (
     <div ref={containerRef} className={`${styles.hightable} ${styled ? styles.styled : ''} ${className}`} style={tableScrollStyle}>
       <div className={styles.topBorder} role="presentation" />
       {/* viewport, limited height, scrollable */}
-      <div className={styles.tableScroll} ref={scrollRef} role="group" aria-labelledby="caption" onKeyDown={restrictedOnScrollKeyDown} tabIndex={0}>
+      <div className={styles.tableScroll} ref={viewportRef} role="group" aria-labelledby="caption" onKeyDown={restrictedOnScrollKeyDown} tabIndex={0}>
         {/* content canvas, full height */}
         <div style={{ height: `${scrollHeight}px`, paddingTop: `${offsetTop}px`, overflowY: 'clip' }}>
           {/* content, positioned vertically to match the viewport */}
