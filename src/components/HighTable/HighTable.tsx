@@ -408,103 +408,105 @@ function TableSlice({
 
   const ariaColCount = columnsParameters.length + 1 // don't forget the selection column
   const ariaRowCount = numRows + 1 // don't forget the header row
-  return <>
-    {/* puts a background behind the row labels column */}
-    <div className={styles.mockRowLabel}>&nbsp;</div>
-    {/* the table */}
-    <table
-      aria-readonly={true}
-      aria-colcount={ariaColCount}
-      aria-rowcount={ariaRowCount}
-      aria-multiselectable={selectable}
-      aria-busy={pendingSelectionGesture /* TODO(SL): add other busy states? Used only for tests right now */}
-      role="grid"
-      onKeyDown={onTableKeyDown}
-    >
-      <caption id="caption" hidden>Virtual-scroll table</caption>
-      <thead role="rowgroup">
-        <Row ariaRowIndex={1}>
-          <TableCorner
-            onCheckboxPress={toggleAllRows}
-            checked={allRowsSelected}
-            pendingSelectionGesture={pendingSelectionGesture}
-            ariaColIndex={1}
-            ariaRowIndex={1}
-          />
-          <TableHeader
-            canMeasureColumn={slice.canMeasureColumn}
-            columnsParameters={columnsParameters}
-            orderBy={orderBy}
-            onOrderByChange={onOrderByChange}
-            ariaRowIndex={1}
-            exclusiveSort={data.exclusiveSort === true}
-          />
-        </Row>
-      </thead>
-      <tbody role="rowgroup">
-        {/* TODO(SL): split into three tbody? to help position the second one at the scrolling position */}
-        {prePadding.map((_, prePaddingIndex) => {
-          const row = offset - prePadding.length + prePaddingIndex
-          const ariaRowIndex = row + ariaOffset
-          return (
-            <Row key={row} ariaRowIndex={ariaRowIndex}>
-              <RowHeader ariaColIndex={1} ariaRowIndex={ariaRowIndex} />
-            </Row>
-          )
-        })}
-        {slice.rowContents.map(({ row, rowNumber, cells }) => {
-          const ariaRowIndex = row + ariaOffset
-          const selected = isRowSelected?.({ rowNumber })
-          const rowKey = `${row}`
-          return (
-            <Row
-              key={rowKey}
-              ariaRowIndex={ariaRowIndex}
-              selected={selected}
-              rowNumber={rowNumber}
-              // title={rowError(row, columns.length)} // TODO(SL): re-enable later?
-            >
-              <RowHeader
+  return (
+    <>
+      {/* puts a background behind the row labels column */}
+      <div className={styles.mockRowLabel}>&nbsp;</div>
+      {/* the table */}
+      <table
+        aria-readonly={true}
+        aria-colcount={ariaColCount}
+        aria-rowcount={ariaRowCount}
+        aria-multiselectable={selectable}
+        aria-busy={pendingSelectionGesture /* TODO(SL): add other busy states? Used only for tests right now */}
+        role="grid"
+        onKeyDown={onTableKeyDown}
+      >
+        <caption id="caption" hidden>Virtual-scroll table</caption>
+        <thead role="rowgroup">
+          <Row ariaRowIndex={1}>
+            <TableCorner
+              onCheckboxPress={toggleAllRows}
+              checked={allRowsSelected}
+              pendingSelectionGesture={pendingSelectionGesture}
+              ariaColIndex={1}
+              ariaRowIndex={1}
+            />
+            <TableHeader
+              canMeasureColumn={slice.canMeasureColumn}
+              columnsParameters={columnsParameters}
+              orderBy={orderBy}
+              onOrderByChange={onOrderByChange}
+              ariaRowIndex={1}
+              exclusiveSort={data.exclusiveSort === true}
+            />
+          </Row>
+        </thead>
+        <tbody role="rowgroup">
+          {/* TODO(SL): split into three tbody? to help position the second one at the scrolling position */}
+          {prePadding.map((_, prePaddingIndex) => {
+            const row = offset - prePadding.length + prePaddingIndex
+            const ariaRowIndex = row + ariaOffset
+            return (
+              <Row key={row} ariaRowIndex={ariaRowIndex}>
+                <RowHeader ariaColIndex={1} ariaRowIndex={ariaRowIndex} />
+              </Row>
+            )
+          })}
+          {slice.rowContents.map(({ row, rowNumber, cells }) => {
+            const ariaRowIndex = row + ariaOffset
+            const selected = isRowSelected?.({ rowNumber })
+            const rowKey = `${row}`
+            return (
+              <Row
+                key={rowKey}
+                ariaRowIndex={ariaRowIndex}
                 selected={selected}
                 rowNumber={rowNumber}
-                onCheckboxPress={getOnCheckboxPress({ rowNumber, row })}
-                pendingSelectionGesture={pendingSelectionGesture}
-                ariaColIndex={1}
-                ariaRowIndex={ariaRowIndex}
-              />
-              {cells.map(({ columnIndex, cell }, visibleColumnIndex) => {
-                const columnClassName = columnsParameters[visibleColumnIndex]?.className
-                return (
-                  <Cell
-                    key={columnIndex}
-                    onDoubleClickCell={onDoubleClickCell}
-                    onMouseDownCell={onMouseDownCell}
-                    onKeyDownCell={onKeyDownCell}
-                    stringify={stringify}
-                    columnIndex={columnIndex}
-                    visibleColumnIndex={visibleColumnIndex}
-                    className={columnClassName}
-                    ariaColIndex={visibleColumnIndex + ariaOffset}
-                    ariaRowIndex={ariaRowIndex}
-                    cell={cell}
-                    rowNumber={rowNumber}
-                    renderCellContent={renderCellContent}
-                  />
-                )
-              })}
-            </Row>
-          )
-        })}
-        {postPadding.map((_, postPaddingIndex) => {
-          const row = offset + rowsLength + postPaddingIndex
-          const ariaRowIndex = row + ariaOffset
-          return (
-            <Row key={row} ariaRowIndex={ariaRowIndex}>
-              <RowHeader ariaColIndex={1} ariaRowIndex={ariaRowIndex} />
-            </Row>
-          )
-        })}
-      </tbody>
-    </table>
-  </>
+              // title={rowError(row, columns.length)} // TODO(SL): re-enable later?
+              >
+                <RowHeader
+                  selected={selected}
+                  rowNumber={rowNumber}
+                  onCheckboxPress={getOnCheckboxPress({ rowNumber, row })}
+                  pendingSelectionGesture={pendingSelectionGesture}
+                  ariaColIndex={1}
+                  ariaRowIndex={ariaRowIndex}
+                />
+                {cells.map(({ columnIndex, cell }, visibleColumnIndex) => {
+                  const columnClassName = columnsParameters[visibleColumnIndex]?.className
+                  return (
+                    <Cell
+                      key={columnIndex}
+                      onDoubleClickCell={onDoubleClickCell}
+                      onMouseDownCell={onMouseDownCell}
+                      onKeyDownCell={onKeyDownCell}
+                      stringify={stringify}
+                      columnIndex={columnIndex}
+                      visibleColumnIndex={visibleColumnIndex}
+                      className={columnClassName}
+                      ariaColIndex={visibleColumnIndex + ariaOffset}
+                      ariaRowIndex={ariaRowIndex}
+                      cell={cell}
+                      rowNumber={rowNumber}
+                      renderCellContent={renderCellContent}
+                    />
+                  )
+                })}
+              </Row>
+            )
+          })}
+          {postPadding.map((_, postPaddingIndex) => {
+            const row = offset + rowsLength + postPaddingIndex
+            const ariaRowIndex = row + ariaOffset
+            return (
+              <Row key={row} ariaRowIndex={ariaRowIndex}>
+                <RowHeader ariaColIndex={1} ariaRowIndex={ariaRowIndex} />
+              </Row>
+            )
+          })}
+        </tbody>
+      </table>
+    </>
+  )
 }
