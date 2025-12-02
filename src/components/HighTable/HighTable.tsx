@@ -255,7 +255,7 @@ export function ScrollContainer({
     }
 
     /**
-     * Report the viewport width
+     * Report the available width for the columns, expecting the left column (row numbers).
      */
     function reportWidth() {
       if (viewportRef.current && tableCornerRef.current) {
