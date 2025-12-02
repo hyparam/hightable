@@ -212,12 +212,12 @@ function ScrollContainer({
     }
     setShouldScroll?.(false)
     const row = cellPosition.rowIndex - ariaOffset
-    let nextScrollTop = viewport.scrollTop
-    // if row outside of the rows range, scroll to the estimated position of the cell,
-    // to wait for the cell to be fetched and rendered
-    if (row < rowsRange.start || row >= rowsRange.end) {
-      nextScrollTop = row * rowHeight
+    // if the row is inside the rows range, nothing to do
+    if (row >= rowsRange.start && row < rowsRange.end) {
+      return
     }
+    // Scroll to the estimated position of the cell, to wait for the cell to be fetched and rendered
+    const nextScrollTop = row * rowHeight
     if (nextScrollTop !== viewport.scrollTop) {
       // scroll to the cell
       viewport.scrollTo({ top: nextScrollTop, behavior: 'auto' })
