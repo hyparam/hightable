@@ -630,3 +630,48 @@ export const SortedVaryingData: Story = {
     data: sortableDataFrame(createVaryingArrayDataFrame({ delay_ms: 200, maxRows: 20 })),
   },
 }
+
+export const FiftyMillionRows: Story = {
+  render: ({ data }) => {
+    const [selection, onSelectionChange] = useState<Selection>({
+      ranges: [],
+    })
+    return (
+      <HighTable
+        data={data}
+        selection={selection}
+        onSelectionChange={onSelectionChange}
+      />
+    )
+  },
+  args: {
+    data: (() => {
+      const numRows = 50_000_000
+      const columnDescriptors = [
+        { name: 'Index' },
+        { name: 'Value1' },
+        { name: 'Value2' },
+        { name: 'Value3' },
+      ]
+      
+      function getCell({ row, column }: { row: number, column: string }): ResolvedValue | undefined {
+        return {
+          value: column === 'Index' ? row :
+            column === 'Value1' ? row * 2 :
+              column === 'Value2' ? row * 3 :
+                column === 'Value3' ? row * 5 :
+                  undefined,
+        }
+      }
+      
+      const getRowNumber = createGetRowNumber({ numRows })
+      
+      return sortableDataFrame({
+        columnDescriptors,
+        numRows,
+        getCell,
+        getRowNumber,
+      })
+    })(),
+  },
+}
