@@ -653,7 +653,7 @@ export const FiftyMillionRows: Story = {
         { name: 'Value2' },
         { name: 'Value3' },
       ]
-      
+
       function getCell({ row, column }: { row: number, column: string }): ResolvedValue | undefined {
         return {
           value: column === 'Index' ? row :
@@ -663,9 +663,9 @@ export const FiftyMillionRows: Story = {
                   undefined,
         }
       }
-      
+
       const getRowNumber = createGetRowNumber({ numRows })
-      
+
       return sortableDataFrame({
         columnDescriptors,
         numRows,
