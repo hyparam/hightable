@@ -26,6 +26,10 @@
       "types": "./dist/types/index.d.ts",
       "import": "./dist/HighTable.js"
     },
+    "./dataframe": {
+      "types": "./dist/types/dataframe.d.ts",
+      "import": "./dist/dataframe.js"
+    },
     "./src/HighTable.css": "./dist/HighTable.css"
   },
   "files": [

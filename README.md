@@ -195,6 +195,29 @@ const data = [
 const dataframe = arrayDataFrame(data)
 ```
 
+## Dataframe Utilities (Node.js)
+
+For using dataframe utilities in Node.js or environments without React, import from the `hightable/dataframe` subpath:
+
+```javascript
+import {
+  arrayDataFrame,
+  sortableDataFrame,
+  createEventTarget,
+  computeRanks,
+  stringify,
+  // ... other utilities
+} from 'hightable/dataframe'
+```
+
+Available exports include:
+- `arrayDataFrame`, `sortableDataFrame`, `convertV1ToDataFrame` - DataFrame implementations
+- `createEventTarget`, `TypedCustomEvent` - Event handling utilities
+- `computeRanks`, `serializeOrderBy`, `deserializeOrderBy` - Sort utilities
+- `stringify` - Value stringification
+- Validation helpers: `checkSignal`, `validateColumn`, `validateRow`, etc.
+- Legacy utilities: `resolvablePromise`, `wrapPromise`, `asyncRows`, etc.
+
 ## Sortable DataFrame
 
 If your data source supports sorting, set the sortable property to true in your DataFrame object. When sorting is enabled, the rows function will receive an additional orderBy parameter, which represents the column name to sort by.
