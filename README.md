@@ -211,7 +211,7 @@ import {
 ```
 
 Available exports include:
-- `arrayDataFrame`, `sortableDataFrame`, `convertV1ToDataFrame` - DataFrame implementations
+- `arrayDataFrame`, `sortableDataFrame` - DataFrame implementations
 - `createEventTarget`, `TypedCustomEvent` - Event handling utilities
 - `computeRanks`, `serializeOrderBy`, `deserializeOrderBy` - Sort utilities
 - `stringify` - Value stringification
@@ -229,35 +229,6 @@ HighTable includes a helper function to transform a dataframe to a sorted datafr
 ```javascript
 import { sortedDataFrame } from 'hightable'
 const sortableDf = sortableDataFrame(df)
-```
-
-## Legacy DataFrame format
-
-The legacy DataFrame format can still be used, but it is not recommended for new projects. It has the following structure:
-
-```ts
-export interface DataFrameV1 {
-  header: string[]
-  numRows: number
-  rows({ start, end, orderBy }: { start: number, end: number, orderBy?: OrderBy }): AsyncRow[]
-  getColumn?: GetColumn
-  sortable?: boolean
-}
-```
-
-HighTable provides a helper function to convert the legacy DataFrame format to the new format:
-
-```javascript
-import { convertV1ToDataFrame } from 'hightable/helpers/dataframe/legacy/index.js'
-const legacyDataFrame = {
-  header: ['ID', 'Name', 'Email'],
-  numRows: 1000000,
-  rows({ start, end }) {
-    // fetch rows from your data source here
-    return fetchRowsFromServer(start, end)
-  }
-}
-const dataframe = convertV1ToDataFrame(legacyDataFrame)
 ```
 
 ## Styling
