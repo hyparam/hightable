@@ -10,11 +10,12 @@ export default defineConfig({
   plugins: [react()],
   build: {
     lib: {
-      entry: resolve(__dirname, 'src/index.js'),
+      entry: {
+        HighTable: resolve(__dirname, 'src/index.ts'),
+        dataframe: resolve(__dirname, 'src/dataframe.ts'),
+      },
       formats: ['es'],
       name: 'HighTable',
-      // the proper extensions will be added
-      fileName: 'HighTable',
     },
     rollupOptions: {
       // make sure to externalize deps that shouldn't be bundled
@@ -28,6 +29,9 @@ export default defineConfig({
           'react/jsx-runtime': 'jsx',
           'react-dom': 'ReactDOM',
         },
+        // Use consistent chunk names without hashes for library builds
+        chunkFileNames: '[name].js',
+        assetFileNames: 'HighTable[extname]',
       },
     },
     sourcemap: true,

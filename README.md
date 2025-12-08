@@ -195,6 +195,29 @@ const data = [
 const dataframe = arrayDataFrame(data)
 ```
 
+## Dataframe Utilities (Node.js)
+
+For using dataframe utilities in Node.js or environments without React, import from the `hightable/dataframe` subpath:
+
+```javascript
+import {
+  arrayDataFrame,
+  sortableDataFrame,
+  createEventTarget,
+  computeRanks,
+  stringify,
+  // ... other utilities
+} from 'hightable/dataframe'
+```
+
+Available exports include:
+- `arrayDataFrame`, `sortableDataFrame` - DataFrame implementations
+- `createEventTarget`, `TypedCustomEvent` - Event handling utilities
+- `computeRanks`, `serializeOrderBy`, `deserializeOrderBy` - Sort utilities
+- `stringify` - Value stringification
+- Validation helpers: `checkSignal`, `validateColumn`, `validateRow`, etc.
+- Legacy utilities: `resolvablePromise`, `wrapPromise`, `asyncRows`, etc.
+
 ## Sortable DataFrame
 
 If your data source supports sorting, set the sortable property to true in your DataFrame object. When sorting is enabled, the rows function will receive an additional orderBy parameter, which represents the column name to sort by.
@@ -206,35 +229,6 @@ HighTable includes a helper function to transform a dataframe to a sorted datafr
 ```javascript
 import { sortedDataFrame } from 'hightable'
 const sortableDf = sortableDataFrame(df)
-```
-
-## Legacy DataFrame format
-
-The legacy DataFrame format can still be used, but it is not recommended for new projects. It has the following structure:
-
-```ts
-export interface DataFrameV1 {
-  header: string[]
-  numRows: number
-  rows({ start, end, orderBy }: { start: number, end: number, orderBy?: OrderBy }): AsyncRow[]
-  getColumn?: GetColumn
-  sortable?: boolean
-}
-```
-
-HighTable provides a helper function to convert the legacy DataFrame format to the new format:
-
-```javascript
-import { convertV1ToDataFrame } from 'hightable/helpers/dataframe/legacy/index.js'
-const legacyDataFrame = {
-  header: ['ID', 'Name', 'Email'],
-  numRows: 1000000,
-  rows({ start, end }) {
-    // fetch rows from your data source here
-    return fetchRowsFromServer(start, end)
-  }
-}
-const dataframe = convertV1ToDataFrame(legacyDataFrame)
 ```
 
 ## Styling
