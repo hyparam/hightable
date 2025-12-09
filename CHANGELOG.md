@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## [0.25.0](https://github.com/hyparam/hightable/compare/v0.24.1...v0.25.0) - 2025-12-09
+
+### Added
+
+- export dataframe from new entrypoint `hightable/dataframe` without react dependency ([#346](https://github.com/hyparam/hightable/pull/346)).
+
+### Fixed
+
+- fix environments without `crypto` (http://) by switching from randomUUID to incremental key ([#343](https://github.com/hyparam/hightable/pull/343)).
+
 ## [0.24.1](https://github.com/hyparam/hightable/compare/v0.24.0...v0.24.1) - 2025-12-01
 
 ### Fixed
