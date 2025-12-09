@@ -2,6 +2,10 @@
 
 ## [0.25.0](https://github.com/hyparam/hightable/compare/v0.24.1...v0.25.0) - 2025-12-09
 
+### Removed
+
+- **Breaking** - removed dataframe v1 compatibility layer (`DataFrameV1`, `AsyncRow`, `convertV1ToDataFrame`, `asyncRows`, `awaitRows`, `wrapPromise`, `resolvablePromise`, `wrapResolved`, etc) ([#346](https://github.com/hyparam/hightable/pull/346)).
+
 ### Added
 
 - export dataframe from new entrypoint `hightable/dataframe` without react dependency ([#346](https://github.com/hyparam/hightable/pull/346)).
