@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { MouseEvent, ReactNode, useState } from 'react'
+import { MouseEvent, ReactNode, useEffect, useRef, useState } from 'react'
 import { checkSignal, createGetRowNumber, validateFetchParams, validateGetCellParams } from '../../helpers/dataframe/helpers.js'
 import { DataFrame, DataFrameEvents, arrayDataFrame } from '../../helpers/dataframe/index.js'
 import { sortableDataFrame } from '../../helpers/dataframe/sort.js'
@@ -547,4 +547,49 @@ export const SortedVaryingData: Story = {
   args: {
     data: sortableDataFrame(createVaryingArrayDataFrame({ delay_ms: 200, maxRows: 20 })),
   },
+}
+
+export const DynamicColumns: Story = {
+  render: () => {
+    const [columnCount, setColumnCount] = useState(2)
+    const containerRef = useRef<HTMLDivElement>(null)
+    const rows = [
+      { ID: 'row 0', Value: 42 },
+      { ID: 'row 1', Value: 17 },
+      { ID: 'row 2', Value: 93 },
+      { ID: 'row 3', Value: 56 },
+      { ID: 'row 4', Value: 31 },
+    ].map((row, index) => {
+      const extendedRow: Record<string, unknown> = { ...row }
+      for (let i = 1; i <= columnCount - 2; i++) {
+        extendedRow[`Extra${i}`] = Math.floor(100 * random(index * 100 + i))
+      }
+      return extendedRow
+    })
+    const data = arrayDataFrame(rows)
+    useEffect(() => {
+      if (columnCount <= 2) return // Don't scroll on initial render
+      // Wait for layout to complete before scrolling
+      const timeoutId = setTimeout(() => {
+        const scrollContainer = containerRef.current?.querySelector('[aria-labelledby="caption"]')
+        if (scrollContainer) {
+          scrollContainer.scrollLeft = scrollContainer.scrollWidth
+        }
+      }, 100)
+      return () => clearTimeout(timeoutId)
+    }, [columnCount])
+    return (
+      <div style={{ width: '800px' }} ref={containerRef}>
+        <button
+          type="button"
+          onClick={() => setColumnCount(c => c + 1)}
+          style={{ marginBottom: '10px' }}
+        >
+          Add Column
+        </button>
+        <HighTable data={data} />
+      </div>
+    )
+  },
+  args: {},
 }
