@@ -257,6 +257,8 @@ function TableSlice({
   const { orderBy, onOrderByChange } = useContext(OrderByContext)
   const { selectable, toggleAllRows, pendingSelectionGesture, onTableKeyDown: onSelectionTableKeyDown, allRowsSelected, isRowSelected, toggleRowNumber, toggleRangeToRowNumber } = useContext(SelectionContext)
   const { firstDataRow, numDataRows, tableOffset } = useContext(RowsSliceContext)
+  const { cellPosition, shouldScroll, setShouldScroll } = useContext(CellNavigationContext)
+  const { scrollToRowIndex } = useContext(RowsSliceContext)
 
   const onTableKeyDown = useCallback((event: KeyboardEvent) => {
     onNavigationTableKeyDown?.(event)
@@ -275,6 +277,17 @@ function TableSlice({
       }
     }
   }, [toggleRowNumber, toggleRangeToRowNumber])
+
+  // TODO(SL): why here? maybe in the provider?
+  useEffect(() => {
+    if (!shouldScroll || !scrollToRowIndex) {
+      // if (!shouldScroll || !scroller || !('scrollTo' in scroller)) {
+      // scrollTo does not exist in jsdom, used in the tests
+      return
+    }
+    setShouldScroll?.(false)
+    scrollToRowIndex(cellPosition.rowIndex)
+  }, [cellPosition, shouldScroll, setShouldScroll, scrollToRowIndex])
 
   // focus table on mount and later changes (when focusFirstCell is updated), so arrow keys work
   useEffect(() => {
