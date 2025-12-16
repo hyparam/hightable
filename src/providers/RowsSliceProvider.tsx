@@ -72,7 +72,7 @@ export function RowsSliceProvider({ children, numRows, headerHeight, rowHeight, 
   // TODO(SL): memoize?
 
   // special cases
-  const isInHeader = virtualScrollTop < headerHeight
+  const isInHeader = numRows === 0 || virtualScrollTop < headerHeight
 
   // a. first visible row (r, d). It can be the header row (0).
   const firstVisibleRow = isInHeader
@@ -108,7 +108,8 @@ export function RowsSliceProvider({ children, numRows, headerHeight, rowHeight, 
 
   // f. first data row and number of data rows
   const firstDataRow = firstVisibleRow - previousRows
-  const numDataRows = previousRows + followingRows + lastVisibleRow - firstVisibleRow + 1
+  const numDataRows = numRows === 0 ? 0 :
+    previousRows + followingRows + lastVisibleRow - firstVisibleRow + 1
 
   /**
    * Programmatically scroll to a specific row if needed.
@@ -217,7 +218,7 @@ export function RowsSliceProvider({ children, numRows, headerHeight, rowHeight, 
     throw new Error(`Invalid following rows: ${followingRows}. It should be between 0 and min(padding (${padding}), numRows (${numRows})).`)
   }
 
-  if (firstDataRow < 0 || firstDataRow >= numRows) {
+  if (firstDataRow < 0 || numRows > 0 && firstDataRow >= numRows) {
     throw new Error(`Invalid first data row: ${firstDataRow}. It should be between 0 and ${numRows - 1}.`)
   }
   if (numDataRows < 0 || firstDataRow + numDataRows > numRows) {
