@@ -109,7 +109,7 @@ function HighTableData(props: PropsData) {
     <PortalContainerProvider>
       <ViewportProvider>
         {/* TODO(SL): re-enable later, for now, the default context gives a constant height of 10K pixels
-                       <CanvasSizeProvider numRows={numRows} headerHeight={headerHeight} rowHeight={rowHeight}> */}
+          <CanvasSizeProvider numRows={numRows} headerHeight={headerHeight} rowHeight={rowHeight}> */}
         <TableCornerProvider>
           <RowsSliceProvider numRows={numRows} headerHeight={headerHeight} rowHeight={rowHeight} padding={props.padding ?? defaultPadding}>
             {/* Provide the column configuration to the table */}
