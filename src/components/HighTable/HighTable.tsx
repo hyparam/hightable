@@ -149,13 +149,6 @@ type ScrollContainerProps = Omit<PropsData, 'padding' | 'orderBy' | 'onOrderByCh
 }
 
 /**
- * TODO
- *
- * - When scrolling (PageDn for example), the scrollHeight changes from 10033 (approx the expected size) to 17M!
- * - The last row has no bottom border
- */
-
-/**
  * Container providing the scrollable area for the table.
  */
 function ScrollContainer({
