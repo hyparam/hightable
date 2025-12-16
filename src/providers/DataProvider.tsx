@@ -1,26 +1,7 @@
-import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from 'react'
+import { ReactNode, useEffect, useMemo, useState } from 'react'
 
-import { arrayDataFrame, DataFrame, Obj } from '../helpers/dataframe/index.js'
-
-interface DataContextType {
-  data: Omit<DataFrame, 'numRows'>,
-  key: number,
-  version: number,
-  maxRowNumber: number
-  numRows: number
-}
-
-function getDefaultDataContext(): DataContextType {
-  return {
-    data: arrayDataFrame([]),
-    key: 0,
-    version: 0,
-    maxRowNumber: 0,
-    numRows: 0,
-  }
-}
-
-export const DataContext = createContext<DataContextType>(getDefaultDataContext())
+import { DataContext } from '../contexts/DataContext.js'
+import { DataFrame, Obj } from '../helpers/dataframe/index.js'
 
 interface DataProviderProps<M extends Obj, C extends Obj> {
   data: DataFrame<M, C>,
@@ -74,8 +55,4 @@ export function DataProvider<M extends Obj, C extends Obj>({ children, data, max
       {children}
     </DataContext.Provider>
   )
-}
-
-export function useData() {
-  return useContext(DataContext)
 }

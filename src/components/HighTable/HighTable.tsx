@@ -1,19 +1,27 @@
-import { CSSProperties, KeyboardEvent, MouseEvent, ReactNode, RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { CSSProperties, KeyboardEvent, MouseEvent, ReactNode, RefObject, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 
+import { CellNavigationContext } from '../../contexts/CellNavigationContext.js'
+import { type ColumnParameters, ColumnParametersContext } from '../../contexts/ColumnParametersContext.js'
+import { ColumnVisibilityStatesContext } from '../../contexts/ColumnVisibilityStatesContext.js'
+import { ColumnWidthsContext } from '../../contexts/ColumnWidthsContext.js'
+import { DataContext } from '../../contexts/DataContext.js'
+import { OrderByContext } from '../../contexts/OrderByContext.js'
+import { PortalContainerContext } from '../../contexts/PortalContainerContext.js'
+import { SelectionContext } from '../../contexts/SelectionContext.js'
 import { ColumnConfiguration } from '../../helpers/columnConfiguration.js'
 import { DataFrame } from '../../helpers/dataframe/index.js'
 import { Selection } from '../../helpers/selection.js'
 import { OrderBy } from '../../helpers/sort.js'
-import { getClientWidth, getOffsetWidth } from '../../helpers/width.js'
-import styles from '../../HighTable.module.css'
-import { CellsNavigationProvider, useCellsNavigation } from '../../hooks/useCellsNavigation.js'
-import { ColumnParameters, ColumnParametersProvider, useColumnParameters } from '../../hooks/useColumnParameters.js'
-import { ColumnVisibilityStatesProvider, type MaybeHiddenColumn, useColumnVisibilityStates } from '../../hooks/useColumnVisibilityStates.js'
-import { ColumnWidthsProvider, useColumnWidths } from '../../hooks/useColumnWidths.js'
-import { DataProvider, useData } from '../../hooks/useData.js'
-import { OrderByProvider, useOrderBy } from '../../hooks/useOrderBy.js'
-import { PortalContainerProvider, usePortalContainer } from '../../hooks/usePortalContainer.js'
-import { SelectionProvider, useSelection } from '../../hooks/useSelection.js'
+import { getOffsetWidth } from '../../helpers/width.js'
+import { getClientWidth } from '../../helpers/width.js'
+import { CellNavigationProvider } from '../../providers/CellNavigationProvider.js'
+import { ColumnParametersProvider } from '../../providers/ColumnParametersProvider.js'
+import { ColumnVisibilityStatesProvider, type MaybeHiddenColumn } from '../../providers/ColumnVisibilityStatesProvider.js'
+import { ColumnWidthsProvider } from '../../providers/ColumnWidthsProvider.js'
+import { DataProvider } from '../../providers/DataProvider.js'
+import { OrderByProvider } from '../../providers/OrderByProvider.js'
+import { PortalContainerProvider } from '../../providers/PortalContainerProvider.js'
+import { SelectionProvider } from '../../providers/SelectionProvider.js'
 import { stringify as stringifyDefault } from '../../utils/stringify.js'
 import Cell, { type CellContentProps } from '../Cell/Cell.js'
 import Row from '../Row/Row.js'
@@ -21,6 +29,7 @@ import RowHeader from '../RowHeader/RowHeader.js'
 import TableCorner from '../TableCorner/TableCorner.js'
 import TableHeader from '../TableHeader/TableHeader.js'
 export { type CellContentProps } from '../Cell/Cell.js'
+import styles from '../../HighTable.module.css'
 
 const rowHeight = 33 // row height px
 
@@ -49,13 +58,13 @@ interface Props {
 }
 
 const defaultPadding = 20
-export const defaultOverscan = 20
+const defaultOverscan = 20
 const ariaOffset = 2 // 1-based index, +1 for the header
 
 const columnWidthsFormatVersion = '2' // increase in case of breaking changes in the column widths format
-export const columnWidthsSuffix = `:${columnWidthsFormatVersion}:column:widths` // suffix used to store the column widths in local storage
+const columnWidthsSuffix = `:${columnWidthsFormatVersion}:column:widths` // suffix used to store the column widths in local storage
 const columnVisibilityStatesFormatVersion = '2' // increase in case of breaking changes in the column visibility format (changed from array by index to record by name)
-export const columnVisibilityStatesSuffix = `:${columnVisibilityStatesFormatVersion}:column:visibility` // suffix used to store the columns vsibility in local storage
+const columnVisibilityStatesSuffix = `:${columnVisibilityStatesFormatVersion}:column:visibility` // suffix used to store the columns vsibility in local storage
 
 /**
  * Render a table with streaming rows on demand from a DataFrame.
@@ -76,7 +85,7 @@ export default function HighTable(props: Props) {
 type PropsData = Omit<Props, 'data'>
 
 function HighTableData(props: PropsData) {
-  const { data, key, version, maxRowNumber, numRows } = useData()
+  const { data, key, version, maxRowNumber, numRows } = useContext(DataContext)
   // TODO(SL): onError could be in a context, as we might want to use it everywhere
   const { cacheKey, orderBy, onOrderByChange, selection, onSelectionChange, onError, onColumnsVisibilityChange } = props
 
@@ -106,11 +115,11 @@ function HighTableData(props: PropsData) {
             {/* Create a new selection context if the dataframe has changed */}
             <SelectionProvider key={key} selection={selection} onSelectionChange={onSelectionChange} data={data} numRows={numRows} onError={onError}>
               {/* Create a new navigation context if the dataframe has changed, because the focused cell might not exist anymore */}
-              <CellsNavigationProvider key={key} colCount={data.columnDescriptors.length + 1} rowCount={numRows + 1} rowPadding={props.padding ?? defaultPadding}>
+              <CellNavigationProvider key={key} colCount={data.columnDescriptors.length + 1} rowCount={numRows + 1} rowPadding={props.padding ?? defaultPadding}>
                 <PortalContainerProvider> {/* TODO(SL): move as the outmost provider? */}
                   <ScrollContainer data={data} numRows={numRows} version={version} {...props} maxRowNumber={maxRowNumber} />
                 </PortalContainerProvider>
-              </CellsNavigationProvider>
+              </CellNavigationProvider>
             </SelectionProvider>
           </OrderByProvider>
         </ColumnVisibilityStatesProvider>
@@ -158,15 +167,15 @@ export function ScrollContainer({
   renderCellContent,
   maxRowNumber,
 }: ScrollContainerProps) {
-  const { containerRef } = usePortalContainer()
+  const { containerRef } = useContext(PortalContainerContext)
+  const { shouldScroll, setShouldScroll, onScrollKeyDown, cellPosition } = useContext(CellNavigationContext)
+  const { setAvailableWidth } = useContext(ColumnWidthsContext)
+  const { orderBy } = useContext(OrderByContext)
+  const allColumnsParameters = useContext(ColumnParametersContext)
+  const { isHiddenColumn } = useContext(ColumnVisibilityStatesContext)
+
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const tableCornerRef = useRef<Pick<HTMLTableCellElement, 'offsetWidth'> | null>(null)
-
-  const { shouldScroll, setShouldScroll, onScrollKeyDown, cellPosition } = useCellsNavigation()
-  const { setAvailableWidth } = useColumnWidths()
-  const { orderBy } = useOrderBy()
-  const allColumnsParameters = useColumnParameters()
-  const { isHiddenColumn } = useColumnVisibilityStates()
 
   const columnsParameters = useMemo(() => {
     return allColumnsParameters.filter((col) => {
@@ -364,9 +373,9 @@ export function TablePart({
   tableCornerRef,
 }: TablePartProps) {
   // contexts
-  const { onTableKeyDown: onNavigationTableKeyDown, focusFirstCell } = useCellsNavigation()
-  const { orderBy, onOrderByChange } = useOrderBy()
-  const { selectable, toggleAllRows, pendingSelectionGesture, onTableKeyDown: onSelectionTableKeyDown, allRowsSelected, isRowSelected, toggleRowNumber, toggleRangeToRowNumber } = useSelection()
+  const { onTableKeyDown: onNavigationTableKeyDown, focusFirstCell } = useContext(CellNavigationContext)
+  const { orderBy, onOrderByChange } = useContext(OrderByContext)
+  const { selectable, toggleAllRows, pendingSelectionGesture, onTableKeyDown: onSelectionTableKeyDown, allRowsSelected, isRowSelected, toggleRowNumber, toggleRangeToRowNumber } = useContext(SelectionContext)
 
   const onTableKeyDown = useCallback((event: KeyboardEvent) => {
     onNavigationTableKeyDown?.(event)

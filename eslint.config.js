@@ -1,6 +1,7 @@
 import javascript from '@eslint/js'
 import react from 'eslint-plugin-react'
 import reactHooks from 'eslint-plugin-react-hooks'
+import reactRefresh from 'eslint-plugin-react-refresh'
 import simpleImportSort from 'eslint-plugin-simple-import-sort'
 import storybook from 'eslint-plugin-storybook'
 import globals from 'globals'
@@ -8,8 +9,13 @@ import typescript from 'typescript-eslint'
 
 export default typescript.config(
   { ignores: ['coverage/', 'dist/'] },
+  reactRefresh.configs.recommended,
   {
-    extends: [javascript.configs.recommended, ...typescript.configs.strictTypeChecked, ...typescript.configs.stylisticTypeChecked],
+    extends: [
+      javascript.configs.recommended,
+      ...typescript.configs.strictTypeChecked,
+      ...typescript.configs.stylisticTypeChecked,
+    ],
     files: ['**/*.{ts,tsx,js}'],
     languageOptions: {
       globals: globals.browser,
@@ -33,16 +39,19 @@ export default typescript.config(
       'arrow-spacing': 'error',
       camelcase: 'off',
       'comma-spacing': 'error',
-      'comma-dangle': ['error', {
-        arrays: 'always-multiline',
-        objects: 'always-multiline',
-        imports: 'always-multiline',
-        exports: 'always-multiline',
-        functions: 'never',
-      }],
+      'comma-dangle': [
+        'error',
+        {
+          arrays: 'always-multiline',
+          objects: 'always-multiline',
+          imports: 'always-multiline',
+          exports: 'always-multiline',
+          functions: 'never',
+        },
+      ],
       'eol-last': 'error',
       eqeqeq: 'error',
-      'func-style': ['error', 'declaration', { 'allowTypeAnnotation': true }],
+      'func-style': ['error', 'declaration', { allowTypeAnnotation: true }],
       indent: ['error', 2],
       'key-spacing': 'error',
       'no-constant-condition': 'off',
@@ -58,10 +67,13 @@ export default typescript.config(
       'no-var': 'error',
       'object-curly-spacing': ['error', 'always'],
       'prefer-const': 'warn',
-      'prefer-destructuring': ['warn', {
-        object: true,
-        array: false,
-      }],
+      'prefer-destructuring': [
+        'warn',
+        {
+          object: true,
+          array: false,
+        },
+      ],
       'prefer-promise-reject-errors': 'error',
       quotes: ['error', 'single'],
       'require-await': 'warn',
@@ -69,7 +81,10 @@ export default typescript.config(
       'space-infix-ops': 'error',
       // typescript
       '@typescript-eslint/restrict-template-expressions': 'off',
-      '@typescript-eslint/no-unused-vars': ['warn', { 'ignoreRestSiblings': true }],
+      '@typescript-eslint/no-unused-vars': [
+        'warn',
+        { ignoreRestSiblings: true },
+      ],
       '@typescript-eslint/require-await': 'warn',
       '@typescript-eslint/no-deprecated': 'warn',
       // allow using any - see row.ts - it's not easy to replace with unknown for example
@@ -100,9 +115,7 @@ export default typescript.config(
     ...typescript.configs.disableTypeChecked,
   },
   {
-    extends: [
-      ...storybook.configs['flat/recommended'],
-    ],
+    extends: [...storybook.configs['flat/recommended']],
     files: ['**/*.stories.tsx'],
   }
 )

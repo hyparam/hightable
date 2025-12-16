@@ -1,14 +1,8 @@
-import { createContext, type ReactNode, useContext, useMemo } from 'react'
+import { type ReactNode, useMemo } from 'react'
 
-import { ColumnConfig, ColumnConfiguration } from '../helpers/columnConfiguration.js'
+import { type ColumnParameters, ColumnParametersContext } from '../contexts/ColumnParametersContext.js'
+import { ColumnConfiguration } from '../helpers/columnConfiguration.js'
 import { ColumnDescriptor } from '../helpers/dataframe/index.js'
-
-// The column parameters don't include the `metadata` field from `ColumnDescriptor`
-export interface ColumnParameters extends ColumnConfig, Omit<ColumnDescriptor, 'metadata'> {
-  index: number; // position in current order
-}
-
-export const ColumnParametersContext = createContext<ColumnParameters[]>([])
 
 interface ColumnParametersProviderProps {
   columnConfiguration?: ColumnConfiguration
@@ -46,16 +40,4 @@ export function ColumnParametersProvider({ columnConfiguration, columnDescriptor
       {children}
     </ColumnParametersContext.Provider>
   )
-}
-
-export function useColumnParameters(): ColumnParameters[] {
-  return useContext(ColumnParametersContext)
-}
-
-export function useColumnMinWidths(): (number | undefined)[] {
-  const columnParameters = useColumnParameters()
-  const minWidths = useMemo(() => {
-    return columnParameters.map(col => col.minWidth)
-  }, [columnParameters])
-  return minWidths
 }

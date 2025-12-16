@@ -1,12 +1,13 @@
 import type { ReactNode } from 'react'
+import { useContext } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { usePortalContainer } from '../../hooks/usePortalContainer'
+import { PortalContainerContext } from '../../contexts/PortalContainerContext.js'
 import { render as _render } from '../../utils/userEvent.js'
 import ColumnMenu from './ColumnMenu.js'
 
 function ContainerProvider({ children }: { children: ReactNode }) {
-  const { containerRef } = usePortalContainer()
+  const { containerRef } = useContext(PortalContainerContext)
   return (
     <div ref={containerRef}>
       {children}

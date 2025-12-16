@@ -8,7 +8,7 @@ import type { Obj } from '../../helpers/dataframe/types.js'
 import type { OrderBy } from '../../helpers/sort.js'
 import { createEventTarget } from '../../helpers/typedEventTarget.js'
 import { render } from '../../utils/userEvent.js'
-import HighTable, { columnWidthsSuffix, defaultOverscan } from './HighTable.js'
+import HighTable from './HighTable.js'
 
 Element.prototype.scrollIntoView = vi.fn()
 
@@ -253,6 +253,7 @@ describe('with async data, HighTable', () => {
   })
 
   it('renders initial rows', async () => {
+    const defaultOverscan = 20
     const rowEnd = defaultOverscan + 4
     const asyncData = createAsyncDataFrame()
     const { getByText } = render(<HighTable data={asyncData} />)
@@ -494,6 +495,7 @@ describe('When sorted, HighTable', () => {
 const initialWidth = 62 // initial width of the columns, in pixels, above the default minimal width of 50px
 const getOffsetWidth = vi.fn(() => initialWidth)
 const getClientWidth = vi.fn(() => 1000) // used to get the width of the table - let's give space
+const columnWidthsSuffix = ':2:column:widths'
 const keyItem = `key${columnWidthsSuffix}`
 vi.mock(import('../../helpers/width.js'), async (importOriginal ) => {
   const actual = await importOriginal()

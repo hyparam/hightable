@@ -1,10 +1,10 @@
-import { KeyboardEvent, MouseEvent, ReactNode, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
+import { KeyboardEvent, MouseEvent, ReactNode, useCallback, useContext, useEffect, useId, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
+import { CellNavigationContext } from '../../contexts/CellNavigationContext'
+import { PortalContainerContext } from '../../contexts/PortalContainerContext.js'
 import { Direction } from '../../helpers/sort'
-import { useCellsNavigation } from '../../hooks/useCellsNavigation'
 import { useFocusManagement } from '../../hooks/useFocusManagement'
-import { usePortalContainer } from '../../hooks/usePortalContainer'
 
 function getSortDirection(direction?: Direction) {
   switch (direction) {
@@ -100,7 +100,7 @@ export default function ColumnMenu({
   close,
   id,
 }: ColumnMenuProps) {
-  const { containerRef } = usePortalContainer()
+  const { containerRef } = useContext(PortalContainerContext)
   const [container, setContainer] = useState<HTMLElement | undefined>(undefined)
   useEffect(() => {
     if (container || !containerRef.current) {
@@ -114,7 +114,7 @@ export default function ColumnMenu({
   const labelId = useId()
 
   const { navigateFocus } = useFocusManagement(isOpen, menuRef)
-  const { focusFirstCell } = useCellsNavigation()
+  const { focusFirstCell } = useContext(CellNavigationContext)
 
   const handleKeyDown = useCallback((e: KeyboardEvent<HTMLDivElement>) => {
     e.preventDefault()

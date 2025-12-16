@@ -1,13 +1,13 @@
-import { KeyboardEvent, ReactNode, useCallback, useEffect, useMemo, useRef } from 'react'
+import { KeyboardEvent, ReactNode, useCallback, useContext, useEffect, useMemo, useRef } from 'react'
 import { flushSync } from 'react-dom'
 
+import type { ColumnParameters } from '../../contexts/ColumnParametersContext.js'
+import { ColumnVisibilityStatesContext } from '../../contexts/ColumnVisibilityStatesContext.js'
+import { ColumnWidthsContext } from '../../contexts/ColumnWidthsContext.js'
 import { Direction } from '../../helpers/sort.js'
 import { getOffsetWidth } from '../../helpers/width.js'
-import { useCellNavigation } from '../../hooks/useCellsNavigation.js'
+import { useCellFocus } from '../../hooks/useCellFocus.js'
 import { useColumnMenu } from '../../hooks/useColumnMenu.js'
-import type { ColumnParameters } from '../../hooks/useColumnParameters.js'
-import { useColumnVisibilityStates } from '../../hooks/useColumnVisibilityStates.js'
-import { useColumnWidths } from '../../hooks/useColumnWidths.js'
 import { useOnCopy } from '../../hooks/useOnCopyToClipboard.js'
 import ColumnMenu from '../ColumnMenu/ColumnMenu.js'
 import ColumnMenuButton from '../ColumnMenuButton/ColumnMenuButton.js'
@@ -30,10 +30,10 @@ interface Props {
 
 export default function ColumnHeader({ columnIndex, columnName, columnConfig, canMeasureWidth, direction, toggleOrderBy, orderByIndex, orderBySize, ariaColIndex, ariaRowIndex, className, children }: Props) {
   const ref = useRef<HTMLTableCellElement | null>(null)
-  const { tabIndex, navigateToCell } = useCellNavigation({ ref, ariaColIndex, ariaRowIndex })
+  const { tabIndex, navigateToCell } = useCellFocus({ ref, ariaColIndex, ariaRowIndex })
   const { sortable } = columnConfig
   const { isOpen, position, menuId, close, handleMenuClick } = useColumnMenu(ref, navigateToCell)
-  const { getHideColumn, showAllColumns } = useColumnVisibilityStates()
+  const { getHideColumn, showAllColumns } = useContext(ColumnVisibilityStatesContext)
 
   const handleClick = useCallback(() => {
     navigateToCell()
@@ -50,7 +50,7 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
   }, [sortable, hideColumn, showAllColumns])
 
   // Get the column width from the context
-  const { getStyle, getDataFixedWidth, getWidth, setMeasuredWidth, setFixedWidth, releaseWidth } = useColumnWidths()
+  const { getStyle, getDataFixedWidth, getWidth, setMeasuredWidth, setFixedWidth, releaseWidth } = useContext(ColumnWidthsContext)
   const columnStyle = getStyle?.(columnIndex)
   const dataFixedWidth = getDataFixedWidth?.(columnIndex)
   const width = getWidth?.(columnIndex)

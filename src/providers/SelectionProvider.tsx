@@ -1,24 +1,12 @@
-import { createContext, KeyboardEvent, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { KeyboardEvent, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 
+import { OrderByContext } from '../contexts/OrderByContext.js'
+import { SelectionContext } from '../contexts/SelectionContext.js'
 import { checkSignal } from '../helpers/dataframe/helpers.js'
 import { DataFrame } from '../helpers/dataframe/index.js'
 import { countSelectedRows, getDefaultSelection, isSelected, selectIndex, Selection, toggleIndex, toggleIndexInSelection, unselectIndex } from '../helpers/selection.js'
 import { OrderBy, serializeOrderBy } from '../helpers/sort.js'
-import { useInputState } from './useInputState.js'
-import { useOrderBy } from './useOrderBy.js'
-
-interface SelectionContextType {
-  selectable?: boolean // true if the selection is defined
-  pendingSelectionGesture?: boolean // true if a gesture is pending, meaning that the selection is being modified
-  isRowSelected?: ({ rowNumber }: { rowNumber: number | undefined }) => boolean | undefined // function to check if a row is selected. Returns true if the row is selected, false if it is not selected, and undefined if the selection is not defined.
-  toggleRowNumber?: ({ rowNumber }: { rowNumber: number }) => void // function to toggle a row in the selection by its row number. undefined if the selection or the onSelectionChange callback are not defined.
-  toggleRangeToRowNumber?: ({ row, rowNumber }: { row: number, rowNumber: number }) => void // function to toggle a range to the row number. undefined if the selection or the onSelectionChange callback are not defined.
-  onTableKeyDown?: (event: KeyboardEvent) => void // callback to call when a key is pressed on the table.
-  toggleAllRows?: () => void // toggle all rows in the table. undefined if the selection or the onSelectionChange callback are not defined.
-  allRowsSelected?: boolean // true if all rows are selected, false if none are selected, undefined if the selection is not defined.
-}
-
-export const SelectionContext = createContext<SelectionContextType>({})
+import { useInputState } from '../hooks/useInputState.js'
 
 interface SelectionProviderProps {
   selection?: Selection // selection and anchor rows, expressed as data indexes (not as indexes in the table). If undefined, the selection is hidden and the interactions are disabled.
@@ -44,7 +32,7 @@ export function SelectionProvider({ children, data, numRows, onError, selection:
 
   const [rowByRowNumberAndOrderBy] = useState<Map<string, Map<number, number | undefined>>>(() => new Map())
   const [allRowsSelected, setAllRowsSelected] = useState<boolean | undefined>(areAllSelected({ numRows, selection }))
-  const { orderBy } = useOrderBy()
+  const { orderBy } = useContext(OrderByContext)
 
   if (numRows !== previousNumRows) {
     setPreviousNumRows(numRows)
@@ -229,10 +217,6 @@ export function SelectionProvider({ children, data, numRows, onError, selection:
       {children}
     </SelectionContext.Provider>
   )
-}
-
-export function useSelection(): SelectionContextType {
-  return useContext(SelectionContext)
 }
 
 // fetch the row numbers in the range

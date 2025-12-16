@@ -1,10 +1,12 @@
 import { renderHook } from '@testing-library/react'
 import type { ReactNode } from 'react'
+import { useContext } from 'react'
 import { describe, expect, it } from 'vitest'
 
+import { ColumnParametersContext } from '../../src/contexts/ColumnParametersContext.js'
 import { ColumnConfiguration } from '../../src/helpers/columnConfiguration.js'
 import { ColumnDescriptor } from '../../src/helpers/dataframe/index.js'
-import { ColumnParametersProvider, useColumnParameters } from '../../src/hooks/useColumnParameters.js'
+import { ColumnParametersProvider } from '../../src/providers/ColumnParametersProvider.js'
 
 function createWrapper(columnDescriptors: ColumnDescriptor[], columnConfiguration?: ColumnConfiguration) {
   function wrapper({ children }: { children: ReactNode }) {
@@ -17,12 +19,12 @@ function createWrapper(columnDescriptors: ColumnDescriptor[], columnConfiguratio
   return wrapper
 }
 
-describe('useColumnParameters', () => {
+describe('ColumnParametersProvider', () => {
   it('returns parameters in DataFrame column descriptors order', () => {
     const columnDescriptors = ['id', 'name', 'status'].map(name => ({ name }))
 
     const { result } = renderHook(
-      () => useColumnParameters(),
+      () => useContext(ColumnParametersContext),
       { wrapper: createWrapper(columnDescriptors) }
     )
 
@@ -38,7 +40,7 @@ describe('useColumnParameters', () => {
     }
 
     const { result } = renderHook(
-      () => useColumnParameters(),
+      () => useContext(ColumnParametersContext),
       { wrapper: createWrapper(columnDescriptors, columnConfiguration) }
     )
 
@@ -60,7 +62,7 @@ describe('useColumnParameters', () => {
     }
 
     const { result } = renderHook(
-      () => useColumnParameters(),
+      () => useContext(ColumnParametersContext),
       { wrapper: createWrapper(columnDescriptors, columnConfiguration) }
     )
 
@@ -81,7 +83,7 @@ describe('useColumnParameters', () => {
     }
 
     const { result } = renderHook(
-      () => useColumnParameters(),
+      () => useContext(ColumnParametersContext),
       { wrapper: createWrapper(columnDescriptors, columnConfiguration) }
     )
 
@@ -106,7 +108,7 @@ describe('useColumnParameters', () => {
     } as unknown as ColumnConfiguration // stray key on purpose
 
     const { result } = renderHook(
-      () => useColumnParameters(),
+      () => useContext(ColumnParametersContext),
       { wrapper: createWrapper(columnDescriptors, columnConfiguration) }
     )
 
@@ -118,7 +120,7 @@ describe('useColumnParameters', () => {
     const columnDescriptors = [{ name: 'id' }]
 
     const { result, rerender } = renderHook(
-      () => useColumnParameters(),
+      () => useContext(ColumnParametersContext),
       { wrapper: createWrapper(columnDescriptors) }
     )
 

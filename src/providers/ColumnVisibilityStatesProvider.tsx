@@ -1,14 +1,7 @@
-import { createContext, ReactNode, useCallback, useContext, useMemo } from 'react'
+import { ReactNode, useCallback, useMemo } from 'react'
 
-import { useLocalStorageState } from './useLocalStorageState.js'
-
-interface ColumnVisibilityStatesContextType {
-  getHideColumn?: (columnName: string) => undefined | (() => void) // returns a function to hide the column, or undefined if the column cannot be hidden
-  showAllColumns?: () => void // returns a function to show all columns, or undefined if there are no hidden columns
-  isHiddenColumn?: (columnName: string) => boolean // returns true if the column is hidden
-}
-
-export const ColumnVisibilityStatesContext = createContext<ColumnVisibilityStatesContextType>({})
+import { ColumnVisibilityStatesContext } from '../contexts/ColumnVisibilityStatesContext.js'
+import { useLocalStorageState } from '../hooks/useLocalStorageState.js'
 
 interface ColumnVisibilityStatesProviderProps {
   localStorageKey?: string // optional key to use for local storage (no local storage if not provided)
@@ -106,8 +99,4 @@ export function ColumnVisibilityStatesProvider({ children, localStorageKey, colu
       {children}
     </ColumnVisibilityStatesContext.Provider>
   )
-}
-
-export function useColumnVisibilityStates() {
-  return useContext(ColumnVisibilityStatesContext)
 }

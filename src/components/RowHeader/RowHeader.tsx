@@ -1,6 +1,6 @@
 import { ChangeEvent, CSSProperties, KeyboardEvent, MouseEvent, useCallback, useMemo, useRef } from 'react'
 
-import { useCellNavigation } from '../../hooks/useCellsNavigation'
+import { useCellFocus } from '../../hooks/useCellFocus'
 import { useOnCopy } from '../../hooks/useOnCopyToClipboard.js'
 
 interface Props {
@@ -22,7 +22,7 @@ function formatRowNumber(rowIndex?: number): string {
 
 export default function RowHeader({ onCheckboxPress, pendingSelectionGesture, style, ariaColIndex, ariaRowIndex, selected, rowNumber }: Props) {
   const ref = useRef<HTMLTableCellElement | null>(null)
-  const { tabIndex, navigateToCell } = useCellNavigation({ ref, ariaColIndex, ariaRowIndex })
+  const { tabIndex, navigateToCell } = useCellFocus({ ref, ariaColIndex, ariaRowIndex })
   const handleClick = useCallback((event: MouseEvent) => {
     navigateToCell()
     onCheckboxPress?.({ shiftKey: event.shiftKey })
