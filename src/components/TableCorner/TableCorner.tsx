@@ -1,6 +1,5 @@
-import { ChangeEvent, CSSProperties, ForwardedRef, forwardRef, KeyboardEvent, ReactNode, useCallback, useImperativeHandle, useRef } from 'react'
-
-import { useCellNavigation } from '../../hooks/useCellsNavigation'
+import { CSSProperties, ChangeEvent, ForwardedRef, KeyboardEvent, ReactNode, forwardRef, useCallback, useImperativeHandle, useRef } from 'react'
+import { useCellFocus } from '../../hooks/useCellFocus'
 
 interface Props {
   checked?: boolean
@@ -21,7 +20,7 @@ function TableCorner({ children, checked, onCheckboxPress, pendingSelectionGestu
       },
     }
   }, [])
-  const { tabIndex, navigateToCell } = useCellNavigation({ ref: cellRef, ariaColIndex, ariaRowIndex })
+  const { tabIndex, navigateToCell } = useCellFocus({ ref: cellRef, ariaColIndex, ariaRowIndex })
   const handleClick = useCallback(() => {
     navigateToCell()
     onCheckboxPress?.()

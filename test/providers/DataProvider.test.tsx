@@ -1,9 +1,19 @@
 import { render, renderHook } from '@testing-library/react'
 import type { ReactNode } from 'react'
+<<<<<<< HEAD:test/hooks/useData.test.tsx
 import { act } from 'react'
 import { describe, expect, it } from 'vitest'
 
 import { arrayDataFrame, DataFrame, DataFrameEvents, Obj } from '../../src/helpers/dataframe/index.js'
+=======
+import { act, useContext } from 'react'
+import { render, renderHook } from '@testing-library/react'
+import { describe, expect, it } from 'vitest'
+
+import { DataProvider } from '../../src/providers/DataProvider.js'
+import { DataContext } from '../../src/contexts/DataContext.js'
+import { DataFrame, DataFrameEvents, Obj, arrayDataFrame } from '../../src/helpers/dataframe/index.js'
+>>>>>>> 4b3fd03 (separate contexts/ and providers/):test/providers/DataProvider.test.tsx
 import { createEventTarget } from '../../src/helpers/typedEventTarget.js'
 import { DataProvider, useData } from '../../src/hooks/useData.js'
 
@@ -19,7 +29,7 @@ function TestComponent({ data }: { data: DataFrame }) {
   return <DataProvider data={data}><InnerTestComponent /></DataProvider>
 }
 function InnerTestComponent() {
-  const { key, version, numRows } = useData()
+  const { key, version, numRows } = useContext(DataContext)
   return <>
     <div data-testid="key">{key}</div>
     <div data-testid="version">{version}</div>
@@ -27,9 +37,9 @@ function InnerTestComponent() {
   </>
 }
 
-describe('useData', () => {
+describe('DataProvider', () => {
   it('should provide an empty data frame by default', () => {
-    const { data, key, version, maxRowNumber, numRows } = renderHook(() => useData()).result.current
+    const { data, key, version, maxRowNumber, numRows } = renderHook(() => useContext(DataContext)).result.current
     expect(data.columnDescriptors).toEqual([])
     expect(key).toBe(0)
     expect(data.getRowNumber({ row: 0 })).toBeUndefined()
@@ -40,7 +50,7 @@ describe('useData', () => {
   })
   it('should provide the passed dataframe', () => {
     const df = arrayDataFrame([{ a: 1, b: 2 }, { a: 3, b: 4 }])
-    const { result } = renderHook(() => useData(), { wrapper: createWrapper({ data: df }) })
+    const { result } = renderHook(() => useContext(DataContext), { wrapper: createWrapper({ data: df }) })
     const { data, key, version, maxRowNumber, numRows } = result.current
     expect(data).toBe(df)
     expect(key).toBe(0)
@@ -50,14 +60,14 @@ describe('useData', () => {
   })
   it('should accept a maxRowNumber prop', () => {
     const df = arrayDataFrame([{ a: 1 }, { a: 2 }, { a: 3 }])
-    const { result } = renderHook(() => useData(), { wrapper: createWrapper({ data: df, maxRowNumber: 10 }) })
+    const { result } = renderHook(() => useContext(DataContext), { wrapper: createWrapper({ data: df, maxRowNumber: 10 }) })
     const { maxRowNumber, numRows } = result.current
     expect(numRows).toBe(3)
     expect(maxRowNumber).toBe(10)
   })
   it('should increment version on data resolution', async () => {
     const df = arrayDataFrame([{ a: 1 }, { a: 2 }])
-    const { result } = renderHook(() => useData(), { wrapper: createWrapper({ data: df }) })
+    const { result } = renderHook(() => useContext(DataContext), { wrapper: createWrapper({ data: df }) })
     const initialVersion = result.current.version
     // Simulate data resolution
     // eslint-disable-next-line require-await, @typescript-eslint/require-await
@@ -69,7 +79,7 @@ describe('useData', () => {
   })
   it('should increment version on data update', async () => {
     const df = arrayDataFrame([{ a: 1 }, { a: 2 }])
-    const { result } = renderHook(() => useData(), { wrapper: createWrapper({ data: df }) })
+    const { result } = renderHook(() => useContext(DataContext), { wrapper: createWrapper({ data: df }) })
     const initialVersion = result.current.version
     // Simulate data update
     // eslint-disable-next-line require-await, @typescript-eslint/require-await
@@ -87,7 +97,7 @@ describe('useData', () => {
       getRowNumber: () => undefined,
       getCell: () => undefined,
     }
-    const { result } = renderHook(() => useData(), { wrapper: createWrapper({ data: df }) })
+    const { result } = renderHook(() => useContext(DataContext), { wrapper: createWrapper({ data: df }) })
     const initialNumRows = result.current.numRows
     const initialVersion = result.current.version
     expect(initialNumRows).toBe(2)
@@ -102,7 +112,7 @@ describe('useData', () => {
   })
   it('should update numRows and version when rows are pushed to a dataframe creates with arrayDataFrame', async () => {
     const df = arrayDataFrame([{ a: 1 }, { a: 2 }])
-    const { result } = renderHook(() => useData(), { wrapper: createWrapper({ data: df }) })
+    const { result } = renderHook(() => useContext(DataContext), { wrapper: createWrapper({ data: df }) })
     const initialNumRows = result.current.numRows
     const initialVersion = result.current.version
     expect(initialNumRows).toBe(2)

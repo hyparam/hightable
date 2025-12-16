@@ -1,8 +1,7 @@
-import { KeyboardEvent, MouseEvent, ReactNode, useCallback, useMemo, useRef } from 'react'
-
+import { KeyboardEvent, MouseEvent, ReactNode, useCallback, useContext, useMemo, useRef } from 'react'
 import { ResolvedValue } from '../../helpers/dataframe/index.js'
-import { useCellNavigation } from '../../hooks/useCellsNavigation.js'
-import { useColumnWidths } from '../../hooks/useColumnWidths.js'
+import { useCellFocus } from '../../hooks/useCellFocus.js'
+import { ColumnWidthsContext } from '../../contexts/ColumnWidthsContext.js'
 import { useOnCopy } from '../../hooks/useOnCopyToClipboard.js'
 
 export interface CellContentProps {
@@ -44,10 +43,10 @@ interface Props {
  */
 export default function Cell({ cell, onDoubleClickCell, onMouseDownCell, onKeyDownCell, stringify, columnIndex, visibleColumnIndex, className, ariaColIndex, ariaRowIndex, rowNumber, renderCellContent }: Props) {
   const ref = useRef<HTMLTableCellElement | null>(null)
-  const { tabIndex, navigateToCell } = useCellNavigation({ ref, ariaColIndex, ariaRowIndex })
+  const { tabIndex, navigateToCell } = useCellFocus({ ref, ariaColIndex, ariaRowIndex })
 
   // Get the column width from the context (use visibleColumnIndex for styling)
-  const columnStyle = useColumnWidths().getStyle?.(visibleColumnIndex)
+  const columnStyle = useContext(ColumnWidthsContext).getStyle?.(visibleColumnIndex)
   // render as truncated text
   const str = useMemo(() => {
     return stringify(cell?.value)

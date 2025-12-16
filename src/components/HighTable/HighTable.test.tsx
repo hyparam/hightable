@@ -8,7 +8,7 @@ import type { Obj } from '../../helpers/dataframe/types.js'
 import type { OrderBy } from '../../helpers/sort.js'
 import { createEventTarget } from '../../helpers/typedEventTarget.js'
 import { render } from '../../utils/userEvent.js'
-import HighTable, { columnWidthsSuffix, defaultOverscan } from './HighTable.js'
+import HighTable from './HighTable.js'
 
 Element.prototype.scrollIntoView = vi.fn()
 
@@ -100,8 +100,8 @@ describe('HighTable', () => {
     })
   })
 
-  it('uses overscan option', async () => {
-    const { getByText } = render(<HighTable data={mockData} overscan={10} />)
+  it('uses padding option', async () => {
+    const { getByText } = render(<HighTable data={mockData} padding={10} />)
     await waitFor(() => {
       getByText('ID')
       expect(mockData.getCell).toHaveBeenCalledWith({ row: 13, column: 'Age', orderBy: [] })
@@ -253,7 +253,8 @@ describe('with async data, HighTable', () => {
   })
 
   it('renders initial rows', async () => {
-    const rowEnd = defaultOverscan + 4
+    const defaultPadding = 20
+    const rowEnd = defaultPadding + 4
     const asyncData = createAsyncDataFrame()
     const { getByText } = render(<HighTable data={asyncData} />)
     await waitFor(() => {
@@ -265,11 +266,11 @@ describe('with async data, HighTable', () => {
     })
   })
 
-  it('uses overscan option', async () => {
-    const overscan = 10
-    const rowEnd = overscan + 4
+  it('uses padding option', async () => {
+    const padding = 10
+    const rowEnd = padding + 4
     const asyncData = createAsyncDataFrame()
-    const { getByText } = render(<HighTable data={asyncData} overscan={overscan} />)
+    const { getByText } = render(<HighTable data={asyncData} padding={padding} />)
     await waitFor(() => {
       getByText('ID')
       expect(asyncData.fetch).toHaveBeenCalledExactlyOnceWith({ rowStart: 0, rowEnd, columns: ['ID', 'Name', 'Age'], orderBy: [], signal: expect.any(AbortSignal) })
@@ -494,6 +495,7 @@ describe('When sorted, HighTable', () => {
 const initialWidth = 62 // initial width of the columns, in pixels, above the default minimal width of 50px
 const getOffsetWidth = vi.fn(() => initialWidth)
 const getClientWidth = vi.fn(() => 1000) // used to get the width of the table - let's give space
+const columnWidthsSuffix = ':2:column:widths'
 const keyItem = `key${columnWidthsSuffix}`
 vi.mock(import('../../helpers/width.js'), async (importOriginal ) => {
   const actual = await importOriginal()

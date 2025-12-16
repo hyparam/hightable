@@ -1,19 +1,30 @@
-import { CSSProperties, KeyboardEvent, MouseEvent, ReactNode, RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-
+import { CSSProperties, KeyboardEvent, MouseEvent, ReactNode, RefObject, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { ColumnConfiguration } from '../../helpers/columnConfiguration.js'
 import { DataFrame } from '../../helpers/dataframe/index.js'
 import { Selection } from '../../helpers/selection.js'
 import { OrderBy } from '../../helpers/sort.js'
-import { getClientWidth, getOffsetWidth } from '../../helpers/width.js'
-import styles from '../../HighTable.module.css'
-import { CellsNavigationProvider, useCellsNavigation } from '../../hooks/useCellsNavigation.js'
-import { ColumnParameters, ColumnParametersProvider, useColumnParameters } from '../../hooks/useColumnParameters.js'
-import { ColumnVisibilityStatesProvider, type MaybeHiddenColumn, useColumnVisibilityStates } from '../../hooks/useColumnVisibilityStates.js'
-import { ColumnWidthsProvider, useColumnWidths } from '../../hooks/useColumnWidths.js'
-import { DataProvider, useData } from '../../hooks/useData.js'
-import { OrderByProvider, useOrderBy } from '../../hooks/useOrderBy.js'
-import { PortalContainerProvider, usePortalContainer } from '../../hooks/usePortalContainer.js'
-import { SelectionProvider, useSelection } from '../../hooks/useSelection.js'
+import { getOffsetWidth } from '../../helpers/width.js'
+import { CellNavigationProvider } from '../../providers/CellNavigationProvider.js'
+import { CellNavigationContext } from '../../contexts/CellNavigationContext.js'
+import { ColumnParametersProvider } from '../../providers/ColumnParametersProvider.js'
+import { type ColumnParameters, ColumnParametersContext } from '../../contexts/ColumnParametersContext.js'
+import { ColumnWidthsProvider } from '../../providers/ColumnWidthsProvider.js'
+import { ColumnWidthsContext } from '../../contexts/ColumnWidthsContext.js'
+import { ColumnVisibilityStatesProvider, type MaybeHiddenColumn } from '../../providers/ColumnVisibilityStatesProvider.js'
+import { ColumnVisibilityStatesContext } from '../../contexts/ColumnVisibilityStatesContext.js'
+import { DataProvider } from '../../providers/DataProvider.js'
+import { DataContext } from '../../contexts/DataContext.js'
+import { OrderByProvider } from '../../providers/OrderByProvider.js'
+import { OrderByContext } from '../../contexts/OrderByContext.js'
+import { SelectionProvider } from '../../providers/SelectionProvider.js'
+import { PortalContainerProvider } from '../../providers/PortalContainerProvider.js'
+import { PortalContainerContext } from '../../contexts/PortalContainerContext.js'
+import { SelectionContext } from '../../contexts/SelectionContext.js'
+import { RowsSliceProvider } from '../../providers/RowsSliceProvider.js'
+import { RowsSliceContext } from '../../contexts/RowsSliceContext.js'
+import { CanvasSizeContext } from '../../contexts/CanvasSizeContext.js'
+import { ViewportProvider } from '../../providers/ViewportProvider.js'
+import { ViewportContext } from '../../contexts/ViewportContext.js'
 import { stringify as stringifyDefault } from '../../utils/stringify.js'
 import Cell, { type CellContentProps } from '../Cell/Cell.js'
 import Row from '../Row/Row.js'
@@ -23,6 +34,7 @@ import TableHeader from '../TableHeader/TableHeader.js'
 export { type CellContentProps } from '../Cell/Cell.js'
 
 const rowHeight = 33 // row height px
+const headerHeight = rowHeight // header height px
 
 interface Props {
   data: DataFrame
@@ -32,8 +44,7 @@ interface Props {
   focus?: boolean // focus table on mount? (default true)
   maxRowNumber?: number // maximum row number to display (for row headers). Useful for filtered data. If undefined, the number of rows in the data frame is applied.
   orderBy?: OrderBy // order used to fetch the rows. If undefined, the table is unordered, the sort controls are hidden and the interactions are disabled. Pass [] to fetch the rows in the original order.
-  overscan?: number // number of rows to fetch outside of the viewport
-  padding?: number // number of padding rows to render outside of the viewport
+  padding?: number // number of padding rows to fetch and render outside of the viewport
   selection?: Selection // selection and anchor rows, expressed as data indexes (not as indexes in the table). If undefined, the selection is hidden and the interactions are disabled.
   styled?: boolean // use styled component? (default true)
   // TODO(SL): replace col: number with col: string?
@@ -49,13 +60,12 @@ interface Props {
 }
 
 const defaultPadding = 20
-export const defaultOverscan = 20
 const ariaOffset = 2 // 1-based index, +1 for the header
 
 const columnWidthsFormatVersion = '2' // increase in case of breaking changes in the column widths format
-export const columnWidthsSuffix = `:${columnWidthsFormatVersion}:column:widths` // suffix used to store the column widths in local storage
+const columnWidthsSuffix = `:${columnWidthsFormatVersion}:column:widths` // suffix used to store the column widths in local storage
 const columnVisibilityStatesFormatVersion = '2' // increase in case of breaking changes in the column visibility format (changed from array by index to record by name)
-export const columnVisibilityStatesSuffix = `:${columnVisibilityStatesFormatVersion}:column:visibility` // suffix used to store the columns vsibility in local storage
+const columnVisibilityStatesSuffix = `:${columnVisibilityStatesFormatVersion}:column:visibility` // suffix used to store the columns vsibility in local storage
 
 /**
  * Render a table with streaming rows on demand from a DataFrame.
@@ -76,7 +86,7 @@ export default function HighTable(props: Props) {
 type PropsData = Omit<Props, 'data'>
 
 function HighTableData(props: PropsData) {
-  const { data, key, version, maxRowNumber, numRows } = useData()
+  const { data, key, version, maxRowNumber, numRows } = useContext(DataContext)
   // TODO(SL): onError could be in a context, as we might want to use it everywhere
   const { cacheKey, orderBy, onOrderByChange, selection, onSelectionChange, onError, onColumnsVisibilityChange } = props
 
@@ -106,11 +116,11 @@ function HighTableData(props: PropsData) {
             {/* Create a new selection context if the dataframe has changed */}
             <SelectionProvider key={key} selection={selection} onSelectionChange={onSelectionChange} data={data} numRows={numRows} onError={onError}>
               {/* Create a new navigation context if the dataframe has changed, because the focused cell might not exist anymore */}
-              <CellsNavigationProvider key={key} colCount={data.columnDescriptors.length + 1} rowCount={numRows + 1} rowPadding={props.padding ?? defaultPadding}>
+              <CellNavigationProvider key={key} colCount={data.columnDescriptors.length + 1} rowCount={numRows + 1} rowPadding={props.padding ?? defaultPadding}>
                 <PortalContainerProvider> {/* TODO(SL): move as the outmost provider? */}
                   <ScrollContainer data={data} numRows={numRows} version={version} {...props} maxRowNumber={maxRowNumber} />
                 </PortalContainerProvider>
-              </CellsNavigationProvider>
+              </CellNavigationProvider>
             </SelectionProvider>
           </OrderByProvider>
         </ColumnVisibilityStatesProvider>

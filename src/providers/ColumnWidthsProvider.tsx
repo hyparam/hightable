@@ -1,8 +1,8 @@
-import { createContext, CSSProperties, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
-
+import { ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { cellStyle } from '../helpers/width.js'
-import { useColumnMinWidths } from './useColumnParameters.js'
-import { useLocalStorageState } from './useLocalStorageState.js'
+import { ColumnParametersContext } from '../contexts/ColumnParametersContext.js'
+import { useLocalStorageState } from '../hooks/useLocalStorageState.js'
+import { ColumnWidthsContext } from '../contexts/ColumnWidthsContext.js'
 
 const defaultMinWidth = 50 // minimum width of a cell in px, used to compute the column widths
 const snapDistance = 10 // if a small space remains to the right of the last column after shrinking widths, it's filled by expanding some columns
@@ -16,7 +16,7 @@ const underfillMargin = 3 // leave 3px unused to avoid showing an unneeded horiz
  * Some are given:
  * - the number of columns
  * - the global minimum width (minWidth prop, 50px by default)
- * - the minimum width for a specific column, which overrides the default one (useColumnParameters context hook, optional)
+ * - the minimum width for a specific column, which overrides the default one (see ColumnParametersContext, optional)
  * - the available width in the table (depends on the component resizes)
  * Others are a state:
  * - the fixed width, when a user resizes the column (note: it is stored in the local storage, and we don't adjust other columns when setting a fixed column)
@@ -35,18 +35,6 @@ const underfillMargin = 3 // leave 3px unused to avoid showing an unneeded horiz
  * - if a fixed or measured width does not respect the minimum width anymore, it is deleted.
  * - when a column is resized manually (ie. fixed), the other columns remain unchanged and are not adjusted.
  */
-
-interface ColumnWidthsContextType {
-  getWidth?: (columnIndex: number) => number | undefined
-  getStyle?: (columnIndex: number) => CSSProperties
-  getDataFixedWidth?: (columnIndex: number) => true | undefined // returns true if the column has a fixed width
-  releaseWidth?: (columnIndex: number) => void // used to remove the widths of a column, so it can be measured again
-  setAvailableWidth?: (value: number) => void // used to set the available width in the wrapper element
-  setFixedWidth?: (columnIndex: number, value: number) => void // used to set a fixed width for a column (will be stored and overrides the auto width)
-  setMeasuredWidth?: (columnIndex: number, value: number) => void // used to set the measured width (and adjust all the measured columns)
-}
-
-export const ColumnWidthsContext = createContext<ColumnWidthsContextType>({})
 
 interface ColumnWidthsProviderProps {
   localStorageKey?: string // optional key to use for local storage (no local storage if not provided)
@@ -69,7 +57,12 @@ export function ColumnWidthsProvider({ children, localStorageKey, numColumns, mi
   if (!isValidWidth(minWidth)) {
     throw new Error(`Invalid minWidth: ${minWidth}. It must be a positive number.`)
   }
-  const columnMinWidths = useColumnMinWidths()
+
+  const columnParameters = useContext(ColumnParametersContext)
+  const columnMinWidths = useMemo(() => {
+    return columnParameters.map(col => col.minWidth)
+  }, [columnParameters])
+
   const getMinWidth = useCallback((columnIndex?: number) => {
     return (isValidIndex(columnIndex) ? columnMinWidths[columnIndex] : undefined) ?? minWidth
   }, [isValidIndex, columnMinWidths, minWidth])
@@ -210,10 +203,6 @@ export function ColumnWidthsProvider({ children, localStorageKey, numColumns, mi
       {children}
     </ColumnWidthsContext.Provider>
   )
-}
-
-export function useColumnWidths() {
-  return useContext(ColumnWidthsContext)
 }
 
 interface WidthGroup {

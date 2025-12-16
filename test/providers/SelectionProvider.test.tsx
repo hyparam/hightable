@@ -1,12 +1,18 @@
 import { fireEvent, render } from '@testing-library/react'
+<<<<<<< HEAD:test/hooks/useSelection.test.tsx
 import { act } from 'react'
 import { describe, expect, it, vi } from 'vitest'
+=======
+import { describe, expect, it, vi } from 'vitest'
+import { act, useContext } from 'react'
+>>>>>>> 4b3fd03 (separate contexts/ and providers/):test/providers/SelectionProvider.test.tsx
 
 import { arrayDataFrame } from '../../src/helpers/dataframe/array.js'
-import { SelectionProvider, useSelection } from '../../src/hooks/useSelection.js'
+import { SelectionContext } from '../../src/contexts/SelectionContext.js'
+import { SelectionProvider } from '../../src/providers/SelectionProvider.js'
 
 function TestComponent() {
-  const { allRowsSelected, toggleAllRows, isRowSelected } = useSelection()
+  const { allRowsSelected, toggleAllRows, isRowSelected } = useContext(SelectionContext)
   return (
     <div>
       <span data-testid="all-rows-selected">{allRowsSelected ? 'true' : 'false'}</span>
@@ -17,7 +23,7 @@ function TestComponent() {
   )
 }
 
-describe('useSelection', () => {
+describe('SelectionProvider', () => {
   describe('when numRows changes', () => {
     it('recomputes allRowsSelected state', async () => {
       const data = arrayDataFrame(Array.from({ length: 5 }, (_, i) => ({ id: i })))

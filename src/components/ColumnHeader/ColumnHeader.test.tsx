@@ -1,9 +1,8 @@
 import { act, fireEvent } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { getOffsetWidth } from '../../helpers/width.js'
-import { ColumnParametersProvider } from '../../hooks/useColumnParameters.js'
-import { ColumnWidthsProvider } from '../../hooks/useColumnWidths.js'
+import { ColumnParametersProvider } from '../../providers/ColumnParametersProvider.js'
+import { ColumnWidthsProvider } from '../../providers/ColumnWidthsProvider.js'
 import { render } from '../../utils/userEvent.js'
 import ColumnHeader from './ColumnHeader.js'
 
