@@ -1,4 +1,4 @@
-import { within } from '@testing-library/react'
+import { within } from '@testing-library/dom'
 import type { ReactNode } from 'react'
 import { useContext } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'

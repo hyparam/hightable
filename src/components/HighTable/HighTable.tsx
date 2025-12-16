@@ -32,6 +32,7 @@ import TableCorner from '../TableCorner/TableCorner.js'
 import TableHeader from '../TableHeader/TableHeader.js'
 
 const rowHeight = 33 // row height px
+// const headerHeight = rowHeight // header height px
 
 interface Props {
   data: DataFrame
@@ -41,8 +42,8 @@ interface Props {
   focus?: boolean // focus table on mount? (default true)
   maxRowNumber?: number // maximum row number to display (for row headers). Useful for filtered data. If undefined, the number of rows in the data frame is applied.
   orderBy?: OrderBy // order used to fetch the rows. If undefined, the table is unordered, the sort controls are hidden and the interactions are disabled. Pass [] to fetch the rows in the original order.
-  overscan?: number // number of rows to fetch outside of the viewport
-  padding?: number // number of padding rows to render outside of the viewport
+  padding?: number // number of padding rows to fetch and render outside of the viewport
+  overscan?: number // number of extra rows to fetch and render outside of the viewport
   selection?: Selection // selection and anchor rows, expressed as data indexes (not as indexes in the table). If undefined, the selection is hidden and the interactions are disabled.
   styled?: boolean // use styled component? (default true)
   // TODO(SL): replace col: number with col: string?
