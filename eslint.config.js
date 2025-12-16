@@ -1,6 +1,7 @@
 import javascript from '@eslint/js'
 import react from 'eslint-plugin-react'
 import reactHooks from 'eslint-plugin-react-hooks'
+import simpleImportSort from 'eslint-plugin-simple-import-sort'
 import storybook from 'eslint-plugin-storybook'
 import globals from 'globals'
 import typescript from 'typescript-eslint'
@@ -20,6 +21,7 @@ export default typescript.config(
     plugins: {
       react,
       'react-hooks': reactHooks,
+      'simple-import-sort': simpleImportSort,
     },
     rules: {
       ...react.configs.recommended.rules,
@@ -64,11 +66,6 @@ export default typescript.config(
       quotes: ['error', 'single'],
       'require-await': 'warn',
       semi: ['error', 'never'],
-      'sort-imports': ['error', {
-        ignoreDeclarationSort: true,
-        ignoreMemberSort: false,
-        memberSyntaxSortOrder: ['none', 'all', 'multiple', 'single'],
-      }],
       'space-infix-ops': 'error',
       // typescript
       '@typescript-eslint/restrict-template-expressions': 'off',
@@ -83,6 +80,8 @@ export default typescript.config(
       '@typescript-eslint/no-unsafe-return': 'off',
       // fix an issue with vi.fn in an object (localStorage mock in our tests): see https://github.com/vitest-dev/eslint-plugin-vitest/issues/591
       '@typescript-eslint/unbound-method': 'off',
+      'simple-import-sort/imports': 'error',
+      'simple-import-sort/exports': 'error',
     },
     settings: { react: { version: 'detect' } },
   },

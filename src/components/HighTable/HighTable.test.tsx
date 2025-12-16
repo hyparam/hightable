@@ -1,13 +1,14 @@
 import { act, fireEvent, waitFor, within } from '@testing-library/react'
-import { Mock, afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, Mock, vi } from 'vitest'
+
 import { createGetRowNumber, validateFetchParams, validateGetCellParams, validateGetRowNumberParams } from '../../helpers/dataframe/helpers.js'
-import { DataFrame, DataFrameEvents, Fetch, arrayDataFrame } from '../../helpers/dataframe/index.js'
+import { arrayDataFrame, DataFrame, DataFrameEvents, Fetch } from '../../helpers/dataframe/index.js'
 import { sortableDataFrame } from '../../helpers/dataframe/sort.js'
+import type { Obj } from '../../helpers/dataframe/types.js'
 import type { OrderBy } from '../../helpers/sort.js'
 import { createEventTarget } from '../../helpers/typedEventTarget.js'
 import { render } from '../../utils/userEvent.js'
 import HighTable, { columnWidthsSuffix, defaultOverscan } from './HighTable.js'
-import type { Obj } from '../../helpers/dataframe/types.js'
 
 Element.prototype.scrollIntoView = vi.fn()
 

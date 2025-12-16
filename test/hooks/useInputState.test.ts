@@ -1,6 +1,7 @@
-import { act } from 'react'
 import { renderHook } from '@testing-library/react'
+import { act } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+
 import { useInputState } from '../../src/hooks/useInputState.js'
 
 describe('in controlled mode (value is defined), ', () => {

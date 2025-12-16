@@ -1,7 +1,8 @@
-import { KeyboardEvent, ReactNode, createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, KeyboardEvent, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+
 import { checkSignal } from '../helpers/dataframe/helpers.js'
 import { DataFrame } from '../helpers/dataframe/index.js'
-import { Selection, countSelectedRows, getDefaultSelection, isSelected, selectIndex, toggleIndex, toggleIndexInSelection, unselectIndex } from '../helpers/selection.js'
+import { countSelectedRows, getDefaultSelection, isSelected, selectIndex, Selection, toggleIndex, toggleIndexInSelection, unselectIndex } from '../helpers/selection.js'
 import { OrderBy, serializeOrderBy } from '../helpers/sort.js'
 import { useInputState } from './useInputState.js'
 import { useOrderBy } from './useOrderBy.js'

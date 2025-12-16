@@ -1,4 +1,5 @@
-import { CSSProperties, ChangeEvent, KeyboardEvent, MouseEvent, useCallback, useMemo, useRef } from 'react'
+import { ChangeEvent, CSSProperties, KeyboardEvent, MouseEvent, useCallback, useMemo, useRef } from 'react'
+
 import { useCellNavigation } from '../../hooks/useCellsNavigation'
 import { useOnCopy } from '../../hooks/useOnCopyToClipboard.js'
 

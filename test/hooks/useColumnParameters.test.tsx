@@ -1,6 +1,6 @@
 import { renderHook } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
 import type { ReactNode } from 'react'
+import { describe, expect, it } from 'vitest'
 
 import { ColumnConfiguration } from '../../src/helpers/columnConfiguration.js'
 import { ColumnDescriptor } from '../../src/helpers/dataframe/index.js'

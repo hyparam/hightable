@@ -1,11 +1,12 @@
 import { waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+
 import { createGetRowNumber, validateGetCellParams } from '../../helpers/dataframe/helpers.js'
 import type { DataFrame } from '../../helpers/dataframe/index.js'
+import type { Obj } from '../../helpers/dataframe/types.js'
 import type { OrderBy } from '../../helpers/sort.js'
 import { render } from '../../utils/userEvent.js'
 import HighTable from './HighTable.js'
-import type { Obj } from '../../helpers/dataframe/types.js'
 
 Element.prototype.scrollIntoView = vi.fn()
 

@@ -1,4 +1,5 @@
-import { CSSProperties, ChangeEvent, ForwardedRef, KeyboardEvent, ReactNode, forwardRef, useCallback, useImperativeHandle, useRef } from 'react'
+import { ChangeEvent, CSSProperties, ForwardedRef, forwardRef, KeyboardEvent, ReactNode, useCallback, useImperativeHandle, useRef } from 'react'
+
 import { useCellNavigation } from '../../hooks/useCellsNavigation'
 
 interface Props {

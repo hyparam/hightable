@@ -1,8 +1,8 @@
+import type { OrderBy } from '../sort.js'
+import { createEventTarget } from '../typedEventTarget.js'
 import { validateGetCellParams, validateGetRowNumberParams } from './helpers.js'
 import type { ColumnDescriptor, DataFrame, Obj, ResolvedValue } from './types.js'
-import type { OrderBy } from '../sort.js'
 import type { DataFrameEvents } from './types.js'
-import { createEventTarget } from '../typedEventTarget.js'
 
 interface ArrayData {
   readonly _array: Record<string, any>[]

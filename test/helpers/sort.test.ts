@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+
 import { areEqualOrderBy, computeRanks, partitionOrderBy, toggleColumn, validateOrderByAgainstSortableColumns } from '../../src/helpers/sort.js'
 
 const nameAsc = { column: 'name', direction: 'ascending' as const }

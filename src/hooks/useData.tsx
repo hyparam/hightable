@@ -1,5 +1,6 @@
-import { ReactNode, createContext, useContext, useEffect, useMemo, useState } from 'react'
-import { DataFrame, Obj, arrayDataFrame } from '../helpers/dataframe/index.js'
+import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from 'react'
+
+import { arrayDataFrame, DataFrame, Obj } from '../helpers/dataframe/index.js'
 
 interface DataContextType {
   data: Omit<DataFrame, 'numRows'>,

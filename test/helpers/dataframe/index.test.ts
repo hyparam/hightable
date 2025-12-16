@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+
 import { arrayDataFrame, sortableDataFrame } from '../../../src/helpers/dataframe/index.js'
 
 describe('sortableDataFrame', () => {

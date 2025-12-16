@@ -1,4 +1,4 @@
-import { OrderBy, computeRanks, deserializeOrderBy, serializeOrderBy, validateOrderByAgainstSortableColumns } from '../sort.js'
+import { computeRanks, deserializeOrderBy, OrderBy, serializeOrderBy, validateOrderByAgainstSortableColumns } from '../sort.js'
 import { createEventTarget } from '../typedEventTarget.js'
 import { checkSignal, validateColumn, validateFetchParams, validateRow } from './helpers.js'
 import { DataFrame, DataFrameEvents, Obj, ResolvedValue } from './types.js'

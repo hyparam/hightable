@@ -1,6 +1,7 @@
+import { createContext, type ReactNode, useContext, useMemo } from 'react'
+
 import { ColumnConfig, ColumnConfiguration } from '../helpers/columnConfiguration.js'
 import { ColumnDescriptor } from '../helpers/dataframe/index.js'
-import { type ReactNode, createContext, useContext, useMemo } from 'react'
 
 // The column parameters don't include the `metadata` field from `ColumnDescriptor`
 export interface ColumnParameters extends ColumnConfig, Omit<ColumnDescriptor, 'metadata'> {
