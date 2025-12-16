@@ -1,11 +1,12 @@
 import { KeyboardEvent, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+
+import { OrderByContext } from '../contexts/OrderByContext.js'
+import { SelectionContext } from '../contexts/SelectionContext.js'
 import { checkSignal } from '../helpers/dataframe/helpers.js'
 import { DataFrame } from '../helpers/dataframe/index.js'
 import { countSelectedRows, getDefaultSelection, isSelected, selectIndex, Selection, toggleIndex, toggleIndexInSelection, unselectIndex } from '../helpers/selection.js'
 import { OrderBy, serializeOrderBy } from '../helpers/sort.js'
 import { useInputState } from '../hooks/useInputState.js'
-import { OrderByContext } from '../contexts/OrderByContext.js'
-import { SelectionContext } from '../contexts/SelectionContext.js'
 
 interface SelectionProviderProps {
   selection?: Selection // selection and anchor rows, expressed as data indexes (not as indexes in the table). If undefined, the selection is hidden and the interactions are disabled.

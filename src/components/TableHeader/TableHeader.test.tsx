@@ -1,11 +1,11 @@
+import { within } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { useContext } from 'react'
-import { within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { PortalContainerContext } from '../../contexts/PortalContainerContext.js'
 import { render as _render } from '../../utils/userEvent.js'
 import TableHeader from './TableHeader.js'
-import { PortalContainerContext } from '../../contexts/PortalContainerContext.js'
 
 function ContainerProvider({ children }: { children: ReactNode }) {
   const { containerRef } = useContext(PortalContainerContext)

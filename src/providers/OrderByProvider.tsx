@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react'
+
+import { OrderByContext } from '../contexts/OrderByContext.js'
 import type { OrderBy } from '../helpers/sort.js'
 import { useInputState } from '../hooks/useInputState.js'
-import { OrderByContext } from '../contexts/OrderByContext.js'
 
 interface OrderByProviderProps {
   orderBy?: OrderBy // order used to fetch the rows. If undefined, the table is unordered, the sort controls are hidden and the interactions are disabled. Pass [] to fetch the rows in the original order.

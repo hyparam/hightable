@@ -1,6 +1,7 @@
 import { ReactNode, useEffect, useMemo, useState } from 'react'
-import { DataFrame, Obj } from '../helpers/dataframe/index.js'
+
 import { DataContext } from '../contexts/DataContext.js'
+import { DataFrame, Obj } from '../helpers/dataframe/index.js'
 
 interface DataProviderProps<M extends Obj, C extends Obj> {
   data: DataFrame<M, C>,

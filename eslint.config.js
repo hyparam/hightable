@@ -1,11 +1,11 @@
 import javascript from '@eslint/js'
 import react from 'eslint-plugin-react'
 import reactHooks from 'eslint-plugin-react-hooks'
+import reactRefresh from 'eslint-plugin-react-refresh'
 import simpleImportSort from 'eslint-plugin-simple-import-sort'
 import storybook from 'eslint-plugin-storybook'
 import globals from 'globals'
 import typescript from 'typescript-eslint'
-import reactRefresh from 'eslint-plugin-react-refresh'
 
 export default typescript.config(
   { ignores: ['coverage/', 'dist/'] },

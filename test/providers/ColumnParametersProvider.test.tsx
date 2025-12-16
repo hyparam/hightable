@@ -1,15 +1,12 @@
 import { renderHook } from '@testing-library/react'
 import type { ReactNode } from 'react'
-<<<<<<< HEAD:test/hooks/useColumnParameters.test.tsx
-import { describe, expect, it } from 'vitest'
-=======
 import { useContext } from 'react'
->>>>>>> 4b3fd03 (separate contexts/ and providers/):test/providers/ColumnParametersProvider.test.tsx
+import { describe, expect, it } from 'vitest'
 
+import { ColumnParametersContext } from '../../src/contexts/ColumnParametersContext.js'
 import { ColumnConfiguration } from '../../src/helpers/columnConfiguration.js'
 import { ColumnDescriptor } from '../../src/helpers/dataframe/index.js'
 import { ColumnParametersProvider } from '../../src/providers/ColumnParametersProvider.js'
-import { ColumnParametersContext } from '../../src/contexts/ColumnParametersContext.js'
 
 function createWrapper(columnDescriptors: ColumnDescriptor[], columnConfiguration?: ColumnConfiguration) {
   function wrapper({ children }: { children: ReactNode }) {

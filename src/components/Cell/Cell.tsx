@@ -1,7 +1,8 @@
 import { KeyboardEvent, MouseEvent, ReactNode, useCallback, useContext, useMemo, useRef } from 'react'
+
+import { ColumnWidthsContext } from '../../contexts/ColumnWidthsContext.js'
 import { ResolvedValue } from '../../helpers/dataframe/index.js'
 import { useCellFocus } from '../../hooks/useCellFocus.js'
-import { ColumnWidthsContext } from '../../contexts/ColumnWidthsContext.js'
 import { useOnCopy } from '../../hooks/useOnCopyToClipboard.js'
 
 export interface CellContentProps {

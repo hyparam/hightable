@@ -1,6 +1,7 @@
 import { ReactNode, useCallback, useMemo } from 'react'
-import { useLocalStorageState } from '../hooks/useLocalStorageState.js'
+
 import { ColumnVisibilityStatesContext } from '../contexts/ColumnVisibilityStatesContext.js'
+import { useLocalStorageState } from '../hooks/useLocalStorageState.js'
 
 interface ColumnVisibilityStatesProviderProps {
   localStorageKey?: string // optional key to use for local storage (no local storage if not provided)

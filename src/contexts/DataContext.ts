@@ -1,5 +1,6 @@
 import { createContext } from 'react'
-import { DataFrame, arrayDataFrame } from '../helpers/dataframe/index.js'
+
+import { arrayDataFrame, DataFrame } from '../helpers/dataframe/index.js'
 
 interface DataContextType {
   data: Omit<DataFrame, 'numRows'>,

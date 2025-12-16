@@ -1,8 +1,9 @@
 import { ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
-import { cellStyle } from '../helpers/width.js'
+
 import { ColumnParametersContext } from '../contexts/ColumnParametersContext.js'
-import { useLocalStorageState } from '../hooks/useLocalStorageState.js'
 import { ColumnWidthsContext } from '../contexts/ColumnWidthsContext.js'
+import { cellStyle } from '../helpers/width.js'
+import { useLocalStorageState } from '../hooks/useLocalStorageState.js'
 
 const defaultMinWidth = 50 // minimum width of a cell in px, used to compute the column widths
 const snapDistance = 10 // if a small space remains to the right of the last column after shrinking widths, it's filled by expanding some columns

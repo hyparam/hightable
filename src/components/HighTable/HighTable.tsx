@@ -1,30 +1,27 @@
 import { CSSProperties, KeyboardEvent, MouseEvent, ReactNode, RefObject, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+
+import { CellNavigationContext } from '../../contexts/CellNavigationContext.js'
+import { type ColumnParameters, ColumnParametersContext } from '../../contexts/ColumnParametersContext.js'
+import { ColumnVisibilityStatesContext } from '../../contexts/ColumnVisibilityStatesContext.js'
+import { ColumnWidthsContext } from '../../contexts/ColumnWidthsContext.js'
+import { DataContext } from '../../contexts/DataContext.js'
+import { OrderByContext } from '../../contexts/OrderByContext.js'
+import { PortalContainerContext } from '../../contexts/PortalContainerContext.js'
+import { SelectionContext } from '../../contexts/SelectionContext.js'
 import { ColumnConfiguration } from '../../helpers/columnConfiguration.js'
 import { DataFrame } from '../../helpers/dataframe/index.js'
 import { Selection } from '../../helpers/selection.js'
 import { OrderBy } from '../../helpers/sort.js'
 import { getOffsetWidth } from '../../helpers/width.js'
+import { getClientWidth } from '../../helpers/width.js'
 import { CellNavigationProvider } from '../../providers/CellNavigationProvider.js'
-import { CellNavigationContext } from '../../contexts/CellNavigationContext.js'
 import { ColumnParametersProvider } from '../../providers/ColumnParametersProvider.js'
-import { type ColumnParameters, ColumnParametersContext } from '../../contexts/ColumnParametersContext.js'
-import { ColumnWidthsProvider } from '../../providers/ColumnWidthsProvider.js'
-import { ColumnWidthsContext } from '../../contexts/ColumnWidthsContext.js'
 import { ColumnVisibilityStatesProvider, type MaybeHiddenColumn } from '../../providers/ColumnVisibilityStatesProvider.js'
-import { ColumnVisibilityStatesContext } from '../../contexts/ColumnVisibilityStatesContext.js'
+import { ColumnWidthsProvider } from '../../providers/ColumnWidthsProvider.js'
 import { DataProvider } from '../../providers/DataProvider.js'
-import { DataContext } from '../../contexts/DataContext.js'
 import { OrderByProvider } from '../../providers/OrderByProvider.js'
-import { OrderByContext } from '../../contexts/OrderByContext.js'
-import { SelectionProvider } from '../../providers/SelectionProvider.js'
 import { PortalContainerProvider } from '../../providers/PortalContainerProvider.js'
-import { PortalContainerContext } from '../../contexts/PortalContainerContext.js'
-import { SelectionContext } from '../../contexts/SelectionContext.js'
-import { RowsSliceProvider } from '../../providers/RowsSliceProvider.js'
-import { RowsSliceContext } from '../../contexts/RowsSliceContext.js'
-import { CanvasSizeContext } from '../../contexts/CanvasSizeContext.js'
-import { ViewportProvider } from '../../providers/ViewportProvider.js'
-import { ViewportContext } from '../../contexts/ViewportContext.js'
+import { SelectionProvider } from '../../providers/SelectionProvider.js'
 import { stringify as stringifyDefault } from '../../utils/stringify.js'
 import Cell, { type CellContentProps } from '../Cell/Cell.js'
 import Row from '../Row/Row.js'
@@ -32,9 +29,9 @@ import RowHeader from '../RowHeader/RowHeader.js'
 import TableCorner from '../TableCorner/TableCorner.js'
 import TableHeader from '../TableHeader/TableHeader.js'
 export { type CellContentProps } from '../Cell/Cell.js'
+import styles from '../../HighTable.module.css'
 
 const rowHeight = 33 // row height px
-const headerHeight = rowHeight // header height px
 
 interface Props {
   data: DataFrame
@@ -44,7 +41,8 @@ interface Props {
   focus?: boolean // focus table on mount? (default true)
   maxRowNumber?: number // maximum row number to display (for row headers). Useful for filtered data. If undefined, the number of rows in the data frame is applied.
   orderBy?: OrderBy // order used to fetch the rows. If undefined, the table is unordered, the sort controls are hidden and the interactions are disabled. Pass [] to fetch the rows in the original order.
-  padding?: number // number of padding rows to fetch and render outside of the viewport
+  overscan?: number // number of rows to fetch outside of the viewport
+  padding?: number // number of padding rows to render outside of the viewport
   selection?: Selection // selection and anchor rows, expressed as data indexes (not as indexes in the table). If undefined, the selection is hidden and the interactions are disabled.
   styled?: boolean // use styled component? (default true)
   // TODO(SL): replace col: number with col: string?
@@ -60,6 +58,7 @@ interface Props {
 }
 
 const defaultPadding = 20
+const defaultOverscan = 20
 const ariaOffset = 2 // 1-based index, +1 for the header
 
 const columnWidthsFormatVersion = '2' // increase in case of breaking changes in the column widths format
@@ -168,15 +167,15 @@ export function ScrollContainer({
   renderCellContent,
   maxRowNumber,
 }: ScrollContainerProps) {
-  const { containerRef } = usePortalContainer()
+  const { containerRef } = useContext(PortalContainerContext)
+  const { shouldScroll, setShouldScroll, onScrollKeyDown, cellPosition } = useContext(CellNavigationContext)
+  const { setAvailableWidth } = useContext(ColumnWidthsContext)
+  const { orderBy } = useContext(OrderByContext)
+  const allColumnsParameters = useContext(ColumnParametersContext)
+  const { isHiddenColumn } = useContext(ColumnVisibilityStatesContext)
+
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const tableCornerRef = useRef<Pick<HTMLTableCellElement, 'offsetWidth'> | null>(null)
-
-  const { shouldScroll, setShouldScroll, onScrollKeyDown, cellPosition } = useCellsNavigation()
-  const { setAvailableWidth } = useColumnWidths()
-  const { orderBy } = useOrderBy()
-  const allColumnsParameters = useColumnParameters()
-  const { isHiddenColumn } = useColumnVisibilityStates()
 
   const columnsParameters = useMemo(() => {
     return allColumnsParameters.filter((col) => {
@@ -374,9 +373,9 @@ export function TablePart({
   tableCornerRef,
 }: TablePartProps) {
   // contexts
-  const { onTableKeyDown: onNavigationTableKeyDown, focusFirstCell } = useCellsNavigation()
-  const { orderBy, onOrderByChange } = useOrderBy()
-  const { selectable, toggleAllRows, pendingSelectionGesture, onTableKeyDown: onSelectionTableKeyDown, allRowsSelected, isRowSelected, toggleRowNumber, toggleRangeToRowNumber } = useSelection()
+  const { onTableKeyDown: onNavigationTableKeyDown, focusFirstCell } = useContext(CellNavigationContext)
+  const { orderBy, onOrderByChange } = useContext(OrderByContext)
+  const { selectable, toggleAllRows, pendingSelectionGesture, onTableKeyDown: onSelectionTableKeyDown, allRowsSelected, isRowSelected, toggleRowNumber, toggleRangeToRowNumber } = useContext(SelectionContext)
 
   const onTableKeyDown = useCallback((event: KeyboardEvent) => {
     onNavigationTableKeyDown?.(event)

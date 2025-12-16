@@ -1,6 +1,6 @@
 import { fireEvent, render } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
 import { useContext } from 'react'
+import { describe, expect, it } from 'vitest'
 
 import { CellNavigationContext } from '../../src/contexts/CellNavigationContext.js'
 import { CellNavigationProvider } from '../../src/providers/CellNavigationProvider.js'

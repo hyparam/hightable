@@ -1,14 +1,9 @@
 import { fireEvent, render } from '@testing-library/react'
-<<<<<<< HEAD:test/hooks/useSelection.test.tsx
-import { act } from 'react'
-import { describe, expect, it, vi } from 'vitest'
-=======
-import { describe, expect, it, vi } from 'vitest'
 import { act, useContext } from 'react'
->>>>>>> 4b3fd03 (separate contexts/ and providers/):test/providers/SelectionProvider.test.tsx
+import { describe, expect, it, vi } from 'vitest'
 
-import { arrayDataFrame } from '../../src/helpers/dataframe/array.js'
 import { SelectionContext } from '../../src/contexts/SelectionContext.js'
+import { arrayDataFrame } from '../../src/helpers/dataframe/array.js'
 import { SelectionProvider } from '../../src/providers/SelectionProvider.js'
 
 function TestComponent() {

@@ -100,8 +100,8 @@ describe('HighTable', () => {
     })
   })
 
-  it('uses padding option', async () => {
-    const { getByText } = render(<HighTable data={mockData} padding={10} />)
+  it('uses overscan option', async () => {
+    const { getByText } = render(<HighTable data={mockData} overscan={10} />)
     await waitFor(() => {
       getByText('ID')
       expect(mockData.getCell).toHaveBeenCalledWith({ row: 13, column: 'Age', orderBy: [] })
@@ -253,8 +253,8 @@ describe('with async data, HighTable', () => {
   })
 
   it('renders initial rows', async () => {
-    const defaultPadding = 20
-    const rowEnd = defaultPadding + 4
+    const defaultOverscan = 20
+    const rowEnd = defaultOverscan + 4
     const asyncData = createAsyncDataFrame()
     const { getByText } = render(<HighTable data={asyncData} />)
     await waitFor(() => {
@@ -266,11 +266,11 @@ describe('with async data, HighTable', () => {
     })
   })
 
-  it('uses padding option', async () => {
-    const padding = 10
-    const rowEnd = padding + 4
+  it('uses overscan option', async () => {
+    const overscan = 10
+    const rowEnd = overscan + 4
     const asyncData = createAsyncDataFrame()
-    const { getByText } = render(<HighTable data={asyncData} padding={padding} />)
+    const { getByText } = render(<HighTable data={asyncData} overscan={overscan} />)
     await waitFor(() => {
       getByText('ID')
       expect(asyncData.fetch).toHaveBeenCalledExactlyOnceWith({ rowStart: 0, rowEnd, columns: ['ID', 'Name', 'Age'], orderBy: [], signal: expect.any(AbortSignal) })
