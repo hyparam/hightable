@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { ViewportContext } from '../contexts/ViewportContext.js'
 
@@ -12,7 +12,18 @@ interface ViewportProviderProps {
 export function ViewportProvider({ children }: ViewportProviderProps) {
   const [viewportHeight, setViewportHeight] = useState<number | undefined>(undefined)
   const [viewportWidth, setViewportWidth] = useState<number | undefined>(undefined)
+  // TODO(SL): update scrollTop only if it changes significantly (more than 1px?)
+  const [scrollTop, setScrollTop] = useState<number | undefined>(undefined)
   const viewportRef = useRef<HTMLDivElement>(null)
+
+  const setClampedScrollTop = useCallback((viewport: HTMLDivElement) => {
+    // clamp to valid range
+    const clampedTop = Math.max(0, Math.min(viewport.scrollTop, viewport.scrollHeight - viewport.clientHeight))
+    if (clampedTop !== viewport.scrollTop) {
+      console.debug('Clamping scrollTop from ', viewport.scrollTop, ' to ', clampedTop, 'before setting state.')
+    }
+    setScrollTop(clampedTop)
+  }, [])
 
   useEffect(() => {
     const viewport = viewportRef.current
@@ -51,8 +62,37 @@ export function ViewportProvider({ children }: ViewportProviderProps) {
     }
   }, [])
 
+  useEffect(() => {
+    const viewport = viewportRef.current
+    if (!viewport) {
+      return
+    }
+
+    // eslint-disable-next-line func-style
+    const handleScroll = () => {
+      // TODO(SL): throttle
+      console.debug('Scrolled to scrollTop: ', viewport.scrollTop, ' scrollHeight: ', viewport.scrollHeight)
+      setClampedScrollTop(viewport)
+    }
+    viewport.addEventListener('scroll', handleScroll)
+    return () => {
+      viewport.removeEventListener('scroll', handleScroll)
+    }
+  }, [setClampedScrollTop])
+
+  const instantScrollTo = useCallback((newScrollTop: number) => {
+    const viewport = viewportRef.current
+    if (!viewport) {
+      console.warn('Viewport element is not available. Cannot scroll.')
+      return
+    }
+    // TODO(SL): handle behavior 'smooth' too? It might require async handling to wait for the scroll to finish
+    console.log('Asking to scroll to: ', newScrollTop, ' current scrollTop: ', viewport.scrollTop, ' scrollHeight: ', viewport.scrollHeight)
+    viewport.scrollTo({ top: newScrollTop, behavior: 'instant' })
+  }, [])
+
   return (
-    <ViewportContext.Provider value={{ viewportRef, viewportHeight, viewportWidth }}>
+    <ViewportContext.Provider value={{ viewportRef, viewportHeight, viewportWidth, scrollTop, instantScrollTo }}>
       {children}
     </ViewportContext.Provider>
   )

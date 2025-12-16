@@ -17,16 +17,23 @@
 
   /* Note that this class cannot be easily overriden by custom CSS. It's not really an issue as its role is functional. */
   .table-scroll {
-    flex: 1;
-    position: relative;
-    overflow: auto;
+    /* flex: 1; */
+    overflow: auto;    
     /* avoid the row and column headers (sticky) to overlap the current navigation cell */
     scroll-padding-inline-start: var(--row-number-width);
     scroll-padding-block-start: var(--column-header-height);
+
+    /* the canvas */
+    & > div {
+      overflow-y: clip;
+      /* used by the mock row labels which are positioned absolutely */
+      position: relative;
+    }
   }
   table {
     max-width: 100%;
-    overflow-x: auto;
+    /* overflow-x: auto; */
+    
   }
 
   /* cells */

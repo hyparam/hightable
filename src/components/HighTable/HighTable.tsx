@@ -1,12 +1,14 @@
 import type { CSSProperties, KeyboardEvent, MouseEvent, ReactNode } from 'react'
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { useCallback, useContext, useEffect, useMemo, useRef } from 'react'
 
+import { CanvasSizeContext } from '../../contexts/CanvasSizeContext.js'
 import { CellNavigationContext } from '../../contexts/CellNavigationContext.js'
 import { type ColumnParameters, ColumnParametersContext } from '../../contexts/ColumnParametersContext.js'
 import { ColumnVisibilityStatesContext } from '../../contexts/ColumnVisibilityStatesContext.js'
 import { DataContext } from '../../contexts/DataContext.js'
 import { OrderByContext } from '../../contexts/OrderByContext.js'
 import { PortalContainerContext } from '../../contexts/PortalContainerContext.js'
+import { RowsSliceContext } from '../../contexts/RowsSliceContext.js'
 import { SelectionContext } from '../../contexts/SelectionContext.js'
 import { ViewportContext } from '../../contexts/ViewportContext.js'
 import type { ColumnConfiguration } from '../../helpers/columnConfiguration.js'
@@ -21,6 +23,7 @@ import { ColumnWidthsProvider } from '../../providers/ColumnWidthsProvider.js'
 import { DataProvider } from '../../providers/DataProvider.js'
 import { OrderByProvider } from '../../providers/OrderByProvider.js'
 import { PortalContainerProvider } from '../../providers/PortalContainerProvider.js'
+import { RowsSliceProvider } from '../../providers/RowsSliceProvider.js'
 import { SelectionProvider } from '../../providers/SelectionProvider.js'
 import { TableCornerProvider } from '../../providers/TableCornerProvider.js'
 import { ViewportProvider } from '../../providers/ViewportProvider.js'
@@ -32,7 +35,7 @@ import TableCorner from '../TableCorner/TableCorner.js'
 import TableHeader from '../TableHeader/TableHeader.js'
 
 const rowHeight = 33 // row height px
-// const headerHeight = rowHeight // header height px
+const headerHeight = rowHeight // header height px
 
 interface Props {
   data: DataFrame
@@ -43,7 +46,6 @@ interface Props {
   maxRowNumber?: number // maximum row number to display (for row headers). Useful for filtered data. If undefined, the number of rows in the data frame is applied.
   orderBy?: OrderBy // order used to fetch the rows. If undefined, the table is unordered, the sort controls are hidden and the interactions are disabled. Pass [] to fetch the rows in the original order.
   padding?: number // number of padding rows to fetch and render outside of the viewport
-  overscan?: number // number of extra rows to fetch and render outside of the viewport
   selection?: Selection // selection and anchor rows, expressed as data indexes (not as indexes in the table). If undefined, the selection is hidden and the interactions are disabled.
   styled?: boolean // use styled component? (default true)
   // TODO(SL): replace col: number with col: string?
@@ -59,7 +61,6 @@ interface Props {
 }
 
 const defaultPadding = 20
-const defaultOverscan = 20
 const ariaOffset = 2 // 1-based index, +1 for the header
 
 const columnWidthsFormatVersion = '2' // increase in case of breaking changes in the column widths format
@@ -107,49 +108,52 @@ function HighTableData(props: PropsData) {
   return (
     <PortalContainerProvider>
       <ViewportProvider>
+
+        {/* TODO(SL): re-enable later, for now, the default context gives a constant height of 10K pixels
+                       <CanvasSizeProvider numRows={numRows} headerHeight={headerHeight} rowHeight={rowHeight}> */}
         <TableCornerProvider>
-          {/* Provide the column configuration to the table */}
-          <ColumnParametersProvider columnConfiguration={props.columnConfiguration} columnDescriptors={data.columnDescriptors}>
-            {/* Create a new set of widths if the data has changed, but keep it if only the number of rows changed */}
-            <ColumnWidthsProvider key={cacheKey ?? key} localStorageKey={cacheKey ? `${cacheKey}${columnWidthsSuffix}` : undefined} numColumns={data.columnDescriptors.length}>
-              {/* Create a new set of hidden columns if the data has changed, but keep it if only the number of rows changed */}
-              <ColumnVisibilityStatesProvider key={cacheKey ?? key} localStorageKey={cacheKey ? `${cacheKey}${columnVisibilityStatesSuffix}` : undefined} columnNames={columnNames} initialVisibilityStates={initialVisibilityStates} onColumnsVisibilityChange={onColumnsVisibilityChange}>
-                {/* Create a new context if the dataframe changes, to flush the cache (ranks and indexes) */}
-                <OrderByProvider key={key} orderBy={orderBy} onOrderByChange={onOrderByChange}>
-                  {/* Create a new selection context if the dataframe has changed */}
-                  <SelectionProvider key={key} selection={selection} onSelectionChange={onSelectionChange} data={data} numRows={numRows} onError={onError}>
-                    {/* Create a new navigation context if the dataframe has changed, because the focused cell might not exist anymore */}
-                    <CellNavigationProvider key={key} colCount={data.columnDescriptors.length + 1} rowCount={numRows + 1} rowPadding={props.padding ?? defaultPadding}>
-                      <ScrollContainer data={data} numRows={numRows} version={version} {...props} maxRowNumber={maxRowNumber} />
-                    </CellNavigationProvider>
-                  </SelectionProvider>
-                </OrderByProvider>
-              </ColumnVisibilityStatesProvider>
-            </ColumnWidthsProvider>
-          </ColumnParametersProvider>
+          <RowsSliceProvider numRows={numRows} headerHeight={headerHeight} rowHeight={rowHeight} padding={props.padding ?? defaultPadding}>
+            {/* Provide the column configuration to the table */}
+            <ColumnParametersProvider columnConfiguration={props.columnConfiguration} columnDescriptors={data.columnDescriptors}>
+              {/* Create a new set of widths if the data has changed, but keep it if only the number of rows changed */}
+              <ColumnWidthsProvider key={cacheKey ?? key} localStorageKey={cacheKey ? `${cacheKey}${columnWidthsSuffix}` : undefined} numColumns={data.columnDescriptors.length}>
+                {/* Create a new set of hidden columns if the data has changed, but keep it if only the number of rows changed */}
+                <ColumnVisibilityStatesProvider key={cacheKey ?? key} localStorageKey={cacheKey ? `${cacheKey}${columnVisibilityStatesSuffix}` : undefined} columnNames={columnNames} initialVisibilityStates={initialVisibilityStates} onColumnsVisibilityChange={onColumnsVisibilityChange}>
+                  {/* Create a new context if the dataframe changes, to flush the cache (ranks and indexes) */}
+                  <OrderByProvider key={key} orderBy={orderBy} onOrderByChange={onOrderByChange}>
+                    {/* Create a new selection context if the dataframe has changed */}
+                    <SelectionProvider key={key} selection={selection} onSelectionChange={onSelectionChange} data={data} numRows={numRows} onError={onError}>
+                      {/* Create a new navigation context if the dataframe has changed, because the focused cell might not exist anymore */}
+                      <CellNavigationProvider key={key} colCount={data.columnDescriptors.length + 1} rowCount={numRows + 1} rowPadding={props.padding ?? defaultPadding}>
+                        <ScrollContainer data={data} numRows={numRows} version={version} {...props} maxRowNumber={maxRowNumber} />
+                      </CellNavigationProvider>
+                    </SelectionProvider>
+                  </OrderByProvider>
+                </ColumnVisibilityStatesProvider>
+              </ColumnWidthsProvider>
+            </ColumnParametersProvider>
+          </RowsSliceProvider>
         </TableCornerProvider>
+        {/* </CanvasSizeProvider> */}
+
       </ViewportProvider>
     </PortalContainerProvider>
   )
 }
 
-type ScrollContainerProps = Omit<PropsData, 'orderBy' | 'onOrderByChange' | 'selection' | 'onSelectionChange' | 'columnConfiguration' | 'maxRowNumber'> & {
+type ScrollContainerProps = Omit<PropsData, 'padding' | 'orderBy' | 'onOrderByChange' | 'selection' | 'onSelectionChange' | 'columnConfiguration' | 'maxRowNumber'> & {
   version: number // version of the data frame, used to re-render the component when the data changes
   maxRowNumber: number // maximum row number to display (for row headers).
   numRows: number // number of rows in the data frame
   data: Omit<DataFrame, 'numRows'> // data frame without numRows (provided separately)
 }
 
-type TableSliceProps = Omit<ScrollContainerProps, 'maxRowNumber' | 'styled' | 'className' | 'overscan' | 'onerror'> & {
-  rowsRange: RowsRange // range of rows to render
-  columnsParameters: ColumnParameters[] // parameters of the columns to render
-}
-interface RowsRange {
-  startFetch: number // first row to fetch (inclusive)
-  endFetch: number // last row to fetch (exclusive)
-  startView: number // first row to show in the viewport (inclusive)
-  endView: number // last row to show in the viewport (exclusive)
-}
+/**
+ * TODO
+ *
+ * - When scrolling (PageDn for example), the scrollHeight changes from 10033 (approx the expected size) to 17M!
+ * - The last row has no bottom border
+ */
 
 /**
  * Container providing the scrollable area for the table.
@@ -157,13 +161,11 @@ interface RowsRange {
 function ScrollContainer({
   data,
   numRows,
-  overscan = defaultOverscan,
-  padding = defaultPadding,
   focus = true,
   onDoubleClickCell,
   onMouseDownCell,
   onKeyDownCell,
-  onError = console.error,
+  onError,
   stringify = stringifyDefault,
   className = '',
   styled = true,
@@ -172,11 +174,13 @@ function ScrollContainer({
   maxRowNumber,
 }: ScrollContainerProps) {
   const { containerRef } = useContext(PortalContainerContext)
-  const { shouldScroll, setShouldScroll, onScrollKeyDown, cellPosition } = useContext(CellNavigationContext)
-  const { orderBy } = useContext(OrderByContext)
+  const { onScrollKeyDown } = useContext(CellNavigationContext)
   const allColumnsParameters = useContext(ColumnParametersContext)
   const { isHiddenColumn } = useContext(ColumnVisibilityStatesContext)
-  const { viewportRef, viewportHeight } = useContext(ViewportContext)
+  const { viewportRef } = useContext(ViewportContext)
+  const { canvasHeight } = useContext(CanvasSizeContext)
+
+  const canvasRef = useRef<HTMLDivElement | null>(null)
 
   const columnsParameters = useMemo(() => {
     return allColumnsParameters.filter((col) => {
@@ -184,130 +188,16 @@ function ScrollContainer({
     })
   }, [allColumnsParameters, isHiddenColumn])
 
-  // Rows to fetch: includes the rows inside the viewport plus overscan rows before and after
-  const [rowsRange, setRowsRange] = useState<RowsRange>({ startFetch: 0, endFetch: 0, startView: 0, endView: 0 })
-
-  /**
-   * Scale functions to convert between row indexes and viewport positions. The header is not counted here.
-   * Row index: 0 is the first row, numRows -1 is the last row
-   * Viewport position: 0 is the top of the viewport, in pixels.
-   */
-
-  // total scrollable height
-  // TODO(SL) fix the computation on unstyled tables, and variable height rows. For now, we assume all the rows, including header, have the same height.
-  // TODO(SL) apply a threshold at numRows > 100K?
-  const scrollHeight = 100_000 // fixed to 100K pixels, temporarily (instead of numRows * rowHeight)
-  const scale = useMemo(() => scrollHeight / numRows, [numRows])
-  const toViewportPosition = useCallback((row: number) => {
-    return row * scale
-  }, [scale])
-  const toRow = useCallback((viewportPosition: number) => {
-    return viewportPosition / scale
-  }, [scale])
-  // Set the position of the table slice to match the viewport
-  const sliceTop = Math.max(0, toViewportPosition(rowsRange.startView))
-
-  console.log('Render ScrollContainer', { ...rowsRange, sliceTop, scale })
-
   // These styles are required here (not in TableSlice) because they affect the scrollable area
   // to setup the scroll padding (to avoid sticky headers overlapping the focused cell)
   const tableScrollStyle = useMemo(() => {
     // reserve space for at least 3 characters
     const numCharacters = Math.max(maxRowNumber.toLocaleString('en-US').length, 3)
     return {
-      '--column-header-height': `${rowHeight}px`,
+      '--column-header-height': `${headerHeight}px`,
       '--row-number-characters': `${numCharacters}`,
     } as CSSProperties
   }, [maxRowNumber])
-
-  // scroll if the navigation cell changed, or if entering navigation mode
-  // this excludes the case where the whole table is focused (not in cell navigation mode), the user
-  // is scrolling with the mouse or the arrow keys, and the cell exits the viewport: don't want to scroll
-  // back to it
-  useEffect(() => {
-    const viewport = viewportRef.current
-    if (!shouldScroll || !viewport || !('scrollTo' in viewport)) {
-      // scrollTo does not exist in jsdom, used in the tests
-      return
-    }
-    setShouldScroll?.(false)
-    const row = cellPosition.rowIndex - ariaOffset // it can be the header row
-    // if the row is inside the rows range, nothing to do
-    if (row >= rowsRange.startFetch && row < rowsRange.endFetch) {
-      return
-    }
-    // Scroll to the estimated position of the cell, to wait for the cell to be fetched and rendered
-    const nextScrollTop = toViewportPosition(row)
-    if (nextScrollTop !== viewport.scrollTop) {
-      // scroll to the cell
-      viewport.scrollTo({ top: nextScrollTop, behavior: 'auto' })
-    }
-  }, [cellPosition, shouldScroll, rowsRange, setShouldScroll, viewportRef])
-
-  // handle scrolling and component resizing
-  useEffect(() => {
-    let abortController: AbortController | undefined = undefined
-
-    /**
-     * Compute the dimensions based on the current scroll position.
-     */
-    function handleScroll() {
-      // abort the previous fetches if any
-      abortController?.abort()
-      abortController = new AbortController()
-      // viewport height (visible area)
-      const validViewportHeight = Math.max(viewportHeight ?? 100, 100)
-      const visibleRows = Math.ceil(validViewportHeight / rowHeight) - 1 // remove the header, which is always visible
-      // scroll position
-      const scrollTop = viewportRef.current?.scrollTop ?? 0
-
-      // determine the visible rows
-      const startView = Math.floor(toRow(scrollTop))
-      const endView = startView + visibleRows // TODO(SL): check +1 or not
-      // determine rows to fetch
-      const startFetch = Math.max(0, startView - overscan)
-      const endFetch = Math.min(numRows, endView + overscan)
-      console.log('handleScroll', { validViewportHeight, visibleRows, scrollTop, startView, endView, startFetch, endFetch })
-
-      if (isNaN(startFetch)) throw new Error(`invalid start row ${startFetch}`)
-      if (isNaN(endFetch)) throw new Error(`invalid end row ${endFetch}`)
-      if (endFetch - startFetch > 1000) throw new Error(`attempted to render too many rows ${endFetch - startFetch} in the table slice`)
-
-      setRowsRange({ startFetch, endFetch, startView, endView })
-      if (data.fetch) {
-        data.fetch({
-          rowStart: startFetch,
-          rowEnd: endFetch,
-          columns: columnsParameters.map(({ name }) => name),
-          orderBy,
-          signal: abortController.signal,
-        }).catch((error: unknown) => {
-          if (error instanceof DOMException && error.name === 'AbortError') {
-            // fetch was aborted, ignore the error
-            return
-          }
-          onError(error) // report the error to the parent component
-        })
-      }
-    }
-
-    // run once
-    handleScroll()
-
-    // listeners
-    const viewport = viewportRef.current
-
-    if (viewport) {
-      viewport.addEventListener('scroll', handleScroll)
-    }
-
-    return () => {
-      abortController?.abort() // cancel the fetches if any
-      if (viewport) {
-        viewport.removeEventListener('scroll', handleScroll)
-      }
-    }
-  }, [numRows, overscan, padding, scrollHeight, data, orderBy, onError, columnsParameters, viewportRef, viewportHeight, toRow])
 
   const restrictedOnScrollKeyDown = useCallback((event: KeyboardEvent) => {
     if (event.target !== viewportRef.current) {
@@ -325,12 +215,15 @@ function ScrollContainer({
         {/* content canvas, full height.
           * "overflowY: clip" lets the header cell be sticked to the top of the viewport, while "overflowY: hidden" does not.
           */}
-        <div style={{ height: `${scrollHeight}px`, paddingTop: `${sliceTop}px`, overflowY: 'clip' }}>
-          {/* content, positioned vertically to match the viewport */}
+        <div ref={canvasRef} style={{ height: `${canvasHeight}px` }}>
+          {/*
+            * content, positioned vertically to match the viewport
+            * it must never overflow the canvas, or the maths will break
+            */}
           <TableSlice
             data={data}
             numRows={numRows}
-            padding={padding}
+            onError={onError}
             focus={focus}
             onDoubleClickCell={onDoubleClickCell}
             onMouseDownCell={onMouseDownCell}
@@ -338,7 +231,6 @@ function ScrollContainer({
             stringify={stringify}
             version={version}
             renderCellContent={renderCellContent}
-            rowsRange={rowsRange}
             columnsParameters={columnsParameters}
           />
         </div>
@@ -347,13 +239,17 @@ function ScrollContainer({
   )
 }
 
+type TableSliceProps = Omit<ScrollContainerProps, 'maxRowNumber' | 'styled' | 'className'> & {
+  columnsParameters: ColumnParameters[] // parameters of the columns to render
+}
+
 /**
  * Only the visible rows are fetched and rendered as HTML <tr> elements.
  */
 function TableSlice({
   data,
   numRows,
-  padding = defaultPadding,
+  onError = console.error,
   focus = true,
   onDoubleClickCell,
   onMouseDownCell,
@@ -361,13 +257,13 @@ function TableSlice({
   stringify = stringifyDefault,
   version,
   renderCellContent,
-  rowsRange,
   columnsParameters,
 }: TableSliceProps) {
   // contexts
   const { onTableKeyDown: onNavigationTableKeyDown, focusFirstCell } = useContext(CellNavigationContext)
   const { orderBy, onOrderByChange } = useContext(OrderByContext)
   const { selectable, toggleAllRows, pendingSelectionGesture, onTableKeyDown: onSelectionTableKeyDown, allRowsSelected, isRowSelected, toggleRowNumber, toggleRangeToRowNumber } = useContext(SelectionContext)
+  const { firstDataRow, numDataRows, tableOffset } = useContext(RowsSliceContext)
 
   const onTableKeyDown = useCallback((event: KeyboardEvent) => {
     onNavigationTableKeyDown?.(event)
@@ -395,22 +291,33 @@ function TableSlice({
     }
   }, [focus, focusFirstCell])
 
-  // add empty pre and post rows to fill the viewport
-  const offset = rowsRange.startFetch
-  const rowsLength = rowsRange.endFetch - offset
-  const prePadding = Array.from({ length: Math.min(padding, offset) }, () => [])
-  const rows = Array.from({ length: rowsLength }, (_, i) => i + offset)
-  const postPadding = Array.from({ length: Math.min(padding, numRows - rowsRange.endFetch) }, () => [])
-  // The negative margin positions row=startView at the top of the viewport, ie: translates the previous rows
-  const previousRows = prePadding.length + rowsRange.startView - rowsRange.startFetch // we don't account for the header, so that we always see it
-  const marginTop = -Math.max(previousRows * rowHeight, 0)
-  console.log('Render TableSlice', { rowsLength, prePaddingLength: prePadding.length, postPaddingLength: postPadding.length, marginTop })
+  const abortController = useRef<AbortController | undefined>(undefined)
+
+  useEffect(() => {
+    // abort the previous fetches if any
+    abortController.current?.abort()
+    abortController.current = new AbortController()
+
+    data.fetch?.({
+      rowStart: firstDataRow,
+      rowEnd: firstDataRow + numDataRows,
+      columns: columnsParameters.map(({ name }) => name),
+      orderBy,
+      signal: abortController.current.signal,
+    }).catch((error: unknown) => {
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        // fetch was aborted, ignore the error
+        return
+      }
+      onError(error) // report the error to the parent component
+    })
+  }, [data, firstDataRow, numDataRows, columnsParameters, orderBy, onError])
 
   // Prepare the slice of data to render
   // TODO(SL): also compute progress percentage here, to show a loading indicator (percentage of resolved cells)
   const slice = useMemo(() => {
     const canMeasureColumn: Record<string, boolean> = {}
-    const rowContents = rows.map((row) => {
+    const rowContents = Array.from({ length: numDataRows }, (_, i) => firstDataRow + i).map((row) => {
       const rowNumber = data.getRowNumber({ row, orderBy })?.value
       const cells = columnsParameters.map(({ name: column, index: originalColumnIndex }) => {
         const cell = data.getCell({ row, column, orderBy })
@@ -428,13 +335,14 @@ function TableSlice({
       canMeasureColumn,
       version,
     }
-  }, [data, columnsParameters, rows, orderBy, version])
+  }, [data, columnsParameters, firstDataRow, numDataRows, orderBy, version])
 
   // don't render table if header is empty
   if (!columnsParameters.length) return
 
   const ariaColCount = columnsParameters.length + 1 // don't forget the selection column
   const ariaRowCount = numRows + 1 // don't forget the header row
+  const paddingTop = tableOffset // beware, it can be negative! TODO(SL): test that
   return (
     <>
       {/* puts a background behind the row labels column */}
@@ -448,7 +356,10 @@ function TableSlice({
         aria-busy={pendingSelectionGesture /* TODO(SL): add other busy states? Used only for tests right now */}
         role="grid"
         onKeyDown={onTableKeyDown}
-        style={{ marginTop: `${marginTop}px` }}
+        style={{
+          position: 'absolute',
+          top: `${paddingTop}px`,
+        }}
       >
         <caption id="caption" hidden>Virtual-scroll table</caption>
         <thead role="rowgroup">
@@ -471,16 +382,6 @@ function TableSlice({
           </Row>
         </thead>
         <tbody role="rowgroup">
-          {/* TODO(SL): split into three tbody? to help position the second one at the scrolling position */}
-          {prePadding.map((_, prePaddingIndex) => {
-            const row = offset - prePadding.length + prePaddingIndex
-            const ariaRowIndex = row + ariaOffset
-            return (
-              <Row key={row} ariaRowIndex={ariaRowIndex}>
-                <RowHeader ariaColIndex={1} ariaRowIndex={ariaRowIndex} />
-              </Row>
-            )
-          })}
           {slice.rowContents.map(({ row, rowNumber, cells }) => {
             const ariaRowIndex = row + ariaOffset
             const selected = isRowSelected?.({ rowNumber })
@@ -521,15 +422,6 @@ function TableSlice({
                     />
                   )
                 })}
-              </Row>
-            )
-          })}
-          {postPadding.map((_, postPaddingIndex) => {
-            const row = offset + rowsLength + postPaddingIndex
-            const ariaRowIndex = row + ariaOffset
-            return (
-              <Row key={row} ariaRowIndex={ariaRowIndex}>
-                <RowHeader ariaColIndex={1} ariaRowIndex={ariaRowIndex} />
               </Row>
             )
           })}
