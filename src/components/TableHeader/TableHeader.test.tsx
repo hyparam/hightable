@@ -1,9 +1,10 @@
-import type { ReactNode } from 'react'
 import { within } from '@testing-library/react'
+import type { ReactNode } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+import { usePortalContainer } from '../../hooks/usePortalContainer.js'
 import { render as _render } from '../../utils/userEvent.js'
 import TableHeader from './TableHeader.js'
-import { usePortalContainer } from '../../hooks/usePortalContainer.js'
 
 function ContainerProvider({ children }: { children: ReactNode }) {
   const { containerRef } = usePortalContainer()

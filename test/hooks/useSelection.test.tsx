@@ -1,6 +1,6 @@
 import { fireEvent, render } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
 import { act } from 'react'
+import { describe, expect, it, vi } from 'vitest'
 
 import { arrayDataFrame } from '../../src/helpers/dataframe/array.js'
 import { SelectionProvider, useSelection } from '../../src/hooks/useSelection.js'

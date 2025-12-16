@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
 import { act, fireEvent } from '@testing-library/react'
+import { describe, expect, it } from 'vitest'
 
 import { render } from '../../utils/userEvent.js'
 import Cell from './Cell.js'

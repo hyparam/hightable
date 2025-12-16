@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { MouseEvent, ReactNode, useState } from 'react'
+
 import { checkSignal, createGetRowNumber, validateFetchParams, validateGetCellParams } from '../../helpers/dataframe/helpers.js'
-import { DataFrame, DataFrameEvents, arrayDataFrame } from '../../helpers/dataframe/index.js'
+import { arrayDataFrame, DataFrame, DataFrameEvents } from '../../helpers/dataframe/index.js'
 import { sortableDataFrame } from '../../helpers/dataframe/sort.js'
 import type { Fetch, ResolvedValue } from '../../helpers/dataframe/types.js'
 import type { Selection } from '../../helpers/selection.js'

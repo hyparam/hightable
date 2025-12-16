@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest'
+
 import { stringify } from '../../src/utils/stringify.js'
 
 describe('stringify', () => {

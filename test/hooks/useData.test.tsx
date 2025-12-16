@@ -1,11 +1,11 @@
+import { render, renderHook } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { act } from 'react'
-import { render, renderHook } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 
-import { DataProvider, useData } from '../../src/hooks/useData.js'
-import { DataFrame, DataFrameEvents, Obj, arrayDataFrame } from '../../src/helpers/dataframe/index.js'
+import { arrayDataFrame, DataFrame, DataFrameEvents, Obj } from '../../src/helpers/dataframe/index.js'
 import { createEventTarget } from '../../src/helpers/typedEventTarget.js'
+import { DataProvider, useData } from '../../src/hooks/useData.js'
 
 function createWrapper<M extends Obj, C extends Obj>(props: {
   data: DataFrame<M, C>,

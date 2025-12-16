@@ -1,11 +1,11 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, fireEvent } from '@testing-library/react'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { getOffsetWidth } from '../../helpers/width.js'
 import { ColumnParametersProvider } from '../../hooks/useColumnParameters.js'
 import { ColumnWidthsProvider } from '../../hooks/useColumnWidths.js'
 import { render } from '../../utils/userEvent.js'
 import ColumnHeader from './ColumnHeader.js'
-import { getOffsetWidth } from '../../helpers/width.js'
 
 vi.mock('../../helpers/width.js', { spy: true })
 

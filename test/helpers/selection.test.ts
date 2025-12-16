@@ -1,4 +1,5 @@
 import { describe, expect, it, test } from 'vitest'
+
 import { areValidRanges, isSelected, isValidIndex, isValidRange, selectRange, toggleIndex, toggleIndexInSelection, unselectRange } from '../../src/helpers/selection.js'
 
 describe('an index', () => {

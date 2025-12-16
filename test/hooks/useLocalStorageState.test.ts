@@ -1,6 +1,7 @@
-import { act } from 'react'
 import { renderHook } from '@testing-library/react'
+import { act } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+
 import { useLocalStorageState } from '../../src/hooks/useLocalStorageState.js'
 
 vi.stubGlobal('localStorage', (() => {
