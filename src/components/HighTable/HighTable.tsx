@@ -396,7 +396,7 @@ function TableSlice({
                 ariaRowIndex={ariaRowIndex}
                 selected={selected}
                 rowNumber={rowNumber}
-              // title={rowError(row, columns.length)} // TODO(SL): re-enable later?
+                // title={rowError(row, columns.length)} // TODO(SL): re-enable later?
               >
                 <RowHeader
                   selected={selected}
