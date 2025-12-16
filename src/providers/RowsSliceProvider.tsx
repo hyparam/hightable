@@ -130,7 +130,6 @@ export function RowsSliceProvider({ children, numRows, headerHeight, rowHeight, 
 
     if (rowIndex === 1) {
       // header row
-      setVirtualScrollTop(0)
       instantScrollTo(0)
       return
     }

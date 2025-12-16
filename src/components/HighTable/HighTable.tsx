@@ -285,6 +285,7 @@ function TableSlice({
     }
     setShouldScroll?.(false)
     scrollToRowIndex(cellPosition.rowIndex)
+    // TODO(SL): scroll horizontally too!
   }, [cellPosition, shouldScroll, setShouldScroll, scrollToRowIndex])
 
   // focus table on mount and later changes (when focusFirstCell is updated), so arrow keys work
