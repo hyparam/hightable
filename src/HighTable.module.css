@@ -20,7 +20,7 @@
     overflow: auto;    
     /* avoid the row and column headers (sticky) to overlap the current navigation cell */
     scroll-padding-inline-start: var(--row-number-width);
-    scroll-padding-block-start: var(--column-header-height); /* TODO(SL): do it in JS, because it does not work with virtual scrolling */
+    scroll-padding-block-start: var(--column-header-height);
 
     /* the canvas */
     & > div {

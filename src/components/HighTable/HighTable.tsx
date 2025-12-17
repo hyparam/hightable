@@ -34,6 +34,7 @@ import RowHeader from '../RowHeader/RowHeader.js'
 import TableCorner from '../TableCorner/TableCorner.js'
 import TableHeader from '../TableHeader/TableHeader.js'
 
+// Ensure these sizes are respected in the CSS. For now: we fix them to 33px
 const rowHeight = 33 // row height px
 const headerHeight = rowHeight // header height px
 
