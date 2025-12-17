@@ -27,7 +27,7 @@ export interface RowsSliceContextType {
    *   where the row is already in the slice (but not fully visible)? Using scrollIntoView?
    * @param rowIndex The row to go to (same semantic as aria-rowindex: 1-based, includes header, see cells navigation)
    */
-  scrollToRowIndex?: (rowIndex: number) => void
+  scrollToRowIndex?: (rowIndex: number) => undefined | { canScrollHorizontally: boolean }
 }
 
 export const defaultRowsSliceContext: RowsSliceContextType = {

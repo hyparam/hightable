@@ -57,6 +57,9 @@ export function RowsSliceProvider({ children, numRows, headerHeight, rowHeight, 
     // don't change virtualScrollTop, since it is more precise
     // and set scrollTop back to the precise value
     instantScrollTo?.(expectedScrollTop)
+    // TODO(SL): one issue is that when scrolling with a key arrow and the whole table is focused
+    //  (not a cell), the scroll behavior is weird, it sometimes catches, and sometimes it is reverted.
+    // Maybe adding some throttle on scroll events would help
   }
   // else, change is negligible, do nothing
 
@@ -140,7 +143,7 @@ export function RowsSliceProvider({ children, numRows, headerHeight, rowHeight, 
     if (rowIndex === 1) {
       // header row
       instantScrollTo(0)
-      return
+      return { canScrollHorizontally: true }
     }
 
     const row = rowIndex - 2 // convert to 0-based data row index
@@ -154,7 +157,7 @@ export function RowsSliceProvider({ children, numRows, headerHeight, rowHeight, 
 
     if (hiddenPixelsBefore <= 0 && hiddenPixelsAfter <= 0) {
       // fully visible, do nothing
-      return
+      return { canScrollHorizontally: true }
     }
 
     // partly or totally hidden: update the scroll position
@@ -179,6 +182,8 @@ export function RowsSliceProvider({ children, numRows, headerHeight, rowHeight, 
       // TODO(SL): if smooth scrolling is implemented, it might be async, so we should await it
       instantScrollTo(newScrollTop)
     }
+
+    return { canScrollHorizontally: true }
   }, [numRows, virtualScrollTop, headerHeight, rowHeight, viewportHeight, toScrollTop, instantScrollTo, canvasHeight])
 
   // Note: we don't change the scroll position if numRows or viewportHeight change, we just adapt to the new situation.

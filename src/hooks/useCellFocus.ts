@@ -15,7 +15,7 @@ interface CellFocus {
 }
 
 export function useCellFocus({ ref, ariaColIndex, ariaRowIndex }: CellData): CellFocus {
-  const { cellPosition: { colIndex, rowIndex }, setColIndex, setRowIndex, shouldFocus, setShouldFocus } = useContext(CellNavigationContext)
+  const { cellPosition: { colIndex, rowIndex }, setColIndex, setRowIndex, shouldFocus, shouldScrollHorizontally, setShouldScrollHorizontally, setShouldFocus } = useContext(CellNavigationContext)
 
   // Check if the cell is the current navigation cell
   const isCurrentCell = ariaColIndex === colIndex && ariaRowIndex === rowIndex
@@ -36,6 +36,11 @@ export function useCellFocus({ ref, ariaColIndex, ariaRowIndex }: CellData): Cel
       const observer = new IntersectionObserver(() => {
         element.focus({ preventScroll: true })
         setShouldFocus?.(false)
+        if (shouldScrollHorizontally) {
+          // scroll to the cell only if it's not a header cell
+          element.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+          setShouldScrollHorizontally?.(false)
+        }
       }, options)
       observer.observe(element)
 
@@ -44,7 +49,7 @@ export function useCellFocus({ ref, ariaColIndex, ariaRowIndex }: CellData): Cel
         observer.disconnect()
       }
     }
-  }, [ref, isCurrentCell, isHeaderCell, shouldFocus, setShouldFocus])
+  }, [ref, isCurrentCell, isHeaderCell, shouldScrollHorizontally, shouldFocus, setShouldFocus, setShouldScrollHorizontally])
 
   // Roving tabindex: only the current navigation cell is focusable with Tab (tabindex = 0)
   // All other cells are focusable only with javascript .focus() (tabindex = -1)
@@ -53,6 +58,7 @@ export function useCellFocus({ ref, ariaColIndex, ariaRowIndex }: CellData): Cel
   const navigateToCell = useCallback(() => {
     setColIndex?.(ariaColIndex)
     setRowIndex?.(ariaRowIndex)
+    setShouldFocus?.(true)
     setShouldFocus?.(true)
   }, [setColIndex, setRowIndex, setShouldFocus, ariaColIndex, ariaRowIndex])
 

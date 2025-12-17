@@ -256,7 +256,7 @@ function TableSlice({
   const { orderBy, onOrderByChange } = useContext(OrderByContext)
   const { selectable, toggleAllRows, pendingSelectionGesture, onTableKeyDown: onSelectionTableKeyDown, allRowsSelected, isRowSelected, toggleRowNumber, toggleRangeToRowNumber } = useContext(SelectionContext)
   const { firstDataRow, numDataRows, tableOffset } = useContext(RowsSliceContext)
-  const { cellPosition, shouldScroll, setShouldScroll } = useContext(CellNavigationContext)
+  const { cellPosition, shouldScroll, setShouldScroll, setShouldScrollHorizontally } = useContext(CellNavigationContext)
   const { scrollToRowIndex } = useContext(RowsSliceContext)
 
   const onTableKeyDown = useCallback((event: KeyboardEvent) => {
@@ -285,9 +285,12 @@ function TableSlice({
       return
     }
     setShouldScroll?.(false)
-    scrollToRowIndex(cellPosition.rowIndex)
+    const result = scrollToRowIndex(cellPosition.rowIndex)
+    if (result?.canScrollHorizontally) {
+      setShouldScrollHorizontally?.(true)
+    }
     // TODO(SL): scroll horizontally too!
-  }, [cellPosition, shouldScroll, setShouldScroll, scrollToRowIndex])
+  }, [cellPosition, shouldScroll, setShouldScroll, setShouldScrollHorizontally, scrollToRowIndex])
 
   // focus table on mount and later changes (when focusFirstCell is updated), so arrow keys work
   useEffect(() => {
