@@ -40,16 +40,25 @@ export function RowsSliceProvider({ children, numRows, headerHeight, rowHeight, 
   // scrollTop in the virtual canvas coordinates
   const [virtualScrollTop, setVirtualScrollTop] = useState(0)
 
-  // sync virtualScrollTop with scrollTop
-  const tolerancePixels = 1
-  if (Math.abs(scrollTop - toScrollTop(virtualScrollTop)) > tolerancePixels) {
-    setVirtualScrollTop(toVirtualScrollTop(scrollTop))
-  }
-
   // scrollTop has a limited precision (1px, or subpixel on some browsers) and is not predictable exactly, in particular when used with zooming.
+  // The browser might also scroll slightly when focusing an element.
   // preciseScrollTop is decimal, computed for the virtual canvas, and updated by user action only when scrollTop changes significantly.
-  // The scroll changed significantly, update preciseScrollTop
-  // sync virtualScrollTop with scrollTop, limiting to valid range
+  const coarsePrecision = 40 // px. TODO(SL): how to choose the value? in percentage of viewportHeight/canvasHeight? Generally, it's 33px or -33px (the height of the focused cell?)
+  const finePrecision = 1
+  const expectedScrollTop = toScrollTop(virtualScrollTop)
+  const difference = scrollTop - expectedScrollTop
+  if (Math.abs(difference) > coarsePrecision) {
+    // scrollTop changed significantly, it controls the position (coarse scroll)
+    const newVirtualScrollTop = toVirtualScrollTop(scrollTop)
+    setVirtualScrollTop(newVirtualScrollTop)
+  }
+  else if (Math.abs(difference) > finePrecision) {
+    // scrollTop changed slightly, virtualScrollTop controls the position (fine scroll)
+    // don't change virtualScrollTop, since it is more precise
+    // and set scrollTop back to the precise value
+    instantScrollTo?.(expectedScrollTop)
+  }
+  // else, change is negligible, do nothing
 
   // safety checks
   if (rowHeight <= 0) {
@@ -149,26 +158,28 @@ export function RowsSliceProvider({ children, numRows, headerHeight, rowHeight, 
     }
 
     // partly or totally hidden: update the scroll position
-    const newVirtualScrollTop = virtualScrollTop + (hiddenPixelsBefore > 0 ? -hiddenPixelsBefore : hiddenPixelsAfter)
+    const delta = hiddenPixelsBefore > 0 ? -hiddenPixelsBefore : hiddenPixelsAfter
+    const newVirtualScrollTop = virtualScrollTop + delta
 
-    const newScrollTop = toScrollTop(newVirtualScrollTop)
+    // Update the virtual scroll top
+    setVirtualScrollTop(newVirtualScrollTop)
 
-    // Ensure the new scrollTop is within bounds
-    if (newScrollTop < 0 || newScrollTop > canvasHeight - viewportHeight) {
-      console.warn(`Computed scrollTop ${newScrollTop} is out of bounds (0, ${canvasHeight - viewportHeight}). Cannot scroll to table row index: ${rowIndex}.`)
-      return
-    }
+    const tolerancePixels = 1
+    if (Math.abs(toScrollTop(delta)) > tolerancePixels) {
+      const newScrollTop = toScrollTop(newVirtualScrollTop)
 
-    if (Math.abs(newScrollTop - scrollTop) > tolerancePixels) {
+      // Ensure the new scrollTop is within bounds
+      if (newScrollTop < 0 || newScrollTop > canvasHeight - viewportHeight) {
+        console.warn(`Computed scrollTop ${newScrollTop} is out of bounds (0, ${canvasHeight - viewportHeight}). Cannot scroll to table row index: ${rowIndex}.`)
+        return
+      }
+
       // Update the coarse scroll position if the change is significant enough
       // for now, we ask for an instant scroll, there is no smooth scrolling
       // TODO(SL): if smooth scrolling is implemented, it might be async, so we should await it
       instantScrollTo(newScrollTop)
-    } else {
-      // Update the virtual scroll top
-      setVirtualScrollTop(newVirtualScrollTop)
     }
-  }, [numRows, scrollTop, virtualScrollTop, headerHeight, rowHeight, viewportHeight, toScrollTop, instantScrollTo, canvasHeight])
+  }, [numRows, virtualScrollTop, headerHeight, rowHeight, viewportHeight, toScrollTop, instantScrollTo, canvasHeight])
 
   // Note: we don't change the scroll position if numRows or viewportHeight change, we just adapt to the new situation.
   // TODO(SL): is this the desired behavior? We might try to keep the same first visible row if possible.
