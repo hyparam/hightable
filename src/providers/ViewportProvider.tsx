@@ -87,7 +87,6 @@ export function ViewportProvider({ children }: ViewportProviderProps) {
       return
     }
     // TODO(SL): handle behavior 'smooth' too? It might require async handling to wait for the scroll to finish
-    console.log('Asking to scroll to: ', newScrollTop, ' current scrollTop: ', viewport.scrollTop, ' scrollHeight: ', viewport.scrollHeight)
     viewport.scrollTo({ top: newScrollTop, behavior: 'instant' })
   }, [])
 
