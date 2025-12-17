@@ -140,7 +140,7 @@ export function RowsSliceProvider({ children, numRows, headerHeight, rowHeight, 
     // - the row is fully visible: do nothing
     // - the row start is before virtualScrollTop + headerHeight: scroll to snap its start with that value
     // - the row end is after virtualScrollTop + viewportHeight: scroll to snap its end with that value
-    const hiddenPixelsBefore = virtualScrollTop - (headerHeight + row * rowHeight)
+    const hiddenPixelsBefore = virtualScrollTop + headerHeight - (headerHeight + row * rowHeight)
     const hiddenPixelsAfter = headerHeight + row * rowHeight + rowHeight - virtualScrollTop - viewportHeight
 
     if (hiddenPixelsBefore <= 0 && hiddenPixelsAfter <= 0) {
