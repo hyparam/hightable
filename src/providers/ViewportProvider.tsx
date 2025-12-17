@@ -71,7 +71,6 @@ export function ViewportProvider({ children }: ViewportProviderProps) {
     // eslint-disable-next-line func-style
     const handleScroll = () => {
       // TODO(SL): throttle
-      console.debug('Scrolled to scrollTop: ', viewport.scrollTop, ' scrollHeight: ', viewport.scrollHeight)
       setClampedScrollTop(viewport)
     }
     viewport.addEventListener('scroll', handleScroll)
