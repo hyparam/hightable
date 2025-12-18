@@ -150,7 +150,7 @@ interface RowsRange {
 /**
  * Container providing the scrollable area for the table.
  */
-export function ScrollContainer({
+function ScrollContainer({
   data,
   numRows,
   overscan = defaultOverscan,
@@ -356,7 +356,7 @@ export function ScrollContainer({
 /**
  * Only the visible rows are fetched and rendered as HTML <tr> elements.
  */
-export function TablePart({
+function TablePart({
   data,
   numRows,
   padding = defaultPadding,
