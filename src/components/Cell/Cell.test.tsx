@@ -44,9 +44,7 @@ describe('Cell', () => {
               cell={{ value: 'custom' }}
               renderCellContent={({ cell }) => (
                 <span>
-                  Value:
-                  {' '}
-                  {String(cell?.value)}
+                  {`Value: ${cell?.value}`}
                 </span>
               )}
               {...rest}
