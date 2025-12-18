@@ -15,7 +15,7 @@ interface CellFocus {
 }
 
 export function useCellFocus({ ref, ariaColIndex, ariaRowIndex }: CellData): CellFocus {
-  const { cellPosition: { colIndex, rowIndex }, setColIndex, setRowIndex, shouldFocus, setShouldFocus } = useContext(CellNavigationContext)
+  const { cellPosition: { colIndex, rowIndex }, setColIndex, setRowIndex, shouldFocus, shouldScrollHorizontally, setShouldScrollHorizontally, setShouldFocus } = useContext(CellNavigationContext)
 
   // Check if the cell is the current navigation cell
   const isCurrentCell = ariaColIndex === colIndex && ariaRowIndex === rowIndex
@@ -23,20 +23,33 @@ export function useCellFocus({ ref, ariaColIndex, ariaRowIndex }: CellData): Cel
 
   useEffect(() => {
     // focus on the cell when needed
-    if (ref.current && isCurrentCell && shouldFocus) {
-      if (!isHeaderCell) {
-        // scroll the cell into view
-        //
-        // scroll-padding-inline-start and scroll-padding-block-start are set in the CSS
-        // to avoid the cell being hidden by the row and column headers
-        //
-        // not applied for header cells, as they are always visible, and it was causing jumps when resizing a column
-        ref.current.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'nearest' })
+    const element = ref.current
+    if (element && isCurrentCell && shouldFocus) {
+      const options = {
+        rootMargin: '0px',
+        scrollMargin: '0px',
+        threshold: 1.0,
       }
-      ref.current.focus()
-      setShouldFocus?.(false)
+      // We need to use IntersectionObserver to ensure that the element is visible, before calling focus()
+      // Otherwise, the browser might scroll (even with preventScroll: true!) to bring the element into view
+      // But this would break our custom scrolling logic (updates the coarse scroll instead of the virtual scroll).
+      const observer = new IntersectionObserver(() => {
+        element.focus({ preventScroll: true })
+        setShouldFocus?.(false)
+        if (shouldScrollHorizontally) {
+          // scroll to the cell only if it's not a header cell
+          element.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+          setShouldScrollHorizontally?.(false)
+        }
+      }, options)
+      observer.observe(element)
+
+      return () => {
+        observer.unobserve(element)
+        observer.disconnect()
+      }
     }
-  }, [ref, isCurrentCell, isHeaderCell, shouldFocus, setShouldFocus])
+  }, [ref, isCurrentCell, isHeaderCell, shouldScrollHorizontally, shouldFocus, setShouldFocus, setShouldScrollHorizontally])
 
   // Roving tabindex: only the current navigation cell is focusable with Tab (tabindex = 0)
   // All other cells are focusable only with javascript .focus() (tabindex = -1)
@@ -45,6 +58,7 @@ export function useCellFocus({ ref, ariaColIndex, ariaRowIndex }: CellData): Cel
   const navigateToCell = useCallback(() => {
     setColIndex?.(ariaColIndex)
     setRowIndex?.(ariaRowIndex)
+    setShouldFocus?.(true)
     setShouldFocus?.(true)
   }, [setColIndex, setRowIndex, setShouldFocus, ariaColIndex, ariaRowIndex])
 

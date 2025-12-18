@@ -16,6 +16,7 @@ export function CellNavigationProvider({ colCount, rowCount, rowPadding, childre
   const [rowIndex, setRowIndex] = useState(defaultCellNavigationContext.cellPosition.rowIndex)
   const [shouldFocus, setShouldFocus] = useState(false)
   const [shouldScroll, setShouldScroll] = useState(false)
+  const [shouldScrollHorizontally, setShouldScrollHorizontally] = useState(false)
 
   // Reset the cell position if the number of rows has decreased and the current row index is out of bounds
   if (rowCount !== previousRowCount) {
@@ -122,11 +123,12 @@ export function CellNavigationProvider({ colCount, rowCount, rowPadding, childre
       shouldFocus,
       setShouldFocus,
       shouldScroll,
+      setShouldScrollHorizontally,
+      shouldScrollHorizontally,
       setShouldScroll,
       focusFirstCell,
     }
-  }, [cellPosition, onTableKeyDown, onScrollKeyDown, shouldFocus, shouldScroll, focusFirstCell])
-
+  }, [cellPosition, onTableKeyDown, onScrollKeyDown, shouldFocus, shouldScroll, shouldScrollHorizontally, focusFirstCell])
   return (
     <CellNavigationContext.Provider value={value}>
       {children}
