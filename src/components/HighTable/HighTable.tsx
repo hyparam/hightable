@@ -14,6 +14,7 @@ import type { DataFrame } from '../../helpers/dataframe/index.js'
 import type { Selection } from '../../helpers/selection.js'
 import type { OrderBy } from '../../helpers/sort.js'
 import { getClientWidth, getOffsetWidth } from '../../helpers/width.js'
+import styles from '../../HighTable.module.css'
 import { CellNavigationProvider } from '../../providers/CellNavigationProvider.js'
 import { ColumnParametersProvider } from '../../providers/ColumnParametersProvider.js'
 import { ColumnVisibilityStatesProvider, type MaybeHiddenColumn } from '../../providers/ColumnVisibilityStatesProvider.js'
@@ -28,8 +29,6 @@ import Row from '../Row/Row.js'
 import RowHeader from '../RowHeader/RowHeader.js'
 import TableCorner from '../TableCorner/TableCorner.js'
 import TableHeader from '../TableHeader/TableHeader.js'
-export { type CellContentProps } from '../Cell/Cell.js'
-import styles from '../../HighTable.module.css'
 
 const rowHeight = 33 // row height px
 
