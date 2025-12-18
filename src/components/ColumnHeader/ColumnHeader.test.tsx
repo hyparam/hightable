@@ -309,8 +309,7 @@ describe('ColumnHeader', () => {
             <ColumnHeader
               columnName="test"
               {...defaultProps}
-            >
-            </ColumnHeader>
+            />
           </tr>
         </tbody>
       </table>

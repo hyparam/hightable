@@ -27,8 +27,7 @@ describe('Cell', () => {
             <Cell
               cell={{ value }}
               {...rest}
-            >
-            </Cell>
+            />
           </tr>
         </tbody>
       </table>
@@ -51,8 +50,7 @@ describe('Cell', () => {
                 </span>
               )}
               {...rest}
-            >
-            </Cell>
+            />
           </tr>
         </tbody>
       </table>
@@ -68,8 +66,7 @@ describe('Cell', () => {
             <Cell
               cell={{ value: 123 }}
               {...rest}
-            >
-            </Cell>
+            />
           </tr>
         </tbody>
       </table>

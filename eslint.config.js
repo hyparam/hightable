@@ -47,6 +47,7 @@ export default defineConfig([
         },
       ],
       '@stylistic/quote-props': ['error', 'as-needed'],
+      '@stylistic/jsx-self-closing-comp': 'error',
     },
   },
   {
