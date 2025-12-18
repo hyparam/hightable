@@ -1,4 +1,5 @@
-import { createContext, KeyboardEvent } from 'react'
+import type { KeyboardEvent } from 'react'
+import { createContext } from 'react'
 
 export interface CellPosition {
   colIndex: number // table column index, same semantic as aria-colindex (1-based, includes row headers)

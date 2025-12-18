@@ -1,4 +1,4 @@
-import React from 'react'
+import type React from 'react'
 
 // Single column config
 export type HeaderControls = React.ReactNode

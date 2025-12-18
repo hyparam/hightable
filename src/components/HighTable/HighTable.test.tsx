@@ -1,8 +1,10 @@
 import { act, fireEvent, waitFor, within } from '@testing-library/react'
-import { afterEach, beforeEach, describe, expect, it, Mock, vi } from 'vitest'
+import type { Mock } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { createGetRowNumber, validateFetchParams, validateGetCellParams, validateGetRowNumberParams } from '../../helpers/dataframe/helpers.js'
-import { arrayDataFrame, DataFrame, DataFrameEvents, Fetch } from '../../helpers/dataframe/index.js'
+import type { DataFrame, DataFrameEvents, Fetch } from '../../helpers/dataframe/index.js'
+import { arrayDataFrame } from '../../helpers/dataframe/index.js'
 import { sortableDataFrame } from '../../helpers/dataframe/sort.js'
 import type { Obj } from '../../helpers/dataframe/types.js'
 import type { OrderBy } from '../../helpers/sort.js'

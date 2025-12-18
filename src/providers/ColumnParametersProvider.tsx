@@ -1,8 +1,8 @@
 import { type ReactNode, useMemo } from 'react'
 
 import { type ColumnParameters, ColumnParametersContext } from '../contexts/ColumnParametersContext.js'
-import { ColumnConfiguration } from '../helpers/columnConfiguration.js'
-import { ColumnDescriptor } from '../helpers/dataframe/index.js'
+import type { ColumnConfiguration } from '../helpers/columnConfiguration.js'
+import type { ColumnDescriptor } from '../helpers/dataframe/index.js'
 
 interface ColumnParametersProviderProps {
   columnConfiguration?: ColumnConfiguration

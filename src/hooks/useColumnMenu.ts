@@ -1,4 +1,5 @@
-import { KeyboardEvent, MouseEvent, RefObject, useCallback, useId, useState } from 'react'
+import type { KeyboardEvent, MouseEvent, RefObject } from 'react'
+import { useCallback, useId, useState } from 'react'
 
 export function useColumnMenu(
   ref: RefObject<HTMLTableCellElement | null>,

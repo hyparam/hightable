@@ -1,5 +1,6 @@
-import { OrderBy, validateOrderByAgainstSortableColumns } from '../sort.js'
-import { DataFrame, ResolvedValue } from './types.js'
+import type { OrderBy } from '../sort.js'
+import { validateOrderByAgainstSortableColumns } from '../sort.js'
+import type { DataFrame, ResolvedValue } from './types.js'
 
 export function createGetRowNumber(data: Pick<DataFrame, 'numRows'>) {
   return ({ row, orderBy }: { row: number, orderBy?: OrderBy }): ResolvedValue<number> => {

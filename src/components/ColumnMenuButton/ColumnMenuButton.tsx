@@ -1,4 +1,5 @@
-import { KeyboardEvent, MouseEvent, ReactNode, useCallback } from 'react'
+import type { KeyboardEvent, MouseEvent, ReactNode } from 'react'
+import { useCallback } from 'react'
 
 interface ColumnMenuButtonProps {
   onClick?: (e: MouseEvent<HTMLElement> | KeyboardEvent<HTMLElement>) => void

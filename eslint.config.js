@@ -66,9 +66,9 @@ export default typescript.config(
       'no-useless-return': 'error',
       'no-var': 'error',
       'object-curly-spacing': ['error', 'always'],
-      'prefer-const': 'warn',
+      'prefer-const': 'error',
       'prefer-destructuring': [
-        'warn',
+        'error',
         {
           object: true,
           array: false,
@@ -82,11 +82,12 @@ export default typescript.config(
       // typescript
       '@typescript-eslint/restrict-template-expressions': 'off',
       '@typescript-eslint/no-unused-vars': [
-        'warn',
+        'error',
         { ignoreRestSiblings: true },
       ],
-      '@typescript-eslint/require-await': 'warn',
-      '@typescript-eslint/no-deprecated': 'warn',
+      '@typescript-eslint/require-await': 'error',
+      '@typescript-eslint/no-deprecated': 'error',
+      '@typescript-eslint/consistent-type-imports': 'error',
       // allow using any - see row.ts - it's not easy to replace with unknown for example
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/use-unknown-in-catch-callback-variable': 'off',

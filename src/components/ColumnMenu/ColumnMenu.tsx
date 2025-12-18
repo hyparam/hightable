@@ -1,9 +1,10 @@
-import { KeyboardEvent, MouseEvent, ReactNode, useCallback, useContext, useEffect, useId, useMemo, useRef, useState } from 'react'
+import type { KeyboardEvent, MouseEvent, ReactNode } from 'react'
+import { useCallback, useContext, useEffect, useId, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
 import { CellNavigationContext } from '../../contexts/CellNavigationContext'
 import { PortalContainerContext } from '../../contexts/PortalContainerContext.js'
-import { Direction } from '../../helpers/sort'
+import type { Direction } from '../../helpers/sort'
 import { useFocusManagement } from '../../hooks/useFocusManagement'
 
 function getSortDirection(direction?: Direction) {

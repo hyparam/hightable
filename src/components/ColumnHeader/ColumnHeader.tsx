@@ -1,10 +1,11 @@
-import { KeyboardEvent, ReactNode, useCallback, useContext, useEffect, useMemo, useRef } from 'react'
+import type { KeyboardEvent, ReactNode } from 'react'
+import { useCallback, useContext, useEffect, useMemo, useRef } from 'react'
 import { flushSync } from 'react-dom'
 
 import type { ColumnParameters } from '../../contexts/ColumnParametersContext.js'
 import { ColumnVisibilityStatesContext } from '../../contexts/ColumnVisibilityStatesContext.js'
 import { ColumnWidthsContext } from '../../contexts/ColumnWidthsContext.js'
-import { Direction } from '../../helpers/sort.js'
+import type { Direction } from '../../helpers/sort.js'
 import { getOffsetWidth } from '../../helpers/width.js'
 import { useCellFocus } from '../../hooks/useCellFocus.js'
 import { useColumnMenu } from '../../hooks/useColumnMenu.js'

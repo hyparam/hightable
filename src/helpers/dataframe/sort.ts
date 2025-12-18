@@ -1,7 +1,8 @@
-import { computeRanks, deserializeOrderBy, OrderBy, serializeOrderBy, validateOrderByAgainstSortableColumns } from '../sort.js'
+import type { OrderBy } from '../sort.js'
+import { computeRanks, deserializeOrderBy, serializeOrderBy, validateOrderByAgainstSortableColumns } from '../sort.js'
 import { createEventTarget } from '../typedEventTarget.js'
 import { checkSignal, validateColumn, validateFetchParams, validateRow } from './helpers.js'
-import { DataFrame, DataFrameEvents, Obj, ResolvedValue } from './types.js'
+import type { DataFrame, DataFrameEvents, Obj, ResolvedValue } from './types.js'
 
 /**
  * Wrap a DataFrame to make it sortable on the specified columns.

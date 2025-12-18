@@ -4,7 +4,8 @@ import { act, useContext } from 'react'
 import { describe, expect, it } from 'vitest'
 
 import { DataContext } from '../../src/contexts/DataContext.js'
-import { arrayDataFrame, DataFrame, DataFrameEvents, Obj } from '../../src/helpers/dataframe/index.js'
+import type { DataFrame, DataFrameEvents, Obj } from '../../src/helpers/dataframe/index.js'
+import { arrayDataFrame } from '../../src/helpers/dataframe/index.js'
 import { createEventTarget } from '../../src/helpers/typedEventTarget.js'
 import { DataProvider } from '../../src/providers/DataProvider.js'
 

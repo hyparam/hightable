@@ -1,4 +1,5 @@
-import { KeyboardEvent, ReactNode, useCallback, useMemo, useState } from 'react'
+import type { KeyboardEvent, ReactNode } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 
 import { CellNavigationContext, defaultCellNavigationContext } from '../contexts/CellNavigationContext'
 

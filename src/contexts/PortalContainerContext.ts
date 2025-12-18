@@ -1,4 +1,5 @@
-import { createContext, RefObject } from 'react'
+import type { RefObject } from 'react'
+import { createContext } from 'react'
 
 interface PortalContainerContextType {
   containerRef: RefObject<HTMLDivElement | null>

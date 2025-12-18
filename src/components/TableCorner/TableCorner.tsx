@@ -1,4 +1,5 @@
-import { ChangeEvent, CSSProperties, ForwardedRef, forwardRef, KeyboardEvent, ReactNode, useCallback, useImperativeHandle, useRef } from 'react'
+import type { ChangeEvent, CSSProperties, ForwardedRef, KeyboardEvent, ReactNode } from 'react'
+import { forwardRef, useCallback, useImperativeHandle, useRef } from 'react'
 
 import { useCellFocus } from '../../hooks/useCellFocus'
 

@@ -1,4 +1,5 @@
-import { ChangeEvent, CSSProperties, KeyboardEvent, MouseEvent, useCallback, useMemo, useRef } from 'react'
+import type { ChangeEvent, CSSProperties, KeyboardEvent, MouseEvent } from 'react'
+import { useCallback, useMemo, useRef } from 'react'
 
 import { useCellFocus } from '../../hooks/useCellFocus'
 import { useOnCopy } from '../../hooks/useOnCopyToClipboard.js'

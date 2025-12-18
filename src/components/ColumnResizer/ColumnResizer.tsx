@@ -1,4 +1,5 @@
-import { KeyboardEvent, MouseEvent, PointerEvent, useCallback, useMemo, useState } from 'react'
+import type { KeyboardEvent, MouseEvent, PointerEvent } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 
 interface InitialPointerState {
   pointerId: number

@@ -1,4 +1,5 @@
-import { RefObject, useCallback, useContext, useEffect } from 'react'
+import type { RefObject } from 'react'
+import { useCallback, useContext, useEffect } from 'react'
 
 import { CellNavigationContext } from '../contexts/CellNavigationContext'
 

@@ -1,4 +1,5 @@
-import { ReactNode, useCallback, useMemo } from 'react'
+import type { ReactNode } from 'react'
+import { useCallback, useMemo } from 'react'
 
 import { ColumnVisibilityStatesContext } from '../contexts/ColumnVisibilityStatesContext.js'
 import { useLocalStorageState } from '../hooks/useLocalStorageState.js'

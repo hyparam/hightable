@@ -1,4 +1,5 @@
-import { ClipboardEvent, useCallback } from 'react'
+import type { ClipboardEvent } from 'react'
+import { useCallback } from 'react'
 
 export function useOnCopy(
   text?: string
