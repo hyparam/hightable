@@ -127,16 +127,14 @@ function createVaryingArrayDataFrame({ delay_ms, maxRows }: { delay_ms?: number,
         ID: `row ${i}`,
         Value: Math.floor(100 * random(135 + i)),
       })
-    }
-    else if (phase === 1) {
+    } else if (phase === 1) {
       // update a random row between 0 and maxRows
       const rowIndex = Math.floor(Math.random() * maxRows)
       df._array[rowIndex] = {
         ID: 'updated',
         Value: Math.floor(100 * random(135 + i)),
       }
-    }
-    else {
+    } else {
       // remove the last row
       df._array.pop()
     }

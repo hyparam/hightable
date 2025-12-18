@@ -27,8 +27,7 @@ describe('Cell', () => {
             <Cell
               cell={{ value }}
               {...rest}
-            >
-            </Cell>
+            />
           </tr>
         </tbody>
       </table>
@@ -45,14 +44,11 @@ describe('Cell', () => {
               cell={{ value: 'custom' }}
               renderCellContent={({ cell }) => (
                 <span>
-                  Value:
-                  {' '}
-                  {String(cell?.value)}
+                  {`Value: ${cell?.value}`}
                 </span>
               )}
               {...rest}
-            >
-            </Cell>
+            />
           </tr>
         </tbody>
       </table>
@@ -68,8 +64,7 @@ describe('Cell', () => {
             <Cell
               cell={{ value: 123 }}
               {...rest}
-            >
-            </Cell>
+            />
           </tr>
         </tbody>
       </table>

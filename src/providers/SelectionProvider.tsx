@@ -94,8 +94,7 @@ export function SelectionProvider({ children, data, numRows, onError, selection:
       const gesture = startGesture()
       try {
         onSelectionChange(toggleIndexInSelection({ selection, index: rowNumber }))
-      }
-      finally {
+      } finally {
         stopGesture({ gesture })
       }
     }
@@ -148,12 +147,10 @@ export function SelectionProvider({ children, data, numRows, onError, selection:
       try {
         // if the user presses Escape, we want to clear the selection
         onSelectionChange?.(getDefaultSelection())
-      }
-      finally {
+      } finally {
         stopGesture({ gesture })
       }
-    }
-    else if (key === 'a' && (event.ctrlKey || event.metaKey)) {
+    } else if (key === 'a' && (event.ctrlKey || event.metaKey)) {
       const gesture = startGesture()
       const { signal } = gesture.controller
       // if the user presses Ctrl+A, we want to select all rows
@@ -171,8 +168,7 @@ export function SelectionProvider({ children, data, numRows, onError, selection:
             onError?.(error)
           })
       }
-    }
-    else if (key === ' ' && shiftKey) {
+    } else if (key === ' ' && shiftKey) {
       // if the user presses Shift+Space, we want to toggle the current row in the selection
       const { target } = event
       if (!selection || !onSelectionChange || !(target instanceof HTMLTableCellElement)) {
@@ -187,8 +183,7 @@ export function SelectionProvider({ children, data, numRows, onError, selection:
       const gesture = startGesture()
       try {
         onSelectionChange({ ranges: toggleIndex({ ranges: selection.ranges, index }), anchor: index })
-      }
-      finally {
+      } finally {
         stopGesture({ gesture })
       }
     }

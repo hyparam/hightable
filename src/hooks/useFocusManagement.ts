@@ -60,8 +60,7 @@ export function useFocusManagement(
           firstElement.focus()
         })
       }
-    }
-    else if (previousFocusRef.current) {
+    } else if (previousFocusRef.current) {
       previousFocusRef.current.focus()
       previousFocusRef.current = null
     }

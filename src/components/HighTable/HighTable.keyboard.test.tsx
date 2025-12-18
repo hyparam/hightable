@@ -23,14 +23,11 @@ function createData(): DataFrame<Obj, { type: string }> {
     const count = numRows - row
     if (column === 'ID') {
       return { value: `row ${row}` }
-    }
-    else if (column === 'Count') {
+    } else if (column === 'Count') {
       return { value: count }
-    }
-    else if (column === 'Double') {
+    } else if (column === 'Double') {
       return { value: count * 2 }
-    }
-    else if (column === 'Triple') {
+    } else if (column === 'Triple') {
       return { value: count * 3 }
     }
   }

@@ -296,7 +296,7 @@ function ScrollContainer({
 
   return (
     <div ref={containerRef} className={`${styles.hightable} ${styled ? styles.styled : ''} ${className}`} style={tableScrollStyle}>
-      <div className={styles.topBorder} role="presentation"></div>
+      <div className={styles.topBorder} role="presentation" />
       <div className={styles.tableScroll} ref={scrollRef} role="group" aria-labelledby="caption" onKeyDown={restrictedOnScrollKeyDown} tabIndex={0}>
         <div style={{ height: `${scrollHeight}px` }}>
           <TableSlice
@@ -357,8 +357,7 @@ function TableSlice({
     return ({ shiftKey }: { shiftKey: boolean }) => {
       if (shiftKey) {
         toggleRangeToRowNumber({ row, rowNumber })
-      }
-      else {
+      } else {
         toggleRowNumber({ rowNumber })
       }
     }

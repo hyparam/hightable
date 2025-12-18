@@ -27,8 +27,7 @@ export default function ColumnMenuButton({
       e.preventDefault()
       e.stopPropagation()
       onClick?.(e)
-    }
-    else if (e.key === 'Escape') {
+    } else if (e.key === 'Escape') {
       e.preventDefault()
       e.stopPropagation()
       onEscape?.(e)

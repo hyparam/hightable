@@ -25,8 +25,7 @@ describe('RowHeader', () => {
             <RowHeader
               rowNumber={rowNumber}
               {...defaultProps}
-            >
-            </RowHeader>
+            />
           </tr>
         </tbody>
       </table>
@@ -50,8 +49,7 @@ describe('RowHeader', () => {
           <tr>
             <RowHeader
               {...defaultProps}
-            >
-            </RowHeader>
+            />
           </tr>
         </tbody>
       </table>

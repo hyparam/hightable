@@ -36,6 +36,7 @@ export default defineConfig([
       stylistic.configs.recommended,
     ],
     rules: {
+      '@stylistic/brace-style': ['error', '1tbs', { allowSingleLine: true }],
       '@stylistic/comma-dangle': [
         'error',
         {
@@ -46,6 +47,7 @@ export default defineConfig([
           functions: 'never',
         },
       ],
+      '@stylistic/jsx-self-closing-comp': 'error',
       '@stylistic/quote-props': ['error', 'as-needed'],
     },
   },

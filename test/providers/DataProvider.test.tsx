@@ -123,14 +123,14 @@ describe('DataProvider', () => {
   it('should adapt when the data frame has changed', async () => {
     const df1 = arrayDataFrame([{ a: 1 }, { a: 2 }])
     const df2 = arrayDataFrame([{ a: 10 }, { a: 20 }, { a: 30 }])
-    const { getByTestId, rerender } = render(<TestComponent data={df1}></TestComponent>)
+    const { getByTestId, rerender } = render(<TestComponent data={df1} />)
     expect(getByTestId('key').textContent).toBe('0')
     expect(getByTestId('version').textContent).toBe('0')
     expect(getByTestId('numRows').textContent).toBe('2')
     // Change the data frame
     // eslint-disable-next-line @typescript-eslint/require-await
     await act(async () => {
-      rerender(<TestComponent data={df2}></TestComponent>)
+      rerender(<TestComponent data={df2} />)
     })
     expect(getByTestId('key').textContent).toBe('1')
     expect(getByTestId('version').textContent).toBe('0')

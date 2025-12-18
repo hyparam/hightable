@@ -66,12 +66,10 @@ export function getContinuousRanges(sortedRows: number[]): { rowStart: number, r
   for (const row of sortedRows) {
     if (range === undefined) {
       range = { rowStart: row, rowEnd: row + 1 }
-    }
-    else if (row === range.rowEnd) {
+    } else if (row === range.rowEnd) {
       // Extend the current range
       range.rowEnd += 1
-    }
-    else {
+    } else {
       // Push the current range and start a new one
       ranges.push(range)
       range = { rowStart: row, rowEnd: row + 1 }
