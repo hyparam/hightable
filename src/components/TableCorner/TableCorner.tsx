@@ -1,6 +1,7 @@
-import type { ChangeEvent, CSSProperties, ForwardedRef, KeyboardEvent, ReactNode } from 'react'
-import { forwardRef, useCallback, useImperativeHandle, useRef } from 'react'
+import type { ChangeEvent, CSSProperties, KeyboardEvent, ReactNode } from 'react'
+import { useCallback, useContext } from 'react'
 
+import { TableCornerContext } from '../../contexts/TableCornerContext.js'
 import { useCellFocus } from '../../hooks/useCellFocus.js'
 
 interface Props {
@@ -13,16 +14,9 @@ interface Props {
   ariaRowIndex: number
 }
 
-function TableCorner({ children, checked, onCheckboxPress, pendingSelectionGesture, style, ariaColIndex, ariaRowIndex }: Props, ref: ForwardedRef<Pick<HTMLTableCellElement, 'offsetWidth'>>) {
-  const cellRef = useRef<HTMLTableCellElement | null>(null)
-  useImperativeHandle(ref, () => {
-    return {
-      get offsetWidth() {
-        return cellRef.current?.offsetWidth ?? 0
-      },
-    }
-  }, [])
-  const { tabIndex, navigateToCell } = useCellFocus({ ref: cellRef, ariaColIndex, ariaRowIndex })
+export default function TableCorner({ children, checked, onCheckboxPress, pendingSelectionGesture, style, ariaColIndex, ariaRowIndex }: Props) {
+  const { tableCornerRef } = useContext(TableCornerContext)
+  const { tabIndex, navigateToCell } = useCellFocus({ ref: tableCornerRef, ariaColIndex, ariaRowIndex })
   const handleClick = useCallback(() => {
     navigateToCell()
     onCheckboxPress?.()
@@ -43,7 +37,7 @@ function TableCorner({ children, checked, onCheckboxPress, pendingSelectionGestu
 
   return (
     <td
-      ref={cellRef}
+      ref={tableCornerRef}
       style={style}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
@@ -72,10 +66,3 @@ function TableCorner({ children, checked, onCheckboxPress, pendingSelectionGestu
     </td>
   )
 }
-
-// To avoid showing ForwardRef in dev tools error messages:
-// > The above error occurred in the <ForwardRef> component
-const ForwardedTableCorner = forwardRef(TableCorner)
-ForwardedTableCorner.displayName = 'TableCorner'
-
-export default ForwardedTableCorner

@@ -3,6 +3,8 @@ import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'r
 
 import { ColumnParametersContext } from '../contexts/ColumnParametersContext.js'
 import { ColumnWidthsContext } from '../contexts/ColumnWidthsContext.js'
+import { TableCornerContext } from '../contexts/TableCornerContext.js'
+import { ViewportContext } from '../contexts/ViewportContext.js'
 import { cellStyle } from '../helpers/width.js'
 import { useLocalStorageState } from '../hooks/useLocalStorageState.js'
 
@@ -46,6 +48,9 @@ interface ColumnWidthsProviderProps {
 }
 
 export function ColumnWidthsProvider({ children, localStorageKey, numColumns, minWidth }: ColumnWidthsProviderProps) {
+  const { viewportWidth } = useContext(ViewportContext)
+  const { tableCornerWidth } = useContext(TableCornerContext)
+
   // Number of columns
   if (!Number.isInteger(numColumns) || numColumns < 0) {
     throw new Error(`Invalid numColumns: ${numColumns}. It must be a positive integer.`)
@@ -88,13 +93,16 @@ export function ColumnWidthsProvider({ children, localStorageKey, numColumns, mi
   }, [getMinWidth])
 
   // Maximum total width
-  const [maxTotalWidth, setMaxTotalWidth] = useState<number | undefined>(undefined)
-  const setAvailableWidth = useCallback((availableWidth: number) => {
-    if (!isValidWidth(availableWidth)) {
-      return
+  const maxTotalWidth = useMemo(() => {
+    if (tableCornerWidth === undefined || viewportWidth === undefined) {
+      return undefined
     }
-    setMaxTotalWidth(availableWidth)
-  }, [])
+    const availableWidth = viewportWidth - tableCornerWidth
+    if (isValidWidth(availableWidth)) {
+      return availableWidth
+    }
+    return undefined
+  }, [viewportWidth, tableCornerWidth])
 
   // Fixed widths
   // The array is uninitialized so that we don't have to know the number of columns in advance
@@ -196,11 +204,10 @@ export function ColumnWidthsProvider({ children, localStorageKey, numColumns, mi
       getStyle,
       getDataFixedWidth,
       releaseWidth,
-      setAvailableWidth,
       setFixedWidth,
       setMeasuredWidth,
     }
-  }, [getWidth, getStyle, getDataFixedWidth, releaseWidth, setAvailableWidth, setFixedWidth, setMeasuredWidth])
+  }, [getWidth, getStyle, getDataFixedWidth, releaseWidth, setFixedWidth, setMeasuredWidth])
 
   return (
     <ColumnWidthsContext.Provider value={value}>
