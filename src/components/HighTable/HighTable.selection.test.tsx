@@ -23,11 +23,14 @@ function createData(): DataFrame<Obj, { type: string }> {
     const count = numRows - row
     if (column === 'ID') {
       return { value: `row ${row}` }
-    } else if (column === 'Count') {
+    }
+    else if (column === 'Count') {
       return { value: count }
-    } else if (column === 'Double') {
+    }
+    else if (column === 'Double') {
       return { value: count * 2 }
-    } else if (column === 'Triple') {
+    }
+    else if (column === 'Triple') {
       return { value: count * 3 }
     }
   }
@@ -43,7 +46,8 @@ function createOtherData(): DataFrame<{ description: string }> {
     validateGetCellParams({ column, row, orderBy, data: { numRows, columnDescriptors } })
     if (column === 'ID') {
       return { value: `other ${row}` }
-    } else if (column === 'Count') {
+    }
+    else if (column === 'Count') {
       return { value: 1000 - row }
     }
   }
@@ -61,7 +65,7 @@ describe('in uncontrolled selection state (onSelection prop), ', () => {
 
   it('HighTable shows no selection initially and onSelectionChange is not called', async () => {
     const onSelectionChange = vi.fn()
-    const { findByRole, queryByRole } = render(<HighTable data={data} onSelectionChange={onSelectionChange}/>)
+    const { findByRole, queryByRole } = render(<HighTable data={data} onSelectionChange={onSelectionChange} />)
     // await because we have to wait for the data to be fetched first
     await findByRole('cell', { name: 'row 2' })
     expect(queryByRole('row', { selected: true })).toBeNull()
@@ -70,7 +74,7 @@ describe('in uncontrolled selection state (onSelection prop), ', () => {
 
   it('the table is marked as multiselectable', async () => {
     const onSelectionChange = vi.fn()
-    const { getByRole } = render(<HighTable data={data} onSelectionChange={onSelectionChange}/>)
+    const { getByRole } = render(<HighTable data={data} onSelectionChange={onSelectionChange} />)
     await waitFor(() => {
       expect(getByRole('grid').getAttribute('aria-busy')).toBe('false')
     })
@@ -79,13 +83,13 @@ describe('in uncontrolled selection state (onSelection prop), ', () => {
   })
 
   it.for([
-    { 'kind': 'click' },
-    { 'kind': 'press', 'key': 'Enter' },
-    { 'kind': 'press', 'key': ' ' },
+    { kind: 'click' },
+    { kind: 'press', key: 'Enter' },
+    { kind: 'press', key: ' ' },
   ])('Click or press Escape or Enter on a row number cell calls onSelection with the row selected, and changes the DOM to select the row', async ({ kind, key }) => {
     const start = 2
     const onSelectionChange = vi.fn()
-    const { user, findByRole, queryByRole } = render(<HighTable data={data} onSelectionChange={onSelectionChange}/>)
+    const { user, findByRole, queryByRole } = render(<HighTable data={data} onSelectionChange={onSelectionChange} />)
     // await because we have to wait for the data to be fetched first
     const cell = await findByRole('cell', { name: 'row 2' })
     expect(onSelectionChange).not.toHaveBeenCalled()
@@ -97,7 +101,8 @@ describe('in uncontrolled selection state (onSelection prop), ', () => {
 
     if (kind === 'click') {
       await user.click(rowHeader)
-    } else {
+    }
+    else {
       // move the focus to the row header
       await user.click(cell)
       await user.keyboard('{Home}')
@@ -113,7 +118,7 @@ describe('in uncontrolled selection state (onSelection prop), ', () => {
   it('on data change, the DOM is updated to unselect the rows', async () => {
     const start = 2
     const onSelectionChange = vi.fn()
-    const { user, rerender, findByRole, queryByRole } = render(<HighTable data={data} onSelectionChange={onSelectionChange}/>)
+    const { user, rerender, findByRole, queryByRole } = render(<HighTable data={data} onSelectionChange={onSelectionChange} />)
     // await because we have to wait for the data to be fetched first
     const cell = await findByRole('cell', { name: 'row 2' })
     expect(onSelectionChange).not.toHaveBeenCalled()
@@ -128,7 +133,7 @@ describe('in uncontrolled selection state (onSelection prop), ', () => {
 
     expect(onSelectionChange).toHaveBeenCalledWith({ ranges: [{ start, end: start + 1 }], anchor: start })
 
-    rerender(<HighTable data={otherData} onSelectionChange={onSelectionChange}/>)
+    rerender(<HighTable data={otherData} onSelectionChange={onSelectionChange} />)
     // await again, since we have to wait for the new data to be fetched
     await findByRole('cell', { name: 'other 2' })
     expect(queryByRole('cell', { name: 'row 2' })).toBeNull()
@@ -144,14 +149,14 @@ describe('in uncontrolled selection state (onSelection prop), ', () => {
     const onSelectionChange = vi.fn()
     console.warn = vi.fn()
 
-    const { queryByRole, findByRole, rerender } = render(<HighTable data={data} selection={selection} onSelectionChange={onSelectionChange}/>)
+    const { queryByRole, findByRole, rerender } = render(<HighTable data={data} selection={selection} onSelectionChange={onSelectionChange} />)
     // await because we have to wait for the data to be fetched first
     await findByRole('cell', { name: 'row 2' })
     expect(queryByRole('row', { selected: true })).toBeNull()
     expect(console.warn).not.toHaveBeenCalled()
 
     const newSelection = { ranges: [{ start, end: start + 1 }], anchor: start }
-    rerender(<HighTable data={data} selection={newSelection} onSelectionChange={onSelectionChange}/>)
+    rerender(<HighTable data={data} selection={newSelection} onSelectionChange={onSelectionChange} />)
     // no need to await because the data is already fetched
     expect(queryByRole('row', { selected: true })).toBeNull()
     expect(console.warn).toHaveBeenNthCalledWith(1, expect.stringMatching(/cannot be set to a value/))
@@ -161,7 +166,7 @@ describe('in uncontrolled selection state (onSelection prop), ', () => {
     const onSelectionChange = vi.fn()
     console.warn = vi.fn()
 
-    const { user, queryAllByRole, findByRole } = render(<HighTable data={data} onSelectionChange={onSelectionChange}/>)
+    const { user, queryAllByRole, findByRole } = render(<HighTable data={data} onSelectionChange={onSelectionChange} />)
     // await because we have to wait for the data to be fetched first
     await findByRole('cell', { name: 'row 2' })
 
@@ -188,7 +193,7 @@ describe('in uncontrolled selection state (onSelection prop), ', () => {
   it('pressing Escape unselects the rows', async () => {
     const onSelectionChange = vi.fn()
 
-    const { user, queryAllByRole, findByRole } = render(<HighTable data={data} onSelectionChange={onSelectionChange}/>)
+    const { user, queryAllByRole, findByRole } = render(<HighTable data={data} onSelectionChange={onSelectionChange} />)
     // await because we have to wait for the data to be fetched first
     await findByRole('cell', { name: 'row 2' })
 
@@ -214,7 +219,7 @@ describe('in uncontrolled selection state (onSelection prop), ', () => {
   it('pressing Shift+Space on a cell toggles the row, and does not take the anchor into account (does not expand the selection)', async () => {
     const onSelectionChange = vi.fn()
 
-    const { user, queryAllByRole, findByRole } = render(<HighTable data={data} onSelectionChange={onSelectionChange}/>)
+    const { user, queryAllByRole, findByRole } = render(<HighTable data={data} onSelectionChange={onSelectionChange} />)
     // await because we have to wait for the data to be fetched first
     await findByRole('cell', { name: 'row 2' })
 
@@ -262,17 +267,17 @@ describe('in disabled selection state (neither selection nor onSelection props),
   })
 
   it('the table is not marked as multiselectable', () => {
-    const { getByRole } = render(<HighTable data={data}/>)
+    const { getByRole } = render(<HighTable data={data} />)
     const table = getByRole('grid')
     expect(table.getAttribute('aria-multiselectable')).toBe('false')
   })
 
   it.for([
-    { 'kind': 'click' },
-    { 'kind': 'press', 'key': 'Enter' },
-    { 'kind': 'press', 'key': ' ' },
+    { kind: 'click' },
+    { kind: 'press', key: 'Enter' },
+    { kind: 'press', key: ' ' },
   ])('click, or press Enter/Space, on a row number cell does nothing', async ({ kind, key }) => {
-    const { user, findByRole, queryByRole } = render(<HighTable data={data}/>)
+    const { user, findByRole, queryByRole } = render(<HighTable data={data} />)
     // await because we have to wait for the data to be fetched first
     const cell = await findByRole('cell', { name: 'row 2' })
 
@@ -282,7 +287,8 @@ describe('in disabled selection state (neither selection nor onSelection props),
 
     if (kind === 'click') {
       await user.click(rowHeader)
-    } else {
+    }
+    else {
       // move the focus to the row header
       await user.click(cell)
       await user.keyboard('{Home}')

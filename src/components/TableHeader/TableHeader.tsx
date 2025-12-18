@@ -26,7 +26,8 @@ export default function TableHeader({
     return () => {
       const next = exclusiveSort ? toggleColumnExclusive(columnHeader, orderBy) : toggleColumn(columnHeader, orderBy)
       onOrderByChange(next)
-    }}, [orderBy, onOrderByChange, exclusiveSort]
+    }
+  }, [orderBy, onOrderByChange, exclusiveSort]
   )
 
   const orderByColumn = useMemo(() => {

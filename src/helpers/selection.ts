@@ -1,4 +1,3 @@
-
 /**
  * A selection is modelled as an array of ordered and non-overlapping ranges.
  * The ranges are separated, ie. the end of one range is strictly less than the start of the next range.

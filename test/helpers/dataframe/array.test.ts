@@ -26,7 +26,7 @@ describe('arrayDataFrame', () => {
   it('should throw if accessing data from an unknown column', () => {
     const df = arrayDataFrame(createTestData())
     expect(() => {
-      df.getCell({ row: 0, column: 'doesnotexist' } )
+      df.getCell({ row: 0, column: 'doesnotexist' })
     }).toThrow('Invalid column: doesnotexist')
   })
 

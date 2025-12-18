@@ -1,7 +1,7 @@
 import type { ChangeEvent, CSSProperties, ForwardedRef, KeyboardEvent, ReactNode } from 'react'
 import { forwardRef, useCallback, useImperativeHandle, useRef } from 'react'
 
-import { useCellFocus } from '../../hooks/useCellFocus'
+import { useCellFocus } from '../../hooks/useCellFocus.js'
 
 interface Props {
   checked?: boolean
@@ -37,7 +37,9 @@ function TableCorner({ children, checked, onCheckboxPress, pendingSelectionGestu
   }, [onCheckboxPress])
   const showCheckBox = checked !== undefined
   const disabledCheckbox = onCheckboxPress === undefined
-  const onChange = useCallback((e: ChangeEvent) => {e.preventDefault()}, [])
+  const onChange = useCallback((e: ChangeEvent) => {
+    e.preventDefault()
+  }, [])
 
   return (
     <td
@@ -52,19 +54,20 @@ function TableCorner({ children, checked, onCheckboxPress, pendingSelectionGestu
       tabIndex={tabIndex}
     >
       {
-        showCheckBox ?
-          <input
-            type='checkbox'
-            onChange={onChange}
-            readOnly={disabledCheckbox}
-            disabled={disabledCheckbox}
-            aria-busy={pendingSelectionGesture}
-            checked={checked}
-            role="presentation"
-            tabIndex={-1}
-          />
-          :
-          <span>{children}</span>
+        showCheckBox
+          ? (
+              <input
+                type="checkbox"
+                onChange={onChange}
+                readOnly={disabledCheckbox}
+                disabled={disabledCheckbox}
+                aria-busy={pendingSelectionGesture}
+                checked={checked}
+                role="presentation"
+                tabIndex={-1}
+              />
+            )
+          : <span>{children}</span>
       }
     </td>
   )

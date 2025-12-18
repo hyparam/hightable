@@ -54,7 +54,7 @@ export default function Cell({ cell, onDoubleClickCell, onMouseDownCell, onKeyDo
     return stringify(cell?.value)
   }, [stringify, cell])
   const title = useMemo(() => {
-    if (str === undefined ) {
+    if (str === undefined) {
       return undefined
     }
     if (str.length > 400) {
@@ -103,7 +103,8 @@ export default function Cell({ cell, onDoubleClickCell, onMouseDownCell, onKeyDo
       onKeyDown={handleKeyDown}
       style={columnStyle}
       className={className}
-      title={title}>
+      title={title}
+    >
       {content}
     </td>
   )

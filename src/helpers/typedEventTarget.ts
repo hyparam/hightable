@@ -12,18 +12,18 @@ export interface CustomEventTarget<TDetails> {
 
     listener: (ev: CustomEvent<TDetails[TType]>) => any,
     options?: boolean | AddEventListenerOptions,
-  ): void;
+  ): void
 
   removeEventListener<TType extends keyof TDetails>(
     type: TType,
 
     listener: (ev: CustomEvent<TDetails[TType]>) => any,
     options?: boolean | EventListenerOptions,
-  ): void;
+  ): void
 
   dispatchEvent<TType extends keyof TDetails>(
     ev: _TypedCustomEvent<TDetails, TType>,
-  ): void;
+  ): void
 }
 
 /**
@@ -32,12 +32,12 @@ export interface CustomEventTarget<TDetails> {
  */
 declare class _TypedCustomEvent<
   TDetails,
-  TType extends keyof TDetails,
+  TType extends keyof TDetails
 > extends CustomEvent<TDetails[TType]> {
   constructor(
     type: TType,
     eventInitDict: { detail: TDetails[TType] } & EventInit,
-  );
+  )
 }
 
 /**

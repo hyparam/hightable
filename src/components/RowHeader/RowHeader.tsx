@@ -1,7 +1,7 @@
 import type { ChangeEvent, CSSProperties, KeyboardEvent, MouseEvent } from 'react'
 import { useCallback, useMemo, useRef } from 'react'
 
-import { useCellFocus } from '../../hooks/useCellFocus'
+import { useCellFocus } from '../../hooks/useCellFocus.js'
 import { useOnCopy } from '../../hooks/useOnCopyToClipboard.js'
 
 interface Props {
@@ -37,7 +37,9 @@ export default function RowHeader({ onCheckboxPress, pendingSelectionGesture, st
     }
   }, [onCheckboxPress])
   const disabledCheckbox = onCheckboxPress === undefined
-  const onChange = useCallback((e: ChangeEvent) => { e.preventDefault() }, [])
+  const onChange = useCallback((e: ChangeEvent) => {
+    e.preventDefault()
+  }, [])
   const str = useMemo(() => {
     return formatRowNumber(rowNumber)
   }, [rowNumber])
@@ -61,16 +63,18 @@ export default function RowHeader({ onCheckboxPress, pendingSelectionGesture, st
       data-rownumber={rowNumber}
     >
       <span>{str}</span>
-      {selected !== undefined && <input
-        type='checkbox'
-        onChange={onChange}
-        readOnly={disabledCheckbox}
-        disabled={disabledCheckbox}
-        aria-busy={pendingSelectionGesture}
-        checked={selected}
-        role="presentation"
-        tabIndex={-1}
-      />}
+      {selected !== undefined && (
+        <input
+          type="checkbox"
+          onChange={onChange}
+          readOnly={disabledCheckbox}
+          disabled={disabledCheckbox}
+          aria-busy={pendingSelectionGesture}
+          checked={selected}
+          role="presentation"
+          tabIndex={-1}
+        />
+      )}
     </th>
   )
 }

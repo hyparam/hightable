@@ -1,8 +1,8 @@
 export type Direction = 'ascending' | 'descending'
 
 export interface ColumnOrderBy {
-    column: string // column name to sort by.
-    direction: Direction // sort direction.
+  column: string // column name to sort by.
+  direction: Direction // sort direction.
 }
 
 export type OrderBy = ColumnOrderBy[]
@@ -36,16 +36,18 @@ export function areEqualOrderBy(a?: OrderBy, b?: OrderBy): boolean {
   })
 }
 
-export function partitionOrderBy(orderBy: OrderBy, column: string): {prefix: OrderBy, item?: ColumnOrderBy, suffix: OrderBy} {
+export function partitionOrderBy(orderBy: OrderBy, column: string): { prefix: OrderBy, item?: ColumnOrderBy, suffix: OrderBy } {
   const prefix: OrderBy = []
   let item: ColumnOrderBy | undefined = undefined
   const suffix: OrderBy = []
   for (const current of orderBy) {
     if (item) {
       suffix.push(current)
-    } else if (current.column === column) {
+    }
+    else if (current.column === column) {
       item = current
-    } else {
+    }
+    else {
       prefix.push(current)
     }
   }
@@ -59,9 +61,10 @@ export function toggleColumn(column: string, orderBy: OrderBy): OrderBy {
     if (item.direction === 'ascending') {
       // ascending -> descending
       return [{ column, direction: 'descending' }, ...suffix]
-    } else {
+    }
+    else {
       // descending -> none
-      return [ ...suffix]
+      return [...suffix]
     }
   }
   // the column is not the principal column. Set it as the principal column with ascending direction
@@ -93,7 +96,8 @@ export function computeRanks(values: any[]): number[] {
   for (const [rank, { value, index }] of sortedValuesWithIndex.entries()) {
     if (value === lastValue) {
       ranks[index] = lastRank
-    } else {
+    }
+    else {
       ranks[index] = rank
       lastRank = rank
       lastValue = value

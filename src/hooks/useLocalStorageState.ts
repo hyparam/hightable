@@ -23,7 +23,8 @@ function saveToOrDeleteFromLocalStorage<T>({ key, value, stringify }: { key?: st
   }
   if (value === undefined) {
     localStorage.removeItem(key)
-  } else {
+  }
+  else {
     localStorage.setItem(key, (stringify ?? JSON.stringify)(value))
   }
 }

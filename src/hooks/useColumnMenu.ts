@@ -26,7 +26,7 @@ export function useColumnMenu(
       })
 
       navigateToCell()
-      setIsOpen((current) => !current)
+      setIsOpen(current => !current)
     },
     [ref, navigateToCell]
   )

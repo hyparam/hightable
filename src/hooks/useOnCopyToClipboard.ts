@@ -9,7 +9,7 @@ export function useOnCopy(
       return
     }
     event.preventDefault()
-    navigator.clipboard.writeText(text).catch((err) => {
+    navigator.clipboard.writeText(text).catch((err: unknown) => {
       // TODO(SL): handle the error properly
       console.debug('Failed to write to clipboard: ', err)
     })

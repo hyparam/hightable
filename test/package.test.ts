@@ -14,7 +14,7 @@ describe('package.json', () => {
   })
   it('should have precise dev dependency versions', () => {
     const { devDependencies } = packageJson
-    Object.values(devDependencies).forEach(version => {
+    Object.values(devDependencies).forEach((version) => {
       expect(version).toMatch(/^\d+\.\d+\.\d+$/)
     })
   })

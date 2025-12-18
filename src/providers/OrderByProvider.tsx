@@ -21,7 +21,8 @@ export function OrderByProvider({ children, orderBy, onOrderByChange }: OrderByP
     <OrderByContext.Provider value={{
       orderBy: state.value,
       onOrderByChange: state.onChange,
-    }}>
+    }}
+    >
       {children}
     </OrderByContext.Provider>
   )

@@ -2,19 +2,19 @@ import type { KeyboardEvent, MouseEvent, ReactNode } from 'react'
 import { useCallback, useContext, useEffect, useId, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
-import { CellNavigationContext } from '../../contexts/CellNavigationContext'
+import { CellNavigationContext } from '../../contexts/CellNavigationContext.js'
 import { PortalContainerContext } from '../../contexts/PortalContainerContext.js'
 import type { Direction } from '../../helpers/sort'
-import { useFocusManagement } from '../../hooks/useFocusManagement'
+import { useFocusManagement } from '../../hooks/useFocusManagement.js'
 
 function getSortDirection(direction?: Direction) {
   switch (direction) {
-  case 'ascending':
-    return 'Ascending'
-  case 'descending':
-    return 'Descending'
-  default:
-    return 'No sort'
+    case 'ascending':
+      return 'Ascending'
+    case 'descending':
+      return 'Descending'
+    default:
+      return 'No sort'
   }
 }
 
@@ -26,7 +26,7 @@ interface MenuGroupProps {
 function MenuGroup({ title, children }: MenuGroupProps) {
   return (
     <>
-      <div role='separator'>{title}</div>
+      <div role="separator">{title}</div>
       {children}
     </>
   )
@@ -54,11 +54,11 @@ function MenuItem({ onClick, label }: MenuItemProps) {
 
   return (
     <button
-      role='menuitem'
+      role="menuitem"
       onClick={handleClick}
       onKeyDown={handleKeyDown}
       tabIndex={0}
-      type='button'
+      type="button"
     >
       {label}
     </button>
@@ -70,7 +70,7 @@ interface OverlayProps {
 }
 
 function Overlay({ onClick }: OverlayProps) {
-  return <div role='presentation' onClick={onClick} />
+  return <div role="presentation" onClick={onClick} />
 }
 
 interface ColumnMenuProps {
@@ -121,30 +121,30 @@ export default function ColumnMenu({
     e.preventDefault()
     e.stopPropagation()
     switch (e.key) {
-    case 'Escape':
-      close()
-      break
-    case 'Enter':
-    case ' ':
+      case 'Escape':
+        close()
+        break
+      case 'Enter':
+      case ' ':
       // Handled by the menu item
-      break
-    case 'ArrowUp':
-    case 'ArrowLeft':
-      navigateFocus('previous')
-      break
-    case 'ArrowDown':
-    case 'ArrowRight':
-      navigateFocus('next')
-      break
-    case 'Home':
-      navigateFocus('first')
-      break
-    case 'End':
-      navigateFocus('last')
-      break
-    case 'Tab':
-      navigateFocus(e.shiftKey ? 'previous' : 'next')
-      break
+        break
+      case 'ArrowUp':
+      case 'ArrowLeft':
+        navigateFocus('previous')
+        break
+      case 'ArrowDown':
+      case 'ArrowRight':
+        navigateFocus('next')
+        break
+      case 'Home':
+        navigateFocus('first')
+        break
+      case 'End':
+        navigateFocus('last')
+        break
+      case 'Tab':
+        navigateFocus(e.shiftKey ? 'previous' : 'next')
+        break
     }
   }, [navigateFocus, close])
 
@@ -204,40 +204,44 @@ export default function ColumnMenu({
       <Overlay onClick={handleOverlayClick} />
       <div
         id={id}
-        role='menu'
+        role="menu"
         style={{ top, left }}
         ref={menuRef}
         tabIndex={-1}
         aria-labelledby={labelId}
-        aria-orientation='vertical'
+        aria-orientation="vertical"
         onKeyDown={handleKeyDown}
         onClick={onWrapperClick}
       >
-        <div role='presentation' id={labelId} aria-hidden="true">{columnName}</div>
-        {sortable &&
-          <MenuGroup title="Sort order">
-            <MenuItem
-              onClick={toggleOrderBy}
-              label={sortDirection}
-            />
-          </MenuGroup>
-        }
-        {showVisibilityGroup &&
-          <MenuGroup title="Visibility">
-            {hideColumnAndClose &&
+        <div role="presentation" id={labelId} aria-hidden="true">{columnName}</div>
+        {sortable
+          && (
+            <MenuGroup title="Sort order">
               <MenuItem
-                onClick={hideColumnAndClose}
-                label={'Hide column'}
+                onClick={toggleOrderBy}
+                label={sortDirection}
               />
-            }
-            {showAllColumnsAndClose &&
-              <MenuItem
-                onClick={showAllColumnsAndClose}
-                label="Show all columns"
-              />
-            }
-          </MenuGroup>
-        }
+            </MenuGroup>
+          )}
+        {showVisibilityGroup
+          && (
+            <MenuGroup title="Visibility">
+              {hideColumnAndClose
+                && (
+                  <MenuItem
+                    onClick={hideColumnAndClose}
+                    label="Hide column"
+                  />
+                )}
+              {showAllColumnsAndClose
+                && (
+                  <MenuItem
+                    onClick={showAllColumnsAndClose}
+                    label="Show all columns"
+                  />
+                )}
+            </MenuGroup>
+          )}
       </div>
     </>,
     container

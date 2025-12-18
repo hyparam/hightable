@@ -13,8 +13,7 @@ import type { ColumnConfiguration } from '../../helpers/columnConfiguration.js'
 import type { DataFrame } from '../../helpers/dataframe/index.js'
 import type { Selection } from '../../helpers/selection.js'
 import type { OrderBy } from '../../helpers/sort.js'
-import { getOffsetWidth } from '../../helpers/width.js'
-import { getClientWidth } from '../../helpers/width.js'
+import { getClientWidth, getOffsetWidth } from '../../helpers/width.js'
 import { CellNavigationProvider } from '../../providers/CellNavigationProvider.js'
 import { ColumnParametersProvider } from '../../providers/ColumnParametersProvider.js'
 import { ColumnVisibilityStatesProvider, type MaybeHiddenColumn } from '../../providers/ColumnVisibilityStatesProvider.js'
@@ -117,7 +116,8 @@ function HighTableData(props: PropsData) {
             <SelectionProvider key={key} selection={selection} onSelectionChange={onSelectionChange} data={data} numRows={numRows} onError={onError}>
               {/* Create a new navigation context if the dataframe has changed, because the focused cell might not exist anymore */}
               <CellNavigationProvider key={key} colCount={data.columnDescriptors.length + 1} rowCount={numRows + 1} rowPadding={props.padding ?? defaultPadding}>
-                <PortalContainerProvider> {/* TODO(SL): move as the outmost provider? */}
+                {/* TODO(SL): move as the outmost provider? */}
+                <PortalContainerProvider>
                   <ScrollContainer data={data} numRows={numRows} version={version} {...props} maxRowNumber={maxRowNumber} />
                 </PortalContainerProvider>
               </CellNavigationProvider>
@@ -390,7 +390,8 @@ export function TablePart({
     return ({ shiftKey }: { shiftKey: boolean }) => {
       if (shiftKey) {
         toggleRangeToRowNumber({ row, rowNumber })
-      } else {
+      }
+      else {
         toggleRowNumber({ rowNumber })
       }
     }
@@ -448,13 +449,13 @@ export function TablePart({
       aria-rowcount={ariaRowCount}
       aria-multiselectable={selectable}
       aria-busy={pendingSelectionGesture /* TODO(SL): add other busy states? Used only for tests right now */}
-      role='grid'
+      role="grid"
       style={{ top: `${offsetTop}px` }}
       onKeyDown={onTableKeyDown}
     >
       <caption id="caption" hidden>Virtual-scroll table</caption>
       <thead role="rowgroup">
-        <Row ariaRowIndex={1} >
+        <Row ariaRowIndex={1}>
           <TableCorner
             onCheckboxPress={toggleAllRows}
             checked={allRowsSelected}
@@ -505,21 +506,23 @@ export function TablePart({
               />
               {cells.map(({ columnIndex, cell }, visibleColumnIndex) => {
                 const columnClassName = columnsParameters[visibleColumnIndex]?.className
-                return <Cell
-                  key={columnIndex}
-                  onDoubleClickCell={onDoubleClickCell}
-                  onMouseDownCell={onMouseDownCell}
-                  onKeyDownCell={onKeyDownCell}
-                  stringify={stringify}
-                  columnIndex={columnIndex}
-                  visibleColumnIndex={visibleColumnIndex}
-                  className={columnClassName}
-                  ariaColIndex={visibleColumnIndex + ariaOffset}
-                  ariaRowIndex={ariaRowIndex}
-                  cell={cell}
-                  rowNumber={rowNumber}
-                  renderCellContent={renderCellContent}
-                />
+                return (
+                  <Cell
+                    key={columnIndex}
+                    onDoubleClickCell={onDoubleClickCell}
+                    onMouseDownCell={onMouseDownCell}
+                    onKeyDownCell={onKeyDownCell}
+                    stringify={stringify}
+                    columnIndex={columnIndex}
+                    visibleColumnIndex={visibleColumnIndex}
+                    className={columnClassName}
+                    ariaColIndex={visibleColumnIndex + ariaOffset}
+                    ariaRowIndex={ariaRowIndex}
+                    cell={cell}
+                    rowNumber={rowNumber}
+                    renderCellContent={renderCellContent}
+                  />
+                )
               })}
             </Row>
           )

@@ -1,8 +1,7 @@
 import type { OrderBy } from '../sort.js'
 import { createEventTarget } from '../typedEventTarget.js'
 import { validateGetCellParams, validateGetRowNumberParams } from './helpers.js'
-import type { ColumnDescriptor, DataFrame, Obj, ResolvedValue } from './types.js'
-import type { DataFrameEvents } from './types.js'
+import type { ColumnDescriptor, DataFrame, DataFrameEvents, Obj, ResolvedValue } from './types.js'
 
 interface ArrayData {
   readonly _array: Record<string, any>[]
@@ -31,7 +30,8 @@ export function arrayDataFrame<M extends Obj, C extends Obj>(
       const result = Reflect.set(target, prop, value)
       if (prop === 'length') {
         eventTarget.dispatchEvent(new CustomEvent('numrowschange'))
-      } else {
+      }
+      else {
         eventTarget.dispatchEvent(new CustomEvent('update'))
       }
       return result

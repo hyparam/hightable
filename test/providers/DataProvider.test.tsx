@@ -10,7 +10,7 @@ import { createEventTarget } from '../../src/helpers/typedEventTarget.js'
 import { DataProvider } from '../../src/providers/DataProvider.js'
 
 function createWrapper<M extends Obj, C extends Obj>(props: {
-  data: DataFrame<M, C>,
+  data: DataFrame<M, C>
   maxRowNumber?: number
 }) {
   return function CreatedWrapper({ children }: { children: ReactNode }) {
@@ -22,11 +22,13 @@ function TestComponent({ data }: { data: DataFrame }) {
 }
 function InnerTestComponent() {
   const { key, version, numRows } = useContext(DataContext)
-  return <>
-    <div data-testid="key">{key}</div>
-    <div data-testid="version">{version}</div>
-    <div data-testid="numRows">{numRows}</div>
-  </>
+  return (
+    <>
+      <div data-testid="key">{key}</div>
+      <div data-testid="version">{version}</div>
+      <div data-testid="numRows">{numRows}</div>
+    </>
+  )
 }
 
 describe('DataProvider', () => {
@@ -62,7 +64,7 @@ describe('DataProvider', () => {
     const { result } = renderHook(() => useContext(DataContext), { wrapper: createWrapper({ data: df }) })
     const initialVersion = result.current.version
     // Simulate data resolution
-    // eslint-disable-next-line require-await, @typescript-eslint/require-await
+    // eslint-disable-next-line @typescript-eslint/require-await
     await act(async () => {
       df.eventTarget?.dispatchEvent(new CustomEvent('resolve'))
     })
@@ -74,7 +76,7 @@ describe('DataProvider', () => {
     const { result } = renderHook(() => useContext(DataContext), { wrapper: createWrapper({ data: df }) })
     const initialVersion = result.current.version
     // Simulate data update
-    // eslint-disable-next-line require-await, @typescript-eslint/require-await
+    // eslint-disable-next-line @typescript-eslint/require-await
     await act(async () => {
       df.eventTarget?.dispatchEvent(new CustomEvent('update'))
     })
@@ -94,7 +96,7 @@ describe('DataProvider', () => {
     const initialVersion = result.current.version
     expect(initialNumRows).toBe(2)
     expect(initialVersion).toBe(0)
-    // eslint-disable-next-line require-await, @typescript-eslint/require-await
+    // eslint-disable-next-line @typescript-eslint/require-await
     await act(async () => {
       df.numRows = 5
       df.eventTarget.dispatchEvent(new CustomEvent('numrowschange'))
@@ -109,7 +111,7 @@ describe('DataProvider', () => {
     const initialVersion = result.current.version
     expect(initialNumRows).toBe(2)
     expect(initialVersion).toBe(0)
-    // eslint-disable-next-line require-await, @typescript-eslint/require-await
+    // eslint-disable-next-line @typescript-eslint/require-await
     await act(async () => {
       // push 3 rows to the dataframe - arrayDataFrame will emit 'numrowschange' event
       df._array.push({ a: 3 }, { a: 4 }, { a: 5 })
@@ -126,7 +128,7 @@ describe('DataProvider', () => {
     expect(getByTestId('version').textContent).toBe('0')
     expect(getByTestId('numRows').textContent).toBe('2')
     // Change the data frame
-    // eslint-disable-next-line require-await, @typescript-eslint/require-await
+    // eslint-disable-next-line @typescript-eslint/require-await
     await act(async () => {
       rerender(<TestComponent data={df2}></TestComponent>)
     })

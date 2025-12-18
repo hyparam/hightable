@@ -13,7 +13,7 @@ export function createGetRowNumber(data: Pick<DataFrame, 'numRows'>) {
   }
 }
 
-export function validateGetRowNumberParams({ row, orderBy, data }: {row: number, orderBy?: OrderBy, data: Pick<DataFrame, 'numRows' | 'columnDescriptors'>}): void {
+export function validateGetRowNumberParams({ row, orderBy, data }: { row: number, orderBy?: OrderBy, data: Pick<DataFrame, 'numRows' | 'columnDescriptors'> }): void {
   validateRow({ row, data: { numRows: data.numRows } })
   validateOrderBy({ orderBy, data: { columnDescriptors: data.columnDescriptors } })
 }
@@ -24,7 +24,7 @@ export function validateGetCellParams({ row, column, orderBy, data }: { row: num
   validateOrderBy({ orderBy, data: { columnDescriptors: data.columnDescriptors } })
 }
 
-export function validateFetchParams({ rowStart, rowEnd, columns, orderBy, data }: {rowStart: number, rowEnd: number, columns?: string[], orderBy?: OrderBy, data: Pick<DataFrame, 'numRows' | 'columnDescriptors'>}): void {
+export function validateFetchParams({ rowStart, rowEnd, columns, orderBy, data }: { rowStart: number, rowEnd: number, columns?: string[], orderBy?: OrderBy, data: Pick<DataFrame, 'numRows' | 'columnDescriptors'> }): void {
   if (rowStart < 0 || rowEnd > data.numRows || !Number.isInteger(rowStart) || !Number.isInteger(rowEnd) || rowStart > rowEnd) {
     throw new Error(`Invalid row range: ${rowStart} - ${rowEnd}, numRows: ${data.numRows}`)
   }
@@ -59,17 +59,19 @@ export function checkSignal(signal?: AbortSignal): void {
   }
 }
 
-export function getContinuousRanges(sortedRows: number[]): {rowStart: number, rowEnd: number}[] {
+export function getContinuousRanges(sortedRows: number[]): { rowStart: number, rowEnd: number }[] {
   // We assume sortedRows is already sorted and contains unique values.
-  const ranges: {rowStart: number, rowEnd: number}[] = []
-  let range: {rowStart: number, rowEnd: number} | undefined = undefined
+  const ranges: { rowStart: number, rowEnd: number }[] = []
+  let range: { rowStart: number, rowEnd: number } | undefined = undefined
   for (const row of sortedRows) {
     if (range === undefined) {
       range = { rowStart: row, rowEnd: row + 1 }
-    } else if (row === range.rowEnd) {
+    }
+    else if (row === range.rowEnd) {
       // Extend the current range
       range.rowEnd += 1
-    } else {
+    }
+    else {
       // Push the current range and start a new one
       ranges.push(range)
       range = { rowStart: row, rowEnd: row + 1 }

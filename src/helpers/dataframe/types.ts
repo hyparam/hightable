@@ -16,20 +16,20 @@ export interface DataFrameEvents {
   /**
    * Emitted when the number of rows has changed.
    */
-  'numrowschange': undefined;
+  numrowschange: undefined
   /**
    * Emitted when a cell value has resolved.
    */
-  'resolve': undefined;
+  resolve: undefined
   /**
    * Emitted when some data has been updated (e.g. a cell value).
    */
-  'update': undefined;
+  update: undefined
 }
 
 export interface ColumnDescriptor<C extends Obj = Obj> {
-  name: string; // column name
-  sortable?: boolean; // is the column sortable? Defaults to false
+  name: string // column name
+  sortable?: boolean // is the column sortable? Defaults to false
   metadata?: C // custom metadata extendable by the user
 }
 
@@ -61,14 +61,14 @@ export interface DataFrame<M extends Obj = Obj, C extends Obj = Obj> {
   // Returns the cell value.
   // undefined means pending, ResolvedValue is a boxed value type (so we can distinguish undefined from pending)
   // getCell does NOT initiate a fetch, it just returns resolved data
-  getCell({ row, column, orderBy }: {row: number, column: string, orderBy?: OrderBy}): ResolvedValue | undefined
+  getCell({ row, column, orderBy }: { row: number, column: string, orderBy?: OrderBy }): ResolvedValue | undefined
 
   // Return the row number (index in the underlying data) for the given row index in the dataframe.
   // undefined if the row number is not available yet.
   // If the dataframe is the result of a sampling operation, for example, the row number is the index in
   // the original data.
   getRowNumber({ row, orderBy }: {
-    row: number, // row index in the dataframe
+    row: number // row index in the dataframe
     orderBy?: OrderBy
   }): ResolvedValue<number> | undefined
 

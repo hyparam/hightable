@@ -20,14 +20,15 @@ export default function ColumnMenuButton({
   menuId,
   disabled = false,
   'aria-label': ariaLabel = 'Column menu',
-  icon = <span aria-hidden='true'>⋮</span>,
+  icon = <span aria-hidden="true">⋮</span>,
 }: ColumnMenuButtonProps) {
   const handleKeyDown = useCallback((e: KeyboardEvent<HTMLElement>) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault()
       e.stopPropagation()
       onClick?.(e)
-    } else if (e.key === 'Escape') {
+    }
+    else if (e.key === 'Escape') {
       e.preventDefault()
       e.stopPropagation()
       onEscape?.(e)
@@ -44,7 +45,7 @@ export default function ColumnMenuButton({
       onClick={disabled ? undefined : handleClick}
       onKeyDown={disabled ? undefined : handleKeyDown}
       aria-label={ariaLabel}
-      aria-haspopup='menu'
+      aria-haspopup="menu"
       aria-expanded={isExpanded}
       aria-controls={menuId}
       disabled={disabled}
