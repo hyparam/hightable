@@ -139,7 +139,7 @@ type ScrollContainerProps = Omit<PropsData, 'orderBy' | 'onOrderByChange' | 'sel
   data: Omit<DataFrame, 'numRows'> // data frame without numRows (provided separately)
 }
 
-type TablePartProps = Omit<ScrollContainerProps, 'maxRowNumber' | 'styled' | 'className' | 'overscan' | 'onerror'> & {
+type TableSliceProps = Omit<ScrollContainerProps, 'maxRowNumber' | 'styled' | 'className' | 'overscan' | 'onerror'> & {
   offsetTop: number // offset top to apply to the table
   rowsRange: RowsRange // range of rows to render
   columnsParameters: ColumnParameters[] // parameters of the columns to render
@@ -299,7 +299,7 @@ function ScrollContainer({
       <div className={styles.topBorder} role="presentation"></div>
       <div className={styles.tableScroll} ref={scrollRef} role="group" aria-labelledby="caption" onKeyDown={restrictedOnScrollKeyDown} tabIndex={0}>
         <div style={{ height: `${scrollHeight}px` }}>
-          <TablePart
+          <TableSlice
             data={data}
             numRows={numRows}
             padding={padding}
@@ -325,7 +325,7 @@ function ScrollContainer({
 /**
  * Only the visible rows are fetched and rendered as HTML <tr> elements.
  */
-function TablePart({
+function TableSlice({
   data,
   numRows,
   padding = defaultPadding,
@@ -339,7 +339,7 @@ function TablePart({
   offsetTop,
   rowsRange,
   columnsParameters,
-}: TablePartProps) {
+}: TableSliceProps) {
   // contexts
   const { onTableKeyDown: onNavigationTableKeyDown, focusFirstCell } = useContext(CellNavigationContext)
   const { orderBy, onOrderByChange } = useContext(OrderByContext)
