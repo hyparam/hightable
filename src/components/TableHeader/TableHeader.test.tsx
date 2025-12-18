@@ -30,27 +30,39 @@ describe('TableHeader', () => {
   })
 
   it('renders table headers correctly', () => {
-    const { getByText } = render(<table><thead><tr>
-      <TableHeader
-        columnsParameters={columnsParameters}
-        ariaRowIndex={1}
-      />
-    </tr></thead></table>)
-    columnsParameters.forEach(descriptor => {
+    const { getByText } = render(
+      <table>
+        <thead>
+          <tr>
+            <TableHeader
+              columnsParameters={columnsParameters}
+              ariaRowIndex={1}
+            />
+          </tr>
+        </thead>
+      </table>
+    )
+    columnsParameters.forEach((descriptor) => {
       getByText(descriptor.name)
     })
   })
 
   it('sets orderBy to the column name (ascending order) when a header is clicked', async () => {
     const onOrderByChange = vi.fn()
-    const { user, getByText } = render(<table><thead><tr>
-      <TableHeader
-        columnsParameters={columnsParameters}
-        orderBy={[]}
-        onOrderByChange={onOrderByChange}
-        ariaRowIndex={1}
-      />
-    </tr></thead></table>)
+    const { user, getByText } = render(
+      <table>
+        <thead>
+          <tr>
+            <TableHeader
+              columnsParameters={columnsParameters}
+              orderBy={[]}
+              onOrderByChange={onOrderByChange}
+              ariaRowIndex={1}
+            />
+          </tr>
+        </thead>
+      </table>
+    )
 
     const ageHeader = getByText('Age')
     await user.click(ageHeader)
@@ -60,14 +72,20 @@ describe('TableHeader', () => {
 
   it('sets orderBy to the column name (descending order) when a header is clicked if it was already sorted by ascending order', async () => {
     const onOrderByChange = vi.fn()
-    const { user, getByText } = render(<table><thead><tr>
-      <TableHeader
-        columnsParameters={columnsParameters}
-        onOrderByChange={onOrderByChange}
-        orderBy={[{ column: 'Age', direction: 'ascending' }]}
-        ariaRowIndex={1}
-      />
-    </tr></thead></table>)
+    const { user, getByText } = render(
+      <table>
+        <thead>
+          <tr>
+            <TableHeader
+              columnsParameters={columnsParameters}
+              onOrderByChange={onOrderByChange}
+              orderBy={[{ column: 'Age', direction: 'ascending' }]}
+              ariaRowIndex={1}
+            />
+          </tr>
+        </thead>
+      </table>
+    )
 
     const ageHeader = getByText('Age')
     await user.click(ageHeader)
@@ -77,14 +95,20 @@ describe('TableHeader', () => {
 
   it('sets orderBy to undefined when a header is clicked if it was already sorted by descending order', async () => {
     const onOrderByChange = vi.fn()
-    const { user, getByText } = render(<table><thead><tr>
-      <TableHeader
-        columnsParameters={columnsParameters}
-        onOrderByChange={onOrderByChange}
-        orderBy={[{ column: 'Age', direction: 'descending' }]}
-        ariaRowIndex={1}
-      />
-    </tr></thead></table>)
+    const { user, getByText } = render(
+      <table>
+        <thead>
+          <tr>
+            <TableHeader
+              columnsParameters={columnsParameters}
+              onOrderByChange={onOrderByChange}
+              orderBy={[{ column: 'Age', direction: 'descending' }]}
+              ariaRowIndex={1}
+            />
+          </tr>
+        </thead>
+      </table>
+    )
 
     const ageHeader = getByText('Age')
     await user.click(ageHeader)
@@ -94,14 +118,20 @@ describe('TableHeader', () => {
 
   it('prepends a new column with ascending order to orderBy when a different header is clicked', async () => {
     const onOrderByChange = vi.fn()
-    const { user, getByText } = render(<table><thead><tr>
-      <TableHeader
-        columnsParameters={columnsParameters}
-        onOrderByChange={onOrderByChange}
-        orderBy={[{ column: 'Age', direction: 'ascending' }]}
-        ariaRowIndex={1}
-      />
-    </tr></thead></table>)
+    const { user, getByText } = render(
+      <table>
+        <thead>
+          <tr>
+            <TableHeader
+              columnsParameters={columnsParameters}
+              onOrderByChange={onOrderByChange}
+              orderBy={[{ column: 'Age', direction: 'ascending' }]}
+              ariaRowIndex={1}
+            />
+          </tr>
+        </thead>
+      </table>
+    )
 
     const addressHeader = getByText('Address')
     await user.click(addressHeader)

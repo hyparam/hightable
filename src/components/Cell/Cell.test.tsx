@@ -20,16 +20,19 @@ describe('Cell', () => {
     [undefined, 'undefined'],
     [[1, 2, 3], '[1,2,3]'],
   ])('renders the value (%s) as string by default: %s', (value, text) => {
-    const { getByText } = render(<table>
-      <tbody>
-        <tr>
-          <Cell
-            cell={{ value }}
-            {...rest}
-          ></Cell>
-        </tr>
-      </tbody>
-    </table>)
+    const { getByText } = render(
+      <table>
+        <tbody>
+          <tr>
+            <Cell
+              cell={{ value }}
+              {...rest}
+            >
+            </Cell>
+          </tr>
+        </tbody>
+      </table>
+    )
     getByText(text)
   })
 
@@ -40,9 +43,16 @@ describe('Cell', () => {
           <tr>
             <Cell
               cell={{ value: 'custom' }}
-              renderCellContent={({ cell }) => <span>Value: {String(cell?.value)}</span>}
+              renderCellContent={({ cell }) => (
+                <span>
+                  Value:
+                  {' '}
+                  {String(cell?.value)}
+                </span>
+              )}
               {...rest}
-            ></Cell>
+            >
+            </Cell>
           </tr>
         </tbody>
       </table>
@@ -58,7 +68,8 @@ describe('Cell', () => {
             <Cell
               cell={{ value: 123 }}
               {...rest}
-            ></Cell>
+            >
+            </Cell>
           </tr>
         </tbody>
       </table>

@@ -1,45 +1,42 @@
-import javascript from '@eslint/js'
+import { fileURLToPath } from 'node:url'
+
+import { includeIgnoreFile } from '@eslint/compat'
+import js from '@eslint/js'
+import stylistic from '@stylistic/eslint-plugin'
+import { defineConfig } from 'eslint/config'
+import importPlugin from 'eslint-plugin-import'
 import react from 'eslint-plugin-react'
 import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
 import simpleImportSort from 'eslint-plugin-simple-import-sort'
 import storybook from 'eslint-plugin-storybook'
 import globals from 'globals'
-import typescript from 'typescript-eslint'
+import tseslint from 'typescript-eslint'
 
-export default typescript.config(
-  { ignores: ['coverage/', 'dist/'] },
-  reactRefresh.configs.recommended,
+const gitignorePath = fileURLToPath(new URL('.gitignore', import.meta.url))
+
+export default defineConfig([
+  includeIgnoreFile(gitignorePath, 'Imported .gitignore patterns'),
   {
-    extends: [
-      javascript.configs.recommended,
-      ...typescript.configs.strictTypeChecked,
-      ...typescript.configs.stylisticTypeChecked,
-    ],
+    // eslint for js and ts files
     files: ['**/*.{ts,tsx,js}'],
-    languageOptions: {
-      globals: globals.browser,
-      parserOptions: {
-        project: ['./tsconfig.json', './tsconfig.eslint.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-    },
-    plugins: {
-      react,
-      'react-hooks': reactHooks,
-      'simple-import-sort': simpleImportSort,
-    },
+    languageOptions: { globals: { ...globals.browser } },
+    extends: [
+      js.configs.recommended,
+    ],
     rules: {
-      ...react.configs.recommended.rules,
-      ...react.configs['jsx-runtime'].rules,
-      ...reactHooks.configs.recommended.rules,
-      ...javascript.configs.recommended.rules,
-      ...typescript.configs.recommended.rules,
-      // javascript
-      'arrow-spacing': 'error',
-      camelcase: 'off',
-      'comma-spacing': 'error',
-      'comma-dangle': [
+      eqeqeq: 'error',
+      'func-style': ['error', 'declaration', { allowTypeAnnotation: true }],
+      'prefer-destructuring': ['error', { object: true, array: false }],
+    },
+  },
+  {
+    // stylistic rules
+    extends: [
+      stylistic.configs.recommended,
+    ],
+    rules: {
+      '@stylistic/comma-dangle': [
         'error',
         {
           arrays: 'always-multiline',
@@ -49,73 +46,85 @@ export default typescript.config(
           functions: 'never',
         },
       ],
-      'eol-last': 'error',
-      eqeqeq: 'error',
-      'func-style': ['error', 'declaration', { allowTypeAnnotation: true }],
-      indent: ['error', 2],
-      'key-spacing': 'error',
-      'no-constant-condition': 'off',
-      'no-extra-parens': 'error',
-      'no-multi-spaces': 'error',
-      'no-multiple-empty-lines': ['error', { max: 1, maxEOF: 0 }],
-      'no-trailing-spaces': 'error',
-      'no-undef': 'error',
-      'no-unused-vars': 'off',
-      'no-useless-concat': 'error',
-      'no-useless-rename': 'error',
-      'no-useless-return': 'error',
-      'no-var': 'error',
-      'object-curly-spacing': ['error', 'always'],
-      'prefer-const': 'warn',
-      'prefer-destructuring': [
-        'warn',
-        {
-          object: true,
-          array: false,
-        },
-      ],
-      'prefer-promise-reject-errors': 'error',
-      quotes: ['error', 'single'],
-      'require-await': 'warn',
-      semi: ['error', 'never'],
-      'space-infix-ops': 'error',
-      // typescript
-      '@typescript-eslint/restrict-template-expressions': 'off',
-      '@typescript-eslint/no-unused-vars': [
-        'warn',
-        { ignoreRestSiblings: true },
-      ],
-      '@typescript-eslint/require-await': 'warn',
-      '@typescript-eslint/no-deprecated': 'warn',
+      '@stylistic/quote-props': ['error', 'as-needed'],
+    },
+  },
+  {
+    // sort the imports
+    files: ['**/*.{ts,tsx,js}'],
+    plugins: {
+      'simple-import-sort': simpleImportSort,
+    },
+    rules: {
+      'simple-import-sort/exports': 'error',
+      'simple-import-sort/imports': 'error',
+    },
+  },
+  {
+    // ensure imports consistently have an extension
+    plugins: {
+      import: importPlugin,
+    },
+    rules: {
+      'import/extensions': ['error', 'ignorePackages'],
+    },
+  },
+  {
+    // typescript only
+    files: ['**/*.{ts,tsx}'],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.eslint.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+    plugins: {
+      react,
+      'react-hooks': reactHooks,
+    },
+    extends: [
+      tseslint.configs.strictTypeChecked,
+      react.configs.flat.recommended,
+      react.configs.flat['jsx-runtime'],
+      reactHooks.configs.flat.recommended,
+      reactRefresh.configs.recommended,
+    ],
+    rules: {
+      '@typescript-eslint/consistent-type-exports': 'error',
+      '@typescript-eslint/consistent-type-imports': 'error',
+      '@typescript-eslint/no-deprecated': 'error',
       // allow using any - see row.ts - it's not easy to replace with unknown for example
       '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/use-unknown-in-catch-callback-variable': 'off',
-      '@typescript-eslint/prefer-promise-reject-errors': 'off',
       '@typescript-eslint/no-unsafe-assignment': 'off',
       '@typescript-eslint/no-unsafe-return': 'off',
-      // fix an issue with vi.fn in an object (localStorage mock in our tests): see https://github.com/vitest-dev/eslint-plugin-vitest/issues/591
-      '@typescript-eslint/unbound-method': 'off',
-      'simple-import-sort/imports': 'error',
-      'simple-import-sort/exports': 'error',
+      '@typescript-eslint/no-unused-vars': ['error', { ignoreRestSiblings: true }],
+      '@typescript-eslint/prefer-promise-reject-errors': 'off',
+      '@typescript-eslint/require-await': 'error',
+      '@typescript-eslint/restrict-template-expressions': 'off',
+      '@typescript-eslint/use-unknown-in-catch-callback-variable': 'off',
     },
     settings: { react: { version: 'detect' } },
   },
   {
-    files: ['test/**/*.{ts,tsx}', '**/*.test.{ts,tsx}', '*.{js,ts}'],
-    languageOptions: {
-      ecmaVersion: 2020,
-      globals: {
-        ...globals.node,
-        ...globals.browser,
-      },
+    // typescript stylistic rules
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      tseslint.configs.stylisticTypeChecked,
+    ],
+  },
+  {
+    // tests only
+    files: ['test/**/*.{ts,tsx}', '**/*.test.{ts,tsx}'],
+    rules: {
+      // fix an issue with vi.fn in an object (localStorage mock in our tests): see https://github.com/vitest-dev/eslint-plugin-vitest/issues/591
+      '@typescript-eslint/unbound-method': 'off',
     },
   },
   {
-    files: ['**/*.js'],
-    ...typescript.configs.disableTypeChecked,
-  },
-  {
-    extends: [...storybook.configs['flat/recommended']],
+    // storybook stories
     files: ['**/*.stories.tsx'],
-  }
-)
+    extends: [
+      storybook.configs['flat/recommended'],
+    ],
+  },
+])

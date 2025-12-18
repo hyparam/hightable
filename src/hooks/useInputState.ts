@@ -8,8 +8,8 @@ import { useCallback, useState } from 'react'
  * @param disabled true if the input is disabled. In this case, the value is undefined and the result onChange function does nothing.
  */
 interface UseInputStateProps<T> {
-  value?: T,
-  onChange?: ((value: T) => void),
+  value?: T
+  onChange?: ((value: T) => void)
   defaultValue?: T
   disabled?: boolean
 }
@@ -72,5 +72,4 @@ export function useInputState<T>({ value, onChange, defaultValue, disabled }: Us
     console.warn('The value is uncontrolled (it only has a local state) because the property was initially undefined. It cannot be set to a value now and is ignored.')
   }
   return { value: localValue, onChange: uncontrolledOnChange }
-
 }

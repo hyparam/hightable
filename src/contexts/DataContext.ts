@@ -1,11 +1,12 @@
 import { createContext } from 'react'
 
-import { arrayDataFrame, DataFrame } from '../helpers/dataframe/index.js'
+import type { DataFrame } from '../helpers/dataframe/index.js'
+import { arrayDataFrame } from '../helpers/dataframe/index.js'
 
 interface DataContextType {
-  data: Omit<DataFrame, 'numRows'>,
-  key: number,
-  version: number,
+  data: Omit<DataFrame, 'numRows'>
+  key: number
+  version: number
   maxRowNumber: number
   numRows: number
 }

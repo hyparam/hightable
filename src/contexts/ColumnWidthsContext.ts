@@ -1,4 +1,5 @@
-import { createContext, CSSProperties } from 'react'
+import type { CSSProperties } from 'react'
+import { createContext } from 'react'
 
 // TODO(SL): add documentation for each function
 interface ColumnWidthsContextType {

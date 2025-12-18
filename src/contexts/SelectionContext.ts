@@ -1,4 +1,5 @@
-import { createContext, KeyboardEvent } from 'react'
+import type { KeyboardEvent } from 'react'
+import { createContext } from 'react'
 
 interface SelectionContextType {
   selectable?: boolean // true if the selection is defined

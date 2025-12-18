@@ -1,11 +1,14 @@
-import { KeyboardEvent, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import type { KeyboardEvent, ReactNode } from 'react'
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react'
 
 import { OrderByContext } from '../contexts/OrderByContext.js'
 import { SelectionContext } from '../contexts/SelectionContext.js'
 import { checkSignal } from '../helpers/dataframe/helpers.js'
-import { DataFrame } from '../helpers/dataframe/index.js'
-import { countSelectedRows, getDefaultSelection, isSelected, selectIndex, Selection, toggleIndex, toggleIndexInSelection, unselectIndex } from '../helpers/selection.js'
-import { OrderBy, serializeOrderBy } from '../helpers/sort.js'
+import type { DataFrame } from '../helpers/dataframe/index.js'
+import type { Selection } from '../helpers/selection.js'
+import { countSelectedRows, getDefaultSelection, isSelected, selectIndex, toggleIndex, toggleIndexInSelection, unselectIndex } from '../helpers/selection.js'
+import type { OrderBy } from '../helpers/sort.js'
+import { serializeOrderBy } from '../helpers/sort.js'
 import { useInputState } from '../hooks/useInputState.js'
 
 interface SelectionProviderProps {
@@ -45,11 +48,11 @@ export function SelectionProvider({ children, data, numRows, onError, selection:
   }
 
   const [gesture, setGesture] = useState<Gesture | undefined>(undefined)
-  const stopGesture = useCallback(({ gesture }: {gesture: Gesture}) => {
+  const stopGesture = useCallback(({ gesture }: { gesture: Gesture }) => {
     // Stop the gesture
     gesture.controller.abort()
     // if it's the current gesture, we reset it
-    setGesture(currentGesture => {
+    setGesture((currentGesture) => {
       if (currentGesture === gesture) {
         // reset the gesture
         return undefined
@@ -61,7 +64,7 @@ export function SelectionProvider({ children, data, numRows, onError, selection:
   const startGesture = useCallback(() => {
     // start a new gesture, aborting the previous one if it exists
     const nextGesture = { controller: new AbortController() }
-    setGesture(previousGesture => {
+    setGesture((previousGesture) => {
       if (previousGesture) {
         // abort the previous gesture
         previousGesture.controller.abort()
@@ -77,7 +80,7 @@ export function SelectionProvider({ children, data, numRows, onError, selection:
 
   const isRowSelected = useMemo(() => {
     if (!selection) return undefined
-    return ({ rowNumber }: {rowNumber:number | undefined}): boolean | undefined => {
+    return ({ rowNumber }: { rowNumber: number | undefined }): boolean | undefined => {
       if (rowNumber === undefined) return undefined
       return isSelected({ ranges: selection.ranges, index: rowNumber })
     }
@@ -91,7 +94,8 @@ export function SelectionProvider({ children, data, numRows, onError, selection:
       const gesture = startGesture()
       try {
         onSelectionChange(toggleIndexInSelection({ selection, index: rowNumber }))
-      } finally {
+      }
+      finally {
         stopGesture({ gesture })
       }
     }
@@ -125,7 +129,7 @@ export function SelectionProvider({ children, data, numRows, onError, selection:
       // toggle a range to the row number
       toggleAll({ data, numRows, selection, signal })
         .finally(() => { stopGesture({ gesture }) })
-        .then((newSelection) => {onSelectionChange(newSelection)})
+        .then((newSelection) => { onSelectionChange(newSelection) })
         .catch((error: unknown) => {
           if (error instanceof Error && error.name === 'AbortError') {
             // the request was aborted, do nothing
@@ -144,10 +148,12 @@ export function SelectionProvider({ children, data, numRows, onError, selection:
       try {
         // if the user presses Escape, we want to clear the selection
         onSelectionChange?.(getDefaultSelection())
-      } finally {
+      }
+      finally {
         stopGesture({ gesture })
       }
-    } else if (key === 'a' && (event.ctrlKey || event.metaKey)) {
+    }
+    else if (key === 'a' && (event.ctrlKey || event.metaKey)) {
       const gesture = startGesture()
       const { signal } = gesture.controller
       // if the user presses Ctrl+A, we want to select all rows
@@ -165,7 +171,8 @@ export function SelectionProvider({ children, data, numRows, onError, selection:
             onError?.(error)
           })
       }
-    } else if (key === ' ' && shiftKey) {
+    }
+    else if (key === ' ' && shiftKey) {
       // if the user presses Shift+Space, we want to toggle the current row in the selection
       const { target } = event
       if (!selection || !onSelectionChange || !(target instanceof HTMLTableCellElement)) {
@@ -180,7 +187,8 @@ export function SelectionProvider({ children, data, numRows, onError, selection:
       const gesture = startGesture()
       try {
         onSelectionChange({ ranges: toggleIndex({ ranges: selection.ranges, index }), anchor: index })
-      } finally {
+      }
+      finally {
         stopGesture({ gesture })
       }
     }
@@ -213,7 +221,8 @@ export function SelectionProvider({ children, data, numRows, onError, selection:
       onTableKeyDown,
       toggleAllRows,
       allRowsSelected,
-    }}>
+    }}
+    >
       {children}
     </SelectionContext.Provider>
   )
@@ -277,9 +286,9 @@ async function toggleRange({ data, numRows, row, rowNumber, selection, orderBy, 
     return toggleIndexInSelection({ selection, index: rowNumber })
   }
   // else: toggle the range between the anchor and the current row
-  const [rowStart, rowEnd] = anchorRow < row ?
-    [anchorRow + 1, row + 1] :
-    [row, anchorRow]
+  const [rowStart, rowEnd] = anchorRow < row
+    ? [anchorRow + 1, row + 1]
+    : [row, anchorRow]
   const rowNumbers = await fetchRowNumbers({ data, rowStart, rowEnd, orderBy, signal })
 
   let { ranges } = selection

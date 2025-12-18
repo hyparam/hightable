@@ -18,9 +18,11 @@ function TestComponent() {
 describe('CellsNavigationProvider', () => {
   describe('when rowCount changes', () => {
     it('resets rowIndex if out of bounds', () => {
-      const { getByTestId, rerender } = render(<CellNavigationProvider colCount={5} rowCount={10} rowPadding={3}>
-        <TestComponent />
-      </CellNavigationProvider>)
+      const { getByTestId, rerender } = render(
+        <CellNavigationProvider colCount={5} rowCount={10} rowPadding={3}>
+          <TestComponent />
+        </CellNavigationProvider>
+      )
 
       const cellPosition = getByTestId('cell-position')
       const setRow10Button = getByTestId('set-row-10')
@@ -33,15 +35,19 @@ describe('CellsNavigationProvider', () => {
       expect(cellPosition.textContent).toBe('col:1,row:10')
 
       // Decrease rowCount to 5, which should reset rowIndex to 5
-      rerender(<CellNavigationProvider colCount={5} rowCount={5} rowPadding={3}>
-        <TestComponent />
-      </CellNavigationProvider>)
+      rerender(
+        <CellNavigationProvider colCount={5} rowCount={5} rowPadding={3}>
+          <TestComponent />
+        </CellNavigationProvider>
+      )
       expect(cellPosition.textContent).toBe('col:1,row:5')
 
       // Increase rowCount to 15, rowIndex should remain 5
-      rerender(<CellNavigationProvider colCount={5} rowCount={15} rowPadding={3}>
-        <TestComponent />
-      </CellNavigationProvider>)
+      rerender(
+        <CellNavigationProvider colCount={5} rowCount={15} rowPadding={3}>
+          <TestComponent />
+        </CellNavigationProvider>
+      )
       expect(cellPosition.textContent).toBe('col:1,row:5')
     })
   })

@@ -1,14 +1,14 @@
-import React from 'react'
+import type React from 'react'
 
 // Single column config
 export type HeaderControls = React.ReactNode
 export type HeaderComponent = React.ReactNode | ((controls: HeaderControls) => React.ReactNode)
 
 export interface ColumnConfig {
-  headerComponent?: HeaderComponent;
-  minWidth?: number;
-  initiallyHidden?: boolean;
-  className?: string;
+  headerComponent?: HeaderComponent
+  minWidth?: number
+  initiallyHidden?: boolean
+  className?: string
   // hideable?: boolean;
   // filters: Some filter structure
   // cellRenderer?: (value: unknown, row: Row) => React.ReactNode;

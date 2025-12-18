@@ -1,6 +1,7 @@
-import { RefObject, useCallback, useContext, useEffect } from 'react'
+import type { RefObject } from 'react'
+import { useCallback, useContext, useEffect } from 'react'
 
-import { CellNavigationContext } from '../contexts/CellNavigationContext'
+import { CellNavigationContext } from '../contexts/CellNavigationContext.js'
 
 interface CellData {
   ref: RefObject<HTMLElement | null> // ref to the HTML element

@@ -59,18 +59,26 @@ describe('toggleColumn', () => {
 describe('validateOrderByAgainstSortableColumns', () => {
   const sortableColumns = new Set(['name', 'age'])
   it('should not throw if the orderBy is valid', () => {
-    expect(() => { validateOrderByAgainstSortableColumns({ sortableColumns, orderBy: [nameAsc, ageAsc] }) }).not.toThrow()
-    expect(() => { validateOrderByAgainstSortableColumns({ sortableColumns, orderBy: [nameDesc, ageAsc] }) }).not.toThrow()
+    expect(() => {
+      validateOrderByAgainstSortableColumns({ sortableColumns, orderBy: [nameAsc, ageAsc] })
+    }).not.toThrow()
+    expect(() => {
+      validateOrderByAgainstSortableColumns({ sortableColumns, orderBy: [nameDesc, ageAsc] })
+    }).not.toThrow()
   })
   it('should throw if the orderBy contains an invalid column', () => {
-    expect(() => { validateOrderByAgainstSortableColumns({ sortableColumns, orderBy: [idAsc] }) }).toThrow('Unsortable columns in orderBy field: id')
-    expect(() => { validateOrderByAgainstSortableColumns({ sortableColumns: new Set(['age']), orderBy: [nameAsc, idAsc] }) }).toThrow('Unsortable columns in orderBy field: name, id')
+    expect(() => {
+      validateOrderByAgainstSortableColumns({ sortableColumns, orderBy: [idAsc] })
+    }).toThrow('Unsortable columns in orderBy field: id')
+    expect(() => {
+      validateOrderByAgainstSortableColumns({ sortableColumns: new Set(['age']), orderBy: [nameAsc, idAsc] })
+    }).toThrow('Unsortable columns in orderBy field: name, id')
   })
 })
 
 describe('computeRanks', () => {
   it('should return different indexes when all the values are different', () => {
-    const values = [3, 1, 2, 4 ]
+    const values = [3, 1, 2, 4]
     const ranks = computeRanks(values)
     expect(ranks).toEqual([2, 0, 1, 3])
   })

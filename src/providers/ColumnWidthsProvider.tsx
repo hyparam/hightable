@@ -1,4 +1,5 @@
-import { ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import type { ReactNode } from 'react'
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 
 import { ColumnParametersContext } from '../contexts/ColumnParametersContext.js'
 import { ColumnWidthsContext } from '../contexts/ColumnWidthsContext.js'
@@ -100,15 +101,17 @@ export function ColumnWidthsProvider({ children, localStorageKey, numColumns, mi
   const [fixedWidths, _setFixedWidths] = useLocalStorageState<(number | undefined)[]>({ key: localStorageKey, parse, stringify: JSON.stringify })
   function parse(json: string): (number | undefined)[] {
     const value: unknown = JSON.parse(json)
-    return !Array.isArray(value) ? [] : value.map((element: unknown) => {
-      return typeof element === 'number' ? element : undefined
-    })
+    return !Array.isArray(value)
+      ? []
+      : value.map((element: unknown) => {
+          return typeof element === 'number' ? element : undefined
+        })
   }
   // Reference to the value of the fixed widths, to use in useEffect without being a dependency
   // (we don't want to adjust other widths when fixed widths change)
   const fixedWidthsRef = useRef<(number | undefined)[]>(fixedWidths)
   const setFixedWidths = useCallback((updater: (widths: (number | undefined)[] | undefined) => (number | undefined)[] | undefined) => {
-    _setFixedWidths(widths => {
+    _setFixedWidths((widths) => {
       const nextWidths = updater(widths)
       fixedWidthsRef.current = nextWidths ?? []
       return nextWidths
@@ -119,7 +122,7 @@ export function ColumnWidthsProvider({ children, localStorageKey, numColumns, mi
       return
     }
     const clampedValue = Math.max(value, getMinWidth(columnIndex))
-    setFixedWidths(widths => {
+    setFixedWidths((widths) => {
       const nextWidths = [...widths ?? []]
       nextWidths[columnIndex] = clampedValue
       return nextWidths
@@ -142,7 +145,7 @@ export function ColumnWidthsProvider({ children, localStorageKey, numColumns, mi
     }
     // Add 1 pixel to avoid rounding errors that shrink the header text
     const clampedValue = Math.max(value + 1, getMinWidth(columnIndex))
-    setMeasuredWidths(widths => {
+    setMeasuredWidths((widths) => {
       const nextWidths = [...widths ?? []]
       nextWidths[columnIndex] = clampedValue
       return nextWidths
@@ -155,12 +158,12 @@ export function ColumnWidthsProvider({ children, localStorageKey, numColumns, mi
     if (!isValidIndex(columnIndex)) {
       return
     }
-    setFixedWidths(widths => {
+    setFixedWidths((widths) => {
       const nextWidths = [...widths ?? []]
       nextWidths[columnIndex] = undefined
       return nextWidths
     })
-    setMeasuredWidths(widths => {
+    setMeasuredWidths((widths) => {
       const nextWidths = [...widths ?? []]
       nextWidths[columnIndex] = undefined
       return nextWidths
@@ -261,7 +264,7 @@ function adjustWidths({
   }
 
   // Group measured column indexes by width in a Map
-  const columnsByWidth = new Map<number, { index: number; minWidth: number; adjustedWidth?: number }[]>()
+  const columnsByWidth = new Map<number, { index: number, minWidth: number, adjustedWidth?: number }[]>()
   for (const [index, value] of measuredWidths.entries()) {
     if (value !== undefined) {
       const minWidth = Math.max(
@@ -276,7 +279,8 @@ function adjustWidths({
       const array = columnsByWidth.get(value)
       if (array) {
         array.push({ index, minWidth })
-      } else {
+      }
+      else {
         columnsByWidth.set(value, [{ index, minWidth }])
       }
     }
@@ -339,7 +343,8 @@ function adjustWidths({
     if (secondLargestGroup?.width === minWidth) {
       // merge
       orderedWidthGroups.push({ width: minWidth, columns: [...secondLargestGroup.columns, ...remainingColumns] })
-    } else {
+    }
+    else {
       // add the second largest group back (if any)
       if (secondLargestGroup !== undefined) {
         orderedWidthGroups.push(secondLargestGroup)
@@ -361,9 +366,9 @@ function adjustWidths({
         fixed: fixedWidth !== undefined,
         width: adjustedWidth ?? measuredWidth,
       }
-    }).filter<{ index: number; fixed: boolean; width: number }>(
+    }).filter<{ index: number, fixed: boolean, width: number }>(
       // tell typescript that width is defined
-      (c): c is { index: number; fixed: boolean; width: number } => !c.fixed && c.width !== undefined
+      (c): c is { index: number, fixed: boolean, width: number } => !c.fixed && c.width !== undefined
     )
     const numColumns = availableColumns.length
     if (numColumns > 0) {

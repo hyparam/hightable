@@ -1,6 +1,7 @@
-import { KeyboardEvent, ReactNode, useCallback, useMemo, useState } from 'react'
+import type { KeyboardEvent, ReactNode } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 
-import { CellNavigationContext, defaultCellNavigationContext } from '../contexts/CellNavigationContext'
+import { CellNavigationContext, defaultCellNavigationContext } from '../contexts/CellNavigationContext.js'
 
 interface CellNavigationProviderProps {
   colCount: number // number of columns in the table, same semantic as aria-colcount (includes row headers)
@@ -35,42 +36,54 @@ export function CellNavigationProvider({ colCount, rowCount, rowPadding, childre
     if (key === 'ArrowRight') {
       if (ctrlKey) {
         setColIndex(colCount)
-      } else {
-        setColIndex((prev) => prev < colCount ? prev + 1 : prev)
       }
-    } else if (key === 'ArrowLeft') {
+      else {
+        setColIndex(prev => prev < colCount ? prev + 1 : prev)
+      }
+    }
+    else if (key === 'ArrowLeft') {
       if (ctrlKey) {
         setColIndex(1)
-      } else {
-        setColIndex((prev) => prev > 1 ? prev - 1 : prev)
       }
-    } else if (key === 'ArrowDown') {
+      else {
+        setColIndex(prev => prev > 1 ? prev - 1 : prev)
+      }
+    }
+    else if (key === 'ArrowDown') {
       if (ctrlKey) {
         setRowIndex(rowCount)
-      } else {
-        setRowIndex((prev) => prev < rowCount ? prev + 1 : prev)
       }
-    } else if (key === 'ArrowUp') {
+      else {
+        setRowIndex(prev => prev < rowCount ? prev + 1 : prev)
+      }
+    }
+    else if (key === 'ArrowUp') {
       if (ctrlKey) {
         setRowIndex(1)
-      } else {
-        setRowIndex((prev) => prev > 1 ? prev - 1 : prev)
       }
-    } else if (key === 'Home') {
+      else {
+        setRowIndex(prev => prev > 1 ? prev - 1 : prev)
+      }
+    }
+    else if (key === 'Home') {
       if (ctrlKey) {
         setRowIndex(1)
       }
       setColIndex(1)
-    } else if (key === 'End') {
+    }
+    else if (key === 'End') {
       if (ctrlKey) {
         setRowIndex(rowCount)
       }
       setColIndex(colCount)
-    } else if (key === 'PageDown') {
-      setRowIndex((prev) => prev + rowPadding <= rowCount ? prev + rowPadding : rowCount )
-    } else if (key === 'PageUp') {
-      setRowIndex((prev) => prev - rowPadding >= 1 ? prev - rowPadding : 1)
-    } else if (key !== ' ') {
+    }
+    else if (key === 'PageDown') {
+      setRowIndex(prev => prev + rowPadding <= rowCount ? prev + rowPadding : rowCount)
+    }
+    else if (key === 'PageUp') {
+      setRowIndex(prev => prev - rowPadding >= 1 ? prev - rowPadding : 1)
+    }
+    else if (key !== ' ') {
       // if the key is not one of the above, do not handle it
       // special case: no action is associated with the Space key, but it's captured
       // anyway to prevent the default action (scrolling the page) and stay in navigation mode
@@ -88,7 +101,7 @@ export function CellNavigationProvider({ colCount, rowCount, rowPadding, childre
     // the user can scroll with the keyboard using the arrow keys.
     // Only handle the Tab, Enter and Space keys, to enter the cell navigation mode
     // TODO(SL): exclude other meta keys
-    if (key === 'Tab' && !event.shiftKey || key === 'Enter' || key === ' ') {
+    if ((key === 'Tab' && !event.shiftKey) || key === 'Enter' || key === ' ') {
       // avoid scrolling the table when the user is navigating with the keyboard
       event.stopPropagation()
       event.preventDefault()

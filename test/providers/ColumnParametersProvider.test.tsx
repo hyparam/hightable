@@ -4,8 +4,8 @@ import { useContext } from 'react'
 import { describe, expect, it } from 'vitest'
 
 import { ColumnParametersContext } from '../../src/contexts/ColumnParametersContext.js'
-import { ColumnConfiguration } from '../../src/helpers/columnConfiguration.js'
-import { ColumnDescriptor } from '../../src/helpers/dataframe/index.js'
+import type { ColumnConfiguration } from '../../src/helpers/columnConfiguration.js'
+import type { ColumnDescriptor } from '../../src/helpers/dataframe/index.js'
 import { ColumnParametersProvider } from '../../src/providers/ColumnParametersProvider.js'
 
 function createWrapper(columnDescriptors: ColumnDescriptor[], columnConfiguration?: ColumnConfiguration) {

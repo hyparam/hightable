@@ -1,4 +1,5 @@
-import { ReactNode, useCallback, useMemo } from 'react'
+import type { ReactNode } from 'react'
+import { useCallback, useMemo } from 'react'
 
 import { ColumnVisibilityStatesContext } from '../contexts/ColumnVisibilityStatesContext.js'
 import { useLocalStorageState } from '../hooks/useLocalStorageState.js'
@@ -68,7 +69,7 @@ export function ColumnVisibilityStatesProvider({ children, localStorageKey, colu
       return undefined
     }
     return () => {
-      setColumnVisibilityStates(currentStates => {
+      setColumnVisibilityStates((currentStates) => {
         const nextColumnVisibilityStates = { ...currentStates ?? initialVisibilityStates ?? {} }
         nextColumnVisibilityStates[columnName] = { hidden: true }
         onColumnsVisibilityChange?.(nextColumnVisibilityStates)

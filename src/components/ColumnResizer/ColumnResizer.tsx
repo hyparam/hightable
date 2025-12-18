@@ -1,4 +1,5 @@
-import { KeyboardEvent, MouseEvent, PointerEvent, useCallback, useMemo, useState } from 'react'
+import type { KeyboardEvent, MouseEvent, PointerEvent } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 
 interface InitialPointerState {
   pointerId: number
@@ -70,7 +71,7 @@ export default function ColumnResizer({ autoResize, resizeTo, width, tabIndex, n
   const handlePointerUp = useCallback((event: PointerEvent<HTMLSpanElement>) => {
     event.stopPropagation()
     // releasePointerCapture() is called automatically on pointer up
-    setInitialPointerState(state => {
+    setInitialPointerState((state) => {
       if (state && event.pointerId === state.pointerId) {
         // only reset the state if the pointer up is from the same pointer
         return undefined
@@ -119,13 +120,17 @@ export default function ColumnResizer({ autoResize, resizeTo, width, tabIndex, n
     }
     if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
       resizeTo?.(width + smallStep)
-    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
+    }
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
       resizeTo?.(width - smallStep)
-    } else if (e.key === 'PageUp') {
+    }
+    else if (e.key === 'PageUp') {
       resizeTo?.(width + bigStep)
-    } else if (e.key === 'PageDown') {
+    }
+    else if (e.key === 'PageDown') {
       resizeTo?.(width - bigStep)
-    } else if (e.key === 'Home') {
+    }
+    else if (e.key === 'Home') {
       // reset to 0 (it will be clamped to a minimum width)
       resizeTo?.(0)
     } // no 'End' key handling because the resizer has no max width

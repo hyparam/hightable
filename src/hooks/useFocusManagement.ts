@@ -1,7 +1,8 @@
-import { RefObject, useCallback, useEffect, useRef } from 'react'
+import type { RefObject } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 
-const FOCUSABLE_SELECTOR =
-  'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+const FOCUSABLE_SELECTOR
+  = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
 
 /**
  * A hook that manages focus behavior for interactive UI components like menus or modals.
@@ -59,7 +60,8 @@ export function useFocusManagement(
           firstElement.focus()
         })
       }
-    } else if (previousFocusRef.current) {
+    }
+    else if (previousFocusRef.current) {
       previousFocusRef.current.focus()
       previousFocusRef.current = null
     }
@@ -80,18 +82,18 @@ export function useFocusManagement(
     let nextIndex: number
 
     switch (direction) {
-    case 'first':
-      nextIndex = 0
-      break
-    case 'last':
-      nextIndex = focusableElements.length - 1
-      break
-    case 'next':
-      nextIndex = currentIndex >= focusableElements.length - 1 ? 0 : currentIndex + 1
-      break
-    case 'previous':
-      nextIndex = currentIndex <= 0 ? focusableElements.length - 1 : currentIndex - 1
-      break
+      case 'first':
+        nextIndex = 0
+        break
+      case 'last':
+        nextIndex = focusableElements.length - 1
+        break
+      case 'next':
+        nextIndex = currentIndex >= focusableElements.length - 1 ? 0 : currentIndex + 1
+        break
+      case 'previous':
+        nextIndex = currentIndex <= 0 ? focusableElements.length - 1 : currentIndex - 1
+        break
     }
 
     focusableElements[nextIndex]?.focus()

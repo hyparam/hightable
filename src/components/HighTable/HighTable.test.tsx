@@ -1,8 +1,10 @@
 import { act, fireEvent, waitFor, within } from '@testing-library/react'
-import { afterEach, beforeEach, describe, expect, it, Mock, vi } from 'vitest'
+import type { Mock } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { createGetRowNumber, validateFetchParams, validateGetCellParams, validateGetRowNumberParams } from '../../helpers/dataframe/helpers.js'
-import { arrayDataFrame, DataFrame, DataFrameEvents, Fetch } from '../../helpers/dataframe/index.js'
+import type { DataFrame, DataFrameEvents, Fetch } from '../../helpers/dataframe/index.js'
+import { arrayDataFrame } from '../../helpers/dataframe/index.js'
 import { sortableDataFrame } from '../../helpers/dataframe/sort.js'
 import type { Obj } from '../../helpers/dataframe/types.js'
 import type { OrderBy } from '../../helpers/sort.js'
@@ -25,11 +27,14 @@ export function createData(): DataFrame<Obj, { type: string }> {
     const count = numRows - row
     if (column === 'ID') {
       return { value: `row ${row}` }
-    } else if (column === 'Count') {
+    }
+    else if (column === 'Count') {
       return { value: count }
-    } else if (column === 'Double') {
+    }
+    else if (column === 'Double') {
       return { value: count * 2 }
-    } else if (column === 'Triple') {
+    }
+    else if (column === 'Triple') {
       return { value: count * 3 }
     }
   }
@@ -45,7 +50,8 @@ export function createOtherData(): DataFrame<{ description: string }> {
     validateGetCellParams({ column, row, orderBy, data: { numRows, columnDescriptors } })
     if (column === 'ID') {
       return { value: `other ${row}` }
-    } else if (column === 'Count') {
+    }
+    else if (column === 'Count') {
       return { value: 1000 - row }
     }
   }
@@ -66,9 +72,11 @@ function createMockData(): MockedUnsortableDataFrame {
     }
     if (column === 'ID') {
       return { value: row }
-    } else if (column === 'Name') {
+    }
+    else if (column === 'Name') {
       return { value: `Name ${row}` }
-    } else if (column === 'Age') {
+    }
+    else if (column === 'Age') {
       return { value: 20 + row % 50 }
     }
     throw new Error(`Unknown column: ${column}`)
@@ -110,7 +118,7 @@ describe('HighTable', () => {
   })
 
   it('creates the rows after having fetched the data', () => {
-    const { queryByRole } = render(<HighTable data={mockData}/>)
+    const { queryByRole } = render(<HighTable data={mockData} />)
     expect(queryByRole('cell', { name: 'Name 0' })).not.toBeNull()
   })
 
@@ -179,7 +187,7 @@ describe('HighTable', () => {
 })
 
 describe('with async data, HighTable', () => {
-  function createAsyncDataFrame({ ms }: {ms: number} = { ms: 10 }): DataFrame & {_forTests: {signalAborted: boolean[], asyncDataFetched: boolean[]}} {
+  function createAsyncDataFrame({ ms }: { ms: number } = { ms: 10 }): DataFrame & { _forTests: { signalAborted: boolean[], asyncDataFetched: boolean[] } } {
     const asyncDataFetched = Array<boolean>(1000).fill(false)
     const signalAborted: boolean[] = []
     const eventTarget = createEventTarget<DataFrameEvents>()
@@ -192,9 +200,11 @@ describe('with async data, HighTable', () => {
       }
       if (column === 'ID') {
         return { value: `async ${row}` }
-      } else if (column === 'Name') {
+      }
+      else if (column === 'Name') {
         return { value: `Async Name ${row}` }
-      } else if (column === 'Age') {
+      }
+      else if (column === 'Age') {
         return { value: 20 + row % 50 }
       }
     }
@@ -281,7 +291,7 @@ describe('with async data, HighTable', () => {
 
   it('creates the rows after having fetched the data', async () => {
     const asyncData = createAsyncDataFrame()
-    const { queryByRole, findByRole } = render(<HighTable data={asyncData}/>)
+    const { queryByRole, findByRole } = render(<HighTable data={asyncData} />)
     // initially, the cell is not there because the data is not fetched yet
     expect(queryByRole('cell', { name: 'async 0' })).toBeNull()
     // after some delay, the cell should be there
@@ -497,13 +507,14 @@ const getOffsetWidth = vi.fn(() => initialWidth)
 const getClientWidth = vi.fn(() => 1000) // used to get the width of the table - let's give space
 const columnWidthsSuffix = ':2:column:widths'
 const keyItem = `key${columnWidthsSuffix}`
-vi.mock(import('../../helpers/width.js'), async (importOriginal ) => {
+vi.mock(import('../../helpers/width.js'), async (importOriginal) => {
   const actual = await importOriginal()
   return {
     ...actual,
     getOffsetWidth: () => getOffsetWidth(),
     getClientWidth: () => getClientWidth(),
-  }})
+  }
+})
 describe('HighTable localstorage', () => {
   let data: DataFrame
   let otherData: DataFrame
@@ -570,7 +581,7 @@ describe('When the number of rows is updated', () => {
     expect(getByRole('grid').getAttribute('aria-rowcount')).toBe('2')
 
     // await is required, the sync version does not work
-    // eslint-disable-next-line require-await, @typescript-eslint/require-await
+    // eslint-disable-next-line @typescript-eslint/require-await
     await act(async () => {
       data._array.push({ ID: 'row 1', Value: 20 })
     })

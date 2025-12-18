@@ -1,7 +1,8 @@
-import { computeRanks, deserializeOrderBy, OrderBy, serializeOrderBy, validateOrderByAgainstSortableColumns } from '../sort.js'
+import type { OrderBy } from '../sort.js'
+import { computeRanks, deserializeOrderBy, serializeOrderBy, validateOrderByAgainstSortableColumns } from '../sort.js'
 import { createEventTarget } from '../typedEventTarget.js'
 import { checkSignal, validateColumn, validateFetchParams, validateRow } from './helpers.js'
-import { DataFrame, DataFrameEvents, Obj, ResolvedValue } from './types.js'
+import type { DataFrame, DataFrameEvents, Obj, ResolvedValue } from './types.js'
 
 /**
  * Wrap a DataFrame to make it sortable on the specified columns.
@@ -114,7 +115,7 @@ export function sortableDataFrame<M extends Obj, C extends Obj>(
     return data.getRowNumber({ row: upstreamRow.value })
   }
 
-  const getCell: ({ row, column, orderBy }: { row: number, column: string, orderBy?: OrderBy }) => ResolvedValue | undefined = function({ row, column, orderBy }){
+  const getCell: ({ row, column, orderBy }: { row: number, column: string, orderBy?: OrderBy }) => ResolvedValue | undefined = function ({ row, column, orderBy }) {
     validateColumn({ column, data: { columnDescriptors } })
     // numRows: Infinity because the upstream data size can change dynamically.
     validateRow({ row, data: { numRows: Infinity } })
@@ -152,7 +153,8 @@ export function sortableDataFrame<M extends Obj, C extends Obj>(
       if (columns && columns.length > 0 && data.fetch) {
         await fetchFromIndexes({ columns, signal, indexes: indexes.slice(rowStart, rowEnd), fetch: data.fetch })
       }
-    } finally {
+    }
+    finally {
       data.eventTarget?.removeEventListener('resolve', callback)
     }
   }
@@ -180,10 +182,12 @@ async function fetchFromIndexes({ columns, indexes, signal, fetch }: { columns?:
     if (range === undefined) {
       // First iteration
       range = [row, row + 1]
-    } else if (range[1] === row) {
+    }
+    else if (range[1] === row) {
       // Consecutive row, extend the range.
       range[1] = row + 1
-    } else {
+    }
+    else {
       // The row is not consecutive, fetch the previous range and start a new one.
       promises.push(fetch({ rowStart: range[0], rowEnd: range[1], columns, signal }))
       range = [row, row + 1]
@@ -197,7 +201,7 @@ async function fetchFromIndexes({ columns, indexes, signal, fetch }: { columns?:
 }
 
 type OrderByWithRanks = {
-  direction: 'ascending' | 'descending',
+  direction: 'ascending' | 'descending'
   ranks: number[]
 }[]
 
@@ -239,12 +243,13 @@ async function fetchOrderByWithRanks<M extends Obj, C extends Obj>(
     const columnRanks = ranksByColumn?.get(column)
     if (columnRanks) {
       orderByWithRanks[i] = { direction, ranks: columnRanks }
-    } else {
+    }
+    else {
       promises.push(
         (
-          data.fetch ?
-            data.fetch({ rowStart: 0, rowEnd: data.numRows, columns: [column], signal }) :
-            Promise.resolve() // if fetch is not defined, resolve immediately
+          data.fetch
+            ? data.fetch({ rowStart: 0, rowEnd: data.numRows, columns: [column], signal })
+            : Promise.resolve() // if fetch is not defined, resolve immediately
         ).then(() => {
           checkSignal(signal)
           // Get the values

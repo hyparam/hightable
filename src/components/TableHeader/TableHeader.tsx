@@ -1,7 +1,8 @@
 import { useCallback, useMemo } from 'react'
 
-import { ColumnParameters } from '../../contexts/ColumnParametersContext.js'
-import { OrderBy, toggleColumn, toggleColumnExclusive } from '../../helpers/sort.js'
+import type { ColumnParameters } from '../../contexts/ColumnParametersContext.js'
+import type { OrderBy } from '../../helpers/sort.js'
+import { toggleColumn, toggleColumnExclusive } from '../../helpers/sort.js'
 import ColumnHeader from '../ColumnHeader/ColumnHeader.js'
 
 interface TableHeaderProps {
@@ -25,7 +26,8 @@ export default function TableHeader({
     return () => {
       const next = exclusiveSort ? toggleColumnExclusive(columnHeader, orderBy) : toggleColumn(columnHeader, orderBy)
       onOrderByChange(next)
-    }}, [orderBy, onOrderByChange, exclusiveSort]
+    }
+  }, [orderBy, onOrderByChange, exclusiveSort]
   )
 
   const orderByColumn = useMemo(() => {

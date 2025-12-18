@@ -1,4 +1,5 @@
-import { Dispatch, SetStateAction, useEffect, useState } from 'react'
+import type { Dispatch, SetStateAction } from 'react'
+import { useEffect, useState } from 'react'
 
 type Parse<T> = (value: string) => T
 type Stringify<T> = (value: T) => string
@@ -22,7 +23,8 @@ function saveToOrDeleteFromLocalStorage<T>({ key, value, stringify }: { key?: st
   }
   if (value === undefined) {
     localStorage.removeItem(key)
-  } else {
+  }
+  else {
     localStorage.setItem(key, (stringify ?? JSON.stringify)(value))
   }
 }

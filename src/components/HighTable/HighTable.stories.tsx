@@ -1,8 +1,10 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { MouseEvent, ReactNode, useState } from 'react'
+import type { MouseEvent, ReactNode } from 'react'
+import { useState } from 'react'
 
 import { checkSignal, createGetRowNumber, validateFetchParams, validateGetCellParams } from '../../helpers/dataframe/helpers.js'
-import { arrayDataFrame, DataFrame, DataFrameEvents } from '../../helpers/dataframe/index.js'
+import type { DataFrame, DataFrameEvents } from '../../helpers/dataframe/index.js'
+import { arrayDataFrame } from '../../helpers/dataframe/index.js'
 import { sortableDataFrame } from '../../helpers/dataframe/sort.js'
 import type { Fetch, ResolvedValue } from '../../helpers/dataframe/types.js'
 import type { Selection } from '../../helpers/selection.js'
@@ -23,14 +25,21 @@ function createUnsortableData(): DataFrame {
     validateGetCellParams({ row, column, orderBy, data: { numRows, columnDescriptors } })
     const count = numRows - row
     return {
-      value: column === 'ID' ? `row ${row}` :
-        column === 'Count' ? count :
-          column === 'Double' ? count * 2 :
-            column === 'Constant' ? 42 :
-              column === 'Value1' ? Math.floor(100 * random(135 + row)) :
-                column === 'Value2' ? Math.floor(100 * random(648 + row)) :
-                  column === 'Value3' ? Math.floor(100 * random(315 + row)) :
-                    undefined,
+      value: column === 'ID'
+        ? `row ${row}`
+        : column === 'Count'
+          ? count
+          : column === 'Double'
+            ? count * 2
+            : column === 'Constant'
+              ? 42
+              : column === 'Value1'
+                ? Math.floor(100 * random(135 + row))
+                : column === 'Value2'
+                  ? Math.floor(100 * random(648 + row))
+                  : column === 'Value3'
+                    ? Math.floor(100 * random(315 + row))
+                    : undefined,
     }
   }
   const getRowNumber = createGetRowNumber({ numRows })
@@ -38,7 +47,9 @@ function createUnsortableData(): DataFrame {
 }
 
 function delay<T>(value: T, ms: number): Promise<T> {
-  return new Promise(resolve => setTimeout(() => { resolve(value) }, ms))
+  return new Promise(resolve => setTimeout(() => {
+    resolve(value)
+  }, ms))
 }
 function createDelayedUnsortableData(): DataFrame {
   const columnDescriptors = ['ID', 'Count'].map(name => ({ name }))
@@ -53,16 +64,18 @@ function createDelayedUnsortableData(): DataFrame {
     return cache.get(column)?.[row]
   }
   const eventTarget = createEventTarget<DataFrameEvents>()
-  const fetch: Fetch = async function({ rowStart, rowEnd, columns, orderBy, signal }: { rowStart: number, rowEnd: number, columns?: string[], orderBy?: OrderBy, signal?: AbortSignal }) {
+  const fetch: Fetch = async function ({ rowStart, rowEnd, columns, orderBy, signal }: { rowStart: number, rowEnd: number, columns?: string[], orderBy?: OrderBy, signal?: AbortSignal }) {
     checkSignal(signal)
     validateFetchParams({ rowStart, rowEnd, columns, orderBy, data: { numRows, columnDescriptors } })
     const columnPromises: Promise<any>[] = []
     for (const column of columns ?? []) {
       const valuePromises: Promise<any>[] = []
       for (let row = rowStart; row < rowEnd; row++) {
-        const rowMs = row % 3 === 0 ? 10 * Math.floor(10 * Math.random()) :
-          row % 3 === 1 ? 20 * Math.floor(10 * Math.random()) :
-            500
+        const rowMs = row % 3 === 0
+          ? 10 * Math.floor(10 * Math.random())
+          : row % 3 === 1
+            ? 20 * Math.floor(10 * Math.random())
+            : 500
         const ms = rowMs * (column === 'ID' ? 1 : 2)
         const resolvedValue = column === 'ID' ? `row ${row}` : numRows - row
         valuePromises.push(delay(resolvedValue, ms).then((value) => {
@@ -114,14 +127,16 @@ function createVaryingArrayDataFrame({ delay_ms, maxRows }: { delay_ms?: number,
         ID: `row ${i}`,
         Value: Math.floor(100 * random(135 + i)),
       })
-    } else if (phase === 1) {
+    }
+    else if (phase === 1) {
       // update a random row between 0 and maxRows
       const rowIndex = Math.floor(Math.random() * maxRows)
       df._array[rowIndex] = {
         ID: 'updated',
         Value: Math.floor(100 * random(135 + i)),
       }
-    } else {
+    }
+    else {
       // remove the last row
       df._array.pop()
     }
@@ -207,7 +222,7 @@ const meta: Meta<typeof HighTable> = {
   component: HighTable,
 }
 export default meta
-type Story = StoryObj<typeof HighTable>;
+type Story = StoryObj<typeof HighTable>
 
 export const Default: Story = {
   args: {
@@ -315,11 +330,12 @@ export const HeaderComponent: Story = {
     data: createUnsortableData(),
     columnConfiguration: {
       Double: {
-        headerComponent:
+        headerComponent: (
           <span>
-            Double &nbsp;<button type="button" onClick={() => { alert('Custom function') }}>Button</button>
+            Double &nbsp;
+            <button type="button" onClick={() => { alert('Custom function') }}>Button</button>
           </span>
-        ,
+        ),
       },
     },
   },
@@ -329,15 +345,24 @@ export const FunctionalHeaderComponent: Story = {
     data: sortableDataFrame(createUnsortableData()),
     columnConfiguration: {
       Double: {
-        headerComponent: (controls: ReactNode) =>
+        headerComponent: (controls: ReactNode) => (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px', minWidth: 0 }}>
             <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Text:</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
-              <button type="button" style={{ background: 'none', border: '1px solid #ccc', padding: '2px 6px', borderRadius: '4px' }} onClick={(e) => { e.stopPropagation(); alert('Confirm') }}>Confirm</button>
+              <button
+                type="button"
+                style={{ background: 'none', border: '1px solid #ccc', padding: '2px 6px', borderRadius: '4px' }}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  alert('Confirm')
+                }}
+              >
+                Confirm
+              </button>
               {controls}
             </div>
           </div>
-        ,
+        ),
       },
     },
   },
@@ -348,25 +373,25 @@ export const HeaderComponentWithMinWidth: Story = {
     columnConfiguration: {
       ID: {
         minWidth: 150,
-        headerComponent:
+        headerComponent: (
           <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <strong>ID</strong>
             <span style={{ fontSize: '12px', color: '#666' }}>(min: 150px)</span>
           </span>
-        ,
+        ),
       },
       Count: {
         minWidth: 80,
-        headerComponent:
+        headerComponent: (
           <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             Count
             <span style={{ fontSize: '12px', color: '#666' }}>(min: 80px)</span>
           </span>
-        ,
+        ),
       },
       Double: {
         minWidth: 200,
-        headerComponent:
+        headerComponent: (
           <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             Double Value
             <button
@@ -377,7 +402,7 @@ export const HeaderComponentWithMinWidth: Story = {
               Info
             </button>
           </span>
-        ,
+        ),
       },
     },
   },

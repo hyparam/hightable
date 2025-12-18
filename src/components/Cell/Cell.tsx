@@ -1,7 +1,8 @@
-import { KeyboardEvent, MouseEvent, ReactNode, useCallback, useContext, useMemo, useRef } from 'react'
+import type { KeyboardEvent, MouseEvent, ReactNode } from 'react'
+import { useCallback, useContext, useMemo, useRef } from 'react'
 
 import { ColumnWidthsContext } from '../../contexts/ColumnWidthsContext.js'
-import { ResolvedValue } from '../../helpers/dataframe/index.js'
+import type { ResolvedValue } from '../../helpers/dataframe/index.js'
 import { useCellFocus } from '../../hooks/useCellFocus.js'
 import { useOnCopy } from '../../hooks/useOnCopyToClipboard.js'
 
@@ -53,7 +54,7 @@ export default function Cell({ cell, onDoubleClickCell, onMouseDownCell, onKeyDo
     return stringify(cell?.value)
   }, [stringify, cell])
   const title = useMemo(() => {
-    if (str === undefined ) {
+    if (str === undefined) {
       return undefined
     }
     if (str.length > 400) {
@@ -102,7 +103,8 @@ export default function Cell({ cell, onDoubleClickCell, onMouseDownCell, onKeyDo
       onKeyDown={handleKeyDown}
       style={columnStyle}
       className={className}
-      title={title}>
+      title={title}
+    >
       {content}
     </td>
   )

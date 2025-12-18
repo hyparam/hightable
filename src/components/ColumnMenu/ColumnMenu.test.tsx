@@ -91,14 +91,14 @@ describe('ColumnMenu', () => {
 
     it('shows correct sort direction text', () => {
       const { getByRole, rerender } = render(
-        <ColumnMenu {...defaultProps} sortable={true} direction='ascending' />
+        <ColumnMenu {...defaultProps} sortable={true} direction="ascending" />
       )
 
       expect(getByRole('menuitem').textContent).toBe('Ascending')
 
       rerender( // We need to set ContainerProvider, because rerender is not wrapped automatically
         <ContainerProvider>
-          <ColumnMenu {...defaultProps} sortable={true} direction='descending' />
+          <ColumnMenu {...defaultProps} sortable={true} direction="descending" />
         </ContainerProvider>
       )
       expect(getByRole('menuitem').textContent).toBe('Descending')
@@ -387,7 +387,7 @@ describe('ColumnMenu', () => {
 
     it('handles empty column name', () => {
       const { getByRole } = render(
-        <ColumnMenu {...defaultProps} columnName='' />
+        <ColumnMenu {...defaultProps} columnName="" />
       )
 
       const menu = getByRole('menu')

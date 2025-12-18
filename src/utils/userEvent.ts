@@ -1,6 +1,6 @@
 import { render as reactRender } from '@testing-library/react'
 import { userEvent } from '@testing-library/user-event'
-import { ReactNode } from 'react'
+import type { ReactNode } from 'react'
 
 // setup function
 export function render(jsx: ReactNode) {

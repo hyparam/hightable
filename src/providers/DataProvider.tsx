@@ -1,11 +1,12 @@
-import { ReactNode, useEffect, useMemo, useState } from 'react'
+import type { ReactNode } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import { DataContext } from '../contexts/DataContext.js'
-import { DataFrame, Obj } from '../helpers/dataframe/index.js'
+import type { DataFrame, Obj } from '../helpers/dataframe/index.js'
 
 interface DataProviderProps<M extends Obj, C extends Obj> {
-  data: DataFrame<M, C>,
-  maxRowNumber?: number,
+  data: DataFrame<M, C>
+  maxRowNumber?: number
   children: ReactNode
 }
 
@@ -51,7 +52,8 @@ export function DataProvider<M extends Obj, C extends Obj>({ children, data, max
       version,
       maxRowNumber,
       numRows,
-    }}>
+    }}
+    >
       {children}
     </DataContext.Provider>
   )

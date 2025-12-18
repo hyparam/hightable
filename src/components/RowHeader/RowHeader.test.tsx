@@ -10,7 +10,6 @@ const defaultProps = {
 }
 
 describe('RowHeader', () => {
-
   beforeEach(() => {
     vi.clearAllMocks()
   })
@@ -26,7 +25,8 @@ describe('RowHeader', () => {
             <RowHeader
               rowNumber={rowNumber}
               {...defaultProps}
-            ></RowHeader>
+            >
+            </RowHeader>
           </tr>
         </tbody>
       </table>
@@ -50,7 +50,8 @@ describe('RowHeader', () => {
           <tr>
             <RowHeader
               {...defaultProps}
-            ></RowHeader>
+            >
+            </RowHeader>
           </tr>
         </tbody>
       </table>

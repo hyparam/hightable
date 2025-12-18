@@ -26,7 +26,7 @@ describe('ColumnMenuButton', () => {
 
     it('renders with custom aria-label', () => {
       const { getByRole } = render(
-        <ColumnMenuButton {...defaultProps} aria-label='Custom menu' />
+        <ColumnMenuButton {...defaultProps} aria-label="Custom menu" />
       )
       const button = getByRole('button')
       expect(button.getAttribute('aria-label')).toBe('Custom menu')
@@ -50,14 +50,14 @@ describe('ColumnMenuButton', () => {
 
     it('renders with menuId and controls attribute', () => {
       const { getByRole } = render(
-        <ColumnMenuButton {...defaultProps} menuId='menu-123' />
+        <ColumnMenuButton {...defaultProps} menuId="menu-123" />
       )
       const button = getByRole('button')
       expect(button.getAttribute('aria-controls')).toBe('menu-123')
     })
 
     it('renders with custom icon', () => {
-      const customIcon = <span data-testid='custom-icon'>📋</span>
+      const customIcon = <span data-testid="custom-icon">📋</span>
       const { getByTestId } = render(
         <ColumnMenuButton {...defaultProps} icon={customIcon} />
       )
