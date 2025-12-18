@@ -18,7 +18,9 @@ interface CanvasSizeProviderProps {
 }
 
 export function CanvasSizeProvider({ children, numRows, rowHeight, headerHeight, minHeight, maxHeight }: CanvasSizeProviderProps) {
-  const height = numRows * rowHeight + (headerHeight ?? rowHeight)
+  // TODO(SL): find a better way to ensure the table is included fully in the canvas.
+  const hotFixMargin = 1 // for the borders
+  const height = numRows * rowHeight + (headerHeight ?? rowHeight) + hotFixMargin
   const canvasHeight = Math.min(Math.max(height, minHeight ?? DEFAULT_MIN_HEIGHT), maxHeight ?? DEFAULT_MAX_HEIGHT)
 
   return (

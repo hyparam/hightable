@@ -19,8 +19,8 @@ export function RowsSliceProvider({ children, numRows, headerHeight, rowHeight, 
   if (scrollTop < 0) {
     throw new Error(`Invalid scrollTop: ${scrollTop}. It should be a non-negative number.`)
   }
-  if (scrollTop > canvasHeight - viewportHeight) {
-    throw new Error(`Invalid scrollTop: ${scrollTop}. It should be less than or equal to canvasHeight - viewportHeight (${canvasHeight - viewportHeight}).`)
+  if (canvasHeight > viewportHeight && scrollTop > canvasHeight - viewportHeight) {
+    throw new Error(`Invalid scrollTop: ${scrollTop} when canvasHeight > viewportHeight. It should be less than or equal to canvasHeight - viewportHeight (${canvasHeight - viewportHeight}, canvasHeight: ${canvasHeight}, viewportHeight: ${viewportHeight}).`)
   }
 
   const virtualCanvasHeight = headerHeight + numRows * rowHeight

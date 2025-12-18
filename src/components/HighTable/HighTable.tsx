@@ -16,6 +16,7 @@ import type { DataFrame } from '../../helpers/dataframe/index.js'
 import type { Selection } from '../../helpers/selection.js'
 import type { OrderBy } from '../../helpers/sort.js'
 import styles from '../../HighTable.module.css'
+import { CanvasSizeProvider } from '../../providers/CanvasSizeProvider.js'
 import { CellNavigationProvider } from '../../providers/CellNavigationProvider.js'
 import { ColumnParametersProvider } from '../../providers/ColumnParametersProvider.js'
 import { ColumnVisibilityStatesProvider, type MaybeHiddenColumn } from '../../providers/ColumnVisibilityStatesProvider.js'
@@ -109,32 +110,31 @@ function HighTableData(props: PropsData) {
   return (
     <PortalContainerProvider>
       <ViewportProvider>
-        {/* TODO(SL): re-enable later, for now, the default context gives a constant height of 10K pixels
-          <CanvasSizeProvider numRows={numRows} headerHeight={headerHeight} rowHeight={rowHeight}> */}
-        <TableCornerProvider>
-          <RowsSliceProvider numRows={numRows} headerHeight={headerHeight} rowHeight={rowHeight} padding={props.padding ?? defaultPadding}>
-            {/* Provide the column configuration to the table */}
-            <ColumnParametersProvider columnConfiguration={props.columnConfiguration} columnDescriptors={data.columnDescriptors}>
-              {/* Create a new set of widths if the data has changed, but keep it if only the number of rows changed */}
-              <ColumnWidthsProvider key={cacheKey ?? key} localStorageKey={cacheKey ? `${cacheKey}${columnWidthsSuffix}` : undefined} numColumns={data.columnDescriptors.length}>
-                {/* Create a new set of hidden columns if the data has changed, but keep it if only the number of rows changed */}
-                <ColumnVisibilityStatesProvider key={cacheKey ?? key} localStorageKey={cacheKey ? `${cacheKey}${columnVisibilityStatesSuffix}` : undefined} columnNames={columnNames} initialVisibilityStates={initialVisibilityStates} onColumnsVisibilityChange={onColumnsVisibilityChange}>
-                  {/* Create a new context if the dataframe changes, to flush the cache (ranks and indexes) */}
-                  <OrderByProvider key={key} orderBy={orderBy} onOrderByChange={onOrderByChange}>
-                    {/* Create a new selection context if the dataframe has changed */}
-                    <SelectionProvider key={key} selection={selection} onSelectionChange={onSelectionChange} data={data} numRows={numRows} onError={onError}>
-                      {/* Create a new navigation context if the dataframe has changed, because the focused cell might not exist anymore */}
-                      <CellNavigationProvider key={key} colCount={data.columnDescriptors.length + 1} rowCount={numRows + 1} rowPadding={props.padding ?? defaultPadding}>
-                        <ScrollContainer data={data} numRows={numRows} version={version} {...props} maxRowNumber={maxRowNumber} />
-                      </CellNavigationProvider>
-                    </SelectionProvider>
-                  </OrderByProvider>
-                </ColumnVisibilityStatesProvider>
-              </ColumnWidthsProvider>
-            </ColumnParametersProvider>
-          </RowsSliceProvider>
-        </TableCornerProvider>
-        {/* </CanvasSizeProvider> */}
+        <CanvasSizeProvider numRows={numRows} headerHeight={headerHeight} rowHeight={rowHeight}>
+          <TableCornerProvider>
+            <RowsSliceProvider numRows={numRows} headerHeight={headerHeight} rowHeight={rowHeight} padding={props.padding ?? defaultPadding}>
+              {/* Provide the column configuration to the table */}
+              <ColumnParametersProvider columnConfiguration={props.columnConfiguration} columnDescriptors={data.columnDescriptors}>
+                {/* Create a new set of widths if the data has changed, but keep it if only the number of rows changed */}
+                <ColumnWidthsProvider key={cacheKey ?? key} localStorageKey={cacheKey ? `${cacheKey}${columnWidthsSuffix}` : undefined} numColumns={data.columnDescriptors.length}>
+                  {/* Create a new set of hidden columns if the data has changed, but keep it if only the number of rows changed */}
+                  <ColumnVisibilityStatesProvider key={cacheKey ?? key} localStorageKey={cacheKey ? `${cacheKey}${columnVisibilityStatesSuffix}` : undefined} columnNames={columnNames} initialVisibilityStates={initialVisibilityStates} onColumnsVisibilityChange={onColumnsVisibilityChange}>
+                    {/* Create a new context if the dataframe changes, to flush the cache (ranks and indexes) */}
+                    <OrderByProvider key={key} orderBy={orderBy} onOrderByChange={onOrderByChange}>
+                      {/* Create a new selection context if the dataframe has changed */}
+                      <SelectionProvider key={key} selection={selection} onSelectionChange={onSelectionChange} data={data} numRows={numRows} onError={onError}>
+                        {/* Create a new navigation context if the dataframe has changed, because the focused cell might not exist anymore */}
+                        <CellNavigationProvider key={key} colCount={data.columnDescriptors.length + 1} rowCount={numRows + 1} rowPadding={props.padding ?? defaultPadding}>
+                          <ScrollContainer data={data} numRows={numRows} version={version} {...props} maxRowNumber={maxRowNumber} />
+                        </CellNavigationProvider>
+                      </SelectionProvider>
+                    </OrderByProvider>
+                  </ColumnVisibilityStatesProvider>
+                </ColumnWidthsProvider>
+              </ColumnParametersProvider>
+            </RowsSliceProvider>
+          </TableCornerProvider>
+        </CanvasSizeProvider>
       </ViewportProvider>
     </PortalContainerProvider>
   )

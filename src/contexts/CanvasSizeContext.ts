@@ -12,7 +12,7 @@ interface CanvasSizeContextType {
 }
 
 // TODO(SL): make min and max height different constants. For now, they are the same, to reduce the moving parts in the app.
-export const DEFAULT_MIN_HEIGHT = 10_000
+export const DEFAULT_MIN_HEIGHT = 0
 export const DEFAULT_MAX_HEIGHT = 10_000
 
 export const defaultCanvasSizeContext: CanvasSizeContextType = {
