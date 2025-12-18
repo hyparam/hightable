@@ -14,7 +14,11 @@ interface RowsSliceProviderProps {
 
 export function RowsSliceProvider({ children, numRows, headerHeight, rowHeight, padding }: RowsSliceProviderProps) {
   const { canvasHeight } = useContext(CanvasSizeContext)
-  const { viewportHeight, scrollTop, instantScrollTo } = useContext(ViewportContext)
+  const { viewportHeight: maybeViewportHeight, scrollTop: maybeScrollTop, instantScrollTo } = useContext(ViewportContext)
+
+  // TODO(SL): should we do something else when these values are undefined?
+  const viewportHeight = maybeViewportHeight ?? 0
+  const scrollTop = maybeScrollTop ?? 0
 
   if (scrollTop < 0) {
     throw new Error(`Invalid scrollTop: ${scrollTop}. It should be a non-negative number.`)
