@@ -1,8 +1,8 @@
 import { type ReactNode, useCallback, useContext, useState } from 'react'
 
-import { CanvasSizeContext } from '../contexts/CanvasSizeContext'
-import { defaultRowsSliceContext, RowsSliceContext } from '../contexts/RowsSliceContext'
-import { ViewportContext } from '../contexts/ViewportContext'
+import { CanvasSizeContext } from '../contexts/CanvasSizeContext.js'
+import { defaultRowsSliceContext, RowsSliceContext } from '../contexts/RowsSliceContext.js'
+import { ViewportContext } from '../contexts/ViewportContext.js'
 
 interface RowsSliceProviderProps {
   children: ReactNode
@@ -90,10 +90,10 @@ export function RowsSliceProvider({ children, numRows, headerHeight, rowHeight, 
   const firstVisibleRow = isInHeader
     ? 0
     : Math.max(0,
-      Math.min(numRows - 1,
-        Math.floor((virtualScrollTop - headerHeight) / rowHeight)
+        Math.min(numRows - 1,
+          Math.floor((virtualScrollTop - headerHeight) / rowHeight)
+        )
       )
-    )
   // hidden pixels in the first visible row, or header
   const hiddenPixelsBefore = isInHeader
     ? virtualScrollTop
@@ -120,8 +120,9 @@ export function RowsSliceProvider({ children, numRows, headerHeight, rowHeight, 
 
   // f. first data row and number of data rows
   const firstDataRow = firstVisibleRow - previousRows
-  const numDataRows = numRows === 0 ? 0 :
-    previousRows + followingRows + lastVisibleRow - firstVisibleRow + 1
+  const numDataRows = numRows === 0
+    ? 0
+    : previousRows + followingRows + lastVisibleRow - firstVisibleRow + 1
 
   /**
    * Programmatically scroll to a specific row if needed.
@@ -215,7 +216,8 @@ export function RowsSliceProvider({ children, numRows, headerHeight, rowHeight, 
     if (hiddenPixelsBefore < 0 || hiddenPixelsBefore >= headerHeight) {
       throw new Error(`Invalid hidden pixels before: ${hiddenPixelsBefore}. It should be positive and less than ${headerHeight} because the first hidden row is the header.`)
     }
-  } else {
+  }
+  else {
     if (hiddenPixelsBefore < 0 || hiddenPixelsBefore >= rowHeight) {
       throw new Error(`Invalid hidden pixels before: ${hiddenPixelsBefore}. It should be positive and less than ${rowHeight}.`)
     }
@@ -233,7 +235,7 @@ export function RowsSliceProvider({ children, numRows, headerHeight, rowHeight, 
     throw new Error(`Invalid following rows: ${followingRows}. It should be between 0 and min(padding (${padding}), numRows (${numRows})).`)
   }
 
-  if (firstDataRow < 0 || numRows > 0 && firstDataRow >= numRows) {
+  if (firstDataRow < 0 || (numRows > 0 && firstDataRow >= numRows)) {
     throw new Error(`Invalid first data row: ${firstDataRow}. It should be between 0 and ${numRows - 1}.`)
   }
   if (numDataRows < 0 || firstDataRow + numDataRows > numRows) {

@@ -212,9 +212,11 @@ function createLargeData(): DataFrame {
   const columnDescriptors = ['ID', 'Value'].map(name => ({ name }))
   function getCell({ row, column }: { row: number, column: string }): ResolvedValue | undefined {
     return {
-      value: column === 'ID' ? `row ${row}` :
-        column === 'Value' ? Math.floor(100 * random(135 + row)) :
-          undefined,
+      value: column === 'ID'
+        ? `row ${row}`
+        : column === 'Value'
+          ? Math.floor(100 * random(135 + row))
+          : undefined,
     }
   }
   const getRowNumber = createGetRowNumber({ numRows })
@@ -226,9 +228,11 @@ function createSmallData(): DataFrame {
   const columnDescriptors = ['ID', 'Value'].map(name => ({ name }))
   function getCell({ row, column }: { row: number, column: string }): ResolvedValue | undefined {
     return {
-      value: column === 'ID' ? `row ${row}` :
-        column === 'Value' ? Math.floor(100 * random(135 + row)) :
-          undefined,
+      value: column === 'ID'
+        ? `row ${row}`
+        : column === 'Value'
+          ? Math.floor(100 * random(135 + row))
+          : undefined,
     }
   }
   const getRowNumber = createGetRowNumber({ numRows })

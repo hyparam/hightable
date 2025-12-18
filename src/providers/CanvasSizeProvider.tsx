@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 
-import { CanvasSizeContext, DEFAULT_MAX_HEIGHT, DEFAULT_MIN_HEIGHT } from '../contexts/CanvasSizeContext'
+import { CanvasSizeContext, DEFAULT_MAX_HEIGHT, DEFAULT_MIN_HEIGHT } from '../contexts/CanvasSizeContext.js'
 
 interface CanvasSizeProviderProps {
   /* children components */
