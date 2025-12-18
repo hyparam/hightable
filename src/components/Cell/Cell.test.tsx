@@ -46,6 +46,7 @@ describe('Cell', () => {
               renderCellContent={({ cell }) => (
                 <span>
                   Value:
+                  {' '}
                   {String(cell?.value)}
                 </span>
               )}
