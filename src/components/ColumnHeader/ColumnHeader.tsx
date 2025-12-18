@@ -90,17 +90,13 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
   const description = useMemo(() => {
     if (!sortable) {
       return `The column ${columnName} cannot be sorted`
-    }
-    else if (orderByIndex !== undefined && orderByIndex > 0) {
+    } else if (orderByIndex !== undefined && orderByIndex > 0) {
       return `Press to sort by ${columnName} in ascending order`
-    }
-    else if (direction === 'ascending') {
+    } else if (direction === 'ascending') {
       return `Press to sort by ${columnName} in descending order`
-    }
-    else if (direction === 'descending') {
+    } else if (direction === 'descending') {
       return `Press to stop sorting by ${columnName}`
-    }
-    else {
+    } else {
       return `Press to sort by ${columnName} in ascending order`
     }
   }, [sortable, columnName, direction, orderByIndex])

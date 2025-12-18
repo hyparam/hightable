@@ -23,14 +23,11 @@ function createData(): DataFrame<Obj, { type: string }> {
     const count = numRows - row
     if (column === 'ID') {
       return { value: `row ${row}` }
-    }
-    else if (column === 'Count') {
+    } else if (column === 'Count') {
       return { value: count }
-    }
-    else if (column === 'Double') {
+    } else if (column === 'Double') {
       return { value: count * 2 }
-    }
-    else if (column === 'Triple') {
+    } else if (column === 'Triple') {
       return { value: count * 3 }
     }
   }
@@ -46,8 +43,7 @@ function createOtherData(): DataFrame<{ description: string }> {
     validateGetCellParams({ column, row, orderBy, data: { numRows, columnDescriptors } })
     if (column === 'ID') {
       return { value: `other ${row}` }
-    }
-    else if (column === 'Count') {
+    } else if (column === 'Count') {
       return { value: 1000 - row }
     }
   }
@@ -182,8 +178,7 @@ describe('in controlled selection state (selection and onSelection props), ', ()
 
     if (kind === 'click') {
       await user.click(rowHeader)
-    }
-    else {
+    } else {
       // move the focus to the row header
       await user.click(cell)
       await user.keyboard('{Home}')
@@ -215,8 +210,7 @@ describe('in controlled selection state (selection and onSelection props), ', ()
 
     if (kind === 'click') {
       await user.click(rowHeader)
-    }
-    else {
+    } else {
       // move the focus to the row header
       const dataCell = row.querySelector('td')
       if (!dataCell) throw new Error('dataCell is null')
@@ -339,8 +333,7 @@ describe('in controlled selection state, read-only (selection prop), ', () => {
 
     if (kind === 'click') {
       await user.click(rowHeader)
-    }
-    else {
+    } else {
       // move the focus to the row header
       await user.click(cell)
       await user.keyboard('{Home}')

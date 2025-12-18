@@ -357,8 +357,7 @@ function TableSlice({
     return ({ shiftKey }: { shiftKey: boolean }) => {
       if (shiftKey) {
         toggleRangeToRowNumber({ row, rowNumber })
-      }
-      else {
+      } else {
         toggleRowNumber({ rowNumber })
       }
     }

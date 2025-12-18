@@ -27,14 +27,11 @@ export function createData(): DataFrame<Obj, { type: string }> {
     const count = numRows - row
     if (column === 'ID') {
       return { value: `row ${row}` }
-    }
-    else if (column === 'Count') {
+    } else if (column === 'Count') {
       return { value: count }
-    }
-    else if (column === 'Double') {
+    } else if (column === 'Double') {
       return { value: count * 2 }
-    }
-    else if (column === 'Triple') {
+    } else if (column === 'Triple') {
       return { value: count * 3 }
     }
   }
@@ -50,8 +47,7 @@ export function createOtherData(): DataFrame<{ description: string }> {
     validateGetCellParams({ column, row, orderBy, data: { numRows, columnDescriptors } })
     if (column === 'ID') {
       return { value: `other ${row}` }
-    }
-    else if (column === 'Count') {
+    } else if (column === 'Count') {
       return { value: 1000 - row }
     }
   }
@@ -72,11 +68,9 @@ function createMockData(): MockedUnsortableDataFrame {
     }
     if (column === 'ID') {
       return { value: row }
-    }
-    else if (column === 'Name') {
+    } else if (column === 'Name') {
       return { value: `Name ${row}` }
-    }
-    else if (column === 'Age') {
+    } else if (column === 'Age') {
       return { value: 20 + row % 50 }
     }
     throw new Error(`Unknown column: ${column}`)
@@ -200,11 +194,9 @@ describe('with async data, HighTable', () => {
       }
       if (column === 'ID') {
         return { value: `async ${row}` }
-      }
-      else if (column === 'Name') {
+      } else if (column === 'Name') {
         return { value: `Async Name ${row}` }
-      }
-      else if (column === 'Age') {
+      } else if (column === 'Age') {
         return { value: 20 + row % 50 }
       }
     }

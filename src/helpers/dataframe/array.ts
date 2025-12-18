@@ -30,8 +30,7 @@ export function arrayDataFrame<M extends Obj, C extends Obj>(
       const result = Reflect.set(target, prop, value)
       if (prop === 'length') {
         eventTarget.dispatchEvent(new CustomEvent('numrowschange'))
-      }
-      else {
+      } else {
         eventTarget.dispatchEvent(new CustomEvent('update'))
       }
       return result

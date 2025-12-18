@@ -36,54 +36,42 @@ export function CellNavigationProvider({ colCount, rowCount, rowPadding, childre
     if (key === 'ArrowRight') {
       if (ctrlKey) {
         setColIndex(colCount)
-      }
-      else {
+      } else {
         setColIndex(prev => prev < colCount ? prev + 1 : prev)
       }
-    }
-    else if (key === 'ArrowLeft') {
+    } else if (key === 'ArrowLeft') {
       if (ctrlKey) {
         setColIndex(1)
-      }
-      else {
+      } else {
         setColIndex(prev => prev > 1 ? prev - 1 : prev)
       }
-    }
-    else if (key === 'ArrowDown') {
+    } else if (key === 'ArrowDown') {
       if (ctrlKey) {
         setRowIndex(rowCount)
-      }
-      else {
+      } else {
         setRowIndex(prev => prev < rowCount ? prev + 1 : prev)
       }
-    }
-    else if (key === 'ArrowUp') {
+    } else if (key === 'ArrowUp') {
       if (ctrlKey) {
         setRowIndex(1)
-      }
-      else {
+      } else {
         setRowIndex(prev => prev > 1 ? prev - 1 : prev)
       }
-    }
-    else if (key === 'Home') {
+    } else if (key === 'Home') {
       if (ctrlKey) {
         setRowIndex(1)
       }
       setColIndex(1)
-    }
-    else if (key === 'End') {
+    } else if (key === 'End') {
       if (ctrlKey) {
         setRowIndex(rowCount)
       }
       setColIndex(colCount)
-    }
-    else if (key === 'PageDown') {
+    } else if (key === 'PageDown') {
       setRowIndex(prev => prev + rowPadding <= rowCount ? prev + rowPadding : rowCount)
-    }
-    else if (key === 'PageUp') {
+    } else if (key === 'PageUp') {
       setRowIndex(prev => prev - rowPadding >= 1 ? prev - rowPadding : 1)
-    }
-    else if (key !== ' ') {
+    } else if (key !== ' ') {
       // if the key is not one of the above, do not handle it
       // special case: no action is associated with the Space key, but it's captured
       // anyway to prevent the default action (scrolling the page) and stay in navigation mode

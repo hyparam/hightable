@@ -286,8 +286,7 @@ function adjustWidths({
       const array = columnsByWidth.get(value)
       if (array) {
         array.push({ index, minWidth })
-      }
-      else {
+      } else {
         columnsByWidth.set(value, [{ index, minWidth }])
       }
     }
@@ -350,8 +349,7 @@ function adjustWidths({
     if (secondLargestGroup?.width === minWidth) {
       // merge
       orderedWidthGroups.push({ width: minWidth, columns: [...secondLargestGroup.columns, ...remainingColumns] })
-    }
-    else {
+    } else {
       // add the second largest group back (if any)
       if (secondLargestGroup !== undefined) {
         orderedWidthGroups.push(secondLargestGroup)

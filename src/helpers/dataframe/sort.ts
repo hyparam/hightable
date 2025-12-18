@@ -153,8 +153,7 @@ export function sortableDataFrame<M extends Obj, C extends Obj>(
       if (columns && columns.length > 0 && data.fetch) {
         await fetchFromIndexes({ columns, signal, indexes: indexes.slice(rowStart, rowEnd), fetch: data.fetch })
       }
-    }
-    finally {
+    } finally {
       data.eventTarget?.removeEventListener('resolve', callback)
     }
   }
@@ -182,12 +181,10 @@ async function fetchFromIndexes({ columns, indexes, signal, fetch }: { columns?:
     if (range === undefined) {
       // First iteration
       range = [row, row + 1]
-    }
-    else if (range[1] === row) {
+    } else if (range[1] === row) {
       // Consecutive row, extend the range.
       range[1] = row + 1
-    }
-    else {
+    } else {
       // The row is not consecutive, fetch the previous range and start a new one.
       promises.push(fetch({ rowStart: range[0], rowEnd: range[1], columns, signal }))
       range = [row, row + 1]
@@ -243,8 +240,7 @@ async function fetchOrderByWithRanks<M extends Obj, C extends Obj>(
     const columnRanks = ranksByColumn?.get(column)
     if (columnRanks) {
       orderByWithRanks[i] = { direction, ranks: columnRanks }
-    }
-    else {
+    } else {
       promises.push(
         (
           data.fetch

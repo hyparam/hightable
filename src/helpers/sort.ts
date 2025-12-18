@@ -43,11 +43,9 @@ export function partitionOrderBy(orderBy: OrderBy, column: string): { prefix: Or
   for (const current of orderBy) {
     if (item) {
       suffix.push(current)
-    }
-    else if (current.column === column) {
+    } else if (current.column === column) {
       item = current
-    }
-    else {
+    } else {
       prefix.push(current)
     }
   }
@@ -61,8 +59,7 @@ export function toggleColumn(column: string, orderBy: OrderBy): OrderBy {
     if (item.direction === 'ascending') {
       // ascending -> descending
       return [{ column, direction: 'descending' }, ...suffix]
-    }
-    else {
+    } else {
       // descending -> none
       return [...suffix]
     }
@@ -96,8 +93,7 @@ export function computeRanks(values: any[]): number[] {
   for (const [rank, { value, index }] of sortedValuesWithIndex.entries()) {
     if (value === lastValue) {
       ranks[index] = lastRank
-    }
-    else {
+    } else {
       ranks[index] = rank
       lastRank = rank
       lastValue = value
