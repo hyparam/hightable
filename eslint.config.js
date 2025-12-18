@@ -27,8 +27,7 @@ export default defineConfig([
     rules: {
       eqeqeq: 'error',
       'func-style': ['error', 'declaration', { allowTypeAnnotation: true }],
-      'prefer-destructuring': ['error', { object: true, array: false },
-      ],
+      'prefer-destructuring': ['error', { object: true, array: false }],
     },
   },
   {
