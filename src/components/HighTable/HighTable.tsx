@@ -1,19 +1,19 @@
-import type { CSSProperties, KeyboardEvent, MouseEvent, ReactNode, RefObject } from 'react'
-import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import type { CSSProperties, KeyboardEvent, MouseEvent, ReactNode } from 'react'
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react'
 
 import { CellNavigationContext } from '../../contexts/CellNavigationContext.js'
 import { type ColumnParameters, ColumnParametersContext } from '../../contexts/ColumnParametersContext.js'
 import { ColumnVisibilityStatesContext } from '../../contexts/ColumnVisibilityStatesContext.js'
-import { ColumnWidthsContext } from '../../contexts/ColumnWidthsContext.js'
 import { DataContext } from '../../contexts/DataContext.js'
 import { OrderByContext } from '../../contexts/OrderByContext.js'
 import { PortalContainerContext } from '../../contexts/PortalContainerContext.js'
 import { SelectionContext } from '../../contexts/SelectionContext.js'
+import { ViewportContext } from '../../contexts/ViewportContext.js'
 import type { ColumnConfiguration } from '../../helpers/columnConfiguration.js'
 import type { DataFrame } from '../../helpers/dataframe/index.js'
 import type { Selection } from '../../helpers/selection.js'
 import type { OrderBy } from '../../helpers/sort.js'
-import { getClientWidth, getOffsetWidth } from '../../helpers/width.js'
+import styles from '../../HighTable.module.css'
 import { CellNavigationProvider } from '../../providers/CellNavigationProvider.js'
 import { ColumnParametersProvider } from '../../providers/ColumnParametersProvider.js'
 import { ColumnVisibilityStatesProvider, type MaybeHiddenColumn } from '../../providers/ColumnVisibilityStatesProvider.js'
@@ -22,14 +22,14 @@ import { DataProvider } from '../../providers/DataProvider.js'
 import { OrderByProvider } from '../../providers/OrderByProvider.js'
 import { PortalContainerProvider } from '../../providers/PortalContainerProvider.js'
 import { SelectionProvider } from '../../providers/SelectionProvider.js'
+import { TableCornerProvider } from '../../providers/TableCornerProvider.js'
+import { ViewportProvider } from '../../providers/ViewportProvider.js'
 import { stringify as stringifyDefault } from '../../utils/stringify.js'
 import Cell, { type CellContentProps } from '../Cell/Cell.js'
 import Row from '../Row/Row.js'
 import RowHeader from '../RowHeader/RowHeader.js'
 import TableCorner from '../TableCorner/TableCorner.js'
 import TableHeader from '../TableHeader/TableHeader.js'
-export { type CellContentProps } from '../Cell/Cell.js'
-import styles from '../../HighTable.module.css'
 
 const rowHeight = 33 // row height px
 
@@ -104,28 +104,31 @@ function HighTableData(props: PropsData) {
   }, [props.columnConfiguration, data.columnDescriptors])
 
   return (
-    /* Provide the column configuration to the table */
-    <ColumnParametersProvider columnConfiguration={props.columnConfiguration} columnDescriptors={data.columnDescriptors}>
-      {/* Create a new set of widths if the data has changed, but keep it if only the number of rows changed */}
-      <ColumnWidthsProvider key={cacheKey ?? key} localStorageKey={cacheKey ? `${cacheKey}${columnWidthsSuffix}` : undefined} numColumns={data.columnDescriptors.length}>
-        {/* Create a new set of hidden columns if the data has changed, but keep it if only the number of rows changed */}
-        <ColumnVisibilityStatesProvider key={cacheKey ?? key} localStorageKey={cacheKey ? `${cacheKey}${columnVisibilityStatesSuffix}` : undefined} columnNames={columnNames} initialVisibilityStates={initialVisibilityStates} onColumnsVisibilityChange={onColumnsVisibilityChange}>
-          {/* Create a new context if the dataframe changes, to flush the cache (ranks and indexes) */}
-          <OrderByProvider key={key} orderBy={orderBy} onOrderByChange={onOrderByChange}>
-            {/* Create a new selection context if the dataframe has changed */}
-            <SelectionProvider key={key} selection={selection} onSelectionChange={onSelectionChange} data={data} numRows={numRows} onError={onError}>
-              {/* Create a new navigation context if the dataframe has changed, because the focused cell might not exist anymore */}
-              <CellNavigationProvider key={key} colCount={data.columnDescriptors.length + 1} rowCount={numRows + 1} rowPadding={props.padding ?? defaultPadding}>
-                {/* TODO(SL): move as the outmost provider? */}
-                <PortalContainerProvider>
-                  <ScrollContainer data={data} numRows={numRows} version={version} {...props} maxRowNumber={maxRowNumber} />
-                </PortalContainerProvider>
-              </CellNavigationProvider>
-            </SelectionProvider>
-          </OrderByProvider>
-        </ColumnVisibilityStatesProvider>
-      </ColumnWidthsProvider>
-    </ColumnParametersProvider>
+    <PortalContainerProvider>
+      <ViewportProvider>
+        <TableCornerProvider>
+          {/* Provide the column configuration to the table */}
+          <ColumnParametersProvider columnConfiguration={props.columnConfiguration} columnDescriptors={data.columnDescriptors}>
+            {/* Create a new set of widths if the data has changed, but keep it if only the number of rows changed */}
+            <ColumnWidthsProvider key={cacheKey ?? key} localStorageKey={cacheKey ? `${cacheKey}${columnWidthsSuffix}` : undefined} numColumns={data.columnDescriptors.length}>
+              {/* Create a new set of hidden columns if the data has changed, but keep it if only the number of rows changed */}
+              <ColumnVisibilityStatesProvider key={cacheKey ?? key} localStorageKey={cacheKey ? `${cacheKey}${columnVisibilityStatesSuffix}` : undefined} columnNames={columnNames} initialVisibilityStates={initialVisibilityStates} onColumnsVisibilityChange={onColumnsVisibilityChange}>
+                {/* Create a new context if the dataframe changes, to flush the cache (ranks and indexes) */}
+                <OrderByProvider key={key} orderBy={orderBy} onOrderByChange={onOrderByChange}>
+                  {/* Create a new selection context if the dataframe has changed */}
+                  <SelectionProvider key={key} selection={selection} onSelectionChange={onSelectionChange} data={data} numRows={numRows} onError={onError}>
+                    {/* Create a new navigation context if the dataframe has changed, because the focused cell might not exist anymore */}
+                    <CellNavigationProvider key={key} colCount={data.columnDescriptors.length + 1} rowCount={numRows + 1} rowPadding={props.padding ?? defaultPadding}>
+                      <ScrollContainer data={data} numRows={numRows} version={version} {...props} maxRowNumber={maxRowNumber} />
+                    </CellNavigationProvider>
+                  </SelectionProvider>
+                </OrderByProvider>
+              </ColumnVisibilityStatesProvider>
+            </ColumnWidthsProvider>
+          </ColumnParametersProvider>
+        </TableCornerProvider>
+      </ViewportProvider>
+    </PortalContainerProvider>
   )
 }
 
@@ -136,11 +139,10 @@ type ScrollContainerProps = Omit<PropsData, 'orderBy' | 'onOrderByChange' | 'sel
   data: Omit<DataFrame, 'numRows'> // data frame without numRows (provided separately)
 }
 
-type TablePartProps = Omit<ScrollContainerProps, 'maxRowNumber' | 'styled' | 'className' | 'overscan' | 'onerror'> & {
+type TableSliceProps = Omit<ScrollContainerProps, 'maxRowNumber' | 'styled' | 'className' | 'overscan' | 'onerror'> & {
   offsetTop: number // offset top to apply to the table
   rowsRange: RowsRange // range of rows to render
   columnsParameters: ColumnParameters[] // parameters of the columns to render
-  tableCornerRef: RefObject<Pick<HTMLTableCellElement, 'offsetWidth'> | null> // ref to the table corner element
 }
 
 interface RowsRange {
@@ -151,7 +153,7 @@ interface RowsRange {
 /**
  * Container providing the scrollable area for the table.
  */
-export function ScrollContainer({
+function ScrollContainer({
   data,
   numRows,
   overscan = defaultOverscan,
@@ -170,13 +172,10 @@ export function ScrollContainer({
 }: ScrollContainerProps) {
   const { containerRef } = useContext(PortalContainerContext)
   const { shouldScroll, setShouldScroll, onScrollKeyDown, cellPosition } = useContext(CellNavigationContext)
-  const { setAvailableWidth } = useContext(ColumnWidthsContext)
   const { orderBy } = useContext(OrderByContext)
   const allColumnsParameters = useContext(ColumnParametersContext)
   const { isHiddenColumn } = useContext(ColumnVisibilityStatesContext)
-
-  const scrollRef = useRef<HTMLDivElement | null>(null)
-  const tableCornerRef = useRef<Pick<HTMLTableCellElement, 'offsetWidth'> | null>(null)
+  const { viewportRef: scrollRef, viewportHeight } = useContext(ViewportContext)
 
   const columnsParameters = useMemo(() => {
     return allColumnsParameters.filter((col) => {
@@ -223,7 +222,7 @@ export function ScrollContainer({
       // scroll to the cell
       scroller.scrollTo({ top: nextScrollTop, behavior: 'auto' })
     }
-  }, [cellPosition, shouldScroll, rowsRange, setShouldScroll])
+  }, [cellPosition, shouldScroll, rowsRange, setShouldScroll, scrollRef])
 
   // handle scrolling and component resizing
   useEffect(() => {
@@ -237,8 +236,7 @@ export function ScrollContainer({
       abortController?.abort()
       abortController = new AbortController()
       // view height (0 is not allowed - the syntax is verbose, but makes it clear)
-      const currentClientHeight = scrollRef.current?.clientHeight
-      const clientHeight = currentClientHeight === undefined || currentClientHeight === 0 ? 100 : currentClientHeight
+      const clientHeight = viewportHeight === undefined || viewportHeight === 0 ? 100 : viewportHeight
       // scroll position
       const scrollTop = scrollRef.current?.scrollTop ?? 0
 
@@ -270,52 +268,23 @@ export function ScrollContainer({
       }
     }
 
-    /**
-     * Report the scroller width
-     */
-    function reportWidth() {
-      if (scrollRef.current && tableCornerRef.current) {
-        // we use the scrollRef client width, because we're interested in the content area
-        const tableWidth = getClientWidth(scrollRef.current)
-        const leftColumnWidth = getOffsetWidth(tableCornerRef.current)
-        setAvailableWidth?.(tableWidth - leftColumnWidth)
-      }
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    const resizeObserver = window.ResizeObserver && new window.ResizeObserver((entries) => {
-      for (const entry of entries) {
-        if (entry.target === scrollRef.current) {
-          handleScroll()
-          reportWidth()
-        }
-      }
-    })
-
     // run once
     handleScroll()
-    reportWidth()
 
     // listeners
     const scroller = scrollRef.current
 
     if (scroller) {
       scroller.addEventListener('scroll', handleScroll)
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-      resizeObserver?.observe(scroller)
     }
 
     return () => {
       abortController?.abort() // cancel the fetches if any
       if (scroller) {
         scroller.removeEventListener('scroll', handleScroll)
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-        resizeObserver?.unobserve(scroller)
       }
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-      resizeObserver?.disconnect()
     }
-  }, [numRows, overscan, padding, scrollHeight, setAvailableWidth, data, orderBy, onError, columnsParameters])
+  }, [numRows, overscan, padding, scrollHeight, data, orderBy, onError, columnsParameters, scrollRef, viewportHeight])
 
   const restrictedOnScrollKeyDown = useCallback((event: KeyboardEvent) => {
     if (event.target !== scrollRef.current) {
@@ -323,14 +292,14 @@ export function ScrollContainer({
       return
     }
     onScrollKeyDown?.(event)
-  }, [onScrollKeyDown])
+  }, [onScrollKeyDown, scrollRef])
 
   return (
     <div ref={containerRef} className={`${styles.hightable} ${styled ? styles.styled : ''} ${className}`} style={tableScrollStyle}>
       <div className={styles.topBorder} role="presentation"></div>
       <div className={styles.tableScroll} ref={scrollRef} role="group" aria-labelledby="caption" onKeyDown={restrictedOnScrollKeyDown} tabIndex={0}>
         <div style={{ height: `${scrollHeight}px` }}>
-          <TablePart
+          <TableSlice
             data={data}
             numRows={numRows}
             padding={padding}
@@ -344,7 +313,6 @@ export function ScrollContainer({
             offsetTop={offsetTop}
             rowsRange={rowsRange}
             columnsParameters={columnsParameters}
-            tableCornerRef={tableCornerRef}
           />
         </div>
       </div>
@@ -357,7 +325,7 @@ export function ScrollContainer({
 /**
  * Only the visible rows are fetched and rendered as HTML <tr> elements.
  */
-export function TablePart({
+function TableSlice({
   data,
   numRows,
   padding = defaultPadding,
@@ -371,8 +339,7 @@ export function TablePart({
   offsetTop,
   rowsRange,
   columnsParameters,
-  tableCornerRef,
-}: TablePartProps) {
+}: TableSliceProps) {
   // contexts
   const { onTableKeyDown: onNavigationTableKeyDown, focusFirstCell } = useContext(CellNavigationContext)
   const { orderBy, onOrderByChange } = useContext(OrderByContext)
@@ -462,7 +429,6 @@ export function TablePart({
             pendingSelectionGesture={pendingSelectionGesture}
             ariaColIndex={1}
             ariaRowIndex={1}
-            ref={tableCornerRef}
           />
           <TableHeader
             canMeasureColumn={slice.canMeasureColumn}

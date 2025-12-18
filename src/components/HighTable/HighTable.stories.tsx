@@ -10,7 +10,7 @@ import type { Fetch, ResolvedValue } from '../../helpers/dataframe/types.js'
 import type { Selection } from '../../helpers/selection.js'
 import type { OrderBy } from '../../helpers/sort.js'
 import { createEventTarget } from '../../helpers/typedEventTarget.js'
-import type { CellContentProps } from './HighTable.js'
+import type { CellContentProps } from '../Cell/Cell.js'
 import HighTable from './HighTable.js'
 
 function random(seed: number) {

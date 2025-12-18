@@ -10,6 +10,3 @@ export function cellStyle(width?: number) {
 export function getOffsetWidth(element: Pick<HTMLElement, 'offsetWidth'>): number {
   return element.offsetWidth
 }
-export function getClientWidth(element: Pick<HTMLElement, 'clientWidth'>): number {
-  return element.clientWidth
-}

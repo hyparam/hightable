@@ -504,7 +504,6 @@ describe('When sorted, HighTable', () => {
 
 const initialWidth = 62 // initial width of the columns, in pixels, above the default minimal width of 50px
 const getOffsetWidth = vi.fn(() => initialWidth)
-const getClientWidth = vi.fn(() => 1000) // used to get the width of the table - let's give space
 const columnWidthsSuffix = ':2:column:widths'
 const keyItem = `key${columnWidthsSuffix}`
 vi.mock(import('../../helpers/width.js'), async (importOriginal) => {
@@ -512,7 +511,6 @@ vi.mock(import('../../helpers/width.js'), async (importOriginal) => {
   return {
     ...actual,
     getOffsetWidth: () => getOffsetWidth(),
-    getClientWidth: () => getClientWidth(),
   }
 })
 describe('HighTable localstorage', () => {
@@ -527,7 +525,6 @@ describe('HighTable localstorage', () => {
   it('does not save anything in localstorage if no fixed widths', () => {
     localStorage.clear()
     render(<HighTable data={data} cacheKey="key" />)
-    expect(getClientWidth).toHaveBeenCalled()
     const json = localStorage.getItem(keyItem)
     expect(json).toEqual(null)
   })
