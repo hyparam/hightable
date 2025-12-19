@@ -5,15 +5,15 @@ import { CellNavigationContext } from '../../contexts/CellNavigationContext.js'
 import { DataContext } from '../../contexts/DataContext.js'
 import styles from '../../HighTable.module.css'
 import { rowHeight } from './constants.js'
-import type { HighTableSliceProps } from './HighTableSlice.js'
-import HighTableSlice from './HighTableSlice.js'
+import type { SliceProps } from './Slice.js'
+import Slice from './Slice.js'
 
 type Props = {
   setViewportWidth: (width: number) => void // callback to set the current viewport width
-} & HighTableSliceProps
-export type HighTableScrollerProps = HighTableSliceProps
+} & SliceProps
+export type ScrollerProps = SliceProps
 
-export default function HighTableScroller({ setViewportWidth, ...rest }: Props) {
+export default function Scroller({ setViewportWidth, ...rest }: Props) {
   // TODO(SL): replace with a callback function (https://react.dev/reference/react-dom/components/common#ref-callback)
   const viewportRef = useRef<HTMLDivElement>(null)
 
@@ -96,7 +96,7 @@ export default function HighTableScroller({ setViewportWidth, ...rest }: Props) 
   return (
     <div className={styles.tableScroll} ref={viewportRef} role="group" aria-labelledby="caption" onKeyDown={onKeyDown} tabIndex={0}>
       <div style={{ height: `${scrollHeight}px` }}>
-        <HighTableSlice
+        <Slice
           scrollTop={scrollTop}
           scrollHeight={scrollHeight}
           viewportHeight={viewportHeight}

@@ -1,5 +1,5 @@
 import type { KeyboardEvent, MouseEvent, ReactNode } from 'react'
-import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useContext, useEffect, useMemo, useRef } from 'react'
 
 import { CellNavigationContext } from '../../contexts/CellNavigationContext.js'
 import { ColumnParametersContext } from '../../contexts/ColumnParametersContext.js'
@@ -7,27 +7,17 @@ import { ColumnVisibilityStatesContext } from '../../contexts/ColumnVisibilitySt
 import { DataContext } from '../../contexts/DataContext.js'
 import { OrderByContext } from '../../contexts/OrderByContext.js'
 import { SelectionContext } from '../../contexts/SelectionContext.js'
-import type { DataFrame } from '../../helpers/dataframe/index.js'
 import { stringify as stringifyDefault } from '../../utils/stringify.js'
 import Cell, { type CellContentProps } from '../Cell/Cell.js'
 import Row from '../Row/Row.js'
 import RowHeader from '../RowHeader/RowHeader.js'
 import TableCorner from '../TableCorner/TableCorner.js'
 import TableHeader from '../TableHeader/TableHeader.js'
-import { rowHeight } from './constants.js'
+import { defaultOverscan, defaultPadding, rowHeight } from './constants.js'
 
-const defaultPadding = 20
-const defaultOverscan = 20
 const ariaOffset = 2 // 1-based index, +1 for the header
 
-type Props = {
-  scrollTop: number | undefined
-  scrollHeight: number | undefined
-  viewportHeight: number | undefined
-  scrollToTop: ((top: number) => void) | undefined
-} & HighTableSliceProps
-
-export interface HighTableSliceProps {
+export interface SliceProps {
   focus?: boolean // focus table on mount? (default true)
   overscan?: number // number of rows to fetch outside of the viewport
   padding?: number // number of padding rows to render outside of the viewport
@@ -40,46 +30,31 @@ export interface HighTableSliceProps {
   stringify?: (value: unknown) => string | undefined
 }
 
-export default function HighTableSlice(props: Props) {
-  const { data, version, numRows } = useContext(DataContext)
+type Props = {
+  scrollHeight: number | undefined
+  scrollTop: number | undefined
+  viewportHeight: number | undefined
+  scrollToTop: ((top: number) => void) | undefined
+} & SliceProps
 
-  return (
-    <ScrollContainer data={data} numRows={numRows} version={version} {...props} />
-  )
-}
-
-type ScrollContainerProps = Omit<Props, 'viewportWidth'> & {
-  version: number // version of the data frame, used to re-render the component when the data changes
-  numRows: number // number of rows in the data frame
-  data: Omit<DataFrame, 'numRows'> // data frame without numRows (provided separately)
-}
-
-interface RowsRange {
-  start: number // start index of the rows range (inclusive)
-  end: number // end index of the rows range (exclusive)
-}
-
-/**
- * Container providing the scrollable area for the table.
- */
-function ScrollContainer({
-  viewportHeight,
-  scrollHeight,
-  scrollTop,
-  scrollToTop,
-  data,
-  numRows,
+export default function Slice({
+  focus = true,
   overscan = defaultOverscan,
   padding = defaultPadding,
-  focus = true,
+  scrollHeight,
+  scrollTop,
+  viewportHeight,
   onDoubleClickCell,
-  onMouseDownCell,
-  onKeyDownCell,
   onError = console.error,
-  stringify = stringifyDefault,
-  version,
+  onKeyDownCell,
+  onMouseDownCell,
   renderCellContent,
-}: ScrollContainerProps) {
+  scrollToTop,
+  stringify = stringifyDefault,
+}: Props) {
+  const abortControllerRef = useRef<AbortController>(null)
+
+  const { data, version, numRows } = useContext(DataContext)
   const { shouldScroll, setShouldScroll, cellPosition } = useContext(CellNavigationContext)
   const allColumnsParameters = useContext(ColumnParametersContext)
   const { isHiddenColumn } = useContext(ColumnVisibilityStatesContext)
@@ -93,12 +68,38 @@ function ScrollContainer({
     })
   }, [allColumnsParameters, isHiddenColumn])
 
-  // local state
-  const [rowsRange, setRowsRange] = useState<RowsRange>({ start: 0, end: 0 })
+  const rowsRange = useMemo(() => {
+    if (
+      // viewport not ready yet
+      scrollTop === undefined
+      || scrollHeight === undefined
+      || viewportHeight === undefined
+      // nothing to render - should not happen because it should always contain the header row
+      || scrollHeight === 0
+    ) {
+      return { start: 0, end: 0 }
+    }
+    // TODO(SL): remove this fallback? It's only for the tests, where the elements have zero height
+    const clientHeight = viewportHeight === 0 ? 100 : viewportHeight
+
+    // determine rows to fetch based on current scroll position (indexes refer to the virtual table domain)
+    const startView = Math.floor(numRows * scrollTop / scrollHeight)
+    const endView = Math.ceil(numRows * (scrollTop + clientHeight) / scrollHeight)
+    const start = Math.max(0, startView - overscan)
+    const end = Math.min(numRows, endView + overscan)
+
+    if (isNaN(start)) throw new Error(`invalid start row ${start}`)
+    if (isNaN(end)) throw new Error(`invalid end row ${end}`)
+    if (end - start > 1000) throw new Error(`attempted to render too many rows ${end - start} table must be contained in a scrollable div`)
+
+    return { start, end }
+  }, [numRows, overscan, scrollHeight, scrollTop, viewportHeight])
 
   // total scrollable height
   /* TODO: fix the computation on unstyled tables */
-  const tableOffset = Math.max(0, rowsRange.start - padding) * rowHeight
+  const tableOffset = useMemo(() => {
+    return Math.max(0, rowsRange.start - padding) * rowHeight
+  }, [rowsRange.start, padding])
 
   // scroll if the navigation cell changed, or if entering navigation mode
   // this excludes the case where the whole table is focused (not in cell navigation mode), the user
@@ -122,41 +123,17 @@ function ScrollContainer({
     }
   }, [cellPosition, shouldScroll, rowsRange, setShouldScroll, scrollToTop, scrollTop])
 
-  const abortControllerRef = useRef<AbortController>(null)
-
   // handle scrolling and component resizing
   useEffect(() => {
-    if (scrollTop === undefined || scrollHeight === undefined || viewportHeight === undefined) {
-      // viewport not ready yet
-      return
-    }
-    if (scrollHeight === 0) {
-      // nothing to render - should not happen because it should always contain the header row
-      return
-    }
-    // TODO(SL): remove this fallback? It's only for the tests, where the elements have zero height
-    const clientHeight = viewportHeight === 0 ? 100 : viewportHeight
-
     // abort the previous fetches if any
     abortControllerRef.current?.abort()
     const abortController = new AbortController()
     abortControllerRef.current = abortController
 
-    // determine rows to fetch based on current scroll position (indexes refer to the virtual table domain)
-    const startView = Math.floor(numRows * scrollTop / scrollHeight)
-    const endView = Math.ceil(numRows * (scrollTop + clientHeight) / scrollHeight)
-    const start = Math.max(0, startView - overscan)
-    const end = Math.min(numRows, endView + overscan)
-
-    if (isNaN(start)) throw new Error(`invalid start row ${start}`)
-    if (isNaN(end)) throw new Error(`invalid end row ${end}`)
-    if (end - start > 1000) throw new Error(`attempted to render too many rows ${end - start} table must be contained in a scrollable div`)
-
-    setRowsRange({ start, end })
     if (data.fetch) {
       data.fetch({
-        rowStart: start,
-        rowEnd: end,
+        rowStart: rowsRange.start,
+        rowEnd: rowsRange.end,
         columns: columnsParameters.map(({ name }) => name),
         orderBy,
         signal: abortController.signal,
@@ -168,7 +145,7 @@ function ScrollContainer({
         onError(error) // report the error to the parent component
       })
     }
-  }, [numRows, overscan, padding, scrollHeight, data, orderBy, onError, columnsParameters, scrollTop, viewportHeight])
+  }, [data, orderBy, onError, columnsParameters, rowsRange])
 
   const onTableKeyDown = useCallback((event: KeyboardEvent) => {
     onNavigationTableKeyDown?.(event, { numRowsPerPage: padding })
@@ -190,6 +167,7 @@ function ScrollContainer({
 
   // focus table on mount, or on later changes, so arrow keys work
   // Note that the dependency upon data and nowRows was removed, because focusFirstCell should depend on them
+  // TODO(SL): move to CellNavigationProvider?
   useEffect(() => {
     if (focus) {
       // Try focusing the first cell
