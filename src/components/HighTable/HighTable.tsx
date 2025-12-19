@@ -31,8 +31,6 @@ import RowHeader from '../RowHeader/RowHeader.js'
 import TableCorner from '../TableCorner/TableCorner.js'
 import TableHeader from '../TableHeader/TableHeader.js'
 
-const rowHeight = 33 // row height px
-
 interface Props {
   data: DataFrame
   cacheKey?: string // used to persist column widths. If undefined, the column widths are not persisted. It is expected to be unique for each table.
@@ -57,6 +55,7 @@ interface Props {
   stringify?: (value: unknown) => string | undefined
 }
 
+const rowHeight = 33 // row height px
 const defaultPadding = 20
 const defaultOverscan = 20
 const ariaOffset = 2 // 1-based index, +1 for the header
