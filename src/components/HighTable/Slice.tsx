@@ -47,7 +47,7 @@ export default function Slice({
   setTableCornerWidth,
   stringify = stringifyDefault,
 }: Props) {
-  const abortControllerRef = useRef<AbortController | null>(null)
+  const abortControllerRef = useRef<AbortController | undefined>(undefined)
 
   const { data, version, numRows } = useContext(DataContext)
   const allColumnsParameters = useContext(ColumnParametersContext)

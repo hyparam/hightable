@@ -39,7 +39,11 @@ export default function TableCorner({ children, checked, onCheckboxPress, pendin
   /* Track the size of the table corner */
   useEffect(() => {
     const tableCorner = tableCornerRef.current
-    if (!tableCorner || !setTableCornerWidth) {
+    if (!setTableCornerWidth) {
+      // Width tracking is disabled intentionally when no callback is provided.
+      return
+    }
+    if (!tableCorner) {
       console.warn('Table corner element is not available. Table corner size will not be tracked accurately.')
       return
     }
@@ -49,7 +53,7 @@ export default function TableCorner({ children, checked, onCheckboxPress, pendin
       return
     }
 
-    // Use an arrow function to get correct viewport type (not null)
+    // Use an arrow function to get correct tableCorner type (not null)
     // eslint-disable-next-line func-style
     const updateTableCornerWidth = () => {
       setTableCornerWidth(tableCorner.offsetWidth)
