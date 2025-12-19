@@ -91,9 +91,9 @@ export function ColumnVisibilityStatesProvider({ children, localStorageKey, colu
 
   const value = useMemo(() => {
     return {
-      getHideColumn, showAllColumns, isHiddenColumn,
+      getHideColumn, showAllColumns, isHiddenColumn, numberOfVisibleColumns,
     }
-  }, [getHideColumn, showAllColumns, isHiddenColumn])
+  }, [getHideColumn, showAllColumns, isHiddenColumn, numberOfVisibleColumns])
 
   return (
     <ColumnVisibilityStatesContext.Provider value={value}>

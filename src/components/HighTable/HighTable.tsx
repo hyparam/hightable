@@ -118,7 +118,7 @@ function HighTableData(props: PropsData) {
                   {/* Create a new selection context if the dataframe has changed */}
                   <SelectionProvider key={key} selection={selection} onSelectionChange={onSelectionChange} data={data} numRows={numRows} onError={onError}>
                     {/* Create a new navigation context if the dataframe has changed, because the focused cell might not exist anymore */}
-                    <CellNavigationProvider key={key} colCount={data.columnDescriptors.length + 1} rowCount={numRows + 1} rowPadding={props.padding ?? defaultPadding}>
+                    <CellNavigationProvider key={key} rowPadding={props.padding ?? defaultPadding}>
                       <ScrollContainer data={data} numRows={numRows} version={version} {...props} maxRowNumber={maxRowNumber} />
                     </CellNavigationProvider>
                   </SelectionProvider>
