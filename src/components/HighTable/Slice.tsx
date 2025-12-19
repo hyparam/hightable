@@ -14,9 +14,8 @@ import Row from '../Row/Row.js'
 import RowHeader from '../RowHeader/RowHeader.js'
 import TableCorner from '../TableCorner/TableCorner.js'
 import TableHeader from '../TableHeader/TableHeader.js'
-import { defaultOverscan, defaultPadding, rowHeight } from './constants.js'
-
-const ariaOffset = 2 // 1-based index, +1 for the header
+import { defaultPadding } from './constants.js'
+import { ariaOffset } from './constants.js'
 
 export interface SliceProps {
   focus?: boolean // focus table on mount? (default true)
@@ -31,30 +30,24 @@ export interface SliceProps {
 }
 
 type Props = {
-  scrollHeight: number | undefined
-  scrollTop: number | undefined
-  viewportHeight: number | undefined
-  scrollToTop: ((top: number) => void) | undefined
+  rowsRange?: { start: number, end: number }
+  tableOffset: number
 } & SliceProps
 
 export default function Slice({
+  rowsRange,
+  tableOffset,
   focus = true,
-  overscan = defaultOverscan,
   padding = defaultPadding,
-  scrollHeight,
-  scrollTop,
-  viewportHeight,
   onDoubleClickCell,
   onKeyDownCell,
   onMouseDownCell,
   renderCellContent,
-  scrollToTop,
   stringify = stringifyDefault,
 }: Props) {
   const abortControllerRef = useRef<AbortController>(null)
 
   const { data, version, numRows } = useContext(DataContext)
-  const { shouldScroll, setShouldScroll, cellPosition } = useContext(CellNavigationContext)
   const allColumnsParameters = useContext(ColumnParametersContext)
   const { isHiddenColumn } = useContext(ColumnVisibilityStatesContext)
   const { onTableKeyDown: onNavigationTableKeyDown, focusFirstCell } = useContext(CellNavigationContext)
@@ -68,62 +61,7 @@ export default function Slice({
     })
   }, [allColumnsParameters, isHiddenColumn])
 
-  const rowsRange = useMemo(() => {
-    if (
-      // viewport not ready yet
-      scrollTop === undefined
-      || scrollHeight === undefined
-      || viewportHeight === undefined
-      // nothing to render - should not happen because it should always contain the header row
-      || scrollHeight === 0
-    ) {
-      return undefined
-    }
-    // TODO(SL): remove this fallback? It's only for the tests, where the elements have zero height
-    const clientHeight = viewportHeight === 0 ? 100 : viewportHeight
-
-    // determine rows to fetch based on current scroll position (indexes refer to the virtual table domain)
-    const startView = Math.floor(numRows * scrollTop / scrollHeight)
-    const endView = Math.ceil(numRows * (scrollTop + clientHeight) / scrollHeight)
-    const start = Math.max(0, startView - overscan)
-    const end = Math.min(numRows, endView + overscan)
-
-    if (isNaN(start)) throw new Error(`invalid start row ${start}`)
-    if (isNaN(end)) throw new Error(`invalid end row ${end}`)
-    if (end - start > 1000) throw new Error(`attempted to render too many rows ${end - start} table must be contained in a scrollable div`)
-
-    return { start, end }
-  }, [numRows, overscan, scrollHeight, scrollTop, viewportHeight])
-
-  // total scrollable height
-  /* TODO: fix the computation on unstyled tables */
-  const tableOffset = useMemo(() => {
-    return Math.max(0, (rowsRange?.start ?? 0) - padding) * rowHeight
-  }, [rowsRange, padding])
-
-  // scroll if the navigation cell changed, or if entering navigation mode
-  // this excludes the case where the whole table is focused (not in cell navigation mode), the user
-  // is scrolling with the mouse or the arrow keys, and the cell exits the viewport: don't want to scroll
-  // back to it
-  useEffect(() => {
-    if (!shouldScroll || scrollTop === undefined || scrollToTop === undefined || rowsRange === undefined) {
-      return
-    }
-    setShouldScroll?.(false)
-    const row = cellPosition.rowIndex - ariaOffset
-    let nextScrollTop = scrollTop
-    // if row outside of the rows range, scroll to the estimated position of the cell,
-    // to wait for the cell to be fetched and rendered
-    if (row < rowsRange.start || row >= rowsRange.end) {
-      nextScrollTop = row * rowHeight
-    }
-    if (nextScrollTop !== scrollTop) {
-      // scroll to the cell
-      scrollToTop(nextScrollTop)
-    }
-  }, [cellPosition, shouldScroll, rowsRange, setShouldScroll, scrollToTop, scrollTop])
-
-  // handle scrolling and component resizing
+  // fetch data when needed
   useEffect(() => {
     if (!data.fetch || rowsRange === undefined) {
       return
