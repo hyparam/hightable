@@ -6,11 +6,10 @@ import { ColumnVisibilityStatesContext } from '../contexts/ColumnVisibilityState
 import { DataContext } from '../contexts/DataContext.js'
 
 interface CellNavigationProviderProps {
-  rowPadding: number // number of rows to skip when navigating with the keyboard
   children: ReactNode
 }
 
-export function CellNavigationProvider({ rowPadding, children }: CellNavigationProviderProps) {
+export function CellNavigationProvider({ children }: CellNavigationProviderProps) {
   const [colIndex, setColIndex] = useState(defaultCellNavigationContext.cellPosition.colIndex)
   const [rowIndex, setRowIndex] = useState(defaultCellNavigationContext.cellPosition.rowIndex)
   const [shouldFocus, setShouldFocus] = useState(false)
@@ -45,7 +44,9 @@ export function CellNavigationProvider({ rowPadding, children }: CellNavigationP
     }
   }
 
-  const onTableKeyDown = useCallback((event: KeyboardEvent) => {
+  const onTableKeyDown = useCallback((event: KeyboardEvent, { numRowsPerPage }: {
+    numRowsPerPage: number // number of rows to skip when navigating with the keyboard (PageUp/PageDown)
+  }) => {
     const { key, altKey, ctrlKey, metaKey, shiftKey } = event
     // if the user is pressing Alt, Meta or Shift, do not handle the event
     if (altKey || metaKey || shiftKey) {
@@ -86,9 +87,11 @@ export function CellNavigationProvider({ rowPadding, children }: CellNavigationP
       }
       setColIndex(colCount)
     } else if (key === 'PageDown') {
-      setRowIndex(prev => prev + rowPadding <= rowCount ? prev + rowPadding : rowCount)
+      setRowIndex(prev => prev + numRowsPerPage <= rowCount ? prev + numRowsPerPage : rowCount)
+      // TODO(SL): same for horizontal scrolling with Alt+PageDown?
     } else if (key === 'PageUp') {
-      setRowIndex(prev => prev - rowPadding >= 1 ? prev - rowPadding : 1)
+      setRowIndex(prev => prev - numRowsPerPage >= 1 ? prev - numRowsPerPage : 1)
+      // TODO(SL): same for horizontal scrolling with Alt+PageUp?
     } else if (key !== ' ') {
       // if the key is not one of the above, do not handle it
       // special case: no action is associated with the Space key, but it's captured
@@ -100,7 +103,7 @@ export function CellNavigationProvider({ rowPadding, children }: CellNavigationP
     event.preventDefault()
     setShouldScroll(true)
     setShouldFocus(true)
-  }, [colCount, rowCount, rowPadding])
+  }, [colCount, rowCount])
 
   const onScrollKeyDown = useCallback((event: KeyboardEvent) => {
     const { key } = event

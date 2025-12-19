@@ -118,7 +118,7 @@ function HighTableData(props: PropsData) {
                   {/* Create a new selection context if the dataframe has changed */}
                   <SelectionProvider key={key} selection={selection} onSelectionChange={onSelectionChange} data={data} numRows={numRows} onError={onError}>
                     {/* Create a new navigation context if the dataframe has changed, because the focused cell might not exist anymore */}
-                    <CellNavigationProvider key={key} rowPadding={props.padding ?? defaultPadding}>
+                    <CellNavigationProvider key={key}>
                       <ScrollContainer data={data} numRows={numRows} version={version} {...props} maxRowNumber={maxRowNumber} />
                     </CellNavigationProvider>
                   </SelectionProvider>
@@ -346,9 +346,10 @@ function TableSlice({
   const { selectable, toggleAllRows, pendingSelectionGesture, onTableKeyDown: onSelectionTableKeyDown, allRowsSelected, isRowSelected, toggleRowNumber, toggleRangeToRowNumber } = useContext(SelectionContext)
 
   const onTableKeyDown = useCallback((event: KeyboardEvent) => {
-    onNavigationTableKeyDown?.(event)
+    // TODO(SL): compute numRowsPerPage based on the viewport height and row height
+    onNavigationTableKeyDown?.(event, { numRowsPerPage: padding })
     onSelectionTableKeyDown?.(event)
-  }, [onNavigationTableKeyDown, onSelectionTableKeyDown])
+  }, [onNavigationTableKeyDown, onSelectionTableKeyDown, padding])
 
   const getOnCheckboxPress = useCallback(({ row, rowNumber }: { row: number, rowNumber?: number }) => {
     if (rowNumber === undefined || !toggleRowNumber || !toggleRangeToRowNumber) {
