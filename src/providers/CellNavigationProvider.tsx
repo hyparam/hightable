@@ -1,21 +1,30 @@
 import type { KeyboardEvent, ReactNode } from 'react'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useContext, useMemo, useState } from 'react'
 
 import { CellNavigationContext, defaultCellNavigationContext } from '../contexts/CellNavigationContext.js'
+import { ColumnVisibilityStatesContext } from '../contexts/ColumnVisibilityStatesContext.js'
+import { DataContext } from '../contexts/DataContext.js'
 
 interface CellNavigationProviderProps {
-  colCount: number // number of columns in the table, same semantic as aria-colcount (includes row headers)
-  rowCount: number // number of rows in the table, same semantic as aria-rowcount (includes column headers)
   rowPadding: number // number of rows to skip when navigating with the keyboard
   children: ReactNode
 }
 
-export function CellNavigationProvider({ colCount, rowCount, rowPadding, children }: CellNavigationProviderProps) {
-  const [previousRowCount, setPreviousRowCount] = useState(rowCount)
+export function CellNavigationProvider({ rowPadding, children }: CellNavigationProviderProps) {
   const [colIndex, setColIndex] = useState(defaultCellNavigationContext.cellPosition.colIndex)
   const [rowIndex, setRowIndex] = useState(defaultCellNavigationContext.cellPosition.rowIndex)
   const [shouldFocus, setShouldFocus] = useState(false)
   const [shouldScroll, setShouldScroll] = useState(false)
+
+  // number of rows in the table, including the header row
+  const { numRows: numDataRows } = useContext(DataContext)
+  const rowCount = numDataRows + 1
+  const [previousRowCount, setPreviousRowCount] = useState(rowCount)
+
+  // number of columns in the table, including the row header column
+  const { numberOfVisibleColumns: numDataColumns } = useContext(ColumnVisibilityStatesContext)
+  const colCount = numDataColumns + 1
+  const [previousColCount, setPreviousColCount] = useState(colCount)
 
   // Reset the cell position if the number of rows has decreased and the current row index is out of bounds
   if (rowCount !== previousRowCount) {
@@ -24,6 +33,15 @@ export function CellNavigationProvider({ colCount, rowCount, rowPadding, childre
       // Reset the row index to the last row if it goes out of bounds
       // Note that we don't force scrolling or focusing
       setRowIndex(rowCount)
+    }
+  }
+  // Reset the cell position if the number of rows has decreased and the current row index is out of bounds
+  if (colCount !== previousColCount) {
+    setPreviousColCount(colCount)
+    if (colIndex > colCount) {
+      // Reset the column index to the last column if it goes out of bounds
+      // Note that we don't force scrolling or focusing
+      setColIndex(colCount)
     }
   }
 
