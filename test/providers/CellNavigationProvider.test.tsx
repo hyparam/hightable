@@ -43,7 +43,7 @@ describe('CellsNavigationProvider', () => {
     const { getByTestId, rerender } = render(
       <DataContext.Provider value={getDefaultDataContext({ numRows: 9 })}>
         <ColumnVisibilityStatesContext.Provider value={{ numberOfVisibleColumns }}>
-          <CellNavigationProvider rowPadding={3}>
+          <CellNavigationProvider>
             <RowCountComponent />
           </CellNavigationProvider>
         </ColumnVisibilityStatesContext.Provider>
@@ -64,7 +64,7 @@ describe('CellsNavigationProvider', () => {
     rerender(
       <DataContext.Provider value={getDefaultDataContext({ numRows: 4 })}>
         <ColumnVisibilityStatesContext.Provider value={{ numberOfVisibleColumns }}>
-          <CellNavigationProvider rowPadding={3}>
+          <CellNavigationProvider>
             <RowCountComponent />
           </CellNavigationProvider>
         </ColumnVisibilityStatesContext.Provider>
@@ -76,7 +76,7 @@ describe('CellsNavigationProvider', () => {
     rerender(
       <DataContext.Provider value={getDefaultDataContext({ numRows: 14 })}>
         <ColumnVisibilityStatesContext.Provider value={{ numberOfVisibleColumns }}>
-          <CellNavigationProvider rowPadding={3}>
+          <CellNavigationProvider>
             <RowCountComponent />
           </CellNavigationProvider>
         </ColumnVisibilityStatesContext.Provider>
@@ -90,7 +90,7 @@ describe('CellsNavigationProvider', () => {
     const { getByTestId, rerender } = render(
       <DataContext.Provider value={getDefaultDataContext({ numRows })}>
         <ColumnVisibilityStatesContext.Provider value={{ numberOfVisibleColumns: 9 }}>
-          <CellNavigationProvider rowPadding={3}>
+          <CellNavigationProvider>
             <ColCountComponent />
           </CellNavigationProvider>
         </ColumnVisibilityStatesContext.Provider>
@@ -111,7 +111,7 @@ describe('CellsNavigationProvider', () => {
     rerender(
       <DataContext.Provider value={getDefaultDataContext({ numRows })}>
         <ColumnVisibilityStatesContext.Provider value={{ numberOfVisibleColumns: 4 }}>
-          <CellNavigationProvider rowPadding={3}>
+          <CellNavigationProvider>
             <ColCountComponent />
           </CellNavigationProvider>
         </ColumnVisibilityStatesContext.Provider>
@@ -123,7 +123,7 @@ describe('CellsNavigationProvider', () => {
     rerender(
       <DataContext.Provider value={getDefaultDataContext({ numRows })}>
         <ColumnVisibilityStatesContext.Provider value={{ numberOfVisibleColumns: 14 }}>
-          <CellNavigationProvider rowPadding={3}>
+          <CellNavigationProvider>
             <ColCountComponent />
           </CellNavigationProvider>
         </ColumnVisibilityStatesContext.Provider>
