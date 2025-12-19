@@ -1,32 +1,69 @@
+import type { CSSProperties, KeyboardEvent, MouseEvent, ReactNode } from 'react'
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react'
+
+import { CellNavigationContext } from '../../contexts/CellNavigationContext.js'
+import { type ColumnParameters, ColumnParametersContext } from '../../contexts/ColumnParametersContext.js'
+import { ColumnVisibilityStatesContext } from '../../contexts/ColumnVisibilityStatesContext.js'
+import { DataContext } from '../../contexts/DataContext.js'
+import { OrderByContext } from '../../contexts/OrderByContext.js'
+import { PortalContainerContext } from '../../contexts/PortalContainerContext.js'
+import { SelectionContext } from '../../contexts/SelectionContext.js'
+import { ViewportContext } from '../../contexts/ViewportContext.js'
+import type { ColumnConfiguration } from '../../helpers/columnConfiguration.js'
 import type { DataFrame } from '../../helpers/dataframe/index.js'
-import { DataProvider } from '../../providers/DataProvider.js'
-import type { HighTableDataProps } from './HighTableData.js'
-import HighTableData from './HighTableData.js'
+import type { Selection } from '../../helpers/selection.js'
+import type { OrderBy } from '../../helpers/sort.js'
+import styles from '../../HighTable.module.css'
+import { CellNavigationProvider } from '../../providers/CellNavigationProvider.js'
+import { ColumnParametersProvider } from '../../providers/ColumnParametersProvider.js'
+import { ColumnVisibilityStatesProvider, type MaybeHiddenColumn } from '../../providers/ColumnVisibilityStatesProvider.js'
+import { ColumnWidthsProvider } from '../../providers/ColumnWidthsProvider.js'
+import { OrderByProvider } from '../../providers/OrderByProvider.js'
+import { PortalContainerProvider } from '../../providers/PortalContainerProvider.js'
+import { SelectionProvider } from '../../providers/SelectionProvider.js'
+import { TableCornerProvider } from '../../providers/TableCornerProvider.js'
+import { ViewportProvider } from '../../providers/ViewportProvider.js'
+import { stringify as stringifyDefault } from '../../utils/stringify.js'
+import Cell, { type CellContentProps } from '../Cell/Cell.js'
+import Row from '../Row/Row.js'
+import RowHeader from '../RowHeader/RowHeader.js'
+import TableCorner from '../TableCorner/TableCorner.js'
+import TableHeader from '../TableHeader/TableHeader.js'
 
-export type Props = {
-  data: DataFrame
-} & HighTableDataProps
+const rowHeight = 33 // row height px
+const defaultPadding = 20
+const defaultOverscan = 20
+const ariaOffset = 2 // 1-based index, +1 for the header
 
-/**
- * Render a table with streaming rows on demand from a DataFrame.
- *
- * orderBy: the order used to fetch the rows. If set, the component is controlled, and the property cannot be unset (undefined) later. If undefined, the component is uncontrolled (internal state). If the data cannot be sorted, it's ignored.
- * onOrderByChange: the callback to call when the order changes. If undefined, the component order is read-only if controlled (orderBy is set), or disabled if not (or if the data cannot be sorted).
- * selection: the selected rows and the anchor row. If set, the component is controlled, and the property cannot be unset (undefined) later. If undefined, the component is uncontrolled (internal state).
- * onSelectionChange: the callback to call when the selection changes. If undefined, the component selection is read-only if controlled (selection is set), or disabled if not.
- */
-export default function HighTable(props: Props) {
-  return (
-    <DataProvider data={props.data} maxRowNumber={props.maxRowNumber}>
-      <HighTableData {...props} />
-    </DataProvider>
-  )
+const columnWidthsFormatVersion = '2' // increase in case of breaking changes in the column widths format
+const columnWidthsSuffix = `:${columnWidthsFormatVersion}:column:widths` // suffix used to store the column widths in local storage
+const columnVisibilityStatesFormatVersion = '2' // increase in case of breaking changes in the column visibility format (changed from array by index to record by name)
+const columnVisibilityStatesSuffix = `:${columnVisibilityStatesFormatVersion}:column:visibility` // suffix used to store the columns vsibility in local storage
+
+export interface HighTableDataProps {
+  cacheKey?: string // used to persist column widths. If undefined, the column widths are not persisted. It is expected to be unique for each table.
+  className?: string // additional class names for the component
+  columnConfiguration?: ColumnConfiguration
+  focus?: boolean // focus table on mount? (default true)
+  maxRowNumber?: number // maximum row number to display (for row headers). Useful for filtered data. If undefined, the number of rows in the data frame is applied.
+  orderBy?: OrderBy // order used to fetch the rows. If undefined, the table is unordered, the sort controls are hidden and the interactions are disabled. Pass [] to fetch the rows in the original order.
+  overscan?: number // number of rows to fetch outside of the viewport
+  padding?: number // number of padding rows to render outside of the viewport
+  selection?: Selection // selection and anchor rows, expressed as data indexes (not as indexes in the table). If undefined, the selection is hidden and the interactions are disabled.
+  styled?: boolean // use styled component? (default true)
+  // TODO(SL): replace col: number with col: string?
+  onColumnsVisibilityChange?: (columns: Record<string, MaybeHiddenColumn>) => void // callback which is called whenever the set of hidden columns changes.
+  onDoubleClickCell?: (event: MouseEvent, col: number, row: number) => void
+  onError?: (error: unknown) => void
+  onKeyDownCell?: (event: KeyboardEvent, col: number, row: number) => void // for accessibility, it should be passed if onDoubleClickCell is passed. It can handle more than that action though.
+  onMouseDownCell?: (event: MouseEvent, col: number, row: number) => void
+  onOrderByChange?: (orderBy: OrderBy) => void // callback to call when a user interaction changes the order. The interactions are disabled if undefined.
+  onSelectionChange?: (selection: Selection) => void // callback to call when a user interaction changes the selection. The selection is expressed as data indexes (not as indexes in the table). The interactions are disabled if undefined.
+  renderCellContent?: (props: CellContentProps) => ReactNode // custom cell content component, if not provided, the default CellContent will be used
+  stringify?: (value: unknown) => string | undefined
 }
-<<<<<<< HEAD
 
-type PropsData = Omit<Props, 'data'>
-
-function HighTableData(props: PropsData) {
+export default function HighTableData(props: HighTableDataProps) {
   const { data, key, version, maxRowNumber, numRows } = useContext(DataContext)
   // TODO(SL): onError could be in a context, as we might want to use it everywhere
   const { cacheKey, orderBy, onOrderByChange, selection, onSelectionChange, onError, onColumnsVisibilityChange } = props
@@ -74,7 +111,7 @@ function HighTableData(props: PropsData) {
   )
 }
 
-type ScrollContainerProps = Omit<PropsData, 'orderBy' | 'onOrderByChange' | 'selection' | 'onSelectionChange' | 'columnConfiguration' | 'maxRowNumber'> & {
+type ScrollContainerProps = Omit<HighTableDataProps, 'orderBy' | 'onOrderByChange' | 'selection' | 'onSelectionChange' | 'columnConfiguration' | 'maxRowNumber'> & {
   version: number // version of the data frame, used to re-render the component when the data changes
   maxRowNumber: number // maximum row number to display (for row headers).
   numRows: number // number of rows in the data frame
@@ -288,10 +325,9 @@ function TableSlice({
   const { selectable, toggleAllRows, pendingSelectionGesture, onTableKeyDown: onSelectionTableKeyDown, allRowsSelected, isRowSelected, toggleRowNumber, toggleRangeToRowNumber } = useContext(SelectionContext)
 
   const onTableKeyDown = useCallback((event: KeyboardEvent) => {
-    // TODO(SL): compute numRowsPerPage based on the viewport height and row height
-    onNavigationTableKeyDown?.(event, { numRowsPerPage: padding })
+    onNavigationTableKeyDown?.(event, { numRowsPerPage: rowsRange.end - rowsRange.start })
     onSelectionTableKeyDown?.(event)
-  }, [onNavigationTableKeyDown, onSelectionTableKeyDown, padding])
+  }, [onNavigationTableKeyDown, onSelectionTableKeyDown, rowsRange])
 
   const getOnCheckboxPress = useCallback(({ row, rowNumber }: { row: number, rowNumber?: number }) => {
     if (rowNumber === undefined || !toggleRowNumber || !toggleRangeToRowNumber) {
@@ -448,5 +484,3 @@ function TableSlice({
     </table>
   )
 }
-=======
->>>>>>> 5c180f1 (HighTableData -> own file)
