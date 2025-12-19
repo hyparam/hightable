@@ -77,7 +77,7 @@ export default function Slice({
       // nothing to render - should not happen because it should always contain the header row
       || scrollHeight === 0
     ) {
-      return { start: 0, end: 0 }
+      return undefined
     }
     // TODO(SL): remove this fallback? It's only for the tests, where the elements have zero height
     const clientHeight = viewportHeight === 0 ? 100 : viewportHeight
@@ -98,15 +98,15 @@ export default function Slice({
   // total scrollable height
   /* TODO: fix the computation on unstyled tables */
   const tableOffset = useMemo(() => {
-    return Math.max(0, rowsRange.start - padding) * rowHeight
-  }, [rowsRange.start, padding])
+    return Math.max(0, (rowsRange?.start ?? 0) - padding) * rowHeight
+  }, [rowsRange, padding])
 
   // scroll if the navigation cell changed, or if entering navigation mode
   // this excludes the case where the whole table is focused (not in cell navigation mode), the user
   // is scrolling with the mouse or the arrow keys, and the cell exits the viewport: don't want to scroll
   // back to it
   useEffect(() => {
-    if (!shouldScroll || scrollTop === undefined || scrollToTop === undefined) {
+    if (!shouldScroll || scrollTop === undefined || scrollToTop === undefined || rowsRange === undefined) {
       return
     }
     setShouldScroll?.(false)
@@ -125,26 +125,27 @@ export default function Slice({
 
   // handle scrolling and component resizing
   useEffect(() => {
+    if (!data.fetch || rowsRange === undefined) {
+      return
+    }
     // abort the previous fetches if any
     abortControllerRef.current?.abort()
     const abortController = new AbortController()
     abortControllerRef.current = abortController
 
-    if (data.fetch) {
-      data.fetch({
-        rowStart: rowsRange.start,
-        rowEnd: rowsRange.end,
-        columns: columnsParameters.map(({ name }) => name),
-        orderBy,
-        signal: abortController.signal,
-      }).catch((error: unknown) => {
-        if (error instanceof DOMException && error.name === 'AbortError') {
-          // fetch was aborted, ignore the error
-          return
-        }
-        onError?.(error)
-      })
-    }
+    data.fetch({
+      rowStart: rowsRange.start,
+      rowEnd: rowsRange.end,
+      columns: columnsParameters.map(({ name }) => name),
+      orderBy,
+      signal: abortController.signal,
+    }).catch((error: unknown) => {
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        // fetch was aborted, ignore the error
+        return
+      }
+      onError?.(error)
+    })
   }, [data, orderBy, onError, columnsParameters, rowsRange])
 
   const onTableKeyDown = useCallback((event: KeyboardEvent) => {
@@ -176,8 +177,8 @@ export default function Slice({
   }, [focus, focusFirstCell])
 
   // add empty pre and post rows to fill the viewport
-  const offset = rowsRange.start
-  const rowsLength = rowsRange.end - rowsRange.start
+  const offset = rowsRange?.start ?? 0
+  const rowsLength = (rowsRange?.end ?? 0) - offset
   const prePadding = Array.from({ length: Math.min(padding, offset) }, () => [])
   const rows = Array.from({ length: rowsLength }, (_, i) => i + offset)
   const postPadding = Array.from({ length: Math.min(padding, numRows - offset - rowsLength) }, () => [])
