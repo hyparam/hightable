@@ -140,7 +140,7 @@ type ScrollContainerProps = Omit<PropsData, 'orderBy' | 'onOrderByChange' | 'sel
 }
 
 type TableSliceProps = Omit<ScrollContainerProps, 'maxRowNumber' | 'styled' | 'className' | 'overscan' | 'onerror'> & {
-  offsetTop: number // offset top to apply to the table
+  tableOffset: number // offset top to apply to the table
   rowsRange: RowsRange // range of rows to render
   columnsParameters: ColumnParameters[] // parameters of the columns to render
 }
@@ -189,7 +189,7 @@ function ScrollContainer({
   // total scrollable height
   /* TODO: fix the computation on unstyled tables */
   const scrollHeight = (numRows + 1) * rowHeight
-  const offsetTop = Math.max(0, rowsRange.start - padding) * rowHeight
+  const tableOffset = Math.max(0, rowsRange.start - padding) * rowHeight
 
   const tableScrollStyle = useMemo(() => {
     // reserve space for at least 3 characters
@@ -310,7 +310,7 @@ function ScrollContainer({
             stringify={stringify}
             version={version}
             renderCellContent={renderCellContent}
-            offsetTop={offsetTop}
+            tableOffset={tableOffset}
             rowsRange={rowsRange}
             columnsParameters={columnsParameters}
           />
@@ -336,7 +336,7 @@ function TableSlice({
   stringify = stringifyDefault,
   version,
   renderCellContent,
-  offsetTop,
+  tableOffset,
   rowsRange,
   columnsParameters,
 }: TableSliceProps) {
@@ -417,7 +417,7 @@ function TableSlice({
       aria-multiselectable={selectable}
       aria-busy={pendingSelectionGesture /* TODO(SL): add other busy states? Used only for tests right now */}
       role="grid"
-      style={{ top: `${offsetTop}px` }}
+      style={{ top: `${tableOffset}px` }}
       onKeyDown={onTableKeyDown}
     >
       <caption id="caption" hidden>Virtual-scroll table</caption>
