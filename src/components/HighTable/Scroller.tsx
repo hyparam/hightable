@@ -138,7 +138,7 @@ export default function Scroller({
     // set scrollToTop function
     if ('scrollTo' in viewport) {
       setScrollToTop(() => {
-        // ^ we need to use a setter function, we cannot set a funciton as a value
+        // ^ we need to use a setter function, we cannot set a function as a value
         return (top: number) => {
           viewport.scrollTo({ top })
         }
