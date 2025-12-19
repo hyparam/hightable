@@ -40,8 +40,6 @@ export default function Wrapper({
   selection,
   styled = true,
   onColumnsVisibilityChange,
-  // TODO(SL): onError could be in a context, as we might want to use it everywhere
-  onError,
   onOrderByChange,
   onSelectionChange,
   ...rest
@@ -87,7 +85,7 @@ export default function Wrapper({
               {/* Create a new context if the dataframe changes, to flush the cache (ranks and indexes) */}
               <OrderByProvider key={key} orderBy={orderBy} onOrderByChange={onOrderByChange}>
                 {/* Create a new selection context if the dataframe has changed */}
-                <SelectionProvider key={key} selection={selection} onSelectionChange={onSelectionChange} data={data} numRows={numRows} onError={onError}>
+                <SelectionProvider key={key} selection={selection} onSelectionChange={onSelectionChange} data={data} numRows={numRows}>
                   {/* Create a new navigation context if the dataframe has changed, because the focused cell might not exist anymore */}
                   <CellNavigationProvider key={key}>
                     {/* TODO(SL): passing a ref to an element is code smell */}

@@ -5,6 +5,7 @@ import { CellNavigationContext } from '../../contexts/CellNavigationContext.js'
 import { ColumnParametersContext } from '../../contexts/ColumnParametersContext.js'
 import { ColumnVisibilityStatesContext } from '../../contexts/ColumnVisibilityStatesContext.js'
 import { DataContext } from '../../contexts/DataContext.js'
+import { ErrorContext } from '../../contexts/ErrorContext.js'
 import { OrderByContext } from '../../contexts/OrderByContext.js'
 import { SelectionContext } from '../../contexts/SelectionContext.js'
 import { stringify as stringifyDefault } from '../../utils/stringify.js'
@@ -23,7 +24,6 @@ export interface SliceProps {
   padding?: number // number of padding rows to render outside of the viewport
   // TODO(SL): replace col: number with col: string?
   onDoubleClickCell?: (event: MouseEvent, col: number, row: number) => void
-  onError?: (error: unknown) => void
   onKeyDownCell?: (event: KeyboardEvent, col: number, row: number) => void // for accessibility, it should be passed if onDoubleClickCell is passed. It can handle more than that action though.
   onMouseDownCell?: (event: MouseEvent, col: number, row: number) => void
   renderCellContent?: (props: CellContentProps) => ReactNode // custom cell content component, if not provided, the default CellContent will be used
@@ -45,7 +45,6 @@ export default function Slice({
   scrollTop,
   viewportHeight,
   onDoubleClickCell,
-  onError = console.error,
   onKeyDownCell,
   onMouseDownCell,
   renderCellContent,
@@ -61,6 +60,7 @@ export default function Slice({
   const { onTableKeyDown: onNavigationTableKeyDown, focusFirstCell } = useContext(CellNavigationContext)
   const { orderBy, onOrderByChange } = useContext(OrderByContext)
   const { selectable, toggleAllRows, pendingSelectionGesture, onTableKeyDown: onSelectionTableKeyDown, allRowsSelected, isRowSelected, toggleRowNumber, toggleRangeToRowNumber } = useContext(SelectionContext)
+  const { onError } = useContext(ErrorContext)
 
   const columnsParameters = useMemo(() => {
     return allColumnsParameters.filter((col) => {
@@ -142,7 +142,7 @@ export default function Slice({
           // fetch was aborted, ignore the error
           return
         }
-        onError(error) // report the error to the parent component
+        onError?.(error)
       })
     }
   }, [data, orderBy, onError, columnsParameters, rowsRange])
