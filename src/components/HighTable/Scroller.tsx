@@ -9,6 +9,7 @@ import type { SliceProps } from './Slice.js'
 import Slice from './Slice.js'
 
 type Props = {
+  setTableCornerWidth?: (width: number) => void // callback to set the current table corner width
   setViewportWidth: (width: number) => void // callback to set the current viewport width
 } & SliceProps
 export type ScrollerProps = SliceProps
@@ -16,6 +17,7 @@ export type ScrollerProps = SliceProps
 export default function Scroller({
   overscan = defaultOverscan,
   padding = defaultPadding,
+  setTableCornerWidth,
   setViewportWidth,
   ...rest }: Props) {
   // TODO(SL): replace with a callback function (https://react.dev/reference/react-dom/components/common#ref-callback)
@@ -174,6 +176,7 @@ export default function Scroller({
           rowsRange={rowsRange}
           tableOffset={tableOffset}
           padding={padding}
+          setTableCornerWidth={setTableCornerWidth}
           {...rest}
         />
       </div>

@@ -32,6 +32,7 @@ export interface SliceProps {
 type Props = {
   rowsRange?: { start: number, end: number }
   tableOffset: number
+  setTableCornerWidth?: (width: number) => void // callback to set the current table corner width
 } & SliceProps
 
 export default function Slice({
@@ -43,6 +44,7 @@ export default function Slice({
   onKeyDownCell,
   onMouseDownCell,
   renderCellContent,
+  setTableCornerWidth,
   stringify = stringifyDefault,
 }: Props) {
   const abortControllerRef = useRef<AbortController>(null)
@@ -170,6 +172,7 @@ export default function Slice({
             pendingSelectionGesture={pendingSelectionGesture}
             ariaColIndex={1}
             ariaRowIndex={1}
+            setTableCornerWidth={setTableCornerWidth}
           />
           <TableHeader
             canMeasureColumn={slice.canMeasureColumn}
