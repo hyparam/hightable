@@ -51,10 +51,14 @@ export default function Wrapper({
 }: WrapperProps) {
   const ref = useRef<HTMLDivElement>(null)
   const [viewportWidth, setViewportWidth] = useState<number | undefined>(undefined)
-  const [tableCornerWidth, setTableCornerWidth] = useState<number | undefined>(undefined)
+  const [tableCornerSize, setTableCornerSize] = useState<{ width: number, height: number } | undefined>(undefined)
   const { data, key, maxRowNumber, numRows } = useContext(DataContext)
 
   const columnNames = useMemo(() => data.columnDescriptors.map(d => d.name), [data.columnDescriptors])
+
+  const headerHeight = useMemo(() => {
+    return tableCornerSize?.height ?? rowHeight
+  }, [tableCornerSize])
 
   const initialVisibilityStates = useMemo(() => {
     if (!columnConfiguration) return undefined
@@ -72,10 +76,10 @@ export default function Wrapper({
     // reserve space for at least 3 characters
     const numCharacters = Math.max(maxRowNumber.toLocaleString('en-US').length, 3)
     return {
-      '--column-header-height': `${rowHeight}px`,
+      '--column-header-height': `${headerHeight}px`,
       '--row-number-characters': `${numCharacters}`,
     } as CSSProperties
-  }, [maxRowNumber])
+  }, [maxRowNumber, headerHeight])
 
   return (
     // TODO(SL): passing a ref to an element is code smell
@@ -87,7 +91,7 @@ export default function Wrapper({
         {/* Provide the column configuration to the table */}
         <ColumnParametersProvider columnConfiguration={columnConfiguration} columnDescriptors={data.columnDescriptors}>
           {/* Create a new set of widths if the data has changed, but keep it if only the number of rows changed */}
-          <ColumnWidthsProvider key={cacheKey ?? key} localStorageKey={cacheKey ? `${cacheKey}${columnWidthsSuffix}` : undefined} numColumns={data.columnDescriptors.length} viewportWidth={viewportWidth} tableCornerWidth={tableCornerWidth}>
+          <ColumnWidthsProvider key={cacheKey ?? key} localStorageKey={cacheKey ? `${cacheKey}${columnWidthsSuffix}` : undefined} numColumns={data.columnDescriptors.length} viewportWidth={viewportWidth} tableCornerWidth={tableCornerSize?.width}>
             {/* Create a new set of hidden columns if the data has changed, but keep it if only the number of rows changed */}
             <ColumnVisibilityStatesProvider key={cacheKey ?? key} localStorageKey={cacheKey ? `${cacheKey}${columnVisibilityStatesSuffix}` : undefined} columnNames={columnNames} initialVisibilityStates={initialVisibilityStates} onColumnsVisibilityChange={onColumnsVisibilityChange}>
               {/* Create a new context if the dataframe changes, to flush the cache (ranks and indexes) */}
@@ -98,9 +102,9 @@ export default function Wrapper({
                   <CellNavigationProvider key={key}>
                     <RowsAndColumnsProvider key={key} padding={padding}>
 
-                      <Scroller setViewportWidth={setViewportWidth} overscan={overscan}>
+                      <Scroller setViewportWidth={setViewportWidth} overscan={overscan} headerHeight={headerHeight}>
                         <Slice
-                          setTableCornerWidth={setTableCornerWidth}
+                          setTableCornerSize={setTableCornerSize}
                           {...rest}
                         />
                       </Scroller>
