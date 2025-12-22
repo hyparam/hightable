@@ -1,11 +1,10 @@
 import type { KeyboardEvent, MouseEvent, ReactNode } from 'react'
-import { useCallback, useContext, useEffect, useMemo, useRef } from 'react'
+import { useCallback, useContext, useEffect, useMemo } from 'react'
 
 import { CellNavigationContext } from '../../contexts/CellNavigationContext.js'
 import { ColumnParametersContext } from '../../contexts/ColumnParametersContext.js'
 import { ColumnVisibilityStatesContext } from '../../contexts/ColumnVisibilityStatesContext.js'
 import { DataContext } from '../../contexts/DataContext.js'
-import { ErrorContext } from '../../contexts/ErrorContext.js'
 import { OrderByContext } from '../../contexts/OrderByContext.js'
 import { SelectionContext } from '../../contexts/SelectionContext.js'
 import { stringify as stringifyDefault } from '../../utils/stringify.js'
@@ -47,46 +46,18 @@ export default function Slice({
   setTableCornerWidth,
   stringify = stringifyDefault,
 }: Props) {
-  const abortControllerRef = useRef<AbortController | undefined>(undefined)
-
   const { data, version, numRows } = useContext(DataContext)
   const allColumnsParameters = useContext(ColumnParametersContext)
   const { isHiddenColumn } = useContext(ColumnVisibilityStatesContext)
   const { onTableKeyDown: onNavigationTableKeyDown, focusFirstCell } = useContext(CellNavigationContext)
   const { orderBy, onOrderByChange } = useContext(OrderByContext)
   const { selectable, toggleAllRows, pendingSelectionGesture, onTableKeyDown: onSelectionTableKeyDown, allRowsSelected, isRowSelected, toggleRowNumber, toggleRangeToRowNumber } = useContext(SelectionContext)
-  const { onError } = useContext(ErrorContext)
 
   const columnsParameters = useMemo(() => {
     return allColumnsParameters.filter((col) => {
       return !isHiddenColumn?.(col.name)
     })
   }, [allColumnsParameters, isHiddenColumn])
-
-  // fetch data when needed
-  useEffect(() => {
-    if (!data.fetch || rowsRange === undefined) {
-      return
-    }
-    // abort the previous fetches if any
-    abortControllerRef.current?.abort()
-    const abortController = new AbortController()
-    abortControllerRef.current = abortController
-
-    data.fetch({
-      rowStart: rowsRange.start,
-      rowEnd: rowsRange.end,
-      columns: columnsParameters.map(({ name }) => name),
-      orderBy,
-      signal: abortController.signal,
-    }).catch((error: unknown) => {
-      if (error instanceof DOMException && error.name === 'AbortError') {
-        // fetch was aborted, ignore the error
-        return
-      }
-      onError?.(error)
-    })
-  }, [data, orderBy, onError, columnsParameters, rowsRange])
 
   const onTableKeyDown = useCallback((event: KeyboardEvent) => {
     onNavigationTableKeyDown?.(event, { numRowsPerPage: padding })
