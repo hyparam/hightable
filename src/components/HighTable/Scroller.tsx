@@ -34,12 +34,6 @@ export default function Scroller({
   const { shouldScroll, setShouldScroll, cellPosition } = useContext(CellNavigationContext)
   const { rowsRangeWithPadding, setRowsRange } = useContext(RowsAndColumnsContext)
 
-  /**
-   * Compute the values:
-   * - scrollHeight: total scrollable height
-   * - rowsRange: rows to fetch based on the current scroll position
-   * - tableOffset: offset of the table inside the scrollable area
-   */
   // total scrollable height - it's fixed, based on the number of rows.
   // if CSS is not completely changed, viewport.current.scrollHeight will be equal to this value
   const scrollHeight = useMemo(() => headerHeight + numRows * rowHeight, [numRows, headerHeight])
@@ -167,6 +161,7 @@ export default function Scroller({
     }
   }, [setViewportWidth, computeAndSetRowsRange])
 
+  // offset of the contents (table) inside the scrollable area
   // Note: it does not depend on headerHeight, because the header is always present in the DOM
   const top = useMemo(() => {
     return (rowsRangeWithPadding?.startPadding ?? 0) * rowHeight
