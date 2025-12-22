@@ -18,6 +18,7 @@ import { rowHeight } from './constants.js'
 import { columnVisibilityStatesSuffix, columnWidthsSuffix } from './constants.js'
 import type { ScrollerProps } from './Scroller.js'
 import Scroller from './Scroller.js'
+import Slice from './Slice.js'
 
 export type WrapperProps = {
   className?: string // additional class names for the component
@@ -36,6 +37,8 @@ export default function Wrapper({
   cacheKey,
   className = '',
   orderBy,
+  padding,
+  overscan,
   selection,
   styled = true,
   onColumnsVisibilityChange,
@@ -90,7 +93,13 @@ export default function Wrapper({
                   {/* TODO(SL): passing a ref to an element is code smell */}
                   <PortalContainerContext.Provider value={{ containerRef: ref }}>
 
-                    <Scroller {...rest} setViewportWidth={setViewportWidth} setTableCornerWidth={setTableCornerWidth} />
+                    <Scroller setViewportWidth={setViewportWidth} overscan={overscan} padding={padding}>
+                      <Slice
+                        padding={padding}
+                        setTableCornerWidth={setTableCornerWidth}
+                        {...rest}
+                      />
+                    </Scroller>
 
                   </PortalContainerContext.Provider>
                 </CellNavigationProvider>

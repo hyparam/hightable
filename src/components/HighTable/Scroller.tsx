@@ -12,20 +12,19 @@ import { RowsRangeContext } from '../../contexts/RowsRangeContext.js'
 import styles from '../../HighTable.module.css'
 import { ariaOffset, defaultOverscan, defaultPadding, rowHeight } from './constants.js'
 import type { SliceProps } from './Slice.js'
-import Slice from './Slice.js'
 
 type Props = {
-  setTableCornerWidth?: (width: number) => void // callback to set the current table corner width
   setViewportWidth: (width: number) => void // callback to set the current viewport width
+  children?: React.ReactNode
 } & SliceProps
 export type ScrollerProps = SliceProps
 
 export default function Scroller({
   overscan = defaultOverscan,
   padding = defaultPadding,
-  setTableCornerWidth,
   setViewportWidth,
-  ...rest }: Props) {
+  children,
+}: Props) {
   // TODO(SL): replace with a callback function (https://react.dev/reference/react-dom/components/common#ref-callback)
   const viewportRef = useRef<HTMLDivElement>(null)
   const abortControllerRef = useRef<AbortController | undefined>(undefined)
@@ -224,11 +223,7 @@ export default function Scroller({
       <div style={{ height: `${scrollHeight}px` }}>
         <div style={{ top: `${tableOffset}px` }}>
           <RowsRangeContext.Provider value={rowsRange}>
-            <Slice
-              padding={padding}
-              setTableCornerWidth={setTableCornerWidth}
-              {...rest}
-            />
+            {children}
           </RowsRangeContext.Provider>
         </div>
       </div>
