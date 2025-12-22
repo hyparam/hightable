@@ -3,7 +3,7 @@ import { createContext } from 'react'
 import type { DataFrame } from '../helpers/dataframe/index.js'
 import { arrayDataFrame } from '../helpers/dataframe/index.js'
 
-interface DataContextType {
+export interface DataContextType {
   data: Omit<DataFrame, 'numRows'>
   key: number
   version: number
