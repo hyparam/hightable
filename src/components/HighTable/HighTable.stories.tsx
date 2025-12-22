@@ -207,6 +207,38 @@ function createFilteredData(): DataFrame {
   return df
 }
 
+function createLargeData(): DataFrame {
+  const numRows = 777_000_000
+  const columnDescriptors = ['ID', 'Value'].map(name => ({ name }))
+  function getCell({ row, column }: { row: number, column: string }): ResolvedValue | undefined {
+    return {
+      value: column === 'ID'
+        ? `row ${row}`
+        : column === 'Value'
+          ? Math.floor(100 * random(135 + row))
+          : undefined,
+    }
+  }
+  const getRowNumber = createGetRowNumber({ numRows })
+  return { columnDescriptors, numRows, getCell, getRowNumber }
+}
+
+function createSmallData(): DataFrame {
+  const numRows = 8
+  const columnDescriptors = ['ID', 'Value'].map(name => ({ name }))
+  function getCell({ row, column }: { row: number, column: string }): ResolvedValue | undefined {
+    return {
+      value: column === 'ID'
+        ? `row ${row}`
+        : column === 'Value'
+          ? Math.floor(100 * random(135 + row))
+          : undefined,
+    }
+  }
+  const getRowNumber = createGetRowNumber({ numRows })
+  return { columnDescriptors, numRows, getCell, getRowNumber }
+}
+
 function CustomCellContent({ cell, row, col, stringify }: CellContentProps) {
   return (
     <span>
@@ -570,5 +602,17 @@ export const SortedVaryingData: Story = {
   },
   args: {
     data: sortableDataFrame(createVaryingArrayDataFrame({ delay_ms: 200, maxRows: 20 })),
+  },
+}
+
+export const LargeData: Story = {
+  args: {
+    data: createLargeData(),
+  },
+}
+
+export const SmallData: Story = {
+  args: {
+    data: createSmallData(),
   },
 }
