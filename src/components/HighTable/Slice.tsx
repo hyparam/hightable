@@ -66,7 +66,7 @@ export default function Slice({
   }, [toggleRowNumber, toggleRangeToRowNumber])
 
   // focus table on mount, or on later changes, so arrow keys work
-  // Note that the dependency upon data and nowRows was removed, because focusFirstCell should depend on them
+  // Note that the dependency upon data and numRows was removed, because focusFirstCell should depend on them
   // TODO(SL): move to CellNavigationProvider?
   useEffect(() => {
     if (focus) {
