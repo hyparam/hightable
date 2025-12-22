@@ -64,17 +64,6 @@ export default function Scroller({
   }, [numRows, overscan, scrollHeight, setRowsRange])
 
   /**
-   * Handle keyboard events for scrolling
-   */
-  const onKeyDown = useCallback((event: KeyboardEvent) => {
-    if (event.target !== viewportRef.current) {
-      // don't handle the event if the target is not the scroller
-      return
-    }
-    onScrollKeyDown?.(event)
-  }, [onScrollKeyDown, viewportRef])
-
-  /**
    * React to cell navigation changes to scroll to the focused cell
    *
    * scroll if the navigation cell changed, or if entering navigation mode
@@ -166,6 +155,17 @@ export default function Scroller({
   const top = useMemo(() => {
     return (rowsRangeWithPadding?.startPadding ?? 0) * rowHeight
   }, [rowsRangeWithPadding])
+
+  /**
+   * Handle keyboard events for scrolling
+   */
+  const onKeyDown = useCallback((event: KeyboardEvent) => {
+    if (event.target !== viewportRef.current) {
+      // don't handle the event if the target is not the scroller
+      return
+    }
+    onScrollKeyDown?.(event)
+  }, [onScrollKeyDown, viewportRef])
 
   return (
     <div className={styles.tableScroll} ref={viewportRef} role="group" aria-labelledby="caption" onKeyDown={onKeyDown} tabIndex={0}>
