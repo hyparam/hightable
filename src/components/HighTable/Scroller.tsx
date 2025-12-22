@@ -12,11 +12,13 @@ export interface ScrollerProps {
 }
 
 type Props = {
+  headerHeight?: number // height of the table header
   setViewportWidth: (width: number) => void // callback to set the current viewport width
   children?: React.ReactNode
 } & ScrollerProps
 
 export default function Scroller({
+  headerHeight = rowHeight,
   overscan = defaultOverscan,
   setViewportWidth,
   children,
@@ -40,7 +42,7 @@ export default function Scroller({
    */
   // total scrollable height - it's fixed, based on the number of rows.
   // if CSS is not completely changed, viewport.current.scrollHeight will be equal to this value
-  const scrollHeight = useMemo(() => (numRows + 1) * rowHeight, [numRows])
+  const scrollHeight = useMemo(() => headerHeight + numRows * rowHeight, [numRows, headerHeight])
 
   // sanity check
   if (scrollHeight <= 0) {
@@ -66,12 +68,6 @@ export default function Scroller({
     const rowsRange = { start, end }
     setRowsRange?.(rowsRange)
   }, [numRows, overscan, scrollHeight, setRowsRange])
-
-  // total scrollable height
-  /* TODO: fix the computation on unstyled tables */
-  const tableOffset = useMemo(() => {
-    return (rowsRangeWithPadding?.startPadding ?? 0) * rowHeight
-  }, [rowsRangeWithPadding])
 
   /**
    * Handle keyboard events for scrolling
@@ -171,10 +167,15 @@ export default function Scroller({
     }
   }, [setViewportWidth, computeAndSetRowsRange])
 
+  // Note: it does not depend on headerHeight, because the header is always present in the DOM
+  const top = useMemo(() => {
+    return (rowsRangeWithPadding?.startPadding ?? 0) * rowHeight
+  }, [rowsRangeWithPadding])
+
   return (
     <div className={styles.tableScroll} ref={viewportRef} role="group" aria-labelledby="caption" onKeyDown={onKeyDown} tabIndex={0}>
       <div style={{ height: `${scrollHeight}px` }}>
-        <div style={{ top: `${tableOffset}px` }}>
+        <div style={{ top: `${top}px` }}>
           {children}
         </div>
       </div>

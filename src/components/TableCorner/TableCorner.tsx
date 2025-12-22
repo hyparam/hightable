@@ -11,10 +11,10 @@ interface Props {
   style?: CSSProperties
   ariaColIndex: number
   ariaRowIndex: number
-  setTableCornerWidth?: (width: number) => void // callback to set the current table corner width
+  setTableCornerSize?: (size: { width: number, height: number }) => void // callback to set the current table corner size
 }
 
-export default function TableCorner({ children, checked, onCheckboxPress, pendingSelectionGesture, style, ariaColIndex, ariaRowIndex, setTableCornerWidth }: Props) {
+export default function TableCorner({ children, checked, onCheckboxPress, pendingSelectionGesture, style, ariaColIndex, ariaRowIndex, setTableCornerSize }: Props) {
   const tableCornerRef = useRef<HTMLTableCellElement>(null)
   const { tabIndex, navigateToCell } = useCellFocus({ ref: tableCornerRef, ariaColIndex, ariaRowIndex })
 
@@ -39,8 +39,8 @@ export default function TableCorner({ children, checked, onCheckboxPress, pendin
   /* Track the size of the table corner */
   useEffect(() => {
     const tableCorner = tableCornerRef.current
-    if (!setTableCornerWidth) {
-      // Width tracking is disabled intentionally when no callback is provided.
+    if (!setTableCornerSize) {
+      // Size tracking is disabled intentionally when no callback is provided.
       return
     }
     if (!tableCorner) {
@@ -55,12 +55,12 @@ export default function TableCorner({ children, checked, onCheckboxPress, pendin
 
     // Use an arrow function to get correct tableCorner type (not null)
     // eslint-disable-next-line func-style
-    const updateTableCornerWidth = () => {
-      setTableCornerWidth(tableCorner.offsetWidth)
+    const updateTableCornerSize = () => {
+      setTableCornerSize({ width: tableCorner.offsetWidth, height: tableCorner.offsetHeight })
     }
 
     // run once
-    updateTableCornerWidth()
+    updateTableCornerSize()
 
     // listener
     const resizeObserver = new window.ResizeObserver(([entry]) => {
@@ -68,14 +68,14 @@ export default function TableCorner({ children, checked, onCheckboxPress, pendin
         console.warn('ResizeObserver entry is not available.')
         return
       }
-      updateTableCornerWidth()
+      updateTableCornerSize()
     })
     resizeObserver.observe(tableCorner)
     return () => {
       resizeObserver.unobserve(tableCorner)
       resizeObserver.disconnect()
     }
-  }, [setTableCornerWidth])
+  }, [setTableCornerSize])
 
   return (
     <td
