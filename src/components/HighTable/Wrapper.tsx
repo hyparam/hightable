@@ -76,23 +76,24 @@ export default function Wrapper({
   }, [maxRowNumber])
 
   return (
-    <div ref={ref} className={`${styles.hightable} ${styled ? styles.styled : ''} ${className}`} style={tableScrollStyle}>
-      <div className={styles.topBorder} role="presentation" />
+    // TODO(SL): passing a ref to an element is code smell
+    <PortalContainerContext.Provider value={{ containerRef: ref }}>
+      <div ref={ref} className={`${styles.hightable} ${styled ? styles.styled : ''} ${className}`} style={tableScrollStyle}>
 
-      {/* Provide the column configuration to the table */}
-      <ColumnParametersProvider columnConfiguration={columnConfiguration} columnDescriptors={data.columnDescriptors}>
-        {/* Create a new set of widths if the data has changed, but keep it if only the number of rows changed */}
-        <ColumnWidthsProvider key={cacheKey ?? key} localStorageKey={cacheKey ? `${cacheKey}${columnWidthsSuffix}` : undefined} numColumns={data.columnDescriptors.length} viewportWidth={viewportWidth} tableCornerWidth={tableCornerWidth}>
-          {/* Create a new set of hidden columns if the data has changed, but keep it if only the number of rows changed */}
-          <ColumnVisibilityStatesProvider key={cacheKey ?? key} localStorageKey={cacheKey ? `${cacheKey}${columnVisibilityStatesSuffix}` : undefined} columnNames={columnNames} initialVisibilityStates={initialVisibilityStates} onColumnsVisibilityChange={onColumnsVisibilityChange}>
-            {/* Create a new context if the dataframe changes, to flush the cache (ranks and indexes) */}
-            <OrderByProvider key={key} orderBy={orderBy} onOrderByChange={onOrderByChange}>
-              {/* Create a new selection context if the dataframe has changed */}
-              <SelectionProvider key={key} selection={selection} onSelectionChange={onSelectionChange} data={data} numRows={numRows}>
-                {/* Create a new navigation context if the dataframe has changed, because the focused cell might not exist anymore */}
-                <CellNavigationProvider key={key}>
-                  {/* TODO(SL): passing a ref to an element is code smell */}
-                  <PortalContainerContext.Provider value={{ containerRef: ref }}>
+        <div className={styles.topBorder} role="presentation" />
+
+        {/* Provide the column configuration to the table */}
+        <ColumnParametersProvider columnConfiguration={columnConfiguration} columnDescriptors={data.columnDescriptors}>
+          {/* Create a new set of widths if the data has changed, but keep it if only the number of rows changed */}
+          <ColumnWidthsProvider key={cacheKey ?? key} localStorageKey={cacheKey ? `${cacheKey}${columnWidthsSuffix}` : undefined} numColumns={data.columnDescriptors.length} viewportWidth={viewportWidth} tableCornerWidth={tableCornerWidth}>
+            {/* Create a new set of hidden columns if the data has changed, but keep it if only the number of rows changed */}
+            <ColumnVisibilityStatesProvider key={cacheKey ?? key} localStorageKey={cacheKey ? `${cacheKey}${columnVisibilityStatesSuffix}` : undefined} columnNames={columnNames} initialVisibilityStates={initialVisibilityStates} onColumnsVisibilityChange={onColumnsVisibilityChange}>
+              {/* Create a new context if the dataframe changes, to flush the cache (ranks and indexes) */}
+              <OrderByProvider key={key} orderBy={orderBy} onOrderByChange={onOrderByChange}>
+                {/* Create a new selection context if the dataframe has changed */}
+                <SelectionProvider key={key} selection={selection} onSelectionChange={onSelectionChange} data={data} numRows={numRows}>
+                  {/* Create a new navigation context if the dataframe has changed, because the focused cell might not exist anymore */}
+                  <CellNavigationProvider key={key}>
                     <RowsAndColumnsProvider>
 
                       <Scroller setViewportWidth={setViewportWidth} overscan={overscan} padding={padding}>
@@ -104,16 +105,17 @@ export default function Wrapper({
                       </Scroller>
 
                     </RowsAndColumnsProvider>
-                  </PortalContainerContext.Provider>
-                </CellNavigationProvider>
-              </SelectionProvider>
-            </OrderByProvider>
-          </ColumnVisibilityStatesProvider>
-        </ColumnWidthsProvider>
-      </ColumnParametersProvider>
+                  </CellNavigationProvider>
+                </SelectionProvider>
+              </OrderByProvider>
+            </ColumnVisibilityStatesProvider>
+          </ColumnWidthsProvider>
+        </ColumnParametersProvider>
 
-      {/* puts a background behind the row labels column */}
-      <div className={styles.mockRowLabel}>&nbsp;</div>
-    </div>
+        {/* puts a background behind the row labels column */}
+        <div className={styles.mockRowLabel}>&nbsp;</div>
+
+      </div>
+    </PortalContainerContext.Provider>
   )
 }
