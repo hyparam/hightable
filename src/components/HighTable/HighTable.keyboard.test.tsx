@@ -113,7 +113,7 @@ describe('Navigating Hightable with the keyboard', () => {
 
   const rowIndex = 4
   const colIndex = 3
-  const pageSize = 2
+  const numRowsPerPage = 2
   const firstRow = 1
   // const lastRow = data.numRows + 1 // see comments below
   const firstCol = 1
@@ -128,9 +128,9 @@ describe('Navigating Hightable with the keyboard', () => {
       ['{Control>}{ArrowUp}{/Control}', firstRow, colIndex],
       ['{ArrowDown}', rowIndex + 1, colIndex],
       // ['{Control>}{ArrowDown}{/Control}', lastRow, 3], // Cannot be tested because it relies on scroll
-      ['{PageUp}', rowIndex - pageSize, colIndex],
+      ['{PageUp}', rowIndex - numRowsPerPage, colIndex],
       ['{Shift>}{ }{/Shift}', rowIndex, colIndex], // no op
-      ['{PageDown}', rowIndex + pageSize, colIndex],
+      ['{PageDown}', rowIndex + numRowsPerPage, colIndex],
       ['{ }', rowIndex, colIndex], // no op
       ['{Home}', rowIndex, firstCol],
       ['{Control>}{Home}{/Control}', firstRow, firstCol],
@@ -154,7 +154,7 @@ describe('Navigating Hightable with the keyboard', () => {
       ['{Meta>}{ArrowLeft}{/Meta}', rowIndex, colIndex], // no op
       ['{Shift>}{ArrowLeft}{/Shift}', rowIndex, colIndex], // no op
     ])('pressing "%s" moves the focus to the cell (%s, %s)', async (key, expectedRowIndex, expectedColIndex) => {
-      const { user } = render(<HighTable data={data} padding={pageSize} />)
+      const { user } = render(<HighTable data={data} numRowsPerPage={numRowsPerPage} />)
       // focus the cell (4, 3)
       await user.keyboard('{ArrowDown}{ArrowDown}{ArrowDown}{ArrowRight}{ArrowRight}')
       expect(getFocusCoordinates()).toEqual({ rowIndex, colIndex })

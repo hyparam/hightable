@@ -5,18 +5,19 @@ import { CellNavigationContext } from '../../contexts/CellNavigationContext.js'
 import { DataContext } from '../../contexts/DataContext.js'
 import { RowsAndColumnsContext } from '../../contexts/RowsAndColumnsContext.js'
 import styles from '../../HighTable.module.css'
-import { ariaOffset, defaultOverscan, defaultPadding, rowHeight } from './constants.js'
-import type { SliceProps } from './Slice.js'
+import { ariaOffset, defaultOverscan, rowHeight } from './constants.js'
+
+export interface ScrollerProps {
+  overscan?: number // number of rows to fetch outside of the viewport
+}
 
 type Props = {
   setViewportWidth: (width: number) => void // callback to set the current viewport width
   children?: React.ReactNode
-} & SliceProps
-export type ScrollerProps = SliceProps
+} & ScrollerProps
 
 export default function Scroller({
   overscan = defaultOverscan,
-  padding = defaultPadding,
   setViewportWidth,
   children,
 }: Props) {
@@ -29,7 +30,7 @@ export default function Scroller({
   const { numRows } = useContext(DataContext)
   const { onScrollKeyDown } = useContext(CellNavigationContext)
   const { shouldScroll, setShouldScroll, cellPosition } = useContext(CellNavigationContext)
-  const { rowsRange, setRowsRange } = useContext(RowsAndColumnsContext)
+  const { rowsRangeWithPadding, setRowsRange } = useContext(RowsAndColumnsContext)
 
   /**
    * Compute the values:
@@ -69,8 +70,8 @@ export default function Scroller({
   // total scrollable height
   /* TODO: fix the computation on unstyled tables */
   const tableOffset = useMemo(() => {
-    return Math.max(0, (rowsRange?.start ?? 0) - padding) * rowHeight
-  }, [rowsRange, padding])
+    return (rowsRangeWithPadding?.startPadding ?? 0) * rowHeight
+  }, [rowsRangeWithPadding])
 
   /**
    * Handle keyboard events for scrolling
@@ -92,7 +93,7 @@ export default function Scroller({
    * back to it
    */
   useEffect(() => {
-    if (!shouldScroll || scrollTop === undefined || scrollToTop === undefined || rowsRange === undefined) {
+    if (!shouldScroll || scrollTop === undefined || scrollToTop === undefined || rowsRangeWithPadding === undefined) {
       return
     }
     setShouldScroll?.(false)
@@ -100,14 +101,14 @@ export default function Scroller({
     let nextScrollTop = scrollTop
     // if row outside of the rows range, scroll to the estimated position of the cell,
     // to wait for the cell to be fetched and rendered
-    if (row < rowsRange.start || row >= rowsRange.end) {
+    if (row < rowsRangeWithPadding.start || row >= rowsRangeWithPadding.end) {
       nextScrollTop = row * rowHeight
     }
     if (nextScrollTop !== scrollTop) {
       // scroll to the cell
       scrollToTop(nextScrollTop)
     }
-  }, [cellPosition, shouldScroll, rowsRange, setShouldScroll, scrollToTop, scrollTop])
+  }, [cellPosition, shouldScroll, rowsRangeWithPadding, setShouldScroll, scrollToTop, scrollTop])
 
   /**
    * Track viewport size and scroll position

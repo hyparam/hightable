@@ -13,12 +13,14 @@ import { ColumnVisibilityStatesProvider } from '../../providers/ColumnVisibility
 import { type MaybeHiddenColumn } from '../../providers/ColumnVisibilityStatesProvider.js'
 import { ColumnWidthsProvider } from '../../providers/ColumnWidthsProvider.js'
 import { OrderByProvider } from '../../providers/OrderByProvider.js'
+import type { RowsAndColumnsProviderProps } from '../../providers/RowsAndColumnsProvider.js'
 import { RowsAndColumnsProvider } from '../../providers/RowsAndColumnsProvider.js'
 import { SelectionProvider } from '../../providers/SelectionProvider.js'
 import { rowHeight } from './constants.js'
 import { columnVisibilityStatesSuffix, columnWidthsSuffix } from './constants.js'
 import type { ScrollerProps } from './Scroller.js'
 import Scroller from './Scroller.js'
+import type { SliceProps } from './Slice.js'
 import Slice from './Slice.js'
 
 export type WrapperProps = {
@@ -31,7 +33,7 @@ export type WrapperProps = {
   onColumnsVisibilityChange?: (columns: Record<string, MaybeHiddenColumn>) => void // callback which is called whenever the set of hidden columns changes.
   onOrderByChange?: (orderBy: OrderBy) => void // callback to call when a user interaction changes the order. The interactions are disabled if undefined.
   onSelectionChange?: (selection: Selection) => void // callback to call when a user interaction changes the selection. The selection is expressed as data indexes (not as indexes in the table). The interactions are disabled if undefined.
-} & ScrollerProps
+} & ScrollerProps & RowsAndColumnsProviderProps & SliceProps
 
 export default function Wrapper({
   columnConfiguration,
@@ -94,11 +96,10 @@ export default function Wrapper({
                 <SelectionProvider key={key} selection={selection} onSelectionChange={onSelectionChange} data={data} numRows={numRows}>
                   {/* Create a new navigation context if the dataframe has changed, because the focused cell might not exist anymore */}
                   <CellNavigationProvider key={key}>
-                    <RowsAndColumnsProvider key={key}>
+                    <RowsAndColumnsProvider key={key} padding={padding}>
 
-                      <Scroller setViewportWidth={setViewportWidth} overscan={overscan} padding={padding}>
+                      <Scroller setViewportWidth={setViewportWidth} overscan={overscan}>
                         <Slice
-                          padding={padding}
                           setTableCornerWidth={setTableCornerWidth}
                           {...rest}
                         />
