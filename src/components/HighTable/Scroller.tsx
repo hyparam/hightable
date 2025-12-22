@@ -220,13 +220,14 @@ export default function Scroller({
   return (
     <div className={styles.tableScroll} ref={viewportRef} role="group" aria-labelledby="caption" onKeyDown={onKeyDown} tabIndex={0}>
       <div style={{ height: `${scrollHeight}px` }}>
-        <Slice
-          rowsRange={rowsRange}
-          tableOffset={tableOffset}
-          padding={padding}
-          setTableCornerWidth={setTableCornerWidth}
-          {...rest}
-        />
+        <div style={{ top: `${tableOffset}px` }}>
+          <Slice
+            rowsRange={rowsRange}
+            padding={padding}
+            setTableCornerWidth={setTableCornerWidth}
+            {...rest}
+          />
+        </div>
       </div>
     </div>
   )

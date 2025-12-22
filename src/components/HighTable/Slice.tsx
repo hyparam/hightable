@@ -30,13 +30,11 @@ export interface SliceProps {
 
 type Props = {
   rowsRange?: { start: number, end: number }
-  tableOffset: number
   setTableCornerWidth?: (width: number) => void // callback to set the current table corner width
 } & SliceProps
 
 export default function Slice({
   rowsRange,
-  tableOffset,
   focus = true,
   padding = defaultPadding,
   onDoubleClickCell,
@@ -131,7 +129,6 @@ export default function Slice({
       aria-multiselectable={selectable}
       aria-busy={pendingSelectionGesture /* TODO(SL): add other busy states? Used only for tests right now */}
       role="grid"
-      style={{ top: `${tableOffset}px` }}
       onKeyDown={onTableKeyDown}
     >
       <caption id="caption" hidden>Virtual-scroll table</caption>
