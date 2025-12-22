@@ -13,12 +13,13 @@ import RowHeader from '../RowHeader/RowHeader.js'
 import TableCorner from '../TableCorner/TableCorner.js'
 import TableHeader from '../TableHeader/TableHeader.js'
 import { defaultPadding } from './constants.js'
-import { ariaOffset } from './constants.js'
+import { ariaOffset, defaultNumRowsPerPage } from './constants.js'
 
 export interface SliceProps {
   focus?: boolean // focus table on mount? (default true)
   overscan?: number // number of rows to fetch outside of the viewport
   padding?: number // number of padding rows to render outside of the viewport
+  numRowsPerPage?: number // number of rows per page for keyboard navigation (default 20)
   // TODO(SL): replace col: number with col: string?
   onDoubleClickCell?: (event: MouseEvent, col: number, row: number) => void
   onKeyDownCell?: (event: KeyboardEvent, col: number, row: number) => void // for accessibility, it should be passed if onDoubleClickCell is passed. It can handle more than that action though.
@@ -34,6 +35,7 @@ type Props = {
 export default function Slice({
   focus = true,
   padding = defaultPadding,
+  numRowsPerPage = defaultNumRowsPerPage,
   onDoubleClickCell,
   onKeyDownCell,
   onMouseDownCell,
@@ -48,9 +50,9 @@ export default function Slice({
   const { rowsRange, columnsParameters } = useContext(RowsAndColumnsContext)
 
   const onTableKeyDown = useCallback((event: KeyboardEvent) => {
-    onNavigationTableKeyDown?.(event, { numRowsPerPage: padding })
+    onNavigationTableKeyDown?.(event, { numRowsPerPage })
     onSelectionTableKeyDown?.(event)
-  }, [onNavigationTableKeyDown, onSelectionTableKeyDown, padding])
+  }, [onNavigationTableKeyDown, onSelectionTableKeyDown, numRowsPerPage])
 
   const getOnCheckboxPress = useCallback(({ row, rowNumber }: { row: number, rowNumber?: number }) => {
     if (rowNumber === undefined || !toggleRowNumber || !toggleRangeToRowNumber) {
