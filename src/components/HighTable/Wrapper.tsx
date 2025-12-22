@@ -94,7 +94,7 @@ export default function Wrapper({
                 <SelectionProvider key={key} selection={selection} onSelectionChange={onSelectionChange} data={data} numRows={numRows}>
                   {/* Create a new navigation context if the dataframe has changed, because the focused cell might not exist anymore */}
                   <CellNavigationProvider key={key}>
-                    <RowsAndColumnsProvider>
+                    <RowsAndColumnsProvider key={key}>
 
                       <Scroller setViewportWidth={setViewportWidth} overscan={overscan} padding={padding}>
                         <Slice
