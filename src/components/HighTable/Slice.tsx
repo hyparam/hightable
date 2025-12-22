@@ -75,16 +75,17 @@ export default function Slice({
     }
   }, [focus, focusFirstCell])
 
-  // add empty pre and post rows to fill the viewport
-  const offset = rowsRange?.start ?? 0
-  const rowsLength = (rowsRange?.end ?? 0) - offset
-  const prePadding = Array.from({ length: Math.min(padding, offset) }, () => [])
-  const rows = Array.from({ length: rowsLength }, (_, i) => i + offset)
-  const postPadding = Array.from({ length: Math.min(padding, numRows - offset - rowsLength) }, () => [])
-
   // Prepare the slice of data to render
   // TODO(SL): also compute progress percentage here, to show a loading indicator
   const slice = useMemo(() => {
+    // add empty pre and post rows to fill the viewport
+    const offset = rowsRange?.start ?? 0
+    const rowsLength = (rowsRange?.end ?? 0) - offset
+    const prePaddingLength = Math.min(padding, offset)
+    const prePadding = Array.from({ length: prePaddingLength }, (_, prePaddingIndex) => ({ row: offset - prePaddingLength + prePaddingIndex }))
+    const rows = Array.from({ length: rowsLength }, (_, i) => i + offset)
+    const postPadding = Array.from({ length: Math.min(padding, numRows - offset - rowsLength) }, (_, postPaddingIndex) => ({ row: offset + rowsLength + postPaddingIndex }))
+
     const canMeasureColumn: Record<string, boolean> = {}
     const rowContents = rows.map((row) => {
       const rowNumber = data.getRowNumber({ row, orderBy })?.value
@@ -100,11 +101,13 @@ export default function Slice({
       }
     })
     return {
+      prePadding,
+      postPadding,
       rowContents,
       canMeasureColumn,
       version,
     }
-  }, [data, columnsParameters, rows, orderBy, version])
+  }, [data, columnsParameters, numRows, padding, rowsRange, orderBy, version])
 
   // don't render table if header is empty
   if (!columnsParameters) return
@@ -143,8 +146,7 @@ export default function Slice({
         </Row>
       </thead>
       <tbody role="rowgroup">
-        {prePadding.map((_, prePaddingIndex) => {
-          const row = offset - prePadding.length + prePaddingIndex
+        {slice.prePadding.map(({ row }) => {
           const ariaRowIndex = row + ariaOffset
           return (
             <Row key={row} ariaRowIndex={ariaRowIndex}>
@@ -195,8 +197,7 @@ export default function Slice({
             </Row>
           )
         })}
-        {postPadding.map((_, postPaddingIndex) => {
-          const row = offset + rowsLength + postPaddingIndex
+        {slice.postPadding.map(({ row }) => {
           const ariaRowIndex = row + ariaOffset
           return (
             <Row key={row} ariaRowIndex={ariaRowIndex}>
