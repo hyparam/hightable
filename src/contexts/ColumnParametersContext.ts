@@ -8,7 +8,7 @@ export interface ColumnParameters extends ColumnConfig, Omit<ColumnDescriptor, '
   index: number // position in current order
 }
 
-export type ColumnParametersContextType = ColumnParameters[]
+type ColumnParametersContextType = ColumnParameters[]
 
 export const defaultColumnParametersContext: ColumnParametersContextType = []
 
