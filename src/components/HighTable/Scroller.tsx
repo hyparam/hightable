@@ -2,13 +2,8 @@ import type { KeyboardEvent } from 'react'
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 
 import { CellNavigationContext } from '../../contexts/CellNavigationContext.js'
-import { ColumnParametersContext } from '../../contexts/ColumnParametersContext.js'
-import { ColumnVisibilityStatesContext } from '../../contexts/ColumnVisibilityStatesContext.js'
 import { DataContext } from '../../contexts/DataContext.js'
-import { ErrorContext } from '../../contexts/ErrorContext.js'
-import { OrderByContext } from '../../contexts/OrderByContext.js'
-import type { RowsRange } from '../../contexts/RowsRangeContext.js'
-import { RowsRangeContext } from '../../contexts/RowsRangeContext.js'
+import { RowsAndColumnsContext } from '../../contexts/RowsAndColumnsContext.js'
 import styles from '../../HighTable.module.css'
 import { ariaOffset, defaultOverscan, defaultPadding, rowHeight } from './constants.js'
 import type { SliceProps } from './Slice.js'
@@ -27,26 +22,14 @@ export default function Scroller({
 }: Props) {
   // TODO(SL): replace with a callback function (https://react.dev/reference/react-dom/components/common#ref-callback)
   const viewportRef = useRef<HTMLDivElement>(null)
-  const abortControllerRef = useRef<AbortController | undefined>(undefined)
 
   const [scrollTop, setScrollTop] = useState<number | undefined>(undefined)
   const [scrollToTop, setScrollToTop] = useState<((top: number) => void) | undefined>(undefined)
-  const [rowsRange, setRowsRange] = useState<RowsRange | undefined>(undefined)
 
-  const { data, numRows } = useContext(DataContext)
+  const { numRows } = useContext(DataContext)
   const { onScrollKeyDown } = useContext(CellNavigationContext)
   const { shouldScroll, setShouldScroll, cellPosition } = useContext(CellNavigationContext)
-  const { onError } = useContext(ErrorContext)
-  const { orderBy } = useContext(OrderByContext)
-
-  // TODO(SL): extract above
-  const { isHiddenColumn } = useContext(ColumnVisibilityStatesContext)
-  const allColumnsParameters = useContext(ColumnParametersContext)
-  const columnsParameters = useMemo(() => {
-    return allColumnsParameters.filter((col) => {
-      return !isHiddenColumn?.(col.name)
-    })
-  }, [allColumnsParameters, isHiddenColumn])
+  const { rowsRange, setRowsRange } = useContext(RowsAndColumnsContext)
 
   /**
    * Compute the values:
@@ -58,42 +41,14 @@ export default function Scroller({
   // if CSS is not completely changed, viewport.current.scrollHeight will be equal to this value
   const scrollHeight = useMemo(() => (numRows + 1) * rowHeight, [numRows])
 
-  const fetchRows = useCallback(({
-    rowsRange: { start, end },
-  }: {
-    rowsRange: { start: number, end: number }
-  }) => {
-    if (data.fetch === undefined) {
-      return
-    }
-    // abort the previous fetches if any
-    abortControllerRef.current?.abort()
-    const abortController = new AbortController()
-    abortControllerRef.current = abortController
-    // fetch data when needed
-    data.fetch({
-      rowStart: start,
-      rowEnd: end,
-      columns: columnsParameters.map(({ name }) => name),
-      orderBy,
-      signal: abortController.signal,
-    }).catch((error: unknown) => {
-      if (error instanceof DOMException && error.name === 'AbortError') {
-        // fetch was aborted, ignore the error
-        return
-      }
-      onError?.(error)
-    })
-  }, [data, orderBy, onError, columnsParameters])
+  // sanity check
+  if (scrollHeight <= 0) {
+    throw new Error(`invalid scrollHeight ${scrollHeight}`)
+  }
 
-  const computeSetAndFetchRowsRange = useCallback((viewport: HTMLDivElement): { start: number, end: number } | undefined => {
-    const { scrollHeight, scrollTop, clientHeight: viewportHeight } = viewport
-    if (
-      // nothing to render - should not happen because it should always contain the header row
-      scrollHeight === 0
-    ) {
-      return undefined
-    }
+  const computeAndSetRowsRange = useCallback((viewport: HTMLDivElement) => {
+    const { scrollTop, clientHeight: viewportHeight } = viewport
+
     // TODO(SL): remove this fallback? It's only for the tests, where the elements have zero height
     const clientHeight = viewportHeight === 0 ? 100 : viewportHeight
 
@@ -108,11 +63,8 @@ export default function Scroller({
     if (end - start > 1000) throw new Error(`attempted to render too many rows ${end - start} table must be contained in a scrollable div`)
 
     const rowsRange = { start, end }
-    setRowsRange(rowsRange)
-    fetchRows({ rowsRange })
-
-    return rowsRange
-  }, [numRows, overscan, fetchRows])
+    setRowsRange?.(rowsRange)
+  }, [numRows, overscan, scrollHeight, setRowsRange])
 
   // total scrollable height
   /* TODO: fix the computation on unstyled tables */
@@ -171,13 +123,13 @@ export default function Scroller({
     const updateViewportSize = () => {
       setViewportWidth(viewport.clientWidth)
       // recompute the rows range if the height has changed
-      computeSetAndFetchRowsRange(viewport)
+      computeAndSetRowsRange(viewport)
     }
     // eslint-disable-next-line func-style
     const handleScroll = () => {
       // TODO(SL): throttle? see https://github.com/hyparam/hightable/pull/347
       setScrollTop(viewport.scrollTop)
-      computeSetAndFetchRowsRange(viewport)
+      computeAndSetRowsRange(viewport)
     }
 
     // run once
@@ -216,15 +168,13 @@ export default function Scroller({
       resizeObserver?.disconnect()
       viewport.removeEventListener('scroll', handleScroll)
     }
-  }, [setViewportWidth, computeSetAndFetchRowsRange])
+  }, [setViewportWidth, computeAndSetRowsRange])
 
   return (
     <div className={styles.tableScroll} ref={viewportRef} role="group" aria-labelledby="caption" onKeyDown={onKeyDown} tabIndex={0}>
       <div style={{ height: `${scrollHeight}px` }}>
         <div style={{ top: `${tableOffset}px` }}>
-          <RowsRangeContext.Provider value={rowsRange}>
-            {children}
-          </RowsRangeContext.Provider>
+          {children}
         </div>
       </div>
     </div>

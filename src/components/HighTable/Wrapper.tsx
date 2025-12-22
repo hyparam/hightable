@@ -13,6 +13,7 @@ import { ColumnVisibilityStatesProvider } from '../../providers/ColumnVisibility
 import { type MaybeHiddenColumn } from '../../providers/ColumnVisibilityStatesProvider.js'
 import { ColumnWidthsProvider } from '../../providers/ColumnWidthsProvider.js'
 import { OrderByProvider } from '../../providers/OrderByProvider.js'
+import { RowsAndColumnsProvider } from '../../providers/RowsAndColumnsProvider.js'
 import { SelectionProvider } from '../../providers/SelectionProvider.js'
 import { rowHeight } from './constants.js'
 import { columnVisibilityStatesSuffix, columnWidthsSuffix } from './constants.js'
@@ -92,15 +93,17 @@ export default function Wrapper({
                 <CellNavigationProvider key={key}>
                   {/* TODO(SL): passing a ref to an element is code smell */}
                   <PortalContainerContext.Provider value={{ containerRef: ref }}>
+                    <RowsAndColumnsProvider>
 
-                    <Scroller setViewportWidth={setViewportWidth} overscan={overscan} padding={padding}>
-                      <Slice
-                        padding={padding}
-                        setTableCornerWidth={setTableCornerWidth}
-                        {...rest}
-                      />
-                    </Scroller>
+                      <Scroller setViewportWidth={setViewportWidth} overscan={overscan} padding={padding}>
+                        <Slice
+                          padding={padding}
+                          setTableCornerWidth={setTableCornerWidth}
+                          {...rest}
+                        />
+                      </Scroller>
 
+                    </RowsAndColumnsProvider>
                   </PortalContainerContext.Provider>
                 </CellNavigationProvider>
               </SelectionProvider>

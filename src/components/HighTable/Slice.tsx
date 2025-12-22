@@ -2,11 +2,9 @@ import type { KeyboardEvent, MouseEvent, ReactNode } from 'react'
 import { useCallback, useContext, useEffect, useMemo } from 'react'
 
 import { CellNavigationContext } from '../../contexts/CellNavigationContext.js'
-import { ColumnParametersContext } from '../../contexts/ColumnParametersContext.js'
-import { ColumnVisibilityStatesContext } from '../../contexts/ColumnVisibilityStatesContext.js'
 import { DataContext } from '../../contexts/DataContext.js'
 import { OrderByContext } from '../../contexts/OrderByContext.js'
-import { RowsRangeContext } from '../../contexts/RowsRangeContext.js'
+import { RowsAndColumnsContext } from '../../contexts/RowsAndColumnsContext.js'
 import { SelectionContext } from '../../contexts/SelectionContext.js'
 import { stringify as stringifyDefault } from '../../utils/stringify.js'
 import Cell, { type CellContentProps } from '../Cell/Cell.js'
@@ -44,18 +42,10 @@ export default function Slice({
   stringify = stringifyDefault,
 }: Props) {
   const { data, version, numRows } = useContext(DataContext)
-  const allColumnsParameters = useContext(ColumnParametersContext)
-  const { isHiddenColumn } = useContext(ColumnVisibilityStatesContext)
   const { onTableKeyDown: onNavigationTableKeyDown, focusFirstCell } = useContext(CellNavigationContext)
   const { orderBy, onOrderByChange } = useContext(OrderByContext)
   const { selectable, toggleAllRows, pendingSelectionGesture, onTableKeyDown: onSelectionTableKeyDown, allRowsSelected, isRowSelected, toggleRowNumber, toggleRangeToRowNumber } = useContext(SelectionContext)
-  const rowsRange = useContext(RowsRangeContext)
-
-  const columnsParameters = useMemo(() => {
-    return allColumnsParameters.filter((col) => {
-      return !isHiddenColumn?.(col.name)
-    })
-  }, [allColumnsParameters, isHiddenColumn])
+  const { rowsRange, columnsParameters } = useContext(RowsAndColumnsContext)
 
   const onTableKeyDown = useCallback((event: KeyboardEvent) => {
     onNavigationTableKeyDown?.(event, { numRowsPerPage: padding })
@@ -98,7 +88,7 @@ export default function Slice({
     const canMeasureColumn: Record<string, boolean> = {}
     const rowContents = rows.map((row) => {
       const rowNumber = data.getRowNumber({ row, orderBy })?.value
-      const cells = columnsParameters.map(({ name: column, index: originalColumnIndex }) => {
+      const cells = (columnsParameters ?? []).map(({ name: column, index: originalColumnIndex }) => {
         const cell = data.getCell({ row, column, orderBy })
         canMeasureColumn[column] ||= cell !== undefined
         return { columnIndex: originalColumnIndex, cell }
@@ -117,7 +107,7 @@ export default function Slice({
   }, [data, columnsParameters, rows, orderBy, version])
 
   // don't render table if header is empty
-  if (!columnsParameters.length) return
+  if (!columnsParameters) return
 
   const ariaColCount = columnsParameters.length + 1 // don't forget the selection column
   const ariaRowCount = numRows + 1 // don't forget the header row
