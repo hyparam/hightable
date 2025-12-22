@@ -30,7 +30,7 @@ export function CellNavigationProvider({ children }: CellNavigationProviderProps
     setPreviousRowCount(rowCount)
     if (rowIndex > rowCount) {
       // Reset the row index to the last row if it goes out of bounds
-      // Note that we don't force scrolling or focusing
+      // TODO(SL): scroll and/or focus?
       setRowIndex(rowCount)
     }
   }

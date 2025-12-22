@@ -21,6 +21,9 @@
     overflow: auto;
     & > div {
       position: relative;
+      & > div {
+        position: absolute;
+      }
     }
     /* avoid the row and column headers (sticky) to overlap the current navigation cell */
     scroll-padding-inline-start: var(--row-number-width);
@@ -28,7 +31,6 @@
   }
 
   table {
-    position: absolute;
     max-width: 100%;
     overflow-x: auto;
   }

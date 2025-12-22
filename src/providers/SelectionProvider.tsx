@@ -1,6 +1,7 @@
 import type { KeyboardEvent, ReactNode } from 'react'
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react'
 
+import { ErrorContext } from '../contexts/ErrorContext.js'
 import { OrderByContext } from '../contexts/OrderByContext.js'
 import { SelectionContext } from '../contexts/SelectionContext.js'
 import { checkSignal } from '../helpers/dataframe/helpers.js'
@@ -16,7 +17,6 @@ interface SelectionProviderProps {
   onSelectionChange?: (selection: Selection) => void // callback to call when a user interaction changes the selection. The selection is expressed as data indexes (not as indexes in the table). The interactions are disabled if undefined.
   data: Omit<DataFrame, 'numRows'>
   numRows: number
-  onError?: (error: unknown) => void
   children: ReactNode
 }
 
@@ -24,7 +24,7 @@ interface Gesture {
   controller: AbortController // the AbortController used to abort the gesture
 }
 
-export function SelectionProvider({ children, data, numRows, onError, selection: inputSelection, onSelectionChange: inputOnSelectionChange }: SelectionProviderProps) {
+export function SelectionProvider({ children, data, numRows, selection: inputSelection, onSelectionChange: inputOnSelectionChange }: SelectionProviderProps) {
   const [previousNumRows, setPreviousNumRows] = useState(numRows)
   const { value: selection, onChange: onSelectionChange } = useInputState<Selection>({
     value: inputSelection,
@@ -35,7 +35,9 @@ export function SelectionProvider({ children, data, numRows, onError, selection:
 
   const [rowByRowNumberAndOrderBy] = useState<Map<string, Map<number, number | undefined>>>(() => new Map())
   const [allRowsSelected, setAllRowsSelected] = useState<boolean | undefined>(areAllSelected({ numRows, selection }))
+
   const { orderBy } = useContext(OrderByContext)
+  const { onError } = useContext(ErrorContext)
 
   if (numRows !== previousNumRows) {
     setPreviousNumRows(numRows)
