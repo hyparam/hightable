@@ -40,7 +40,7 @@ export default function TableCorner({ children, checked, onCheckboxPress, pendin
   useEffect(() => {
     const tableCorner = tableCornerRef.current
     if (!setTableCornerSize) {
-      // Width tracking is disabled intentionally when no callback is provided.
+      // Size tracking is disabled intentionally when no callback is provided.
       return
     }
     if (!tableCorner) {
@@ -55,12 +55,12 @@ export default function TableCorner({ children, checked, onCheckboxPress, pendin
 
     // Use an arrow function to get correct tableCorner type (not null)
     // eslint-disable-next-line func-style
-    const updateTableCornerWidth = () => {
+    const updateTableCornerSize = () => {
       setTableCornerSize({ width: tableCorner.offsetWidth, height: tableCorner.offsetHeight })
     }
 
     // run once
-    updateTableCornerWidth()
+    updateTableCornerSize()
 
     // listener
     const resizeObserver = new window.ResizeObserver(([entry]) => {
@@ -68,7 +68,7 @@ export default function TableCorner({ children, checked, onCheckboxPress, pendin
         console.warn('ResizeObserver entry is not available.')
         return
       }
-      updateTableCornerWidth()
+      updateTableCornerSize()
     })
     resizeObserver.observe(tableCorner)
     return () => {
