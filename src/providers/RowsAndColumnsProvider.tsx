@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { useContext, useMemo, useState } from 'react'
 
+import { defaultPadding } from '../components/HighTable/constants.js'
 import { ColumnParametersContext } from '../contexts/ColumnParametersContext.js'
 import { ColumnVisibilityStatesContext } from '../contexts/ColumnVisibilityStatesContext.js'
 import { DataContext } from '../contexts/DataContext.js'
@@ -9,15 +10,19 @@ import { OrderByContext } from '../contexts/OrderByContext.js'
 import type { RowsRange } from '../contexts/RowsAndColumnsContext.js'
 import { RowsAndColumnsContext } from '../contexts/RowsAndColumnsContext.js'
 
-interface RowsAndColumnsProviderProps {
-  children: ReactNode
+export interface RowsAndColumnsProviderProps {
+  padding?: number
 }
 
-export function RowsAndColumnsProvider({ children }: RowsAndColumnsProviderProps) {
+type Props = {
+  children: ReactNode
+} & RowsAndColumnsProviderProps
+
+export function RowsAndColumnsProvider({ padding = defaultPadding, children }: Props) {
   const [rowsRange, setRowsRange] = useState<RowsRange | undefined>(undefined)
 
   const { onError } = useContext(ErrorContext)
-  const { data } = useContext(DataContext)
+  const { data, numRows } = useContext(DataContext)
   const { orderBy } = useContext(OrderByContext)
   const allColumnsParameters = useContext(ColumnParametersContext)
   const { isHiddenColumn } = useContext(ColumnVisibilityStatesContext)
@@ -64,11 +69,23 @@ export function RowsAndColumnsProvider({ children }: RowsAndColumnsProviderProps
     }
   }
 
+  const rowsRangeWithPadding = useMemo(() => {
+    if (!rowsRange) return undefined
+
+    const startPadding = Math.max(rowsRange.start - padding, 0)
+    const endPadding = Math.min(rowsRange.end + padding, numRows)
+    return {
+      ...rowsRange,
+      startPadding,
+      endPadding,
+    }
+  }, [rowsRange, numRows, padding])
+
   const value = useMemo(() => ({
     columnsParameters,
-    rowsRange,
+    rowsRangeWithPadding,
     setRowsRange,
-  }), [columnsParameters, rowsRange, setRowsRange])
+  }), [columnsParameters, rowsRangeWithPadding, setRowsRange])
 
   return (
     <RowsAndColumnsContext.Provider value={value}>

@@ -7,9 +7,14 @@ export interface RowsRange {
   end: number
 }
 
+interface RowsRangeWithPadding extends RowsRange {
+  startPadding: number // offset before start
+  endPadding: number // offset after end
+}
+
 interface RowsAndColumnsContextType {
   columnsParameters?: ColumnParameters[]
-  rowsRange?: RowsRange
+  rowsRangeWithPadding?: RowsRangeWithPadding
   setRowsRange?: (rowsRange: RowsRange | undefined) => void
 }
 

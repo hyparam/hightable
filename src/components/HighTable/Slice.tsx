@@ -12,13 +12,10 @@ import Row from '../Row/Row.js'
 import RowHeader from '../RowHeader/RowHeader.js'
 import TableCorner from '../TableCorner/TableCorner.js'
 import TableHeader from '../TableHeader/TableHeader.js'
-import { defaultPadding } from './constants.js'
 import { ariaOffset, defaultNumRowsPerPage } from './constants.js'
 
 export interface SliceProps {
   focus?: boolean // focus table on mount? (default true)
-  overscan?: number // number of rows to fetch outside of the viewport
-  padding?: number // number of padding rows to render outside of the viewport
   numRowsPerPage?: number // number of rows per page for keyboard navigation (default 20)
   // TODO(SL): replace col: number with col: string?
   onDoubleClickCell?: (event: MouseEvent, col: number, row: number) => void
@@ -34,7 +31,6 @@ type Props = {
 
 export default function Slice({
   focus = true,
-  padding = defaultPadding,
   numRowsPerPage = defaultNumRowsPerPage,
   onDoubleClickCell,
   onKeyDownCell,
@@ -47,7 +43,7 @@ export default function Slice({
   const { onTableKeyDown: onNavigationTableKeyDown, focusFirstCell } = useContext(CellNavigationContext)
   const { orderBy, onOrderByChange } = useContext(OrderByContext)
   const { selectable, toggleAllRows, pendingSelectionGesture, onTableKeyDown: onSelectionTableKeyDown, allRowsSelected, isRowSelected, toggleRowNumber, toggleRangeToRowNumber } = useContext(SelectionContext)
-  const { rowsRange, columnsParameters } = useContext(RowsAndColumnsContext)
+  const { columnsParameters, rowsRangeWithPadding } = useContext(RowsAndColumnsContext)
 
   const onTableKeyDown = useCallback((event: KeyboardEvent) => {
     onNavigationTableKeyDown?.(event, { numRowsPerPage })
@@ -80,13 +76,20 @@ export default function Slice({
   // Prepare the slice of data to render
   // TODO(SL): also compute progress percentage here, to show a loading indicator
   const slice = useMemo(() => {
+    if (!rowsRangeWithPadding) {
+      return {
+        prePadding: [],
+        postPadding: [],
+        rowContents: [],
+        canMeasureColumn: {},
+        version,
+      }
+    }
+    const { startPadding, start, end, endPadding } = rowsRangeWithPadding
     // add empty pre and post rows to fill the viewport
-    const offset = rowsRange?.start ?? 0
-    const rowsLength = (rowsRange?.end ?? 0) - offset
-    const prePaddingLength = Math.min(padding, offset)
-    const prePadding = Array.from({ length: prePaddingLength }, (_, prePaddingIndex) => ({ row: offset - prePaddingLength + prePaddingIndex }))
-    const rows = Array.from({ length: rowsLength }, (_, i) => i + offset)
-    const postPadding = Array.from({ length: Math.min(padding, numRows - offset - rowsLength) }, (_, postPaddingIndex) => ({ row: offset + rowsLength + postPaddingIndex }))
+    const prePadding = Array.from({ length: start - startPadding }, (_, i) => ({ row: startPadding + i }))
+    const rows = Array.from({ length: end - start }, (_, i) => start + i)
+    const postPadding = Array.from({ length: endPadding - end }, (_, i) => ({ row: end + i }))
 
     const canMeasureColumn: Record<string, boolean> = {}
     const rowContents = rows.map((row) => {
@@ -109,7 +112,7 @@ export default function Slice({
       canMeasureColumn,
       version,
     }
-  }, [data, columnsParameters, numRows, padding, rowsRange, orderBy, version])
+  }, [data, columnsParameters, rowsRangeWithPadding, orderBy, version])
 
   // don't render table if header is empty
   if (!columnsParameters) return
