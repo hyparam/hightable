@@ -7,6 +7,8 @@ import { ColumnVisibilityStatesContext } from '../../contexts/ColumnVisibilitySt
 import { DataContext } from '../../contexts/DataContext.js'
 import { ErrorContext } from '../../contexts/ErrorContext.js'
 import { OrderByContext } from '../../contexts/OrderByContext.js'
+import type { RowsRange } from '../../contexts/RowsRangeContext.js'
+import { RowsRangeContext } from '../../contexts/RowsRangeContext.js'
 import styles from '../../HighTable.module.css'
 import { ariaOffset, defaultOverscan, defaultPadding, rowHeight } from './constants.js'
 import type { SliceProps } from './Slice.js'
@@ -30,7 +32,7 @@ export default function Scroller({
 
   const [scrollTop, setScrollTop] = useState<number | undefined>(undefined)
   const [scrollToTop, setScrollToTop] = useState<((top: number) => void) | undefined>(undefined)
-  const [rowsRange, setRowsRange] = useState<{ start: number, end: number } | undefined>(undefined)
+  const [rowsRange, setRowsRange] = useState<RowsRange | undefined>(undefined)
 
   const { data, numRows } = useContext(DataContext)
   const { onScrollKeyDown } = useContext(CellNavigationContext)
@@ -221,12 +223,13 @@ export default function Scroller({
     <div className={styles.tableScroll} ref={viewportRef} role="group" aria-labelledby="caption" onKeyDown={onKeyDown} tabIndex={0}>
       <div style={{ height: `${scrollHeight}px` }}>
         <div style={{ top: `${tableOffset}px` }}>
-          <Slice
-            rowsRange={rowsRange}
-            padding={padding}
-            setTableCornerWidth={setTableCornerWidth}
-            {...rest}
-          />
+          <RowsRangeContext.Provider value={rowsRange}>
+            <Slice
+              padding={padding}
+              setTableCornerWidth={setTableCornerWidth}
+              {...rest}
+            />
+          </RowsRangeContext.Provider>
         </div>
       </div>
     </div>

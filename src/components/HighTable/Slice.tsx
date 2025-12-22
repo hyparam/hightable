@@ -6,6 +6,7 @@ import { ColumnParametersContext } from '../../contexts/ColumnParametersContext.
 import { ColumnVisibilityStatesContext } from '../../contexts/ColumnVisibilityStatesContext.js'
 import { DataContext } from '../../contexts/DataContext.js'
 import { OrderByContext } from '../../contexts/OrderByContext.js'
+import { RowsRangeContext } from '../../contexts/RowsRangeContext.js'
 import { SelectionContext } from '../../contexts/SelectionContext.js'
 import { stringify as stringifyDefault } from '../../utils/stringify.js'
 import Cell, { type CellContentProps } from '../Cell/Cell.js'
@@ -29,12 +30,10 @@ export interface SliceProps {
 }
 
 type Props = {
-  rowsRange?: { start: number, end: number }
   setTableCornerWidth?: (width: number) => void // callback to set the current table corner width
 } & SliceProps
 
 export default function Slice({
-  rowsRange,
   focus = true,
   padding = defaultPadding,
   onDoubleClickCell,
@@ -50,6 +49,7 @@ export default function Slice({
   const { onTableKeyDown: onNavigationTableKeyDown, focusFirstCell } = useContext(CellNavigationContext)
   const { orderBy, onOrderByChange } = useContext(OrderByContext)
   const { selectable, toggleAllRows, pendingSelectionGesture, onTableKeyDown: onSelectionTableKeyDown, allRowsSelected, isRowSelected, toggleRowNumber, toggleRangeToRowNumber } = useContext(SelectionContext)
+  const rowsRange = useContext(RowsRangeContext)
 
   const columnsParameters = useMemo(() => {
     return allColumnsParameters.filter((col) => {
