@@ -8,8 +8,8 @@ export interface RowsRange {
 }
 
 interface RowsRangeWithPadding extends RowsRange {
-  startPadding: number // offset before start
-  endPadding: number // offset after end
+  startPadding: number // starting row index (inclusive) of the padded region before `start` (i.e. start - padding rows, or 0)
+  endPadding: number // ending row index (exclusive) of the padded region (i.e. end + padding rows, or numRows)
 }
 
 interface RowsAndColumnsContextType {
