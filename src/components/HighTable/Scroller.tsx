@@ -5,8 +5,8 @@ import { CellNavigationContext } from '../../contexts/CellNavigationContext.js'
 import { DataContext } from '../../contexts/DataContext.js'
 import { RowsAndColumnsContext } from '../../contexts/RowsAndColumnsContext.js'
 import { ScrollModeContext } from '../../contexts/ScrollModeContext.js'
+import { ariaOffset, maxElementHeight, rowHeight } from '../../helpers/constants.js'
 import styles from '../../HighTable.module.css'
-import { ariaOffset, maxElementHeight, rowHeight } from './constants.js'
 
 interface Props {
   headerHeight?: number // height of the table header
