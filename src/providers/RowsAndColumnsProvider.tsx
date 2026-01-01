@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { useContext, useMemo, useState } from 'react'
 
-import { defaultPadding } from '../components/HighTable/constants.js'
+import { defaultOverscan, defaultPadding } from '../components/HighTable/constants.js'
 import { ColumnParametersContext } from '../contexts/ColumnParametersContext.js'
 import { ColumnVisibilityStatesContext } from '../contexts/ColumnVisibilityStatesContext.js'
 import { DataContext } from '../contexts/DataContext.js'
@@ -11,15 +11,16 @@ import type { RowsRange } from '../contexts/RowsAndColumnsContext.js'
 import { RowsAndColumnsContext } from '../contexts/RowsAndColumnsContext.js'
 
 export interface RowsAndColumnsProviderProps {
-  padding?: number
+  overscan?: number // number of rows to fetch outside of the viewport
+  padding?: number // number of rows to include as padding in the table rendering
 }
 
 type Props = {
   children: ReactNode
 } & RowsAndColumnsProviderProps
 
-export function RowsAndColumnsProvider({ padding = defaultPadding, children }: Props) {
-  const [rowsRange, setRowsRange] = useState<RowsRange | undefined>(undefined)
+export function RowsAndColumnsProvider({ padding = defaultPadding, overscan = defaultOverscan, children }: Props) {
+  const [visibleRowsRange, setVisibleRowsRange] = useState<RowsRange | undefined>(undefined)
 
   const { onError } = useContext(ErrorContext)
   const { data, numRows } = useContext(DataContext)
@@ -33,12 +34,29 @@ export function RowsAndColumnsProvider({ padding = defaultPadding, children }: P
     })
   }, [allColumnsParameters, isHiddenColumn])
 
+  const fetchedRowsRange = useMemo(() => {
+    if (!visibleRowsRange) return undefined
+
+    return {
+      start: Math.max(0, visibleRowsRange.start - overscan),
+      end: Math.min(numRows, visibleRowsRange.end + overscan),
+    }
+  }, [visibleRowsRange, numRows, overscan])
+  const renderedRowsRange = useMemo(() => {
+    if (!fetchedRowsRange) return undefined
+
+    return {
+      start: Math.max(0, fetchedRowsRange.start - padding),
+      end: Math.min(numRows, fetchedRowsRange.end + padding),
+    }
+  }, [fetchedRowsRange, numRows, padding])
+
   const fetchOptions = useMemo(() => ({
     orderBy,
     columnsParameters,
-    rowsRange,
+    fetchedRowsRange,
     abortController: new AbortController(),
-  }), [orderBy, columnsParameters, rowsRange])
+  }), [orderBy, columnsParameters, fetchedRowsRange])
   const [lastFetchOptions, setLastFetchOptions] = useState(fetchOptions)
 
   // fetch the rows if needed
@@ -47,15 +65,15 @@ export function RowsAndColumnsProvider({ padding = defaultPadding, children }: P
   // No need for useEffect
   if (
     lastFetchOptions.orderBy !== orderBy
-    || lastFetchOptions.rowsRange !== rowsRange
+    || lastFetchOptions.fetchedRowsRange !== fetchedRowsRange
     || lastFetchOptions.columnsParameters !== columnsParameters
   ) {
     lastFetchOptions.abortController.abort()
     setLastFetchOptions(fetchOptions)
-    if (data.fetch !== undefined && rowsRange !== undefined) {
+    if (data.fetch !== undefined && fetchedRowsRange !== undefined) {
       data.fetch({
-        rowStart: rowsRange.start,
-        rowEnd: rowsRange.end,
+        rowStart: fetchedRowsRange.start,
+        rowEnd: fetchedRowsRange.end,
         columns: columnsParameters.map(({ name }) => name),
         orderBy,
         signal: fetchOptions.abortController.signal,
@@ -69,23 +87,13 @@ export function RowsAndColumnsProvider({ padding = defaultPadding, children }: P
     }
   }
 
-  const rowsRangeWithPadding = useMemo(() => {
-    if (!rowsRange) return undefined
-
-    const startPadding = Math.max(rowsRange.start - padding, 0)
-    const endPadding = Math.min(rowsRange.end + padding, numRows)
-    return {
-      ...rowsRange,
-      startPadding,
-      endPadding,
-    }
-  }, [rowsRange, numRows, padding])
-
   const value = useMemo(() => ({
     columnsParameters,
-    rowsRangeWithPadding,
-    setRowsRange,
-  }), [columnsParameters, rowsRangeWithPadding, setRowsRange])
+    visibleRowsRange,
+    renderedRowsRange,
+    fetchedRowsRange,
+    setVisibleRowsRange,
+  }), [columnsParameters, fetchedRowsRange, setVisibleRowsRange, renderedRowsRange, visibleRowsRange])
 
   return (
     <RowsAndColumnsContext.Provider value={value}>

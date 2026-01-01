@@ -43,7 +43,7 @@ export default function Slice({
   const { onTableKeyDown: onNavigationTableKeyDown, focusFirstCell } = useContext(CellNavigationContext)
   const { orderBy, onOrderByChange } = useContext(OrderByContext)
   const { selectable, toggleAllRows, pendingSelectionGesture, onTableKeyDown: onSelectionTableKeyDown, allRowsSelected, isRowSelected, toggleRowNumber, toggleRangeToRowNumber } = useContext(SelectionContext)
-  const { columnsParameters, rowsRangeWithPadding } = useContext(RowsAndColumnsContext)
+  const { columnsParameters, renderedRowsRange, fetchedRowsRange } = useContext(RowsAndColumnsContext)
 
   const onTableKeyDown = useCallback((event: KeyboardEvent) => {
     onNavigationTableKeyDown?.(event, { numRowsPerPage })
@@ -76,7 +76,7 @@ export default function Slice({
   // Prepare the slice of data to render
   // TODO(SL): also compute progress percentage here, to show a loading indicator
   const slice = useMemo(() => {
-    if (!rowsRangeWithPadding) {
+    if (!renderedRowsRange || !fetchedRowsRange) {
       return {
         prePadding: [],
         postPadding: [],
@@ -85,11 +85,13 @@ export default function Slice({
         version,
       }
     }
-    const { startPadding, start, end, endPadding } = rowsRangeWithPadding
+    const prePaddingRowCount = Math.max(0, fetchedRowsRange.start - renderedRowsRange.start)
+    const fetchedRowCount = fetchedRowsRange.end - fetchedRowsRange.start
+    const postPaddingRowCount = Math.max(0, renderedRowsRange.end - fetchedRowsRange.end)
     // add empty pre and post rows to fill the viewport
-    const prePadding = Array.from({ length: start - startPadding }, (_, i) => ({ row: startPadding + i }))
-    const rows = Array.from({ length: end - start }, (_, i) => start + i)
-    const postPadding = Array.from({ length: endPadding - end }, (_, i) => ({ row: end + i }))
+    const prePadding = Array.from({ length: prePaddingRowCount }, (_, i) => ({ row: renderedRowsRange.start + i }))
+    const rows = Array.from({ length: fetchedRowCount }, (_, i) => fetchedRowsRange.start + i)
+    const postPadding = Array.from({ length: postPaddingRowCount }, (_, i) => ({ row: fetchedRowsRange.end + i }))
 
     const canMeasureColumn: Record<string, boolean> = {}
     const rowContents = rows.map((row) => {
@@ -112,7 +114,7 @@ export default function Slice({
       canMeasureColumn,
       version,
     }
-  }, [data, columnsParameters, rowsRangeWithPadding, orderBy, version])
+  }, [data, columnsParameters, renderedRowsRange, fetchedRowsRange, orderBy, version])
 
   // don't render table if header is empty
   if (!columnsParameters) return
