@@ -5,21 +5,16 @@ import { CellNavigationContext } from '../../contexts/CellNavigationContext.js'
 import { DataContext } from '../../contexts/DataContext.js'
 import { RowsAndColumnsContext } from '../../contexts/RowsAndColumnsContext.js'
 import styles from '../../HighTable.module.css'
-import { ariaOffset, defaultOverscan, rowHeight } from './constants.js'
+import { ariaOffset, rowHeight } from './constants.js'
 
-export interface ScrollerProps {
-  overscan?: number // number of rows to fetch outside of the viewport
-}
-
-type Props = {
+interface Props {
   headerHeight?: number // height of the table header
   setViewportWidth: (width: number) => void // callback to set the current viewport width
   children?: React.ReactNode
-} & ScrollerProps
+}
 
 export default function Scroller({
   headerHeight = rowHeight,
-  overscan = defaultOverscan,
   setViewportWidth,
   children,
 }: Props) {
@@ -32,7 +27,7 @@ export default function Scroller({
   const { numRows } = useContext(DataContext)
   const { onScrollKeyDown } = useContext(CellNavigationContext)
   const { shouldScroll, setShouldScroll, cellPosition } = useContext(CellNavigationContext)
-  const { rowsRangeWithPadding, setRowsRange } = useContext(RowsAndColumnsContext)
+  const { fetchedRowsRange, renderedRowsRange, setVisibleRowsRange } = useContext(RowsAndColumnsContext)
 
   /**
    * Compute the values:
@@ -55,19 +50,15 @@ export default function Scroller({
     // TODO(SL): remove this fallback? It's only for the tests, where the elements have zero height
     const clientHeight = viewportHeight === 0 ? 100 : viewportHeight
 
-    // determine rows to fetch based on current scroll position (indexes refer to the virtual table domain)
-    const startView = Math.floor(numRows * scrollTop / scrollHeight)
-    const endView = Math.ceil(numRows * (scrollTop + clientHeight) / scrollHeight)
-    const start = Math.max(0, startView - overscan)
-    const end = Math.min(numRows, endView + overscan)
+    // determine visible rows based on current scroll position (indexes refer to the virtual table domain)
+    const start = Math.max(0, Math.floor(numRows * scrollTop / scrollHeight))
+    const end = Math.min(numRows, Math.ceil(numRows * (scrollTop + clientHeight) / scrollHeight))
 
     if (isNaN(start)) throw new Error(`invalid start row ${start}`)
     if (isNaN(end)) throw new Error(`invalid end row ${end}`)
     if (end - start > 1000) throw new Error(`attempted to render too many rows ${end - start} table must be contained in a scrollable div`)
-
-    const rowsRange = { start, end }
-    setRowsRange?.(rowsRange)
-  }, [numRows, overscan, scrollHeight, setRowsRange])
+    setVisibleRowsRange?.({ start, end })
+  }, [numRows, scrollHeight, setVisibleRowsRange])
 
   /**
    * Handle keyboard events for scrolling
@@ -89,22 +80,23 @@ export default function Scroller({
    * back to it
    */
   useEffect(() => {
-    if (!shouldScroll || scrollTop === undefined || scrollToTop === undefined || rowsRangeWithPadding === undefined) {
+    if (!shouldScroll || scrollTop === undefined || scrollToTop === undefined || fetchedRowsRange === undefined) {
       return
     }
     setShouldScroll?.(false)
     const row = cellPosition.rowIndex - ariaOffset
     let nextScrollTop = scrollTop
-    // if row outside of the rows range, scroll to the estimated position of the cell,
+    // if the row is outside of the fetched rows range, scroll to the estimated position of the cell,
     // to wait for the cell to be fetched and rendered
-    if (row < rowsRangeWithPadding.start || row >= rowsRangeWithPadding.end) {
+    // TODO(SL): should fetchedRowsRange be replaced with visibleRowsRange?
+    if (row < fetchedRowsRange.start || row >= fetchedRowsRange.end) {
       nextScrollTop = row * rowHeight
     }
     if (nextScrollTop !== scrollTop) {
       // scroll to the cell
       scrollToTop(nextScrollTop)
     }
-  }, [cellPosition, shouldScroll, rowsRangeWithPadding, setShouldScroll, scrollToTop, scrollTop])
+  }, [cellPosition, shouldScroll, fetchedRowsRange, setShouldScroll, scrollToTop, scrollTop])
 
   /**
    * Track viewport size and scroll position
@@ -169,8 +161,8 @@ export default function Scroller({
 
   // Note: it does not depend on headerHeight, because the header is always present in the DOM
   const top = useMemo(() => {
-    return (rowsRangeWithPadding?.startPadding ?? 0) * rowHeight
-  }, [rowsRangeWithPadding])
+    return (renderedRowsRange?.start ?? 0) * rowHeight
+  }, [renderedRowsRange])
 
   return (
     <div className={styles.tableScroll} ref={viewportRef} role="group" aria-labelledby="caption" onKeyDown={onKeyDown} tabIndex={0}>

@@ -3,19 +3,16 @@ import { createContext } from 'react'
 import type { ColumnParameters } from '../contexts/ColumnParametersContext.js'
 
 export interface RowsRange {
-  start: number
-  end: number
-}
-
-interface RowsRangeWithPadding extends RowsRange {
-  startPadding: number // starting row index (inclusive) of the padded region before `start` (i.e. start - padding rows, or 0)
-  endPadding: number // ending row index (exclusive) of the padded region (i.e. end + padding rows, or numRows)
+  start: number // first row index (inclusive). Indexes refer to the virtual table domain.
+  end: number // last row index (exclusive)
 }
 
 interface RowsAndColumnsContextType {
   columnsParameters?: ColumnParameters[]
-  rowsRangeWithPadding?: RowsRangeWithPadding
-  setRowsRange?: (rowsRange: RowsRange | undefined) => void
+  visibleRowsRange?: RowsRange // range of rows visible in the viewport
+  fetchedRowsRange?: RowsRange // range of rows fetched from the data source (including overscan)
+  renderedRowsRange?: RowsRange // range of rows rendered in the DOM as table rows (including padding and overscan)
+  setVisibleRowsRange?: (rowsRange: RowsRange | undefined) => void
 }
 
 export const defaultRowsAndColumnsContext: RowsAndColumnsContextType = {}
