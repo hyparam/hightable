@@ -101,7 +101,7 @@ interface TableProps {
   maxRowNumber?: number // maximum row number to display (for row headers). Useful for filtered data. If undefined, the number of rows in the data frame is applied.
   orderBy?: OrderBy // order by column (if defined, the component order is controlled by the parent)
   overscan?: number // number of rows to fetch outside of the viewport (default 20)
-  padding?: number // number of extra rows to render outside of the viewport (default 20)
+  padding?: number // number of empty placeholder rows to render beyond the fetched data range (default 20)
   numRowsPerPage?: number // number of rows per page for keyboard navigation (default 20)
   selection?: Selection // selection state (if defined, the component selection is controlled by the parent)
   styled?: boolean // use styled component? (default true)
