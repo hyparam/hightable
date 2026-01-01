@@ -25,13 +25,19 @@ export default function Scroller({
   const { setShouldFocus, rowIndex } = useContext(CellNavigationContext)
   const { fetchedRowsRange, renderedRowsRange, setVisibleRowsRange } = useContext(RowsAndColumnsContext)
 
-  // total scrollable height - it's fixed, based on the number of rows.
-  // if CSS is not completely changed, viewport.current.scrollHeight will be equal to this value
-  const scrollHeight = useMemo(() => headerHeight + numRows * rowHeight, [numRows, headerHeight])
+  // total table height - it's fixed, based on the number of rows.
+  // if the number of rows is big, this value can overflow the maximum height supported by the browser.
+  const tableHeight = useMemo(() => headerHeight + numRows * rowHeight, [numRows, headerHeight])
+
+  // total scrollable height
+  // if CSS is not completely changed, viewportRef.current.scrollHeight will be equal to this value
+  const canvasHeight = useMemo(() => {
+    return tableHeight
+  }, [tableHeight])
 
   // sanity check
-  if (scrollHeight <= 0) {
-    throw new Error(`invalid scrollHeight ${scrollHeight}`)
+  if (canvasHeight <= 0) {
+    throw new Error(`invalid canvasHeight ${canvasHeight}`)
   }
 
   const computeAndSetRowsRange = useCallback((viewport: HTMLDivElement) => {
@@ -41,14 +47,14 @@ export default function Scroller({
     const clientHeight = viewportHeight === 0 ? 100 : viewportHeight
 
     // determine visible rows based on current scroll position (indexes refer to the virtual table domain)
-    const start = Math.max(0, Math.floor(numRows * scrollTop / scrollHeight))
-    const end = Math.min(numRows, Math.ceil(numRows * (scrollTop + clientHeight) / scrollHeight))
+    const start = Math.max(0, Math.floor(numRows * scrollTop / canvasHeight))
+    const end = Math.min(numRows, Math.ceil(numRows * (scrollTop + clientHeight) / canvasHeight))
 
     if (isNaN(start)) throw new Error(`invalid start row ${start}`)
     if (isNaN(end)) throw new Error(`invalid end row ${end}`)
     if (end - start > 1000) throw new Error(`attempted to render too many rows ${end - start} table must be contained in a scrollable div`)
     setVisibleRowsRange?.({ start, end })
-  }, [numRows, scrollHeight, setVisibleRowsRange])
+  }, [numRows, canvasHeight, setVisibleRowsRange])
 
   /**
    * Vertically scroll to bring a specific row into view
@@ -167,7 +173,7 @@ export default function Scroller({
 
   return (
     <div className={styles.tableScroll} ref={viewportRef} role="group" aria-labelledby="caption" onKeyDown={onKeyDown} tabIndex={0}>
-      <div style={{ height: `${scrollHeight}px` }}>
+      <div style={{ height: `${canvasHeight}px` }}>
         <div style={{ top: `${top}px` }}>
           <ScrollModeContext.Provider value={scrollModeContext}>
             {children}
