@@ -4,7 +4,7 @@ import { useCallback, useContext, useMemo, useState } from 'react'
 import { CellNavigationContext } from '../../contexts/CellNavigationContext.js'
 import { DataContext } from '../../contexts/DataContext.js'
 import { RowsAndColumnsContext } from '../../contexts/RowsAndColumnsContext.js'
-import { ScrollerContext } from '../../contexts/ScrollerContext.js'
+import { ScrollModeContext } from '../../contexts/ScrollModeContext.js'
 import styles from '../../HighTable.module.css'
 import { ariaOffset, rowHeight } from './constants.js'
 
@@ -158,13 +158,20 @@ export default function Scroller({
     return (renderedRowsRange?.start ?? 0) * rowHeight
   }, [renderedRowsRange])
 
+  const scrollModeContext = useMemo(() => {
+    return {
+      scrollMode: 'native' as const,
+      scrollRowIntoView,
+    }
+  }, [scrollRowIntoView])
+
   return (
     <div className={styles.tableScroll} ref={viewportRef} role="group" aria-labelledby="caption" onKeyDown={onKeyDown} tabIndex={0}>
       <div style={{ height: `${scrollHeight}px` }}>
         <div style={{ top: `${top}px` }}>
-          <ScrollerContext.Provider value={{ scrollRowIntoView }}>
+          <ScrollModeContext.Provider value={scrollModeContext}>
             {children}
-          </ScrollerContext.Provider>
+          </ScrollModeContext.Provider>
         </div>
       </div>
     </div>

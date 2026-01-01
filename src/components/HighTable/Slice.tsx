@@ -5,7 +5,7 @@ import { CellNavigationContext } from '../../contexts/CellNavigationContext.js'
 import { DataContext } from '../../contexts/DataContext.js'
 import { OrderByContext } from '../../contexts/OrderByContext.js'
 import { RowsAndColumnsContext } from '../../contexts/RowsAndColumnsContext.js'
-import { ScrollerContext } from '../../contexts/ScrollerContext.js'
+import { ScrollModeContext } from '../../contexts/ScrollModeContext.js'
 import { SelectionContext } from '../../contexts/SelectionContext.js'
 import { stringify as stringifyDefault } from '../../utils/stringify.js'
 import Cell, { type CellContentProps } from '../Cell/Cell.js'
@@ -43,7 +43,7 @@ export default function Slice({
   const { orderBy, onOrderByChange } = useContext(OrderByContext)
   const { selectable, toggleAllRows, pendingSelectionGesture, onTableKeyDown: onSelectionTableKeyDown, allRowsSelected, isRowSelected, toggleRowNumber, toggleRangeToRowNumber } = useContext(SelectionContext)
   const { columnsParameters, renderedRowsRange, fetchedRowsRange } = useContext(RowsAndColumnsContext)
-  const { scrollRowIntoView } = useContext(ScrollerContext)
+  const { scrollRowIntoView } = useContext(ScrollModeContext)
 
   // TODO(SL): we depend on rowIndex to trigger the scroll effect, which means we recreate the
   // callback every time the rowIndex changes. Can we avoid that?
