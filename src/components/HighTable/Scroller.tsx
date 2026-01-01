@@ -50,7 +50,7 @@ export default function Scroller({
     // TODO(SL): remove this fallback? It's only for the tests, where the elements have zero height
     const clientHeight = viewportHeight === 0 ? 100 : viewportHeight
 
-    // determine rows to fetch based on current scroll position (indexes refer to the virtual table domain)
+    // determine visible rows based on current scroll position (indexes refer to the virtual table domain)
     const start = Math.max(0, Math.floor(numRows * scrollTop / scrollHeight))
     const end = Math.min(numRows, Math.ceil(numRows * (scrollTop + clientHeight) / scrollHeight))
 
@@ -86,7 +86,7 @@ export default function Scroller({
     setShouldScroll?.(false)
     const row = cellPosition.rowIndex - ariaOffset
     let nextScrollTop = scrollTop
-    // if the row is outside of the rows range, scroll to the estimated position of the cell,
+    // if the row is outside of the fetched rows range, scroll to the estimated position of the cell,
     // to wait for the cell to be fetched and rendered
     // TODO(SL): should fetchedRowsRange be replaced with visibleRowsRange?
     if (row < fetchedRowsRange.start || row >= fetchedRowsRange.end) {

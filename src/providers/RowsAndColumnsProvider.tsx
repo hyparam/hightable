@@ -12,7 +12,7 @@ import { RowsAndColumnsContext } from '../contexts/RowsAndColumnsContext.js'
 
 export interface RowsAndColumnsProviderProps {
   overscan?: number // number of rows to fetch outside of the viewport
-  padding?: number // number of rows to include as padding in the table rendering
+  padding?: number // number of empty placeholder rows to render beyond the fetched data range
 }
 
 type Props = {
