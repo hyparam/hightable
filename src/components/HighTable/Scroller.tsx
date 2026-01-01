@@ -6,7 +6,7 @@ import { DataContext } from '../../contexts/DataContext.js'
 import { RowsAndColumnsContext } from '../../contexts/RowsAndColumnsContext.js'
 import { ScrollModeContext } from '../../contexts/ScrollModeContext.js'
 import styles from '../../HighTable.module.css'
-import { ariaOffset, rowHeight } from './constants.js'
+import { ariaOffset, maxElementHeight, rowHeight } from './constants.js'
 
 interface Props {
   headerHeight?: number // height of the table header
@@ -27,13 +27,23 @@ export default function Scroller({
 
   // total table height - it's fixed, based on the number of rows.
   // if the number of rows is big, this value can overflow the maximum height supported by the browser.
+  // If so, we switch to the 'virtual scroll' mode, where we override the scrolling mechanism.
   const tableHeight = useMemo(() => headerHeight + numRows * rowHeight, [numRows, headerHeight])
+
+  const scrollMode = useMemo(() => {
+    return tableHeight < maxElementHeight ? 'native' as const : 'virtual' as const
+  }, [tableHeight])
 
   // total scrollable height
   // if CSS is not completely changed, viewportRef.current.scrollHeight will be equal to this value
   const canvasHeight = useMemo(() => {
-    return tableHeight
-  }, [tableHeight])
+    if (scrollMode === 'native') {
+      return tableHeight
+    }
+    // virtual scroll mode
+    // set a safe maximum height for the scrollable area
+    return maxElementHeight
+  }, [scrollMode, tableHeight])
 
   // sanity check
   if (canvasHeight <= 0) {
@@ -166,10 +176,14 @@ export default function Scroller({
 
   const scrollModeContext = useMemo(() => {
     return {
-      scrollMode: 'native' as const,
+      scrollMode,
       scrollRowIntoView,
     }
-  }, [scrollRowIntoView])
+  }, [scrollMode, scrollRowIntoView])
+
+  if (scrollMode !== 'native') {
+    throw new Error('virtual scroll mode is not yet implemented')
+  }
 
   return (
     <div className={styles.tableScroll} ref={viewportRef} role="group" aria-labelledby="caption" onKeyDown={onKeyDown} tabIndex={0}>
