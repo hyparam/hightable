@@ -105,20 +105,6 @@ export function CellNavigationProvider({ children }: CellNavigationProviderProps
     setShouldFocus(true)
   }, [colCount, rowCount])
 
-  const onScrollKeyDown = useCallback((event: KeyboardEvent) => {
-    const { key } = event
-    // the user can scroll with the keyboard using the arrow keys.
-    // Only handle the Tab, Enter and Space keys, to enter the cell navigation mode
-    // TODO(SL): exclude other meta keys
-    if ((key === 'Tab' && !event.shiftKey) || key === 'Enter' || key === ' ') {
-      // avoid scrolling the table when the user is navigating with the keyboard
-      event.stopPropagation()
-      event.preventDefault()
-      setShouldScroll(true)
-      setShouldFocus(true)
-    }
-  }, [])
-
   const focusFirstCell = useCallback(() => {
     setColIndex(defaultCellNavigationContext.cellPosition.colIndex)
     setRowIndex(defaultCellNavigationContext.cellPosition.rowIndex)
@@ -137,7 +123,6 @@ export function CellNavigationProvider({ children }: CellNavigationProviderProps
     return {
       cellPosition,
       onTableKeyDown,
-      onScrollKeyDown,
       setColIndex,
       setRowIndex,
       shouldFocus,
@@ -146,7 +131,7 @@ export function CellNavigationProvider({ children }: CellNavigationProviderProps
       setShouldScroll,
       focusFirstCell,
     }
-  }, [cellPosition, onTableKeyDown, onScrollKeyDown, shouldFocus, shouldScroll, focusFirstCell])
+  }, [cellPosition, onTableKeyDown, shouldFocus, shouldScroll, focusFirstCell])
 
   return (
     <CellNavigationContext.Provider value={value}>

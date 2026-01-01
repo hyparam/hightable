@@ -11,7 +11,6 @@ interface CellNavigationContextType {
   shouldFocus: boolean // true if the current cell should be focused
   shouldScroll: boolean // true if the table should scroll to the current cell
   onTableKeyDown?: (event: KeyboardEvent, { numRowsPerPage }: { numRowsPerPage: number }) => void // function to handle keydown events inside the table.
-  onScrollKeyDown?: (event: KeyboardEvent) => void // function to handle keydown events outside the table, in the scroll wrapper.
   setColIndex?: (colIndex: number) => void // function to set the column index
   setRowIndex?: (rowIndex: number) => void // function to set the row index
   setShouldFocus?: (shouldFocus: boolean) => void // function to set the shouldFocus state

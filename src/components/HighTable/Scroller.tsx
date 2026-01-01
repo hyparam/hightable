@@ -25,8 +25,7 @@ export default function Scroller({
   const [scrollToTop, setScrollToTop] = useState<((top: number) => void) | undefined>(undefined)
 
   const { numRows } = useContext(DataContext)
-  const { onScrollKeyDown } = useContext(CellNavigationContext)
-  const { shouldScroll, setShouldScroll, cellPosition } = useContext(CellNavigationContext)
+  const { shouldScroll, setShouldFocus, setShouldScroll, cellPosition } = useContext(CellNavigationContext)
   const { fetchedRowsRange, renderedRowsRange, setVisibleRowsRange } = useContext(RowsAndColumnsContext)
 
   /**
@@ -68,8 +67,18 @@ export default function Scroller({
       // don't handle the event if the target is not the scroller
       return
     }
-    onScrollKeyDown?.(event)
-  }, [onScrollKeyDown, viewportRef])
+    const { key } = event
+    // the user can scroll with the keyboard using the arrow keys.
+    // Only handle the Tab, Enter and Space keys, to enter the cell navigation mode
+    // TODO(SL): exclude other meta keys
+    if ((key === 'Tab' && !event.shiftKey) || key === 'Enter' || key === ' ') {
+      // avoid scrolling the table when the user is navigating with the keyboard
+      event.stopPropagation()
+      event.preventDefault()
+      setShouldScroll?.(true)
+      setShouldFocus?.(true)
+    }
+  }, [setShouldFocus, setShouldScroll])
 
   /**
    * React to cell navigation changes to scroll to the focused cell
