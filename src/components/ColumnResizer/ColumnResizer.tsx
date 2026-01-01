@@ -61,10 +61,9 @@ export default function ColumnResizer({ autoResize, resizeTo, width, tabIndex, n
 
   // Handle pointer move event during resizing
   const handlePointerMove = useCallback((event: PointerEvent<HTMLSpanElement>) => {
-    if (!initialPointerState || event.pointerId !== initialPointerState.pointerId) {
-      return
+    if (event.pointerId === initialPointerState?.pointerId) {
+      resizeTo?.(initialPointerState.width - initialPointerState.clientX + event.clientX)
     }
-    resizeTo?.(initialPointerState.width - initialPointerState.clientX + event.clientX)
   }, [resizeTo, initialPointerState])
 
   // Handle pointer up to end resizing
@@ -72,7 +71,7 @@ export default function ColumnResizer({ autoResize, resizeTo, width, tabIndex, n
     event.stopPropagation()
     // releasePointerCapture() is called automatically on pointer up
     setInitialPointerState((state) => {
-      if (state && event.pointerId === state.pointerId) {
+      if (event.pointerId === state?.pointerId) {
         // only reset the state if the pointer up is from the same pointer
         return undefined
       }
