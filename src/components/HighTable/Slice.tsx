@@ -63,15 +63,15 @@ export default function Slice({
     }
   }, [toggleRowNumber, toggleRangeToRowNumber])
 
-  // focus table on mount, or on later changes, so arrow keys work
-  // Note that the dependency upon data and numRows was removed, because focusFirstCell should depend on them
-  // TODO(SL): move to CellNavigationProvider?
   useEffect(() => {
     if (focus) {
-      // Try focusing the first cell
+      // Focus the first cell on mount, or on later changes, so keyboard navigation works
       focusFirstCell?.()
     }
-  }, [focus, focusFirstCell])
+  }, [
+    // explicitly depend on data, so that focus is set again when data changes
+    data, focus, focusFirstCell,
+  ])
 
   // Prepare the slice of data to render
   // TODO(SL): also compute progress percentage here, to show a loading indicator

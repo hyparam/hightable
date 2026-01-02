@@ -126,7 +126,7 @@ export default function ColumnMenu({
         break
       case 'Enter':
       case ' ':
-      // Handled by the menu item
+        // Handled by the menu item
         break
       case 'ArrowUp':
       case 'ArrowLeft':
@@ -170,12 +170,14 @@ export default function ColumnMenu({
     }
     return () => {
       hideColumn()
-      // We focus the top left cell, which will always exist, because this column will disappear
+
+      // The header cell was focused when opening the menu.
+      // Move the focus to the left cell to keep ability to navigate with keyboard.
       focusFirstCell?.()
+
       close()
     }
   }, [hideColumn, close, focusFirstCell])
-
   const showAllColumnsAndClose = useMemo(() => {
     if (!showAllColumns) {
       return undefined

@@ -106,10 +106,10 @@ export function CellNavigationProvider({ children }: CellNavigationProviderProps
   }, [colCount, rowCount])
 
   const focusFirstCell = useCallback(() => {
-    setColIndex(defaultCellNavigationContext.colIndex)
-    setRowIndex(defaultCellNavigationContext.rowIndex)
-    setShouldScroll(true)
+    setColIndex(1)
+    setRowIndex(1)
     setShouldFocus(true)
+    // No need to scroll to it, the top left column is always visible.
   }, [])
 
   const value = useMemo(() => {
