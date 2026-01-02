@@ -52,13 +52,13 @@ export function RowsAndColumnsProvider({ padding = defaultPadding, overscan = de
     }
   }, [visibleRowsRange, numRows, overscan])
   const renderedRowsRange = useMemo(() => {
-    if (!fetchedRowsRange) return undefined
+    if (!visibleRowsRange) return undefined
 
     return {
-      start: Math.max(0, fetchedRowsRange.start - padding),
-      end: Math.min(numRows, fetchedRowsRange.end + padding),
+      start: Math.max(0, visibleRowsRange.start - padding),
+      end: Math.min(numRows, visibleRowsRange.end + padding),
     }
-  }, [fetchedRowsRange, numRows, padding])
+  }, [visibleRowsRange, numRows, padding])
 
   const fetchOptions = useMemo(() => ({
     orderBy,
