@@ -10,7 +10,6 @@ export interface RowsRange {
 interface RowsAndColumnsContextType {
   columnsParameters?: ColumnParameters[]
   visibleRowsRange?: RowsRange // range of rows visible in the viewport
-  fetchedRowsRange?: RowsRange // range of rows fetched from the data source (including overscan)
   renderedRowsRange?: RowsRange // range of rows rendered in the DOM as table rows (including padding and overscan)
   setVisibleRowsRange?: (rowsRange: RowsRange | undefined) => void
 }

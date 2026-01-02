@@ -51,6 +51,7 @@ export function RowsAndColumnsProvider({ padding = defaultPadding, overscan = de
       end: Math.min(numRows, visibleRowsRange.end + overscan),
     }
   }, [visibleRowsRange, numRows, overscan])
+
   const renderedRowsRange = useMemo(() => {
     if (!visibleRowsRange) return undefined
 
@@ -99,9 +100,8 @@ export function RowsAndColumnsProvider({ padding = defaultPadding, overscan = de
     columnsParameters,
     visibleRowsRange,
     renderedRowsRange,
-    fetchedRowsRange,
     setVisibleRowsRange,
-  }), [columnsParameters, fetchedRowsRange, setVisibleRowsRange, renderedRowsRange, visibleRowsRange])
+  }), [columnsParameters, setVisibleRowsRange, renderedRowsRange, visibleRowsRange])
 
   return (
     <RowsAndColumnsContext.Provider value={value}>
