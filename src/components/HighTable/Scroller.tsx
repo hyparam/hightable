@@ -87,7 +87,7 @@ export default function Scroller({
    * Handle keyboard events for scrolling
    */
   const onKeyDown = useCallback((event: KeyboardEvent) => {
-    if (event.target !== viewportRef.current) {
+    if (event.target !== event.currentTarget) {
       // don't handle the event if the target is not the scroller
       return
     }
