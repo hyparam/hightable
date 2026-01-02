@@ -4,6 +4,7 @@ import { useContext, useMemo, useRef, useState } from 'react'
 import { DataContext } from '../../contexts/DataContext.js'
 import { PortalContainerContext } from '../../contexts/PortalContainerContext.js'
 import type { ColumnConfiguration } from '../../helpers/columnConfiguration.js'
+import { columnVisibilityStatesSuffix, columnWidthsSuffix, rowHeight } from '../../helpers/constants.js'
 import type { Selection } from '../../helpers/selection.js'
 import type { OrderBy } from '../../helpers/sort.js'
 import styles from '../../HighTable.module.css'
@@ -16,9 +17,8 @@ import { ColumnWidthsProvider } from '../../providers/ColumnWidthsProvider.js'
 import { OrderByProvider } from '../../providers/OrderByProvider.js'
 import type { RowsAndColumnsProviderProps } from '../../providers/RowsAndColumnsProvider.js'
 import { RowsAndColumnsProvider } from '../../providers/RowsAndColumnsProvider.js'
+import { ScrollModeProvider } from '../../providers/ScrollModeProvider.js'
 import { SelectionProvider } from '../../providers/SelectionProvider.js'
-import { rowHeight } from './constants.js'
-import { columnVisibilityStatesSuffix, columnWidthsSuffix } from './constants.js'
 import Scroller from './Scroller.js'
 import type { SliceProps } from './Slice.js'
 import Slice from './Slice.js'
@@ -102,14 +102,16 @@ export default function Wrapper({
                   {/* Create a new navigation context if the dataframe has changed, because the focused cell might not exist anymore */}
                   <CellNavigationProvider key={key} focus={focus}>
                     <RowsAndColumnsProvider key={key} padding={padding} overscan={overscan}>
+                      <ScrollModeProvider numRows={numRows} headerHeight={headerHeight}>
 
-                      <Scroller setViewportWidth={setViewportWidth} headerHeight={headerHeight}>
-                        <Slice
-                          setTableCornerSize={setTableCornerSize}
-                          {...rest}
-                        />
-                      </Scroller>
+                        <Scroller setViewportWidth={setViewportWidth}>
+                          <Slice
+                            setTableCornerSize={setTableCornerSize}
+                            {...rest}
+                          />
+                        </Scroller>
 
+                      </ScrollModeProvider>
                     </RowsAndColumnsProvider>
                   </CellNavigationProvider>
                 </SelectionProvider>

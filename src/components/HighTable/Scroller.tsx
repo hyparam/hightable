@@ -1,84 +1,21 @@
 import type { KeyboardEvent } from 'react'
-import { useCallback, useContext, useMemo, useState } from 'react'
+import { useCallback, useContext, useMemo } from 'react'
 
 import { CellNavigationContext } from '../../contexts/CellNavigationContext.js'
-import { DataContext } from '../../contexts/DataContext.js'
-import { RowsAndColumnsContext } from '../../contexts/RowsAndColumnsContext.js'
-import { ScrollerContext } from '../../contexts/ScrollerContext.js'
+import { ScrollModeContext } from '../../contexts/ScrollModeContext.js'
 import styles from '../../HighTable.module.css'
-import { ariaOffset, rowHeight } from './constants.js'
 
 interface Props {
-  headerHeight?: number // height of the table header
-  setViewportWidth: (width: number) => void // callback to set the current viewport width
   children?: React.ReactNode
+  setViewportWidth: (width: number) => void // callback to set the current viewport width
 }
 
 export default function Scroller({
-  headerHeight = rowHeight,
-  setViewportWidth,
   children,
+  setViewportWidth,
 }: Props) {
-  const [scrollToTop, setScrollToTop] = useState<((top: number) => void) | undefined>(undefined)
-
-  const { numRows } = useContext(DataContext)
   const { setShouldFocus, rowIndex } = useContext(CellNavigationContext)
-  const { fetchedRowsRange, renderedRowsRange, setVisibleRowsRange } = useContext(RowsAndColumnsContext)
-
-  /**
-   * Compute the values:
-   * - scrollHeight: total scrollable height
-   * - rowsRange: rows to fetch based on the current scroll position
-   * - tableOffset: offset of the table inside the scrollable area
-   */
-  // total scrollable height - it's fixed, based on the number of rows.
-  // if CSS is not completely changed, viewport.current.scrollHeight will be equal to this value
-  const scrollHeight = useMemo(() => headerHeight + numRows * rowHeight, [numRows, headerHeight])
-
-  // sanity check
-  if (scrollHeight <= 0) {
-    throw new Error(`invalid scrollHeight ${scrollHeight}`)
-  }
-
-  const computeAndSetRowsRange = useCallback((viewport: HTMLDivElement) => {
-    const { scrollTop, clientHeight: viewportHeight } = viewport
-
-    // TODO(SL): remove this fallback? It's only for the tests, where the elements have zero height
-    const clientHeight = viewportHeight === 0 ? 100 : viewportHeight
-
-    // determine visible rows based on current scroll position (indexes refer to the virtual table domain)
-    const start = Math.max(0, Math.floor(numRows * scrollTop / scrollHeight))
-    const end = Math.min(numRows, Math.ceil(numRows * (scrollTop + clientHeight) / scrollHeight))
-
-    if (isNaN(start)) throw new Error(`invalid start row ${start}`)
-    if (isNaN(end)) throw new Error(`invalid end row ${end}`)
-    if (end - start > 1000) throw new Error(`attempted to render too many rows ${end - start} table must be contained in a scrollable div`)
-    setVisibleRowsRange?.({ start, end })
-  }, [numRows, scrollHeight, setVisibleRowsRange])
-
-  /**
-   * Vertically scroll to bring a specific row into view
-   */
-  const scrollRowIntoView = useCallback(({ rowIndex }: { rowIndex: number }) => {
-    if (scrollToTop === undefined || fetchedRowsRange === undefined) {
-      return
-    }
-    if (rowIndex < 1) {
-      throw new Error(`invalid rowIndex ${rowIndex}`)
-    }
-    if (rowIndex === 1) {
-      // always visible
-      return
-    }
-    // should be zero-based
-    const row = rowIndex - ariaOffset
-    // if the row is outside of the fetched rows range, scroll to the estimated position of the cell,
-    // to wait for the cell to be fetched and rendered
-    // TODO(SL): should fetchedRowsRange be replaced with visibleRowsRange?
-    if (row < fetchedRowsRange.start || row >= fetchedRowsRange.end) {
-      scrollToTop(row * rowHeight)
-    }
-  }, [fetchedRowsRange, scrollToTop])
+  const { canvasHeight, sliceTop, onViewportChange, scrollRowIntoView, setScrollToTop } = useContext(ScrollModeContext)
 
   /**
    * Handle keyboard events for scrolling
@@ -96,7 +33,7 @@ export default function Scroller({
       event.stopPropagation()
       event.preventDefault()
       // scroll to the active cell
-      scrollRowIntoView({ rowIndex })
+      scrollRowIntoView?.({ rowIndex })
       // focus the cell (once it exists)
       setShouldFocus(true)
     }
@@ -110,14 +47,13 @@ export default function Scroller({
     // eslint-disable-next-line func-style
     const updateViewportSize = () => {
       setViewportWidth(viewport.clientWidth)
-      // recompute the rows range if the height has changed
-      computeAndSetRowsRange(viewport)
+      onViewportChange?.(viewport)
     }
+
     // eslint-disable-next-line func-style
     const handleScroll = () => {
       // TODO(SL): throttle? see https://github.com/hyparam/hightable/pull/347
-      // recompute the rows range if the scroll position changed
-      computeAndSetRowsRange(viewport)
+      onViewportChange?.(viewport)
     }
 
     // run once
@@ -126,7 +62,7 @@ export default function Scroller({
 
     // set scrollToTop function
     if ('scrollTo' in viewport) {
-      setScrollToTop(() => {
+      setScrollToTop?.(() => {
         // ^ we need to use a setter function, we cannot set a function as a value
         return (top: number) => {
           viewport.scrollTo({ top })
@@ -134,7 +70,7 @@ export default function Scroller({
       })
     } else {
       // scrollTo does not exist in jsdom, used in the tests
-      setScrollToTop(undefined)
+      setScrollToTop?.(undefined)
     }
 
     // listeners
@@ -156,20 +92,23 @@ export default function Scroller({
       resizeObserver?.disconnect()
       viewport.removeEventListener('scroll', handleScroll)
     }
-  }, [setViewportWidth, computeAndSetRowsRange])
+  }, [setScrollToTop, setViewportWidth, onViewportChange])
 
-  // Note: it does not depend on headerHeight, because the header is always present in the DOM
-  const top = useMemo(() => {
-    return (renderedRowsRange?.start ?? 0) * rowHeight
-  }, [renderedRowsRange])
+  // TODO(SL): maybe pass CSS variables instead of inline styles?
+  // the viewport div scrollHeight will be equal to canvasHeight (unless custom CSS is messing with it)
+  const canvasHeightStyle = useMemo(() => {
+    return canvasHeight !== undefined ? { height: `${canvasHeight}px` } : {}
+  }, [canvasHeight])
+
+  const sliceTopStyle = useMemo(() => {
+    return sliceTop !== undefined ? { top: `${sliceTop}px` } : {}
+  }, [sliceTop])
 
   return (
     <div className={styles.tableScroll} ref={viewportRef} role="group" aria-labelledby="caption" onKeyDown={onKeyDown} tabIndex={0}>
-      <div style={{ height: `${scrollHeight}px` }}>
-        <div style={{ top: `${top}px` }}>
-          <ScrollerContext.Provider value={{ scrollRowIntoView }}>
-            {children}
-          </ScrollerContext.Provider>
+      <div style={canvasHeightStyle}>
+        <div style={sliceTopStyle}>
+          {children}
         </div>
       </div>
     </div>

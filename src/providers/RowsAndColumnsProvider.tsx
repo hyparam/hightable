@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react'
-import { useContext, useMemo, useState } from 'react'
+import { useCallback, useContext, useMemo, useState } from 'react'
 
-import { defaultOverscan, defaultPadding } from '../components/HighTable/constants.js'
 import { ColumnParametersContext } from '../contexts/ColumnParametersContext.js'
 import { ColumnVisibilityStatesContext } from '../contexts/ColumnVisibilityStatesContext.js'
 import { DataContext } from '../contexts/DataContext.js'
@@ -9,6 +8,7 @@ import { ErrorContext } from '../contexts/ErrorContext.js'
 import { OrderByContext } from '../contexts/OrderByContext.js'
 import type { RowsRange } from '../contexts/RowsAndColumnsContext.js'
 import { RowsAndColumnsContext } from '../contexts/RowsAndColumnsContext.js'
+import { defaultOverscan, defaultPadding } from '../helpers/constants.js'
 
 export interface RowsAndColumnsProviderProps {
   overscan?: number // number of rows to fetch outside of the viewport
@@ -20,7 +20,16 @@ type Props = {
 } & RowsAndColumnsProviderProps
 
 export function RowsAndColumnsProvider({ padding = defaultPadding, overscan = defaultOverscan, children }: Props) {
-  const [visibleRowsRange, setVisibleRowsRange] = useState<RowsRange | undefined>(undefined)
+  const [visibleRowsRange, _setVisibleRowsRange] = useState<RowsRange | undefined>(undefined)
+  const setVisibleRowsRange = useCallback((nextRowsRange: RowsRange | undefined) => {
+    // compare the fields, not the object reference
+    _setVisibleRowsRange((rowsRange) => {
+      if (rowsRange?.start === nextRowsRange?.start && rowsRange?.end === nextRowsRange?.end) {
+        return rowsRange
+      }
+      return nextRowsRange
+    })
+  }, [])
 
   const { onError } = useContext(ErrorContext)
   const { data, numRows } = useContext(DataContext)
