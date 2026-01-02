@@ -608,6 +608,10 @@ export const SortedVaryingData: Story = {
 export const LargeData: Story = {
   args: {
     data: createLargeData(),
+    onError: (error: unknown) => {
+      console.error('Error in LargeData story:', error)
+      alert(error)
+    },
   },
 }
 
