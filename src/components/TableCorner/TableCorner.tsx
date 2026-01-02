@@ -1,5 +1,5 @@
 import type { ChangeEvent, CSSProperties, KeyboardEvent, ReactNode } from 'react'
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback } from 'react'
 
 import { useCellFocus } from '../../hooks/useCellFocus.js'
 
@@ -15,8 +15,7 @@ interface Props {
 }
 
 export default function TableCorner({ children, checked, onCheckboxPress, pendingSelectionGesture, style, ariaColIndex, ariaRowIndex, setTableCornerSize }: Props) {
-  const tableCornerRef = useRef<HTMLTableCellElement>(null)
-  const { tabIndex, navigateToCell } = useCellFocus({ ref: tableCornerRef, ariaColIndex, ariaRowIndex })
+  const { tabIndex, navigateToCell, focusCellIfNeeded } = useCellFocus({ ariaColIndex, ariaRowIndex })
 
   const handleClick = useCallback(() => {
     navigateToCell()
@@ -36,15 +35,12 @@ export default function TableCorner({ children, checked, onCheckboxPress, pendin
     e.preventDefault()
   }, [])
 
-  /* Track the size of the table corner */
-  useEffect(() => {
-    const tableCorner = tableCornerRef.current
+  const trackSize = useCallback((tableCorner: HTMLTableCellElement | null) => {
     if (!setTableCornerSize) {
       // Size tracking is disabled intentionally when no callback is provided.
       return
     }
     if (!tableCorner) {
-      console.warn('Table corner element is not available. Table corner size will not be tracked accurately.')
       return
     }
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
@@ -75,11 +71,18 @@ export default function TableCorner({ children, checked, onCheckboxPress, pendin
       resizeObserver.unobserve(tableCorner)
       resizeObserver.disconnect()
     }
+    /* Track the size of the table corner */
   }, [setTableCornerSize])
+
+  const ref = useCallback((tableCorner: HTMLTableCellElement | null) => {
+    focusCellIfNeeded(tableCorner)
+    // return the cleanup function from size tracking
+    return trackSize(tableCorner)
+  }, [focusCellIfNeeded, trackSize])
 
   return (
     <td
-      ref={tableCornerRef}
+      ref={ref}
       style={style}
       onClick={handleClick}
       onKeyDown={handleKeyDown}

@@ -7,6 +7,7 @@ import type { ColumnConfiguration } from '../../helpers/columnConfiguration.js'
 import type { Selection } from '../../helpers/selection.js'
 import type { OrderBy } from '../../helpers/sort.js'
 import styles from '../../HighTable.module.css'
+import type { CellNavigationProviderProps } from '../../providers/CellNavigationProvider.js'
 import { CellNavigationProvider } from '../../providers/CellNavigationProvider.js'
 import { ColumnParametersProvider } from '../../providers/ColumnParametersProvider.js'
 import { ColumnVisibilityStatesProvider } from '../../providers/ColumnVisibilityStatesProvider.js'
@@ -32,12 +33,13 @@ export type WrapperProps = {
   onColumnsVisibilityChange?: (columns: Record<string, MaybeHiddenColumn>) => void // callback which is called whenever the set of hidden columns changes.
   onOrderByChange?: (orderBy: OrderBy) => void // callback to call when a user interaction changes the order. The interactions are disabled if undefined.
   onSelectionChange?: (selection: Selection) => void // callback to call when a user interaction changes the selection. The selection is expressed as data indexes (not as indexes in the table). The interactions are disabled if undefined.
-} & RowsAndColumnsProviderProps & SliceProps
+} & RowsAndColumnsProviderProps & CellNavigationProviderProps & SliceProps
 
 export default function Wrapper({
   columnConfiguration,
   cacheKey,
   className = '',
+  focus,
   orderBy,
   padding,
   overscan,
@@ -98,7 +100,7 @@ export default function Wrapper({
                 {/* Create a new selection context if the dataframe has changed */}
                 <SelectionProvider key={key} selection={selection} onSelectionChange={onSelectionChange} data={data} numRows={numRows}>
                   {/* Create a new navigation context if the dataframe has changed, because the focused cell might not exist anymore */}
-                  <CellNavigationProvider key={key}>
+                  <CellNavigationProvider key={key} focus={focus}>
                     <RowsAndColumnsProvider key={key} padding={padding} overscan={overscan}>
 
                       <Scroller setViewportWidth={setViewportWidth} headerHeight={headerHeight}>

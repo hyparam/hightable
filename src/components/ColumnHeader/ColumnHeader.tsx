@@ -31,10 +31,16 @@ interface Props {
 
 export default function ColumnHeader({ columnIndex, columnName, columnConfig, canMeasureWidth, direction, toggleOrderBy, orderByIndex, orderBySize, ariaColIndex, ariaRowIndex, className, children }: Props) {
   const ref = useRef<HTMLTableCellElement | null>(null)
-  const { tabIndex, navigateToCell } = useCellFocus({ ref, ariaColIndex, ariaRowIndex })
+  const { tabIndex, navigateToCell, focusCellIfNeeded } = useCellFocus({ ariaColIndex, ariaRowIndex })
   const { sortable } = columnConfig
   const { isOpen, position, menuId, close, handleMenuClick } = useColumnMenu(ref, navigateToCell)
   const { getHideColumn, showAllColumns } = useContext(ColumnVisibilityStatesContext)
+
+  const refCallback = useCallback((node: HTMLTableCellElement | null) => {
+    focusCellIfNeeded(node)
+    // set the current ref, it will be used to position the menu in handleMenuClick
+    ref.current = node
+  }, [focusCellIfNeeded])
 
   const handleClick = useCallback(() => {
     navigateToCell()
@@ -150,7 +156,7 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
 
   return (
     <th
-      ref={ref}
+      ref={refCallback}
       scope="col"
       role="columnheader"
       aria-sort={direction ?? (sortable ? 'none' : undefined)}

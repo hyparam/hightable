@@ -1,9 +1,10 @@
 import type { KeyboardEvent } from 'react'
-import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useContext, useMemo, useState } from 'react'
 
 import { CellNavigationContext } from '../../contexts/CellNavigationContext.js'
 import { DataContext } from '../../contexts/DataContext.js'
 import { RowsAndColumnsContext } from '../../contexts/RowsAndColumnsContext.js'
+import { ScrollerContext } from '../../contexts/ScrollerContext.js'
 import styles from '../../HighTable.module.css'
 import { ariaOffset, rowHeight } from './constants.js'
 
@@ -18,15 +19,10 @@ export default function Scroller({
   setViewportWidth,
   children,
 }: Props) {
-  // TODO(SL): replace with a callback function (https://react.dev/reference/react-dom/components/common#ref-callback)
-  const viewportRef = useRef<HTMLDivElement>(null)
-
-  const [scrollTop, setScrollTop] = useState<number | undefined>(undefined)
   const [scrollToTop, setScrollToTop] = useState<((top: number) => void) | undefined>(undefined)
 
   const { numRows } = useContext(DataContext)
-  const { onScrollKeyDown } = useContext(CellNavigationContext)
-  const { shouldScroll, setShouldScroll, cellPosition } = useContext(CellNavigationContext)
+  const { setShouldFocus, rowIndex } = useContext(CellNavigationContext)
   const { fetchedRowsRange, renderedRowsRange, setVisibleRowsRange } = useContext(RowsAndColumnsContext)
 
   /**
@@ -61,52 +57,55 @@ export default function Scroller({
   }, [numRows, scrollHeight, setVisibleRowsRange])
 
   /**
-   * Handle keyboard events for scrolling
+   * Vertically scroll to bring a specific row into view
    */
-  const onKeyDown = useCallback((event: KeyboardEvent) => {
-    if (event.target !== viewportRef.current) {
-      // don't handle the event if the target is not the scroller
+  const scrollRowIntoView = useCallback(({ rowIndex }: { rowIndex: number }) => {
+    if (scrollToTop === undefined || fetchedRowsRange === undefined) {
       return
     }
-    onScrollKeyDown?.(event)
-  }, [onScrollKeyDown, viewportRef])
-
-  /**
-   * React to cell navigation changes to scroll to the focused cell
-   *
-   * scroll if the navigation cell changed, or if entering navigation mode
-   * this excludes the case where the whole table is focused (not in cell navigation mode), the user
-   * is scrolling with the mouse or the arrow keys, and the cell exits the viewport: don't want to scroll
-   * back to it
-   */
-  useEffect(() => {
-    if (!shouldScroll || scrollTop === undefined || scrollToTop === undefined || fetchedRowsRange === undefined) {
+    if (rowIndex < 1) {
+      throw new Error(`invalid rowIndex ${rowIndex}`)
+    }
+    if (rowIndex === 1) {
+      // always visible
       return
     }
-    setShouldScroll?.(false)
-    const row = cellPosition.rowIndex - ariaOffset
-    let nextScrollTop = scrollTop
+    // should be zero-based
+    const row = rowIndex - ariaOffset
     // if the row is outside of the fetched rows range, scroll to the estimated position of the cell,
     // to wait for the cell to be fetched and rendered
     // TODO(SL): should fetchedRowsRange be replaced with visibleRowsRange?
     if (row < fetchedRowsRange.start || row >= fetchedRowsRange.end) {
-      nextScrollTop = row * rowHeight
+      scrollToTop(row * rowHeight)
     }
-    if (nextScrollTop !== scrollTop) {
-      // scroll to the cell
-      scrollToTop(nextScrollTop)
+  }, [fetchedRowsRange, scrollToTop])
+
+  /**
+   * Handle keyboard events for scrolling
+   */
+  const onKeyDown = useCallback((event: KeyboardEvent) => {
+    if (event.target !== event.currentTarget) {
+      // don't handle the event if the target is not the scroller
+      return
     }
-  }, [cellPosition, shouldScroll, fetchedRowsRange, setShouldScroll, scrollToTop, scrollTop])
+    const { key } = event
+    // the user can scroll with the keyboard using the arrow keys. Here we only handle the Tab,
+    // Enter and Space keys, to enter the cell navigation mode instead of scrolling the table
+    // TODO(SL): exclude other meta keys (return without handling if shiftKey, ctrlKey, altKey, metaKey)
+    if ((key === 'Tab' && !event.shiftKey) || key === 'Enter' || key === ' ') {
+      event.stopPropagation()
+      event.preventDefault()
+      // scroll to the active cell
+      scrollRowIntoView({ rowIndex })
+      // focus the cell (once it exists)
+      setShouldFocus(true)
+    }
+  }, [rowIndex, setShouldFocus, scrollRowIntoView])
 
   /**
    * Track viewport size and scroll position
    */
-  useEffect(() => {
-    const viewport = viewportRef.current
-    if (!viewport) {
-      throw new Error('Viewport element is not available. Viewport size will not be tracked accurately.')
-    }
-
+  const viewportRef = useCallback((viewport: HTMLDivElement) => {
     // Use arrow functions to get correct viewport type (not null)
     // eslint-disable-next-line func-style
     const updateViewportSize = () => {
@@ -117,7 +116,7 @@ export default function Scroller({
     // eslint-disable-next-line func-style
     const handleScroll = () => {
       // TODO(SL): throttle? see https://github.com/hyparam/hightable/pull/347
-      setScrollTop(viewport.scrollTop)
+      // recompute the rows range if the scroll position changed
       computeAndSetRowsRange(viewport)
     }
 
@@ -168,7 +167,9 @@ export default function Scroller({
     <div className={styles.tableScroll} ref={viewportRef} role="group" aria-labelledby="caption" onKeyDown={onKeyDown} tabIndex={0}>
       <div style={{ height: `${scrollHeight}px` }}>
         <div style={{ top: `${top}px` }}>
-          {children}
+          <ScrollerContext.Provider value={{ scrollRowIntoView }}>
+            {children}
+          </ScrollerContext.Provider>
         </div>
       </div>
     </div>

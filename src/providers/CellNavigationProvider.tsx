@@ -1,19 +1,25 @@
-import type { KeyboardEvent, ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { useCallback, useContext, useMemo, useState } from 'react'
 
 import { CellNavigationContext, defaultCellNavigationContext } from '../contexts/CellNavigationContext.js'
 import { ColumnVisibilityStatesContext } from '../contexts/ColumnVisibilityStatesContext.js'
 import { DataContext } from '../contexts/DataContext.js'
+import type { DataFrame } from '../helpers/dataframe/index.js'
 
-interface CellNavigationProviderProps {
-  children: ReactNode
+export interface CellNavigationProviderProps {
+  focus?: boolean // whether to focus the first cell on mount
 }
 
-export function CellNavigationProvider({ children }: CellNavigationProviderProps) {
-  const [colIndex, setColIndex] = useState(defaultCellNavigationContext.cellPosition.colIndex)
-  const [rowIndex, setRowIndex] = useState(defaultCellNavigationContext.cellPosition.rowIndex)
+type Props = {
+  children: ReactNode
+} & CellNavigationProviderProps
+
+export function CellNavigationProvider({ children, focus = true }: Props) {
+  const [colIndex, setColIndex] = useState(defaultCellNavigationContext.colIndex)
+  const [rowIndex, setRowIndex] = useState(defaultCellNavigationContext.rowIndex)
   const [shouldFocus, setShouldFocus] = useState(false)
-  const [shouldScroll, setShouldScroll] = useState(false)
+  const [lastData, setLastData] = useState<Omit<DataFrame, 'numRows'> | undefined>(undefined)
+  const { data } = useContext(DataContext)
 
   // number of rows in the table, including the header row
   const { numRows: numDataRows } = useContext(DataContext)
@@ -44,109 +50,34 @@ export function CellNavigationProvider({ children }: CellNavigationProviderProps
     }
   }
 
-  const onTableKeyDown = useCallback((event: KeyboardEvent, { numRowsPerPage }: {
-    numRowsPerPage: number // number of rows to skip when navigating with the keyboard (PageUp/PageDown)
-  }) => {
-    const { key, altKey, ctrlKey, metaKey, shiftKey } = event
-    // if the user is pressing Alt, Meta or Shift, do not handle the event
-    if (altKey || metaKey || shiftKey) {
-      return
-    }
-    if (key === 'ArrowRight') {
-      if (ctrlKey) {
-        setColIndex(colCount)
-      } else {
-        setColIndex(prev => prev < colCount ? prev + 1 : prev)
-      }
-    } else if (key === 'ArrowLeft') {
-      if (ctrlKey) {
-        setColIndex(1)
-      } else {
-        setColIndex(prev => prev > 1 ? prev - 1 : prev)
-      }
-    } else if (key === 'ArrowDown') {
-      if (ctrlKey) {
-        setRowIndex(rowCount)
-      } else {
-        setRowIndex(prev => prev < rowCount ? prev + 1 : prev)
-      }
-    } else if (key === 'ArrowUp') {
-      if (ctrlKey) {
-        setRowIndex(1)
-      } else {
-        setRowIndex(prev => prev > 1 ? prev - 1 : prev)
-      }
-    } else if (key === 'Home') {
-      if (ctrlKey) {
-        setRowIndex(1)
-      }
-      setColIndex(1)
-    } else if (key === 'End') {
-      if (ctrlKey) {
-        setRowIndex(rowCount)
-      }
-      setColIndex(colCount)
-    } else if (key === 'PageDown') {
-      setRowIndex(prev => prev + numRowsPerPage <= rowCount ? prev + numRowsPerPage : rowCount)
-      // TODO(SL): same for horizontal scrolling with Alt+PageDown?
-    } else if (key === 'PageUp') {
-      setRowIndex(prev => prev - numRowsPerPage >= 1 ? prev - numRowsPerPage : 1)
-      // TODO(SL): same for horizontal scrolling with Alt+PageUp?
-    } else if (key !== ' ') {
-      // if the key is not one of the above, do not handle it
-      // special case: no action is associated with the Space key, but it's captured
-      // anyway to prevent the default action (scrolling the page) and stay in navigation mode
-      return
-    }
-    // avoid scrolling the table when the user is navigating with the keyboard
-    event.stopPropagation()
-    event.preventDefault()
-    setShouldScroll(true)
-    setShouldFocus(true)
-  }, [colCount, rowCount])
-
-  const onScrollKeyDown = useCallback((event: KeyboardEvent) => {
-    const { key } = event
-    // the user can scroll with the keyboard using the arrow keys.
-    // Only handle the Tab, Enter and Space keys, to enter the cell navigation mode
-    // TODO(SL): exclude other meta keys
-    if ((key === 'Tab' && !event.shiftKey) || key === 'Enter' || key === ' ') {
-      // avoid scrolling the table when the user is navigating with the keyboard
-      event.stopPropagation()
-      event.preventDefault()
-      setShouldScroll(true)
-      setShouldFocus(true)
-    }
-  }, [])
-
   const focusFirstCell = useCallback(() => {
-    setColIndex(defaultCellNavigationContext.cellPosition.colIndex)
-    setRowIndex(defaultCellNavigationContext.cellPosition.rowIndex)
-    setShouldScroll(true)
+    setColIndex(1)
+    setRowIndex(1)
     setShouldFocus(true)
+    // No need to scroll to it, the top left column is always visible.
   }, [])
 
-  const cellPosition = useMemo(() => {
-    return {
-      colIndex,
-      rowIndex,
+  // Focus the first cell on mount, or on later changes, so keyboard navigation works
+  if (data !== lastData) {
+    setLastData(data)
+    if (focus) {
+      focusFirstCell()
     }
-  }, [colIndex, rowIndex])
+  }
 
   const value = useMemo(() => {
     return {
-      cellPosition,
-      onTableKeyDown,
-      onScrollKeyDown,
+      colCount,
+      colIndex,
+      rowCount,
+      rowIndex,
       setColIndex,
       setRowIndex,
       shouldFocus,
       setShouldFocus,
-      shouldScroll,
-      setShouldScroll,
       focusFirstCell,
     }
-  }, [cellPosition, onTableKeyDown, onScrollKeyDown, shouldFocus, shouldScroll, focusFirstCell])
+  }, [colCount, colIndex, rowCount, rowIndex, shouldFocus, focusFirstCell])
 
   return (
     <CellNavigationContext.Provider value={value}>
