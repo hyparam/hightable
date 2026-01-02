@@ -1,29 +1,31 @@
-import type { RefObject } from 'react'
-import { useCallback, useContext, useEffect } from 'react'
+import { useCallback, useContext } from 'react'
 
 import { CellNavigationContext } from '../contexts/CellNavigationContext.js'
 
 interface CellData {
-  ref: RefObject<HTMLElement | null> // ref to the HTML element
   ariaColIndex: number // table column index, same semantic as aria-colindex (1-based, includes row headers)
   ariaRowIndex: number // table row index, same semantic as aria-rowindex (1-based, includes column headers)
 }
 type TabIndex = -1 | 0 // roving tabindex: -1 for all cells except the current navigation cell, which is 0
 interface CellFocus {
   tabIndex: TabIndex
+  focusCellIfNeeded: (element: HTMLElement | null) => void
   navigateToCell: () => void
 }
 
-export function useCellFocus({ ref, ariaColIndex, ariaRowIndex }: CellData): CellFocus {
+export function useCellFocus({ ariaColIndex, ariaRowIndex }: CellData): CellFocus {
   const { colIndex, rowIndex, setColIndex, setRowIndex, shouldFocus, setShouldFocus } = useContext(CellNavigationContext)
 
   // Check if the cell is the current navigation cell
   const isCurrentCell = ariaColIndex === colIndex && ariaRowIndex === rowIndex
   const isHeaderCell = ariaRowIndex === 1 || ariaColIndex === 1
 
-  useEffect(() => {
+  const focusCellIfNeeded = useCallback((element: HTMLElement | null) => {
+    if (!element) {
+      return
+    }
     // focus on the cell when needed
-    if (ref.current && isCurrentCell && shouldFocus) {
+    if (isCurrentCell && shouldFocus) {
       if (!isHeaderCell) {
         // scroll the cell into view
         //
@@ -31,12 +33,12 @@ export function useCellFocus({ ref, ariaColIndex, ariaRowIndex }: CellData): Cel
         // to avoid the cell being hidden by the row and column headers
         //
         // not applied for header cells, as they are always visible, and it was causing jumps when resizing a column
-        ref.current.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'nearest' })
+        element.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'nearest' })
       }
-      ref.current.focus()
+      element.focus()
       setShouldFocus(false)
     }
-  }, [ref, isCurrentCell, isHeaderCell, shouldFocus, setShouldFocus])
+  }, [isCurrentCell, isHeaderCell, shouldFocus, setShouldFocus])
 
   // Roving tabindex: only the current navigation cell is focusable with Tab (tabindex = 0)
   // All other cells are focusable only with javascript .focus() (tabindex = -1)
@@ -51,6 +53,7 @@ export function useCellFocus({ ref, ariaColIndex, ariaRowIndex }: CellData): Cel
 
   return {
     tabIndex,
+    focusCellIfNeeded,
     navigateToCell,
   }
 }

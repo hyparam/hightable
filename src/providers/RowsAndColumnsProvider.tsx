@@ -62,7 +62,6 @@ export function RowsAndColumnsProvider({ padding = defaultPadding, overscan = de
   // fetch the rows if needed
   // (it does not include change in onError, which is a detail,
   //  or in data, which would retrigger a full remount of the provider with key)
-  // No need for useEffect
   if (
     lastFetchOptions.orderBy !== orderBy
     || lastFetchOptions.fetchedRowsRange !== fetchedRowsRange
