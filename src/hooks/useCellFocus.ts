@@ -34,7 +34,7 @@ export function useCellFocus({ ref, ariaColIndex, ariaRowIndex }: CellData): Cel
         ref.current.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'nearest' })
       }
       ref.current.focus()
-      setShouldFocus?.(false)
+      setShouldFocus(false)
     }
   }, [ref, isCurrentCell, isHeaderCell, shouldFocus, setShouldFocus])
 
@@ -43,9 +43,10 @@ export function useCellFocus({ ref, ariaColIndex, ariaRowIndex }: CellData): Cel
   const tabIndex = isCurrentCell ? 0 : -1
 
   const navigateToCell = useCallback(() => {
-    setColIndex?.(ariaColIndex)
-    setRowIndex?.(ariaRowIndex)
-    setShouldFocus?.(true)
+    setColIndex(ariaColIndex)
+    setRowIndex(ariaRowIndex)
+    setShouldFocus(true)
+    // no need to scroll the row into view here, as the cell is already in the DOM
   }, [setColIndex, setRowIndex, setShouldFocus, ariaColIndex, ariaRowIndex])
 
   return {

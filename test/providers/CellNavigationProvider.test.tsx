@@ -13,7 +13,7 @@ function RowCountComponent() {
   return (
     <div>
       <span data-testid="cell-position">{`col:${colIndex},row:${rowIndex}`}</span>
-      <button data-testid="set-row-10" onClick={() => setRowIndex?.(10)}>Set Row to 10</button>
+      <button data-testid="set-row-10" onClick={() => { setRowIndex(10) }}>Set Row to 10</button>
     </div>
   )
 }
@@ -22,7 +22,7 @@ function ColCountComponent() {
   return (
     <div>
       <span data-testid="cell-position">{`col:${colIndex},row:${rowIndex}`}</span>
-      <button data-testid="set-col-10" onClick={() => setColIndex?.(10)}>Set Col to 10</button>
+      <button data-testid="set-col-10" onClick={() => { setColIndex(10) }}>Set Col to 10</button>
     </div>
   )
 }

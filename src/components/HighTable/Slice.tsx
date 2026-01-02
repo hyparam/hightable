@@ -5,6 +5,7 @@ import { CellNavigationContext } from '../../contexts/CellNavigationContext.js'
 import { DataContext } from '../../contexts/DataContext.js'
 import { OrderByContext } from '../../contexts/OrderByContext.js'
 import { RowsAndColumnsContext } from '../../contexts/RowsAndColumnsContext.js'
+import { ScrollerContext } from '../../contexts/ScrollerContext.js'
 import { SelectionContext } from '../../contexts/SelectionContext.js'
 import { stringify as stringifyDefault } from '../../utils/stringify.js'
 import Cell, { type CellContentProps } from '../Cell/Cell.js'
@@ -40,13 +41,82 @@ export default function Slice({
   stringify = stringifyDefault,
 }: Props) {
   const { data, version, numRows } = useContext(DataContext)
-  const { onTableKeyDown: onNavigationTableKeyDown, focusFirstCell } = useContext(CellNavigationContext)
+  const { rowIndex, colCount, rowCount, focusFirstCell, setColIndex, setRowIndex, setShouldFocus } = useContext(CellNavigationContext)
   const { orderBy, onOrderByChange } = useContext(OrderByContext)
   const { selectable, toggleAllRows, pendingSelectionGesture, onTableKeyDown: onSelectionTableKeyDown, allRowsSelected, isRowSelected, toggleRowNumber, toggleRangeToRowNumber } = useContext(SelectionContext)
   const { columnsParameters, renderedRowsRange, fetchedRowsRange } = useContext(RowsAndColumnsContext)
+  const { scrollRowIntoView } = useContext(ScrollerContext)
+
+  // TODO(SL): we depend on rowIndex to trigger the scroll effect, which means we recreate the
+  // callback every time the rowIndex changes. Can we avoid that?
+  // For now, we don't need to depend on colIndex, we can set the state using the update function form.
+  const onNavigationTableKeyDown = useCallback((event: KeyboardEvent, { numRowsPerPage }: {
+    numRowsPerPage: number // number of rows to skip when navigating with the keyboard (PageUp/PageDown)
+  }) => {
+    const { key, altKey, ctrlKey, metaKey, shiftKey } = event
+    // if the user is pressing Alt, Meta or Shift, do not handle the event
+    if (altKey || metaKey || shiftKey) {
+      return
+    }
+    let newRowIndex: number | undefined = undefined
+    if (key === 'ArrowRight') {
+      if (ctrlKey) {
+        setColIndex(colCount)
+      } else {
+        setColIndex(prev => prev < colCount ? prev + 1 : prev)
+      }
+    } else if (key === 'ArrowLeft') {
+      if (ctrlKey) {
+        setColIndex(1)
+      } else {
+        setColIndex(prev => prev > 1 ? prev - 1 : prev)
+      }
+    } else if (key === 'ArrowDown') {
+      if (ctrlKey) {
+        newRowIndex = rowCount
+      } else {
+        newRowIndex = rowIndex < rowCount ? rowIndex + 1 : rowIndex
+      }
+    } else if (key === 'ArrowUp') {
+      if (ctrlKey) {
+        newRowIndex = 1
+      } else {
+        newRowIndex = rowIndex > 1 ? rowIndex - 1 : rowIndex
+      }
+    } else if (key === 'Home') {
+      if (ctrlKey) {
+        newRowIndex = 1
+      }
+      setColIndex(1)
+    } else if (key === 'End') {
+      if (ctrlKey) {
+        newRowIndex = rowCount
+      }
+      setColIndex(colCount)
+    } else if (key === 'PageDown') {
+      newRowIndex = rowIndex + numRowsPerPage <= rowCount ? rowIndex + numRowsPerPage : rowCount
+      // TODO(SL): same for horizontal scrolling with Alt+PageDown?
+    } else if (key === 'PageUp') {
+      newRowIndex = rowIndex - numRowsPerPage >= 1 ? rowIndex - numRowsPerPage : 1
+      // TODO(SL): same for horizontal scrolling with Alt+PageUp?
+    } else if (key !== ' ') {
+      // if the key is not one of the above, do not handle it
+      // special case: no action is associated with the Space key, but it's captured
+      // anyway to prevent the default action (scrolling the page) and stay in navigation mode
+      return
+    }
+    // avoid scrolling the table when the user is navigating with the keyboard
+    event.stopPropagation()
+    event.preventDefault()
+    if (newRowIndex !== undefined) {
+      setRowIndex(newRowIndex)
+      scrollRowIntoView?.({ rowIndex: newRowIndex }) // ensure the cell is visible
+    }
+    setShouldFocus(true)
+  }, [rowIndex, colCount, rowCount, setColIndex, setRowIndex, setShouldFocus, scrollRowIntoView])
 
   const onTableKeyDown = useCallback((event: KeyboardEvent) => {
-    onNavigationTableKeyDown?.(event, { numRowsPerPage })
+    onNavigationTableKeyDown(event, { numRowsPerPage })
     onSelectionTableKeyDown?.(event)
   }, [onNavigationTableKeyDown, onSelectionTableKeyDown, numRowsPerPage])
 
@@ -66,7 +136,7 @@ export default function Slice({
   useEffect(() => {
     if (focus) {
       // Focus the first cell on mount, or on later changes, so keyboard navigation works
-      focusFirstCell?.()
+      focusFirstCell()
     }
   }, [
     // explicitly depend on data, so that focus is set again when data changes

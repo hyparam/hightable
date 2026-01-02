@@ -173,7 +173,7 @@ export default function ColumnMenu({
 
       // The header cell was focused when opening the menu.
       // Move the focus to the left cell to keep ability to navigate with keyboard.
-      focusFirstCell?.()
+      focusFirstCell()
 
       close()
     }
