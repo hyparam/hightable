@@ -1,13 +1,9 @@
 import type { KeyboardEvent } from 'react'
 import { createContext } from 'react'
 
-export interface CellPosition {
+interface CellNavigationContextType {
   colIndex: number // table column index, same semantic as aria-colindex (1-based, includes row headers)
   rowIndex: number // table row index, same semantic as aria-rowindex (1-based, includes column headers)
-}
-
-interface CellNavigationContextType {
-  cellPosition: CellPosition
   shouldFocus: boolean // true if the current cell should be focused
   shouldScroll: boolean // true if the table should scroll to the current cell
   onTableKeyDown?: (event: KeyboardEvent, { numRowsPerPage }: { numRowsPerPage: number }) => void // function to handle keydown events inside the table.
@@ -19,10 +15,8 @@ interface CellNavigationContextType {
 }
 
 export const defaultCellNavigationContext: CellNavigationContextType = {
-  cellPosition: {
-    colIndex: 1, // the cursor cell is initially the top-left cell
-    rowIndex: 1, //
-  },
+  colIndex: 1, // the cursor cell is initially the top-left cell
+  rowIndex: 1, //
   shouldFocus: false,
   shouldScroll: false,
 }

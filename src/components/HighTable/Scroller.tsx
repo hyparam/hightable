@@ -25,7 +25,7 @@ export default function Scroller({
   const [scrollToTop, setScrollToTop] = useState<((top: number) => void) | undefined>(undefined)
 
   const { numRows } = useContext(DataContext)
-  const { shouldScroll, setShouldFocus, setShouldScroll, cellPosition } = useContext(CellNavigationContext)
+  const { shouldScroll, setShouldFocus, setShouldScroll, rowIndex } = useContext(CellNavigationContext)
   const { fetchedRowsRange, renderedRowsRange, setVisibleRowsRange } = useContext(RowsAndColumnsContext)
 
   /**
@@ -93,7 +93,7 @@ export default function Scroller({
       return
     }
     setShouldScroll?.(false)
-    const row = cellPosition.rowIndex - ariaOffset
+    const row = rowIndex - ariaOffset
     let nextScrollTop = scrollTop
     // if the row is outside of the fetched rows range, scroll to the estimated position of the cell,
     // to wait for the cell to be fetched and rendered
@@ -105,7 +105,7 @@ export default function Scroller({
       // scroll to the cell
       scrollToTop(nextScrollTop)
     }
-  }, [cellPosition, shouldScroll, fetchedRowsRange, setShouldScroll, scrollToTop, scrollTop])
+  }, [rowIndex, shouldScroll, fetchedRowsRange, setShouldScroll, scrollToTop, scrollTop])
 
   /**
    * Track viewport size and scroll position

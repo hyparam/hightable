@@ -10,8 +10,8 @@ interface CellNavigationProviderProps {
 }
 
 export function CellNavigationProvider({ children }: CellNavigationProviderProps) {
-  const [colIndex, setColIndex] = useState(defaultCellNavigationContext.cellPosition.colIndex)
-  const [rowIndex, setRowIndex] = useState(defaultCellNavigationContext.cellPosition.rowIndex)
+  const [colIndex, setColIndex] = useState(defaultCellNavigationContext.colIndex)
+  const [rowIndex, setRowIndex] = useState(defaultCellNavigationContext.rowIndex)
   const [shouldFocus, setShouldFocus] = useState(false)
   const [shouldScroll, setShouldScroll] = useState(false)
 
@@ -106,22 +106,16 @@ export function CellNavigationProvider({ children }: CellNavigationProviderProps
   }, [colCount, rowCount])
 
   const focusFirstCell = useCallback(() => {
-    setColIndex(defaultCellNavigationContext.cellPosition.colIndex)
-    setRowIndex(defaultCellNavigationContext.cellPosition.rowIndex)
+    setColIndex(defaultCellNavigationContext.colIndex)
+    setRowIndex(defaultCellNavigationContext.rowIndex)
     setShouldScroll(true)
     setShouldFocus(true)
   }, [])
 
-  const cellPosition = useMemo(() => {
+  const value = useMemo(() => {
     return {
       colIndex,
       rowIndex,
-    }
-  }, [colIndex, rowIndex])
-
-  const value = useMemo(() => {
-    return {
-      cellPosition,
       onTableKeyDown,
       setColIndex,
       setRowIndex,
@@ -131,7 +125,7 @@ export function CellNavigationProvider({ children }: CellNavigationProviderProps
       setShouldScroll,
       focusFirstCell,
     }
-  }, [cellPosition, onTableKeyDown, shouldFocus, shouldScroll, focusFirstCell])
+  }, [colIndex, rowIndex, onTableKeyDown, shouldFocus, shouldScroll, focusFirstCell])
 
   return (
     <CellNavigationContext.Provider value={value}>

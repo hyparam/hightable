@@ -15,7 +15,7 @@ interface CellFocus {
 }
 
 export function useCellFocus({ ref, ariaColIndex, ariaRowIndex }: CellData): CellFocus {
-  const { cellPosition: { colIndex, rowIndex }, setColIndex, setRowIndex, shouldFocus, setShouldFocus } = useContext(CellNavigationContext)
+  const { colIndex, rowIndex, setColIndex, setRowIndex, shouldFocus, setShouldFocus } = useContext(CellNavigationContext)
 
   // Check if the cell is the current navigation cell
   const isCurrentCell = ariaColIndex === colIndex && ariaRowIndex === rowIndex

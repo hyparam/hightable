@@ -9,19 +9,19 @@ import { arrayDataFrame } from '../../src/helpers/dataframe/index.js'
 import { CellNavigationProvider } from '../../src/providers/CellNavigationProvider.js'
 
 function RowCountComponent() {
-  const { cellPosition, setRowIndex } = useContext(CellNavigationContext)
+  const { colIndex, rowIndex, setRowIndex } = useContext(CellNavigationContext)
   return (
     <div>
-      <span data-testid="cell-position">{`col:${cellPosition.colIndex},row:${cellPosition.rowIndex}`}</span>
+      <span data-testid="cell-position">{`col:${colIndex},row:${rowIndex}`}</span>
       <button data-testid="set-row-10" onClick={() => setRowIndex?.(10)}>Set Row to 10</button>
     </div>
   )
 }
 function ColCountComponent() {
-  const { cellPosition, setColIndex } = useContext(CellNavigationContext)
+  const { colIndex, rowIndex, setColIndex } = useContext(CellNavigationContext)
   return (
     <div>
-      <span data-testid="cell-position">{`col:${cellPosition.colIndex},row:${cellPosition.rowIndex}`}</span>
+      <span data-testid="cell-position">{`col:${colIndex},row:${rowIndex}`}</span>
       <button data-testid="set-col-10" onClick={() => setColIndex?.(10)}>Set Col to 10</button>
     </div>
   )
