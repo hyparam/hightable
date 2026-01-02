@@ -1,5 +1,5 @@
 import type { KeyboardEvent } from 'react'
-import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useContext, useMemo, useState } from 'react'
 
 import { CellNavigationContext } from '../../contexts/CellNavigationContext.js'
 import { DataContext } from '../../contexts/DataContext.js'
@@ -19,9 +19,6 @@ export default function Scroller({
   setViewportWidth,
   children,
 }: Props) {
-  // TODO(SL): replace with a callback function (https://react.dev/reference/react-dom/components/common#ref-callback)
-  const viewportRef = useRef<HTMLDivElement>(null)
-
   const [scrollToTop, setScrollToTop] = useState<((top: number) => void) | undefined>(undefined)
 
   const { numRows } = useContext(DataContext)
@@ -108,12 +105,7 @@ export default function Scroller({
   /**
    * Track viewport size and scroll position
    */
-  useEffect(() => {
-    const viewport = viewportRef.current
-    if (!viewport) {
-      throw new Error('Viewport element is not available. Viewport size will not be tracked accurately.')
-    }
-
+  const viewportRef = useCallback((viewport: HTMLDivElement) => {
     // Use arrow functions to get correct viewport type (not null)
     // eslint-disable-next-line func-style
     const updateViewportSize = () => {
