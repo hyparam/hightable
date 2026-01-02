@@ -6,8 +6,6 @@ import { ScrollModeContext } from '../contexts/ScrollModeContext.js'
 interface ScrollModeVirtualProviderProps {
   children: ReactNode
   canvasHeight: number // total scrollable height. It must be strictly positive.
-  tableHeight: number // total table height
-  numRows: number
 }
 
 export function ScrollModeVirtualProvider({ children, canvasHeight }: ScrollModeVirtualProviderProps) {

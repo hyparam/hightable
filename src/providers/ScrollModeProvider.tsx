@@ -25,7 +25,7 @@ export function ScrollModeProvider({ children, headerHeight, numRows }: ScrollMo
     )
   } else {
     return (
-      <ScrollModeVirtualProvider canvasHeight={maxElementHeight} tableHeight={tableHeight} numRows={numRows}>
+      <ScrollModeVirtualProvider canvasHeight={maxElementHeight}>
         {children}
       </ScrollModeVirtualProvider>
     )
