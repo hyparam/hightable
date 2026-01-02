@@ -4,15 +4,22 @@ import { useCallback, useContext, useMemo, useState } from 'react'
 import { CellNavigationContext, defaultCellNavigationContext } from '../contexts/CellNavigationContext.js'
 import { ColumnVisibilityStatesContext } from '../contexts/ColumnVisibilityStatesContext.js'
 import { DataContext } from '../contexts/DataContext.js'
+import type { DataFrame } from '../helpers/dataframe/index.js'
 
-interface CellNavigationProviderProps {
-  children: ReactNode
+export interface CellNavigationProviderProps {
+  focus?: boolean // whether to focus the first cell on mount
 }
 
-export function CellNavigationProvider({ children }: CellNavigationProviderProps) {
+type Props = {
+  children: ReactNode
+} & CellNavigationProviderProps
+
+export function CellNavigationProvider({ children, focus = true }: Props) {
   const [colIndex, setColIndex] = useState(defaultCellNavigationContext.colIndex)
   const [rowIndex, setRowIndex] = useState(defaultCellNavigationContext.rowIndex)
   const [shouldFocus, setShouldFocus] = useState(false)
+  const [lastData, setLastData] = useState<Omit<DataFrame, 'numRows'> | undefined>(undefined)
+  const { data } = useContext(DataContext)
 
   // number of rows in the table, including the header row
   const { numRows: numDataRows } = useContext(DataContext)
@@ -49,6 +56,14 @@ export function CellNavigationProvider({ children }: CellNavigationProviderProps
     setShouldFocus(true)
     // No need to scroll to it, the top left column is always visible.
   }, [])
+
+  // Focus the first cell on mount, or on later changes, so keyboard navigation works
+  if (data !== lastData) {
+    setLastData(data)
+    if (focus) {
+      focusFirstCell()
+    }
+  }
 
   const value = useMemo(() => {
     return {

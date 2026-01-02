@@ -1,5 +1,5 @@
 import type { KeyboardEvent, MouseEvent, ReactNode } from 'react'
-import { useCallback, useContext, useEffect, useMemo } from 'react'
+import { useCallback, useContext, useMemo } from 'react'
 
 import { CellNavigationContext } from '../../contexts/CellNavigationContext.js'
 import { DataContext } from '../../contexts/DataContext.js'
@@ -16,7 +16,6 @@ import TableHeader from '../TableHeader/TableHeader.js'
 import { ariaOffset, defaultNumRowsPerPage } from './constants.js'
 
 export interface SliceProps {
-  focus?: boolean // focus table on mount? (default true)
   numRowsPerPage?: number // number of rows per page for keyboard navigation (default 20)
   // TODO(SL): replace col: number with col: string?
   onDoubleClickCell?: (event: MouseEvent, col: number, row: number) => void
@@ -31,7 +30,6 @@ type Props = {
 } & SliceProps
 
 export default function Slice({
-  focus = true,
   numRowsPerPage = defaultNumRowsPerPage,
   onDoubleClickCell,
   onKeyDownCell,
@@ -41,7 +39,7 @@ export default function Slice({
   stringify = stringifyDefault,
 }: Props) {
   const { data, version, numRows } = useContext(DataContext)
-  const { rowIndex, colCount, rowCount, focusFirstCell, setColIndex, setRowIndex, setShouldFocus } = useContext(CellNavigationContext)
+  const { rowIndex, colCount, rowCount, setColIndex, setRowIndex, setShouldFocus } = useContext(CellNavigationContext)
   const { orderBy, onOrderByChange } = useContext(OrderByContext)
   const { selectable, toggleAllRows, pendingSelectionGesture, onTableKeyDown: onSelectionTableKeyDown, allRowsSelected, isRowSelected, toggleRowNumber, toggleRangeToRowNumber } = useContext(SelectionContext)
   const { columnsParameters, renderedRowsRange, fetchedRowsRange } = useContext(RowsAndColumnsContext)
@@ -132,16 +130,6 @@ export default function Slice({
       }
     }
   }, [toggleRowNumber, toggleRangeToRowNumber])
-
-  useEffect(() => {
-    if (focus) {
-      // Focus the first cell on mount, or on later changes, so keyboard navigation works
-      focusFirstCell()
-    }
-  }, [
-    // explicitly depend on data, so that focus is set again when data changes
-    data, focus, focusFirstCell,
-  ])
 
   // Prepare the slice of data to render
   // TODO(SL): also compute progress percentage here, to show a loading indicator
