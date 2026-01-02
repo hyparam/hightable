@@ -76,7 +76,8 @@ export default function TableCorner({ children, checked, onCheckboxPress, pendin
 
   const ref = useCallback((tableCorner: HTMLTableCellElement | null) => {
     focusCellIfNeeded(tableCorner)
-    trackSize(tableCorner)
+    // return the cleanup function from size tracking
+    return trackSize(tableCorner)
   }, [focusCellIfNeeded, trackSize])
 
   return (

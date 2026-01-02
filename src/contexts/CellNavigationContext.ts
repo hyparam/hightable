@@ -8,7 +8,7 @@ interface CellNavigationContextType {
   rowIndex: number // table row index, same semantic as aria-rowindex (1-based, includes column headers)
   shouldFocus: boolean // true if the current cell should be focused
   setColIndex: (value: SetStateAction<number>) => void // function to set the column index
-  setRowIndex: (value: number) => void // function to set the row index
+  setRowIndex: (value: number) => void // function to set the row index. No need for SetStateAction here, as we only call it with a number
   setShouldFocus: (shouldFocus: boolean) => void // function to set the shouldFocus state
   focusFirstCell: () => void // function to focus the first cell
 }
