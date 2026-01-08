@@ -1,35 +1,25 @@
 import type { ReactNode } from 'react'
-import { useCallback, useContext, useMemo, useState } from 'react'
+import { useContext, useMemo, useState } from 'react'
 
 import { ColumnParametersContext } from '../contexts/ColumnParametersContext.js'
 import { ColumnVisibilityStatesContext } from '../contexts/ColumnVisibilityStatesContext.js'
 import { DataContext } from '../contexts/DataContext.js'
 import { ErrorContext } from '../contexts/ErrorContext.js'
 import { OrderByContext } from '../contexts/OrderByContext.js'
-import type { RowsRange } from '../contexts/RowsAndColumnsContext.js'
 import { RowsAndColumnsContext } from '../contexts/RowsAndColumnsContext.js'
-import { defaultOverscan, defaultPadding } from '../helpers/constants.js'
+import { ScrollModeContext } from '../contexts/ScrollModeContext.js'
+import { defaultOverscan } from '../helpers/constants.js'
 
 export interface RowsAndColumnsProviderProps {
   overscan?: number // number of rows to fetch beyond the visible table cells (default 20)
-  padding?: number // number of rows to render beyond the visible table cells (default 20)
 }
 
 type Props = {
   children: ReactNode
 } & RowsAndColumnsProviderProps
 
-export function RowsAndColumnsProvider({ padding = defaultPadding, overscan = defaultOverscan, children }: Props) {
-  const [visibleRowsRange, _setVisibleRowsRange] = useState<RowsRange | undefined>(undefined)
-  const setVisibleRowsRange = useCallback((nextRowsRange: RowsRange | undefined) => {
-    // compare the fields, not the object reference
-    _setVisibleRowsRange((rowsRange) => {
-      if (rowsRange?.start === nextRowsRange?.start && rowsRange?.end === nextRowsRange?.end) {
-        return rowsRange
-      }
-      return nextRowsRange
-    })
-  }, [])
+export function RowsAndColumnsProvider({ overscan = defaultOverscan, children }: Props) {
+  const { visibleRowsRange } = useContext(ScrollModeContext)
 
   const { onError } = useContext(ErrorContext)
   const { data, numRows } = useContext(DataContext)
@@ -51,15 +41,6 @@ export function RowsAndColumnsProvider({ padding = defaultPadding, overscan = de
       end: Math.min(numRows, visibleRowsRange.end + overscan),
     }
   }, [visibleRowsRange, numRows, overscan])
-
-  const renderedRowsRange = useMemo(() => {
-    if (!visibleRowsRange) return undefined
-
-    return {
-      start: Math.max(0, visibleRowsRange.start - padding),
-      end: Math.min(numRows, visibleRowsRange.end + padding),
-    }
-  }, [visibleRowsRange, numRows, padding])
 
   const fetchOptions = useMemo(() => ({
     orderBy,
@@ -98,10 +79,7 @@ export function RowsAndColumnsProvider({ padding = defaultPadding, overscan = de
 
   const value = useMemo(() => ({
     columnsParameters,
-    visibleRowsRange,
-    renderedRowsRange,
-    setVisibleRowsRange,
-  }), [columnsParameters, setVisibleRowsRange, renderedRowsRange, visibleRowsRange])
+  }), [columnsParameters])
 
   return (
     <RowsAndColumnsContext.Provider value={value}>

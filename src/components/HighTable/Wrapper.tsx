@@ -17,6 +17,7 @@ import { ColumnWidthsProvider } from '../../providers/ColumnWidthsProvider.js'
 import { OrderByProvider } from '../../providers/OrderByProvider.js'
 import type { RowsAndColumnsProviderProps } from '../../providers/RowsAndColumnsProvider.js'
 import { RowsAndColumnsProvider } from '../../providers/RowsAndColumnsProvider.js'
+import type { ScrollModeProviderProps } from '../../providers/ScrollModeProvider.js'
 import { ScrollModeProvider } from '../../providers/ScrollModeProvider.js'
 import { SelectionProvider } from '../../providers/SelectionProvider.js'
 import Scroller from './Scroller.js'
@@ -33,7 +34,7 @@ export type WrapperProps = {
   onColumnsVisibilityChange?: (columns: Record<string, MaybeHiddenColumn>) => void // callback which is called whenever the set of hidden columns changes.
   onOrderByChange?: (orderBy: OrderBy) => void // callback to call when a user interaction changes the order. The interactions are disabled if undefined.
   onSelectionChange?: (selection: Selection) => void // callback to call when a user interaction changes the selection. The selection is expressed as data indexes (not as indexes in the table). The interactions are disabled if undefined.
-} & RowsAndColumnsProviderProps & CellNavigationProviderProps & SliceProps
+} & RowsAndColumnsProviderProps & CellNavigationProviderProps & ScrollModeProviderProps & SliceProps
 
 export default function Wrapper({
   columnConfiguration,
@@ -101,18 +102,18 @@ export default function Wrapper({
                 <SelectionProvider key={key} selection={selection} onSelectionChange={onSelectionChange} data={data} numRows={numRows}>
                   {/* Create a new navigation context if the dataframe has changed, because the focused cell might not exist anymore */}
                   <CellNavigationProvider key={key} focus={focus}>
-                    <RowsAndColumnsProvider key={key} padding={padding} overscan={overscan}>
-                      <ScrollModeProvider numRows={numRows} headerHeight={headerHeight}>
+                    <ScrollModeProvider numRows={numRows} headerHeight={headerHeight} padding={padding}>
+                      <Scroller setViewportWidth={setViewportWidth}>
 
-                        <Scroller setViewportWidth={setViewportWidth}>
+                        <RowsAndColumnsProvider key={key} overscan={overscan}>
                           <Slice
                             setTableCornerSize={setTableCornerSize}
                             {...rest}
                           />
-                        </Scroller>
+                        </RowsAndColumnsProvider>
 
-                      </ScrollModeProvider>
-                    </RowsAndColumnsProvider>
+                      </Scroller>
+                    </ScrollModeProvider>
                   </CellNavigationProvider>
                 </SelectionProvider>
               </OrderByProvider>

@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
-import { useCallback, useContext, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 
-import { RowsAndColumnsContext } from '../contexts/RowsAndColumnsContext.js'
+import type { RowsRange } from '../contexts/ScrollModeContext.js'
 import { ScrollModeContext } from '../contexts/ScrollModeContext.js'
 import { ariaOffset, rowHeight } from '../helpers/constants.js'
 
@@ -9,12 +9,29 @@ interface ScrollModeNativeProviderProps {
   children: ReactNode
   canvasHeight: number // total scrollable height. It must be strictly positive.
   numRows: number
+  padding: number
 }
 
-export function ScrollModeNativeProvider({ children, canvasHeight, numRows }: ScrollModeNativeProviderProps) {
+export function ScrollModeNativeProvider({ children, canvasHeight, numRows, padding }: ScrollModeNativeProviderProps) {
   const [scrollTo, setScrollTo] = useState<HTMLElement['scrollTo'] | undefined>(undefined)
-  const { visibleRowsRange, renderedRowsRange, setVisibleRowsRange } = useContext(RowsAndColumnsContext)
   const [clientHeight, setClientHeight] = useState(100)
+  const [visibleRowsRange, _setVisibleRowsRange] = useState<RowsRange | undefined>(undefined)
+  const setVisibleRowsRange = useCallback((nextRowsRange: RowsRange | undefined) => {
+    // compare the fields, not the object reference
+    _setVisibleRowsRange((rowsRange) => {
+      if (rowsRange?.start === nextRowsRange?.start && rowsRange?.end === nextRowsRange?.end) {
+        return rowsRange
+      }
+      return nextRowsRange
+    })
+  }, [])
+  const renderedRowsRange = useMemo(() => {
+    if (!visibleRowsRange) return undefined
+    return {
+      start: Math.max(0, visibleRowsRange.start - padding),
+      end: Math.min(numRows, visibleRowsRange.end + padding),
+    }
+  }, [visibleRowsRange, numRows, padding])
 
   if (canvasHeight <= 0) {
     throw new Error(`invalid canvasHeight ${canvasHeight}`)
@@ -33,7 +50,7 @@ export function ScrollModeNativeProvider({ children, canvasHeight, numRows }: Sc
     if (isNaN(start)) throw new Error(`invalid start row ${start}`)
     if (isNaN(end)) throw new Error(`invalid end row ${end}`)
     if (end - start > 1000) throw new Error(`attempted to render too many rows ${end - start}`)
-    setVisibleRowsRange?.({ start, end })
+    setVisibleRowsRange({ start, end })
   }, [numRows, canvasHeight, setVisibleRowsRange])
 
   // row: zero-based index in the virtual table domain
@@ -78,11 +95,13 @@ export function ScrollModeNativeProvider({ children, canvasHeight, numRows }: Sc
       scrollMode: 'native' as const,
       canvasHeight,
       sliceTop,
+      renderedRowsRange,
+      visibleRowsRange,
       onViewportChange,
       scrollRowIntoView,
       setScrollTo,
     }
-  }, [canvasHeight, sliceTop, onViewportChange, scrollRowIntoView])
+  }, [canvasHeight, sliceTop, renderedRowsRange, visibleRowsRange, onViewportChange, scrollRowIntoView])
 
   return (
     <ScrollModeContext.Provider value={value}>

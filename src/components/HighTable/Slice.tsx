@@ -42,8 +42,8 @@ export default function Slice({
   const { rowIndex, colCount, rowCount, setColIndex, setRowIndex, setShouldFocus } = useContext(CellNavigationContext)
   const { orderBy, onOrderByChange } = useContext(OrderByContext)
   const { selectable, toggleAllRows, pendingSelectionGesture, onTableKeyDown: onSelectionTableKeyDown, allRowsSelected, isRowSelected, toggleRowNumber, toggleRangeToRowNumber } = useContext(SelectionContext)
-  const { columnsParameters, renderedRowsRange } = useContext(RowsAndColumnsContext)
-  const { scrollRowIntoView } = useContext(ScrollModeContext)
+  const { columnsParameters } = useContext(RowsAndColumnsContext)
+  const { scrollRowIntoView, renderedRowsRange } = useContext(ScrollModeContext)
 
   // TODO(SL): we depend on rowIndex to trigger the scroll effect, which means we recreate the
   // callback every time the rowIndex changes. Can we avoid that?
