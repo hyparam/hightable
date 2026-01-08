@@ -641,7 +641,7 @@ describe('When a column is hidden', () => {
     }
   })
 
-  it('the hidden columns should be ignored when navigating with the keyboard, but are not currently', async () => {
+  it('the hidden columns are ignored when navigating with the keyboard', async () => {
     const data = createData()
     const { user, findByRole } = render(
       <HighTable data={data} />
