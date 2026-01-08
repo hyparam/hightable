@@ -209,14 +209,34 @@ function createFilteredData(): DataFrame {
 
 function createLargeData(): DataFrame {
   const numRows = 777_000_000
-  const columnDescriptors = ['ID', 'Value'].map(name => ({ name }))
+  const columnDescriptors = ['ID1', 'LongString1', 'Value1', 'ID2', 'LongString2', 'Value2', 'ID3', 'LongString3', 'Value3', 'ID4', 'LongString4', 'Value4'].map(name => ({ name }))
   function getCell({ row, column }: { row: number, column: string }): ResolvedValue | undefined {
     return {
-      value: column === 'ID'
-        ? `row ${row}`
-        : column === 'Value'
-          ? Math.floor(100 * random(135 + row))
-          : undefined,
+      value: column === 'ID1'
+        ? `row ${row} A`
+        : column === 'LongString1'
+          ? longString.repeat(10)
+          : column === 'Value1'
+            ? Math.floor(100 * random(123 + row))
+            : column === 'ID2'
+              ? `row ${row} B`
+              : column === 'LongString2'
+                ? longString.repeat(8)
+                : column === 'Value2'
+                  ? Math.floor(100 * random(456 + row))
+                  : column === 'ID3'
+                    ? `row ${row} C`
+                    : column === 'LongString3'
+                      ? longString.repeat(12)
+                      : column === 'Value3'
+                        ? Math.floor(100 * random(789 + row))
+                        : column === 'ID4'
+                          ? `row ${row} D`
+                          : column === 'LongString4'
+                            ? longString.repeat(10)
+                            : column === 'Value4'
+                              ? Math.floor(100 * random(951 + row))
+                              : undefined,
     }
   }
   const getRowNumber = createGetRowNumber({ numRows })
