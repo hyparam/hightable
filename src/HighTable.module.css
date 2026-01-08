@@ -237,12 +237,8 @@
   --row-number-padding-characters: 2;
   /* 1ch: width of the '0' character in the current font (beware if different fonts are used in the table) */
   --row-number-width: calc(
-    calc(
-      var(--row-number-characters)
-      + var(--row-number-padding-characters)
-    )
-    * var(--row-number-size-multiplier)
-    * 1ch
+    calc(var(--row-number-characters) + var(--row-number-padding-characters)) *
+      var(--row-number-size-multiplier) * 1ch
   );
   --cell-border-width: 1px;
   --cell-horizontal-padding: 10px;
@@ -262,10 +258,10 @@
   --hy-accent-3: #ccd;
   --hy-accent-4: #dbdbe5;
   --hy-accent-5: #efeef6;
-  
+
   --hy-highlight-1: #f1edbb;
   --hy-highlight-2: #fbf7bf;
-  
+
   --header-color: var(--hy-color-2);
   --menu-color: var(--hy-color-2);
   --menu-item-color: var(--hy-color-2);
@@ -294,11 +290,11 @@
   --resize-indicator-background-color: var(--hy-accent-2);
 
   --cell-busy-background: linear-gradient(
-      60deg,
-      rgba(0, 0, 0, 0.05) 25%,
-      rgba(0, 0, 0, 0.08) 50%,
-      rgba(0, 0, 0, 0.05) 75%
-    );
+    60deg,
+    rgba(0, 0, 0, 0.05) 25%,
+    rgba(0, 0, 0, 0.08) 50%,
+    rgba(0, 0, 0, 0.05) 75%
+  );
 
   --top-border-color: var(--hy-accent-1);
   --focus-border-color: var(--hy-accent-1);
@@ -311,6 +307,7 @@
   --resizer-hovered-right-border-color: var(--hy-accent-2);
   --row-number-hovered-right-border-color: var(--hy-color-7);
   --corner-cell-right-border-color: var(--hy-color-7);
+  --row-number-right-border-color: var(--hy-color-7);
 
   & {
     isolation: isolate;
@@ -404,7 +401,10 @@
   thead th[data-functional-header="true"][aria-sort]::after {
     content: none;
   }
-  thead th[data-functional-header="true"][data-order-by-index="0"] div[role="group"] > span[role="img"] {
+  thead
+    th[data-functional-header="true"][data-order-by-index="0"]
+    div[role="group"]
+    > span[role="img"] {
     color: var(--primary-sort-icon-color);
   }
 
@@ -426,7 +426,7 @@
     &[tabindex="0"] {
       outline-style: solid;
       outline-color: var(--focusable-border-color);
-      outline-width: var(--focus-border-width);;
+      outline-width: var(--focus-border-width);
       outline-offset: calc(0px - var(--focus-border-width));
       background-color: var(--focusable-background-color);
     }
@@ -542,7 +542,8 @@
   thead [role="spinbutton"] {
     background-color: transparent;
     transition: background-color 0.2s ease;
-    &:focus, &:hover {
+    &:focus,
+    &:hover {
       border-right-color: var(--resizer-hovered-right-border-color);
       border-width: 0 var(--resizer-border-width) 0 0;
       border-style: solid;
