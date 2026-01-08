@@ -51,13 +51,13 @@ export default function Scroller({
     // eslint-disable-next-line func-style
     const updateViewportSize = () => {
       setViewportWidth(viewport.clientWidth)
-      onViewportChange?.(viewport)
+      onViewportChange?.({ clientHeight: viewport.clientHeight, scrollTop: viewport.scrollTop })
     }
 
     // eslint-disable-next-line func-style
     const handleScroll = () => {
       // TODO(SL): throttle? see https://github.com/hyparam/hightable/pull/347
-      onViewportChange?.(viewport)
+      onViewportChange?.({ clientHeight: viewport.clientHeight, scrollTop: viewport.scrollTop })
     }
 
     // run once
