@@ -624,6 +624,7 @@ describe('When a column is hidden', () => {
         throw new Error('No active element')
       }
       expect(activeElement.getAttribute('aria-rowindex')).toBe('1')
+      expect(activeElement.getAttribute('aria-label')).toBe('Count')
       expect(activeElement.getAttribute('aria-colindex')).toBe('3')
     }
 
@@ -659,9 +660,8 @@ describe('When a column is hidden', () => {
       if (!activeElement) {
         throw new Error('No active element')
       }
-      expect(activeElement.getAttribute('aria-colindex')).toBe('2') // Count column
-      // TODO(SL): when #373 is fixed, replace with:
-      // expect(activeElement.getAttribute('aria-colindex')).toBe('3') // Double column
+      expect(activeElement.getAttribute('aria-label')).toBe('Double')
+      expect(activeElement.getAttribute('aria-colindex')).toBe('3')
     }
   })
 })

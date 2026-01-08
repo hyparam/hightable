@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react'
 
 import type { ColumnParameters } from '../../contexts/ColumnParametersContext.js'
+import { ariaOffset } from '../../helpers/constants.js'
 import type { OrderBy } from '../../helpers/sort.js'
 import { toggleColumn, toggleColumnExclusive } from '../../helpers/sort.js'
 import ColumnHeader from '../ColumnHeader/ColumnHeader.js'
@@ -34,12 +35,11 @@ export default function TableHeader({
     return new Map((orderBy ?? []).map(({ column, direction }, index) => [column, { direction, index }]))
   }, [orderBy])
 
-  return columnsParameters.map((columnParameters) => {
+  return columnsParameters.map((columnParameters, visibleColumnIndex) => {
     const { name, index: columnIndex, className, ...columnConfig } = columnParameters
     // Note: columnIndex is the index of the column in the dataframe header
     // and not the index of the column in the table (which can be different if
     // some columns are hidden, or if the order is changed)
-    const ariaColIndex = columnIndex + 2 // 1-based, include the row header
     return (
       // The ColumnHeader component width is controlled by the parent
       <ColumnHeader
@@ -52,7 +52,7 @@ export default function TableHeader({
         columnName={name}
         columnIndex={columnIndex}
         className={className}
-        ariaColIndex={ariaColIndex}
+        ariaColIndex={visibleColumnIndex + ariaOffset}
         ariaRowIndex={ariaRowIndex}
         columnConfig={columnConfig}
       >
