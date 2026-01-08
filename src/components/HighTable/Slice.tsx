@@ -42,7 +42,7 @@ export default function Slice({
   const { rowIndex, colCount, rowCount, setColIndex, setRowIndex, setShouldFocus } = useContext(CellNavigationContext)
   const { orderBy, onOrderByChange } = useContext(OrderByContext)
   const { selectable, toggleAllRows, pendingSelectionGesture, onTableKeyDown: onSelectionTableKeyDown, allRowsSelected, isRowSelected, toggleRowNumber, toggleRangeToRowNumber } = useContext(SelectionContext)
-  const { columnsParameters, renderedRowsRange, fetchedRowsRange } = useContext(RowsAndColumnsContext)
+  const { columnsParameters, renderedRowsRange } = useContext(RowsAndColumnsContext)
   const { scrollRowIntoView } = useContext(ScrollModeContext)
 
   // TODO(SL): we depend on rowIndex to trigger the scroll effect, which means we recreate the
@@ -134,22 +134,15 @@ export default function Slice({
   // Prepare the slice of data to render
   // TODO(SL): also compute progress percentage here, to show a loading indicator
   const slice = useMemo(() => {
-    if (!renderedRowsRange || !fetchedRowsRange) {
+    if (!renderedRowsRange) {
       return {
-        prePadding: [],
-        postPadding: [],
         rowContents: [],
         canMeasureColumn: {},
         version,
       }
     }
-    const prePaddingRowCount = Math.max(0, fetchedRowsRange.start - renderedRowsRange.start)
-    const fetchedRowCount = fetchedRowsRange.end - fetchedRowsRange.start
-    const postPaddingRowCount = Math.max(0, renderedRowsRange.end - fetchedRowsRange.end)
-    // add empty pre and post rows to fill the viewport
-    const prePadding = Array.from({ length: prePaddingRowCount }, (_, i) => ({ row: renderedRowsRange.start + i }))
-    const rows = Array.from({ length: fetchedRowCount }, (_, i) => fetchedRowsRange.start + i)
-    const postPadding = Array.from({ length: postPaddingRowCount }, (_, i) => ({ row: fetchedRowsRange.end + i }))
+    const renderedRowCount = renderedRowsRange.end - renderedRowsRange.start
+    const rows = Array.from({ length: renderedRowCount }, (_, i) => renderedRowsRange.start + i)
 
     const canMeasureColumn: Record<string, boolean> = {}
     const rowContents = rows.map((row) => {
@@ -166,13 +159,11 @@ export default function Slice({
       }
     })
     return {
-      prePadding,
-      postPadding,
       rowContents,
       canMeasureColumn,
       version,
     }
-  }, [data, columnsParameters, renderedRowsRange, fetchedRowsRange, orderBy, version])
+  }, [data, columnsParameters, renderedRowsRange, orderBy, version])
 
   // don't render table if header is empty
   if (!columnsParameters) return
@@ -211,14 +202,6 @@ export default function Slice({
         </Row>
       </thead>
       <tbody role="rowgroup">
-        {slice.prePadding.map(({ row }) => {
-          const ariaRowIndex = row + ariaOffset
-          return (
-            <Row key={row} ariaRowIndex={ariaRowIndex}>
-              <RowHeader ariaColIndex={1} ariaRowIndex={ariaRowIndex} />
-            </Row>
-          )
-        })}
         {slice.rowContents.map(({ row, rowNumber, cells }) => {
           const ariaRowIndex = row + ariaOffset
           const selected = isRowSelected?.({ rowNumber })
@@ -259,14 +242,6 @@ export default function Slice({
                   />
                 )
               })}
-            </Row>
-          )
-        })}
-        {slice.postPadding.map(({ row }) => {
-          const ariaRowIndex = row + ariaOffset
-          return (
-            <Row key={row} ariaRowIndex={ariaRowIndex}>
-              <RowHeader ariaColIndex={1} ariaRowIndex={ariaRowIndex} />
             </Row>
           )
         })}

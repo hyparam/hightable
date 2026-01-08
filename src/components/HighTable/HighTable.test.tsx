@@ -2,6 +2,7 @@ import { act, fireEvent, waitFor, within } from '@testing-library/react'
 import type { Mock } from 'vitest'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { defaultOverscan, defaultPadding } from '../../helpers/constants.js'
 import { createGetRowNumber, validateFetchParams, validateGetCellParams, validateGetRowNumberParams } from '../../helpers/dataframe/helpers.js'
 import type { DataFrame, DataFrameEvents, Fetch } from '../../helpers/dataframe/index.js'
 import { arrayDataFrame } from '../../helpers/dataframe/index.js'
@@ -13,6 +14,8 @@ import { render } from '../../utils/userEvent.js'
 import HighTable from './HighTable.js'
 
 Element.prototype.scrollIntoView = vi.fn()
+
+const visibleRows = 4 // 100px height / 33px row height
 
 export const dataColumnDescriptors = ['ID', 'Count', 'Double', 'Triple'].map(name => ({
   name,
@@ -97,17 +100,28 @@ describe('HighTable', () => {
     await waitFor(() => {
       getByText('ID')
       expect(mockData.getCell).toHaveBeenCalledWith({ row: 0, column: 'ID', orderBy: [] })
-      expect(mockData.getCell).toHaveBeenCalledWith({ row: 23, column: 'Age', orderBy: [] })
-      expect(mockData.getCell).not.toHaveBeenCalledWith({ row: 24, column: 'Age', orderBy: [] })
+      expect(mockData.getCell).toHaveBeenCalledWith({ row: visibleRows + defaultOverscan + defaultPadding - 1, column: 'Age', orderBy: [] })
+      expect(mockData.getCell).not.toHaveBeenCalledWith({ row: visibleRows + defaultOverscan + defaultPadding, column: 'Age', orderBy: [] })
+    })
+  })
+
+  it('uses padding option', async () => {
+    const padding = 10
+    const { getByText } = render(<HighTable data={mockData} padding={padding} />)
+    await waitFor(() => {
+      getByText('ID')
+      expect(mockData.getCell).toHaveBeenCalledWith({ row: visibleRows + defaultOverscan + padding - 1, column: 'Age', orderBy: [] })
+      expect(mockData.getCell).not.toHaveBeenCalledWith({ row: visibleRows + defaultOverscan + padding, column: 'Age', orderBy: [] })
     })
   })
 
   it('uses overscan option', async () => {
-    const { getByText } = render(<HighTable data={mockData} overscan={10} />)
+    const overscan = 10
+    const { getByText } = render(<HighTable data={mockData} overscan={overscan} />)
     await waitFor(() => {
       getByText('ID')
-      expect(mockData.getCell).toHaveBeenCalledWith({ row: 13, column: 'Age', orderBy: [] })
-      expect(mockData.getCell).not.toHaveBeenCalledWith({ row: 14, column: 'Age', orderBy: [] })
+      expect(mockData.getCell).toHaveBeenCalledWith({ row: visibleRows + overscan + defaultPadding - 1, column: 'Age', orderBy: [] })
+      expect(mockData.getCell).not.toHaveBeenCalledWith({ row: visibleRows + overscan + defaultPadding, column: 'Age', orderBy: [] })
     })
   })
 
@@ -120,8 +134,8 @@ describe('HighTable', () => {
     const { getByLabelText } = render(<HighTable className="myclass" data={mockData} />)
     const scrollDiv = getByLabelText('Virtual-scroll table')
     await waitFor(() => {
-      expect(mockData.getCell).toHaveBeenCalledWith({ row: 23, column: 'Age', orderBy: [] })
-      expect(mockData.getCell).not.toHaveBeenCalledWith({ row: 24, column: 'Age', orderBy: [] })
+      expect(mockData.getCell).toHaveBeenCalledWith({ row: visibleRows + defaultOverscan + defaultPadding - 1, column: 'Age', orderBy: [] })
+      expect(mockData.getCell).not.toHaveBeenCalledWith({ row: visibleRows + defaultOverscan + defaultPadding, column: 'Age', orderBy: [] })
     })
 
     act(() => {
@@ -131,7 +145,7 @@ describe('HighTable', () => {
     })
 
     await waitFor(() => {
-      expect(mockData.getCell).toHaveBeenCalledWith({ row: 24, column: 'Age', orderBy: [] })
+      expect(mockData.getCell).toHaveBeenCalledWith({ row: visibleRows + defaultOverscan + defaultPadding, column: 'Age', orderBy: [] })
     })
   })
 
@@ -255,29 +269,41 @@ describe('with async data, HighTable', () => {
   })
 
   it('renders initial rows', async () => {
-    const defaultOverscan = 20
-    const rowEnd = defaultOverscan + 4
     const asyncData = createAsyncDataFrame()
     const { getByText } = render(<HighTable data={asyncData} />)
     await waitFor(() => {
       getByText('ID')
-      expect(asyncData.fetch).toHaveBeenCalledExactlyOnceWith({ rowStart: 0, rowEnd, columns: ['ID', 'Name', 'Age'], orderBy: [], signal: expect.any(AbortSignal) })
+      expect(asyncData.fetch).toHaveBeenCalledExactlyOnceWith({ rowStart: 0, rowEnd: visibleRows + defaultOverscan, columns: ['ID', 'Name', 'Age'], orderBy: [], signal: expect.any(AbortSignal) })
       expect(asyncData.getCell).toHaveBeenCalledWith({ row: 0, column: 'ID', orderBy: [] })
-      expect(asyncData.getCell).toHaveBeenCalledWith({ row: rowEnd - 1, column: 'Age', orderBy: [] })
-      expect(asyncData.getCell).not.toHaveBeenCalledWith({ row: rowEnd, column: 'Age', orderBy: [] })
+      // the rendered rows include the overscan, then the padding
+      // TODO(SL): render only the visible rows + padding, not the overscan?
+      // see https://github.com/hyparam/hightable/issues/370
+      expect(asyncData.getCell).toHaveBeenCalledWith({ row: visibleRows + defaultOverscan + defaultPadding - 1, column: 'Age', orderBy: [] })
+      expect(asyncData.getCell).not.toHaveBeenCalledWith({ row: visibleRows + defaultOverscan + defaultPadding, column: 'Age', orderBy: [] })
+    })
+  })
+
+  it('uses padding option', async () => {
+    const padding = 10
+    const asyncData = createAsyncDataFrame()
+    const { getByText } = render(<HighTable data={asyncData} padding={padding} />)
+    await waitFor(() => {
+      getByText('ID')
+      expect(asyncData.fetch).toHaveBeenCalledExactlyOnceWith({ rowStart: 0, rowEnd: visibleRows + defaultOverscan, columns: ['ID', 'Name', 'Age'], orderBy: [], signal: expect.any(AbortSignal) })
+      expect(asyncData.getCell).toHaveBeenCalledWith({ row: visibleRows + defaultOverscan + padding - 1, column: 'Age', orderBy: [] })
+      expect(asyncData.getCell).not.toHaveBeenCalledWith({ row: visibleRows + defaultOverscan + padding, column: 'Age', orderBy: [] })
     })
   })
 
   it('uses overscan option', async () => {
     const overscan = 10
-    const rowEnd = overscan + 4
     const asyncData = createAsyncDataFrame()
     const { getByText } = render(<HighTable data={asyncData} overscan={overscan} />)
     await waitFor(() => {
       getByText('ID')
-      expect(asyncData.fetch).toHaveBeenCalledExactlyOnceWith({ rowStart: 0, rowEnd, columns: ['ID', 'Name', 'Age'], orderBy: [], signal: expect.any(AbortSignal) })
-      expect(asyncData.getCell).toHaveBeenCalledWith({ row: rowEnd - 1, column: 'Age', orderBy: [] })
-      expect(asyncData.getCell).not.toHaveBeenCalledWith({ row: rowEnd, column: 'Age', orderBy: [] })
+      expect(asyncData.fetch).toHaveBeenCalledExactlyOnceWith({ rowStart: 0, rowEnd: visibleRows + overscan, columns: ['ID', 'Name', 'Age'], orderBy: [], signal: expect.any(AbortSignal) })
+      expect(asyncData.getCell).toHaveBeenCalledWith({ row: visibleRows + overscan + defaultPadding - 1, column: 'Age', orderBy: [] })
+      expect(asyncData.getCell).not.toHaveBeenCalledWith({ row: visibleRows + overscan + defaultPadding, column: 'Age', orderBy: [] })
     })
   })
 
@@ -295,8 +321,8 @@ describe('with async data, HighTable', () => {
     const { getByLabelText, findByRole, queryByRole } = render(<HighTable className="myclass" data={asyncData} />)
     const scrollDiv = getByLabelText('Virtual-scroll table')
     await waitFor(() => {
-      expect(asyncData.getCell).toHaveBeenCalledWith({ row: 23, column: 'Age', orderBy: [] })
-      expect(asyncData.getCell).not.toHaveBeenCalledWith({ row: 24, column: 'Age', orderBy: [] })
+      expect(asyncData.getCell).toHaveBeenCalledWith({ row: visibleRows + defaultOverscan + defaultPadding - 1, column: 'Age', orderBy: [] })
+      expect(asyncData.getCell).not.toHaveBeenCalledWith({ row: visibleRows + defaultOverscan + defaultPadding, column: 'Age', orderBy: [] })
     })
     await findByRole('cell', { name: 'async 0' })
     expect(queryByRole('cell', { name: 'async 24' })).toBeNull()
@@ -308,7 +334,7 @@ describe('with async data, HighTable', () => {
     })
 
     await waitFor(() => {
-      expect(asyncData.getCell).toHaveBeenCalledWith({ row: 24, column: 'Age', orderBy: [] })
+      expect(asyncData.getCell).toHaveBeenCalledWith({ row: visibleRows + defaultOverscan + defaultPadding, column: 'Age', orderBy: [] })
     })
     await findByRole('cell', { name: 'async 24' })
     expect(queryByRole('cell', { name: 'async 50' })).toBeNull()
