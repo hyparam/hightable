@@ -1,5 +1,36 @@
 # CHANGELOG
 
+## [0.25.1](https://github.com/hyparam/hightable/compare/v0.25.0...v0.25.1) - 2026-01-08
+
+### Added
+
+- add prop `numRowsPerPage` to `HighTable` to set the number of rows per page for page up/down keyboard navigation ([#359](https://github.com/hyparam/hightable/pull/359), [#362](https://github.com/hyparam/hightable/pull/362)).
+
+### Changed
+
+- report an error (using `onError`) and show an empty table, when a table would occupy 8M pixels or more, ie. more than ~240K rows, making an existing limit more explicit ([#364](https://github.com/hyparam/hightable/pull/364)).
+
+### Fixed
+
+- fix virtual table offset when the header row height is bigger than rows' ([#363](https://github.com/hyparam/hightable/pull/363)).
+- define missing CSS variable `--row-number-right-border-color` ([#374](https://github.com/hyparam/hightable/pull/374)).
+- ignore keypress on column header if the column is not sortable ([#375](https://github.com/hyparam/hightable/pull/375)).
+- fix cells navigation with keyboard when some columns are hidden ([#358](https://github.com/hyparam/hightable/pull/358), [#376](https://github.com/hyparam/hightable/pull/376)).
+
+### Refactored
+
+- separate contexts from providers ([#350](https://github.com/hyparam/hightable/pull/350), [#351](https://github.com/hyparam/hightable/pull/351)).
+- split virtual scroll logic into components, and remove `useEffect`/`useRef` where possible ([#356](https://github.com/hyparam/hightable/pull/356), [#360](https://github.com/hyparam/hightable/pull/360), [#367](https://github.com/hyparam/hightable/pull/367), [#368](https://github.com/hyparam/hightable/pull/368), [#364](https://github.com/hyparam/hightable/pull/364)).
+- eslint: sort the imports ([#349](https://github.com/hyparam/hightable/pull/349)).
+- eslint: add rules for storybook stories ([#350](https://github.com/hyparam/hightable/pull/350)).
+- eslint: use `eslint-plugin-react-refresh` to ensure only one component is exported in `tsx` files, which is required by `vite/storybook` for live update ([#350](https://github.com/hyparam/hightable/pull/350)).
+- eslint: use `import type` instead of `import` for types ([#353](https://github.com/hyparam/hightable/pull/353)).
+- eslint: use `@stylistic/eslint-plugin` instead of deprecated eslint rules for styling, and use more default rules ([#353](https://github.com/hyparam/hightable/pull/353), [#357](https://github.com/hyparam/hightable/pull/357)).
+- eslint: use eslint-plugin-import to ensure the imports consistently use an extension ([#353](https://github.com/hyparam/hightable/pull/353)).
+- eslint: rewrite configuration file for clarity ([#353](https://github.com/hyparam/hightable/pull/353)).
+- upgrade development dependencies ([#350](https://github.com/hyparam/hightable/pull/350), [#352](https://github.com/hyparam/hightable/pull/352), [#366](https://github.com/hyparam/hightable/pull/366), [#377](https://github.com/hyparam/hightable/pull/377)).
+- storybook: use React Strict Mode in storybook stories ([#352](https://github.com/hyparam/hightable/pull/352)).
+
 ## [0.25.0](https://github.com/hyparam/hightable/compare/v0.24.1...v0.25.0) - 2025-12-09
 
 ### Removed
