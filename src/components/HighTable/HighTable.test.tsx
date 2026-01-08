@@ -602,8 +602,10 @@ describe('When a column is hidden', () => {
     await user.keyboard('{Tab}')
     // 3. open the column menu
     await user.keyboard('{Enter}')
-    await user.keyboard('{Tab}') // not sure why we need this extra tab, in the browser it's not needed to go to the first menu item
     // 4. activate the "Hide column" menu item (first item)
+    await waitFor(() => {
+      expect(document.activeElement?.textContent).toBe('Hide column')
+    })
     await user.keyboard('{Enter}')
 
     expect(within(grid).getAllByRole('columnheader')).toHaveLength(3)
@@ -629,7 +631,14 @@ describe('When a column is hidden', () => {
     }
 
     // hide the ID column from the column menu
-    await user.keyboard('{Tab}{Enter}{Tab}{Enter}')
+    // open the column menu
+    await user.keyboard('{Tab}{Enter}')
+    // activate the "Hide column" menu item (first item)
+    await waitFor(() => {
+      expect(document.activeElement?.textContent).toBe('Hide column')
+    })
+    await user.keyboard('{Enter}')
+
     {
       const { activeElement } = document
       if (!activeElement) {
@@ -650,7 +659,15 @@ describe('When a column is hidden', () => {
     await findByRole('cell', { name: 'row 0' })
 
     // hide the Count column
-    await user.keyboard('{ArrowRight}{ArrowRight}{Tab}{Enter}{Tab}{Enter}')
+    // move to the Count column header
+    await user.keyboard('{ArrowRight}{ArrowRight}')
+    // open the column menu
+    await user.keyboard('{Tab}{Enter}')
+    // activate the "Hide column" menu item (first item)
+    await waitFor(() => {
+      expect(document.activeElement?.textContent).toBe('Hide column')
+    })
+    await user.keyboard('{Enter}')
     // the Count column is now hidden and the focus is on the corner cell
 
     // move to the right twice, should go to the Double column (skipping Count)
