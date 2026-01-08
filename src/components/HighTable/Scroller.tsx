@@ -42,7 +42,11 @@ export default function Scroller({
   /**
    * Track viewport size and scroll position
    */
-  const viewportRef = useCallback((viewport: HTMLDivElement) => {
+  const viewportRef = useCallback((viewport: HTMLDivElement | null) => {
+    if (!viewport) {
+      return
+    }
+
     // Use arrow functions to get correct viewport type (not null)
     // eslint-disable-next-line func-style
     const updateViewportSize = () => {
