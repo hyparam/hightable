@@ -311,6 +311,7 @@
   --resizer-hovered-right-border-color: var(--hy-accent-2);
   --row-number-hovered-right-border-color: var(--hy-color-7);
   --corner-cell-right-border-color: var(--hy-color-7);
+  --row-number-right-border-color: var(--hy-color-7);
 
   & {
     isolation: isolate;
