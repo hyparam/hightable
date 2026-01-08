@@ -12,7 +12,7 @@ interface ScrollModeNativeProviderProps {
 }
 
 export function ScrollModeNativeProvider({ children, canvasHeight, numRows }: ScrollModeNativeProviderProps) {
-  const [scrollTo, setScrollTo] = useState<(HTMLElement['scrollTo'] | undefined)>(undefined)
+  const [scrollTo, setScrollTo] = useState<HTMLElement['scrollTo'] | undefined>(undefined)
   const { visibleRowsRange, renderedRowsRange, setVisibleRowsRange } = useContext(RowsAndColumnsContext)
   const [clientHeight, setClientHeight] = useState(100)
 
