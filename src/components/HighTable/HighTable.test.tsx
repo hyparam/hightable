@@ -581,3 +581,87 @@ describe('When the number of rows is updated', () => {
     })
   })
 })
+
+describe('When a column is hidden', () => {
+  it('the column is not rendered', async () => {
+    const data = createData()
+    const { user, getByRole, findByRole } = render(
+      <HighTable data={data} />
+    )
+    // await because we have to wait for the data to be fetched first
+    await findByRole('cell', { name: 'row 0' })
+
+    const grid = getByRole('grid')
+    expect(within(grid).getAllByRole('columnheader')).toHaveLength(4)
+    expect(within(grid).getByRole('columnheader', { name: 'ID' })).toBeDefined()
+
+    // hide the ID column from the column menu
+    // 1. go to the ID column header
+    await user.keyboard('{ArrowRight}') // move to the first column header (ID)
+    // 2. focus the column menu button
+    await user.keyboard('{Tab}')
+    // 3. open the column menu
+    await user.keyboard('{Enter}')
+    await user.keyboard('{Tab}') // not sure why we need this extra tab, in the browser it's not needed to go to the first menu item
+    // 4. activate the "Hide column" menu item (first item)
+    await user.keyboard('{Enter}')
+
+    expect(within(grid).getAllByRole('columnheader')).toHaveLength(3)
+    expect(within(grid).queryByRole('columnheader', { name: 'ID' })).toBeNull()
+  })
+
+  it('the focus moves to the top left cell when hiding a column', async () => {
+    const data = createData()
+    const { user, findByRole } = render(
+      <HighTable data={data} />
+    )
+    // await because we have to wait for the data to be fetched first
+    await findByRole('cell', { name: 'row 0' })
+    await user.keyboard('{ArrowRight}{ArrowRight}') // move to the second column header (Count)
+    {
+      const { activeElement } = document
+      if (!activeElement) {
+        throw new Error('No active element')
+      }
+      expect(activeElement.getAttribute('aria-rowindex')).toBe('1')
+      expect(activeElement.getAttribute('aria-label')).toBe('Count')
+      expect(activeElement.getAttribute('aria-colindex')).toBe('3')
+    }
+
+    // hide the ID column from the column menu
+    await user.keyboard('{Tab}{Enter}{Tab}{Enter}')
+    {
+      const { activeElement } = document
+      if (!activeElement) {
+        throw new Error('No active element')
+      }
+      // focus should be on the top left cell (corner)
+      expect(activeElement.getAttribute('aria-rowindex')).toBe('1')
+      expect(activeElement.getAttribute('aria-colindex')).toBe('1')
+    }
+  })
+
+  it('the hidden columns are ignored when navigating with the keyboard', async () => {
+    const data = createData()
+    const { user, findByRole } = render(
+      <HighTable data={data} />
+    )
+    // await because we have to wait for the data to be fetched first
+    await findByRole('cell', { name: 'row 0' })
+
+    // hide the Count column
+    await user.keyboard('{ArrowRight}{ArrowRight}{Tab}{Enter}{Tab}{Enter}')
+    // the Count column is now hidden and the focus is on the corner cell
+
+    // move to the right twice, should go to the Double column (skipping Count)
+    await user.keyboard('{ArrowRight}{ArrowRight}')
+    {
+      const { activeElement } = document
+      if (!activeElement) {
+        throw new Error('No active element')
+      }
+      expect(activeElement.getAttribute('aria-label')).toBe('Double')
+      expect(activeElement.getAttribute('aria-colindex')).toBe('3')
+    }
+  })
+})
