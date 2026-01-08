@@ -11,8 +11,8 @@ import { RowsAndColumnsContext } from '../contexts/RowsAndColumnsContext.js'
 import { defaultOverscan, defaultPadding } from '../helpers/constants.js'
 
 export interface RowsAndColumnsProviderProps {
-  overscan?: number // number of rows to fetch outside of the viewport
-  padding?: number // number of empty placeholder rows to render beyond the fetched data range
+  overscan?: number // number of rows to fetch beyond the visible table cells (default 20)
+  padding?: number // number of rows to render beyond the visible table cells (default 20)
 }
 
 type Props = {

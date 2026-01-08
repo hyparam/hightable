@@ -64,7 +64,7 @@ export default function Scroller({
     updateViewportSize()
     handleScroll()
 
-    // set setScrollTo function
+    // register scrollTo
     if ('scrollTo' in viewport) {
       setScrollTo?.(() => {
         // ^ we need to use a setter function, we cannot set a function as a value
