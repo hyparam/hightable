@@ -15,7 +15,7 @@ export default function Scroller({
   setViewportWidth,
 }: Props) {
   const { setShouldFocus, rowIndex } = useContext(CellNavigationContext)
-  const { canvasHeight, sliceTop, onViewportChange, scrollRowIntoView, setScrollToTop } = useContext(ScrollModeContext)
+  const { canvasHeight, sliceTop, onViewportChange, scrollRowIntoView, setScrollTo } = useContext(ScrollModeContext)
 
   /**
    * Handle keyboard events for scrolling
@@ -64,17 +64,15 @@ export default function Scroller({
     updateViewportSize()
     handleScroll()
 
-    // set scrollToTop function
+    // set setScrollTo function
     if ('scrollTo' in viewport) {
-      setScrollToTop?.(() => {
+      setScrollTo?.(() => {
         // ^ we need to use a setter function, we cannot set a function as a value
-        return (top: number) => {
-          viewport.scrollTo({ top })
-        }
+        return viewport.scrollTo.bind(viewport)
       })
     } else {
       // scrollTo does not exist in jsdom, used in the tests
-      setScrollToTop?.(undefined)
+      setScrollTo?.(undefined)
     }
 
     // listeners
@@ -96,7 +94,7 @@ export default function Scroller({
       resizeObserver?.disconnect()
       viewport.removeEventListener('scroll', handleScroll)
     }
-  }, [setScrollToTop, setViewportWidth, onViewportChange])
+  }, [setScrollTo, setViewportWidth, onViewportChange])
 
   // TODO(SL): maybe pass CSS variables instead of inline styles?
   // the viewport div scrollHeight will be equal to canvasHeight (unless custom CSS is messing with it)

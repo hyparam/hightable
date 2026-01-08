@@ -12,7 +12,7 @@ interface ScrollModeNativeProviderProps {
 }
 
 export function ScrollModeNativeProvider({ children, canvasHeight, numRows }: ScrollModeNativeProviderProps) {
-  const [scrollToTop, setScrollToTop] = useState<((top: number) => void) | undefined>(undefined)
+  const [scrollTo, setScrollTo] = useState<(HTMLElement['scrollTo'] | undefined)>(undefined)
   const { fetchedRowsRange, renderedRowsRange, setVisibleRowsRange } = useContext(RowsAndColumnsContext)
 
   if (canvasHeight <= 0) {
@@ -43,7 +43,7 @@ export function ScrollModeNativeProvider({ children, canvasHeight, numRows }: Sc
    * Vertically scroll to bring a specific row into view
    */
   const scrollRowIntoView = useCallback(({ rowIndex }: { rowIndex: number }) => {
-    if (scrollToTop === undefined || fetchedRowsRange === undefined) {
+    if (scrollTo === undefined || fetchedRowsRange === undefined) {
       return
     }
     if (rowIndex < 1) {
@@ -61,11 +61,11 @@ export function ScrollModeNativeProvider({ children, canvasHeight, numRows }: Sc
     // TODO(SL): if the row is not in the table, we should scroll to the closest edge. Currently, we set the cell at the top of the view.
     // When row is after the last fetched row, we should instead scroll to the bottom of the view.
     if (row < fetchedRowsRange.start || row >= fetchedRowsRange.end) {
-      scrollToTop(getRowTop(row))
+      scrollTo({ top: getRowTop(row) })
     }
     // else, the row is in the table, and we use another mechanism to scroll to it (.scrollIntoView in useCellFocus.tsx)
     // beware, it's only for the native scroll mode
-  }, [fetchedRowsRange, scrollToTop, getRowTop])
+  }, [fetchedRowsRange, scrollTo, getRowTop])
 
   const sliceTop = useMemo(() => {
     return getRowTop(renderedRowsRange?.start ?? 0)
@@ -78,7 +78,7 @@ export function ScrollModeNativeProvider({ children, canvasHeight, numRows }: Sc
       sliceTop,
       onViewportChange,
       scrollRowIntoView,
-      setScrollToTop,
+      setScrollTo,
     }
   }, [canvasHeight, sliceTop, onViewportChange, scrollRowIntoView])
 
