@@ -11,8 +11,8 @@ import { RowsAndColumnsContext } from '../contexts/RowsAndColumnsContext.js'
 import { defaultOverscan, defaultPadding } from '../helpers/constants.js'
 
 export interface RowsAndColumnsProviderProps {
-  overscan?: number // number of rows to fetch outside of the viewport
-  padding?: number // number of empty placeholder rows to render beyond the fetched data range
+  overscan?: number // number of rows to fetch beyond the visible table cells (default 20)
+  padding?: number // number of rows to render beyond the visible table cells (default 20)
 }
 
 type Props = {
@@ -51,14 +51,15 @@ export function RowsAndColumnsProvider({ padding = defaultPadding, overscan = de
       end: Math.min(numRows, visibleRowsRange.end + overscan),
     }
   }, [visibleRowsRange, numRows, overscan])
+
   const renderedRowsRange = useMemo(() => {
-    if (!fetchedRowsRange) return undefined
+    if (!visibleRowsRange) return undefined
 
     return {
-      start: Math.max(0, fetchedRowsRange.start - padding),
-      end: Math.min(numRows, fetchedRowsRange.end + padding),
+      start: Math.max(0, visibleRowsRange.start - padding),
+      end: Math.min(numRows, visibleRowsRange.end + padding),
     }
-  }, [fetchedRowsRange, numRows, padding])
+  }, [visibleRowsRange, numRows, padding])
 
   const fetchOptions = useMemo(() => ({
     orderBy,
@@ -99,9 +100,8 @@ export function RowsAndColumnsProvider({ padding = defaultPadding, overscan = de
     columnsParameters,
     visibleRowsRange,
     renderedRowsRange,
-    fetchedRowsRange,
     setVisibleRowsRange,
-  }), [columnsParameters, fetchedRowsRange, setVisibleRowsRange, renderedRowsRange, visibleRowsRange])
+  }), [columnsParameters, setVisibleRowsRange, renderedRowsRange, visibleRowsRange])
 
   return (
     <RowsAndColumnsContext.Provider value={value}>

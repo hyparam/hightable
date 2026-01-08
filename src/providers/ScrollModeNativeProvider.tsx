@@ -12,8 +12,9 @@ interface ScrollModeNativeProviderProps {
 }
 
 export function ScrollModeNativeProvider({ children, canvasHeight, numRows }: ScrollModeNativeProviderProps) {
-  const [scrollToTop, setScrollToTop] = useState<((top: number) => void) | undefined>(undefined)
-  const { fetchedRowsRange, renderedRowsRange, setVisibleRowsRange } = useContext(RowsAndColumnsContext)
+  const [scrollTo, setScrollTo] = useState<HTMLElement['scrollTo'] | undefined>(undefined)
+  const { visibleRowsRange, renderedRowsRange, setVisibleRowsRange } = useContext(RowsAndColumnsContext)
+  const [clientHeight, setClientHeight] = useState(100)
 
   if (canvasHeight <= 0) {
     throw new Error(`invalid canvasHeight ${canvasHeight}`)
@@ -24,6 +25,7 @@ export function ScrollModeNativeProvider({ children, canvasHeight, numRows }: Sc
     // instead, it should return without updating the visible rows range, or set it to undefined.
     // TODO(SL): test in the browser (playwright)
     const effectiveClientHeight = clientHeight === 0 ? 100 : clientHeight
+    setClientHeight(effectiveClientHeight)
 
     // determine visible rows based on current scroll position (indexes refer to the virtual table domain)
     const start = Math.max(0, Math.floor(numRows * scrollTop / canvasHeight))
@@ -43,7 +45,7 @@ export function ScrollModeNativeProvider({ children, canvasHeight, numRows }: Sc
    * Vertically scroll to bring a specific row into view
    */
   const scrollRowIntoView = useCallback(({ rowIndex }: { rowIndex: number }) => {
-    if (scrollToTop === undefined || fetchedRowsRange === undefined) {
+    if (scrollTo === undefined || visibleRowsRange === undefined) {
       return
     }
     if (rowIndex < 1) {
@@ -57,15 +59,15 @@ export function ScrollModeNativeProvider({ children, canvasHeight, numRows }: Sc
     const row = rowIndex - ariaOffset
     // if the row is outside of the visible rows range, scroll to the estimated position of the cell,
     // to wait for the cell to be fetched and rendered
-    // TODO(SL): should fetchedRowsRange be replaced with visibleRowsRange? (it's currently fixed by .scrollIntoView in useCellFocus.tsx)
-    // TODO(SL): if the row is not in the table, we should scroll to the closest edge. Currently, we set the cell at the top of the view.
-    // When row is after the last fetched row, we should instead scroll to the bottom of the view.
-    if (row < fetchedRowsRange.start || row >= fetchedRowsRange.end) {
-      scrollToTop(getRowTop(row))
+    // algorithm: go to the nearest edge (same as `block: nearest` in scrollIntoView)
+    if (row < visibleRowsRange.start) {
+      scrollTo({ top: getRowTop(row) })
+    } else if (row >= visibleRowsRange.end) {
+      scrollTo({ top: getRowTop(row) - clientHeight + rowHeight })
     }
     // else, the row is in the table, and we use another mechanism to scroll to it (.scrollIntoView in useCellFocus.tsx)
     // beware, it's only for the native scroll mode
-  }, [fetchedRowsRange, scrollToTop, getRowTop])
+  }, [visibleRowsRange, scrollTo, getRowTop, clientHeight])
 
   const sliceTop = useMemo(() => {
     return getRowTop(renderedRowsRange?.start ?? 0)
@@ -78,7 +80,7 @@ export function ScrollModeNativeProvider({ children, canvasHeight, numRows }: Sc
       sliceTop,
       onViewportChange,
       scrollRowIntoView,
-      setScrollToTop,
+      setScrollTo,
     }
   }, [canvasHeight, sliceTop, onViewportChange, scrollRowIntoView])
 
