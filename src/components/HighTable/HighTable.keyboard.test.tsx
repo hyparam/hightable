@@ -38,7 +38,7 @@ async function setFocusOnScrollableDiv(user: UserEvent) {
   await user.keyboard('{Shift>}{Tab}{/Shift}')
 }
 
-describe('Navigating Hightable with the keyboard', () => {
+describe('Navigating HighTable with the keyboard', () => {
   let data: DataFrame
   beforeEach(() => {
     vi.clearAllMocks()
