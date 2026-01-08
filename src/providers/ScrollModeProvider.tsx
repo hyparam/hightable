@@ -1,17 +1,21 @@
 import type { ReactNode } from 'react'
 import { useMemo } from 'react'
 
-import { maxElementHeight, rowHeight } from '../helpers/constants.js'
+import { defaultPadding, maxElementHeight, rowHeight } from '../helpers/constants.js'
 import { ScrollModeNativeProvider } from './ScrollModeNativeProvider.js'
 import { ScrollModeVirtualProvider } from './ScrollModeVirtualProvider.js'
 
-interface ScrollModeProviderProps {
+export interface ScrollModeProviderProps {
+  padding?: number // number of rows to render beyond the visible table cells
+}
+
+type Props = {
   children: ReactNode
   headerHeight: number // height of the table header
   numRows: number
-}
+} & ScrollModeProviderProps
 
-export function ScrollModeProvider({ children, headerHeight, numRows }: ScrollModeProviderProps) {
+export function ScrollModeProvider({ children, headerHeight, numRows, padding = defaultPadding }: Props) {
   // total table height - it's fixed, based on the number of rows.
   // if the number of rows is big, this value can overflow the maximum height supported by the browser.
   // If so, we switch to the 'virtual scroll' mode, where we override the scrolling mechanism.
@@ -19,7 +23,7 @@ export function ScrollModeProvider({ children, headerHeight, numRows }: ScrollMo
 
   if (tableHeight < maxElementHeight) {
     return (
-      <ScrollModeNativeProvider canvasHeight={tableHeight} numRows={numRows}>
+      <ScrollModeNativeProvider canvasHeight={tableHeight} numRows={numRows} padding={padding}>
         {children}
       </ScrollModeNativeProvider>
     )

@@ -2,16 +2,8 @@ import { createContext } from 'react'
 
 import type { ColumnParameters } from '../contexts/ColumnParametersContext.js'
 
-export interface RowsRange {
-  start: number // first row index (inclusive). Indexes refer to the virtual table domain.
-  end: number // last row index (exclusive)
-}
-
 interface RowsAndColumnsContextType {
   columnsParameters?: ColumnParameters[]
-  visibleRowsRange?: RowsRange // range of rows visible in the viewport
-  renderedRowsRange?: RowsRange // range of rows rendered in the DOM as table rows (including padding and overscan)
-  setVisibleRowsRange?: (rowsRange: RowsRange | undefined) => void
 }
 
 export const defaultRowsAndColumnsContext: RowsAndColumnsContextType = {}
