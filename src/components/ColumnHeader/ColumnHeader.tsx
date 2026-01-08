@@ -108,8 +108,8 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
   }, [sortable, columnName, direction, orderByIndex])
 
   const onKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.target !== ref.current) {
-      // only handle keyboard events when the header is focused
+    if (e.target !== ref.current || !sortable) {
+      // only handle keyboard events when the header is focused, and if the column is sortable
       return
     }
     if (e.key === 'Enter' || e.key === ' ') {
@@ -117,7 +117,7 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
       e.stopPropagation()
       toggleOrderBy?.()
     }
-  }, [toggleOrderBy])
+  }, [sortable, toggleOrderBy])
   const handleCopy = useOnCopy(columnName)
 
   // If the hightable user provides a custom header component, they can choose where to place these controls inside it

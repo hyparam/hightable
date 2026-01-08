@@ -15,7 +15,7 @@
     padding: 0;
   }
 
-  /* Note that this class cannot be easily overriden by custom CSS. It's not really an issue as its role is functional. */
+  /* Note that this class cannot be easily overridden by custom CSS. It's not really an issue as its role is functional. */
   .table-scroll {
     flex: 1;
     overflow: auto;

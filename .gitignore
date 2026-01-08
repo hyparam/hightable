@@ -6,3 +6,4 @@ coverage
 
 *storybook.log
 storybook-static
+.vscode

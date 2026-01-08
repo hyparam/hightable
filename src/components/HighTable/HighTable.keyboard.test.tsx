@@ -2,7 +2,7 @@ import type { UserEvent } from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { createGetRowNumber, validateGetCellParams } from '../../helpers/dataframe/helpers.js'
-import type { DataFrame } from '../../helpers/dataframe/index.js'
+import { type DataFrame, sortableDataFrame } from '../../helpers/dataframe/index.js'
 import type { Obj } from '../../helpers/dataframe/types.js'
 import type { OrderBy } from '../../helpers/sort.js'
 import { render } from '../../utils/userEvent.js'
@@ -38,7 +38,7 @@ async function setFocusOnScrollableDiv(user: UserEvent) {
   await user.keyboard('{Shift>}{Tab}{/Shift}')
 }
 
-describe('Navigating Hightable with the keyboard', () => {
+describe('Navigating HighTable with the keyboard', () => {
   let data: DataFrame
   beforeEach(() => {
     vi.clearAllMocks()
@@ -289,6 +289,38 @@ describe('Navigating Hightable with the keyboard', () => {
       await user.keyboard(key)
       // already autosized - toggles to adjustable width
       expect(spinbutton.getAttribute('aria-valuenow')).toBe(initialValue)
+    })
+
+    it.for(['{ }', '{Enter}'])('the column sort is toggled, if the dataframe is sortable, when %s is pressed', async (key) => {
+      const sortableData = sortableDataFrame(data)
+      const { user, getByRole } = render(<HighTable data={sortableData} />)
+      // go to the header cell (ID)
+      await user.keyboard('{ArrowRight}')
+      const cell = document.activeElement
+      const columnHeader = getByRole('columnheader', { name: 'ID' })
+      expect(columnHeader.getAttribute('aria-sort')).toBe('none')
+      // press the key to sort ascending
+      await user.keyboard(key)
+      expect(columnHeader.getAttribute('aria-sort')).toBe('ascending')
+      // press the key to sort descending
+      await user.keyboard(key)
+      expect(columnHeader.getAttribute('aria-sort')).toBe('descending')
+      // press the key to remove sorting
+      await user.keyboard(key)
+      expect(columnHeader.getAttribute('aria-sort')).toBe('none')
+      expect(document.activeElement).toBe(cell)
+    })
+
+    it.for(['{ }', '{Enter}'])('if the dataframe is not sortable, pressing %s when the column header is focused is a no-op', async (key) => {
+      const { user, getByRole } = render(<HighTable data={data} />)
+      // go to the header cell (Count)
+      await user.keyboard('{ArrowRight}{ArrowRight}')
+      const columnHeader = getByRole('columnheader', { name: 'Count' })
+      expect(columnHeader.getAttribute('aria-sort')).toBe(null)
+      // press the key
+      await user.keyboard(key)
+      // no change
+      expect(columnHeader.getAttribute('aria-sort')).toBe(null)
     })
   })
 })
