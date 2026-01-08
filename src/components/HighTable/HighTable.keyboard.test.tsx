@@ -311,17 +311,15 @@ describe('Navigating HighTable with the keyboard', () => {
       expect(document.activeElement).toBe(cell)
     })
 
-    // TODO(SL): to be changed, it should not throw, but be ignored
-    it.for(['{ }', '{Enter}'])('the app throws, if the dataframe is not sortable, when %s is pressed', async (key) => {
+    it.for(['{ }', '{Enter}'])('if the dataframe is not sortable, pressing %s when the column header is focused is a no-op', async (key) => {
       const { user, getByRole } = render(<HighTable data={data} />)
       // go to the header cell (Count)
       await user.keyboard('{ArrowRight}{ArrowRight}')
       const columnHeader = getByRole('columnheader', { name: 'Count' })
       expect(columnHeader.getAttribute('aria-sort')).toBe(null)
-      // press the key to sort ascending
-      await expect(async () => {
-        await user.keyboard(key)
-      }).rejects.toThrowError('orderBy is not supported in this getRowNumber implementation.')
+      // press the key
+      await user.keyboard(key)
+      // no change
       expect(columnHeader.getAttribute('aria-sort')).toBe(null)
     })
   })
