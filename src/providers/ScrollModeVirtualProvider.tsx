@@ -12,7 +12,14 @@ interface ScrollModeVirtualProviderProps {
 }
 
 export function ScrollModeVirtualProvider({ children, canvasHeight, headerHeight, numRows, padding }: ScrollModeVirtualProviderProps) {
+  const [virtualScrollTop, setVirtualScrollTop] = useState<number | undefined>(undefined)
+  const [scrollTo, setScrollTo] = useState<HTMLElement['scrollTo'] | undefined>(undefined)
+  const [isScrolling, setIsScrolling] = useState<boolean>(false)
   const [scrollTop, setScrollTop] = useState<number | undefined>(undefined)
+  const setScrollTopAndStopPendingScroll = useCallback((scrollTop: number) => {
+    setIsScrolling(false)
+    setScrollTop(scrollTop)
+  }, [])
   const [clientHeight, _setClientHeight] = useState<number | undefined>(undefined)
   const setClientHeight = useCallback((clientHeight: number) => {
     // TODO(SL): remove this fallback? It's only for the tests in Node.js, where the elements have zero height
@@ -21,9 +28,6 @@ export function ScrollModeVirtualProvider({ children, canvasHeight, headerHeight
     _setClientHeight(clientHeight === 0 ? 100 : clientHeight)
   }, [])
 
-  const [virtualScrollTop, setVirtualScrollTop] = useState<number | undefined>(undefined)
-  const [scrollTo, setScrollTo] = useState<HTMLElement['scrollTo'] | undefined>(undefined)
-  const [shouldScrollHorizontally, setShouldScrollHorizontally] = useState(false)
   const virtualCanvasHeight = useMemo(() => headerHeight + numRows * rowHeight, [headerHeight, numRows])
 
   // safety checks
@@ -91,11 +95,17 @@ export function ScrollModeVirtualProvider({ children, canvasHeight, headerHeight
         const newVirtualScrollTop = virtualScrollTop + differencePx
         const newExpectedScrollTop = toScrollTop(newVirtualScrollTop)
 
-        // set scrollTop to the precise value
-        scrollTo?.({ top: newExpectedScrollTop, behavior: 'instant' })
-        setVirtualScrollTop(newVirtualScrollTop)
-        setScrollTop(newExpectedScrollTop)
-        // should rerender with the new virtualScrollTop
+        if (scrollTo === undefined) {
+          console.warn('scrollTo function is not available. Cannot adjust scrollTop.')
+        } else {
+          // set scrollTop to the precise value
+          scrollTo({ top: newExpectedScrollTop, behavior: 'instant' })
+          setIsScrolling(true)
+
+          setVirtualScrollTop(newVirtualScrollTop)
+          setScrollTop(newExpectedScrollTop)
+          // should rerender with the new virtualScrollTop
+        }
 
         // TODO(SL): edge case: top boundary: we cannot come back to the first row if newExpectedScrollTop < 1 (effectively 0)
       }
@@ -170,6 +180,7 @@ export function ScrollModeVirtualProvider({ children, canvasHeight, headerHeight
     const headerRow = isInHeader ? 0 : 1
     return firstVisibleRowTop - headerRow * headerHeight - previousPaddingRows * rowHeight
   }, [visibleRowsStart, renderedRowsStart, isInHeader, headerHeight, scrollTop, hiddenPixelsBefore])
+
   /**
    * Programmatically scroll to a specific row if needed.
    * Beware:
@@ -192,7 +203,7 @@ export function ScrollModeVirtualProvider({ children, canvasHeight, headerHeight
 
     if (rowIndex === 1) {
       // header row
-      setShouldScrollHorizontally(true)
+      setIsScrolling(false)
       return
     }
 
@@ -207,7 +218,7 @@ export function ScrollModeVirtualProvider({ children, canvasHeight, headerHeight
 
     if (hiddenPixelsBefore <= 0 && hiddenPixelsAfter <= 0) {
       // fully visible, do nothing
-      setShouldScrollHorizontally(true)
+      setIsScrolling(false)
       return
     }
 
@@ -233,11 +244,10 @@ export function ScrollModeVirtualProvider({ children, canvasHeight, headerHeight
       // for now, we ask for an instant scroll, there is no smooth scrolling
       // TODO(SL): if smooth scrolling is implemented, it might be async, so we should await it
       scrollTo({ top: newScrollTop, behavior: 'instant' })
+      setIsScrolling(true)
+    } else {
+      setIsScrolling(false)
     }
-
-    // TODO(SL): replace with 'pendingScrollTo'... then set this state when next scroll event is received
-    // Or: just pass "pendingScrollTo" to the context
-    setShouldScrollHorizontally(true)
   }, [numRows, scrollTo, virtualScrollTop, headerHeight, clientHeight, toScrollTop, canvasHeight])
 
   const value = useMemo(() => {
@@ -245,18 +255,17 @@ export function ScrollModeVirtualProvider({ children, canvasHeight, headerHeight
       scrollMode: 'virtual' as const,
       canvasHeight,
       sliceTop,
-      shouldScrollHorizontally,
+      isScrolling,
       visibleRowsStart,
       visibleRowsEnd,
       renderedRowsStart,
       renderedRowsEnd,
       setClientHeight,
-      setScrollTop,
+      setScrollTop: setScrollTopAndStopPendingScroll, // if a programmatic scroll was triggered, we consider that it is done
       scrollRowIntoView,
       setScrollTo,
-      setShouldScrollHorizontally,
     }
-  }, [canvasHeight, renderedRowsEnd, renderedRowsStart, sliceTop, shouldScrollHorizontally, visibleRowsEnd, visibleRowsStart, setClientHeight, setScrollTop, scrollRowIntoView])
+  }, [canvasHeight, renderedRowsEnd, renderedRowsStart, sliceTop, isScrolling, visibleRowsEnd, visibleRowsStart, setClientHeight, setScrollTopAndStopPendingScroll, scrollRowIntoView])
 
   return (
     <ScrollModeContext.Provider value={value}>
