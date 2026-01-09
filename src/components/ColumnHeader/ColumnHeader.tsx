@@ -37,9 +37,9 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
   const { getHideColumn, showAllColumns } = useContext(ColumnVisibilityStatesContext)
 
   const refCallback = useCallback((node: HTMLTableCellElement | null) => {
-    focusCellIfNeeded(node)
     // set the current ref, it will be used to position the menu in handleMenuClick
     ref.current = node
+    focusCellIfNeeded(node)
   }, [focusCellIfNeeded])
 
   const handleClick = useCallback(() => {
