@@ -29,7 +29,7 @@ export function ScrollModeProvider({ children, headerHeight, numRows, padding = 
     )
   } else {
     return (
-      <ScrollModeVirtualProvider canvasHeight={maxElementHeight}>
+      <ScrollModeVirtualProvider canvasHeight={maxElementHeight} numRows={numRows} headerHeight={headerHeight} padding={padding}>
         {children}
       </ScrollModeVirtualProvider>
     )
