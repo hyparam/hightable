@@ -16,37 +16,25 @@ interface CellFocus {
 
 export function useCellFocus({ ariaColIndex, ariaRowIndex }: CellData): CellFocus {
   const { colIndex, rowIndex, setColIndex, setRowIndex, shouldFocus, setShouldFocus } = useContext(CellNavigationContext)
-  const { scrollMode, setShouldScrollHorizontally, shouldScrollHorizontally } = useContext(ScrollModeContext)
+  const { isScrolling } = useContext(ScrollModeContext)
 
   // Check if the cell is the current navigation cell
   const isCurrentCell = ariaColIndex === colIndex && ariaRowIndex === rowIndex
 
   const focusCellIfNeeded = useCallback((element: HTMLElement | null) => {
-    if (!element || !isCurrentCell || !shouldFocus) {
+    if (!element || !isCurrentCell || !shouldFocus || isScrolling) {
       return
     }
-    if (scrollMode === 'virtual') {
-      element.focus({ preventScroll: true })
-      setShouldFocus(false)
-      if (shouldScrollHorizontally) {
-        // note: we want it to scroll only horizontally. Vertically, it should already be in view.
-        // TODO(SL): container: nearest could be useful, if we decide to have two scrollable containers (one for vertical, one for horizontal)
-        // but unfortunately it's not widely supported yet (no Firefox support as of January 2026)
-        element.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'nearest' })
-        setShouldScrollHorizontally?.(false)
-      }
-    } else {
-      // scroll the cell into view
-      //
-      // scroll-padding-inline-start and scroll-padding-block-start are set in the CSS
-      // to avoid the cell being hidden by the row and column headers
-      //
-      // Note that it might scroll both vertically and horizontally.
-      element.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'nearest' })
-      element.focus()
-      setShouldFocus(false)
-    }
-  }, [isCurrentCell, shouldFocus, setShouldFocus, scrollMode, setShouldScrollHorizontally, shouldScrollHorizontally])
+    // scroll the cell into view
+    //
+    // scroll-padding-inline-start and scroll-padding-block-start are set in the CSS
+    // to avoid the cell being hidden by the row and column headers
+    //
+    // Note that it might scroll both vertically and horizontally.
+    element.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'nearest' })
+    element.focus()
+    setShouldFocus(false)
+  }, [isCurrentCell, shouldFocus, setShouldFocus, isScrolling])
 
   // Roving tabindex: only the current navigation cell is focusable with Tab (tabindex = 0)
   // All other cells are focusable only with javascript .focus() (tabindex = -1)
