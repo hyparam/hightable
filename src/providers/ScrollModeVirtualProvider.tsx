@@ -21,7 +21,7 @@ export function ScrollModeVirtualProvider({ children, canvasHeight, headerHeight
     _setClientHeight(clientHeight === 0 ? 100 : clientHeight)
   }, [])
 
-  const [virtualScrollTop, setVirtualScrollTop] = useState(0)
+  const [virtualScrollTop, setVirtualScrollTop] = useState<number | undefined>(undefined)
   const [scrollTo, setScrollTo] = useState<HTMLElement['scrollTo'] | undefined>(undefined)
   const [shouldScrollHorizontally, setShouldScrollHorizontally] = useState(false)
   const virtualCanvasHeight = useMemo(() => headerHeight + numRows * rowHeight, [headerHeight, numRows])
@@ -69,50 +69,77 @@ export function ScrollModeVirtualProvider({ children, canvasHeight, headerHeight
   }, [canvasHeight, clientHeight, virtualCanvasHeight])
 
   if (toScrollTop && toVirtualScrollTop && scrollTop !== undefined) {
-    // scrollTop has a limited precision (1px, or subpixel on some browsers) and is not predictable exactly, in particular when used with zooming.
-    // The browser might also scroll slightly when focusing an element.
-    // virtualScrollTop is decimal, computed for the virtual canvas, and updated by user action only when scrollTop changes significantly.
-    const coarseScrollThreshold = 40 // px. TODO(SL): how to choose the value? in percentage of clientHeight/canvasHeight? Generally, it's 33px or -33px (the height of the focused cell?)
-    const fineScrollThreshold = 1
-    const expectedScrollTop = toScrollTop(virtualScrollTop)
-    const difference = scrollTop - expectedScrollTop
-
-    if (Math.abs(difference) > coarseScrollThreshold) {
-      // scrollTop changed significantly, it controls the position (coarse scroll)
+    if (virtualScrollTop === undefined) {
+      // initialize virtualScrollTop
       setVirtualScrollTop(toVirtualScrollTop(scrollTop))
-    } else if (Math.abs(difference) > fineScrollThreshold) {
-      // scrollTop changed slightly, virtualScrollTop controls the position (fine scroll)
-      // don't change virtualScrollTop, since it is more precise
-      // and set scrollTop back to the precise value
-      scrollTo?.({ top: expectedScrollTop, behavior: 'instant' })
+    } else {
+      // scrollTop has a limited precision (1px, or subpixel on some browsers) and is not predictable exactly, in particular when used with zooming.
+      // The browser might also scroll slightly when focusing an element.
+      // virtualScrollTop is decimal, computed for the virtual canvas, and updated by user action only when scrollTop changes significantly.
+      const coarseScrollThreshold = 4000 // px. TODO(SL): how to choose the value? in percentage of clientHeight/canvasHeight? Generally, it's 33px or -33px (the height of the focused cell?)
+      const fineScrollThreshold = 1
+      const expectedScrollTop = toScrollTop(virtualScrollTop)
+      const differencePx = scrollTop - expectedScrollTop
+
+      if (Math.abs(differencePx) > coarseScrollThreshold) {
+        // scrollTop changed significantly, it controls the position (coarse scroll)
+        setVirtualScrollTop(toVirtualScrollTop(scrollTop))
+      } else if (Math.abs(differencePx) > fineScrollThreshold) {
+        // scrollTop changed slightly, adapt both scrollTop and virtualScrollTop
+        // virtualScrollTop controls the position (fine scroll)
+        // The difference is used to adjust virtualScrollTop accordingly
+        const newVirtualScrollTop = virtualScrollTop + differencePx
+        const newExpectedScrollTop = toScrollTop(newVirtualScrollTop)
+
+        // set scrollTop to the precise value
+        scrollTo?.({ top: newExpectedScrollTop, behavior: 'instant' })
+        setVirtualScrollTop(newVirtualScrollTop)
+        setScrollTop(newExpectedScrollTop)
+        // should rerender with the new virtualScrollTop
+
+        // TODO(SL): edge case: top boundary: we cannot come back to the first row if newExpectedScrollTop < 1 (effectively 0)
+      }
+      // else, change is negligible, do nothing
     }
-    // else, change is negligible, do nothing
   }
 
   // Compute the derived values
 
   // special cases
-  const isInHeader = useMemo(() => numRows === 0 || virtualScrollTop < headerHeight, [numRows, virtualScrollTop, headerHeight])
+  const isInHeader = useMemo(() => {
+    if (virtualScrollTop === undefined) {
+      return undefined
+    }
+    return numRows === 0 || virtualScrollTop < headerHeight
+  }, [numRows, virtualScrollTop, headerHeight])
 
   // a. first visible row (r, d). It can be the header row (0).
-  const firstVisibleRow = useMemo(() => isInHeader
-    ? 0
-    : Math.max(0,
-        Math.min(numRows - 1,
-          Math.floor((virtualScrollTop - headerHeight) / rowHeight)
+  const firstVisibleRow = useMemo(() => {
+    if (virtualScrollTop === undefined || isInHeader === undefined) {
+      return undefined
+    }
+    return isInHeader
+      ? 0
+      : Math.max(0,
+          Math.min(numRows - 1,
+            Math.floor((virtualScrollTop - headerHeight) / rowHeight)
+          )
         )
-      ),
-  [isInHeader, virtualScrollTop, headerHeight, numRows])
+  }, [isInHeader, virtualScrollTop, headerHeight, numRows])
 
   // hidden pixels in the first visible row, or header
-  const hiddenPixelsBefore = useMemo(() => isInHeader
-    ? virtualScrollTop
-    : virtualScrollTop - headerHeight - firstVisibleRow * rowHeight,
-  [isInHeader, virtualScrollTop, headerHeight, firstVisibleRow])
+  const hiddenPixelsBefore = useMemo(() => {
+    if (virtualScrollTop === undefined || isInHeader === undefined || firstVisibleRow === undefined) {
+      return undefined
+    }
+    return isInHeader
+      ? virtualScrollTop
+      : virtualScrollTop - headerHeight - firstVisibleRow * rowHeight
+  }, [isInHeader, virtualScrollTop, headerHeight, firstVisibleRow])
 
   // b. last visible row (s, e)
   const lastVisibleRow = useMemo(() => {
-    if (clientHeight === undefined) {
+    if (clientHeight === undefined || virtualScrollTop === undefined || firstVisibleRow === undefined) {
       return firstVisibleRow
     }
     return Math.max(firstVisibleRow,
@@ -125,18 +152,18 @@ export function ScrollModeVirtualProvider({ children, canvasHeight, headerHeight
   // const hiddenPixelsAfter = headerHeight + (lastVisibleRow + 1) * rowHeight - (virtualScrollTop + clientHeight)
 
   const visibleRowsStart = firstVisibleRow
-  if (isNaN(visibleRowsStart)) throw new Error(`invalid start row ${visibleRowsStart}`)
-  const visibleRowsEnd = lastVisibleRow + 1 // end is exclusive
-  if (isNaN(visibleRowsEnd)) throw new Error(`invalid end row ${visibleRowsEnd}`)
-  if (visibleRowsEnd - visibleRowsStart > 1000) throw new Error(`attempted to render too many rows ${visibleRowsEnd - visibleRowsStart}`)
+  if (visibleRowsStart !== undefined && isNaN(visibleRowsStart)) throw new Error(`invalid start row ${visibleRowsStart}`)
+  const visibleRowsEnd = lastVisibleRow === undefined ? undefined : lastVisibleRow + 1 // end is exclusive
+  if (visibleRowsEnd !== undefined && isNaN(visibleRowsEnd)) throw new Error(`invalid end row ${visibleRowsEnd}`)
+  if (visibleRowsEnd !== undefined && visibleRowsStart !== undefined && visibleRowsEnd - visibleRowsStart > 1000) throw new Error(`attempted to render too many rows ${visibleRowsEnd - visibleRowsStart}`)
 
   // e. offset of the first row in the canvas (u)
-  const renderedRowsStart = useMemo(() => Math.max(0, visibleRowsStart - padding), [visibleRowsStart, padding])
-  const renderedRowsEnd = useMemo(() => Math.min(numRows, visibleRowsEnd + padding), [visibleRowsEnd, numRows, padding])
+  const renderedRowsStart = useMemo(() => visibleRowsStart === undefined ? undefined : Math.max(0, visibleRowsStart - padding), [visibleRowsStart, padding])
+  const renderedRowsEnd = useMemo(() => visibleRowsEnd === undefined ? undefined : Math.min(numRows, visibleRowsEnd + padding), [visibleRowsEnd, numRows, padding])
 
   const sliceTop = useMemo(() => {
-    if (scrollTop === undefined) {
-      return 0
+    if (visibleRowsStart === undefined || renderedRowsStart === undefined || isInHeader === undefined || hiddenPixelsBefore === undefined || scrollTop === undefined) {
+      return undefined
     }
     const firstVisibleRowTop = scrollTop - hiddenPixelsBefore
     const previousPaddingRows = visibleRowsStart - renderedRowsStart
@@ -159,7 +186,7 @@ export function ScrollModeVirtualProvider({ children, canvasHeight, headerHeight
       console.warn('scrollTo function is not available. Cannot scroll to row.')
       return
     }
-    if (!toScrollTop || clientHeight === undefined) {
+    if (!toScrollTop || clientHeight === undefined || virtualScrollTop === undefined) {
       return
     }
 
@@ -208,6 +235,8 @@ export function ScrollModeVirtualProvider({ children, canvasHeight, headerHeight
       scrollTo({ top: newScrollTop, behavior: 'instant' })
     }
 
+    // TODO(SL): replace with 'pendingScrollTo'... then set this state when next scroll event is received
+    // Or: just pass "pendingScrollTo" to the context
     setShouldScrollHorizontally(true)
   }, [numRows, scrollTo, virtualScrollTop, headerHeight, clientHeight, toScrollTop, canvasHeight])
 
