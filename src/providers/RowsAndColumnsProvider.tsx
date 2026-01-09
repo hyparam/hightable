@@ -19,7 +19,7 @@ type Props = {
 } & RowsAndColumnsProviderProps
 
 export function RowsAndColumnsProvider({ overscan = defaultOverscan, children }: Props) {
-  const { visibleRowsRange } = useContext(ScrollModeContext)
+  const { visibleRowsStart, visibleRowsEnd } = useContext(ScrollModeContext)
 
   const { onError } = useContext(ErrorContext)
   const { data, numRows } = useContext(DataContext)
@@ -33,21 +33,23 @@ export function RowsAndColumnsProvider({ overscan = defaultOverscan, children }:
     })
   }, [allColumnsParameters, isHiddenColumn])
 
-  const fetchedRowsRange = useMemo(() => {
-    if (!visibleRowsRange) return undefined
+  const fetchedRowsStart = useMemo(() => {
+    if (visibleRowsStart === undefined) return undefined
+    return Math.max(0, visibleRowsStart - overscan)
+  }, [visibleRowsStart, overscan])
 
-    return {
-      start: Math.max(0, visibleRowsRange.start - overscan),
-      end: Math.min(numRows, visibleRowsRange.end + overscan),
-    }
-  }, [visibleRowsRange, numRows, overscan])
+  const fetchedRowsEnd = useMemo(() => {
+    if (visibleRowsEnd === undefined) return undefined
+    return Math.min(numRows, visibleRowsEnd + overscan)
+  }, [visibleRowsEnd, numRows, overscan])
 
   const fetchOptions = useMemo(() => ({
     orderBy,
     columnsParameters,
-    fetchedRowsRange,
+    fetchedRowsStart,
+    fetchedRowsEnd,
     abortController: new AbortController(),
-  }), [orderBy, columnsParameters, fetchedRowsRange])
+  }), [orderBy, columnsParameters, fetchedRowsStart, fetchedRowsEnd])
   const [lastFetchOptions, setLastFetchOptions] = useState(fetchOptions)
 
   // fetch the rows if needed
@@ -55,15 +57,16 @@ export function RowsAndColumnsProvider({ overscan = defaultOverscan, children }:
   //  or in data, which would retrigger a full remount of the provider with key)
   if (
     lastFetchOptions.orderBy !== orderBy
-    || lastFetchOptions.fetchedRowsRange !== fetchedRowsRange
+    || lastFetchOptions.fetchedRowsStart !== fetchedRowsStart
+    || lastFetchOptions.fetchedRowsEnd !== fetchedRowsEnd
     || lastFetchOptions.columnsParameters !== columnsParameters
   ) {
     lastFetchOptions.abortController.abort()
     setLastFetchOptions(fetchOptions)
-    if (data.fetch !== undefined && fetchedRowsRange !== undefined) {
+    if (data.fetch !== undefined && fetchedRowsStart !== undefined && fetchedRowsEnd !== undefined) {
       data.fetch({
-        rowStart: fetchedRowsRange.start,
-        rowEnd: fetchedRowsRange.end,
+        rowStart: fetchedRowsStart,
+        rowEnd: fetchedRowsEnd,
         columns: columnsParameters.map(({ name }) => name),
         orderBy,
         signal: fetchOptions.abortController.signal,

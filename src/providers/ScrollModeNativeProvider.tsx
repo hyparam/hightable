@@ -22,28 +22,39 @@ export function ScrollModeNativeProvider({ children, canvasHeight, numRows, padd
     _setClientHeight(clientHeight === 0 ? 100 : clientHeight)
   }, [])
 
-  const visibleRowsRange = useMemo(() => {
+  // determine visible rows based on current scroll position (indexes refer to the virtual table domain)
+  const visibleRowsStart = useMemo(() => {
     if (clientHeight === undefined || scrollTop === undefined) {
       return undefined
     }
-    // determine visible rows based on current scroll position (indexes refer to the virtual table domain)
     const start = Math.max(0, Math.floor(numRows * scrollTop / canvasHeight))
-    const end = Math.min(numRows, Math.ceil(numRows * (scrollTop + clientHeight) / canvasHeight))
-    if (isNaN(start)) throw new Error(`invalid start row ${start}`)
-    if (isNaN(end)) throw new Error(`invalid end row ${end}`)
-    if (end - start > 1000) throw new Error(`attempted to render too many rows ${end - start}`)
-    return { start, end }
+    if (isNaN(start)) throw new Error(`invalid first visible row ${start}`)
+    return start
   }, [numRows, canvasHeight, scrollTop, clientHeight])
-
-  const renderedRowsRange = useMemo(() => {
-    if (visibleRowsRange === undefined) {
+  const visibleRowsEnd = useMemo(() => {
+    if (clientHeight === undefined || scrollTop === undefined) {
       return undefined
     }
-    return {
-      start: Math.max(0, visibleRowsRange.start - padding),
-      end: Math.min(numRows, visibleRowsRange.end + padding),
+    const end = Math.min(numRows, Math.ceil(numRows * (scrollTop + clientHeight) / canvasHeight))
+    if (isNaN(end)) throw new Error(`invalid last visible row ${end}`)
+    return end
+  }, [numRows, canvasHeight, scrollTop, clientHeight])
+  if (visibleRowsStart !== undefined && visibleRowsEnd !== undefined && visibleRowsEnd - visibleRowsStart > 1000) {
+    throw new Error(`attempted to render too many rows ${visibleRowsEnd - visibleRowsStart}`)
+  }
+
+  const renderedRowsStart = useMemo(() => {
+    if (visibleRowsStart === undefined) {
+      return undefined
     }
-  }, [visibleRowsRange, numRows, padding])
+    return Math.max(0, visibleRowsStart - padding)
+  }, [visibleRowsStart, padding])
+  const renderedRowsEnd = useMemo(() => {
+    if (visibleRowsEnd === undefined) {
+      return undefined
+    }
+    return Math.min(numRows, visibleRowsEnd + padding)
+  }, [visibleRowsEnd, numRows, padding])
 
   if (canvasHeight <= 0) {
     throw new Error(`invalid canvasHeight ${canvasHeight}`)
@@ -58,7 +69,7 @@ export function ScrollModeNativeProvider({ children, canvasHeight, numRows, padd
    * Vertically scroll to bring a specific row into view
    */
   const scrollRowIntoView = useCallback(({ rowIndex }: { rowIndex: number }) => {
-    if (scrollTo === undefined || visibleRowsRange === undefined || clientHeight === undefined) {
+    if (scrollTo === undefined || visibleRowsStart === undefined || visibleRowsEnd === undefined || clientHeight === undefined) {
       return
     }
     if (rowIndex < 1) {
@@ -73,32 +84,34 @@ export function ScrollModeNativeProvider({ children, canvasHeight, numRows, padd
     // if the row is outside of the visible rows range, scroll to the estimated position of the cell,
     // to wait for the cell to be fetched and rendered
     // algorithm: go to the nearest edge (same as `block: nearest` in scrollIntoView)
-    if (row < visibleRowsRange.start) {
+    if (row < visibleRowsStart) {
       scrollTo({ top: getRowTop(row) })
-    } else if (row >= visibleRowsRange.end) {
+    } else if (row >= visibleRowsEnd) {
       scrollTo({ top: getRowTop(row) - clientHeight + rowHeight })
     }
     // else, the row is in the table, and we use another mechanism to scroll to it (.scrollIntoView in useCellFocus.tsx)
     // beware, it's only for the native scroll mode
-  }, [visibleRowsRange, scrollTo, getRowTop, clientHeight])
+  }, [visibleRowsStart, visibleRowsEnd, scrollTo, getRowTop, clientHeight])
 
   const sliceTop = useMemo(() => {
-    return getRowTop(renderedRowsRange?.start ?? 0)
-  }, [renderedRowsRange, getRowTop])
+    return getRowTop(renderedRowsStart ?? 0)
+  }, [renderedRowsStart, getRowTop])
 
   const value = useMemo(() => {
     return {
       scrollMode: 'native' as const,
       canvasHeight,
       sliceTop,
-      renderedRowsRange,
-      visibleRowsRange,
+      visibleRowsStart,
+      visibleRowsEnd,
+      renderedRowsStart,
+      renderedRowsEnd,
       scrollRowIntoView,
       setClientHeight,
       setScrollTo,
       setScrollTop,
     }
-  }, [canvasHeight, sliceTop, renderedRowsRange, visibleRowsRange, scrollRowIntoView, setClientHeight])
+  }, [canvasHeight, sliceTop, renderedRowsStart, visibleRowsStart, renderedRowsEnd, visibleRowsEnd, scrollRowIntoView, setClientHeight])
 
   return (
     <ScrollModeContext.Provider value={value}>
