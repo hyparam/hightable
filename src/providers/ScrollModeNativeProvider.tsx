@@ -28,7 +28,7 @@ export function ScrollModeNativeProvider({ children, canvasHeight, numRows, padd
       return undefined
     }
     const start = Math.max(0, Math.floor(numRows * scrollTop / canvasHeight))
-    if (isNaN(start)) throw new Error(`invalid first visible row ${start}`)
+    if (isNaN(start)) throw new Error(`invalid visible rows start: ${start}`)
     return start
   }, [numRows, canvasHeight, scrollTop, clientHeight])
   const visibleRowsEnd = useMemo(() => {
@@ -36,7 +36,7 @@ export function ScrollModeNativeProvider({ children, canvasHeight, numRows, padd
       return undefined
     }
     const end = Math.min(numRows, Math.ceil(numRows * (scrollTop + clientHeight) / canvasHeight))
-    if (isNaN(end)) throw new Error(`invalid last visible row ${end}`)
+    if (isNaN(end)) throw new Error(`invalid visible rows end: ${end}`)
     return end
   }, [numRows, canvasHeight, scrollTop, clientHeight])
   if (visibleRowsStart !== undefined && visibleRowsEnd !== undefined && visibleRowsEnd - visibleRowsStart > 1000) {
