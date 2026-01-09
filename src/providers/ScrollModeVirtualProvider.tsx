@@ -3,11 +3,12 @@ import { type ReactNode, useCallback, useMemo, useState } from 'react'
 import { ScrollModeContext } from '../contexts/ScrollModeContext.js'
 import { ariaOffset, rowHeight } from '../helpers/constants.js'
 
-// 4,000px is only 0.05% of the canvas height for 8 millions rows
+// 4,000px is only 0.05% of the canvas height for 8 million rows
 // -> when scrolling with the mouse wheel, the change is local (< 4,000px)
 // -> when scrolling with the scrollbar (drag/drop), the change is global (> 0.05% of the scrollbar height)
 // -> on mobile, swapping will also produce big jumps. TODO(SL): should we detect touch events and adapt the thresholds?
 const coarseScrollThresholdPx = 4000
+// 1px is only to avoid floating point precision issues (scrollTop is not always an integer)
 const fineScrollThresholdPx = 1
 
 interface ScrollModeVirtualProviderProps {
