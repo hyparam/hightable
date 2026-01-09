@@ -43,7 +43,7 @@ export default function Slice({
   const { orderBy, onOrderByChange } = useContext(OrderByContext)
   const { selectable, toggleAllRows, pendingSelectionGesture, onTableKeyDown: onSelectionTableKeyDown, allRowsSelected, isRowSelected, toggleRowNumber, toggleRangeToRowNumber } = useContext(SelectionContext)
   const { columnsParameters } = useContext(RowsAndColumnsContext)
-  const { scrollRowIntoView, renderedRowsRange } = useContext(ScrollModeContext)
+  const { scrollRowIntoView, renderedRowsStart, renderedRowsEnd } = useContext(ScrollModeContext)
 
   // TODO(SL): we depend on rowIndex to trigger the scroll effect, which means we recreate the
   // callback every time the rowIndex changes. Can we avoid that?
@@ -134,15 +134,14 @@ export default function Slice({
   // Prepare the slice of data to render
   // TODO(SL): also compute progress percentage here, to show a loading indicator
   const slice = useMemo(() => {
-    if (!renderedRowsRange) {
+    if (renderedRowsStart === undefined || renderedRowsEnd === undefined) {
       return {
         rowContents: [],
         canMeasureColumn: {},
         version,
       }
     }
-    const renderedRowCount = renderedRowsRange.end - renderedRowsRange.start
-    const rows = Array.from({ length: renderedRowCount }, (_, i) => renderedRowsRange.start + i)
+    const rows = Array.from({ length: renderedRowsEnd - renderedRowsStart }, (_, i) => renderedRowsStart + i)
 
     const canMeasureColumn: Record<string, boolean> = {}
     const rowContents = rows.map((row) => {
@@ -163,7 +162,7 @@ export default function Slice({
       canMeasureColumn,
       version,
     }
-  }, [data, columnsParameters, renderedRowsRange, orderBy, version])
+  }, [data, columnsParameters, renderedRowsStart, renderedRowsEnd, orderBy, version])
 
   // don't render table if header is empty
   if (!columnsParameters) return
