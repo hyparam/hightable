@@ -3,6 +3,7 @@ import { createContext } from 'react'
 export interface ScrollModeContextType {
   scrollMode?: 'native' | 'virtual'
   canvasHeight?: number // total scrollable height
+  shouldScrollHorizontally?: boolean
   sliceTop?: number // offset of the top of the slice from the top of the canvas
   visibleRowsStart?: number // index of the first row visible in the viewport (inclusive). Indexes refer to the virtual table domain.
   visibleRowsEnd?: number // index of the last row visible in the viewport (exclusive).
@@ -12,6 +13,7 @@ export interface ScrollModeContextType {
   setClientHeight?: (clientHeight: number) => void // function to call when the current viewport height changes
   setScrollTo?: (scrollTo: HTMLElement['scrollTo'] | undefined) => void // function to set the scrollTo function
   setScrollTop?: (scrollTop: number) => void // function to call when the current scroll top position changes
+  setShouldScrollHorizontally?: (shouldScroll: boolean) => void
 }
 
 export const defaultScrollModeContext: ScrollModeContextType = {}

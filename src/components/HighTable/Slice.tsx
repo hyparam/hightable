@@ -108,8 +108,10 @@ export default function Slice({
     event.preventDefault()
     if (newRowIndex !== undefined) {
       setRowIndex(newRowIndex)
-      scrollRowIntoView?.({ rowIndex: newRowIndex }) // ensure the cell is visible
     }
+    // ensure the cell is visible (even if only horizontal scrolling is needed)
+    // TODO(SL): improve the name of scrollRowIntoView, because it can also (indirectly) scroll columns into view
+    scrollRowIntoView?.({ rowIndex: newRowIndex ?? rowIndex })
     setShouldFocus(true)
   }, [rowIndex, colCount, rowCount, setColIndex, setRowIndex, setShouldFocus, scrollRowIntoView])
 
