@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react'
 import { useCallback, useMemo, useState } from 'react'
 
-import type { RowsRange } from '../contexts/ScrollModeContext.js'
 import { ScrollModeContext } from '../contexts/ScrollModeContext.js'
 import { ariaOffset, rowHeight } from '../helpers/constants.js'
 
@@ -14,19 +13,32 @@ interface ScrollModeNativeProviderProps {
 
 export function ScrollModeNativeProvider({ children, canvasHeight, numRows, padding }: ScrollModeNativeProviderProps) {
   const [scrollTo, setScrollTo] = useState<HTMLElement['scrollTo'] | undefined>(undefined)
-  const [clientHeight, setClientHeight] = useState(100)
-  const [visibleRowsRange, _setVisibleRowsRange] = useState<RowsRange | undefined>(undefined)
-  const setVisibleRowsRange = useCallback((nextRowsRange: RowsRange | undefined) => {
-    // compare the fields, not the object reference
-    _setVisibleRowsRange((rowsRange) => {
-      if (rowsRange?.start === nextRowsRange?.start && rowsRange?.end === nextRowsRange?.end) {
-        return rowsRange
-      }
-      return nextRowsRange
-    })
+  const [scrollTop, setScrollTop] = useState<number | undefined>(undefined)
+  const [clientHeight, _setClientHeight] = useState<number | undefined>(undefined)
+  const setClientHeight = useCallback((clientHeight: number) => {
+    // TODO(SL): remove this fallback? It's only for the tests in Node.js, where the elements have zero height
+    // instead, it should return without updating the visible rows range, or set it to undefined.
+    // TODO(SL): test in the browser (playwright)
+    _setClientHeight(clientHeight === 0 ? 100 : clientHeight)
   }, [])
+
+  const visibleRowsRange = useMemo(() => {
+    if (clientHeight === undefined || scrollTop === undefined) {
+      return undefined
+    }
+    // determine visible rows based on current scroll position (indexes refer to the virtual table domain)
+    const start = Math.max(0, Math.floor(numRows * scrollTop / canvasHeight))
+    const end = Math.min(numRows, Math.ceil(numRows * (scrollTop + clientHeight) / canvasHeight))
+    if (isNaN(start)) throw new Error(`invalid start row ${start}`)
+    if (isNaN(end)) throw new Error(`invalid end row ${end}`)
+    if (end - start > 1000) throw new Error(`attempted to render too many rows ${end - start}`)
+    return { start, end }
+  }, [numRows, canvasHeight, scrollTop, clientHeight])
+
   const renderedRowsRange = useMemo(() => {
-    if (!visibleRowsRange) return undefined
+    if (visibleRowsRange === undefined) {
+      return undefined
+    }
     return {
       start: Math.max(0, visibleRowsRange.start - padding),
       end: Math.min(numRows, visibleRowsRange.end + padding),
@@ -37,22 +49,6 @@ export function ScrollModeNativeProvider({ children, canvasHeight, numRows, padd
     throw new Error(`invalid canvasHeight ${canvasHeight}`)
   }
 
-  const onViewportChange = useCallback(({ clientHeight, scrollTop }: { clientHeight: number, scrollTop: number }) => {
-    // TODO(SL): remove this fallback? It's only for the tests in Node.js, where the elements have zero height
-    // instead, it should return without updating the visible rows range, or set it to undefined.
-    // TODO(SL): test in the browser (playwright)
-    const effectiveClientHeight = clientHeight === 0 ? 100 : clientHeight
-    setClientHeight(effectiveClientHeight)
-
-    // determine visible rows based on current scroll position (indexes refer to the virtual table domain)
-    const start = Math.max(0, Math.floor(numRows * scrollTop / canvasHeight))
-    const end = Math.min(numRows, Math.ceil(numRows * (scrollTop + effectiveClientHeight) / canvasHeight))
-    if (isNaN(start)) throw new Error(`invalid start row ${start}`)
-    if (isNaN(end)) throw new Error(`invalid end row ${end}`)
-    if (end - start > 1000) throw new Error(`attempted to render too many rows ${end - start}`)
-    setVisibleRowsRange({ start, end })
-  }, [numRows, canvasHeight, setVisibleRowsRange])
-
   // row: zero-based index in the virtual table domain
   const getRowTop = useCallback((row: number) => {
     return row * rowHeight
@@ -62,7 +58,7 @@ export function ScrollModeNativeProvider({ children, canvasHeight, numRows, padd
    * Vertically scroll to bring a specific row into view
    */
   const scrollRowIntoView = useCallback(({ rowIndex }: { rowIndex: number }) => {
-    if (scrollTo === undefined || visibleRowsRange === undefined) {
+    if (scrollTo === undefined || visibleRowsRange === undefined || clientHeight === undefined) {
       return
     }
     if (rowIndex < 1) {
@@ -97,11 +93,12 @@ export function ScrollModeNativeProvider({ children, canvasHeight, numRows, padd
       sliceTop,
       renderedRowsRange,
       visibleRowsRange,
-      onViewportChange,
       scrollRowIntoView,
+      setClientHeight,
       setScrollTo,
+      setScrollTop,
     }
-  }, [canvasHeight, sliceTop, renderedRowsRange, visibleRowsRange, onViewportChange, scrollRowIntoView])
+  }, [canvasHeight, sliceTop, renderedRowsRange, visibleRowsRange, scrollRowIntoView, setClientHeight])
 
   return (
     <ScrollModeContext.Provider value={value}>

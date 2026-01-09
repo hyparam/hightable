@@ -15,7 +15,7 @@ export default function Scroller({
   setViewportWidth,
 }: Props) {
   const { setShouldFocus, rowIndex } = useContext(CellNavigationContext)
-  const { canvasHeight, sliceTop, onViewportChange, scrollRowIntoView, setScrollTo } = useContext(ScrollModeContext)
+  const { canvasHeight, sliceTop, setClientHeight, setScrollTop, scrollRowIntoView, setScrollTo } = useContext(ScrollModeContext)
 
   /**
    * Handle keyboard events for scrolling
@@ -51,13 +51,13 @@ export default function Scroller({
     // eslint-disable-next-line func-style
     const updateViewportSize = () => {
       setViewportWidth(viewport.clientWidth)
-      onViewportChange?.({ clientHeight: viewport.clientHeight, scrollTop: viewport.scrollTop })
+      setClientHeight?.(viewport.clientHeight)
     }
 
     // eslint-disable-next-line func-style
     const handleScroll = () => {
       // TODO(SL): throttle? see https://github.com/hyparam/hightable/pull/347
-      onViewportChange?.({ clientHeight: viewport.clientHeight, scrollTop: viewport.scrollTop })
+      setScrollTop?.(viewport.scrollTop)
     }
 
     // run once
@@ -94,7 +94,7 @@ export default function Scroller({
       resizeObserver?.disconnect()
       viewport.removeEventListener('scroll', handleScroll)
     }
-  }, [setScrollTo, setViewportWidth, onViewportChange])
+  }, [setScrollTo, setViewportWidth, setClientHeight, setScrollTop])
 
   // TODO(SL): maybe pass CSS variables instead of inline styles?
   // the viewport div scrollHeight will be equal to canvasHeight (unless custom CSS is messing with it)
