@@ -3,6 +3,13 @@ import { type ReactNode, useCallback, useMemo, useState } from 'react'
 import { ScrollModeContext } from '../contexts/ScrollModeContext.js'
 import { ariaOffset, rowHeight } from '../helpers/constants.js'
 
+// 4,000px is only 0.05% of the canvas height for 8 millions rows
+// -> when scrolling with the mouse wheel, the change is local (< 4,000px)
+// -> when scrolling with the scrollbar (drag/drop), the change is global (> 0.05% of the scrollbar height)
+// -> on mobile, swapping will also produce big jumps. TODO(SL): should we detect touch events and adapt the thresholds?
+const coarseScrollThresholdPx = 4000
+const fineScrollThresholdPx = 1
+
 interface ScrollModeVirtualProviderProps {
   children: ReactNode
   canvasHeight: number // total scrollable height. It must be strictly positive.
@@ -80,15 +87,13 @@ export function ScrollModeVirtualProvider({ children, canvasHeight, headerHeight
       // scrollTop has a limited precision (1px, or subpixel on some browsers) and is not predictable exactly, in particular when used with zooming.
       // The browser might also scroll slightly when focusing an element.
       // virtualScrollTop is decimal, computed for the virtual canvas, and updated by user action only when scrollTop changes significantly.
-      const coarseScrollThreshold = 4000 // px. TODO(SL): how to choose the value? in percentage of clientHeight/canvasHeight? Generally, it's 33px or -33px (the height of the focused cell?)
-      const fineScrollThreshold = 1
       const expectedScrollTop = toScrollTop(virtualScrollTop)
       const differencePx = scrollTop - expectedScrollTop
 
-      if (Math.abs(differencePx) > coarseScrollThreshold) {
+      if (Math.abs(differencePx) > coarseScrollThresholdPx) {
         // scrollTop changed significantly, it controls the position (coarse scroll)
         setVirtualScrollTop(toVirtualScrollTop(scrollTop))
-      } else if (Math.abs(differencePx) > fineScrollThreshold) {
+      } else if (Math.abs(differencePx) > fineScrollThresholdPx) {
         // scrollTop changed slightly, adapt both scrollTop and virtualScrollTop
         // virtualScrollTop controls the position (fine scroll)
         // The difference is used to adjust virtualScrollTop accordingly
@@ -102,9 +107,8 @@ export function ScrollModeVirtualProvider({ children, canvasHeight, headerHeight
           scrollTo({ top: newExpectedScrollTop, behavior: 'instant' })
           setIsScrolling(true)
 
-          setVirtualScrollTop(newVirtualScrollTop)
           setScrollTop(newExpectedScrollTop)
-          // should rerender with the new virtualScrollTop
+          setVirtualScrollTop(newVirtualScrollTop)
         }
 
         // TODO(SL): edge case: top boundary: we cannot come back to the first row if newExpectedScrollTop < 1 (effectively 0)
