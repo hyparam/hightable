@@ -1,4 +1,4 @@
-import { type ReactNode, useCallback, useMemo, useState } from 'react'
+import { type ReactNode, useCallback, useMemo, useReducer, useState } from 'react'
 
 import { ScrollModeContext } from '../contexts/ScrollModeContext.js'
 import { ariaOffset, rowHeight } from '../helpers/constants.js'
@@ -19,15 +19,82 @@ interface ScrollModeVirtualProviderProps {
   padding: number
 }
 
+interface Scale {
+  toVirtual: (scrollTop: number) => number
+  fromVirtual: (virtualScrollTop: number) => number
+  factor: number
+  canvasHeight: number
+  virtualCanvasHeight: number
+  clientHeight: number
+}
+
+interface ScrollState {
+  isScrolling: boolean
+  scale: Scale | undefined
+  scrollDelta: number
+  scrollTop: number | undefined
+  virtualScrollTop: number | undefined
+}
+
+type ScrollAction
+  = | { type: 'ON_SCROLL', scrollTop: number }
+    | { type: 'SET_VIRTUAL_SCROLL_TOP', virtualScrollTop: number }
+    | { type: 'ADJUST_SCROLL_DELTA', scrollDelta: number }
+    | { type: 'SCROLL_TO', scrollTop: number, virtualScrollTop: number }
+    | { type: 'SET_SCALE', scale: Scale | undefined }
+
+function scrollReducer(state: ScrollState, action: ScrollAction) {
+  switch (action.type) {
+    case 'SCROLL_TO':
+      return {
+        ...state,
+        scrollTop: action.scrollTop,
+        virtualScrollTop: action.virtualScrollTop,
+        scrollDelta: 0,
+        isScrolling: true,
+      }
+    case 'ON_SCROLL':
+      return {
+        ...state,
+        scrollTop: action.scrollTop,
+        isScrolling: false,
+      }
+    case 'SET_VIRTUAL_SCROLL_TOP':
+      return {
+        ...state,
+        virtualScrollTop: action.virtualScrollTop,
+        scrollDelta: 0,
+      }
+    case 'ADJUST_SCROLL_DELTA':
+      return {
+        ...state,
+        scrollDelta: action.scrollDelta,
+      }
+    case 'SET_SCALE':
+      return {
+        ...state,
+        scale: action.scale,
+        // scrollTop is only changed when scrolling
+        // TODO(SL): update virtualScrollTop and scrollDelta accordingly, trying to keep the same view (same first visible row? or move up if out of bounds?)
+        // virtualScrollTop: ???,
+        // scrollDelta: ???,
+      }
+  }
+}
+
+const initialScrollState: ScrollState = {
+  isScrolling: false,
+  scale: undefined,
+  scrollDelta: 0,
+  scrollTop: undefined,
+  virtualScrollTop: undefined,
+}
+
 export function ScrollModeVirtualProvider({ children, canvasHeight, headerHeight, numRows, padding }: ScrollModeVirtualProviderProps) {
-  const [_virtualScrollTop, setVirtualScrollTop] = useState<number | undefined>(undefined)
+  const [{ scale, scrollTop, virtualScrollTop: _virtualScrollTop, isScrolling, scrollDelta }, dispatch] = useReducer(scrollReducer, initialScrollState)
   const [scrollTo, setScrollTo] = useState<HTMLElement['scrollTo'] | undefined>(undefined)
-  const [isScrolling, setIsScrolling] = useState<boolean>(false)
-  const [scrollDelta, setScrollDelta] = useState<number>(0)
-  const [scrollTop, setScrollTop] = useState<number | undefined>(undefined)
-  const setScrollTopAndStopPendingScroll = useCallback((scrollTop: number) => {
-    setIsScrolling(false)
-    setScrollTop(scrollTop)
+  const setScrollTop = useCallback((scrollTop: number) => {
+    dispatch({ type: 'ON_SCROLL', scrollTop })
   }, [])
   const [clientHeight, _setClientHeight] = useState<number | undefined>(undefined)
   const setClientHeight = useCallback((clientHeight: number) => {
@@ -36,8 +103,6 @@ export function ScrollModeVirtualProvider({ children, canvasHeight, headerHeight
     // TODO(SL): test in the browser (playwright)
     _setClientHeight(clientHeight === 0 ? 100 : clientHeight)
   }, [])
-
-  const virtualCanvasHeight = useMemo(() => headerHeight + numRows * rowHeight, [headerHeight, numRows])
 
   // safety checks
   if (headerHeight <= 0) {
@@ -49,17 +114,18 @@ export function ScrollModeVirtualProvider({ children, canvasHeight, headerHeight
   if (numRows < 0 || !Number.isInteger(numRows)) {
     throw new Error(`Invalid numRows: ${numRows}. It should be a non-negative integer.`)
   }
-  // Note that scrollTop can be negative, or beyond canvasHeight - clientHeight, depending on the browser,
-  // the zoom level, the scroll behavior or the margin/padding of the container.
-  // TODO(SL): handle these cases
-  if (clientHeight !== undefined && canvasHeight <= clientHeight) {
-    throw new Error(`Invalid canvasHeight: ${canvasHeight} when clientHeight is ${clientHeight}. canvasHeight should be greater than clientHeight for virtual scrolling.`)
-  }
-  if (clientHeight !== undefined && virtualCanvasHeight <= clientHeight) {
-    throw new Error(`Invalid virtualCanvasHeight: ${virtualCanvasHeight} when clientHeight is ${clientHeight}. virtualCanvasHeight should be greater than clientHeight for virtual scrolling.`)
-  }
 
-  const scale = useMemo(() => {
+  const currentScale = useMemo(() => {
+    const virtualCanvasHeight = headerHeight + numRows * rowHeight
+    // Note that scrollTop can be negative, or beyond canvasHeight - clientHeight, depending on the browser,
+    // the zoom level, the scroll behavior or the margin/padding of the container.
+    // TODO(SL): handle these cases
+    if (clientHeight !== undefined && canvasHeight <= clientHeight) {
+      throw new Error(`Invalid canvasHeight: ${canvasHeight} when clientHeight is ${clientHeight}. canvasHeight should be greater than clientHeight for virtual scrolling.`)
+    }
+    if (clientHeight !== undefined && virtualCanvasHeight <= clientHeight) {
+      throw new Error(`Invalid virtualCanvasHeight: ${virtualCanvasHeight} when clientHeight is ${clientHeight}. virtualCanvasHeight should be greater than clientHeight for virtual scrolling.`)
+    }
     if (clientHeight === undefined) {
       return undefined
     }
@@ -71,14 +137,24 @@ export function ScrollModeVirtualProvider({ children, canvasHeight, headerHeight
       fromVirtual: (virtualScrollTop: number) => {
         return virtualScrollTop / factor
       },
+      factor,
+      canvasHeight,
+      virtualCanvasHeight,
+      clientHeight,
     }
-  }, [virtualCanvasHeight, clientHeight, canvasHeight])
+  }, [clientHeight, canvasHeight, headerHeight, numRows])
+
+  // ideally: call SET_SCALE from an event listener (if num_rows changes, or on resize if the clientHeight changes)
+  // not during rendering
+  // ie: move this to a useEffect, or lift the scale management up outside of this provider
+  if (currentScale !== scale) {
+    dispatch({ type: 'SET_SCALE', scale: currentScale })
+  }
 
   if (scale && scrollTop !== undefined) {
     if (_virtualScrollTop === undefined) {
       // initialize virtualScrollTop
-      setVirtualScrollTop(scale.toVirtual(scrollTop))
-      setScrollDelta(0)
+      dispatch({ type: 'SET_VIRTUAL_SCROLL_TOP', virtualScrollTop: scale.toVirtual(scrollTop) })
     } else {
       // scrollTop has a limited precision (1px, or subpixel on some browsers) and is not predictable exactly, in particular when used with zooming.
       // The browser might also scroll slightly when focusing an element.
@@ -91,12 +167,11 @@ export function ScrollModeVirtualProvider({ children, canvasHeight, headerHeight
         || Math.abs(newScrollDelta) > coarseScrollThresholdPx
       ) {
         // scrollTop changed significantly, or is too far from synchronization (too many small steps): update virtualScrollTop (coarse scroll)
-        setVirtualScrollTop(scale.toVirtual(scrollTop))
-        setScrollDelta(0)
+        dispatch({ type: 'SET_VIRTUAL_SCROLL_TOP', virtualScrollTop: scale.toVirtual(scrollTop) })
       } else if (Math.abs(newScrollDelta - scrollDelta) > fineScrollThresholdPx) {
         // scrollTop changed slightly
         // keep scrollTop and virtualScrollTop untouched, compensate with scrollDelta
-        setScrollDelta(newScrollDelta)
+        dispatch({ type: 'ADJUST_SCROLL_DELTA', scrollDelta: newScrollDelta })
       }
       // else, change is negligible, do nothing
     }
@@ -197,7 +272,6 @@ export function ScrollModeVirtualProvider({ children, canvasHeight, headerHeight
 
     if (rowIndex === 1) {
       // header row
-      setIsScrolling(false)
       return
     }
 
@@ -213,7 +287,6 @@ export function ScrollModeVirtualProvider({ children, canvasHeight, headerHeight
 
     if (hiddenPixelsBefore <= 0 && hiddenPixelsAfter <= 0) {
       // fully visible, do nothing
-      setIsScrolling(false)
       return
     }
 
@@ -233,16 +306,10 @@ export function ScrollModeVirtualProvider({ children, canvasHeight, headerHeight
       const newScrollTop = scale.fromVirtual(newVirtualScrollTop)
       scrollTo({ top: newScrollTop, behavior: 'instant' })
       // anticipate the scroll position change
-      setScrollTop(newScrollTop)
-      setVirtualScrollTop(newVirtualScrollTop)
-      setScrollDelta(0)
-      setIsScrolling(true)
+      dispatch({ type: 'SCROLL_TO', scrollTop: newScrollTop, virtualScrollTop: newVirtualScrollTop })
     } else if (Math.abs(newScrollDelta - scrollDelta) > fineScrollThresholdPx) {
       // move slightly: keep scrollTop and virtualScrollTop untouched, compensate with scrollDelta
-      setScrollDelta(newScrollDelta)
-      setIsScrolling(false)
-    } else {
-      setIsScrolling(false)
+      dispatch({ type: 'ADJUST_SCROLL_DELTA', scrollDelta: newScrollDelta })
     }
   }, [numRows, scrollTo, _virtualScrollTop, scrollDelta, scrollTop, headerHeight, clientHeight, scale])
 
@@ -257,11 +324,11 @@ export function ScrollModeVirtualProvider({ children, canvasHeight, headerHeight
       renderedRowsStart,
       renderedRowsEnd,
       setClientHeight,
-      setScrollTop: setScrollTopAndStopPendingScroll, // if a programmatic scroll was triggered, we consider that it is done
+      setScrollTop,
       scrollRowIntoView,
       setScrollTo,
     }
-  }, [canvasHeight, renderedRowsEnd, renderedRowsStart, sliceTop, isScrolling, visibleRowsEnd, visibleRowsStart, setClientHeight, setScrollTopAndStopPendingScroll, scrollRowIntoView])
+  }, [canvasHeight, renderedRowsEnd, renderedRowsStart, sliceTop, isScrolling, visibleRowsEnd, visibleRowsStart, setClientHeight, setScrollTop, scrollRowIntoView])
 
   return (
     <ScrollModeContext.Provider value={value}>

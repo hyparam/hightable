@@ -103,6 +103,7 @@ export default defineConfig([
       '@typescript-eslint/prefer-promise-reject-errors': 'off',
       '@typescript-eslint/require-await': 'error',
       '@typescript-eslint/restrict-template-expressions': 'off',
+      '@typescript-eslint/switch-exhaustiveness-check': ['error', { allowDefaultCaseForExhaustiveSwitch: false }],
       '@typescript-eslint/use-unknown-in-catch-callback-variable': 'off',
     },
     settings: { react: { version: 'detect' } },
