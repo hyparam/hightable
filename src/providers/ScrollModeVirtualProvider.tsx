@@ -20,9 +20,10 @@ interface ScrollModeVirtualProviderProps {
 }
 
 export function ScrollModeVirtualProvider({ children, canvasHeight, headerHeight, numRows, padding }: ScrollModeVirtualProviderProps) {
-  const [virtualScrollTop, setVirtualScrollTop] = useState<number | undefined>(undefined)
+  const [_virtualScrollTop, setVirtualScrollTop] = useState<number | undefined>(undefined)
   const [scrollTo, setScrollTo] = useState<HTMLElement['scrollTo'] | undefined>(undefined)
   const [isScrolling, setIsScrolling] = useState<boolean>(false)
+  const [scrollDelta, setScrollDelta] = useState<number>(0)
   const [scrollTop, setScrollTop] = useState<number | undefined>(undefined)
   const setScrollTopAndStopPendingScroll = useCallback((scrollTop: number) => {
     setIsScrolling(false)
@@ -74,42 +75,41 @@ export function ScrollModeVirtualProvider({ children, canvasHeight, headerHeight
   }, [virtualCanvasHeight, clientHeight, canvasHeight])
 
   if (scale && scrollTop !== undefined) {
-    if (virtualScrollTop === undefined) {
+    if (_virtualScrollTop === undefined) {
       // initialize virtualScrollTop
       setVirtualScrollTop(scale.toVirtual(scrollTop))
+      setScrollDelta(0)
     } else {
       // scrollTop has a limited precision (1px, or subpixel on some browsers) and is not predictable exactly, in particular when used with zooming.
       // The browser might also scroll slightly when focusing an element.
       // virtualScrollTop is decimal, computed for the virtual canvas, and updated by user action only when scrollTop changes significantly.
-      const expectedScrollTop = scale.fromVirtual(virtualScrollTop)
-      const differencePx = scrollTop - expectedScrollTop
+      const expectedScrollTop = scale.fromVirtual(_virtualScrollTop)
+      const newScrollDelta = scrollTop - expectedScrollTop
 
-      if (Math.abs(differencePx) > coarseScrollThresholdPx) {
-        // scrollTop changed significantly, it controls the position (coarse scroll)
+      if (
+        Math.abs(newScrollDelta - scrollDelta) > coarseScrollThresholdPx
+        || Math.abs(newScrollDelta) > coarseScrollThresholdPx
+      ) {
+        // scrollTop changed significantly, or is too far from synchronization (too many small steps): update virtualScrollTop (coarse scroll)
         setVirtualScrollTop(scale.toVirtual(scrollTop))
-      } else if (Math.abs(differencePx) > fineScrollThresholdPx) {
-        // scrollTop changed slightly, adapt both scrollTop and virtualScrollTop
-        // virtualScrollTop controls the position (fine scroll)
-        // The difference is used to adjust virtualScrollTop accordingly
-        const newVirtualScrollTop = virtualScrollTop + differencePx
-        const newExpectedScrollTop = scale.fromVirtual(newVirtualScrollTop)
-
-        if (scrollTo === undefined) {
-          console.warn('scrollTo function is not available. Cannot adjust scrollTop.')
-        } else {
-          // set scrollTop to the precise value
-          scrollTo({ top: newExpectedScrollTop, behavior: 'instant' })
-          setIsScrolling(true)
-
-          setScrollTop(newExpectedScrollTop)
-          setVirtualScrollTop(newVirtualScrollTop)
-        }
-
-        // TODO(SL): edge case: top boundary: we cannot come back to the first row if newExpectedScrollTop < 1 (effectively 0)
+        setScrollDelta(0)
+      } else if (Math.abs(newScrollDelta - scrollDelta) > fineScrollThresholdPx) {
+        // scrollTop changed slightly
+        // keep scrollTop and virtualScrollTop untouched, compensate with scrollDelta
+        setScrollDelta(newScrollDelta)
       }
       // else, change is negligible, do nothing
     }
+
+    // TODO(SL): adjust at the end to avoid white space after the last row
   }
+
+  const virtualScrollTop = useMemo(() => {
+    if (_virtualScrollTop === undefined) {
+      return undefined
+    }
+    return _virtualScrollTop + scrollDelta
+  }, [_virtualScrollTop, scrollDelta])
 
   // Compute the derived values
 
@@ -191,11 +191,7 @@ export function ScrollModeVirtualProvider({ children, canvasHeight, headerHeight
     if (rowIndex < 1 || rowIndex > numRows + 1 || !Number.isInteger(rowIndex)) {
       throw new Error(`Invalid row index: ${rowIndex}. It should be an integer between 1 and ${numRows + 1}.`)
     }
-    if (!scrollTo) {
-      console.warn('scrollTo function is not available. Cannot scroll to row.')
-      return
-    }
-    if (!scale || clientHeight === undefined || virtualScrollTop === undefined) {
+    if (!scale || clientHeight === undefined || _virtualScrollTop === undefined || scrollTop === undefined) {
       return
     }
 
@@ -211,6 +207,7 @@ export function ScrollModeVirtualProvider({ children, canvasHeight, headerHeight
     // - the row is fully visible: do nothing
     // - the row start is before virtualScrollTop + headerHeight: scroll to snap its start with that value
     // - the row end is after virtualScrollTop + viewportHeight: scroll to snap its end with that value
+    const virtualScrollTop = _virtualScrollTop + scrollDelta
     const hiddenPixelsBefore = virtualScrollTop + headerHeight - (headerHeight + row * rowHeight)
     const hiddenPixelsAfter = headerHeight + row * rowHeight + rowHeight - virtualScrollTop - clientHeight
 
@@ -222,31 +219,32 @@ export function ScrollModeVirtualProvider({ children, canvasHeight, headerHeight
 
     // partly or totally hidden: update the scroll position
     const delta = hiddenPixelsBefore > 0 ? -hiddenPixelsBefore : hiddenPixelsAfter
-    const newVirtualScrollTop = virtualScrollTop + delta
-
-    // Update the virtual scroll top
-    setVirtualScrollTop(newVirtualScrollTop)
-
-    const tolerancePixels = 1
-
-    const currentScrollTop = scale.fromVirtual(virtualScrollTop)
-    const newScrollTop = scale.fromVirtual(newVirtualScrollTop)
-    if (Math.abs(newScrollTop - currentScrollTop) > tolerancePixels) {
-      // Ensure the new scrollTop is within bounds
-      if (newScrollTop < 0 || newScrollTop > canvasHeight - clientHeight) {
-        console.warn(`Computed scrollTop ${newScrollTop} is out of bounds (0, ${canvasHeight - clientHeight}). Cannot scroll to table row index: ${rowIndex}.`)
+    const newScrollDelta = scrollDelta + delta
+    if (
+      Math.abs(newScrollDelta - scrollDelta) > coarseScrollThresholdPx
+      || Math.abs(newScrollDelta) > coarseScrollThresholdPx
+    ) {
+      // reset virtualScrollTop and scrollTop (coarse scroll)
+      if (!scrollTo) {
+        console.warn('scrollTo function is not available. Cannot scroll to row.')
         return
       }
-
-      // Update the coarse scroll position if the change is significant enough
-      // for now, we ask for an instant scroll, there is no smooth scrolling
-      // TODO(SL): if smooth scrolling is implemented, it might be async, so we should await it
+      const newVirtualScrollTop = _virtualScrollTop + newScrollDelta
+      const newScrollTop = scale.fromVirtual(newVirtualScrollTop)
       scrollTo({ top: newScrollTop, behavior: 'instant' })
+      // anticipate the scroll position change
+      setScrollTop(newScrollTop)
+      setVirtualScrollTop(newVirtualScrollTop)
+      setScrollDelta(0)
       setIsScrolling(true)
+    } else if (Math.abs(newScrollDelta - scrollDelta) > fineScrollThresholdPx) {
+      // move slightly: keep scrollTop and virtualScrollTop untouched, compensate with scrollDelta
+      setScrollDelta(newScrollDelta)
+      setIsScrolling(false)
     } else {
       setIsScrolling(false)
     }
-  }, [numRows, scrollTo, virtualScrollTop, headerHeight, clientHeight, scale, canvasHeight])
+  }, [numRows, scrollTo, _virtualScrollTop, scrollDelta, scrollTop, headerHeight, clientHeight, scale])
 
   const value = useMemo(() => {
     return {
