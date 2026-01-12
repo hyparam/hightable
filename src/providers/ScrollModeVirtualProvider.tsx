@@ -3,12 +3,13 @@ import { type ReactNode, useCallback, useMemo, useReducer, useState } from 'reac
 import { ScrollModeContext } from '../contexts/ScrollModeContext.js'
 import { ariaOffset, rowHeight } from '../helpers/constants.js'
 
-// 4,000px is only 0.05% of the canvas height for 8 million rows
-// -> when scrolling with the mouse wheel, the change is local (< 4,000px)
-// -> when scrolling with the scrollbar (drag/drop), or with the mouse wheel for a long time, the change is global (> 0.05% of the scrollbar height)
-// -> on mobile, swapping will also produce big jumps. TODO(SL): should we detect touch events and adapt the thresholds?
-// TODO(SL): increase? make it configurable? or dependent on the number of rows, ie: a % of the scroll bar height?
-const coarseScrollThresholdPx = 4000
+// 16,500px is ~0.2% of the canvas height for 8M px, it corresponds to 500 rows at 33px height.
+// -> when scrolling with the mouse wheel, the change is local (< 16,500px)
+// -> when scrolling with the scrollbar (drag/drop), or with the mouse wheel for a long time (> 500 rows), the change is global (> 0.2% of the scrollbar height)
+// -> on mobile, swapping will also produce big jumps.
+// TODO(SL): should we detect touch events and adapt the thresholds on mobile?
+// TODO(SL): decrease/increase the threshold? make it configurable? or dependent on the number of rows, ie: a % of the scroll bar height?
+const largeScrollPx = 16_500
 
 interface ScrollModeVirtualProviderProps {
   children: ReactNode
@@ -94,11 +95,13 @@ function scrollReducer(state: ScrollState, action: ScrollAction) {
         // we can compute virtualScrollBase and one of the following conditions is met
         scale !== undefined && (
           // the last move is big
-          Math.abs(delta) > coarseScrollThresholdPx
+          Math.abs(delta) > largeScrollPx
           // the accumulated virtualScrollDelta is big
-          || Math.abs(virtualScrollDelta + delta) > coarseScrollThresholdPx
+          || Math.abs(virtualScrollDelta + delta) > largeScrollPx
           // scrollTop is 0 - cannot scroll back up, we need to reset to the first row
           || scrollTop === 0
+          // scrollTop is at the maximum - cannot scroll further down, we need to reset to the last row
+          || scrollTop >= scale.canvasHeight - scale.clientHeight
         )
       ) {
         // reset virtualScrollBase and virtualScrollDelta
@@ -106,7 +109,7 @@ function scrollReducer(state: ScrollState, action: ScrollAction) {
           ...state,
           isScrolling,
           scrollTop,
-          virtualScrollBase: scale.toVirtual(scrollTop),
+          virtualScrollBase: scale.toVirtual(Math.min(scrollTop, scale.canvasHeight - scale.clientHeight)),
           virtualScrollDelta: 0,
         }
       }
@@ -118,7 +121,6 @@ function scrollReducer(state: ScrollState, action: ScrollAction) {
         scrollTop,
         virtualScrollDelta: virtualScrollDelta + delta,
       }
-      // TODO(SL): adjust at the end to avoid white space after the last row
     }
     case 'ADD_DELTA':
       return {
@@ -257,8 +259,8 @@ export function ScrollModeVirtualProvider({ children, canvasHeight, headerHeight
     const delta = hiddenPixelsBefore > 0 ? -hiddenPixelsBefore : hiddenPixelsAfter
     const newVirtualScrollDelta = virtualScrollDelta + delta
     if (
-      Math.abs(newVirtualScrollDelta - virtualScrollDelta) > coarseScrollThresholdPx
-      || Math.abs(newVirtualScrollDelta) > coarseScrollThresholdPx
+      Math.abs(newVirtualScrollDelta - virtualScrollDelta) > largeScrollPx
+      || Math.abs(newVirtualScrollDelta) > largeScrollPx
     ) {
       // reset virtualScrollTop and scrollTop (coarse scroll)
       if (!scrollTo) {
