@@ -58,48 +58,41 @@ export function ScrollModeVirtualProvider({ children, canvasHeight, headerHeight
     throw new Error(`Invalid virtualCanvasHeight: ${virtualCanvasHeight} when clientHeight is ${clientHeight}. virtualCanvasHeight should be greater than clientHeight for virtual scrolling.`)
   }
 
-  // convert scrollTop (in canvas coordinates, between 0px and canvasHeight - clientHeight)
-  // to virtualScrollTop (in virtual canvas coordinates, between 0px and headerHeight + numRows * rowHeight - clientHeight)
-  const toVirtualScrollTop = useMemo(() => {
+  const scale = useMemo(() => {
     if (clientHeight === undefined) {
       return undefined
     }
-    return (scrollTop: number) => {
-      return scrollTop * (virtualCanvasHeight - clientHeight) / (canvasHeight - clientHeight)
+    const factor = (virtualCanvasHeight - clientHeight) / (canvasHeight - clientHeight)
+    return {
+      toVirtual: (scrollTop: number) => {
+        return scrollTop * factor
+      },
+      fromVirtual: (virtualScrollTop: number) => {
+        return virtualScrollTop / factor
+      },
     }
   }, [virtualCanvasHeight, clientHeight, canvasHeight])
 
-  // convert virtualScrollTop (in virtual canvas coordinates, between 0px and headerHeight + numRows * rowHeight - clientHeight)
-  // to scrollTop (in canvas coordinates, between 0px and canvasHeight - clientHeight)
-  const toScrollTop = useMemo(() => {
-    if (clientHeight === undefined) {
-      return undefined
-    }
-    return (virtualScrollTop: number) => {
-      return virtualScrollTop * (canvasHeight - clientHeight) / (virtualCanvasHeight - clientHeight)
-    }
-  }, [canvasHeight, clientHeight, virtualCanvasHeight])
-
-  if (toScrollTop && toVirtualScrollTop && scrollTop !== undefined) {
+  if (scale && scrollTop !== undefined) {
     if (virtualScrollTop === undefined) {
       // initialize virtualScrollTop
-      setVirtualScrollTop(toVirtualScrollTop(scrollTop))
+      setVirtualScrollTop(scale.toVirtual(scrollTop))
     } else {
       // scrollTop has a limited precision (1px, or subpixel on some browsers) and is not predictable exactly, in particular when used with zooming.
       // The browser might also scroll slightly when focusing an element.
       // virtualScrollTop is decimal, computed for the virtual canvas, and updated by user action only when scrollTop changes significantly.
-      const expectedScrollTop = toScrollTop(virtualScrollTop)
+      const expectedScrollTop = scale.fromVirtual(virtualScrollTop)
       const differencePx = scrollTop - expectedScrollTop
 
       if (Math.abs(differencePx) > coarseScrollThresholdPx) {
         // scrollTop changed significantly, it controls the position (coarse scroll)
-        setVirtualScrollTop(toVirtualScrollTop(scrollTop))
+        setVirtualScrollTop(scale.toVirtual(scrollTop))
       } else if (Math.abs(differencePx) > fineScrollThresholdPx) {
         // scrollTop changed slightly, adapt both scrollTop and virtualScrollTop
         // virtualScrollTop controls the position (fine scroll)
         // The difference is used to adjust virtualScrollTop accordingly
         const newVirtualScrollTop = virtualScrollTop + differencePx
-        const newExpectedScrollTop = toScrollTop(newVirtualScrollTop)
+        const newExpectedScrollTop = scale.fromVirtual(newVirtualScrollTop)
 
         if (scrollTo === undefined) {
           console.warn('scrollTo function is not available. Cannot adjust scrollTop.')
@@ -202,7 +195,7 @@ export function ScrollModeVirtualProvider({ children, canvasHeight, headerHeight
       console.warn('scrollTo function is not available. Cannot scroll to row.')
       return
     }
-    if (!toScrollTop || clientHeight === undefined || virtualScrollTop === undefined) {
+    if (!scale || clientHeight === undefined || virtualScrollTop === undefined) {
       return
     }
 
@@ -236,8 +229,8 @@ export function ScrollModeVirtualProvider({ children, canvasHeight, headerHeight
 
     const tolerancePixels = 1
 
-    const currentScrollTop = toScrollTop(virtualScrollTop)
-    const newScrollTop = toScrollTop(newVirtualScrollTop)
+    const currentScrollTop = scale.fromVirtual(virtualScrollTop)
+    const newScrollTop = scale.fromVirtual(newVirtualScrollTop)
     if (Math.abs(newScrollTop - currentScrollTop) > tolerancePixels) {
       // Ensure the new scrollTop is within bounds
       if (newScrollTop < 0 || newScrollTop > canvasHeight - clientHeight) {
@@ -253,7 +246,7 @@ export function ScrollModeVirtualProvider({ children, canvasHeight, headerHeight
     } else {
       setIsScrolling(false)
     }
-  }, [numRows, scrollTo, virtualScrollTop, headerHeight, clientHeight, toScrollTop, canvasHeight])
+  }, [numRows, scrollTo, virtualScrollTop, headerHeight, clientHeight, scale, canvasHeight])
 
   const value = useMemo(() => {
     return {
