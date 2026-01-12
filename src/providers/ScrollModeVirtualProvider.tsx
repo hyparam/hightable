@@ -42,6 +42,7 @@ type ScrollAction
     | { type: 'SCROLL_TO', scrollTop: number, virtualScrollTop: number }
     | { type: 'ADD_DELTA', delta: number }
 
+// TODO(SL): export the function and test it
 function scrollReducer(state: ScrollState, action: ScrollAction) {
   switch (action.type) {
     case 'SCROLL_TO':
@@ -150,6 +151,95 @@ function scrollReducer(state: ScrollState, action: ScrollAction) {
         scale,
       }
     }
+  }
+}
+
+/* Compute the derived values */
+// TODO(SL): export the function and test it
+function computeDerivedValues({ scale, scrollTop, virtualScrollBase, virtualScrollDelta, numRows, headerHeight, padding }: Omit<ScrollState, 'isScrolling'> & { numRows: number, headerHeight: number, padding: number }): {
+  sliceTop?: number | undefined
+  visibleRowsStart?: number | undefined
+  visibleRowsEnd?: number | undefined
+  renderedRowsStart?: number | undefined
+  renderedRowsEnd?: number | undefined
+} {
+  if (virtualScrollBase === undefined) {
+    return {}
+  }
+  const virtualScrollTop = virtualScrollBase + virtualScrollDelta
+
+  // special case: is the virtual scroll position in the header?
+  const isInHeader = numRows === 0 || virtualScrollTop < headerHeight
+
+  // First visible row. It can be the header row (0).
+  const visibleRowsStart = isInHeader
+    ? 0
+    : Math.max(0,
+        Math.min(numRows - 1,
+          Math.floor((virtualScrollTop - headerHeight) / rowHeight)
+        )
+      )
+  if (isNaN(visibleRowsStart)) throw new Error(`invalid start row ${visibleRowsStart}`)
+  const renderedRowsStart = Math.max(0, visibleRowsStart - padding)
+
+  // hidden pixels in the first visible row, or header
+  const hiddenPixelsBefore = isInHeader
+    ? virtualScrollTop
+    : virtualScrollTop - headerHeight - visibleRowsStart * rowHeight
+
+  if (scale?.clientHeight === undefined) {
+    return {
+      visibleRowsStart,
+      renderedRowsStart,
+    }
+  }
+
+  // Last visible row
+  const visibleRowsEnd = Math.max(visibleRowsStart,
+    Math.min(numRows - 1,
+      Math.floor((virtualScrollTop + scale.clientHeight - headerHeight) / rowHeight)
+    )
+  ) + 1 // end is exclusive
+  if (isNaN(visibleRowsEnd)) throw new Error(`invalid end row ${visibleRowsEnd}`)
+  const renderedRowsEnd = Math.min(numRows, visibleRowsEnd + padding)
+  if (renderedRowsEnd - renderedRowsStart > 1000) throw new Error(`attempted to render too many rows ${renderedRowsEnd - renderedRowsStart}`)
+
+  // Uncomment if needed
+  // const hiddenPixelsAfter = headerHeight + visibleRowsEnd * rowHeight - (virtualScrollTop + scale.clientHeight)
+
+  if (scrollTop === undefined) {
+    return {
+      visibleRowsStart,
+      visibleRowsEnd,
+      renderedRowsStart,
+      renderedRowsEnd,
+    }
+  }
+
+  // Offset of the first row in the canvas (sliceTop)
+
+  // Y-offset of the first visible data row in the full scrollable canvas,
+  // i.e. the scroll position minus the number of hidden pixels for that row.
+  const firstVisibleRowTop = scrollTop - hiddenPixelsBefore
+  // Number of "padding" rows that we render above the first visible row
+  const previousPaddingRows = visibleRowsStart - renderedRowsStart
+  // When the scroll position is still within the header, the first visible
+  // data row starts right after the header. Encode that as 0/1 so we can
+  // subtract a single headerHeight when we are in the body.
+  const headerRow = isInHeader ? 0 : 1
+  // The top of the rendered slice in canvas coordinates:
+  // - start from the top of the first visible row
+  // - subtract the header height (once) when we are below the header
+  // - shift up by the number of padding rows times the row height so that
+  //   those extra rows are also included in the rendered slice.
+  const sliceTop = firstVisibleRowTop - headerRow * headerHeight - previousPaddingRows * rowHeight
+
+  return {
+    sliceTop,
+    visibleRowsStart,
+    visibleRowsEnd,
+    renderedRowsStart,
+    renderedRowsEnd,
   }
 }
 
@@ -278,109 +368,26 @@ export function ScrollModeVirtualProvider({ children, canvasHeight, headerHeight
     }
   }, [numRows, scrollTo, virtualScrollBase, virtualScrollDelta, scrollTop, headerHeight, scale])
 
-  /* Compute the derived values */
-
-  const virtualScrollTop = useMemo(() => {
-    if (virtualScrollBase === undefined) {
-      return undefined
-    }
-    return virtualScrollBase + virtualScrollDelta
-  }, [virtualScrollBase, virtualScrollDelta])
-
-  // special case: is the virtual scroll position in the header?
-  const isInHeader = useMemo(() => {
-    if (virtualScrollTop === undefined) {
-      return undefined
-    }
-    return numRows === 0 || virtualScrollTop < headerHeight
-  }, [numRows, virtualScrollTop, headerHeight])
-
-  // a. first visible row. It can be the header row (0).
-  const firstVisibleRow = useMemo(() => {
-    if (virtualScrollTop === undefined || isInHeader === undefined) {
-      return undefined
-    }
-    return isInHeader
-      ? 0
-      : Math.max(0,
-          Math.min(numRows - 1,
-            Math.floor((virtualScrollTop - headerHeight) / rowHeight)
-          )
-        )
-  }, [isInHeader, virtualScrollTop, headerHeight, numRows])
-
-  // hidden pixels in the first visible row, or header
-  const hiddenPixelsBefore = useMemo(() => {
-    if (virtualScrollTop === undefined || isInHeader === undefined || firstVisibleRow === undefined) {
-      return undefined
-    }
-    return isInHeader
-      ? virtualScrollTop
-      : virtualScrollTop - headerHeight - firstVisibleRow * rowHeight
-  }, [isInHeader, virtualScrollTop, headerHeight, firstVisibleRow])
-
-  // b. last visible row
-  const lastVisibleRow = useMemo(() => {
-    if (scale === undefined || virtualScrollTop === undefined || firstVisibleRow === undefined) {
-      return firstVisibleRow
-    }
-    return Math.max(firstVisibleRow,
-      Math.min(numRows - 1,
-        Math.floor((virtualScrollTop + scale.clientHeight - headerHeight) / rowHeight)
-      )
-    )
-  }, [firstVisibleRow, numRows, virtualScrollTop, scale, headerHeight])
-
-  // Uncomment if needed
-  // const hiddenPixelsAfter = headerHeight + (lastVisibleRow + 1) * rowHeight - (virtualScrollTop + scale.clientHeight)
-
-  const visibleRowsStart = firstVisibleRow
-  if (visibleRowsStart !== undefined && isNaN(visibleRowsStart)) throw new Error(`invalid start row ${visibleRowsStart}`)
-  const visibleRowsEnd = lastVisibleRow === undefined ? undefined : lastVisibleRow + 1 // end is exclusive
-  if (visibleRowsEnd !== undefined && isNaN(visibleRowsEnd)) throw new Error(`invalid end row ${visibleRowsEnd}`)
-  if (visibleRowsEnd !== undefined && visibleRowsStart !== undefined && visibleRowsEnd - visibleRowsStart > 1000) throw new Error(`attempted to render too many rows ${visibleRowsEnd - visibleRowsStart}`)
-
-  // e. offset of the first row in the canvas
-  const renderedRowsStart = useMemo(() => visibleRowsStart === undefined ? undefined : Math.max(0, visibleRowsStart - padding), [visibleRowsStart, padding])
-  const renderedRowsEnd = useMemo(() => visibleRowsEnd === undefined ? undefined : Math.min(numRows, visibleRowsEnd + padding), [visibleRowsEnd, numRows, padding])
-
-  const sliceTop = useMemo(() => {
-    if (visibleRowsStart === undefined || renderedRowsStart === undefined || isInHeader === undefined || hiddenPixelsBefore === undefined || scrollTop === undefined) {
-      return undefined
-    }
-    // Y-offset of the first visible data row in the full scrollable canvas,
-    // i.e. the scroll position minus the number of hidden pixels for that row.
-    const firstVisibleRowTop = scrollTop - hiddenPixelsBefore
-    // Number of "padding" rows that we render above the first visible row
-    const previousPaddingRows = visibleRowsStart - renderedRowsStart
-    // When the scroll position is still within the header, the first visible
-    // data row starts right after the header. Encode that as 0/1 so we can
-    // subtract a single headerHeight when we are in the body.
-    const headerRow = isInHeader ? 0 : 1
-    // The top of the rendered slice in canvas coordinates:
-    // - start from the top of the first visible row
-    // - subtract the header height (once) when we are below the header
-    // - shift up by the number of padding rows times the row height so that
-    //   those extra rows are also included in the rendered slice.
-    return firstVisibleRowTop - headerRow * headerHeight - previousPaddingRows * rowHeight
-  }, [visibleRowsStart, renderedRowsStart, isInHeader, headerHeight, scrollTop, hiddenPixelsBefore])
-
   const value = useMemo(() => {
     return {
       scrollMode: 'virtual' as const,
       canvasHeight,
-      sliceTop,
       isScrolling,
-      visibleRowsStart,
-      visibleRowsEnd,
-      renderedRowsStart,
-      renderedRowsEnd,
       setClientHeight,
       setScrollTop,
       scrollRowIntoView,
       setScrollTo,
+      ...computeDerivedValues({
+        scale,
+        scrollTop,
+        virtualScrollBase,
+        virtualScrollDelta,
+        numRows,
+        headerHeight,
+        padding,
+      }),
     }
-  }, [canvasHeight, renderedRowsEnd, renderedRowsStart, sliceTop, isScrolling, visibleRowsEnd, visibleRowsStart, setClientHeight, setScrollTop, scrollRowIntoView])
+  }, [scale, scrollTop, virtualScrollBase, virtualScrollDelta, numRows, headerHeight, padding, canvasHeight, isScrolling, setClientHeight, setScrollTop, scrollRowIntoView])
 
   return (
     <ScrollModeContext.Provider value={value}>
