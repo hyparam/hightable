@@ -43,6 +43,12 @@ type ScrollAction
     | { type: 'SCROLL_TO', scrollTop: number, virtualScrollTop: number }
     | { type: 'SET_SCALE', scale: Scale | undefined }
 
+// TODO(SL): move logic to the reducer, using the scale + add tests
+// TODO(SL): handle edge cases (scrollTop = 0 but first row is not 0 -> cannot scroll back)
+// TODO(SL): lift this state up, above all the providers?
+// Note that scrollTop can be negative, or beyond canvasHeight - clientHeight, depending on the browser,
+// the zoom level, the scroll behavior or the margin/padding of the container.
+// TODO(SL): handle these cases
 function scrollReducer(state: ScrollState, action: ScrollAction) {
   switch (action.type) {
     case 'SCROLL_TO':
@@ -54,12 +60,14 @@ function scrollReducer(state: ScrollState, action: ScrollAction) {
         isScrolling: true,
       }
     case 'ON_SCROLL':
+      // TODO(SL): check if scrollTop changed significantly
       return {
         ...state,
         scrollTop: action.scrollTop,
         isScrolling: false,
       }
     case 'SET_VIRTUAL_SCROLL_TOP':
+      // TODO(SL): should disappear, and moved as a condition inside ON_SCROLL
       return {
         ...state,
         virtualScrollTop: action.virtualScrollTop,
@@ -104,28 +112,26 @@ export function ScrollModeVirtualProvider({ children, canvasHeight, headerHeight
     _setClientHeight(clientHeight === 0 ? 100 : clientHeight)
   }, [])
 
-  // safety checks
-  if (headerHeight <= 0) {
-    throw new Error(`Invalid headerHeight: ${headerHeight}. It should be a positive number.`)
-  }
-  if (canvasHeight <= 0) {
-    throw new Error(`Invalid canvasHeight: ${canvasHeight}. It should be a positive number.`)
-  }
-  if (numRows < 0 || !Number.isInteger(numRows)) {
-    throw new Error(`Invalid numRows: ${numRows}. It should be a non-negative integer.`)
-  }
-
   const currentScale = useMemo(() => {
     const virtualCanvasHeight = headerHeight + numRows * rowHeight
-    // Note that scrollTop can be negative, or beyond canvasHeight - clientHeight, depending on the browser,
-    // the zoom level, the scroll behavior or the margin/padding of the container.
-    // TODO(SL): handle these cases
+
+    // safety checks
+    if (headerHeight <= 0) {
+      throw new Error(`Invalid headerHeight: ${headerHeight}. It should be a positive number.`)
+    }
+    if (canvasHeight <= 0) {
+      throw new Error(`Invalid canvasHeight: ${canvasHeight}. It should be a positive number.`)
+    }
+    if (numRows < 0 || !Number.isInteger(numRows)) {
+      throw new Error(`Invalid numRows: ${numRows}. It should be a non-negative integer.`)
+    }
     if (clientHeight !== undefined && canvasHeight <= clientHeight) {
       throw new Error(`Invalid canvasHeight: ${canvasHeight} when clientHeight is ${clientHeight}. canvasHeight should be greater than clientHeight for virtual scrolling.`)
     }
     if (clientHeight !== undefined && virtualCanvasHeight <= clientHeight) {
       throw new Error(`Invalid virtualCanvasHeight: ${virtualCanvasHeight} when clientHeight is ${clientHeight}. virtualCanvasHeight should be greater than clientHeight for virtual scrolling.`)
     }
+
     if (clientHeight === undefined) {
       return undefined
     }
@@ -144,9 +150,8 @@ export function ScrollModeVirtualProvider({ children, canvasHeight, headerHeight
     }
   }, [clientHeight, canvasHeight, headerHeight, numRows])
 
-  // ideally: call SET_SCALE from an event listener (if num_rows changes, or on resize if the clientHeight changes)
+  // ideally: call SET_SCALE from an event listener (if num_rows changes, or on resize if clientHeight or headerHeight change)
   // not during rendering
-  // ie: move this to a useEffect, or lift the scale management up outside of this provider
   if (currentScale !== scale) {
     dispatch({ type: 'SET_SCALE', scale: currentScale })
   }
@@ -222,17 +227,17 @@ export function ScrollModeVirtualProvider({ children, canvasHeight, headerHeight
 
   // b. last visible row (s, e)
   const lastVisibleRow = useMemo(() => {
-    if (clientHeight === undefined || virtualScrollTop === undefined || firstVisibleRow === undefined) {
+    if (scale === undefined || virtualScrollTop === undefined || firstVisibleRow === undefined) {
       return firstVisibleRow
     }
     return Math.max(firstVisibleRow,
       Math.min(numRows - 1,
-        Math.floor((virtualScrollTop + clientHeight - headerHeight) / rowHeight)
+        Math.floor((virtualScrollTop + scale.clientHeight - headerHeight) / rowHeight)
       )
     )
-  }, [firstVisibleRow, numRows, virtualScrollTop, clientHeight, headerHeight])
+  }, [firstVisibleRow, numRows, virtualScrollTop, scale, headerHeight])
 
-  // const hiddenPixelsAfter = headerHeight + (lastVisibleRow + 1) * rowHeight - (virtualScrollTop + clientHeight)
+  // const hiddenPixelsAfter = headerHeight + (lastVisibleRow + 1) * rowHeight - (virtualScrollTop + scale.clientHeight)
 
   const visibleRowsStart = firstVisibleRow
   if (visibleRowsStart !== undefined && isNaN(visibleRowsStart)) throw new Error(`invalid start row ${visibleRowsStart}`)
@@ -266,7 +271,7 @@ export function ScrollModeVirtualProvider({ children, canvasHeight, headerHeight
     if (rowIndex < 1 || rowIndex > numRows + 1 || !Number.isInteger(rowIndex)) {
       throw new Error(`Invalid row index: ${rowIndex}. It should be an integer between 1 and ${numRows + 1}.`)
     }
-    if (!scale || clientHeight === undefined || _virtualScrollTop === undefined || scrollTop === undefined) {
+    if (!scale || _virtualScrollTop === undefined || scrollTop === undefined) {
       return
     }
 
@@ -283,7 +288,7 @@ export function ScrollModeVirtualProvider({ children, canvasHeight, headerHeight
     // - the row end is after virtualScrollTop + viewportHeight: scroll to snap its end with that value
     const virtualScrollTop = _virtualScrollTop + scrollDelta
     const hiddenPixelsBefore = virtualScrollTop + headerHeight - (headerHeight + row * rowHeight)
-    const hiddenPixelsAfter = headerHeight + row * rowHeight + rowHeight - virtualScrollTop - clientHeight
+    const hiddenPixelsAfter = headerHeight + row * rowHeight + rowHeight - virtualScrollTop - scale.clientHeight
 
     if (hiddenPixelsBefore <= 0 && hiddenPixelsAfter <= 0) {
       // fully visible, do nothing
@@ -311,7 +316,7 @@ export function ScrollModeVirtualProvider({ children, canvasHeight, headerHeight
       // move slightly: keep scrollTop and virtualScrollTop untouched, compensate with scrollDelta
       dispatch({ type: 'ADJUST_SCROLL_DELTA', scrollDelta: newScrollDelta })
     }
-  }, [numRows, scrollTo, _virtualScrollTop, scrollDelta, scrollTop, headerHeight, clientHeight, scale])
+  }, [numRows, scrollTo, _virtualScrollTop, scrollDelta, scrollTop, headerHeight, scale])
 
   const value = useMemo(() => {
     return {
