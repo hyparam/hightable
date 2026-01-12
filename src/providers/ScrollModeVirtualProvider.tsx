@@ -99,7 +99,7 @@ function scrollReducer(state: ScrollState, action: ScrollAction) {
           // the accumulated virtualScrollDelta is big
           || Math.abs(virtualScrollDelta + delta) > largeScrollPx
           // scrollTop is 0 - cannot scroll back up, we need to reset to the first row
-          || scrollTop === 0
+          || scrollTop <= 0
           // scrollTop is at the maximum - cannot scroll further down, we need to reset to the last row
           || scrollTop >= scale.canvasHeight - scale.clientHeight
         )
@@ -254,21 +254,21 @@ export function ScrollModeVirtualProvider({ children, canvasHeight, headerHeight
       // fully visible, do nothing
       return
     }
+    // else, it's partly or totally hidden: update the scroll position
 
-    // partly or totally hidden: update the scroll position
     const delta = hiddenPixelsBefore > 0 ? -hiddenPixelsBefore : hiddenPixelsAfter
-    const newVirtualScrollDelta = virtualScrollDelta + delta
     if (
-      Math.abs(newVirtualScrollDelta - virtualScrollDelta) > largeScrollPx
-      || Math.abs(newVirtualScrollDelta) > largeScrollPx
+      scrollTo && (
+        // big jump
+        Math.abs(delta) > largeScrollPx
+        // or accumulated delta is big
+        || Math.abs(virtualScrollDelta + delta) > largeScrollPx
+      )
     ) {
-      // reset virtualScrollTop and scrollTop (coarse scroll)
-      if (!scrollTo) {
-        console.warn('scrollTo function is not available. Cannot scroll to row.')
-        return
-      }
-      const newVirtualScrollTop = virtualScrollBase + newVirtualScrollDelta
+      // scroll to the new position, and update the state optimistically
+      const newVirtualScrollTop = virtualScrollTop + delta
       const newScrollTop = scale.fromVirtual(newVirtualScrollTop)
+      // side effect: scroll the viewport
       scrollTo({ top: newScrollTop, behavior: 'instant' })
       // anticipate the scroll position change
       dispatch({ type: 'SCROLL_TO', scrollTop: newScrollTop, virtualScrollTop: newVirtualScrollTop })
@@ -278,7 +278,7 @@ export function ScrollModeVirtualProvider({ children, canvasHeight, headerHeight
     }
   }, [numRows, scrollTo, virtualScrollBase, virtualScrollDelta, scrollTop, headerHeight, scale])
 
-  // Compute the derived values
+  /* Compute the derived values */
 
   const virtualScrollTop = useMemo(() => {
     if (virtualScrollBase === undefined) {
