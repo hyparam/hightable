@@ -61,7 +61,7 @@ function scrollReducer(state: ScrollState, action: ScrollAction) {
 
       if (virtualScrollBase === undefined) {
         if (!scale) {
-        // cannot compute virtualScrollBase without scale
+          // cannot compute virtualScrollBase without scale
           return {
             ...state,
             isScrolling,
@@ -79,7 +79,7 @@ function scrollReducer(state: ScrollState, action: ScrollAction) {
         }
       }
 
-      if (!oldScrollTop) {
+      if (oldScrollTop === undefined) {
         // cannot compute a delta without oldScrollTop
         return {
           ...state,
@@ -225,7 +225,7 @@ export function ScrollModeVirtualProvider({ children, canvasHeight, headerHeight
    * - row 1: header
    * - row 2: first data row
    * - row numRows + 1: last data row
-   * @param row The row to scroll to (same semantic as aria-rowindex: 1-based, includes header)
+   * @param rowIndex The row to scroll to (same semantic as aria-rowindex: 1-based, includes header)
    */
   const scrollRowIntoView = useCallback(({ rowIndex }: { rowIndex: number }) => {
     if (rowIndex < 1 || rowIndex > numRows + 1 || !Number.isInteger(rowIndex)) {
@@ -348,9 +348,20 @@ export function ScrollModeVirtualProvider({ children, canvasHeight, headerHeight
     if (visibleRowsStart === undefined || renderedRowsStart === undefined || isInHeader === undefined || hiddenPixelsBefore === undefined || scrollTop === undefined) {
       return undefined
     }
+    // Y-offset of the first visible data row in the full scrollable canvas,
+    // i.e. the scroll position minus the number of hidden pixels for that row.
     const firstVisibleRowTop = scrollTop - hiddenPixelsBefore
+    // Number of "padding" rows that we render above the first visible row
     const previousPaddingRows = visibleRowsStart - renderedRowsStart
+    // When the scroll position is still within the header, the first visible
+    // data row starts right after the header. Encode that as 0/1 so we can
+    // subtract a single headerHeight when we are in the body.
     const headerRow = isInHeader ? 0 : 1
+    // The top of the rendered slice in canvas coordinates:
+    // - start from the top of the first visible row
+    // - subtract the header height (once) when we are below the header
+    // - shift up by the number of padding rows times the row height so that
+    //   those extra rows are also included in the rendered slice.
     return firstVisibleRowTop - headerRow * headerHeight - previousPaddingRows * rowHeight
   }, [visibleRowsStart, renderedRowsStart, isInHeader, headerHeight, scrollTop, hiddenPixelsBefore])
 
