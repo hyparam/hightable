@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## [0.25.2](https://github.com/hyparam/hightable/compare/v0.25.1...v0.25.2) - 2026-01-12
+
+### Fixed
+
+- remove the limit on maximum element height, introduced in v0.25.1, as it was showing an error instead of rendering the table, even with an imperfect scroll behavior ([#385](https://github.com/hyparam/hightable/pull/385)).
+
 ## [0.25.1](https://github.com/hyparam/hightable/compare/v0.25.0...v0.25.1) - 2026-01-08
 
 ### Added
