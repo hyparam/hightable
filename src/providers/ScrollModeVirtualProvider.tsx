@@ -217,81 +217,6 @@ export function ScrollModeVirtualProvider({ children, canvasHeight, headerHeight
     dispatch({ type: 'SET_SCALE', scale: currentScale })
   }
 
-  const virtualScrollTop = useMemo(() => {
-    if (virtualScrollBase === undefined) {
-      return undefined
-    }
-    return virtualScrollBase + virtualScrollDelta
-  }, [virtualScrollBase, virtualScrollDelta])
-
-  // Compute the derived values
-
-  // special cases
-  const isInHeader = useMemo(() => {
-    if (virtualScrollTop === undefined) {
-      return undefined
-    }
-    return numRows === 0 || virtualScrollTop < headerHeight
-  }, [numRows, virtualScrollTop, headerHeight])
-
-  // a. first visible row (r, d). It can be the header row (0).
-  const firstVisibleRow = useMemo(() => {
-    if (virtualScrollTop === undefined || isInHeader === undefined) {
-      return undefined
-    }
-    return isInHeader
-      ? 0
-      : Math.max(0,
-          Math.min(numRows - 1,
-            Math.floor((virtualScrollTop - headerHeight) / rowHeight)
-          )
-        )
-  }, [isInHeader, virtualScrollTop, headerHeight, numRows])
-
-  // hidden pixels in the first visible row, or header
-  const hiddenPixelsBefore = useMemo(() => {
-    if (virtualScrollTop === undefined || isInHeader === undefined || firstVisibleRow === undefined) {
-      return undefined
-    }
-    return isInHeader
-      ? virtualScrollTop
-      : virtualScrollTop - headerHeight - firstVisibleRow * rowHeight
-  }, [isInHeader, virtualScrollTop, headerHeight, firstVisibleRow])
-
-  // b. last visible row (s, e)
-  const lastVisibleRow = useMemo(() => {
-    if (scale === undefined || virtualScrollTop === undefined || firstVisibleRow === undefined) {
-      return firstVisibleRow
-    }
-    return Math.max(firstVisibleRow,
-      Math.min(numRows - 1,
-        Math.floor((virtualScrollTop + scale.clientHeight - headerHeight) / rowHeight)
-      )
-    )
-  }, [firstVisibleRow, numRows, virtualScrollTop, scale, headerHeight])
-
-  // const hiddenPixelsAfter = headerHeight + (lastVisibleRow + 1) * rowHeight - (virtualScrollTop + scale.clientHeight)
-
-  const visibleRowsStart = firstVisibleRow
-  if (visibleRowsStart !== undefined && isNaN(visibleRowsStart)) throw new Error(`invalid start row ${visibleRowsStart}`)
-  const visibleRowsEnd = lastVisibleRow === undefined ? undefined : lastVisibleRow + 1 // end is exclusive
-  if (visibleRowsEnd !== undefined && isNaN(visibleRowsEnd)) throw new Error(`invalid end row ${visibleRowsEnd}`)
-  if (visibleRowsEnd !== undefined && visibleRowsStart !== undefined && visibleRowsEnd - visibleRowsStart > 1000) throw new Error(`attempted to render too many rows ${visibleRowsEnd - visibleRowsStart}`)
-
-  // e. offset of the first row in the canvas (u)
-  const renderedRowsStart = useMemo(() => visibleRowsStart === undefined ? undefined : Math.max(0, visibleRowsStart - padding), [visibleRowsStart, padding])
-  const renderedRowsEnd = useMemo(() => visibleRowsEnd === undefined ? undefined : Math.min(numRows, visibleRowsEnd + padding), [visibleRowsEnd, numRows, padding])
-
-  const sliceTop = useMemo(() => {
-    if (visibleRowsStart === undefined || renderedRowsStart === undefined || isInHeader === undefined || hiddenPixelsBefore === undefined || scrollTop === undefined) {
-      return undefined
-    }
-    const firstVisibleRowTop = scrollTop - hiddenPixelsBefore
-    const previousPaddingRows = visibleRowsStart - renderedRowsStart
-    const headerRow = isInHeader ? 0 : 1
-    return firstVisibleRowTop - headerRow * headerHeight - previousPaddingRows * rowHeight
-  }, [visibleRowsStart, renderedRowsStart, isInHeader, headerHeight, scrollTop, hiddenPixelsBefore])
-
   /**
    * Programmatically scroll to a specific row if needed.
    * Beware:
@@ -350,6 +275,82 @@ export function ScrollModeVirtualProvider({ children, canvasHeight, headerHeight
       dispatch({ type: 'ADD_DELTA', delta })
     }
   }, [numRows, scrollTo, virtualScrollBase, virtualScrollDelta, scrollTop, headerHeight, scale])
+
+  // Compute the derived values
+
+  const virtualScrollTop = useMemo(() => {
+    if (virtualScrollBase === undefined) {
+      return undefined
+    }
+    return virtualScrollBase + virtualScrollDelta
+  }, [virtualScrollBase, virtualScrollDelta])
+
+  // special case: is the virtual scroll position in the header?
+  const isInHeader = useMemo(() => {
+    if (virtualScrollTop === undefined) {
+      return undefined
+    }
+    return numRows === 0 || virtualScrollTop < headerHeight
+  }, [numRows, virtualScrollTop, headerHeight])
+
+  // a. first visible row. It can be the header row (0).
+  const firstVisibleRow = useMemo(() => {
+    if (virtualScrollTop === undefined || isInHeader === undefined) {
+      return undefined
+    }
+    return isInHeader
+      ? 0
+      : Math.max(0,
+          Math.min(numRows - 1,
+            Math.floor((virtualScrollTop - headerHeight) / rowHeight)
+          )
+        )
+  }, [isInHeader, virtualScrollTop, headerHeight, numRows])
+
+  // hidden pixels in the first visible row, or header
+  const hiddenPixelsBefore = useMemo(() => {
+    if (virtualScrollTop === undefined || isInHeader === undefined || firstVisibleRow === undefined) {
+      return undefined
+    }
+    return isInHeader
+      ? virtualScrollTop
+      : virtualScrollTop - headerHeight - firstVisibleRow * rowHeight
+  }, [isInHeader, virtualScrollTop, headerHeight, firstVisibleRow])
+
+  // b. last visible row
+  const lastVisibleRow = useMemo(() => {
+    if (scale === undefined || virtualScrollTop === undefined || firstVisibleRow === undefined) {
+      return firstVisibleRow
+    }
+    return Math.max(firstVisibleRow,
+      Math.min(numRows - 1,
+        Math.floor((virtualScrollTop + scale.clientHeight - headerHeight) / rowHeight)
+      )
+    )
+  }, [firstVisibleRow, numRows, virtualScrollTop, scale, headerHeight])
+
+  // Uncomment if needed
+  // const hiddenPixelsAfter = headerHeight + (lastVisibleRow + 1) * rowHeight - (virtualScrollTop + scale.clientHeight)
+
+  const visibleRowsStart = firstVisibleRow
+  if (visibleRowsStart !== undefined && isNaN(visibleRowsStart)) throw new Error(`invalid start row ${visibleRowsStart}`)
+  const visibleRowsEnd = lastVisibleRow === undefined ? undefined : lastVisibleRow + 1 // end is exclusive
+  if (visibleRowsEnd !== undefined && isNaN(visibleRowsEnd)) throw new Error(`invalid end row ${visibleRowsEnd}`)
+  if (visibleRowsEnd !== undefined && visibleRowsStart !== undefined && visibleRowsEnd - visibleRowsStart > 1000) throw new Error(`attempted to render too many rows ${visibleRowsEnd - visibleRowsStart}`)
+
+  // e. offset of the first row in the canvas
+  const renderedRowsStart = useMemo(() => visibleRowsStart === undefined ? undefined : Math.max(0, visibleRowsStart - padding), [visibleRowsStart, padding])
+  const renderedRowsEnd = useMemo(() => visibleRowsEnd === undefined ? undefined : Math.min(numRows, visibleRowsEnd + padding), [visibleRowsEnd, numRows, padding])
+
+  const sliceTop = useMemo(() => {
+    if (visibleRowsStart === undefined || renderedRowsStart === undefined || isInHeader === undefined || hiddenPixelsBefore === undefined || scrollTop === undefined) {
+      return undefined
+    }
+    const firstVisibleRowTop = scrollTop - hiddenPixelsBefore
+    const previousPaddingRows = visibleRowsStart - renderedRowsStart
+    const headerRow = isInHeader ? 0 : 1
+    return firstVisibleRowTop - headerRow * headerHeight - previousPaddingRows * rowHeight
+  }, [visibleRowsStart, renderedRowsStart, isInHeader, headerHeight, scrollTop, hiddenPixelsBefore])
 
   const value = useMemo(() => {
     return {
