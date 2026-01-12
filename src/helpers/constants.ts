@@ -13,5 +13,4 @@ export const ariaOffset = 2 // 1-based index, +1 for the header
 
 // reference: https://meyerweb.com/eric/thoughts/2025/08/07/infinite-pixels/
 // it seems to be 17,895,700 in Firefox, 33,554,400 in Chrome and 33,554,428 in Safari
-// Disabled for now
-export const maxElementHeight = Infinity
+export const maxElementHeight = 8_000_000 // a safe maximum height for an element in the DOM
