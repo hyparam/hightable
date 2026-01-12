@@ -5,8 +5,9 @@ import { ariaOffset, rowHeight } from '../helpers/constants.js'
 
 // 4,000px is only 0.05% of the canvas height for 8 million rows
 // -> when scrolling with the mouse wheel, the change is local (< 4,000px)
-// -> when scrolling with the scrollbar (drag/drop), the change is global (> 0.05% of the scrollbar height)
+// -> when scrolling with the scrollbar (drag/drop), or with the mouse wheel for a long time, the change is global (> 0.05% of the scrollbar height)
 // -> on mobile, swapping will also produce big jumps. TODO(SL): should we detect touch events and adapt the thresholds?
+// TODO(SL): increase? make it configurable? or dependent on the number of rows, ie: a % of the scroll bar height?
 const coarseScrollThresholdPx = 4000
 
 interface ScrollModeVirtualProviderProps {
@@ -29,58 +30,51 @@ interface Scale {
 interface ScrollState {
   isScrolling: boolean
   scale: Scale | undefined
-  scrollDelta: number
   scrollTop: number | undefined
-  virtualScrollTop: number | undefined
+  virtualScrollBase: number | undefined
+  virtualScrollDelta: number
 }
 
 type ScrollAction
-  = | { type: 'ON_SCROLL', scrollTop: number }
-    | { type: 'ADJUST_SCROLL_DELTA', scrollDelta: number }
+  = | { type: 'SET_SCALE', scale: Scale }
+    | { type: 'ON_SCROLL', scrollTop: number }
     | { type: 'SCROLL_TO', scrollTop: number, virtualScrollTop: number }
-    | { type: 'SET_SCALE', scale: Scale }
+    | { type: 'ADD_DELTA', delta: number }
 
-// TODO(SL): move logic to the reducer, using the scale + add tests
-// TODO(SL): handle edge cases (scrollTop = 0 but first row is not 0 -> cannot scroll back)
-// TODO(SL): lift this state up, above all the providers?
-// Note that scrollTop can be negative, or beyond canvasHeight - clientHeight, depending on the browser,
-// the zoom level, the scroll behavior or the margin/padding of the container.
-// TODO(SL): handle these cases
 function scrollReducer(state: ScrollState, action: ScrollAction) {
   switch (action.type) {
     case 'SCROLL_TO':
       return {
         ...state,
-        scrollTop: action.scrollTop,
-        virtualScrollTop: action.virtualScrollTop,
-        scrollDelta: 0,
         isScrolling: true,
+        scrollTop: action.scrollTop,
+        virtualScrollBase: action.virtualScrollTop,
+        virtualScrollDelta: 0,
       }
     case 'ON_SCROLL': {
       const isScrolling = false
       const { scrollTop } = action
 
-      // if virtualScrollTop is undefined, we initialize it here
-      const { scale, scrollDelta, virtualScrollTop, scrollTop: oldScrollTop } = state
+      // if virtualScrollBase is undefined, we initialize it here
+      const { scale, virtualScrollDelta, virtualScrollBase, scrollTop: oldScrollTop } = state
 
-      if (virtualScrollTop === undefined) {
+      if (virtualScrollBase === undefined) {
         if (!scale) {
-        // cannot compute virtualScrollTop without scale
+        // cannot compute virtualScrollBase without scale
           return {
             ...state,
-            scrollTop,
             isScrolling,
+            scrollTop,
           }
         }
 
-        // initialize virtualScrollTop
-        // we assume that scrollDelta is valid (surely 0 at this point)
-        const initialVirtualScrollTop = scale.toVirtual(scrollTop) - scrollDelta
+        // initialize virtualScrollBase
         return {
           ...state,
-          virtualScrollTop: initialVirtualScrollTop,
-          scrollTop,
           isScrolling,
+          scrollTop,
+          // we assume that virtualScrollDelta is valid (surely 0 at this point)
+          virtualScrollBase: scale.toVirtual(scrollTop) - virtualScrollDelta,
         }
       }
 
@@ -88,8 +82,8 @@ function scrollReducer(state: ScrollState, action: ScrollAction) {
         // cannot compute a delta without oldScrollTop
         return {
           ...state,
-          scrollTop,
           isScrolling,
+          scrollTop,
         }
       }
 
@@ -97,57 +91,57 @@ function scrollReducer(state: ScrollState, action: ScrollAction) {
 
       // Do a global jump (reset local scroll based on the new scrollTop value) if
       if (
-        // we can compute virtualScrollTop and one of the following conditions is met
+        // we can compute virtualScrollBase and one of the following conditions is met
         scale !== undefined && (
           // the last move is big
           Math.abs(delta) > coarseScrollThresholdPx
-          // the accumulated scrollDelta is big
-          || Math.abs(scrollDelta + delta) > coarseScrollThresholdPx
+          // the accumulated virtualScrollDelta is big
+          || Math.abs(virtualScrollDelta + delta) > coarseScrollThresholdPx
           // scrollTop is 0 - cannot scroll back up, we need to reset to the first row
           || scrollTop === 0
         )
       ) {
-        // reset virtualScrollTop and scrollDelta
+        // reset virtualScrollBase and virtualScrollDelta
         return {
           ...state,
-          virtualScrollTop: scale.toVirtual(scrollTop),
-          scrollTop,
-          scrollDelta: 0,
           isScrolling,
+          scrollTop,
+          virtualScrollBase: scale.toVirtual(scrollTop),
+          virtualScrollDelta: 0,
         }
       }
 
-      // Adjust scrollDelta
+      // Adjust virtualScrollDelta
       return {
         ...state,
-        scrollDelta: scrollDelta + delta,
-        scrollTop,
         isScrolling,
+        scrollTop,
+        virtualScrollDelta: virtualScrollDelta + delta,
       }
       // TODO(SL): adjust at the end to avoid white space after the last row
     }
-    case 'ADJUST_SCROLL_DELTA':
+    case 'ADD_DELTA':
       return {
         ...state,
-        scrollDelta: action.scrollDelta,
+        virtualScrollDelta: state.virtualScrollDelta + action.delta,
       }
     case 'SET_SCALE': {
       const { scale } = action
-      const { virtualScrollTop, scrollDelta, scrollTop } = state
+      const { virtualScrollBase, virtualScrollDelta, scrollTop } = state
 
-      // initialize virtualScrollTop if needed and possible
-      if (virtualScrollTop === undefined && scrollTop !== undefined) {
-        // we assume that scrollDelta is valid (surely 0 at this point)
-        const initialVirtualScrollTop = scale.toVirtual(scrollTop) - scrollDelta
+      // initialize virtualScrollBase if needed and possible
+      if (virtualScrollBase === undefined && scrollTop !== undefined) {
         return {
           ...state,
           scale,
-          virtualScrollTop: initialVirtualScrollTop,
+          // we assume that virtualScrollDelta is valid (surely 0 at this point)
+          virtualScrollBase: scale.toVirtual(scrollTop) - virtualScrollDelta,
         }
       }
 
-      // TODO(SL): if state.scale already existed, i.e. if some dimensions changed, update the state accordingly (virtualScrollTop, scrollDelta)
-      // trying to keep the same view
+      // TODO(SL): if state.scale already existed, i.e. if some dimensions changed, update the state accordingly (virtualScrollBase, virtualScrollDelta)
+      // trying to keep the same view?
+      // The most impactful change could be if the number of rows changed drastically.
 
       return {
         ...state,
@@ -160,13 +154,13 @@ function scrollReducer(state: ScrollState, action: ScrollAction) {
 const initialScrollState: ScrollState = {
   isScrolling: false,
   scale: undefined,
-  scrollDelta: 0,
   scrollTop: undefined,
-  virtualScrollTop: undefined,
+  virtualScrollBase: undefined,
+  virtualScrollDelta: 0,
 }
 
 export function ScrollModeVirtualProvider({ children, canvasHeight, headerHeight, numRows, padding }: ScrollModeVirtualProviderProps) {
-  const [{ scale, scrollTop, virtualScrollTop: _virtualScrollTop, isScrolling, scrollDelta }, dispatch] = useReducer(scrollReducer, initialScrollState)
+  const [{ scale, scrollTop, virtualScrollBase, isScrolling, virtualScrollDelta }, dispatch] = useReducer(scrollReducer, initialScrollState)
   const [scrollTo, setScrollTo] = useState<HTMLElement['scrollTo'] | undefined>(undefined)
   const setScrollTop = useCallback((scrollTop: number) => {
     dispatch({ type: 'ON_SCROLL', scrollTop })
@@ -224,11 +218,11 @@ export function ScrollModeVirtualProvider({ children, canvasHeight, headerHeight
   }
 
   const virtualScrollTop = useMemo(() => {
-    if (_virtualScrollTop === undefined) {
+    if (virtualScrollBase === undefined) {
       return undefined
     }
-    return _virtualScrollTop + scrollDelta
-  }, [_virtualScrollTop, scrollDelta])
+    return virtualScrollBase + virtualScrollDelta
+  }, [virtualScrollBase, virtualScrollDelta])
 
   // Compute the derived values
 
@@ -310,7 +304,7 @@ export function ScrollModeVirtualProvider({ children, canvasHeight, headerHeight
     if (rowIndex < 1 || rowIndex > numRows + 1 || !Number.isInteger(rowIndex)) {
       throw new Error(`Invalid row index: ${rowIndex}. It should be an integer between 1 and ${numRows + 1}.`)
     }
-    if (!scale || _virtualScrollTop === undefined || scrollTop === undefined) {
+    if (!scale || virtualScrollBase === undefined || scrollTop === undefined) {
       return
     }
 
@@ -325,7 +319,7 @@ export function ScrollModeVirtualProvider({ children, canvasHeight, headerHeight
     // - the row is fully visible: do nothing
     // - the row start is before virtualScrollTop + headerHeight: scroll to snap its start with that value
     // - the row end is after virtualScrollTop + viewportHeight: scroll to snap its end with that value
-    const virtualScrollTop = _virtualScrollTop + scrollDelta
+    const virtualScrollTop = virtualScrollBase + virtualScrollDelta
     const hiddenPixelsBefore = virtualScrollTop + headerHeight - (headerHeight + row * rowHeight)
     const hiddenPixelsAfter = headerHeight + row * rowHeight + rowHeight - virtualScrollTop - scale.clientHeight
 
@@ -336,26 +330,26 @@ export function ScrollModeVirtualProvider({ children, canvasHeight, headerHeight
 
     // partly or totally hidden: update the scroll position
     const delta = hiddenPixelsBefore > 0 ? -hiddenPixelsBefore : hiddenPixelsAfter
-    const newScrollDelta = scrollDelta + delta
+    const newVirtualScrollDelta = virtualScrollDelta + delta
     if (
-      Math.abs(newScrollDelta - scrollDelta) > coarseScrollThresholdPx
-      || Math.abs(newScrollDelta) > coarseScrollThresholdPx
+      Math.abs(newVirtualScrollDelta - virtualScrollDelta) > coarseScrollThresholdPx
+      || Math.abs(newVirtualScrollDelta) > coarseScrollThresholdPx
     ) {
       // reset virtualScrollTop and scrollTop (coarse scroll)
       if (!scrollTo) {
         console.warn('scrollTo function is not available. Cannot scroll to row.')
         return
       }
-      const newVirtualScrollTop = _virtualScrollTop + newScrollDelta
+      const newVirtualScrollTop = virtualScrollBase + newVirtualScrollDelta
       const newScrollTop = scale.fromVirtual(newVirtualScrollTop)
       scrollTo({ top: newScrollTop, behavior: 'instant' })
       // anticipate the scroll position change
       dispatch({ type: 'SCROLL_TO', scrollTop: newScrollTop, virtualScrollTop: newVirtualScrollTop })
     } else {
-      // move slightly: keep scrollTop and virtualScrollTop untouched, compensate with scrollDelta
-      dispatch({ type: 'ADJUST_SCROLL_DELTA', scrollDelta: newScrollDelta })
+      // move slightly: keep scrollTop and virtualScrollTop untouched, compensate with virtualScrollDelta
+      dispatch({ type: 'ADD_DELTA', delta })
     }
-  }, [numRows, scrollTo, _virtualScrollTop, scrollDelta, scrollTop, headerHeight, scale])
+  }, [numRows, scrollTo, virtualScrollBase, virtualScrollDelta, scrollTop, headerHeight, scale])
 
   const value = useMemo(() => {
     return {
