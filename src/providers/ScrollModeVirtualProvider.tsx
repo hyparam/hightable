@@ -8,8 +8,6 @@ import { ariaOffset, rowHeight } from '../helpers/constants.js'
 // -> when scrolling with the scrollbar (drag/drop), the change is global (> 0.05% of the scrollbar height)
 // -> on mobile, swapping will also produce big jumps. TODO(SL): should we detect touch events and adapt the thresholds?
 const coarseScrollThresholdPx = 4000
-// 1px is only to avoid floating point precision issues (scrollTop is not always an integer)
-const fineScrollThresholdPx = 1
 
 interface ScrollModeVirtualProviderProps {
   children: ReactNode
@@ -96,20 +94,20 @@ function scrollReducer(state: ScrollState, action: ScrollAction) {
       }
 
       const delta = scrollTop - oldScrollTop
-      if (Math.abs(delta) < fineScrollThresholdPx || !scale) {
-        // negligible change, do nothing
-        // (or, if scale is undefined, cannot compute virtualScrollTop)
-        return {
-          ...state,
-          scrollTop,
-          isScrolling,
-        }
-      }
 
-      // special case: if scrollTop is 0, the user will not be able to scroll back up!
-      // in that case, we reset virtualScrollTop and scrollDelta
-      if (Math.abs(delta) > coarseScrollThresholdPx || scrollTop === 0) {
-        // big change, or special case: reset virtualScrollTop and scrollDelta
+      // Do a global jump (reset local scroll based on the new scrollTop value) if
+      if (
+        // we can compute virtualScrollTop and one of the following conditions is met
+        scale !== undefined && (
+          // the last move is big
+          Math.abs(delta) > coarseScrollThresholdPx
+          // the accumulated scrollDelta is big
+          || Math.abs(scrollDelta + delta) > coarseScrollThresholdPx
+          // scrollTop is 0 - cannot scroll back up, we need to reset to the first row
+          || scrollTop === 0
+        )
+      ) {
+        // reset virtualScrollTop and scrollDelta
         return {
           ...state,
           virtualScrollTop: scale.toVirtual(scrollTop),
@@ -119,7 +117,7 @@ function scrollReducer(state: ScrollState, action: ScrollAction) {
         }
       }
 
-      // small change, adjust scrollDelta
+      // Adjust scrollDelta
       return {
         ...state,
         scrollDelta: scrollDelta + delta,
@@ -353,7 +351,7 @@ export function ScrollModeVirtualProvider({ children, canvasHeight, headerHeight
       scrollTo({ top: newScrollTop, behavior: 'instant' })
       // anticipate the scroll position change
       dispatch({ type: 'SCROLL_TO', scrollTop: newScrollTop, virtualScrollTop: newVirtualScrollTop })
-    } else if (Math.abs(newScrollDelta - scrollDelta) > fineScrollThresholdPx) {
+    } else {
       // move slightly: keep scrollTop and virtualScrollTop untouched, compensate with scrollDelta
       dispatch({ type: 'ADJUST_SCROLL_DELTA', scrollDelta: newScrollDelta })
     }
