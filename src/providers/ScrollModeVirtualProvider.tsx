@@ -1,8 +1,8 @@
 import { type ReactNode, useCallback, useMemo, useReducer, useState } from 'react'
 
 import { ScrollModeContext } from '../contexts/ScrollModeContext.js'
-import { ariaOffset, largeScrollPx, rowHeight } from '../helpers/constants.js'
-import { computeDerivedValues, createScale, initializeScrollState, scrollReducer } from '../helpers/virtualScroll.js'
+import { rowHeight } from '../helpers/constants.js'
+import { computeDerivedValues, createScale, getScrollActionForRow, initializeScrollState, scrollReducer } from '../helpers/virtualScroll.js'
 
 interface ScrollModeVirtualProviderProps {
   children: ReactNode
@@ -48,57 +48,22 @@ export function ScrollModeVirtualProvider({ children, canvasHeight, headerHeight
    * @param rowIndex The row to scroll to (same semantic as aria-rowindex: 1-based, includes header)
    */
   const scrollRowIntoView = useCallback(({ rowIndex }: { rowIndex: number }) => {
-    if (rowIndex < 1 || rowIndex > numRows + 1 || !Number.isInteger(rowIndex)) {
-      throw new Error(`Invalid row index: ${rowIndex}. It should be an integer between 1 and ${numRows + 1}.`)
-    }
-    if (!scale || virtualScrollBase === undefined || scrollTop === undefined) {
+    if (!scale || virtualScrollBase === undefined) {
       return
     }
-
-    if (rowIndex === 1) {
-      // header row
+    const result = getScrollActionForRow({ rowIndex, scale, virtualScrollBase, virtualScrollDelta })
+    if (!result) {
       return
     }
-
-    const row = rowIndex - ariaOffset // convert to 0-based data row index
-
-    // TODO(SL): move this logic to the virtualScroll helper
-
-    // Three cases:
-    // - the row is fully visible: do nothing
-    // - the row start is before virtualScrollTop + headerHeight: scroll to snap its start with that value
-    // - the row end is after virtualScrollTop + viewportHeight: scroll to snap its end with that value
-    const virtualScrollTop = virtualScrollBase + virtualScrollDelta
-    const hiddenPixelsBefore = virtualScrollTop + headerHeight - (headerHeight + row * rowHeight)
-    const hiddenPixelsAfter = headerHeight + row * rowHeight + rowHeight - virtualScrollTop - scale.parameters.clientHeight
-
-    if (hiddenPixelsBefore <= 0 && hiddenPixelsAfter <= 0) {
-      // fully visible, do nothing
-      return
-    }
-    // else, it's partly or totally hidden: update the scroll position
-
-    const delta = hiddenPixelsBefore > 0 ? -hiddenPixelsBefore : hiddenPixelsAfter
-    if (
-      scrollTo && (
-        // big jump
-        Math.abs(delta) > largeScrollPx
-        // or accumulated delta is big
-        || Math.abs(virtualScrollDelta + delta) > largeScrollPx
-      )
-    ) {
-      // scroll to the new position, and update the state optimistically
-      const newVirtualScrollTop = virtualScrollTop + delta
-      const newScrollTop = scale.fromVirtual(newVirtualScrollTop)
+    if ('delta' in result) {
+      dispatch({ type: 'ADD_DELTA', delta: result.delta })
+    } else if ('scrollTop' in result && scrollTo) {
       // side effect: scroll the viewport
-      scrollTo({ top: newScrollTop, behavior: 'instant' })
+      scrollTo({ top: result.scrollTop, behavior: 'instant' })
       // anticipate the scroll position change
-      dispatch({ type: 'SCROLL_TO', scrollTop: newScrollTop })
-    } else {
-      // move slightly: keep scrollTop and virtualScrollTop untouched, compensate with virtualScrollDelta
-      dispatch({ type: 'ADD_DELTA', delta })
+      dispatch({ type: 'SCROLL_TO', scrollTop: result.scrollTop })
     }
-  }, [numRows, scrollTo, virtualScrollBase, virtualScrollDelta, scrollTop, headerHeight, scale])
+  }, [scrollTo, virtualScrollBase, virtualScrollDelta, scale])
 
   const value = useMemo(() => {
     return {

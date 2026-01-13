@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import type { Scale, ScrollState } from '../../src/helpers/virtualScroll.js'
-import { computeDerivedValues, createScale, initializeScrollState, scrollReducer } from '../../src/helpers/virtualScroll.js'
+import { computeDerivedValues, createScale, getScrollActionForRow, initializeScrollState, scrollReducer } from '../../src/helpers/virtualScroll.js'
 
 function createFakeScale(factor: number): Scale {
   return {
@@ -426,5 +426,95 @@ describe('computeDerivedValues', () => {
     expect(visibleRowsEnd).toBe(32)
     expect(renderedRowsStart).toBe(0) // cannot go below 0
     expect(renderedRowsEnd).toBe(42) // can add full padding at the end
+  })
+})
+
+describe('getScrollActionForRow', () => {
+  it.each([
+    { rowIndex: 1, virtualScrollBase: 0, virtualScrollDelta: 0 },
+    { rowIndex: 2, virtualScrollBase: 0, virtualScrollDelta: 0 },
+    { rowIndex: 10, virtualScrollBase: 100, virtualScrollDelta: 0 },
+    { rowIndex: 10, virtualScrollBase: 100, virtualScrollDelta: -100 },
+    { rowIndex: 50, virtualScrollBase: 1_000, virtualScrollDelta: 200 },
+  ])('returns undefined if the row is already in view', ({ rowIndex, virtualScrollBase, virtualScrollDelta }) => {
+    const scale = createScale({
+      clientHeight: 1_000,
+      canvasHeight: 10_000,
+      headerHeight: 50,
+      rowHeight: 33,
+      numRows: 1_000,
+    })
+    const action = getScrollActionForRow({ scale, rowIndex, virtualScrollBase, virtualScrollDelta })
+    expect(action).toBeUndefined()
+  })
+
+  it.each([
+    { rowIndex: 5, virtualScrollBase: 500, virtualScrollDelta: 0, expectedDelta: -401 },
+    { rowIndex: 500, virtualScrollBase: 0, virtualScrollDelta: 0, expectedDelta: 15_517 },
+    { rowIndex: 500, virtualScrollBase: 1_000, virtualScrollDelta: 1_000, expectedDelta: 13_517 },
+  ])('returns a delta action (positive or negative) to scroll to the row when a small scroll is needed (%o)', ({ rowIndex, virtualScrollBase, virtualScrollDelta, expectedDelta }) => {
+    const scale = createScale({
+      clientHeight: 1_000,
+      canvasHeight: 10_000,
+      headerHeight: 50,
+      rowHeight: 33,
+      numRows: 1_000,
+    })
+    const action = getScrollActionForRow({ scale, rowIndex, virtualScrollBase, virtualScrollDelta })
+    expect(action).toEqual({ delta: expectedDelta })
+  })
+
+  it.each([
+    { rowIndex: 2, virtualScrollBase: 50_000, virtualScrollDelta: 0, expectedScrollTop: 0 },
+    { rowIndex: 800, virtualScrollBase: 0, virtualScrollDelta: 0, expectedScrollTop: 7_137 },
+  ])('returns a scrollTop action to scroll to the row when a large scroll is needed (%o)', ({ rowIndex, virtualScrollBase, virtualScrollDelta, expectedScrollTop }) => {
+    const scale = createScale({
+      clientHeight: 1_000,
+      canvasHeight: 10_000,
+      headerHeight: 50,
+      rowHeight: 33,
+      numRows: 1_000,
+    })
+    const action = getScrollActionForRow({ scale, rowIndex, virtualScrollBase, virtualScrollDelta })
+    if (!action || !('scrollTop' in action)) {
+      throw new Error('Expected a scrollTop action')
+    }
+    expect(action.scrollTop).toBeCloseTo(expectedScrollTop, 0)
+  })
+
+  it('returns a scrollTop action when the accumulated delta would exceed largeScrollPx threshold', () => {
+    const scale = createScale({
+      clientHeight: 1_000,
+      canvasHeight: 10_000,
+      headerHeight: 50,
+      rowHeight: 33,
+      numRows: 1_000,
+    })
+    const virtualScrollDelta = 16_500 // below the largeScrollPx threshold (16,500)
+    const rowIndex = 600
+    const virtualScrollBase = 0
+    // should add a small delta (2_317), but the accumulated delta (18_817) exceeds largeScrollPx, so: scrollTop is returned to synchronize properly
+    const action = getScrollActionForRow({ scale, rowIndex, virtualScrollBase, virtualScrollDelta })
+    if (!action || !('scrollTop' in action)) {
+      throw new Error('Expected a scrollTop action')
+    }
+    expect(action.scrollTop).toBeCloseTo(5_284, 0)
+  })
+
+  it.each([
+    // would be a delta, but rowIndex 1 is the header
+    { rowIndex: 1, virtualScrollBase: 500, virtualScrollDelta: 0, expectedDelta: -401 },
+    // would be a scrollTop, but rowIndex 1 is the header
+    { rowIndex: 1, virtualScrollBase: 50_000, virtualScrollDelta: 0 },
+  ])('returns undefined if the rowIndex is the header, because it is always in view (%o)', ({ rowIndex, virtualScrollBase, virtualScrollDelta }) => {
+    const scale = createScale({
+      clientHeight: 1_000,
+      canvasHeight: 10_000,
+      headerHeight: 50,
+      rowHeight: 33,
+      numRows: 1_000,
+    })
+    const action = getScrollActionForRow({ scale, rowIndex, virtualScrollBase, virtualScrollDelta })
+    expect(action).toBeUndefined()
   })
 })

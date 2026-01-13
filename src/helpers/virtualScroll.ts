@@ -1,4 +1,4 @@
-import { largeScrollPx } from '../helpers/constants.js'
+import { ariaOffset, largeScrollPx } from '../helpers/constants.js'
 
 export interface Scale {
   toVirtual: (scrollTop: number) => number
@@ -279,5 +279,62 @@ export function createScale(parameters: {
       numRows,
       rowHeight,
     },
+  }
+}
+
+// TODO(SL): this logic should be shared with the 'ON_SCROLL' action in the reducer, to avoid code duplication
+// and to ensure consistent behavior
+export function getScrollActionForRow({
+  rowIndex,
+  scale,
+  virtualScrollBase,
+  virtualScrollDelta,
+}: {
+  rowIndex: number
+  scale: Scale
+  virtualScrollBase: number
+  virtualScrollDelta: number
+}): { delta: number } | { scrollTop: number } | undefined {
+  const { headerHeight, rowHeight, numRows } = scale.parameters
+
+  if (rowIndex < 1 || rowIndex > numRows + 1 || !Number.isInteger(rowIndex)) {
+    throw new Error(`Invalid row index: ${rowIndex}. It should be an integer between 1 and ${numRows + 1}.`)
+  }
+
+  if (rowIndex === 1) {
+    // header row
+    return
+  }
+
+  const row = rowIndex - ariaOffset // convert to 0-based data row index
+
+  // Three cases:
+  // - the row is fully visible: do nothing
+  // - the row start is before virtualScrollTop + headerHeight: scroll to snap its start with that value
+  // - the row end is after virtualScrollTop + viewportHeight: scroll to snap its end with that value
+  const virtualScrollTop = virtualScrollBase + virtualScrollDelta
+  const hiddenPixelsBefore = virtualScrollTop + headerHeight - (headerHeight + row * rowHeight)
+  const hiddenPixelsAfter = headerHeight + row * rowHeight + rowHeight - virtualScrollTop - scale.parameters.clientHeight
+
+  if (hiddenPixelsBefore <= 0 && hiddenPixelsAfter <= 0) {
+    // fully visible, do nothing
+    return
+  }
+  // else, it's partly or totally hidden: update the scroll position
+
+  const delta = hiddenPixelsBefore > 0 ? -hiddenPixelsBefore : hiddenPixelsAfter
+  if (
+    // big jump
+    Math.abs(delta) > largeScrollPx
+    // or accumulated delta is big
+    || Math.abs(virtualScrollDelta + delta) > largeScrollPx
+  ) {
+    // scroll to the new position, and update the state optimistically
+    const newVirtualScrollTop = virtualScrollTop + delta
+    const newScrollTop = scale.fromVirtual(newVirtualScrollTop)
+    return { scrollTop: newScrollTop }
+  } else {
+    // move slightly: keep scrollTop and virtualScrollTop untouched, compensate with virtualScrollDelta
+    return { delta }
   }
 }
