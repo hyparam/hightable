@@ -208,7 +208,8 @@ function createFilteredData(): DataFrame {
 }
 
 function createLargeData(): DataFrame {
-  const numRows = 777_000_000
+  // 1 peta rows (1 million billion, 10^15)
+  const numRows = 1_000_000_000_000_000
   const columnDescriptors = ['ID1', 'LongString1', 'Value1', 'ID2', 'LongString2', 'Value2', 'ID3', 'LongString3', 'Value3', 'ID4', 'LongString4', 'Value4'].map(name => ({ name }))
   function getCell({ row, column }: { row: number, column: string }): ResolvedValue | undefined {
     return {

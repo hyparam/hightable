@@ -13,7 +13,7 @@ function getSortDirection(direction?: Direction) {
       return 'Ascending'
     case 'descending':
       return 'Descending'
-    default:
+    case undefined:
       return 'No sort'
   }
 }
