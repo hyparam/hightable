@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## [0.25.3](https://github.com/hyparam/hightable/compare/v0.25.2...v0.25.3) - 2026-01-13
+
+### Changed
+
+- support data with a large number of rows. It was previously limited to 500K rows or less depending on the browser ([#369](https://github.com/hyparam/hightable/pull/369)).
+
+### Refactored
+
+- upgrade development dependencies ([#387](https://github.com/hyparam/hightable/pull/387)).
+
 ## [0.25.2](https://github.com/hyparam/hightable/compare/v0.25.1...v0.25.2) - 2026-01-12
 
 ### Fixed
