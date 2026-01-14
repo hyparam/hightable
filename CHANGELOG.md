@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## [0.25.3](https://github.com/hyparam/hightable/compare/v0.25.2...v0.25.3) - 2026-01-13
+## [0.26.0](https://github.com/hyparam/hightable/compare/v0.25.2...v0.26.0) - 2026-01-14
 
 ### Changed
 
