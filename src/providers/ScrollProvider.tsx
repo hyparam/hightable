@@ -1,18 +1,20 @@
 import { type ReactNode, useCallback, useMemo, useReducer, useState } from 'react'
 
-import { ScrollModeContext } from '../contexts/ScrollModeContext.js'
-import { rowHeight } from '../helpers/constants.js'
-import { computeDerivedValues, createScale, getScrollActionForRow, initializeScrollState, scrollReducer } from '../helpers/virtualScroll.js'
+import { ScrollContext } from '../contexts/ScrollContext.js'
+import { defaultPadding, maxElementHeight, rowHeight } from '../helpers/constants.js'
+import { computeDerivedValues, createScale, getScrollActionForRow, initializeScrollState, scrollReducer } from '../helpers/scroll.js'
 
-interface ScrollModeVirtualProviderProps {
-  children: ReactNode
-  canvasHeight: number // total scrollable height. It must be strictly positive.
-  headerHeight: number
-  numRows: number
-  padding: number
+export interface ScrollProviderProps {
+  padding?: number // number of rows to render beyond the visible table cells
 }
 
-export function ScrollModeVirtualProvider({ children, canvasHeight, headerHeight, numRows, padding }: ScrollModeVirtualProviderProps) {
+type Props = {
+  children: ReactNode
+  headerHeight: number
+  numRows: number
+} & ScrollProviderProps
+
+export function ScrollProvider({ children, headerHeight, numRows, padding = defaultPadding }: Props) {
   const [{ scale, scrollTop, virtualScrollBase, isScrolling, virtualScrollDelta }, dispatch] = useReducer(scrollReducer, undefined, initializeScrollState)
   const [scrollTo, setScrollTo] = useState<HTMLElement['scrollTo'] | undefined>(undefined)
   const setScrollTop = useCallback((scrollTop: number) => {
@@ -30,8 +32,8 @@ export function ScrollModeVirtualProvider({ children, canvasHeight, headerHeight
     if (clientHeight === undefined) {
       return undefined
     }
-    return createScale({ clientHeight, canvasHeight, headerHeight, rowHeight, numRows })
-  }, [clientHeight, canvasHeight, headerHeight, numRows])
+    return createScale({ clientHeight, headerHeight, rowHeight, numRows, maxElementHeight })
+  }, [clientHeight, headerHeight, numRows])
 
   // ideally: call SET_SCALE from an event listener (if num_rows changes, or on resize if clientHeight or headerHeight change)
   // not during rendering
@@ -68,7 +70,7 @@ export function ScrollModeVirtualProvider({ children, canvasHeight, headerHeight
   const value = useMemo(() => {
     return {
       scrollMode: 'virtual' as const,
-      canvasHeight,
+      canvasHeight: scale ? scale.canvasHeight : undefined,
       isScrolling,
       setClientHeight,
       setScrollTop,
@@ -82,10 +84,10 @@ export function ScrollModeVirtualProvider({ children, canvasHeight, headerHeight
         padding,
       }),
     }
-  }, [scale, scrollTop, virtualScrollBase, virtualScrollDelta, padding, canvasHeight, isScrolling, setClientHeight, setScrollTop, scrollRowIntoView])
+  }, [scale, scrollTop, virtualScrollBase, virtualScrollDelta, padding, isScrolling, setClientHeight, setScrollTop, scrollRowIntoView])
   return (
-    <ScrollModeContext.Provider value={value}>
+    <ScrollContext.Provider value={value}>
       {children}
-    </ScrollModeContext.Provider>
+    </ScrollContext.Provider>
   )
 }

@@ -21,6 +21,10 @@
     overflow: auto;
     & > div {
       position: relative;
+      /* show the whole width (the horizontal scrollbar is on the parent) */
+      overflow-x: visible;
+      /* hide vertical overflow, useful for the bottom part of the canvas, but show the sticky header (difference with hidden) */
+      overflow-y: clip;
       & > div {
         position: absolute;
       }
