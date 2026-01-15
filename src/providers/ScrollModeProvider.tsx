@@ -23,7 +23,7 @@ export function ScrollModeProvider({ children, headerHeight, numRows, padding = 
 
   if (tableHeight < maxElementHeight) {
     return (
-      <ScrollModeNativeProvider canvasHeight={tableHeight} numRows={numRows} padding={padding}>
+      <ScrollModeNativeProvider canvasHeight={tableHeight} numRows={numRows} headerHeight={headerHeight} padding={padding}>
         {children}
       </ScrollModeNativeProvider>
     )
