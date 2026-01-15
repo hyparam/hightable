@@ -337,7 +337,7 @@ describe('getScrollActionForRow', () => {
     })
 
     it.each([
-    // would be a delta, but rowIndex 1 is the header
+      // would be a delta, but rowIndex 1 is the header
       { rowIndex: 1, virtualScrollBase: 500, virtualScrollDelta: 0, expectedDelta: -401 },
       // would be a scrollTop, but rowIndex 1 is the header
       { rowIndex: 1, virtualScrollBase: 50_000, virtualScrollDelta: 0 },
