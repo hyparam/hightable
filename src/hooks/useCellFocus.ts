@@ -25,14 +25,18 @@ export function useCellFocus({ ariaColIndex, ariaRowIndex }: CellData): CellFocu
     if (!element || !isCurrentCell || !shouldFocus || isScrolling) {
       return
     }
-    // scroll the cell into view
+    // scroll the cell into view (vertically and horizontally) and focus it
     //
     // scroll-padding-inline-start and scroll-padding-block-start are set in the CSS
     // to avoid the cell being hidden by the row and column headers
     //
-    // Note that it might scroll both vertically and horizontally.
+    // we don't use the simpler form:
+    //   element.focus()
+    // due to its default scroll behavior. After focusing the elements, it scrolls it into view using `block: center' and
+    // `inline: center`. But `block: nearest` and `inline: nearest` feel more natural for navigation. So, we use
+    // scrollIntoView first, then focus with `preventScroll: true`.
     element.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'nearest' })
-    element.focus()
+    element.focus({ preventScroll: true })
     setShouldFocus(false)
   }, [isCurrentCell, shouldFocus, setShouldFocus, isScrolling])
 

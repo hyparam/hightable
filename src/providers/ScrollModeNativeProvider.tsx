@@ -7,12 +7,12 @@ import { ariaOffset, rowHeight } from '../helpers/constants.js'
 interface ScrollModeNativeProviderProps {
   children: ReactNode
   canvasHeight: number // total scrollable height. It must be strictly positive.
+  headerHeight: number
   numRows: number
   padding: number
 }
 
-export function ScrollModeNativeProvider({ children, canvasHeight, numRows, padding }: ScrollModeNativeProviderProps) {
-  const [scrollTo, setScrollTo] = useState<HTMLElement['scrollTo'] | undefined>(undefined)
+export function ScrollModeNativeProvider({ children, headerHeight, canvasHeight, numRows, padding }: ScrollModeNativeProviderProps) {
   const [scrollTop, setScrollTop] = useState<number | undefined>(undefined)
   const [clientHeight, _setClientHeight] = useState<number | undefined>(undefined)
   const setClientHeight = useCallback((clientHeight: number) => {
@@ -69,7 +69,7 @@ export function ScrollModeNativeProvider({ children, canvasHeight, numRows, padd
    * Vertically scroll to bring a specific row into view
    */
   const scrollRowIntoView = useCallback(({ rowIndex }: { rowIndex: number }) => {
-    if (scrollTo === undefined || visibleRowsStart === undefined || visibleRowsEnd === undefined || clientHeight === undefined) {
+    if (visibleRowsStart === undefined || visibleRowsEnd === undefined || clientHeight === undefined) {
       return
     }
     if (rowIndex < 1) {
@@ -81,17 +81,20 @@ export function ScrollModeNativeProvider({ children, canvasHeight, numRows, padd
     }
     // should be zero-based
     const row = rowIndex - ariaOffset
-    // if the row is outside of the visible rows range, scroll to the estimated position of the cell,
-    // to wait for the cell to be fetched and rendered
-    // algorithm: go to the nearest edge (same as `block: nearest` in scrollIntoView)
+
+    // if the row is outside of the visible rows range, update scrollTop in the state, to
+    // change the visible rows range.
     if (row < visibleRowsStart) {
-      scrollTo({ top: getRowTop(row) })
+      // above the visible area, put the row at the top
+      setScrollTop(getRowTop(row) + headerHeight)
+      return
     } else if (row >= visibleRowsEnd) {
-      scrollTo({ top: getRowTop(row) - clientHeight + rowHeight })
+      // below the visible area, put the row at the bottom
+      setScrollTop(getRowTop(row) - clientHeight + rowHeight)
+      return
     }
-    // else, the row is in the table, and we use another mechanism to scroll to it (.scrollIntoView in useCellFocus.tsx)
-    // beware, it's only for the native scroll mode
-  }, [visibleRowsStart, visibleRowsEnd, scrollTo, getRowTop, clientHeight])
+    // else: already visible
+  }, [visibleRowsStart, visibleRowsEnd, getRowTop, clientHeight, headerHeight])
 
   const sliceTop = useMemo(() => {
     return getRowTop(renderedRowsStart ?? 0)
@@ -108,7 +111,6 @@ export function ScrollModeNativeProvider({ children, canvasHeight, numRows, padd
       renderedRowsEnd,
       scrollRowIntoView,
       setClientHeight,
-      setScrollTo,
       setScrollTop,
     }
   }, [canvasHeight, sliceTop, renderedRowsStart, visibleRowsStart, renderedRowsEnd, visibleRowsEnd, scrollRowIntoView, setClientHeight])
