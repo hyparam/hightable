@@ -15,7 +15,7 @@ type Props = {
 } & ScrollProviderProps
 
 export function ScrollProvider({ children, headerHeight, numRows, padding = defaultPadding }: Props) {
-  const [{ scale, scrollTop, virtualScrollBase, isScrolling, virtualScrollDelta }, dispatch] = useReducer(scrollReducer, undefined, initializeScrollState)
+  const [{ scale, scrollTop, virtualScrollBase, isScrolling, localOffset }, dispatch] = useReducer(scrollReducer, undefined, initializeScrollState)
   const [scrollTo, setScrollTo] = useState<HTMLElement['scrollTo'] | undefined>(undefined)
   const setScrollTop = useCallback((scrollTop: number) => {
     dispatch({ type: 'ON_SCROLL', scrollTop })
@@ -53,7 +53,7 @@ export function ScrollProvider({ children, headerHeight, numRows, padding = defa
     if (!scale || virtualScrollBase === undefined) {
       return
     }
-    const result = getScrollActionForRow({ rowIndex, scale, virtualScrollBase, virtualScrollDelta })
+    const result = getScrollActionForRow({ rowIndex, scale, virtualScrollBase, localOffset })
     if (!result) {
       return
     }
@@ -65,7 +65,7 @@ export function ScrollProvider({ children, headerHeight, numRows, padding = defa
       // anticipate the scroll position change
       dispatch({ type: 'SCROLL_TO', scrollTop: result.scrollTop })
     }
-  }, [scrollTo, virtualScrollBase, virtualScrollDelta, scale])
+  }, [scrollTo, virtualScrollBase, localOffset, scale])
 
   const value = useMemo(() => {
     return {
@@ -80,11 +80,11 @@ export function ScrollProvider({ children, headerHeight, numRows, padding = defa
         scale,
         scrollTop,
         virtualScrollBase,
-        virtualScrollDelta,
+        localOffset,
         padding,
       }),
     }
-  }, [scale, scrollTop, virtualScrollBase, virtualScrollDelta, padding, isScrolling, setClientHeight, setScrollTop, scrollRowIntoView])
+  }, [scale, scrollTop, virtualScrollBase, localOffset, padding, isScrolling, setClientHeight, setScrollTop, scrollRowIntoView])
   return (
     <ScrollContext.Provider value={value}>
       {children}
