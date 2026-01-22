@@ -21,7 +21,7 @@ export interface ScrollState {
   isScrolling: boolean
   scale: Scale | undefined
   scrollTop: number | undefined
-  virtualScrollBase: number | undefined
+  globalAnchor: number | undefined
   localOffset: number
 }
 
@@ -36,7 +36,7 @@ export function initializeScrollState(): ScrollState {
     isScrolling: false,
     scale: undefined,
     scrollTop: undefined,
-    virtualScrollBase: undefined,
+    globalAnchor: undefined,
     localOffset: 0,
   }
 }
@@ -48,90 +48,53 @@ export function scrollReducer(state: ScrollState, action: ScrollAction) {
         ...state,
         isScrolling: true,
         scrollTop: action.scrollTop,
-        virtualScrollBase: state.scale?.toVirtual(action.scrollTop),
+        globalAnchor: action.scrollTop,
         localOffset: 0,
       }
     case 'ON_SCROLL': {
-      const isScrolling = false
       const { scrollTop } = action
 
-      // if virtualScrollBase is undefined, we initialize it here
-      const { scale, localOffset, virtualScrollBase, scrollTop: oldScrollTop } = state
+      const { scale, localOffset, globalAnchor, scrollTop: oldScrollTop } = state
 
-      if (virtualScrollBase === undefined) {
-        if (!scale) {
-          // cannot compute virtualScrollBase without scale
-          return {
-            ...state,
-            isScrolling,
-            scrollTop,
-          }
-        }
-
-        // initialize virtualScrollBase
-        return {
-          ...state,
-          isScrolling,
-          scrollTop,
-          // we assume that localOffset is valid (surely 0 at this point)
-          virtualScrollBase: scale.toVirtual(scrollTop) - localOffset,
-        }
-      }
-
-      if (oldScrollTop === undefined) {
-        // cannot compute a delta without oldScrollTop
-        return {
-          ...state,
-          isScrolling,
-          scrollTop,
-        }
-      }
-
-      const delta = scrollTop - oldScrollTop
-
-      if (scale?.factor === 1) {
-        // no virtual scroll needed
-        return {
-          ...state,
-          isScrolling,
-          scrollTop,
-          virtualScrollBase: scrollTop,
-          localOffset: 0,
-        }
-      }
-
-      // Do a global jump (reset local scroll based on the new scrollTop value) if
+      // conditions for local scroll:
       if (
-        // we can compute virtualScrollBase and one of the following conditions is met
-        scale !== undefined && (
-          // the last move is big
-          Math.abs(delta) > largeScrollPx
-          // the accumulated localOffset is big
-          || Math.abs(localOffset + delta) > largeScrollPx
-          // scrollTop is 0 - cannot scroll back up, we need to reset to the first row
-          || scrollTop <= 0
-          // scrollTop is at the maximum - cannot scroll further down, we need to reset to the last row
-          || scrollTop >= scale.canvasHeight - scale.parameters.clientHeight
-        )
+        // globalAnchor is defined
+        globalAnchor !== undefined
+        // the previous scrollTop is defined
+        && oldScrollTop !== undefined
+        // scale is defined
+        && scale !== undefined
+        // there is virtual scroll
+        && scale.factor !== 1
+        // the last move is small
+        && Math.abs(scrollTop - oldScrollTop) <= largeScrollPx
+        // the accumulated localOffset is small enough
+        && Math.abs(localOffset + (scrollTop - oldScrollTop)) <= largeScrollPx
+        // scrollTop is greater than 0 - we will still be able to scroll back up
+        && scrollTop > 0
+        // scrollTop is not at the maximum - we will still be able to scroll further down
+        && scrollTop < scale.canvasHeight - scale.parameters.clientHeight
       ) {
-        // reset virtualScrollBase and localOffset
+        // Local scroll
         return {
           ...state,
-          isScrolling,
+          isScrolling: false,
           scrollTop,
-          // TODO(SL): maybe a bug for the maximum value, due to canvasHeight being larger due to the absolute positioning of the table?
-          virtualScrollBase: scale.toVirtual(Math.max(0, Math.min(scrollTop, scale.canvasHeight - scale.parameters.clientHeight))),
-          // virtualScrollBase: scale.toVirtual(scrollTop),
-          localOffset: 0,
+          localOffset: localOffset + scrollTop - oldScrollTop,
+          // globalAnchor is unchanged
         }
       }
 
-      // Adjust localOffset
+      // else, global scroll
       return {
         ...state,
-        isScrolling,
+        isScrolling: false,
         scrollTop,
-        localOffset: localOffset + delta,
+        globalAnchor: scale
+          // TODO(SL): maybe a bug for the maximum value, due to canvasHeight being larger due to the absolute positioning of the table?
+          ? Math.max(0, Math.min(scrollTop, scale.canvasHeight - scale.parameters.clientHeight))
+          : scrollTop,
+        localOffset: 0,
       }
     }
     case 'ADD_DELTA':
@@ -141,19 +104,8 @@ export function scrollReducer(state: ScrollState, action: ScrollAction) {
       }
     case 'SET_SCALE': {
       const { scale } = action
-      const { virtualScrollBase, localOffset, scrollTop } = state
 
-      // initialize virtualScrollBase if needed and possible
-      if (virtualScrollBase === undefined && scrollTop !== undefined) {
-        return {
-          ...state,
-          scale,
-          // we assume that localOffset is valid (surely 0 at this point)
-          virtualScrollBase: scale.toVirtual(scrollTop) - localOffset,
-        }
-      }
-
-      // TODO(SL): if state.scale already existed, i.e. if some dimensions changed, update the state accordingly (virtualScrollBase, localOffset)
+      // TODO(SL): if state.scale already existed, i.e. if some dimensions changed, update the state accordingly (globalAnchor, localOffset)
       // trying to keep the same view?
       // The most impactful change could be if the number of rows changed drastically.
 
@@ -166,17 +118,17 @@ export function scrollReducer(state: ScrollState, action: ScrollAction) {
 }
 
 /* Compute the derived values */
-export function computeDerivedValues({ scale, scrollTop, virtualScrollBase, localOffset, padding }: Omit<ScrollState, 'isScrolling'> & { padding: number }): {
+export function computeDerivedValues({ scale, scrollTop, globalAnchor, localOffset, padding }: Omit<ScrollState, 'isScrolling'> & { padding: number }): {
   sliceTop?: number | undefined
   visibleRowsStart?: number | undefined
   visibleRowsEnd?: number | undefined
   renderedRowsStart?: number | undefined
   renderedRowsEnd?: number | undefined
 } {
-  if (virtualScrollBase === undefined || scale === undefined) {
+  if (globalAnchor === undefined || scale === undefined) {
     return {}
   }
-  const virtualScrollTop = virtualScrollBase + localOffset
+  const virtualScrollTop = scale.toVirtual(globalAnchor) + localOffset
   const { clientHeight, headerHeight, rowHeight, numRows } = scale.parameters
 
   // special case: is the virtual scroll position in the header?
@@ -315,12 +267,12 @@ export function createScale(parameters: {
 export function getScrollActionForRow({
   rowIndex,
   scale,
-  virtualScrollBase,
+  globalAnchor,
   localOffset,
 }: {
   rowIndex: number
   scale: Scale
-  virtualScrollBase: number
+  globalAnchor: number
   localOffset: number
 }): { delta: number } | { scrollTop: number } | undefined {
   const { headerHeight, rowHeight, numRows } = scale.parameters
@@ -340,7 +292,7 @@ export function getScrollActionForRow({
   // - the row is fully visible: do nothing
   // - the row start is before virtualScrollTop + headerHeight: scroll to snap its start with that value
   // - the row end is after virtualScrollTop + viewportHeight: scroll to snap its end with that value
-  const virtualScrollTop = virtualScrollBase + localOffset
+  const virtualScrollTop = scale.toVirtual(globalAnchor) + localOffset
   const hiddenPixelsBefore = virtualScrollTop + headerHeight - (headerHeight + row * rowHeight)
   const hiddenPixelsAfter = headerHeight + row * rowHeight + rowHeight - virtualScrollTop - scale.parameters.clientHeight
 

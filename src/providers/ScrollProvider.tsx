@@ -15,7 +15,7 @@ type Props = {
 } & ScrollProviderProps
 
 export function ScrollProvider({ children, headerHeight, numRows, padding = defaultPadding }: Props) {
-  const [{ scale, scrollTop, virtualScrollBase, isScrolling, localOffset }, dispatch] = useReducer(scrollReducer, undefined, initializeScrollState)
+  const [{ scale, scrollTop, globalAnchor, isScrolling, localOffset }, dispatch] = useReducer(scrollReducer, undefined, initializeScrollState)
   const [scrollTo, setScrollTo] = useState<HTMLElement['scrollTo'] | undefined>(undefined)
   const setScrollTop = useCallback((scrollTop: number) => {
     dispatch({ type: 'ON_SCROLL', scrollTop })
@@ -50,22 +50,23 @@ export function ScrollProvider({ children, headerHeight, numRows, padding = defa
    * @param rowIndex The row to scroll to (same semantic as aria-rowindex: 1-based, includes header)
    */
   const scrollRowIntoView = useCallback(({ rowIndex }: { rowIndex: number }) => {
-    if (!scale || virtualScrollBase === undefined) {
+    if (!scale || globalAnchor === undefined) {
       return
     }
-    const result = getScrollActionForRow({ rowIndex, scale, virtualScrollBase, localOffset })
+    const result = getScrollActionForRow({ rowIndex, scale, globalAnchor, localOffset })
     if (!result) {
       return
     }
     if ('delta' in result) {
       dispatch({ type: 'ADD_DELTA', delta: result.delta })
     } else if ('scrollTop' in result && scrollTo) {
+      const { scrollTop } = result
       // side effect: scroll the viewport
-      scrollTo({ top: result.scrollTop, behavior: 'instant' })
+      scrollTo({ top: scrollTop, behavior: 'instant' })
       // anticipate the scroll position change
-      dispatch({ type: 'SCROLL_TO', scrollTop: result.scrollTop })
+      dispatch({ type: 'SCROLL_TO', scrollTop })
     }
-  }, [scrollTo, virtualScrollBase, localOffset, scale])
+  }, [scrollTo, globalAnchor, localOffset, scale])
 
   const value = useMemo(() => {
     return {
@@ -79,12 +80,12 @@ export function ScrollProvider({ children, headerHeight, numRows, padding = defa
       ...computeDerivedValues({
         scale,
         scrollTop,
-        virtualScrollBase,
+        globalAnchor,
         localOffset,
         padding,
       }),
     }
-  }, [scale, scrollTop, virtualScrollBase, localOffset, padding, isScrolling, setClientHeight, setScrollTop, scrollRowIntoView])
+  }, [scale, scrollTop, globalAnchor, localOffset, padding, isScrolling, setClientHeight, setScrollTop, scrollRowIntoView])
   return (
     <ScrollContext.Provider value={value}>
       {children}
