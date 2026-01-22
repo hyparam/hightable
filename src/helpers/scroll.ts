@@ -1,17 +1,20 @@
-import { ariaOffset, largeScrollPx } from '../helpers/constants.js'
+import { ariaOffset, largeScrollPx } from './constants.js'
+
+interface ScaleParameters {
+  clientHeight: number
+  headerHeight: number
+  maxElementHeight: number
+  numRows: number
+  rowHeight: number
+}
 
 export interface Scale {
   toVirtual: (scrollTop: number) => number
   fromVirtual: (virtualScrollTop: number) => number
   factor: number
+  canvasHeight: number
   virtualCanvasHeight: number
-  parameters: {
-    canvasHeight: number
-    clientHeight: number
-    headerHeight: number
-    numRows: number
-    rowHeight: number
-  }
+  parameters: ScaleParameters
 }
 
 export interface ScrollState {
@@ -86,6 +89,17 @@ export function scrollReducer(state: ScrollState, action: ScrollAction) {
 
       const delta = scrollTop - oldScrollTop
 
+      if (scale?.factor === 1) {
+        // no virtual scroll needed
+        return {
+          ...state,
+          isScrolling,
+          scrollTop,
+          virtualScrollBase: scrollTop,
+          virtualScrollDelta: 0,
+        }
+      }
+
       // Do a global jump (reset local scroll based on the new scrollTop value) if
       if (
         // we can compute virtualScrollBase and one of the following conditions is met
@@ -97,7 +111,7 @@ export function scrollReducer(state: ScrollState, action: ScrollAction) {
           // scrollTop is 0 - cannot scroll back up, we need to reset to the first row
           || scrollTop <= 0
           // scrollTop is at the maximum - cannot scroll further down, we need to reset to the last row
-          || scrollTop >= scale.parameters.canvasHeight - scale.parameters.clientHeight
+          || scrollTop >= scale.canvasHeight - scale.parameters.clientHeight
         )
       ) {
         // reset virtualScrollBase and virtualScrollDelta
@@ -106,7 +120,8 @@ export function scrollReducer(state: ScrollState, action: ScrollAction) {
           isScrolling,
           scrollTop,
           // TODO(SL): maybe a bug for the maximum value, due to canvasHeight being larger due to the absolute positioning of the table?
-          virtualScrollBase: scale.toVirtual(Math.max(0, Math.min(scrollTop, scale.parameters.canvasHeight - scale.parameters.clientHeight))),
+          virtualScrollBase: scale.toVirtual(Math.max(0, Math.min(scrollTop, scale.canvasHeight - scale.parameters.clientHeight))),
+          // virtualScrollBase: scale.toVirtual(scrollTop),
           virtualScrollDelta: 0,
         }
       }
@@ -234,13 +249,12 @@ export function computeDerivedValues({ scale, scrollTop, virtualScrollBase, virt
 
 export function createScale(parameters: {
   clientHeight: number
-  canvasHeight: number
   headerHeight: number
-  rowHeight: number
+  maxElementHeight: number
   numRows: number
+  rowHeight: number
 }): Scale {
-  const { clientHeight, canvasHeight, headerHeight, rowHeight, numRows } = parameters
-  const virtualCanvasHeight = headerHeight + numRows * rowHeight
+  const { clientHeight, headerHeight, maxElementHeight, numRows, rowHeight } = parameters
 
   // safety checks
   if (headerHeight <= 0) {
@@ -249,19 +263,38 @@ export function createScale(parameters: {
   if (rowHeight <= 0) {
     throw new Error(`Invalid rowHeight: ${rowHeight}. It should be a positive number.`)
   }
-  if (canvasHeight <= 0) {
-    throw new Error(`Invalid canvasHeight: ${canvasHeight}. It should be a positive number.`)
-  }
   if (numRows < 0 || !Number.isInteger(numRows)) {
     throw new Error(`Invalid numRows: ${numRows}. It should be a non-negative integer.`)
   }
-  if (canvasHeight <= clientHeight) {
-    throw new Error(`Invalid canvasHeight: ${canvasHeight} when clientHeight is ${clientHeight}. canvasHeight should be greater than clientHeight for virtual scrolling.`)
+  if (maxElementHeight <= 0) {
+    throw new Error(`Invalid maxElementHeight: ${maxElementHeight}. It should be a positive number.`)
   }
-  if (virtualCanvasHeight <= clientHeight) {
-    throw new Error(`Invalid virtualCanvasHeight: ${virtualCanvasHeight} when clientHeight is ${clientHeight}. virtualCanvasHeight should be greater than clientHeight for virtual scrolling.`)
+  if (maxElementHeight <= clientHeight) {
+    throw new Error(`Invalid maxElementHeight: ${maxElementHeight} when clientHeight is ${clientHeight}. maxElementHeight should be greater than clientHeight.`)
   }
 
+  // total table height - it's fixed, based on the number of rows.
+  // if the number of rows is big, this value can overflow the maximum height supported by the browser.
+  // If so, the canvas height is capped to maxElementHeight.
+  const virtualCanvasHeight = headerHeight + numRows * rowHeight
+
+  if (virtualCanvasHeight <= maxElementHeight) {
+    // no virtual scroll needed
+    return {
+      toVirtual: (scrollTop: number) => scrollTop,
+      fromVirtual: (virtualScrollTop: number) => virtualScrollTop,
+      factor: 1,
+      canvasHeight: virtualCanvasHeight,
+      virtualCanvasHeight,
+      parameters,
+    }
+  }
+
+  const canvasHeight = maxElementHeight
+
+  // factor is strictly greater than 1
+  // Also, note that, as maxElementHeight > clientHeight, canvasHeight is also greater, and the
+  // denominator is always positive.
   const factor = (virtualCanvasHeight - clientHeight) / (canvasHeight - clientHeight)
   return {
     toVirtual: (scrollTop: number) => {
@@ -271,14 +304,9 @@ export function createScale(parameters: {
       return virtualScrollTop / factor
     },
     factor,
+    canvasHeight,
     virtualCanvasHeight,
-    parameters: {
-      canvasHeight,
-      clientHeight,
-      headerHeight,
-      numRows,
-      rowHeight,
-    },
+    parameters,
   }
 }
 
@@ -324,8 +352,10 @@ export function getScrollActionForRow({
 
   const delta = hiddenPixelsBefore > 0 ? -hiddenPixelsBefore : hiddenPixelsAfter
   if (
+    // no virtual scroll
+    scale.factor === 1
     // big jump
-    Math.abs(delta) > largeScrollPx
+    || Math.abs(delta) > largeScrollPx
     // or accumulated delta is big
     || Math.abs(virtualScrollDelta + delta) > largeScrollPx
   ) {

@@ -1,7 +1,6 @@
 import { createContext } from 'react'
 
-export interface ScrollModeContextType {
-  scrollMode?: 'native' | 'virtual' // it's only informative for now
+export interface ScrollContextType {
   canvasHeight?: number // total scrollable height
   isScrolling?: boolean
   sliceTop?: number // offset of the top of the slice from the top of the canvas
@@ -15,6 +14,6 @@ export interface ScrollModeContextType {
   setScrollTop?: (scrollTop: number) => void // function to call when the current scroll top position changes
 }
 
-export const defaultScrollModeContext: ScrollModeContextType = {}
+export const defaultScrollContext: ScrollContextType = {}
 
-export const ScrollModeContext = createContext<ScrollModeContextType>(defaultScrollModeContext)
+export const ScrollContext = createContext<ScrollContextType>(defaultScrollContext)

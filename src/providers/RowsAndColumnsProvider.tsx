@@ -7,7 +7,7 @@ import { DataContext } from '../contexts/DataContext.js'
 import { ErrorContext } from '../contexts/ErrorContext.js'
 import { OrderByContext } from '../contexts/OrderByContext.js'
 import { RowsAndColumnsContext } from '../contexts/RowsAndColumnsContext.js'
-import { ScrollModeContext } from '../contexts/ScrollModeContext.js'
+import { ScrollContext } from '../contexts/ScrollContext.js'
 import { defaultOverscan } from '../helpers/constants.js'
 
 export interface RowsAndColumnsProviderProps {
@@ -19,7 +19,7 @@ type Props = {
 } & RowsAndColumnsProviderProps
 
 export function RowsAndColumnsProvider({ overscan = defaultOverscan, children }: Props) {
-  const { visibleRowsStart, visibleRowsEnd } = useContext(ScrollModeContext)
+  const { visibleRowsStart, visibleRowsEnd } = useContext(ScrollContext)
 
   const { onError } = useContext(ErrorContext)
   const { data, numRows } = useContext(DataContext)

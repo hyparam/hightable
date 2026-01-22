@@ -1,7 +1,7 @@
 import { useCallback, useContext } from 'react'
 
 import { CellNavigationContext } from '../contexts/CellNavigationContext.js'
-import { ScrollModeContext } from '../contexts/ScrollModeContext.js'
+import { ScrollContext } from '../contexts/ScrollContext.js'
 
 interface CellData {
   ariaColIndex: number // table column index, same semantic as aria-colindex (1-based, includes row headers)
@@ -16,7 +16,7 @@ interface CellFocus {
 
 export function useCellFocus({ ariaColIndex, ariaRowIndex }: CellData): CellFocus {
   const { colIndex, rowIndex, setColIndex, setRowIndex, shouldFocus, setShouldFocus } = useContext(CellNavigationContext)
-  const { isScrolling } = useContext(ScrollModeContext)
+  const { isScrolling } = useContext(ScrollContext)
 
   // Check if the cell is the current navigation cell
   const isCurrentCell = ariaColIndex === colIndex && ariaRowIndex === rowIndex
@@ -25,16 +25,16 @@ export function useCellFocus({ ariaColIndex, ariaRowIndex }: CellData): CellFocu
     if (!element || !isCurrentCell || !shouldFocus || isScrolling) {
       return
     }
-    // scroll the cell into view (vertically and horizontally) and focus it
+    // horizontally scroll the cell into view and focus it, once the row is rendered and scrolled into view vertically
+    // (thanks to the scrollRowIntoView function)
     //
-    // scroll-padding-inline-start and scroll-padding-block-start are set in the CSS
-    // to avoid the cell being hidden by the row and column headers
+    // scroll-padding-inline-start is set in the CSS
+    // to avoid the cell being hidden by the row headers
     //
     // we don't use the simpler form:
     //   element.focus()
-    // due to its default scroll behavior. After focusing the elements, it scrolls it into view using `block: center' and
-    // `inline: center`. But `block: nearest` and `inline: nearest` feel more natural for navigation. So, we use
-    // scrollIntoView first, then focus with `preventScroll: true`.
+    // due to its default scroll behavior. After focusing the elements, it scrolls it into view using `inline: center`.
+    // But `inline: nearest` feels more natural for navigation. So, we use scrollIntoView first, then focus with `preventScroll: true`.
     element.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'nearest' })
     element.focus({ preventScroll: true })
     setShouldFocus(false)
