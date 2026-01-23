@@ -43,6 +43,18 @@ export function initializeScrollState(): ScrollState {
 
 export function scrollReducer(state: ScrollState, action: ScrollAction) {
   switch (action.type) {
+    case 'SET_SCALE': {
+      const { scale } = action
+
+      // TODO(SL): if state.scale already existed, i.e. if some dimensions changed, update the state accordingly (globalAnchor, localOffset)
+      // trying to keep the same view?
+      // The most impactful change could be if the number of rows changed drastically.
+
+      return {
+        ...state,
+        scale,
+      }
+    }
     case 'SCROLL_TO':
       return {
         ...state,
@@ -102,18 +114,6 @@ export function scrollReducer(state: ScrollState, action: ScrollAction) {
         ...state,
         localOffset: state.localOffset + action.delta,
       }
-    case 'SET_SCALE': {
-      const { scale } = action
-
-      // TODO(SL): if state.scale already existed, i.e. if some dimensions changed, update the state accordingly (globalAnchor, localOffset)
-      // trying to keep the same view?
-      // The most impactful change could be if the number of rows changed drastically.
-
-      return {
-        ...state,
-        scale,
-      }
-    }
   }
 }
 
