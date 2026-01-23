@@ -51,6 +51,47 @@ interface ScrollToAction {
   scrollTop: number
 }
 
+interface GlobalScrollAction {
+  type: 'GLOBAL_SCROLL'
+  scrollTop: number
+}
+
+export function decideLocalOrGlobal({ state, scrollTop }: { state: Omit<ScrollState, 'isScrolling'>, scrollTop: number }): LocalScrollAction | GlobalScrollAction {
+  const { scale, localOffset, globalAnchor, scrollTop: oldScrollTop } = state
+
+  // conditions for local scroll:
+  if (
+    // globalAnchor is defined
+    globalAnchor !== undefined
+    // the previous scrollTop is defined
+    && oldScrollTop !== undefined
+    // scale is defined
+    && scale !== undefined
+    // there is virtual scroll
+    && scale.factor !== 1
+    // the last move is small
+    && Math.abs(scrollTop - oldScrollTop) <= largeScrollPx
+    // the accumulated localOffset is small enough
+    && Math.abs(localOffset + (scrollTop - oldScrollTop)) <= largeScrollPx
+    // scrollTop is greater than 0 - we will still be able to scroll back up
+    && scrollTop > 0
+    // scrollTop is not at the maximum - we will still be able to scroll further down
+    && scrollTop < scale.canvasHeight - scale.parameters.clientHeight
+  ) {
+    // Local scroll
+    return {
+      type: 'LOCAL_SCROLL',
+      delta: scrollTop - oldScrollTop,
+    }
+  }
+
+  // else, global scroll
+  return {
+    type: 'GLOBAL_SCROLL',
+    scrollTop,
+  }
+}
+
 export function scrollReducer(state: ScrollState, action: ScrollAction) {
   switch (action.type) {
     case 'SET_SCALE': {
@@ -76,47 +117,27 @@ export function scrollReducer(state: ScrollState, action: ScrollAction) {
     case 'ON_SCROLL': {
       const { scrollTop } = action
 
-      const { scale, localOffset, globalAnchor, scrollTop: oldScrollTop } = state
+      const scrollAction = decideLocalOrGlobal({ state, scrollTop })
 
-      // conditions for local scroll:
-      if (
-        // globalAnchor is defined
-        globalAnchor !== undefined
-        // the previous scrollTop is defined
-        && oldScrollTop !== undefined
-        // scale is defined
-        && scale !== undefined
-        // there is virtual scroll
-        && scale.factor !== 1
-        // the last move is small
-        && Math.abs(scrollTop - oldScrollTop) <= largeScrollPx
-        // the accumulated localOffset is small enough
-        && Math.abs(localOffset + (scrollTop - oldScrollTop)) <= largeScrollPx
-        // scrollTop is greater than 0 - we will still be able to scroll back up
-        && scrollTop > 0
-        // scrollTop is not at the maximum - we will still be able to scroll further down
-        && scrollTop < scale.canvasHeight - scale.parameters.clientHeight
-      ) {
-        // Local scroll
+      if (scrollAction.type === 'LOCAL_SCROLL') {
         return {
           ...state,
           isScrolling: false,
           scrollTop,
-          localOffset: localOffset + scrollTop - oldScrollTop,
+          localOffset: state.localOffset + scrollAction.delta,
           // globalAnchor is unchanged
         }
-      }
-
-      // else, global scroll
-      return {
-        ...state,
-        isScrolling: false,
-        scrollTop,
-        globalAnchor: scale
+      } else {
+        return {
+          ...state,
+          isScrolling: false,
+          scrollTop,
+          globalAnchor: state.scale
           // TODO(SL): maybe a bug for the maximum value, due to canvasHeight being larger due to the absolute positioning of the table?
-          ? Math.max(0, Math.min(scrollTop, scale.canvasHeight - scale.parameters.clientHeight))
-          : scrollTop,
-        localOffset: 0,
+            ? Math.max(0, Math.min(scrollTop, state.scale.canvasHeight - state.scale.parameters.clientHeight))
+            : scrollTop,
+          localOffset: 0,
+        }
       }
     }
     case 'LOCAL_SCROLL':
