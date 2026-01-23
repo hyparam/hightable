@@ -58,7 +58,7 @@ export function ScrollProvider({ children, headerHeight, numRows, padding = defa
       return
     }
     if ('delta' in result) {
-      dispatch({ type: 'ADD_DELTA', delta: result.delta })
+      dispatch({ type: 'LOCAL_SCROLL', delta: result.delta })
     } else if ('scrollTop' in result && scrollTo) {
       const { scrollTop } = result
       // side effect: scroll the viewport

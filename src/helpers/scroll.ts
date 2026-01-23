@@ -29,7 +29,7 @@ type ScrollAction
   = | { type: 'SET_SCALE', scale: Scale }
     | { type: 'ON_SCROLL', scrollTop: number }
     | { type: 'SCROLL_TO', scrollTop: number }
-    | { type: 'ADD_DELTA', delta: number }
+    | { type: 'LOCAL_SCROLL', delta: number }
 
 export function initializeScrollState(): ScrollState {
   return {
@@ -109,7 +109,7 @@ export function scrollReducer(state: ScrollState, action: ScrollAction) {
         localOffset: 0,
       }
     }
-    case 'ADD_DELTA':
+    case 'LOCAL_SCROLL':
       return {
         ...state,
         localOffset: state.localOffset + action.delta,

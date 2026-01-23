@@ -430,17 +430,17 @@ describe('scrollReducer', () => {
     })
   })
 
-  describe('ADD_DELTA action', () => {
+  describe('LOCAL_SCROLL action', () => {
     it('adds delta to localOffset', () => {
       const initialState = initializeScrollState()
-      const newState = scrollReducer(initialState, { type: 'ADD_DELTA', delta: 50 })
+      const newState = scrollReducer(initialState, { type: 'LOCAL_SCROLL', delta: 50 })
       expect(newState.localOffset).toBe(50)
     })
 
-    it('accumulates delta on multiple ADD_DELTA actions', () => {
+    it('accumulates delta on multiple LOCAL_SCROLL actions', () => {
       const initialState = initializeScrollState()
-      const stateAfterFirstDelta = scrollReducer(initialState, { type: 'ADD_DELTA', delta: 30 })
-      const stateAfterSecondDelta = scrollReducer(stateAfterFirstDelta, { type: 'ADD_DELTA', delta: 20 })
+      const stateAfterFirstDelta = scrollReducer(initialState, { type: 'LOCAL_SCROLL', delta: 30 })
+      const stateAfterSecondDelta = scrollReducer(stateAfterFirstDelta, { type: 'LOCAL_SCROLL', delta: 20 })
       expect(stateAfterSecondDelta.localOffset).toBe(50)
     })
 
@@ -452,7 +452,7 @@ describe('scrollReducer', () => {
         globalAnchor: 200,
         localOffset: 10,
       }
-      const newState = scrollReducer(initialState, { type: 'ADD_DELTA', delta: 15 })
+      const newState = scrollReducer(initialState, { type: 'LOCAL_SCROLL', delta: 15 })
       expect(newState.localOffset).toBe(25)
       expect(newState.isScrolling).toBe(true)
       expect(newState.scale).toBe(initialState.scale)
