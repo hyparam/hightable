@@ -268,7 +268,7 @@ describe('getScrollActionForRow', () => {
       { rowIndex: 5, virtualScrollBase: 500, localOffset: 0, expectedDelta: -401 },
       { rowIndex: 500, virtualScrollBase: 0, localOffset: 0, expectedDelta: 15_517 },
       { rowIndex: 500, virtualScrollBase: 1_000, localOffset: 1_000, expectedDelta: 13_517 },
-    ])('returns a delta action (positive or negative) to scroll to the row when a small scroll is needed (%o)', ({ rowIndex, virtualScrollBase, localOffset, expectedDelta }) => {
+    ])('returns a local scroll action (positive or negative) to scroll to the row when a small scroll is needed (%o)', ({ rowIndex, virtualScrollBase, localOffset, expectedDelta }) => {
       const scale = createScale({
         clientHeight: 1_000,
         headerHeight: 50,
@@ -278,7 +278,7 @@ describe('getScrollActionForRow', () => {
       })
       // TODO(SL): directly set globalAnchor instead of virtualScrollBase
       const action = getScrollActionForRow({ scale, rowIndex, globalAnchor: scale.fromVirtual(virtualScrollBase), localOffset })
-      expect(action).toEqual({ delta: expectedDelta })
+      expect(action).toEqual({ type: 'LOCAL_SCROLL', delta: expectedDelta })
     })
 
     it.each([

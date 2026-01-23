@@ -41,6 +41,16 @@ export function initializeScrollState(): ScrollState {
   }
 }
 
+interface LocalScrollAction {
+  type: 'LOCAL_SCROLL'
+  delta: number
+}
+
+interface ScrollToAction {
+  type: 'SCROLL_TO'
+  scrollTop: number
+}
+
 export function scrollReducer(state: ScrollState, action: ScrollAction) {
   switch (action.type) {
     case 'SET_SCALE': {
@@ -274,7 +284,7 @@ export function getScrollActionForRow({
   scale: Scale
   globalAnchor: number
   localOffset: number
-}): { delta: number } | { scrollTop: number } | undefined {
+}): ScrollToAction | LocalScrollAction | undefined {
   const { headerHeight, rowHeight, numRows } = scale.parameters
 
   if (rowIndex < 1 || rowIndex > numRows + 1 || !Number.isInteger(rowIndex)) {
@@ -314,9 +324,9 @@ export function getScrollActionForRow({
     // scroll to the new position, and update the state optimistically
     const newVirtualScrollTop = virtualScrollTop + delta
     const newScrollTop = scale.fromVirtual(newVirtualScrollTop)
-    return { scrollTop: newScrollTop }
+    return { type: 'SCROLL_TO', scrollTop: newScrollTop }
   } else {
     // move slightly: keep scrollTop and virtualScrollTop untouched, compensate with localOffset
-    return { delta }
+    return { type: 'LOCAL_SCROLL', delta }
   }
 }

@@ -53,19 +53,20 @@ export function ScrollProvider({ children, headerHeight, numRows, padding = defa
     if (!scale || globalAnchor === undefined) {
       return
     }
-    const result = getScrollActionForRow({ rowIndex, scale, globalAnchor, localOffset })
-    if (!result) {
+    const action = getScrollActionForRow({ rowIndex, scale, globalAnchor, localOffset })
+    if (!action) {
       return
     }
-    if ('delta' in result) {
-      dispatch({ type: 'LOCAL_SCROLL', delta: result.delta })
-    } else if ('scrollTop' in result && scrollTo) {
-      const { scrollTop } = result
-      // side effect: scroll the viewport
-      scrollTo({ top: scrollTop, behavior: 'instant' })
-      // anticipate the scroll position change
-      dispatch({ type: 'SCROLL_TO', scrollTop })
+    // side effect: scroll to the new position while updating the state optimistically
+    if (action.type === 'SCROLL_TO') {
+      if (!scrollTo) {
+        // Safe-guard for the tests with jsdom, which don't provide scrollTo
+        return
+      }
+      scrollTo({ top: action.scrollTop, behavior: 'instant' })
     }
+    // update the state
+    dispatch(action)
   }, [scrollTo, globalAnchor, localOffset, scale])
 
   const value = useMemo(() => {
