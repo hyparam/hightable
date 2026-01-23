@@ -69,19 +69,23 @@ export function decideLocalOrGlobal({ state, scrollTop }: { state: Omit<ScrollSt
     && scale !== undefined
     // there is virtual scroll
     && scale.factor !== 1
-    // the last move is small
-    && Math.abs(scrollTop - oldScrollTop) <= largeScrollPx
-    // the accumulated localOffset is small enough
-    && Math.abs(localOffset + (scrollTop - oldScrollTop)) <= largeScrollPx
-    // scrollTop is greater than 0 - we will still be able to scroll back up
-    && scrollTop > 0
-    // scrollTop is not at the maximum - we will still be able to scroll further down
-    && scrollTop < scale.canvasHeight - scale.parameters.clientHeight
   ) {
+    const delta = scrollTop - oldScrollTop
+    if (
+      // the last move is small
+      Math.abs(delta) <= largeScrollPx
+      // the accumulated localOffset is small enough
+      && Math.abs(localOffset + (delta)) <= largeScrollPx
+      // scrollTop is greater than 0 - we will still be able to scroll back up
+      && scrollTop > 0
+      // scrollTop is not at the maximum - we will still be able to scroll further down
+      && scrollTop < scale.canvasHeight - scale.parameters.clientHeight
+    ) {
     // Local scroll
-    return {
-      type: 'LOCAL_SCROLL',
-      delta: scrollTop - oldScrollTop,
+      return {
+        type: 'LOCAL_SCROLL',
+        delta: delta,
+      }
     }
   }
 
