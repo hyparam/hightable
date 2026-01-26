@@ -21,7 +21,7 @@ export interface ScrollState {
   isScrolling: boolean
   scale: Scale | undefined
   scrollTop: number | undefined
-  globalAnchor: number | undefined
+  scrollTopAnchor: number | undefined
   localOffset: number
 }
 
@@ -36,7 +36,7 @@ export function initializeScrollState(): ScrollState {
     isScrolling: false,
     scale: undefined,
     scrollTop: undefined,
-    globalAnchor: undefined,
+    scrollTopAnchor: undefined,
     localOffset: 0,
   }
 }
@@ -57,12 +57,12 @@ interface GlobalScrollAction {
 }
 
 export function decideLocalOrGlobal({ state, scrollTop }: { state: Omit<ScrollState, 'isScrolling'>, scrollTop: number }): LocalScrollAction | GlobalScrollAction {
-  const { scale, localOffset, globalAnchor, scrollTop: oldScrollTop } = state
+  const { scale, localOffset, scrollTopAnchor, scrollTop: oldScrollTop } = state
 
   // conditions for local scroll:
   if (
-    // globalAnchor is defined
-    globalAnchor !== undefined
+    // scrollTopAnchor is defined
+    scrollTopAnchor !== undefined
     // the previous scrollTop is defined
     && oldScrollTop !== undefined
     // scale is defined
@@ -101,7 +101,7 @@ export function scrollReducer(state: ScrollState, action: ScrollAction) {
     case 'SET_SCALE': {
       const { scale } = action
 
-      // TODO(SL): if state.scale already existed, i.e. if some dimensions changed, update the state accordingly (globalAnchor, localOffset)
+      // TODO(SL): if state.scale already existed, i.e. if some dimensions changed, update the state accordingly (scrollTopAnchor, localOffset)
       // trying to keep the same view?
       // The most impactful change could be if the number of rows changed drastically.
 
@@ -115,7 +115,7 @@ export function scrollReducer(state: ScrollState, action: ScrollAction) {
         ...state,
         isScrolling: true,
         scrollTop: action.scrollTop,
-        globalAnchor: action.scrollTop,
+        scrollTopAnchor: action.scrollTop,
         localOffset: 0,
       }
     case 'ON_SCROLL': {
@@ -129,14 +129,14 @@ export function scrollReducer(state: ScrollState, action: ScrollAction) {
           isScrolling: false,
           scrollTop,
           localOffset: state.localOffset + scrollAction.delta,
-          // globalAnchor is unchanged
+          // scrollTopAnchor is unchanged
         }
       } else {
         return {
           ...state,
           isScrolling: false,
           scrollTop,
-          globalAnchor: state.scale
+          scrollTopAnchor: state.scale
           // TODO(SL): maybe a bug for the maximum value, due to canvasHeight being larger due to the absolute positioning of the table?
             ? Math.max(0, Math.min(scrollTop, state.scale.canvasHeight - state.scale.parameters.clientHeight))
             : scrollTop,
@@ -153,17 +153,17 @@ export function scrollReducer(state: ScrollState, action: ScrollAction) {
 }
 
 /* Compute the derived values */
-export function computeDerivedValues({ scale, scrollTop, globalAnchor, localOffset, padding }: Omit<ScrollState, 'isScrolling'> & { padding: number }): {
+export function computeDerivedValues({ scale, scrollTop, scrollTopAnchor, localOffset, padding }: Omit<ScrollState, 'isScrolling'> & { padding: number }): {
   sliceTop?: number | undefined
   visibleRowsStart?: number | undefined
   visibleRowsEnd?: number | undefined
   renderedRowsStart?: number | undefined
   renderedRowsEnd?: number | undefined
 } {
-  if (globalAnchor === undefined || scale === undefined) {
+  if (scrollTopAnchor === undefined || scale === undefined) {
     return {}
   }
-  const virtualScrollTop = scale.toVirtual(globalAnchor) + localOffset
+  const virtualScrollTop = scale.toVirtual(scrollTopAnchor) + localOffset
   const { clientHeight, headerHeight, rowHeight, numRows } = scale.parameters
 
   // special case: is the virtual scroll position in the header?
@@ -302,12 +302,12 @@ export function createScale(parameters: {
 export function getScrollActionForRow({
   rowIndex,
   scale,
-  globalAnchor,
+  scrollTopAnchor,
   localOffset,
 }: {
   rowIndex: number
   scale: Scale
-  globalAnchor: number
+  scrollTopAnchor: number
   localOffset: number
 }): ScrollToAction | LocalScrollAction | undefined {
   const { headerHeight, rowHeight, numRows } = scale.parameters
@@ -327,7 +327,7 @@ export function getScrollActionForRow({
   // - the row is fully visible: do nothing
   // - the row start is before virtualScrollTop + headerHeight: scroll to snap its start with that value
   // - the row end is after virtualScrollTop + viewportHeight: scroll to snap its end with that value
-  const virtualScrollTop = scale.toVirtual(globalAnchor) + localOffset
+  const virtualScrollTop = scale.toVirtual(scrollTopAnchor) + localOffset
   const hiddenPixelsBefore = virtualScrollTop + headerHeight - (headerHeight + row * rowHeight)
   const hiddenPixelsAfter = headerHeight + row * rowHeight + rowHeight - virtualScrollTop - scale.parameters.clientHeight
 

@@ -99,7 +99,7 @@ describe('computeDerivedValues', () => {
       scale,
       // these values are arbitrary for the test
       scrollTop: 200,
-      globalAnchor: scale.fromVirtual(600), // TODO(SL): put a value directly
+      scrollTopAnchor: scale.fromVirtual(600), // TODO(SL): put a value directly
       localOffset: 150,
       padding: 5,
     })
@@ -122,7 +122,7 @@ describe('computeDerivedValues', () => {
       scale,
       // these values are arbitrary for the test
       scrollTop: 2_000,
-      globalAnchor: 2_000,
+      scrollTopAnchor: 2_000,
       localOffset: 0,
       padding: 5,
     })
@@ -145,7 +145,7 @@ describe('computeDerivedValues', () => {
       scale,
       // these values are arbitrary for the test
       scrollTop: 0,
-      globalAnchor: 0,
+      scrollTopAnchor: 0,
       localOffset: 0,
       padding: 10,
     })
@@ -164,7 +164,7 @@ describe('initializeScrollState', () => {
       isScrolling: false,
       scale: undefined,
       scrollTop: undefined,
-      globalAnchor: undefined,
+      scrollTopAnchor: undefined,
       localOffset: 0,
     })
   })
@@ -173,10 +173,10 @@ describe('initializeScrollState', () => {
 describe('getScrollActionForRow', () => {
   describe('in normal scrolling mode (scale.factor = 1)', () => {
     it.each([
-      { rowIndex: 1, globalAnchor: 0 },
-      { rowIndex: 10, globalAnchor: 100 },
-      { rowIndex: 50, globalAnchor: 1_000 },
-    ])('returns undefined if the row is already in view', ({ rowIndex, globalAnchor }) => {
+      { rowIndex: 1, scrollTopAnchor: 0 },
+      { rowIndex: 10, scrollTopAnchor: 100 },
+      { rowIndex: 50, scrollTopAnchor: 1_000 },
+    ])('returns undefined if the row is already in view', ({ rowIndex, scrollTopAnchor }) => {
       const scale = createScale({
         clientHeight: 1_000,
         headerHeight: 50,
@@ -184,16 +184,16 @@ describe('getScrollActionForRow', () => {
         numRows: 1_000,
         rowHeight: 33,
       })
-      const action = getScrollActionForRow({ scale, rowIndex, globalAnchor, localOffset: 0 })
+      const action = getScrollActionForRow({ scale, rowIndex, scrollTopAnchor, localOffset: 0 })
       expect(action).toBeUndefined()
     })
 
     it.each([
-      { rowIndex: 2, globalAnchor: 500, expectedScrollTop: 0 },
-      { rowIndex: 500, globalAnchor: 0, expectedScrollTop: 15_517 },
-      { rowIndex: 800, globalAnchor: 0, expectedScrollTop: 25_417 },
-      { rowIndex: 800, globalAnchor: 25_000, expectedScrollTop: 25_417 },
-    ])('returns a scrollTop action to scroll to the row in all the cases, small or large scroll (%o)', ({ rowIndex, globalAnchor, expectedScrollTop }) => {
+      { rowIndex: 2, scrollTopAnchor: 500, expectedScrollTop: 0 },
+      { rowIndex: 500, scrollTopAnchor: 0, expectedScrollTop: 15_517 },
+      { rowIndex: 800, scrollTopAnchor: 0, expectedScrollTop: 25_417 },
+      { rowIndex: 800, scrollTopAnchor: 25_000, expectedScrollTop: 25_417 },
+    ])('returns a scrollTop action to scroll to the row in all the cases, small or large scroll (%o)', ({ rowIndex, scrollTopAnchor, expectedScrollTop }) => {
       const scale = createScale({
         clientHeight: 1_000,
         headerHeight: 50,
@@ -201,7 +201,7 @@ describe('getScrollActionForRow', () => {
         numRows: 1_000,
         rowHeight: 33,
       })
-      const action = getScrollActionForRow({ scale, rowIndex, globalAnchor, localOffset: 0 })
+      const action = getScrollActionForRow({ scale, rowIndex, scrollTopAnchor, localOffset: 0 })
       if (!action || !('scrollTop' in action)) {
         throw new Error('Expected a scrollTop action')
       }
@@ -209,9 +209,9 @@ describe('getScrollActionForRow', () => {
     })
 
     it.each([
-      { rowIndex: 500, globalAnchor: 0, expectedScrollTop: 15_517 },
-      { rowIndex: 500, globalAnchor: 30_000, expectedScrollTop: 16_434 },
-    ])('returns different scrollTop value if the current row was before or after the next one (nearest neighbor) (%o)', ({ rowIndex, globalAnchor, expectedScrollTop }) => {
+      { rowIndex: 500, scrollTopAnchor: 0, expectedScrollTop: 15_517 },
+      { rowIndex: 500, scrollTopAnchor: 30_000, expectedScrollTop: 16_434 },
+    ])('returns different scrollTop value if the current row was before or after the next one (nearest neighbor) (%o)', ({ rowIndex, scrollTopAnchor, expectedScrollTop }) => {
       const scale = createScale({
         clientHeight: 1_000,
         headerHeight: 50,
@@ -219,7 +219,7 @@ describe('getScrollActionForRow', () => {
         numRows: 1_000,
         rowHeight: 33,
       })
-      const action = getScrollActionForRow({ scale, rowIndex, globalAnchor, localOffset: 0 })
+      const action = getScrollActionForRow({ scale, rowIndex, scrollTopAnchor, localOffset: 0 })
       if (!action || !('scrollTop' in action)) {
         throw new Error('Expected a scrollTop action')
       }
@@ -228,10 +228,10 @@ describe('getScrollActionForRow', () => {
 
     it.each([
       // would be a delta, but rowIndex 1 is the header
-      { rowIndex: 1, globalAnchor: 500 },
+      { rowIndex: 1, scrollTopAnchor: 500 },
       // would be a scrollTop, but rowIndex 1 is the header
-      { rowIndex: 1, globalAnchor: 50_000 },
-    ])('returns undefined if the rowIndex is the header, because it is always in view (%o)', ({ rowIndex, globalAnchor }) => {
+      { rowIndex: 1, scrollTopAnchor: 50_000 },
+    ])('returns undefined if the rowIndex is the header, because it is always in view (%o)', ({ rowIndex, scrollTopAnchor }) => {
       const scale = createScale({
         clientHeight: 1_000,
         headerHeight: 50,
@@ -239,7 +239,7 @@ describe('getScrollActionForRow', () => {
         numRows: 1_000,
         rowHeight: 33,
       })
-      const action = getScrollActionForRow({ scale, rowIndex, globalAnchor, localOffset: 0 })
+      const action = getScrollActionForRow({ scale, rowIndex, scrollTopAnchor, localOffset: 0 })
       expect(action).toBeUndefined()
     })
   })
@@ -259,8 +259,8 @@ describe('getScrollActionForRow', () => {
         numRows: 1_000,
         rowHeight: 33,
       })
-      // TODO(SL): directly set globalAnchor instead of virtualScrollBase
-      const action = getScrollActionForRow({ scale, rowIndex, globalAnchor: scale.fromVirtual(virtualScrollBase), localOffset })
+      // TODO(SL): directly set scrollTopAnchor instead of virtualScrollBase
+      const action = getScrollActionForRow({ scale, rowIndex, scrollTopAnchor: scale.fromVirtual(virtualScrollBase), localOffset })
       expect(action).toBeUndefined()
     })
 
@@ -276,8 +276,8 @@ describe('getScrollActionForRow', () => {
         numRows: 1_000,
         rowHeight: 33,
       })
-      // TODO(SL): directly set globalAnchor instead of virtualScrollBase
-      const action = getScrollActionForRow({ scale, rowIndex, globalAnchor: scale.fromVirtual(virtualScrollBase), localOffset })
+      // TODO(SL): directly set scrollTopAnchor instead of virtualScrollBase
+      const action = getScrollActionForRow({ scale, rowIndex, scrollTopAnchor: scale.fromVirtual(virtualScrollBase), localOffset })
       expect(action).toEqual({ type: 'LOCAL_SCROLL', delta: expectedDelta })
     })
 
@@ -292,8 +292,8 @@ describe('getScrollActionForRow', () => {
         numRows: 1_000,
         rowHeight: 33,
       })
-      // TODO(SL): directly set globalAnchor instead of virtualScrollBase
-      const action = getScrollActionForRow({ scale, rowIndex, globalAnchor: scale.fromVirtual(virtualScrollBase), localOffset })
+      // TODO(SL): directly set scrollTopAnchor instead of virtualScrollBase
+      const action = getScrollActionForRow({ scale, rowIndex, scrollTopAnchor: scale.fromVirtual(virtualScrollBase), localOffset })
       if (!action || !('scrollTop' in action)) {
         throw new Error('Expected a scrollTop action')
       }
@@ -313,8 +313,8 @@ describe('getScrollActionForRow', () => {
         numRows: 10_000,
         rowHeight: 33,
       })
-      // TODO(SL): directly set globalAnchor instead of virtualScrollBase
-      const action = getScrollActionForRow({ scale, rowIndex, globalAnchor: scale.fromVirtual(virtualScrollBase), localOffset: 0 })
+      // TODO(SL): directly set scrollTopAnchor instead of virtualScrollBase
+      const action = getScrollActionForRow({ scale, rowIndex, scrollTopAnchor: scale.fromVirtual(virtualScrollBase), localOffset: 0 })
       if (!action || !('scrollTop' in action)) {
         throw new Error('Expected a scrollTop action')
       }
@@ -333,8 +333,8 @@ describe('getScrollActionForRow', () => {
       const rowIndex = 600
       const virtualScrollBase = 0
       // should add a small delta (2_317), but the accumulated delta (18_817) exceeds largeScrollPx, so: scrollTop is returned to synchronize properly
-      // TODO(SL): directly set globalAnchor instead of virtualScrollBase
-      const action = getScrollActionForRow({ scale, rowIndex, globalAnchor: scale.fromVirtual(virtualScrollBase), localOffset })
+      // TODO(SL): directly set scrollTopAnchor instead of virtualScrollBase
+      const action = getScrollActionForRow({ scale, rowIndex, scrollTopAnchor: scale.fromVirtual(virtualScrollBase), localOffset })
       if (!action || !('scrollTop' in action)) {
         throw new Error('Expected a scrollTop action')
       }
@@ -354,8 +354,8 @@ describe('getScrollActionForRow', () => {
         numRows: 1_000,
         rowHeight: 33,
       })
-      // TODO(SL): directly set globalAnchor instead of virtualScrollBase
-      const action = getScrollActionForRow({ scale, rowIndex, globalAnchor: scale.fromVirtual(virtualScrollBase), localOffset })
+      // TODO(SL): directly set scrollTopAnchor instead of virtualScrollBase
+      const action = getScrollActionForRow({ scale, rowIndex, scrollTopAnchor: scale.fromVirtual(virtualScrollBase), localOffset })
       expect(action).toBeUndefined()
     })
   })
@@ -390,7 +390,7 @@ describe('scrollReducer', () => {
       expect(newState.scale).toBe(scale)
       expect(newState.isScrolling).toBe(false)
       expect(newState.scrollTop).toBeUndefined()
-      expect(newState.globalAnchor).toBeUndefined()
+      expect(newState.scrollTopAnchor).toBeUndefined()
       expect(newState.localOffset).toBe(0)
     })
 
@@ -399,7 +399,7 @@ describe('scrollReducer', () => {
         isScrolling: true,
         scale: undefined,
         scrollTop: 100,
-        globalAnchor: 200,
+        scrollTopAnchor: 200,
         localOffset: 10,
       }
       const scale = createNormalScale()
@@ -407,7 +407,7 @@ describe('scrollReducer', () => {
       expect(newState.scale).toBe(scale)
       expect(newState.isScrolling).toBe(true)
       expect(newState.scrollTop).toBe(100)
-      expect(newState.globalAnchor).toBe(200)
+      expect(newState.scrollTopAnchor).toBe(200)
       expect(newState.localOffset).toBe(10)
     })
 
@@ -417,7 +417,7 @@ describe('scrollReducer', () => {
         isScrolling: false,
         scale: createNormalScale(),
         scrollTop: 100,
-        globalAnchor: 200,
+        scrollTopAnchor: 200,
         localOffset: 0,
       }
       const newScale = createNormalScale()
@@ -425,7 +425,7 @@ describe('scrollReducer', () => {
       expect(newState.scale).toBe(newScale)
       expect(newState.isScrolling).toBe(false)
       expect(newState.scrollTop).toBe(100)
-      expect(newState.globalAnchor).toBe(200)
+      expect(newState.scrollTopAnchor).toBe(200)
       expect(newState.localOffset).toBe(0)
     })
   })
@@ -449,7 +449,7 @@ describe('scrollReducer', () => {
         isScrolling: true,
         scale: createVirtualScale(),
         scrollTop: 100,
-        globalAnchor: 200,
+        scrollTopAnchor: 200,
         localOffset: 10,
       }
       const newState = scrollReducer(initialState, { type: 'LOCAL_SCROLL', delta: 15 })
@@ -457,22 +457,22 @@ describe('scrollReducer', () => {
       expect(newState.isScrolling).toBe(true)
       expect(newState.scale).toBe(initialState.scale)
       expect(newState.scrollTop).toBe(100)
-      expect(newState.globalAnchor).toBe(200)
+      expect(newState.scrollTopAnchor).toBe(200)
     })
   })
 
   describe('SCROLL_TO action', () => {
-    it.each([undefined, 'normal', 'virtual'])('sets scrollTop and globalAnchor, resets localOffset, and sets isScrolling to true if scale is %s', (scale) => {
+    it.each([undefined, 'normal', 'virtual'])('sets scrollTop and scrollTopAnchor, resets localOffset, and sets isScrolling to true if scale is %s', (scale) => {
       const initialState = {
         isScrolling: false,
         scale: scale === 'normal' ? createNormalScale() : scale === 'virtual' ? createVirtualScale() : undefined,
         scrollTop: 150,
-        globalAnchor: 800,
+        scrollTopAnchor: 800,
         localOffset: 120,
       }
       const newState = scrollReducer(initialState, { type: 'SCROLL_TO', scrollTop: 250 })
       expect(newState.scrollTop).toBe(250)
-      expect(newState.globalAnchor).toBe(250)
+      expect(newState.scrollTopAnchor).toBe(250)
       expect(newState.localOffset).toBe(0)
       expect(newState.isScrolling).toBe(true)
     })
@@ -486,7 +486,7 @@ describe('scrollReducer', () => {
       isScrolling: true,
       scale: createVirtualScale(),
       scrollTop: initialScrollTop,
-      globalAnchor: initialScrollTop,
+      scrollTopAnchor: initialScrollTop,
       localOffset: 200,
     }
 
@@ -494,7 +494,7 @@ describe('scrollReducer', () => {
       const newState = scrollReducer({ ...initialState, isScrolling }, { type: 'ON_SCROLL', scrollTop: farScrollTop })
       expect(newState.isScrolling).toBe(false)
       expect(newState.scrollTop).toBe(farScrollTop)
-      expect(newState.globalAnchor).toBe(farScrollTop)
+      expect(newState.scrollTopAnchor).toBe(farScrollTop)
       expect(newState.localOffset).toBe(0)
     })
 
@@ -502,15 +502,15 @@ describe('scrollReducer', () => {
       const newState = scrollReducer(initialState, { type: 'ON_SCROLL', scrollTop: nearScrollTop })
       expect(newState.isScrolling).toBe(false)
       expect(newState.scrollTop).toBe(nearScrollTop)
-      expect(newState.globalAnchor).toBe(initialState.globalAnchor) // unchanged
+      expect(newState.scrollTopAnchor).toBe(initialState.scrollTopAnchor) // unchanged
       expect(newState.localOffset).toBe(400)
     })
 
-    it('scrolls globally when globalAnchor is undefined', () => {
-      const newState = scrollReducer({ ...initialState, globalAnchor: undefined }, { type: 'ON_SCROLL', scrollTop: nearScrollTop })
+    it('scrolls globally when scrollTopAnchor is undefined', () => {
+      const newState = scrollReducer({ ...initialState, scrollTopAnchor: undefined }, { type: 'ON_SCROLL', scrollTop: nearScrollTop })
       expect(newState.isScrolling).toBe(false)
       expect(newState.scrollTop).toBe(nearScrollTop)
-      expect(newState.globalAnchor).toBe(nearScrollTop)
+      expect(newState.scrollTopAnchor).toBe(nearScrollTop)
       expect(newState.localOffset).toBe(0)
     })
 
@@ -518,7 +518,7 @@ describe('scrollReducer', () => {
       const newState = scrollReducer({ ...initialState, scrollTop: undefined }, { type: 'ON_SCROLL', scrollTop: nearScrollTop })
       expect(newState.isScrolling).toBe(false)
       expect(newState.scrollTop).toBe(nearScrollTop)
-      expect(newState.globalAnchor).toBe(nearScrollTop)
+      expect(newState.scrollTopAnchor).toBe(nearScrollTop)
       expect(newState.localOffset).toBe(0)
     })
 
@@ -526,7 +526,7 @@ describe('scrollReducer', () => {
       const newState = scrollReducer({ ...initialState, scale: undefined }, { type: 'ON_SCROLL', scrollTop: nearScrollTop })
       expect(newState.isScrolling).toBe(false)
       expect(newState.scrollTop).toBe(nearScrollTop)
-      expect(newState.globalAnchor).toBe(nearScrollTop)
+      expect(newState.scrollTopAnchor).toBe(nearScrollTop)
       expect(newState.localOffset).toBe(0)
     })
 
@@ -535,7 +535,7 @@ describe('scrollReducer', () => {
       const newState = scrollReducer(normalScaleState, { type: 'ON_SCROLL', scrollTop: nearScrollTop })
       expect(newState.isScrolling).toBe(false)
       expect(newState.scrollTop).toBe(nearScrollTop)
-      expect(newState.globalAnchor).toBe(nearScrollTop)
+      expect(newState.scrollTopAnchor).toBe(nearScrollTop)
       expect(newState.localOffset).toBe(0)
     })
 
@@ -543,7 +543,7 @@ describe('scrollReducer', () => {
       const newState = scrollReducer(initialState, { type: 'ON_SCROLL', scrollTop: farScrollTop })
       expect(newState.isScrolling).toBe(false)
       expect(newState.scrollTop).toBe(farScrollTop)
-      expect(newState.globalAnchor).toBe(farScrollTop)
+      expect(newState.scrollTopAnchor).toBe(farScrollTop)
       expect(newState.localOffset).toBe(0)
     })
 
@@ -555,28 +555,28 @@ describe('scrollReducer', () => {
       const newState = scrollReducer(stateWithLargeLocalOffset, { type: 'ON_SCROLL', scrollTop: nearScrollTop })
       expect(newState.isScrolling).toBe(false)
       expect(newState.scrollTop).toBe(nearScrollTop)
-      expect(newState.globalAnchor).toBe(nearScrollTop)
+      expect(newState.scrollTopAnchor).toBe(nearScrollTop)
       expect(newState.localOffset).toBe(0)
     })
 
-    it('scrolls globally, and globalAnchor is clamped, when scrollTop is non-positive', () => {
+    it('scrolls globally, and scrollTopAnchor is clamped, when scrollTop is non-positive', () => {
       const newState = scrollReducer(initialState, { type: 'ON_SCROLL', scrollTop: -50 })
       expect(newState.isScrolling).toBe(false)
       expect(newState.scrollTop).toBe(-50)
-      expect(newState.globalAnchor).toBe(0)
+      expect(newState.scrollTopAnchor).toBe(0)
       expect(newState.localOffset).toBe(0)
     })
 
-    it('scrolls globally, and globalAnchor is clamped, when scrollTop is too large', () => {
+    it('scrolls globally, and scrollTopAnchor is clamped, when scrollTop is too large', () => {
       const maxScrollTop = initialState.scale.canvasHeight - initialState.scale.parameters.clientHeight
       const newState = scrollReducer({
         ...initialState,
         scrollTop: maxScrollTop - 100,
-        globalAnchor: maxScrollTop - 100,
+        scrollTopAnchor: maxScrollTop - 100,
       }, { type: 'ON_SCROLL', scrollTop: maxScrollTop + 100 })
       expect(newState.isScrolling).toBe(false)
       expect(newState.scrollTop).toBe(maxScrollTop + 100)
-      expect(newState.globalAnchor).toBe(maxScrollTop)
+      expect(newState.scrollTopAnchor).toBe(maxScrollTop)
       expect(newState.localOffset).toBe(0)
     })
   })

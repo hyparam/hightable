@@ -15,7 +15,7 @@ type Props = {
 } & ScrollProviderProps
 
 export function ScrollProvider({ children, headerHeight, numRows, padding = defaultPadding }: Props) {
-  const [{ scale, scrollTop, globalAnchor, isScrolling, localOffset }, dispatch] = useReducer(scrollReducer, undefined, initializeScrollState)
+  const [{ scale, scrollTop, scrollTopAnchor, isScrolling, localOffset }, dispatch] = useReducer(scrollReducer, undefined, initializeScrollState)
   const [scrollTo, setScrollTo] = useState<HTMLElement['scrollTo'] | undefined>(undefined)
   const setScrollTop = useCallback((scrollTop: number) => {
     dispatch({ type: 'ON_SCROLL', scrollTop })
@@ -50,10 +50,10 @@ export function ScrollProvider({ children, headerHeight, numRows, padding = defa
    * @param rowIndex The row to scroll to (same semantic as aria-rowindex: 1-based, includes header)
    */
   const scrollRowIntoView = useCallback(({ rowIndex }: { rowIndex: number }) => {
-    if (!scale || globalAnchor === undefined) {
+    if (!scale || scrollTopAnchor === undefined) {
       return
     }
-    const action = getScrollActionForRow({ rowIndex, scale, globalAnchor, localOffset })
+    const action = getScrollActionForRow({ rowIndex, scale, scrollTopAnchor, localOffset })
     if (!action) {
       return
     }
@@ -67,7 +67,7 @@ export function ScrollProvider({ children, headerHeight, numRows, padding = defa
     }
     // update the state
     dispatch(action)
-  }, [scrollTo, globalAnchor, localOffset, scale])
+  }, [scrollTo, scrollTopAnchor, localOffset, scale])
 
   const value = useMemo(() => {
     return {
@@ -81,12 +81,12 @@ export function ScrollProvider({ children, headerHeight, numRows, padding = defa
       ...computeDerivedValues({
         scale,
         scrollTop,
-        globalAnchor,
+        scrollTopAnchor,
         localOffset,
         padding,
       }),
     }
-  }, [scale, scrollTop, globalAnchor, localOffset, padding, isScrolling, setClientHeight, setScrollTop, scrollRowIntoView])
+  }, [scale, scrollTop, scrollTopAnchor, localOffset, padding, isScrolling, setClientHeight, setScrollTop, scrollRowIntoView])
   return (
     <ScrollContext.Provider value={value}>
       {children}
