@@ -2,7 +2,7 @@ import { createContext } from 'react'
 
 export interface ScrollContextType {
   canvasHeight?: number // total scrollable height
-  isScrolling?: boolean
+  isScrollingProgrammatically?: boolean
   sliceTop?: number // offset of the top of the slice from the top of the canvas
   visibleRowsStart?: number // index of the first row visible in the viewport (inclusive). Indexes refer to the virtual table domain.
   visibleRowsEnd?: number // index of the last row visible in the viewport (exclusive).

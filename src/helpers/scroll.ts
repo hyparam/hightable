@@ -18,16 +18,16 @@ export interface Scale {
 }
 
 /**
- * The scroll state of the table
+ * The state to handle virtual scrolling
  *
- * - scrollTop: the current scrollTop of the scrollable container
- * - scrollTopAnchor: the scrollTop position that anchors the virtual scroll calculations
- * - localOffset: the local offset applied to the virtual scroll calculations
- * - scale: the current scale object, mapping scrollTop to virtual scrollTop
- * - isScrolling: semaphore telling whether a scroll action is in progress
+ * - scrollTop: the current scrollTop of HTML <div> container
+ * - scrollTopAnchor: the scrollTop position that anchors the virtual scroll calculations. It differs from scrollTop when local scrolling is applied.
+ * - localOffset: the local offset added to the virtual scrollTop to scroll locally (for small scroll deltas)
+ * - scale: the scale mapping scrollTop to virtual scrollTop
+ * - isScrollingProgrammatically: semaphore telling whether a programmatic scroll action is in progress
  */
 export interface ScrollState {
-  isScrolling: boolean
+  isScrollingProgrammatically: boolean
   scale: Scale | undefined
   scrollTop: number | undefined
   scrollTopAnchor: number | undefined
@@ -43,7 +43,7 @@ type ScrollAction
 
 export function initializeScrollState(): ScrollState {
   return {
-    isScrolling: false,
+    isScrollingProgrammatically: false,
     scale: undefined,
     scrollTop: undefined,
     scrollTopAnchor: undefined,
@@ -98,7 +98,7 @@ export function scrollReducer(state: ScrollState, action: ScrollAction): ScrollS
       // update the state optimistically, while waiting for the scroll event to arrive
       return {
         ...scrollReducer(state, { type: 'GLOBAL_SCROLL', scrollTop: action.scrollTop }),
-        isScrolling: true,
+        isScrollingProgrammatically: true,
       }
     }
     case 'ON_SCROLL': {
@@ -106,11 +106,11 @@ export function scrollReducer(state: ScrollState, action: ScrollAction): ScrollS
 
       const { scrollTopAnchor, scrollTop: oldScrollTop, scale } = state
 
-      // in either case, after a scroll event, save the scrollTop value, and clear the isScrolling semaphore
+      // in either case, after a scroll event, save the scrollTop value, and clear the isScrollingProgrammatically semaphore
       const nextState = {
         ...state,
         scrollTop,
-        isScrolling: false,
+        isScrollingProgrammatically: false,
       }
 
       const delta = oldScrollTop === undefined ? undefined : scrollTop - oldScrollTop
@@ -155,7 +155,7 @@ export function scrollReducer(state: ScrollState, action: ScrollAction): ScrollS
 }
 
 /* Compute the derived values */
-export function computeDerivedValues({ scale, scrollTop, scrollTopAnchor, localOffset, padding }: Omit<ScrollState, 'isScrolling'> & { padding: number }): {
+export function computeDerivedValues({ scale, scrollTop, scrollTopAnchor, localOffset, padding }: Omit<ScrollState, 'isScrollingProgrammatically'> & { padding: number }): {
   sliceTop?: number | undefined
   visibleRowsStart?: number | undefined
   visibleRowsEnd?: number | undefined

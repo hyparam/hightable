@@ -15,7 +15,7 @@ type Props = {
 } & ScrollProviderProps
 
 export function ScrollProvider({ children, headerHeight, numRows, padding = defaultPadding }: Props) {
-  const [{ scale, scrollTop, scrollTopAnchor, isScrolling, localOffset }, dispatch] = useReducer(scrollReducer, undefined, initializeScrollState)
+  const [{ scale, scrollTop, scrollTopAnchor, isScrollingProgrammatically, localOffset }, dispatch] = useReducer(scrollReducer, undefined, initializeScrollState)
   const [scrollTo, setScrollTo] = useState<HTMLElement['scrollTo'] | undefined>(undefined)
   const setScrollTop = useCallback((scrollTop: number) => {
     dispatch({ type: 'ON_SCROLL', scrollTop })
@@ -73,7 +73,7 @@ export function ScrollProvider({ children, headerHeight, numRows, padding = defa
     return {
       scrollMode: 'virtual' as const,
       canvasHeight: scale ? scale.canvasHeight : undefined,
-      isScrolling,
+      isScrollingProgrammatically,
       setClientHeight,
       setScrollTop,
       scrollRowIntoView,
@@ -86,7 +86,7 @@ export function ScrollProvider({ children, headerHeight, numRows, padding = defa
         padding,
       }),
     }
-  }, [scale, scrollTop, scrollTopAnchor, localOffset, padding, isScrolling, setClientHeight, setScrollTop, scrollRowIntoView])
+  }, [scale, scrollTop, scrollTopAnchor, localOffset, padding, isScrollingProgrammatically, setClientHeight, setScrollTop, scrollRowIntoView])
   return (
     <ScrollContext.Provider value={value}>
       {children}
