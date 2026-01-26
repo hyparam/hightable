@@ -16,13 +16,13 @@ interface CellFocus {
 
 export function useCellFocus({ ariaColIndex, ariaRowIndex }: CellData): CellFocus {
   const { colIndex, rowIndex, setColIndex, setRowIndex, shouldFocus, setShouldFocus } = useContext(CellNavigationContext)
-  const { isScrolling } = useContext(ScrollContext)
+  const { isScrollingProgrammatically } = useContext(ScrollContext)
 
   // Check if the cell is the current navigation cell
   const isCurrentCell = ariaColIndex === colIndex && ariaRowIndex === rowIndex
 
   const focusCellIfNeeded = useCallback((element: HTMLElement | null) => {
-    if (!element || !isCurrentCell || !shouldFocus || isScrolling) {
+    if (!element || !isCurrentCell || !shouldFocus || isScrollingProgrammatically) {
       return
     }
     // horizontally scroll the cell into view and focus it, once the row is rendered and scrolled into view vertically
@@ -38,7 +38,7 @@ export function useCellFocus({ ariaColIndex, ariaRowIndex }: CellData): CellFocu
     element.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'nearest' })
     element.focus({ preventScroll: true })
     setShouldFocus(false)
-  }, [isCurrentCell, shouldFocus, setShouldFocus, isScrolling])
+  }, [isCurrentCell, shouldFocus, setShouldFocus, isScrollingProgrammatically])
 
   // Roving tabindex: only the current navigation cell is focusable with Tab (tabindex = 0)
   // All other cells are focusable only with javascript .focus() (tabindex = -1)

@@ -15,7 +15,7 @@ type Props = {
 } & ScrollProviderProps
 
 export function ScrollProvider({ children, headerHeight, numRows, padding = defaultPadding }: Props) {
-  const [{ scale, scrollTop, virtualScrollBase, isScrolling, virtualScrollDelta }, dispatch] = useReducer(scrollReducer, undefined, initializeScrollState)
+  const [{ scale, scrollTop, scrollTopAnchor, isScrollingProgrammatically, localOffset }, dispatch] = useReducer(scrollReducer, undefined, initializeScrollState)
   const [scrollTo, setScrollTo] = useState<HTMLElement['scrollTo'] | undefined>(undefined)
   const setScrollTop = useCallback((scrollTop: number) => {
     dispatch({ type: 'ON_SCROLL', scrollTop })
@@ -50,28 +50,30 @@ export function ScrollProvider({ children, headerHeight, numRows, padding = defa
    * @param rowIndex The row to scroll to (same semantic as aria-rowindex: 1-based, includes header)
    */
   const scrollRowIntoView = useCallback(({ rowIndex }: { rowIndex: number }) => {
-    if (!scale || virtualScrollBase === undefined) {
+    if (!scale || scrollTopAnchor === undefined) {
       return
     }
-    const result = getScrollActionForRow({ rowIndex, scale, virtualScrollBase, virtualScrollDelta })
-    if (!result) {
+    const action = getScrollActionForRow({ rowIndex, scale, scrollTopAnchor, localOffset })
+    if (!action) {
       return
     }
-    if ('delta' in result) {
-      dispatch({ type: 'ADD_DELTA', delta: result.delta })
-    } else if ('scrollTop' in result && scrollTo) {
-      // side effect: scroll the viewport
-      scrollTo({ top: result.scrollTop, behavior: 'instant' })
-      // anticipate the scroll position change
-      dispatch({ type: 'SCROLL_TO', scrollTop: result.scrollTop })
+    // side effect: scroll to the new position while updating the state optimistically
+    if (action.type === 'SCROLL_TO') {
+      if (!scrollTo) {
+        // Safe-guard for the tests with jsdom, which don't provide scrollTo
+        return
+      }
+      scrollTo({ top: action.scrollTop, behavior: 'instant' })
     }
-  }, [scrollTo, virtualScrollBase, virtualScrollDelta, scale])
+    // update the state
+    dispatch(action)
+  }, [scrollTo, scrollTopAnchor, localOffset, scale])
 
   const value = useMemo(() => {
     return {
       scrollMode: 'virtual' as const,
       canvasHeight: scale ? scale.canvasHeight : undefined,
-      isScrolling,
+      isScrollingProgrammatically,
       setClientHeight,
       setScrollTop,
       scrollRowIntoView,
@@ -79,12 +81,12 @@ export function ScrollProvider({ children, headerHeight, numRows, padding = defa
       ...computeDerivedValues({
         scale,
         scrollTop,
-        virtualScrollBase,
-        virtualScrollDelta,
+        scrollTopAnchor,
+        localOffset,
         padding,
       }),
     }
-  }, [scale, scrollTop, virtualScrollBase, virtualScrollDelta, padding, isScrolling, setClientHeight, setScrollTop, scrollRowIntoView])
+  }, [scale, scrollTop, scrollTopAnchor, localOffset, padding, isScrollingProgrammatically, setClientHeight, setScrollTop, scrollRowIntoView])
   return (
     <ScrollContext.Provider value={value}>
       {children}
