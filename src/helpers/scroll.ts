@@ -94,7 +94,7 @@ export function scrollReducer(state: ScrollState, action: ScrollAction): ScrollS
     case 'ON_SCROLL': {
       const { scrollTop } = action
 
-      const { scrollTopAnchor, scrollTop: oldScrollTop, scale } = state
+      const { localOffset, scrollTopAnchor, scrollTop: oldScrollTop, scale } = state
 
       // in either case, after a scroll event, save the scrollTop value, and clear the isScrollingProgrammatically semaphore
       const nextState = {
@@ -112,7 +112,7 @@ export function scrollReducer(state: ScrollState, action: ScrollAction): ScrollS
         // scale is defined
         && scale !== undefined
         // the scroll delta is small enough and the scale is virtual
-        && canBeLocalScroll({ delta, scale, localOffset: state.localOffset })
+        && canBeLocalScroll({ delta, scale, localOffset })
         // scrollTop is greater than 0 - we will still be able to scroll back up
         && scrollTop > 0
         // scrollTop is not at the maximum - we will still be able to scroll further down
