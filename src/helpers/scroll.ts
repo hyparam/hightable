@@ -214,12 +214,15 @@ export function computeDerivedValues({ scale, scrollTop, scrollTopAnchor, localO
   // Y-offset of the first visible data row in the full scrollable canvas,
   // i.e. the scroll position minus the number of hidden pixels for that row.
   const firstVisibleRowTop = scrollTop - hiddenPixelsBefore
+
   // Number of "padding" rows that we render above the first visible row
   const previousPaddingRows = visibleRowsStart - renderedRowsStart
+
   // When the scroll position is still within the header, the first visible
   // data row starts right after the header. Encode that as 0/1 so we can
   // subtract a single headerHeight when we are in the body.
   const headerRow = isInHeader ? 0 : 1
+
   // The top of the rendered slice in canvas coordinates:
   // - start from the top of the first visible row
   // - subtract the header height (once) when we are below the header
