@@ -411,7 +411,7 @@ describe('scrollReducer', () => {
       expect(newState.localOffset).toBe(10)
     })
 
-    // TODO(SL): maybe it should reset virtualScrollBase and localOffset if the scale changes
+    // TODO(SL): maybe it should reset scrollTopAnchor and localOffset if the scale changes
     it('does not change other state properties when updating scale', () => {
       const initialState: ScrollState = {
         isScrollingProgrammatically: false,
