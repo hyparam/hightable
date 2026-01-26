@@ -51,16 +51,6 @@ export function initializeScrollState(): ScrollState {
   }
 }
 
-interface LocalScrollAction {
-  type: 'LOCAL_SCROLL'
-  delta: number
-}
-
-interface ScrollToAction {
-  type: 'SCROLL_TO'
-  scrollTop: number
-}
-
 // conditions for local scroll:
 function canBeLocalScroll({ delta, scale, localOffset}: { delta: number, scale: Scale, localOffset: number }): boolean {
   return (
@@ -300,6 +290,16 @@ export function createScale(parameters: {
     virtualCanvasHeight: totalTableHeight,
     parameters,
   }
+}
+
+interface LocalScrollAction {
+  type: 'LOCAL_SCROLL'
+  delta: number
+}
+
+interface ScrollToAction {
+  type: 'SCROLL_TO'
+  scrollTop: number
 }
 
 // TODO(SL): this logic should be shared with the 'ON_SCROLL' action in the reducer, to avoid code duplication
