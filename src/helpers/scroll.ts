@@ -268,16 +268,16 @@ export function createScale(parameters: {
   // total table height - it's fixed, based on the number of rows.
   // if the number of rows is big, this value can overflow the maximum height supported by the browser.
   // If so, the canvas height is capped to maxElementHeight.
-  const virtualCanvasHeight = headerHeight + numRows * rowHeight
+  const totalTableHeight = headerHeight + numRows * rowHeight
 
-  if (virtualCanvasHeight <= maxElementHeight) {
+  if (totalTableHeight <= maxElementHeight) {
     // no virtual scroll needed
     return {
       toVirtual: (scrollTop: number) => scrollTop,
       fromVirtual: (virtualScrollTop: number) => virtualScrollTop,
       factor: 1,
-      canvasHeight: virtualCanvasHeight,
-      virtualCanvasHeight,
+      canvasHeight: totalTableHeight,
+      virtualCanvasHeight: totalTableHeight,
       parameters,
     }
   }
@@ -287,7 +287,7 @@ export function createScale(parameters: {
   // factor is strictly greater than 1
   // Also, note that, as maxElementHeight > clientHeight, canvasHeight is also greater, and the
   // denominator is always positive.
-  const factor = (virtualCanvasHeight - clientHeight) / (canvasHeight - clientHeight)
+  const factor = (totalTableHeight - clientHeight) / (canvasHeight - clientHeight)
   return {
     toVirtual: (scrollTop: number) => {
       return scrollTop * factor
@@ -297,7 +297,7 @@ export function createScale(parameters: {
     },
     factor,
     canvasHeight,
-    virtualCanvasHeight,
+    virtualCanvasHeight: totalTableHeight,
     parameters,
   }
 }
