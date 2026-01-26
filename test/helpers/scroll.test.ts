@@ -461,8 +461,34 @@ describe('scrollReducer', () => {
     })
   })
 
+  describe('GLOBAL_SCROLL action', () => {
+    const virtualScale = createVirtualScale()
+    const maxScrollTop = virtualScale.canvasHeight - virtualScale.parameters.clientHeight
+    it.each([
+      [-10, 0],
+      [0, 0],
+      [50, 50],
+      [maxScrollTop - 50, maxScrollTop - 50],
+      [maxScrollTop, maxScrollTop],
+      [maxScrollTop + 10, maxScrollTop],
+    ])('sets scrollTop, clamps scrollTopAnchor, and resets localOffset, when scrollTop is %d', (scrollTop, expectedGlobalAnchor) => {
+      const initialState = {
+        scale: virtualScale,
+        // arbitrary initial values
+        isScrolling: true,
+        scrollTop: 150,
+        scrollTopAnchor: 800,
+        localOffset: 120,
+      }
+      const newState = scrollReducer(initialState, { type: 'GLOBAL_SCROLL', scrollTop })
+      expect(newState.scrollTop).toBe(scrollTop)
+      expect(newState.scrollTopAnchor).toBe(expectedGlobalAnchor)
+      expect(newState.localOffset).toBe(0)
+    })
+  })
+
   describe('SCROLL_TO action', () => {
-    it.each([undefined, 'normal', 'virtual'])('sets scrollTop and scrollTopAnchor, resets localOffset, and sets isScrolling to true if scale is %s', (scale) => {
+    it.each([undefined, 'normal', 'virtual'])('globally scrolls and sets isScrolling to true if scale is %s', (scale) => {
       const initialState = {
         isScrolling: false,
         scale: scale === 'normal' ? createNormalScale() : scale === 'virtual' ? createVirtualScale() : undefined,
