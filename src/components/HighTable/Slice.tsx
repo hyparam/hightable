@@ -61,25 +61,25 @@ export default function Slice({
       if (ctrlKey) {
         colIndex = colCount
       } else {
-        colIndex += 1
+        colIndex = colIndex < colCount ? colIndex + 1 : colCount
       }
     } else if (key === 'ArrowLeft') {
       if (ctrlKey) {
         colIndex = 1
       } else {
-        colIndex -= 1
+        colIndex = colIndex > 1 ? colIndex - 1 : 1
       }
     } else if (key === 'ArrowDown') {
       if (ctrlKey) {
         rowIndex = rowCount
       } else {
-        rowIndex += 1
+        rowIndex = rowIndex < rowCount ? rowIndex + 1 : rowCount
       }
     } else if (key === 'ArrowUp') {
       if (ctrlKey) {
         rowIndex = 1
       } else {
-        rowIndex -= 1
+        rowIndex = rowIndex > 1 ? rowIndex - 1 : 1
       }
     } else if (key === 'Home') {
       if (ctrlKey) {
@@ -92,10 +92,10 @@ export default function Slice({
       }
       colIndex = colCount
     } else if (key === 'PageDown') {
-      rowIndex += numRowsPerPage
+      rowIndex = Math.min(rowIndex + numRowsPerPage, rowCount)
       // TODO(SL): same for horizontal scrolling with Alt+PageDown?
     } else if (key === 'PageUp') {
-      rowIndex -= numRowsPerPage
+      rowIndex = Math.max(rowIndex - numRowsPerPage, 1)
       // TODO(SL): same for horizontal scrolling with Alt+PageUp?
     } else if (key !== ' ') {
       // if the key is not one of the above, do not handle it
