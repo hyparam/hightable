@@ -38,11 +38,9 @@ export function CellNavigationProvider({ children, focus = true }: Props) {
     const colIndex = Math.min(Math.max(1, value.colIndex), colCount)
     const rowIndex = Math.min(Math.max(1, value.rowIndex), rowCount)
 
-    // TODO(SL): should we check for equality? or always set + focus + scroll it?
     setCell({ colIndex, rowIndex })
-    // ensure the cell is visible (even if only horizontal scrolling is needed)
-    // TODO(SL): improve the name of scrollRowIntoView, because it can also (indirectly) scroll columns into view
     scrollRowIntoView?.({ rowIndex })
+    // after scrolling, focus the cell (and scroll horizontally into view if needed - see focusCurrentCell)
     setShouldFocus(true)
   }, [scrollRowIntoView, colCount, rowCount])
 
