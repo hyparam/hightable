@@ -1,29 +1,29 @@
-import type { SetStateAction } from 'react'
 import { createContext } from 'react'
 
-interface CellNavigationContextType {
-  colCount: number // total number of columns in the table
+export interface Cell {
   colIndex: number // table column index, same semantic as aria-colindex (1-based, includes row headers)
-  rowCount: number // total number of rows in the table
   rowIndex: number // table row index, same semantic as aria-rowindex (1-based, includes column headers)
-  shouldFocus: boolean // true if the current cell should be focused
-  setColIndex: (value: SetStateAction<number>) => void // function to set the column index
-  setRowIndex: (value: number) => void // function to set the row index. No need for SetStateAction here, as we only call it with a number
-  setShouldFocus: (shouldFocus: boolean) => void // function to set the shouldFocus state
-  focusFirstCell: () => void // function to focus the first cell
+}
+
+interface CellNavigationContextType {
+  cell: Cell
+  colCount: number // total number of columns in the table
+  rowCount: number // total number of rows in the table
+  focusCurrentCell?: (element: HTMLElement) => void // function to focus the current cell, if needed
+  goToCell: (value: Cell) => void // function to go to cell. If out of bounds, it is clamped. It scrolls to and focuses the cell, even if the values are unchanged.
+  goToCurrentCell: () => void // function to go to the current cell (navigation state).
+  goToFirstCell: () => void // function to go to the first cell (1, 1)
 }
 
 // the default context assumes a one-cell table (the top left corner is always present)
 export const defaultCellNavigationContext: CellNavigationContextType = {
+  cell: { colIndex: 1, rowIndex: 1 },
   colCount: 1,
-  colIndex: 1,
   rowCount: 1,
-  rowIndex: 1,
-  shouldFocus: false,
-  setColIndex: () => { /* no-op */ },
-  setRowIndex: () => { /* no-op */ },
-  setShouldFocus: () => { /* no-op */ },
-  focusFirstCell: () => { /* no-op */ },
+  focusCurrentCell: undefined,
+  goToCell: () => { /* no-op */ },
+  goToCurrentCell: () => { /* no-op */ },
+  goToFirstCell: () => { /* no-op */ },
 }
 
 export const CellNavigationContext = createContext<CellNavigationContextType>(defaultCellNavigationContext)

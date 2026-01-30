@@ -14,8 +14,8 @@ export default function Scroller({
   children,
   setViewportWidth,
 }: Props) {
-  const { setShouldFocus, rowIndex } = useContext(CellNavigationContext)
-  const { canvasHeight, sliceTop, setClientHeight, setScrollTop, scrollRowIntoView, setScrollTo } = useContext(ScrollContext)
+  const { goToCurrentCell } = useContext(CellNavigationContext)
+  const { canvasHeight, sliceTop, setClientHeight, setScrollTop, setScrollTo } = useContext(ScrollContext)
 
   /**
    * Handle keyboard events for scrolling
@@ -32,12 +32,9 @@ export default function Scroller({
     if ((key === 'Tab' && !event.shiftKey) || key === 'Enter' || key === ' ') {
       event.stopPropagation()
       event.preventDefault()
-      // scroll to the active cell
-      scrollRowIntoView?.({ rowIndex })
-      // focus the cell (once it exists)
-      setShouldFocus(true)
+      goToCurrentCell()
     }
-  }, [rowIndex, setShouldFocus, scrollRowIntoView])
+  }, [goToCurrentCell])
 
   /**
    * Track viewport size and scroll position

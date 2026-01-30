@@ -39,11 +39,11 @@ export default function Slice({
   stringify = stringifyDefault,
 }: Props) {
   const { data, version, numRows } = useContext(DataContext)
-  const { rowIndex, colCount, rowCount, setColIndex, setRowIndex, setShouldFocus } = useContext(CellNavigationContext)
+  const { cell, colCount, rowCount, goToCell } = useContext(CellNavigationContext)
   const { orderBy, onOrderByChange } = useContext(OrderByContext)
   const { selectable, toggleAllRows, pendingSelectionGesture, onTableKeyDown: onSelectionTableKeyDown, allRowsSelected, isRowSelected, toggleRowNumber, toggleRangeToRowNumber } = useContext(SelectionContext)
   const { columnsParameters } = useContext(RowsAndColumnsContext)
-  const { scrollRowIntoView, renderedRowsStart, renderedRowsEnd } = useContext(ScrollContext)
+  const { renderedRowsStart, renderedRowsEnd } = useContext(ScrollContext)
 
   // TODO(SL): we depend on rowIndex to trigger the scroll effect, which means we recreate the
   // callback every time the rowIndex changes. Can we avoid that?
@@ -56,46 +56,46 @@ export default function Slice({
     if (altKey || metaKey || shiftKey) {
       return
     }
-    let newRowIndex: number | undefined = undefined
+    let { colIndex, rowIndex } = cell
     if (key === 'ArrowRight') {
       if (ctrlKey) {
-        setColIndex(colCount)
+        colIndex = colCount
       } else {
-        setColIndex(prev => prev < colCount ? prev + 1 : prev)
+        colIndex += 1
       }
     } else if (key === 'ArrowLeft') {
       if (ctrlKey) {
-        setColIndex(1)
+        colIndex = 1
       } else {
-        setColIndex(prev => prev > 1 ? prev - 1 : prev)
+        colIndex -= 1
       }
     } else if (key === 'ArrowDown') {
       if (ctrlKey) {
-        newRowIndex = rowCount
+        rowIndex = rowCount
       } else {
-        newRowIndex = rowIndex < rowCount ? rowIndex + 1 : rowIndex
+        rowIndex += 1
       }
     } else if (key === 'ArrowUp') {
       if (ctrlKey) {
-        newRowIndex = 1
+        rowIndex = 1
       } else {
-        newRowIndex = rowIndex > 1 ? rowIndex - 1 : rowIndex
+        rowIndex -= 1
       }
     } else if (key === 'Home') {
       if (ctrlKey) {
-        newRowIndex = 1
+        rowIndex = 1
       }
-      setColIndex(1)
+      colIndex = 1
     } else if (key === 'End') {
       if (ctrlKey) {
-        newRowIndex = rowCount
+        rowIndex = rowCount
       }
-      setColIndex(colCount)
+      colIndex = colCount
     } else if (key === 'PageDown') {
-      newRowIndex = rowIndex + numRowsPerPage <= rowCount ? rowIndex + numRowsPerPage : rowCount
+      rowIndex += numRowsPerPage
       // TODO(SL): same for horizontal scrolling with Alt+PageDown?
     } else if (key === 'PageUp') {
-      newRowIndex = rowIndex - numRowsPerPage >= 1 ? rowIndex - numRowsPerPage : 1
+      rowIndex -= numRowsPerPage
       // TODO(SL): same for horizontal scrolling with Alt+PageUp?
     } else if (key !== ' ') {
       // if the key is not one of the above, do not handle it
@@ -106,14 +106,8 @@ export default function Slice({
     // avoid scrolling the table when the user is navigating with the keyboard
     event.stopPropagation()
     event.preventDefault()
-    if (newRowIndex !== undefined) {
-      setRowIndex(newRowIndex)
-    }
-    // ensure the cell is visible (even if only horizontal scrolling is needed)
-    // TODO(SL): improve the name of scrollRowIntoView, because it can also (indirectly) scroll columns into view
-    scrollRowIntoView?.({ rowIndex: newRowIndex ?? rowIndex })
-    setShouldFocus(true)
-  }, [rowIndex, colCount, rowCount, setColIndex, setRowIndex, setShouldFocus, scrollRowIntoView])
+    goToCell({ colIndex, rowIndex })
+  }, [cell, colCount, rowCount, goToCell])
 
   const onTableKeyDown = useCallback((event: KeyboardEvent) => {
     onNavigationTableKeyDown(event, { numRowsPerPage })

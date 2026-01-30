@@ -9,22 +9,33 @@ import { arrayDataFrame } from '../../src/helpers/dataframe/index.js'
 import { CellNavigationProvider } from '../../src/providers/CellNavigationProvider.js'
 
 function RowCountComponent() {
-  const { colIndex, rowIndex, setRowIndex, shouldFocus } = useContext(CellNavigationContext)
+  const { cell: { colIndex, rowIndex }, goToCell, focusCurrentCell } = useContext(CellNavigationContext)
 
   return (
     <div>
       <span data-testid="cell-position">{`col:${colIndex},row:${rowIndex}`}</span>
-      <span data-testid="should-focus">{`${shouldFocus}`}</span>
-      <button data-testid="set-row-10" onClick={() => { setRowIndex(10) }}>Set Row to 10</button>
+      <span data-testid="should-focus">{`${focusCurrentCell !== undefined}`}</span>
+      <button data-testid="go-to-row-10" onClick={() => { goToCell({ colIndex, rowIndex: 10 }) }}>Set Row to 10</button>
+      <button
+        data-testid="remove-focus"
+        onClick={() => {
+          // jsdom does not provide scrollIntoView
+          const element = document.body
+          element.scrollIntoView = () => { /* no-op */ }
+          focusCurrentCell?.(element)
+        }}
+      >
+        Remove focus
+      </button>
     </div>
   )
 }
 function ColCountComponent() {
-  const { colIndex, rowIndex, setColIndex } = useContext(CellNavigationContext)
+  const { cell: { colIndex, rowIndex }, goToCell } = useContext(CellNavigationContext)
   return (
     <div>
       <span data-testid="cell-position">{`col:${colIndex},row:${rowIndex}`}</span>
-      <button data-testid="set-col-10" onClick={() => { setColIndex(10) }}>Set Col to 10</button>
+      <button data-testid="go-to-col-10" onClick={() => { goToCell({ colIndex: 10, rowIndex }) }}>Set Col to 10</button>
     </div>
   )
 }
@@ -55,7 +66,7 @@ describe('CellsNavigationProvider', () => {
       )
 
       const cellPosition = getByTestId('cell-position')
-      const setRow10Button = getByTestId('set-row-10')
+      const setRow10Button = getByTestId('go-to-row-10')
 
       // Initially, rowIndex should be 1
       expect(cellPosition.textContent).toBe('col:1,row:1')
@@ -107,7 +118,7 @@ describe('CellsNavigationProvider', () => {
       )
 
       const cellPosition = getByTestId('cell-position')
-      const setCol10Button = getByTestId('set-col-10')
+      const setCol10Button = getByTestId('go-to-col-10')
 
       // Initially, colIndex should be 1
       expect(cellPosition.textContent).toBe('col:1,row:1')
@@ -218,7 +229,7 @@ describe('CellsNavigationProvider', () => {
       expect(shouldFocus.textContent).toBe('true')
 
       // Set rowIndex to 10
-      const setRow10Button = getByTestId('set-row-10')
+      const setRow10Button = getByTestId('go-to-row-10')
       fireEvent.click(setRow10Button)
 
       // The cell position should be updated
@@ -243,9 +254,10 @@ describe('CellsNavigationProvider', () => {
 
     it('does not focus first cell when data changes and focus is false', () => {
       const dataContext = getDefaultDataContext({ numRows: 9 })
+      const numberOfVisibleColumns = 4
       const { getByTestId, rerender } = render(
         <DataContext.Provider value={dataContext}>
-          <ColumnVisibilityStatesContext.Provider value={{ numberOfVisibleColumns: 4 }}>
+          <ColumnVisibilityStatesContext.Provider value={{ numberOfVisibleColumns }}>
             <CellNavigationProvider focus={false}>
               <RowCountComponent />
             </CellNavigationProvider>
@@ -261,17 +273,22 @@ describe('CellsNavigationProvider', () => {
       expect(shouldFocus.textContent).toBe('false')
 
       // Set rowIndex to 10
-      const setRow10Button = getByTestId('set-row-10')
+      const setRow10Button = getByTestId('go-to-row-10')
       fireEvent.click(setRow10Button)
 
       // The cell position should be updated
       expect(cellPosition.textContent).toBe('col:1,row:10')
+      expect(shouldFocus.textContent).toBe('true')
+      // Remove focus
+      const removeFocusButton = getByTestId('remove-focus')
+      fireEvent.click(removeFocusButton)
       expect(shouldFocus.textContent).toBe('false')
 
       // Change data context to simulate data change
+      const anotherDataContext = getDefaultDataContext({ numRows: 9 })
       rerender(
-        <DataContext.Provider value={getDefaultDataContext({ numRows: 9 })}>
-          <ColumnVisibilityStatesContext.Provider value={{ numberOfVisibleColumns: 4 }}>
+        <DataContext.Provider value={anotherDataContext}>
+          <ColumnVisibilityStatesContext.Provider value={{ numberOfVisibleColumns }}>
             <CellNavigationProvider focus={false}>
               <RowCountComponent />
             </CellNavigationProvider>
