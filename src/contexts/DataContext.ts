@@ -3,7 +3,7 @@ import { createContext } from 'react'
 import type { DataFrame } from '../helpers/dataframe/index.js'
 import { arrayDataFrame } from '../helpers/dataframe/index.js'
 
-interface DataContextType {
+export interface DataContextType {
   /** The data frame (without the number of rows, which is passed separately) */
   data: Omit<DataFrame, 'numRows'>
   /** A key that identifies a data frame. It increments whenever a new data frame object is passed. */

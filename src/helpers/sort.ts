@@ -1,10 +1,25 @@
+/** Sort direction. */
 export type Direction = 'ascending' | 'descending'
 
 export interface ColumnOrderBy {
-  column: string // column name to sort by.
-  direction: Direction // sort direction.
+  /** Column name to sort by. */
+  column: string
+  /** Sort direction. */
+  direction: Direction
 }
 
+/**
+ * OrderBy is an array of ColumnOrderBy, where the first item is the primary sort column,
+ * the second item is the secondary sort column, and so on.
+ *
+ * For example, to sort by column "A" ascending, then by column "B" descending:
+ * ```ts
+ * const orderBy: OrderBy = [
+ *   { column: "A", direction: "ascending" },
+ *   { column: "B", direction: "descending" }
+ * ]
+ * ```
+ */
 export type OrderBy = ColumnOrderBy[]
 
 export function serializeOrderBy(orderBy: OrderBy): string {

@@ -1,17 +1,49 @@
 import { createContext } from 'react'
 
 export interface ScrollContextType {
-  canvasHeight?: number // total scrollable height
+  /** Total scrollable height, in pixels */
+  canvasHeight?: number
+  /** Whether the table is currently being scrolled programmatically */
   isScrollingProgrammatically?: boolean
-  sliceTop?: number // offset of the top of the slice from the top of the canvas
-  visibleRowsStart?: number // index of the first row visible in the viewport (inclusive). Indexes refer to the virtual table domain.
-  visibleRowsEnd?: number // index of the last row visible in the viewport (exclusive).
-  renderedRowsStart?: number // index of the first row rendered in the DOM as a table row (inclusive).
-  renderedRowsEnd?: number // index of the last row rendered in the DOM as a table row (exclusive).
-  scrollRowIntoView?: ({ rowIndex }: { rowIndex: number }) => void // function to scroll so that the row is visible in the table
-  setClientHeight?: (clientHeight: number) => void // function to call when the current viewport height changes
-  setScrollTo?: (scrollTo: HTMLElement['scrollTo'] | undefined) => void // function to set the scrollTo function
-  setScrollTop?: (scrollTop: number) => void // function to call when the current scroll top position changes
+  /** Offset of the top of the visible slice from the top of the canvas, in pixels */
+  sliceTop?: number
+  /** Index of the first row visible in the viewport (inclusive). Indexes refer to the virtual table domain. */
+  visibleRowsStart?: number
+  /** Index of the last row visible in the viewport (exclusive). */
+  visibleRowsEnd?: number
+  /** Index of the first row rendered in the DOM as a table row (inclusive). */
+  renderedRowsStart?: number
+  /** Index of the last row rendered in the DOM as a table row (exclusive). */
+  renderedRowsEnd?: number
+  /**
+   * Function to scroll so that the row is visible in the table
+   *
+   * Beware:
+   * - row 1: header
+   * - row 2: first data row
+   * - row numRows + 1: last data row
+   *
+   * @param rowIndex The row to scroll to (same semantic as aria-rowindex: 1-based, includes header)
+   */
+  scrollRowIntoView?: ({ rowIndex }: { rowIndex: number }) => void
+  /**
+   * Function to call when the current viewport height changes (on resize)
+   *
+   * @param clientHeight The new viewport height in pixels
+   */
+  setClientHeight?: (clientHeight: number) => void
+  /**
+   * Function to set the scrollTo function
+   *
+   * @param scrollTo The scrollTo function of the viewport element (on component mount), or undefined (on unmount)
+   */
+  setScrollTo?: (scrollTo: HTMLElement['scrollTo'] | undefined) => void
+  /**
+   * Function to call when the current scroll top position changes (on scroll)
+   *
+   * @param scrollTop The new scroll top position in pixels
+   */
+  setScrollTop?: (scrollTop: number) => void
 }
 
 export const defaultScrollContext: ScrollContextType = {}

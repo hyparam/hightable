@@ -1,20 +1,22 @@
 import { type ReactNode, useCallback, useMemo, useReducer, useState } from 'react'
 
+import type { DataContextType } from '../contexts/DataContext.js'
 import { ScrollContext } from '../contexts/ScrollContext.js'
 import { defaultPadding, maxElementHeight, rowHeight } from '../helpers/constants.js'
 import { computeDerivedValues, createScale, getScrollActionForRow, initializeScrollState, scrollReducer } from '../helpers/scroll.js'
+import type { HighTableProps } from '../types.js'
 
-export interface ScrollProviderProps {
-  padding?: number // number of rows to render beyond the visible table cells
+type ScrollProviderProps = Pick<HighTableProps, 'padding'> & Pick<DataContextType, 'numRows'> & {
+  /** Height of the header row, in pixels */
+  headerHeight: number
+  /** Child components */
+  children: ReactNode
 }
 
-type Props = {
-  children: ReactNode
-  headerHeight: number
-  numRows: number
-} & ScrollProviderProps
-
-export function ScrollProvider({ children, headerHeight, numRows, padding = defaultPadding }: Props) {
+/**
+ * Provide the scroll state and logic to the table, through the ScrollContext.
+ */
+export function ScrollProvider({ children, headerHeight, numRows, padding = defaultPadding }: ScrollProviderProps) {
   const [{ scale, scrollTop, scrollTopAnchor, isScrollingProgrammatically, localOffset }, dispatch] = useReducer(scrollReducer, undefined, initializeScrollState)
   const [scrollTo, setScrollTo] = useState<HTMLElement['scrollTo'] | undefined>(undefined)
   const setScrollTop = useCallback((scrollTop: number) => {

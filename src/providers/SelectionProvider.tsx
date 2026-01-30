@@ -1,6 +1,7 @@
 import type { KeyboardEvent, ReactNode } from 'react'
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react'
 
+import type { DataContextType } from '../contexts/DataContext.js'
 import { ErrorContext } from '../contexts/ErrorContext.js'
 import { OrderByContext } from '../contexts/OrderByContext.js'
 import { SelectionContext } from '../contexts/SelectionContext.js'
@@ -11,12 +12,11 @@ import { countSelectedRows, getDefaultSelection, isSelected, selectIndex, toggle
 import type { OrderBy } from '../helpers/sort.js'
 import { serializeOrderBy } from '../helpers/sort.js'
 import { useInputOrDisabledState } from '../hooks/useInputState.js'
+import type { HighTableProps } from '../types.js'
 
-interface SelectionProviderProps {
-  selection?: Selection // selection and anchor rows, expressed as data indexes (not as indexes in the table). If undefined, the selection is hidden and the interactions are disabled.
-  onSelectionChange?: (selection: Selection) => void // callback to call when a user interaction changes the selection. The selection is expressed as data indexes (not as indexes in the table). The interactions are disabled if undefined.
-  data: Omit<DataFrame, 'numRows'>
-  numRows: number
+// TODO(SL): get data and numRows from DataContext instead of props?
+type Props = Pick<HighTableProps, 'selection' | 'onSelectionChange'> & Pick<DataContextType, 'data' | 'numRows'> & {
+  /** Child components */
   children: ReactNode
 }
 
@@ -24,7 +24,12 @@ interface Gesture {
   controller: AbortController // the AbortController used to abort the gesture
 }
 
-export function SelectionProvider({ children, data, numRows, selection: inputSelection, onSelectionChange: inputOnSelectionChange }: SelectionProviderProps) {
+/**
+ * Provide the rows selection state and logic to the table, through the SelectionContext.
+ *
+ * Only the data rows can be selected, not the header row, so row numbers are 0-based.
+ */
+export function SelectionProvider({ children, data, numRows, selection: inputSelection, onSelectionChange: inputOnSelectionChange }: Props) {
   const [previousNumRows, setPreviousNumRows] = useState(numRows)
   const inputOrDisabledState = useInputOrDisabledState<Selection>({
     value: inputSelection,

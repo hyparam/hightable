@@ -1,9 +1,27 @@
 import { createContext } from 'react'
 
 interface ColumnVisibilityStatesContextType {
-  numberOfVisibleColumns: number // number of visible columns
-  getHideColumn?: (columnName: string) => undefined | (() => void) // returns a function to hide the column, or undefined if the column cannot be hidden
-  showAllColumns?: () => void // returns a function to show all columns, or undefined if there are no hidden columns
+  /** Number of visible columns */
+  numberOfVisibleColumns: number
+  /**
+   * Get a function to hide a column by its name
+   *
+   * @param columnName - The name of the column to hide
+   * @returns A function which hides the column when called, or undefined if the column cannot be hidden
+   */
+  getHideColumn?: (columnName: string) => undefined | (() => void)
+  /**
+   * Show all columns
+   *
+   * If undefined, there are no hidden columns, and thus no action is needed.
+   */
+  showAllColumns?: () => void
+  /**
+   * Check if a column is hidden by its name
+   *
+   * @param columnName - The name of the column to check
+   * @returns true if the column is hidden, false otherwise
+   */
   isHiddenColumn?: (columnName: string) => boolean // returns true if the column is hidden
 }
 

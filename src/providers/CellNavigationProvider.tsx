@@ -7,16 +7,17 @@ import { ColumnVisibilityStatesContext } from '../contexts/ColumnVisibilityState
 import { DataContext } from '../contexts/DataContext.js'
 import { ScrollContext } from '../contexts/ScrollContext.js'
 import type { DataFrame } from '../helpers/dataframe/index.js'
+import type { HighTableProps } from '../types.js'
 
-export interface CellNavigationProviderProps {
-  focus?: boolean // whether to focus the first cell on mount
+type CellNavigationProviderProps = Pick<HighTableProps, 'focus'> & {
+  /** Children elements */
+  children: ReactNode
 }
 
-type Props = {
-  children: ReactNode
-} & CellNavigationProviderProps
-
-export function CellNavigationProvider({ children, focus = true }: Props) {
+/**
+ * Provide the cell navigation state and logic to the table, through the CellNavigationContext.
+ */
+export function CellNavigationProvider({ children, focus = true }: CellNavigationProviderProps) {
   const [cell, setCell] = useState<Cell>(defaultCellNavigationContext.cell)
   const [shouldFocus, setShouldFocus] = useState(false)
   const [lastData, setLastData] = useState<Omit<DataFrame, 'numRows'> | undefined>(undefined)

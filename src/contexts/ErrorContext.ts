@@ -1,7 +1,7 @@
 import { createContext } from 'react'
 
 interface ErrorContextType {
-  /** Callback called when an error occurs. Ignored if not set. */
+  /** Optional callback to call when an error occurs. */
   onError?: (error: unknown) => void
 }
 

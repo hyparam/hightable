@@ -6,14 +6,13 @@ import { ScrollContext } from '../../contexts/ScrollContext.js'
 import styles from '../../HighTable.module.css'
 
 interface Props {
+  /** Callback to set the current viewport width */
+  setViewportWidth: (width: number) => void
+  /** Child components */
   children?: React.ReactNode
-  setViewportWidth: (width: number) => void // callback to set the current viewport width
 }
 
-export default function Scroller({
-  children,
-  setViewportWidth,
-}: Props) {
+export default function Scroller({ children, setViewportWidth }: Props) {
   const { scrollAndFocusCurrentCell } = useContext(CellNavigationContext)
   const { canvasHeight, sliceTop, setClientHeight, setScrollTop, setScrollTo } = useContext(ScrollContext)
 

@@ -3,15 +3,9 @@ import { useEffect, useMemo, useState } from 'react'
 
 import { DataContext } from '../contexts/DataContext.js'
 import type { DataFrame } from '../helpers/dataframe/index.js'
+import type { HighTableProps } from '../types.js'
 
-export interface DataProviderProps {
-  /** A data frame */
-  data: DataFrame
-  /** The maximum number of rows to display (for row headers). Useful for filtered data. If undefined, the number of rows in the data frame is applied. */
-  maxRowNumber?: number
-}
-
-type Props = DataProviderProps & {
+type Props = Pick<HighTableProps, 'data' | 'maxRowNumber'> & {
   children: ReactNode
 }
 
