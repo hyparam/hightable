@@ -7,6 +7,9 @@ type Props = Pick<HighTableProps, 'onError'> & {
   children: React.ReactNode
 }
 
+/**
+ * Provides error handling functionality to the table, through the ErrorContext.
+ */
 export function ErrorProvider({ children, onError }: Props) {
   const value = useMemo(() => ({
     onError,
