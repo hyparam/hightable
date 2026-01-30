@@ -115,7 +115,7 @@ export default function ColumnMenu({
   const labelId = useId()
 
   const { navigateFocus } = useFocusManagement(isOpen, menuRef)
-  const { focusFirstCell } = useContext(CellNavigationContext)
+  const { goToFirstCell } = useContext(CellNavigationContext)
 
   const handleKeyDown = useCallback((e: KeyboardEvent<HTMLDivElement>) => {
     e.preventDefault()
@@ -173,11 +173,11 @@ export default function ColumnMenu({
 
       // The header cell was focused when opening the menu.
       // Move the focus to the left cell to keep ability to navigate with keyboard.
-      focusFirstCell()
+      goToFirstCell()
 
       close()
     }
-  }, [hideColumn, close, focusFirstCell])
+  }, [hideColumn, close, goToFirstCell])
   const showAllColumnsAndClose = useMemo(() => {
     if (!showAllColumns) {
       return undefined

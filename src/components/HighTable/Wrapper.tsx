@@ -100,21 +100,21 @@ export default function Wrapper({
               <OrderByProvider key={key} orderBy={orderBy} onOrderByChange={onOrderByChange}>
                 {/* Create a new selection context if the dataframe has changed */}
                 <SelectionProvider key={key} selection={selection} onSelectionChange={onSelectionChange} data={data} numRows={numRows}>
-                  {/* Create a new navigation context if the dataframe has changed, because the focused cell might not exist anymore */}
-                  <CellNavigationProvider key={key} focus={focus}>
-                    <ScrollProvider numRows={numRows} headerHeight={headerHeight} padding={padding}>
-                      <Scroller setViewportWidth={setViewportWidth}>
+                  <ScrollProvider numRows={numRows} headerHeight={headerHeight} padding={padding}>
+                    {/* Create a new navigation context if the dataframe has changed, because the focused cell might not exist anymore */}
+                    <CellNavigationProvider key={key} focus={focus}>
+                      <RowsAndColumnsProvider key={key} overscan={overscan}>
 
-                        <RowsAndColumnsProvider key={key} overscan={overscan}>
+                        <Scroller setViewportWidth={setViewportWidth}>
                           <Slice
                             setTableCornerSize={setTableCornerSize}
                             {...rest}
                           />
-                        </RowsAndColumnsProvider>
+                        </Scroller>
 
-                      </Scroller>
-                    </ScrollProvider>
-                  </CellNavigationProvider>
+                      </RowsAndColumnsProvider>
+                    </CellNavigationProvider>
+                  </ScrollProvider>
                 </SelectionProvider>
               </OrderByProvider>
             </ColumnVisibilityStatesProvider>
