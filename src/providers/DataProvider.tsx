@@ -4,13 +4,18 @@ import { useEffect, useMemo, useState } from 'react'
 import { DataContext } from '../contexts/DataContext.js'
 import type { DataFrame } from '../helpers/dataframe/index.js'
 
-interface DataProviderProps {
+export interface DataProviderProps {
+  /** A data frame */
   data: DataFrame
+  /** The maximum number of rows to display (for row headers). Useful for filtered data. If undefined, the number of rows in the data frame is applied. */
   maxRowNumber?: number
+}
+
+type Props = DataProviderProps & {
   children: ReactNode
 }
 
-export function DataProvider({ children, data, maxRowNumber: propMaxRowNumber }: DataProviderProps) {
+export function DataProvider({ children, data, maxRowNumber: propMaxRowNumber }: Props) {
   // The key helps trigger remounts when the data frame changes
   const [key, setKey] = useState<number>(0)
   const [previousData, setPreviousData] = useState<DataFrame>(data)

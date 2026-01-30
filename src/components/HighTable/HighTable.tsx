@@ -1,14 +1,12 @@
 import { ErrorContext } from '../../contexts/ErrorContext.js'
-import type { DataFrame } from '../../helpers/dataframe/index.js'
+import type { DataProviderProps } from '../../providers/DataProvider.js'
 import { DataProvider } from '../../providers/DataProvider.js'
 import type { WrapperProps } from './Wrapper.js'
 import Wrapper from './Wrapper.js'
 
 type Props = {
-  data: DataFrame
-  maxRowNumber?: number // maximum row number to display (for row headers). Useful for filtered data. If undefined, the number of rows in the data frame is applied.
   onError?: (error: unknown) => void
-} & WrapperProps
+} & DataProviderProps & WrapperProps
 
 // TODO(SL): update the docstring
 /**
