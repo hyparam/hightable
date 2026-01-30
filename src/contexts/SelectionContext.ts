@@ -16,12 +16,6 @@ interface SelectionContextType {
    */
   isRowSelected?: ({ rowNumber }: { rowNumber: number | undefined }) => boolean | undefined
   /**
-   * Function to call when the selection changes
-   *
-   * @param selectedRowNumbers The new set of selected row numbers (0-based, data rows only)
-   */
-  onSelectionChange?: (selectedRowNumbers: Set<number>) => void
-  /**
    * Function to call when a key is pressed on the table
    *
    * @param event The keyboard event

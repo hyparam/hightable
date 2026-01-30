@@ -1,10 +1,11 @@
+import type { ReactNode } from 'react'
 import { useMemo } from 'react'
 
 import { ErrorContext } from '../contexts/ErrorContext.js'
 import type { HighTableProps } from '../types.js'
 
 type Props = Pick<HighTableProps, 'onError'> & {
-  children: React.ReactNode
+  children: ReactNode
 }
 
 /**
