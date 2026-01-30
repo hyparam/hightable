@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import type { MouseEvent, ReactNode } from 'react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 
 import { checkSignal, createGetRowNumber, validateFetchParams, validateGetCellParams } from '../../helpers/dataframe/helpers.js'
 import type { DataFrame, DataFrameEvents } from '../../helpers/dataframe/index.js'
@@ -9,8 +9,9 @@ import { sortableDataFrame } from '../../helpers/dataframe/sort.js'
 import type { Fetch, ResolvedValue } from '../../helpers/dataframe/types.js'
 import type { Selection } from '../../helpers/selection.js'
 import type { OrderBy } from '../../helpers/sort.js'
-import { createEventTarget } from '../../helpers/typedEventTarget.js'
+import { createEventTarget, TypedCustomEvent } from '../../helpers/typedEventTarget.js'
 import type { CellContentProps } from '../Cell/Cell.js'
+import type { HighTableCommands } from './HighTable.js'
 import HighTable from './HighTable.js'
 
 function random(seed: number) {
@@ -639,5 +640,25 @@ export const LargeData: Story = {
 export const SmallData: Story = {
   args: {
     data: createSmallData(),
+  },
+}
+
+export const JumpToRow: Story = {
+  render: () => {
+    const commands = useMemo(() => createEventTarget<HighTableCommands>(), [])
+    function jumpTo(row: number) {
+      commands.dispatchEvent(new TypedCustomEvent('scrollRowIntoView', { detail: row }))
+    }
+
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 10 }}>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button type="button" onClick={() => { jumpTo(1) }}>Row 1</button>
+          <button type="button" onClick={() => { jumpTo(500) }}>Row 500</button>
+          <button type="button" onClick={() => { jumpTo(1000) }}>Row 1000</button>
+        </div>
+        <HighTable data={createUnsortableData()} commands={commands} />
+      </div>
+    )
   },
 }

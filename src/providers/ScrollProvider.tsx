@@ -1,10 +1,13 @@
-import { type ReactNode, useCallback, useMemo, useReducer, useState } from 'react'
+import { type ReactNode, useCallback, useEffect, useMemo, useReducer, useState } from 'react'
 
+import type { HighTableCommands } from '../components/HighTable/HighTable.js'
 import { ScrollContext } from '../contexts/ScrollContext.js'
 import { defaultPadding, maxElementHeight, rowHeight } from '../helpers/constants.js'
 import { computeDerivedValues, createScale, getScrollActionForRow, initializeScrollState, scrollReducer } from '../helpers/scroll.js'
+import type { CustomEventTarget } from '../helpers/typedEventTarget.js'
 
 export interface ScrollProviderProps {
+  commands?: CustomEventTarget<HighTableCommands> // event target to receive commands from outside the component
   padding?: number // number of rows to render beyond the visible table cells
 }
 
@@ -14,7 +17,7 @@ type Props = {
   numRows: number
 } & ScrollProviderProps
 
-export function ScrollProvider({ children, headerHeight, numRows, padding = defaultPadding }: Props) {
+export function ScrollProvider({ children, commands, headerHeight, numRows, padding = defaultPadding }: Props) {
   const [{ scale, scrollTop, scrollTopAnchor, isScrollingProgrammatically, localOffset }, dispatch] = useReducer(scrollReducer, undefined, initializeScrollState)
   const [scrollTo, setScrollTo] = useState<HTMLElement['scrollTo'] | undefined>(undefined)
   const setScrollTop = useCallback((scrollTop: number) => {
@@ -68,6 +71,18 @@ export function ScrollProvider({ children, headerHeight, numRows, padding = defa
     // update the state
     dispatch(action)
   }, [scrollTo, scrollTopAnchor, localOffset, scale])
+
+  // Subscribe to external commands
+  useEffect(() => {
+    if (!commands) return
+    function handler(e: CustomEvent<number>) {
+      scrollRowIntoView({ rowIndex: e.detail + 1 })
+    }
+    commands.addEventListener('scrollRowIntoView', handler)
+    return () => {
+      commands.removeEventListener('scrollRowIntoView', handler)
+    }
+  }, [commands, scrollRowIntoView])
 
   const value = useMemo(() => {
     return {
