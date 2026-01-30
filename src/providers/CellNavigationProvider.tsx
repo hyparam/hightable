@@ -49,7 +49,7 @@ export function CellNavigationProvider({ children, focus = true }: Props) {
     setPreviousRowCount(rowCount)
     if (cell.rowIndex > rowCount) {
       // Reset the row index to the last row if it goes out of bounds
-      setCell({ colIndex: cell.colIndex, rowIndex: rowCount })
+      goToCell({ colIndex: cell.colIndex, rowIndex: rowCount })
     }
   }
   // Reset the cell position if the number of rows has decreased and the current row index is out of bounds
@@ -57,7 +57,7 @@ export function CellNavigationProvider({ children, focus = true }: Props) {
     setPreviousColCount(colCount)
     if (cell.colIndex > colCount) {
       // Reset the column index to the last column if it goes out of bounds
-      setCell({ colIndex: colCount, rowIndex: cell.rowIndex })
+      goToCell({ colIndex: colCount, rowIndex: cell.rowIndex })
     }
   }
 
