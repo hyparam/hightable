@@ -12,6 +12,7 @@ export function stringify(value: unknown): string | undefined {
   // More details and corner cases here: https://github.com/microsoft/TypeScript/issues/18879#issuecomment-1399758565
   if (value === null || value === undefined) return JSON.stringify(value)
   if (value instanceof Date) return value.toISOString()
+  if (value instanceof Error) return `${value.name}: ${value.message}`
   if (typeof value === 'object') {
     return `{\n${Object.entries(value)
       .filter(d => d[1] !== undefined)

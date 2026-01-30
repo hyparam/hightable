@@ -66,4 +66,10 @@ describe('stringify', () => {
     expect(stringify(BigInt(123))).toBe('123')
     expect(stringify(BigInt(4200))).toBe('4,200')
   })
+
+  test('handles errors', () => {
+    expect(stringify(new Error('something went wrong'))).toBe('Error: something went wrong')
+    expect(stringify(new TypeError('invalid type'))).toBe('TypeError: invalid type')
+    expect(stringify(new RangeError('out of bounds'))).toBe('RangeError: out of bounds')
+  })
 })
