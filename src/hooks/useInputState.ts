@@ -13,17 +13,6 @@ interface UseInputStateProps<T> {
 }
 
 /**
- * Props for the useInputOrDisabledState hook.
- * @param value the external value. If undefined, the input is uncontrolled and has a local state. This value cannot be unset (undefined) later if controlled, or set to a value if uncontrolled.
- * @param onChange the callback to call when the input changes. If undefined, the input is read-only.
- * @param defaultValue the default value for the local state if the input is uncontrolled.
- * @param disabled true if the input is disabled. In this case, the value is undefined and the result onChange function does nothing.
- */
-interface UseInputOrDisabledStateProps<T> extends UseInputStateProps<T> {
-  disabled?: boolean
-}
-
-/**
  * Result of the useInputState hook.
  *
  * @param value the current input value
@@ -37,12 +26,11 @@ interface UseInputStateResult<T> {
 /**
  * Simulates the state of React <input> components. See https://react.dev/reference/react-dom/components/input#controlling-an-input-with-a-state-variable
  *
- * The input state can be:
- * - controlled (if value is defined): the parent controls the value. No local state.
- * - uncontrolled (if value is undefined): the input controls the value. Local state.
+ * Depending on the initial props, the input state will be set, and remain, in one of these modes:
+ * - controlled (if initial value is defined): the parent controls the value. No local state.
+ * - uncontrolled (if initial value is undefined): the input controls the value. Local state.
  *
- * Note that the onChange prop can be defined or undefined. If undefined in a controlled state, the input is read-only (no interactions),
- * else, the input can change but the parent cannot get the value.
+ * If the initial value is defined, but not the onChange prop, the input is read-only (no interactions).
  */
 export function useInputState<T>({ value, onChange, defaultValue }: UseInputStateProps<T>): UseInputStateResult<T> {
   const [initialValue] = useState<T | undefined>(value)
@@ -80,16 +68,15 @@ export function useInputState<T>({ value, onChange, defaultValue }: UseInputStat
 /**
  * Simulates the state of React <input> components. See https://react.dev/reference/react-dom/components/input#controlling-an-input-with-a-state-variable
  *
- * The input state can be:
- * - controlled (if value is defined): the parent controls the value. No local state.
- * - uncontrolled (if value is undefined): the input controls the value. Local state.
- * - disabled: the value is hidden and the user interactions are disabled. No local state.
+ * Depending on the initial props, the input state will be set, and remain, in one of these modes:
+ * - controlled (if initial value is defined): the parent controls the value. No local state.
+ * - uncontrolled (if initial value is undefined): the input controls the value. Local state.
+ * - disabled (if the initial value and onChange are undefined): the value is hidden and the user interactions are disabled. No local state.
  *
- * Note that the onChange prop can be defined or undefined. If undefined in a controlled state, the input is read-only (no interactions),
- * else, the input can change but the parent cannot get the value.
+ * If the initial value is defined, but not the onChange prop, the input is read-only (no interactions).
  */
-export function useInputOrDisabledState<T>({ value, onChange, defaultValue, disabled }: UseInputOrDisabledStateProps<T>): UseInputStateResult<T> | undefined {
-  const [isDisabled] = useState<boolean>(disabled ?? false)
+export function useInputOrDisabledState<T>({ value, onChange, defaultValue }: UseInputStateProps<T>): UseInputStateResult<T> | undefined {
+  const [isDisabled] = useState<boolean>(() => value === undefined && onChange === undefined)
   const inputState = useInputState<T>({ value, onChange, defaultValue })
   return isDisabled ? undefined : inputState
 }

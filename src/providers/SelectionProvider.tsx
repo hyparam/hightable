@@ -30,7 +30,6 @@ export function SelectionProvider({ children, data, numRows, selection: inputSel
     value: inputSelection,
     onChange: inputOnSelectionChange,
     defaultValue: getDefaultSelection(),
-    disabled: inputSelection === undefined && inputOnSelectionChange === undefined,
   })
   const selection = inputOrDisabledState?.value
   const onSelectionChange = inputOrDisabledState?.onChange

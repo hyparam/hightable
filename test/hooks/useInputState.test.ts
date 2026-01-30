@@ -39,10 +39,9 @@ describe('useInputOrDisabledState', () => {
       expect(result.current?.onChange).toBeUndefined()
     })
 
-    it('the value is disabled if the "disabled" option is true: value is undefined and props.onChange is not called on input change', () => {
-      const { result } = renderHook(() => useInputOrDisabledState({ value, onChange, disabled: true, defaultValue }))
-      expect(result.current?.value).toBeUndefined()
-      expect(result.current?.onChange).toBeUndefined()
+    it('the value is disabled if value and onChange are undefined', () => {
+      const { result } = renderHook(() => useInputOrDisabledState({ value: undefined, onChange: undefined, defaultValue }))
+      expect(result.current).toBeUndefined()
     })
 
     it('the prop value cannot be set to undefined afterwards', () => {
@@ -77,7 +76,7 @@ describe('useInputOrDisabledState', () => {
 
     it('the initial value, defaultValue, can be undefined, if value is undefined', () => {
       const { result } = renderHook(() => useInputOrDisabledState({ onChange, defaultValue: undefined }))
-      expect(result.current?.value).toBe(undefined)
+      expect(result.current?.value).toBeUndefined()
     })
 
     it('the prop onChange function is called on input change and the value is set to the new value', () => {
@@ -89,10 +88,9 @@ describe('useInputOrDisabledState', () => {
       expect(result.current?.value).toBe(newValue)
     })
 
-    it('the value is disabled if the "disabled" option is true: value is undefined and props.onChange is not called on input change', () => {
-      const { result } = renderHook(() => useInputOrDisabledState({ onChange, defaultValue, disabled: true }))
-      expect(result.current?.value).toBe(undefined)
-      expect(result.current?.onChange).toBeUndefined()
+    it('the value is disabled if value and onChange are undefined', () => {
+      const { result } = renderHook(() => useInputOrDisabledState({ value: undefined, onChange: undefined, defaultValue }))
+      expect(result.current).toBeUndefined()
     })
 
     it('the prop value cannot be defined afterwards', () => {
@@ -101,7 +99,7 @@ describe('useInputOrDisabledState', () => {
         rerender({ value, onChange })
       })
       expect(onChange).not.toHaveBeenCalled()
-      expect(result.current?.value).toBe(undefined)
+      expect(result.current?.value).toBeUndefined()
     })
   })
 })
@@ -173,7 +171,7 @@ describe('useInputState', () => {
 
     it('the initial value, defaultValue, can be undefined, if value is undefined', () => {
       const { result } = renderHook(() => useInputState({ onChange, defaultValue: undefined }))
-      expect(result.current.value).toBe(undefined)
+      expect(result.current.value).toBeUndefined()
     })
 
     it('the prop onChange function is called on input change and the value is set to the new value', () => {
@@ -191,7 +189,7 @@ describe('useInputState', () => {
         rerender({ value, onChange })
       })
       expect(onChange).not.toHaveBeenCalled()
-      expect(result.current.value).toBe(undefined)
+      expect(result.current.value).toBeUndefined()
     })
   })
 })
