@@ -10,7 +10,7 @@ import type { Selection } from '../helpers/selection.js'
 import { countSelectedRows, getDefaultSelection, isSelected, selectIndex, toggleIndex, toggleIndexInSelection, unselectIndex } from '../helpers/selection.js'
 import type { OrderBy } from '../helpers/sort.js'
 import { serializeOrderBy } from '../helpers/sort.js'
-import { useInputState } from '../hooks/useInputState.js'
+import { useInputOrDisabledState } from '../hooks/useInputState.js'
 
 interface SelectionProviderProps {
   selection?: Selection // selection and anchor rows, expressed as data indexes (not as indexes in the table). If undefined, the selection is hidden and the interactions are disabled.
@@ -26,12 +26,13 @@ interface Gesture {
 
 export function SelectionProvider({ children, data, numRows, selection: inputSelection, onSelectionChange: inputOnSelectionChange }: SelectionProviderProps) {
   const [previousNumRows, setPreviousNumRows] = useState(numRows)
-  const { value: selection, onChange: onSelectionChange } = useInputState<Selection>({
+  const inputOrDisabledState = useInputOrDisabledState<Selection>({
     value: inputSelection,
     onChange: inputOnSelectionChange,
     defaultValue: getDefaultSelection(),
-    disabled: inputSelection === undefined && inputOnSelectionChange === undefined,
   })
+  const selection = inputOrDisabledState?.value
+  const onSelectionChange = inputOrDisabledState?.onChange
 
   const [rowByRowNumberAndOrderBy] = useState<Map<string, Map<number, number | undefined>>>(() => new Map())
   const [allRowsSelected, setAllRowsSelected] = useState<boolean | undefined>(areAllSelected({ numRows, selection }))
