@@ -47,7 +47,7 @@ describe('useInputOrDisabledState', () => {
     it('the prop value cannot be set to undefined afterwards', () => {
       const { result, rerender } = renderHook(() => useInputOrDisabledState({ value, onChange, defaultValue }))
       act(() => {
-        rerender({ value: undefined, onChange })
+        rerender({ value: undefined, onChange, defaultValue })
       })
       expect(onChange).not.toHaveBeenCalled()
       expect(result.current?.value).toBe(value)
@@ -89,12 +89,12 @@ describe('useInputOrDisabledState', () => {
     })
 
     it('the prop value cannot be defined afterwards', () => {
-      const { result, rerender } = renderHook(() => useInputOrDisabledState({ onChange, defaultValue: undefined }))
+      const { result, rerender } = renderHook(() => useInputOrDisabledState({ onChange, defaultValue }))
       act(() => {
-        rerender({ value, onChange })
+        rerender({ value, onChange, defaultValue })
       })
       expect(onChange).not.toHaveBeenCalled()
-      expect(result.current?.value).toBeUndefined()
+      expect(result.current?.value).toBe(defaultValue)
     })
   })
 })
@@ -137,7 +137,7 @@ describe('useInputState', () => {
     it('the prop value cannot be set to undefined afterwards', () => {
       const { result, rerender } = renderHook(() => useInputState({ value, onChange, defaultValue }))
       act(() => {
-        rerender({ value: undefined, onChange })
+        rerender({ value: undefined, onChange, defaultValue })
       })
       expect(onChange).not.toHaveBeenCalled()
       expect(result.current.value).toBe(value)
@@ -174,12 +174,12 @@ describe('useInputState', () => {
     })
 
     it('the prop value cannot be defined afterwards', () => {
-      const { result, rerender } = renderHook(() => useInputState({ onChange, defaultValue: undefined }))
+      const { result, rerender } = renderHook(() => useInputState({ onChange, defaultValue }))
       act(() => {
-        rerender({ value, onChange })
+        rerender({ value, onChange, defaultValue })
       })
       expect(onChange).not.toHaveBeenCalled()
-      expect(result.current.value).toBeUndefined()
+      expect(result.current.value).toBe(defaultValue)
     })
   })
 })
