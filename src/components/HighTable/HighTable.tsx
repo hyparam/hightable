@@ -1,12 +1,10 @@
-import { ErrorContext } from '../../contexts/ErrorContext.js'
 import type { DataProviderProps } from '../../providers/DataProvider.js'
 import { DataProvider } from '../../providers/DataProvider.js'
+import { ErrorProvider, type ErrorProviderProps } from '../../providers/ErrorProvider.js'
 import type { WrapperProps } from './Wrapper.js'
 import Wrapper from './Wrapper.js'
 
-type Props = {
-  onError?: (error: unknown) => void
-} & DataProviderProps & WrapperProps
+type Props = ErrorProviderProps & DataProviderProps & WrapperProps
 
 // TODO(SL): update the docstring
 /**
@@ -19,10 +17,10 @@ type Props = {
  */
 export default function HighTable({ data, maxRowNumber, onError, ...rest }: Props) {
   return (
-    <ErrorContext.Provider value={{ onError }}>
+    <ErrorProvider onError={onError}>
       <DataProvider data={data} maxRowNumber={maxRowNumber}>
         <Wrapper {...rest} />
       </DataProvider>
-    </ErrorContext.Provider>
+    </ErrorProvider>
   )
 }
