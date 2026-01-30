@@ -1,6 +1,6 @@
 import type { KeyboardEvent, MouseEvent, ReactNode } from 'react'
 
-import type { CellContentProps } from '../Cell/Cell.js'
+import type { CellContentProps } from './components/Cell/Cell.js'
 import type { ColumnConfiguration } from './helpers/columnConfiguration.js'
 import type { DataFrame } from './helpers/dataframe/index.js'
 import type { Selection } from './helpers/selection.js'
