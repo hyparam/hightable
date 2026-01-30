@@ -44,35 +44,35 @@ interface UseInputStateResult<T> {
  * Note that the onChange prop can be defined or undefined. If undefined in a controlled state, the input is read-only (no interactions),
  * else, the input can change but the parent cannot get the value.
  */
-export function useInputState<T>({ value: propValue, onChange: propOnChange, defaultValue }: UseInputStateProps<T>): UseInputStateResult<T> {
-  const [initialValue] = useState<T | undefined>(propValue)
+export function useInputState<T>({ value, onChange, defaultValue }: UseInputStateProps<T>): UseInputStateResult<T> {
+  const [initialValue] = useState<T | undefined>(value)
 
   // for uncontrolled inputs
   const [localValue, setLocalValue] = useState<T>(defaultValue)
-  const onChange = useCallback((selection: T) => {
-    propOnChange?.(selection)
+  const onUncontrolledChange = useCallback((selection: T) => {
+    onChange?.(selection)
     setLocalValue(selection)
-  }, [propOnChange])
+  }, [onChange])
 
   // The input is forever in one of these two modes:
 
   // - controlled (no local state)
   if (initialValue !== undefined) {
-    if (propValue === undefined) {
+    if (value === undefined) {
       console.warn('The value is controlled (it has no local state) because the property was initially defined. It cannot be set to undefined now (it is set back to the initial value).')
     }
     return {
-      value: propValue ?? initialValue,
+      value: value ?? initialValue,
       // read-only if onChange is undefined
-      onChange: propOnChange,
+      onChange,
     }
   }
 
   // - uncontrolled (local state)
-  if (propValue !== undefined) {
+  if (value !== undefined) {
     console.warn('The value is uncontrolled (it only has a local state) because the property was initially undefined. It cannot be set to a value now and is ignored.')
   }
-  return { value: localValue, onChange }
+  return { value: localValue, onChange: onUncontrolledChange }
 }
 
 /**
