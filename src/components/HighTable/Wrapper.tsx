@@ -83,10 +83,14 @@ export default function Wrapper({
     } as CSSProperties
   }, [maxRowNumber, headerHeight])
 
+  const classes = useMemo(() => {
+    return `${styles.hightable} ${styled ? styles.styled : ''} ${className}`
+  }, [className, styled])
+
   return (
     // TODO(SL): passing a ref to an element is code smell
     <PortalContainerContext.Provider value={{ containerRef: ref }}>
-      <div ref={ref} className={`${styles.hightable} ${styled ? styles.styled : ''} ${className}`} style={tableScrollStyle}>
+      <div ref={ref} className={classes} style={tableScrollStyle}>
 
         <div className={styles.topBorder} role="presentation" />
 
