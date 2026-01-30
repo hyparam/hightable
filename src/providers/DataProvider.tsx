@@ -2,18 +2,18 @@ import type { ReactNode } from 'react'
 import { useEffect, useMemo, useState } from 'react'
 
 import { DataContext } from '../contexts/DataContext.js'
-import type { DataFrame, Obj } from '../helpers/dataframe/index.js'
+import type { DataFrame } from '../helpers/dataframe/index.js'
 
-interface DataProviderProps<M extends Obj, C extends Obj> {
-  data: DataFrame<M, C>
+interface DataProviderProps {
+  data: DataFrame
   maxRowNumber?: number
   children: ReactNode
 }
 
-export function DataProvider<M extends Obj, C extends Obj>({ children, data, maxRowNumber: propMaxRowNumber }: DataProviderProps<M, C>) {
+export function DataProvider({ children, data, maxRowNumber: propMaxRowNumber }: DataProviderProps) {
   // The key helps trigger remounts when the data frame changes
   const [key, setKey] = useState<number>(0)
-  const [previousData, setPreviousData] = useState<DataFrame<M, C>>(data)
+  const [previousData, setPreviousData] = useState<DataFrame>(data)
   const [version, setVersion] = useState(0)
   const [numRows, setNumRows] = useState(data.numRows)
 
