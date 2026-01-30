@@ -24,7 +24,7 @@ const maxAdjustmentRatio = 3
  */
 const minAdjustedWidth = 150
 /**
- * Margin left when adjusting widths to avoid showing an horizontal scrollbar.
+ * Margin left when adjusting widths to avoid showing a horizontal scrollbar.
  */
 const underfillMargin = 3
 // TODO(SL): let config.minAdjustedWidth override minAdjustedWidth the same way config.minWidth does for minWidth?
