@@ -34,12 +34,16 @@ export function CellNavigationProvider({ children, focus = true }: Props) {
   const colCount = useMemo(() => numDataColumns + 1, [numDataColumns])
   const [previousColCount, setPreviousColCount] = useState(colCount)
 
-  const goToCell = useCallback((cell: Cell) => {
-    setCell(cell)
+  const scrollAndFocusCell = useCallback((cell: Cell) => {
     scrollRowIntoView?.({ rowIndex: cell.rowIndex })
     // after scrolling, focus the cell (and scroll horizontally into view if needed - see focusCurrentCell)
     setShouldFocus(true)
   }, [scrollRowIntoView])
+
+  const goToCell = useCallback((cell: Cell) => {
+    setCell(cell)
+    scrollAndFocusCell(cell)
+  }, [scrollAndFocusCell])
 
   // Reset the cell position if the number of rows has decreased and the current row index is out of bounds
   if (rowCount !== previousRowCount) {
@@ -62,9 +66,9 @@ export function CellNavigationProvider({ children, focus = true }: Props) {
     goToCell({ colIndex: 1, rowIndex: 1 })
   }, [goToCell])
 
-  const goToCurrentCell = useCallback(() => {
-    goToCell(cell)
-  }, [goToCell, cell])
+  const scrollAndFocusCurrentCell = useCallback(() => {
+    scrollAndFocusCell(cell)
+  }, [scrollAndFocusCell, cell])
 
   // Focus the first cell on mount, or on later changes, so keyboard navigation works
   if (data !== lastData) {
@@ -102,10 +106,10 @@ export function CellNavigationProvider({ children, focus = true }: Props) {
       rowCount,
       focusCurrentCell,
       goToCell,
-      goToCurrentCell,
       goToFirstCell,
+      scrollAndFocusCurrentCell,
     }
-  }, [cell, colCount, rowCount, focusCurrentCell, goToCell, goToCurrentCell, goToFirstCell])
+  }, [cell, colCount, rowCount, focusCurrentCell, goToCell, goToFirstCell, scrollAndFocusCurrentCell])
 
   return (
     <CellNavigationContext.Provider value={value}>
