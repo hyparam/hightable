@@ -48,8 +48,10 @@ export function useInputState<T>({ value, onChange, defaultValue }: UseInputStat
   const [initialValue] = useState<T | undefined>(value)
 
   // for uncontrolled inputs
+  // the local state and the uncontrolledOnChange callback are created unconditionally to
+  // follow the Rules of Hooks, but are not used in controlled mode
   const [localValue, setLocalValue] = useState<T>(defaultValue)
-  const onUncontrolledChange = useCallback((selection: T) => {
+  const uncontrolledOnChange = useCallback((selection: T) => {
     onChange?.(selection)
     setLocalValue(selection)
   }, [onChange])
@@ -72,7 +74,7 @@ export function useInputState<T>({ value, onChange, defaultValue }: UseInputStat
   if (value !== undefined) {
     console.warn('The value is uncontrolled (it only has a local state) because the property was initially undefined. It cannot be set to a value now and is ignored.')
   }
-  return { value: localValue, onChange: onUncontrolledChange }
+  return { value: localValue, onChange: uncontrolledOnChange }
 }
 
 /**
