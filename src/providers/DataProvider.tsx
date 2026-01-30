@@ -9,6 +9,9 @@ type Props = Pick<HighTableProps, 'data' | 'maxRowNumber'> & {
   children: ReactNode
 }
 
+/**
+ * Provides the data frame and related state to the table, through the DataContext.
+ */
 export function DataProvider({ children, data, maxRowNumber: propMaxRowNumber }: Props) {
   // The key helps trigger remounts when the data frame changes
   const [key, setKey] = useState<number>(0)
