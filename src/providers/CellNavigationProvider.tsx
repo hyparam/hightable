@@ -34,15 +34,12 @@ export function CellNavigationProvider({ children, focus = true }: Props) {
   const colCount = useMemo(() => numDataColumns + 1, [numDataColumns])
   const [previousColCount, setPreviousColCount] = useState(colCount)
 
-  const goToCell = useCallback((value: Cell) => {
-    const colIndex = Math.min(Math.max(1, value.colIndex), colCount)
-    const rowIndex = Math.min(Math.max(1, value.rowIndex), rowCount)
-
-    setCell({ colIndex, rowIndex })
-    scrollRowIntoView?.({ rowIndex })
+  const goToCell = useCallback((cell: Cell) => {
+    setCell(cell)
+    scrollRowIntoView?.({ rowIndex: cell.rowIndex })
     // after scrolling, focus the cell (and scroll horizontally into view if needed - see focusCurrentCell)
     setShouldFocus(true)
-  }, [scrollRowIntoView, colCount, rowCount])
+  }, [scrollRowIntoView])
 
   // Reset the cell position if the number of rows has decreased and the current row index is out of bounds
   if (rowCount !== previousRowCount) {
