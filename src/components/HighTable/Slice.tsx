@@ -1,4 +1,4 @@
-import type { KeyboardEvent, MouseEvent, ReactNode } from 'react'
+import type { KeyboardEvent } from 'react'
 import { useCallback, useContext, useMemo } from 'react'
 
 import { CellNavigationContext } from '../../contexts/CellNavigationContext.js'
@@ -8,26 +8,18 @@ import { RowsAndColumnsContext } from '../../contexts/RowsAndColumnsContext.js'
 import { ScrollContext } from '../../contexts/ScrollContext.js'
 import { SelectionContext } from '../../contexts/SelectionContext.js'
 import { ariaOffset, defaultNumRowsPerPage } from '../../helpers/constants.js'
+import type { HighTableProps } from '../../types.js'
 import { stringify as stringifyDefault } from '../../utils/stringify.js'
-import Cell, { type CellContentProps } from '../Cell/Cell.js'
+import Cell from '../Cell/Cell.js'
 import Row from '../Row/Row.js'
 import RowHeader from '../RowHeader/RowHeader.js'
 import TableCorner from '../TableCorner/TableCorner.js'
 import TableHeader from '../TableHeader/TableHeader.js'
 
-export interface SliceProps {
-  numRowsPerPage?: number // number of rows per page for keyboard navigation (default 20)
-  // TODO(SL): replace col: number with col: string?
-  onDoubleClickCell?: (event: MouseEvent, col: number, row: number) => void
-  onKeyDownCell?: (event: KeyboardEvent, col: number, row: number) => void // for accessibility, it should be passed if onDoubleClickCell is passed. It can handle more than that action though.
-  onMouseDownCell?: (event: MouseEvent, col: number, row: number) => void
-  renderCellContent?: (props: CellContentProps) => ReactNode // custom cell content component, if not provided, the default CellContent will be used
-  stringify?: (value: unknown) => string | undefined
+type SliceProps = Pick<HighTableProps, 'numRowsPerPage' | 'onDoubleClickCell' | 'onKeyDownCell' | 'onMouseDownCell' | 'renderCellContent' | 'stringify'> & {
+  /** Callback to set the current table corner size */
+  setTableCornerSize?: (size: { width: number, height: number }) => void
 }
-
-type Props = {
-  setTableCornerSize?: (size: { width: number, height: number }) => void // callback to set the current table corner size
-} & SliceProps
 
 export default function Slice({
   numRowsPerPage = defaultNumRowsPerPage,
@@ -37,7 +29,7 @@ export default function Slice({
   renderCellContent,
   setTableCornerSize,
   stringify = stringifyDefault,
-}: Props) {
+}: SliceProps) {
   const { data, version, numRows } = useContext(DataContext)
   const { cell, colCount, rowCount, goToCell } = useContext(CellNavigationContext)
   const { orderBy, onOrderByChange } = useContext(OrderByContext)

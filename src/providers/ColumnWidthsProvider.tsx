@@ -6,11 +6,27 @@ import { ColumnWidthsContext } from '../contexts/ColumnWidthsContext.js'
 import { cellStyle } from '../helpers/width.js'
 import { useLocalStorageState } from '../hooks/useLocalStorageState.js'
 
-const defaultMinWidth = 50 // minimum width of a cell in px, used to compute the column widths
-const snapDistance = 10 // if a small space remains to the right of the last column after shrinking widths, it's filled by expanding some columns
-const maxAdjustmentRatio = 3 // when adjusting, we don't want to shrink a column too much. It's the maximum ratio between the measured width and the adjusted width
-const minAdjustedWidth = 150 // when adjusting, we don't want to shrink a column too much. It's the minimum adjusted width
-const underfillMargin = 3 // leave 3px unused to avoid showing an unneeded horizontal scrollbar
+/** Minimum width of a cell in px, used to compute the column widths */
+const defaultMinWidth = 50
+/** Distance in pixels to snap column widths when adjusting.
+ *
+ * If a small space remains to the right of the last column after shrinking widths, it's filled by expanding some columns
+ */
+const snapDistance = 10
+/** Maximum ratio between the measured width and the adjusted width.
+ *
+ * When adjusting, we don't want to shrink a column too much.
+ */
+const maxAdjustmentRatio = 3
+/** Minimum adjusted width.
+ *
+ * When adjusting, we don't want to shrink a column too much.
+ */
+const minAdjustedWidth = 150
+/**
+ * Margin left when adjusting widths to avoid showing a horizontal scrollbar.
+ */
+const underfillMargin = 3
 // TODO(SL): let config.minAdjustedWidth override minAdjustedWidth the same way config.minWidth does for minWidth?
 
 /**
@@ -39,14 +55,25 @@ const underfillMargin = 3 // leave 3px unused to avoid showing an unneeded horiz
  */
 
 interface ColumnWidthsProviderProps {
-  viewportWidth?: number // current viewport width (used to compute the maximum total width)
-  tableCornerWidth?: number // current table corner width (used to compute the maximum total width)
-  localStorageKey?: string // optional key to use for local storage (no local storage if not provided)
-  numColumns: number // number of columns (used to initialize the widths array, and compute the widths)
-  minWidth?: number // minimum width for a column in pixels
+  /** Current viewport width (used to compute the maximum total width) */
+  viewportWidth?: number
+  /** Current table corner width (used to compute the maximum total width) */
+  tableCornerWidth?: number
+  /** Optional key to use for local storage (no local storage if not provided) */
+  localStorageKey?: string
+  /** Number of columns (used to initialize the widths array, and compute the widths) */
+  numColumns: number
+  /** Minimum width for a column in pixels */
+  minWidth?: number
+  /** Children elements */
   children: ReactNode
 }
 
+/**
+ * Handle the column widths state and logic.
+ *
+ * Provides the ColumnWidthsContext.
+ */
 export function ColumnWidthsProvider({ children, localStorageKey, numColumns, minWidth, viewportWidth, tableCornerWidth }: ColumnWidthsProviderProps) {
   // Number of columns
   if (!Number.isInteger(numColumns) || numColumns < 0) {
@@ -261,9 +288,9 @@ function adjustWidths({
     totalWidth += columnWidth
   }
   // Target slightly less than available to avoid triggering an unneeded scrollbar
-  let excedent = totalWidth - Math.max(0, maxTotalWidth - underfillMargin)
+  let surplus = totalWidth - Math.max(0, maxTotalWidth - underfillMargin)
 
-  if (excedent <= 0) {
+  if (surplus <= 0) {
     return []
   }
 
@@ -297,7 +324,7 @@ function adjustWidths({
   // until reaching the target (the max total width).
   // We stop when the total width is below the target width, or when we cannot reduce any more.
   let i = 0
-  while (orderedWidthGroups.length > 0 && i < 100 && excedent > 0) { // TODO(SL): remove the limit
+  while (orderedWidthGroups.length > 0 && i < 100 && surplus > 0) { // TODO(SL): remove the limit
     // safeguard against infinite loop
     i++
 
@@ -321,14 +348,14 @@ function adjustWidths({
     const minWidth = secondLargestGroup === undefined ? minGroupWidth : Math.max(minGroupWidth, secondLargestGroup.width)
 
     // Compute the ideal new width if we could reduce all columns equally
-    const idealNewWidth = Math.ceil(width - excedent / columns.length)
+    const idealNewWidth = Math.ceil(width - surplus / columns.length)
 
     if (idealNewWidth >= minWidth) {
       // we can reduce to the ideal new width and finish
       for (const column of columns) {
         adjustedWidths[column.index] = idealNewWidth
       }
-      excedent -= (width - idealNewWidth) * columns.length
+      surplus -= (width - idealNewWidth) * columns.length
       // All done
       break
     }
@@ -337,7 +364,7 @@ function adjustWidths({
     for (const column of columns) {
       adjustedWidths[column.index] = minWidth
     }
-    excedent -= (width - minWidth) * columns.length
+    surplus -= (width - minWidth) * columns.length
 
     // keep only the columns that can still be shrunk (can be empty)
     const remainingColumns = columns.filter(c => c.minWidth < minWidth)
@@ -358,8 +385,8 @@ function adjustWidths({
     }
   }
 
-  // If we exit the loop with excedent < 0, and it's below a threshold, we add it to some columns to snap to the right border
-  if (excedent < 0 && excedent > -snapDistance) {
+  // If we exit the loop with surplus < 0, and it's below a threshold, we add it to some columns to snap to the right border
+  if (surplus < 0 && surplus > -snapDistance) {
     const availableColumns = adjustedWidths.map((adjustedWidth, index) => {
       const fixedWidth = fixedWidths?.[index]
       const measuredWidth = measuredWidths[index]
@@ -374,8 +401,8 @@ function adjustWidths({
     )
     const numColumns = availableColumns.length
     if (numColumns > 0) {
-      const baseIncrement = Math.floor(-excedent / numColumns)
-      const rest = -excedent % numColumns
+      const baseIncrement = Math.floor(-surplus / numColumns)
+      const rest = -surplus % numColumns
       for (const { index, width } of availableColumns.slice(0, rest)) {
         adjustedWidths[index] = width + baseIncrement + 1
       }

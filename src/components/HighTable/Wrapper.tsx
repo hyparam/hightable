@@ -3,38 +3,21 @@ import { useContext, useMemo, useRef, useState } from 'react'
 
 import { DataContext } from '../../contexts/DataContext.js'
 import { PortalContainerContext } from '../../contexts/PortalContainerContext.js'
-import type { ColumnConfiguration } from '../../helpers/columnConfiguration.js'
 import { columnVisibilityStatesSuffix, columnWidthsSuffix, rowHeight } from '../../helpers/constants.js'
-import type { Selection } from '../../helpers/selection.js'
-import type { OrderBy } from '../../helpers/sort.js'
 import styles from '../../HighTable.module.css'
-import type { CellNavigationProviderProps } from '../../providers/CellNavigationProvider.js'
 import { CellNavigationProvider } from '../../providers/CellNavigationProvider.js'
 import { ColumnParametersProvider } from '../../providers/ColumnParametersProvider.js'
 import { ColumnVisibilityStatesProvider } from '../../providers/ColumnVisibilityStatesProvider.js'
-import { type MaybeHiddenColumn } from '../../providers/ColumnVisibilityStatesProvider.js'
 import { ColumnWidthsProvider } from '../../providers/ColumnWidthsProvider.js'
 import { OrderByProvider } from '../../providers/OrderByProvider.js'
-import type { RowsAndColumnsProviderProps } from '../../providers/RowsAndColumnsProvider.js'
 import { RowsAndColumnsProvider } from '../../providers/RowsAndColumnsProvider.js'
-import type { ScrollProviderProps } from '../../providers/ScrollProvider.js'
 import { ScrollProvider } from '../../providers/ScrollProvider.js'
 import { SelectionProvider } from '../../providers/SelectionProvider.js'
+import type { HighTableProps } from '../../types.js'
 import Scroller from './Scroller.js'
-import type { SliceProps } from './Slice.js'
 import Slice from './Slice.js'
 
-export type WrapperProps = {
-  className?: string // additional class names for the component
-  styled?: boolean // use styled component? (default true)
-  cacheKey?: string // used to persist column widths. If undefined, the column widths are not persisted. It is expected to be unique for each table.
-  columnConfiguration?: ColumnConfiguration
-  orderBy?: OrderBy // order used to fetch the rows. If undefined, the table is unordered, the sort controls are hidden and the interactions are disabled. Pass [] to fetch the rows in the original order.
-  selection?: Selection // selection and anchor rows, expressed as data indexes (not as indexes in the table). If undefined, the selection is hidden and the interactions are disabled.
-  onColumnsVisibilityChange?: (columns: Record<string, MaybeHiddenColumn>) => void // callback which is called whenever the set of hidden columns changes.
-  onOrderByChange?: (orderBy: OrderBy) => void // callback to call when a user interaction changes the order. The interactions are disabled if undefined.
-  onSelectionChange?: (selection: Selection) => void // callback to call when a user interaction changes the selection. The selection is expressed as data indexes (not as indexes in the table). The interactions are disabled if undefined.
-} & RowsAndColumnsProviderProps & CellNavigationProviderProps & ScrollProviderProps & SliceProps
+type Props = Omit<HighTableProps, 'data' | 'maxRowNumber' | 'onError'>
 
 export default function Wrapper({
   columnConfiguration,
@@ -50,12 +33,13 @@ export default function Wrapper({
   onOrderByChange,
   onSelectionChange,
   ...rest
-}: WrapperProps) {
+}: Props) {
   const ref = useRef<HTMLDivElement>(null)
   const [viewportWidth, setViewportWidth] = useState<number | undefined>(undefined)
   const [tableCornerSize, setTableCornerSize] = useState<{ width: number, height: number } | undefined>(undefined)
   const { data, key, maxRowNumber, numRows } = useContext(DataContext)
 
+  // TODO(SL): pass columnDescriptors in DataContext, not from data
   const columnNames = useMemo(() => data.columnDescriptors.map(d => d.name), [data.columnDescriptors])
 
   const headerHeight = useMemo(() => {
@@ -83,29 +67,88 @@ export default function Wrapper({
     } as CSSProperties
   }, [maxRowNumber, headerHeight])
 
+  const classes = useMemo(() => {
+    return `${styles.hightable} ${styled ? styles.styled : ''} ${className}`
+  }, [className, styled])
+
   return (
     // TODO(SL): passing a ref to an element is code smell
     <PortalContainerContext.Provider value={{ containerRef: ref }}>
-      <div ref={ref} className={`${styles.hightable} ${styled ? styles.styled : ''} ${className}`} style={tableScrollStyle}>
+      <div ref={ref} className={classes} style={tableScrollStyle}>
 
         <div className={styles.topBorder} role="presentation" />
 
-        {/* Provide the column configuration to the table */}
-        <ColumnParametersProvider columnConfiguration={columnConfiguration} columnDescriptors={data.columnDescriptors}>
-          {/* Create a new set of widths if the data has changed, but keep it if only the number of rows changed */}
-          <ColumnWidthsProvider key={cacheKey ?? key} localStorageKey={cacheKey ? `${cacheKey}${columnWidthsSuffix}` : undefined} numColumns={data.columnDescriptors.length} viewportWidth={viewportWidth} tableCornerWidth={tableCornerSize?.width}>
-            {/* Create a new set of hidden columns if the data has changed, but keep it if only the number of rows changed */}
-            <ColumnVisibilityStatesProvider key={cacheKey ?? key} localStorageKey={cacheKey ? `${cacheKey}${columnVisibilityStatesSuffix}` : undefined} columnNames={columnNames} initialVisibilityStates={initialVisibilityStates} onColumnsVisibilityChange={onColumnsVisibilityChange}>
-              {/* Create a new context if the dataframe changes, to flush the cache (ranks and indexes) */}
-              <OrderByProvider key={key} orderBy={orderBy} onOrderByChange={onOrderByChange}>
-                {/* Create a new selection context if the dataframe has changed */}
-                <SelectionProvider key={key} selection={selection} onSelectionChange={onSelectionChange} data={data} numRows={numRows}>
-                  <ScrollProvider numRows={numRows} headerHeight={headerHeight} padding={padding}>
-                    {/* Create a new navigation context if the dataframe has changed, because the focused cell might not exist anymore */}
-                    <CellNavigationProvider key={key} focus={focus}>
-                      <RowsAndColumnsProvider key={key} overscan={overscan}>
+        <ColumnParametersProvider
+          columnConfiguration={columnConfiguration}
+          columnDescriptors={data.columnDescriptors}
+        >
+          <ColumnWidthsProvider
+            /**
+             * Recreate a context if a new data frame is passed (but not if only the number of rows changed)
+             * The user can also pass a cacheKey to force a new set of widths, or keep the current ones.
+             */
+            key={cacheKey ?? key}
+            // TODO(SL): pass cacheKey, memoize
+            localStorageKey={cacheKey ? `${cacheKey}${columnWidthsSuffix}` : undefined}
+            numColumns={data.columnDescriptors.length}
+            viewportWidth={viewportWidth}
+            tableCornerWidth={tableCornerSize?.width}
+          >
+            <ColumnVisibilityStatesProvider
+              /**
+               * Recreate a context if a new data frame is passed (but not if only the number of rows changed)
+               * The user can also pass a cacheKey to force a new set of visibility states, or keep the current ones.
+               */
+              key={cacheKey ?? key}
+              // TODO(SL): pass cacheKey, memoize
+              localStorageKey={cacheKey ? `${cacheKey}${columnVisibilityStatesSuffix}` : undefined}
+              columnNames={columnNames}
+              initialVisibilityStates={initialVisibilityStates}
+              onColumnsVisibilityChange={onColumnsVisibilityChange}
+            >
+              <OrderByProvider
+                /**
+                 * Recreate a context if a new data frame is passed, to flush the cache (ranks and indexes)
+                 * (but not if only the number of rows changed)
+                 */
+                key={key}
+                orderBy={orderBy}
+                onOrderByChange={onOrderByChange}
+              >
+                <SelectionProvider
+                  /**
+                   * Recreate a context if a new data frame is passed, because the selection might not make sense anymore
+                   * (but not if only the number of rows changed)
+                   */
+                  key={key}
+                  selection={selection}
+                  onSelectionChange={onSelectionChange}
+                  data={data}
+                  numRows={numRows}
+                >
+                  <ScrollProvider
+                    numRows={numRows}
+                    headerHeight={headerHeight}
+                    padding={padding}
+                  >
+                    <CellNavigationProvider
+                      /**
+                       * Recreate a context if a new data frame is passed, because the focused cell might not exist anymore
+                       */
+                      key={key}
+                      focus={focus}
+                    >
+                      <RowsAndColumnsProvider
+                        /**
+                         * Recreate a context if a new data frame is passed, as it's responsible for fetching the cells.
+                         */
+                        key={key}
+                        overscan={overscan}
+                      >
 
-                        <Scroller setViewportWidth={setViewportWidth}>
+                        <Scroller
+                          setViewportWidth={setViewportWidth}
+                        >
                           <Slice
                             setTableCornerSize={setTableCornerSize}
                             {...rest}

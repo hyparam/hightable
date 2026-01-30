@@ -2,18 +2,20 @@ import type { ReactNode } from 'react'
 import { useEffect, useMemo, useState } from 'react'
 
 import { DataContext } from '../contexts/DataContext.js'
-import type { DataFrame, Obj } from '../helpers/dataframe/index.js'
+import type { DataFrame } from '../helpers/dataframe/index.js'
+import type { HighTableProps } from '../types.js'
 
-interface DataProviderProps<M extends Obj, C extends Obj> {
-  data: DataFrame<M, C>
-  maxRowNumber?: number
+type Props = Pick<HighTableProps, 'data' | 'maxRowNumber'> & {
   children: ReactNode
 }
 
-export function DataProvider<M extends Obj, C extends Obj>({ children, data, maxRowNumber: propMaxRowNumber }: DataProviderProps<M, C>) {
+/**
+ * Provides the data frame and related state to the table, through the DataContext.
+ */
+export function DataProvider({ children, data, maxRowNumber: propMaxRowNumber }: Props) {
   // The key helps trigger remounts when the data frame changes
   const [key, setKey] = useState<number>(0)
-  const [previousData, setPreviousData] = useState<DataFrame<M, C>>(data)
+  const [previousData, setPreviousData] = useState<DataFrame>(data)
   const [version, setVersion] = useState(0)
   const [numRows, setNumRows] = useState(data.numRows)
 

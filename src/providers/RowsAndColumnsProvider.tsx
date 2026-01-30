@@ -9,16 +9,17 @@ import { OrderByContext } from '../contexts/OrderByContext.js'
 import { RowsAndColumnsContext } from '../contexts/RowsAndColumnsContext.js'
 import { ScrollContext } from '../contexts/ScrollContext.js'
 import { defaultOverscan } from '../helpers/constants.js'
+import type { HighTableProps } from '../types.js'
 
-export interface RowsAndColumnsProviderProps {
-  overscan?: number // number of rows to fetch beyond the visible table cells (default 20)
+type RowsAndColumnsProviderProps = Pick<HighTableProps, 'overscan'> & {
+  /** Children elements */
+  children: ReactNode
 }
 
-type Props = {
-  children: ReactNode
-} & RowsAndColumnsProviderProps
-
-export function RowsAndColumnsProvider({ overscan = defaultOverscan, children }: Props) {
+/**
+ * Provide the column parameters, through the RowsAndColumnsContext, and fetch the required rows (visible + overscan).
+ */
+export function RowsAndColumnsProvider({ overscan = defaultOverscan, children }: RowsAndColumnsProviderProps) {
   const { visibleRowsStart, visibleRowsEnd } = useContext(ScrollContext)
 
   const { onError } = useContext(ErrorContext)

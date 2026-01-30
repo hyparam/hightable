@@ -3,6 +3,7 @@ import { createContext } from 'react'
 import type { ColumnParameters } from '../contexts/ColumnParametersContext.js'
 
 interface RowsAndColumnsContextType {
+  /** Parameters for columns */
   columnsParameters?: ColumnParameters[]
 }
 

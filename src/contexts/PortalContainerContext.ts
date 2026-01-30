@@ -2,6 +2,7 @@ import type { RefObject } from 'react'
 import { createContext } from 'react'
 
 interface PortalContainerContextType {
+  /** Reference to the container element for portals */
   containerRef: RefObject<HTMLDivElement | null>
 }
 
