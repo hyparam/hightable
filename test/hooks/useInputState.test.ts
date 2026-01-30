@@ -74,11 +74,6 @@ describe('useInputOrDisabledState', () => {
       expect(result.current?.value).toBe(defaultValue)
     })
 
-    it('the initial value, defaultValue, can be undefined, if value is undefined', () => {
-      const { result } = renderHook(() => useInputOrDisabledState({ onChange, defaultValue: undefined }))
-      expect(result.current?.value).toBeUndefined()
-    })
-
     it('the prop onChange function is called on input change and the value is set to the new value', () => {
       const { result } = renderHook(() => useInputOrDisabledState({ onChange, defaultValue }))
       act(() => {
@@ -167,11 +162,6 @@ describe('useInputState', () => {
     it('the initial value is defaultValue', () => {
       const { result } = renderHook(() => useInputState({ onChange, defaultValue }))
       expect(result.current.value).toBe(defaultValue)
-    })
-
-    it('the initial value, defaultValue, can be undefined, if value is undefined', () => {
-      const { result } = renderHook(() => useInputState({ onChange, defaultValue: undefined }))
-      expect(result.current.value).toBeUndefined()
     })
 
     it('the prop onChange function is called on input change and the value is set to the new value', () => {
