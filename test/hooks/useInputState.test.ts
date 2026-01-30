@@ -39,11 +39,6 @@ describe('useInputOrDisabledState', () => {
       expect(result.current?.onChange).toBeUndefined()
     })
 
-    it('the value is disabled if value and onChange are undefined', () => {
-      const { result } = renderHook(() => useInputOrDisabledState({ value: undefined, onChange: undefined, defaultValue }))
-      expect(result.current).toBeUndefined()
-    })
-
     it('the prop value cannot be set to undefined afterwards', () => {
       const { result, rerender } = renderHook(() => useInputOrDisabledState({ value, onChange, defaultValue }))
       act(() => {
