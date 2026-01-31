@@ -19,6 +19,8 @@ type CellNavigationProviderProps = Pick<HighTableProps, 'focus'> & {
  */
 export function CellNavigationProvider({ children, focus = true }: CellNavigationProviderProps) {
   const [cell, setCell] = useState<Cell>(defaultCellNavigationContext.cell)
+  // TODO(SL): this state should be removed, and a state should be added in useCellFocus,
+  // since the logic in React is to describe UI state through props and not through imperative code.
   const [shouldFocus, setShouldFocus] = useState(false)
   const [lastData, setLastData] = useState<Omit<DataFrame, 'numRows'> | undefined>(undefined)
   const { data } = useContext(DataContext)
