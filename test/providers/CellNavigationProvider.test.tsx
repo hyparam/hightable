@@ -45,7 +45,6 @@ function getDefaultDataContext({ numRows}: { numRows: number }) {
     data: arrayDataFrame([]),
     key: 0,
     version: 0,
-    maxRowNumber: 0,
     numRows,
   }
 }

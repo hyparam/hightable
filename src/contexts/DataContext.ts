@@ -10,8 +10,6 @@ export interface DataContextType {
   dataId: number
   /** A version number that increments whenever a data frame is updated or resolved (the key remains the same). */
   version: number
-  /** The maximum number of rows to display (for row headers). Useful for filtered data. */
-  maxRowNumber: number
   /** The actual number of rows in the data frame. */
   numRows: number
 }
@@ -21,7 +19,6 @@ function getDefaultDataContext(): DataContextType {
     data: arrayDataFrame([]),
     dataId: 0,
     version: 0,
-    maxRowNumber: 0,
     numRows: 0,
   }
 }

@@ -11,7 +11,6 @@ import { DataProvider } from '../../src/providers/DataProvider.js'
 
 function createWrapper<M extends Obj, C extends Obj>(props: {
   data: DataFrame<M, C>
-  maxRowNumber?: number
 }) {
   return function CreatedWrapper({ children }: { children: ReactNode }) {
     return <DataProvider {...props}>{children}</DataProvider>
@@ -33,31 +32,22 @@ function InnerTestComponent() {
 
 describe('DataProvider', () => {
   it('should provide an empty data frame by default', () => {
-    const { data, dataId, version, maxRowNumber, numRows } = renderHook(() => useContext(DataContext)).result.current
+    const { data, dataId, version, numRows } = renderHook(() => useContext(DataContext)).result.current
     expect(data.columnDescriptors).toEqual([])
     expect(dataId).toBe(0)
     expect(data.getRowNumber({ row: 0 })).toBeUndefined()
     expect(() => data.getCell({ row: 0, column: 'a' })).toThrow()
     expect(version).toBe(0)
-    expect(maxRowNumber).toBe(0)
     expect(numRows).toBe(0)
   })
   it('should provide the passed dataframe', () => {
     const df = arrayDataFrame([{ a: 1, b: 2 }, { a: 3, b: 4 }])
     const { result } = renderHook(() => useContext(DataContext), { wrapper: createWrapper({ data: df }) })
-    const { data, dataId, version, maxRowNumber, numRows } = result.current
+    const { data, dataId, version, numRows } = result.current
     expect(data).toBe(df)
     expect(dataId).toBe(0)
     expect(version).toBe(0)
-    expect(maxRowNumber).toBe(df.numRows)
     expect(numRows).toBe(df.numRows)
-  })
-  it('should accept a maxRowNumber prop', () => {
-    const df = arrayDataFrame([{ a: 1 }, { a: 2 }, { a: 3 }])
-    const { result } = renderHook(() => useContext(DataContext), { wrapper: createWrapper({ data: df, maxRowNumber: 10 }) })
-    const { maxRowNumber, numRows } = result.current
-    expect(numRows).toBe(3)
-    expect(maxRowNumber).toBe(10)
   })
   it('should increment version on data resolution', async () => {
     const df = arrayDataFrame([{ a: 1 }, { a: 2 }])

@@ -17,13 +17,14 @@ import type { HighTableProps } from '../../types.js'
 import Scroller from './Scroller.js'
 import Slice from './Slice.js'
 
-type Props = Omit<HighTableProps, 'data' | 'maxRowNumber' | 'onError'>
+type Props = Omit<HighTableProps, 'data' | 'onError'>
 
 export default function Wrapper({
   columnConfiguration,
   cacheKey,
   className = '',
   focus,
+  maxRowNumber: propMaxRowNumber,
   orderBy,
   padding,
   overscan,
@@ -37,7 +38,12 @@ export default function Wrapper({
   const ref = useRef<HTMLDivElement>(null)
   const [viewportWidth, setViewportWidth] = useState<number | undefined>(undefined)
   const [tableCornerSize, setTableCornerSize] = useState<{ width: number, height: number } | undefined>(undefined)
-  const { data, dataId, maxRowNumber, numRows } = useContext(DataContext)
+  const { data, dataId, numRows } = useContext(DataContext)
+
+  /** The maximum number of rows to display (for row headers). Useful for filtered data. */
+  const maxRowNumber = useMemo(() => {
+    return propMaxRowNumber ?? numRows
+  }, [propMaxRowNumber, numRows])
 
   // TODO(SL): pass columnDescriptors in DataContext, not from data
   const columnNames = useMemo(() => data.columnDescriptors.map(d => d.name), [data.columnDescriptors])
