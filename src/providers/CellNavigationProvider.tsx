@@ -21,12 +21,11 @@ export function CellNavigationProvider({ children, focus = true }: CellNavigatio
   const [cell, setCell] = useState<Cell>(defaultCellNavigationContext.cell)
   const [shouldFocus, setShouldFocus] = useState(false)
   const [lastData, setLastData] = useState<Omit<DataFrame, 'numRows'> | undefined>(undefined)
-  const { data } = useContext(DataContext)
   // for scrolling the cell into view. This provider must be used inside a ScrollProvider
   const { isScrollingProgrammatically, scrollRowIntoView } = useContext(ScrollContext)
 
   // number of rows in the table, including the header row
-  const { numRows: numDataRows } = useContext(DataContext)
+  const { data, numRows: numDataRows } = useContext(DataContext)
   const rowCount = useMemo(() => numDataRows + 1, [numDataRows])
   const [previousRowCount, setPreviousRowCount] = useState(rowCount)
 

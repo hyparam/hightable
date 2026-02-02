@@ -43,7 +43,7 @@ function ColCountComponent() {
 function getDefaultDataContext({ numRows}: { numRows: number }) {
   return {
     data: arrayDataFrame([]),
-    key: 0,
+    dataId: 0,
     version: 0,
     numRows,
   }
