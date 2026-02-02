@@ -18,8 +18,12 @@ export function DataProvider({ children, data }: Props) {
   const [dataId, setDataId] = useState<number>(0)
   const [previousData, setPreviousData] = useState<DataFrame>(data)
 
-  // Two elements can change over time: version (if any cell or row number has resolved or changed)
-  // and numRows. They are updated through effects below.
+  // Two data frame elements can change over time:
+  // - version (if any cell or row number has resolved or changed)
+  // - numRows.
+  // We update them through effects below.
+  // Note: we expect the rest of the data frame (columnDescriptors, exclusiveSort, fetch, etc)
+  // to be immutable but we don't enforce it here, and we cannot react to their changes.
   const [version, setVersion] = useState(0)
   const [numRows, setNumRows] = useState(data.numRows)
 
