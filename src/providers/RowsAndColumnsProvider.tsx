@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { useContext, useEffect, useMemo } from 'react'
+import { useContext, useEffect, useEffectEvent, useMemo } from 'react'
 
 import { ColumnParametersContext } from '../contexts/ColumnParametersContext.js'
 import { ColumnVisibilityStatesContext } from '../contexts/ColumnVisibilityStatesContext.js'
@@ -48,16 +48,23 @@ export function RowsAndColumnsProvider({ overscan = defaultOverscan, children }:
     return columnsParameters.map(({ name }) => name)
   }, [columnsParameters])
 
+  // Call onError (if provided) when a fetch fails.
+  // Not in the effect directly to avoid having to add onError to the effect dependencies,
+  // and canceling and re-creating fetches if onError changes.
+  const onFetchError = useEffectEvent((error: unknown) => {
+    onError?.(error)
+  })
+
   // Fetch rows when parameters change.
   // Keep this inside an effect so we don't update state
   // or perform side-effects during render, for example when calling onError.
   useEffect(() => {
-    if (data.fetch === undefined) return
-    if (fetchedRowsStart === undefined || fetchedRowsEnd === undefined) return
+    if (data.fetch === undefined || fetchedRowsStart === undefined || fetchedRowsEnd === undefined) return
 
     // Create an AbortController per fetch and clean it up on dependency changes.
     const abortController = new AbortController()
 
+    // Launch the data fetch. The promise is not awaited here, but it will be aborted if any dependency changes.
     data.fetch({
       rowStart: fetchedRowsStart,
       rowEnd: fetchedRowsEnd,
@@ -68,13 +75,13 @@ export function RowsAndColumnsProvider({ overscan = defaultOverscan, children }:
       if (error instanceof DOMException && error.name === 'AbortError') {
         return
       }
-      onError?.(error)
+      onFetchError(error)
     })
 
     return () => {
       abortController.abort()
     }
-  }, [data, fetchedRowsStart, fetchedRowsEnd, columnNames, orderBy, onError])
+  }, [data, fetchedRowsStart, fetchedRowsEnd, columnNames, orderBy])
 
   const value = useMemo(() => ({
     columnsParameters,
