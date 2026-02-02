@@ -17,6 +17,16 @@ describe('arrayDataFrame', () => {
     expect(df.numRows).toBe(3)
   })
 
+  it('should collect keys from multiple rows', () => {
+    const data = [
+      { id: 1, name: 'Alice' },
+      { id: 2, age: 25 },
+      { id: 3, email: 'charlie@example.com' },
+    ]
+    const df = arrayDataFrame(data)
+    expect(df.columnDescriptors).toEqual(['id', 'name', 'age', 'email'].map(name => ({ name })))
+  })
+
   it('should return the cell value without first fetching the column', () => {
     const df = arrayDataFrame(createTestData())
     const cell = df.getCell({ row: 1, column: 'name' })

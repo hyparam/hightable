@@ -20,7 +20,7 @@ export function arrayDataFrame<M extends Obj, C extends Obj>(
 ): ArrayData & DataFrame<M, C> {
   // Use the keys of the first row as column names if no column descriptors are provided.
   const columnDescriptors = options.columnDescriptors
-    ?? Object.keys(array[0] ?? {}).map(name => ({ name }))
+    ?? getKeysFromArray(array).map(name => ({ name }))
 
   const eventTarget = createEventTarget<DataFrameEvents>()
 
@@ -81,4 +81,17 @@ export function arrayDataFrame<M extends Obj, C extends Obj>(
   }
 
   return data
+}
+
+/**
+ * Get all unique keys from the first 100 objects in the array.
+ */
+function getKeysFromArray(array: Record<string, any>[], limit = 100): string[] {
+  const keys = new Set<string>()
+  for (const item of array.slice(0, limit)) {
+    for (const key of Object.keys(item)) {
+      keys.add(key)
+    }
+  }
+  return Array.from(keys)
 }
