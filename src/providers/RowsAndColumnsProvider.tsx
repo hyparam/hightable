@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { useContext, useMemo, useState } from 'react'
+import { useContext, useEffect, useMemo } from 'react'
 
 import { ColumnParametersContext } from '../contexts/ColumnParametersContext.js'
 import { ColumnVisibilityStatesContext } from '../contexts/ColumnVisibilityStatesContext.js'
@@ -44,42 +44,37 @@ export function RowsAndColumnsProvider({ overscan = defaultOverscan, children }:
     return Math.min(numRows, visibleRowsEnd + overscan)
   }, [visibleRowsEnd, numRows, overscan])
 
-  const fetchOptions = useMemo(() => ({
-    orderBy,
-    columnsParameters,
-    fetchedRowsStart,
-    fetchedRowsEnd,
-    abortController: new AbortController(),
-  }), [orderBy, columnsParameters, fetchedRowsStart, fetchedRowsEnd])
-  const [lastFetchOptions, setLastFetchOptions] = useState(fetchOptions)
+  const columnNames = useMemo(() => {
+    return columnsParameters.map(({ name }) => name)
+  }, [columnsParameters])
 
-  // fetch the rows if needed
-  // (it does not include change in onError, which is a detail,
-  //  or in data, which would retrigger a full remount of the provider with key)
-  if (
-    lastFetchOptions.orderBy !== orderBy
-    || lastFetchOptions.fetchedRowsStart !== fetchedRowsStart
-    || lastFetchOptions.fetchedRowsEnd !== fetchedRowsEnd
-    || lastFetchOptions.columnsParameters !== columnsParameters
-  ) {
-    lastFetchOptions.abortController.abort()
-    setLastFetchOptions(fetchOptions)
-    if (data.fetch !== undefined && fetchedRowsStart !== undefined && fetchedRowsEnd !== undefined) {
-      data.fetch({
-        rowStart: fetchedRowsStart,
-        rowEnd: fetchedRowsEnd,
-        columns: columnsParameters.map(({ name }) => name),
-        orderBy,
-        signal: fetchOptions.abortController.signal,
-      }).catch((error: unknown) => {
-        if (error instanceof DOMException && error.name === 'AbortError') {
-          // fetch was aborted, ignore the error
-          return
-        }
-        onError?.(error)
-      })
+  // Fetch rows when parameters change.
+  // Keep this inside an effect so we don't update state
+  // or perform side-effects during render, for example when calling onError.
+  useEffect(() => {
+    if (data.fetch === undefined) return
+    if (fetchedRowsStart === undefined || fetchedRowsEnd === undefined) return
+
+    // Create an AbortController per fetch and clean it up on dependency changes.
+    const abortController = new AbortController()
+
+    data.fetch({
+      rowStart: fetchedRowsStart,
+      rowEnd: fetchedRowsEnd,
+      columns: columnNames,
+      orderBy,
+      signal: abortController.signal,
+    }).catch((error: unknown) => {
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        return
+      }
+      onError?.(error)
+    })
+
+    return () => {
+      abortController.abort()
     }
-  }
+  }, [data, fetchedRowsStart, fetchedRowsEnd, columnNames, orderBy, onError])
 
   const value = useMemo(() => ({
     columnsParameters,
