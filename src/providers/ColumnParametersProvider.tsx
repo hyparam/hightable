@@ -1,6 +1,7 @@
-import { type ReactNode, useMemo } from 'react'
+import { type ReactNode, useContext, useMemo } from 'react'
 
 import { type ColumnParameters, ColumnParametersContext } from '../contexts/ColumnParametersContext.js'
+import { ErrorContext } from '../contexts/ErrorContext.js'
 import type { ColumnDescriptor } from '../helpers/dataframe/index.js'
 import type { HighTableProps } from '../types.js'
 
@@ -15,6 +16,7 @@ type Props = Pick<HighTableProps, 'columnConfiguration'> & {
  * Provide the columns configuration to the table, through the ColumnParametersContext.
  */
 export function ColumnParametersProvider({ columnConfiguration, columnDescriptors, children }: Props) {
+  const { onWarn } = useContext(ErrorContext)
   const value = useMemo(() => {
     const inHeader = new Set(columnDescriptors.map(c => c.name))
 
@@ -29,7 +31,7 @@ export function ColumnParametersProvider({ columnConfiguration, columnDescriptor
     if (columnConfiguration) {
       for (const k of Object.keys(columnConfiguration)) {
         if (!inHeader.has(k)) {
-          console.warn(
+          onWarn(
             `[HighTable] columnConfiguration has unknown key “${k}”. It will be ignored.`
           )
         }
@@ -37,7 +39,7 @@ export function ColumnParametersProvider({ columnConfiguration, columnDescriptor
     }
 
     return cols
-  }, [columnDescriptors, columnConfiguration])
+  }, [columnDescriptors, columnConfiguration, onWarn])
 
   return (
     <ColumnParametersContext.Provider value={value}>

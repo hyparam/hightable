@@ -56,13 +56,23 @@ export interface HighTableProps {
   // TODO(SL): replace col: number with col: string?
   onDoubleClickCell?: (event: MouseEvent, col: number, row: number) => void
   /**
-   * Optional function called when an error occurs.
+   * Optional function called when an error occurs, generally from a catch block.
+   *
+   * It is generally an Error object, but for type safety, it is typed as unknown.
    *
    * Ignored if not set.
    *
    * @param error The error that occurred
    */
   onError?: (error: unknown) => void
+  /**
+   * Optional function called when a warning message is issued.
+   *
+   * console.warn is used by default if not provided.
+   *
+   * @param message The warning message
+   */
+  onWarn?: (message: string) => void
   /**
    * Optional function called on key down of a cell.
    *

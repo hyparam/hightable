@@ -107,25 +107,25 @@ describe('in controlled selection state (selection and onSelection props), ', ()
     expect(onSelectionChange).not.toHaveBeenCalled()
   })
 
-  it('removing selection prop is ignored and a warning is printed in the console', async () => {
+  it('removing selection prop is ignored and a warning is emitted', async () => {
     const start = 2
     const selection = { ranges: [{ start, end: start + 1 }], anchor: start }
     const onSelectionChange = vi.fn()
-    console.warn = vi.fn()
+    const onWarn = vi.fn()
 
-    const { getByRole, queryByRole, findByRole, rerender } = render(<HighTable data={data} selection={selection} onSelectionChange={onSelectionChange} />)
+    const { getByRole, queryByRole, findByRole, rerender } = render(<HighTable data={data} selection={selection} onSelectionChange={onSelectionChange} onWarn={onWarn} />)
     await waitFor(() => {
       expect(getByRole('grid').getAttribute('aria-busy')).toBe('false')
     })
     // await because we have to wait for the data to be fetched first
     await findByRole('row', { selected: true })
-    expect(console.warn).not.toHaveBeenCalled()
+    expect(onWarn).not.toHaveBeenCalled()
 
     const newSelection = undefined
-    rerender(<HighTable data={data} selection={newSelection} onSelectionChange={onSelectionChange} />)
+    rerender(<HighTable data={data} selection={newSelection} onSelectionChange={onSelectionChange} onWarn={onWarn} />)
     // no need to await because the data is already fetched
     expect(queryByRole('row', { selected: true })).not.toBeNull()
-    expect(console.warn).toHaveBeenNthCalledWith(1, expect.stringMatching(/cannot be set to undefined/))
+    expect(onWarn).toHaveBeenNthCalledWith(1, expect.stringMatching(/cannot be set to undefined/))
   })
 
   it('on data change, onSelection is not called and the selection stays the same', async () => {

@@ -1,4 +1,6 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useContext, useState } from 'react'
+
+import { ErrorContext } from '../contexts/ErrorContext.js'
 
 /**
  * Props for the useInputState hook.
@@ -33,6 +35,7 @@ interface UseInputStateResult<T> {
  * If the initial value is defined, but not the onChange prop, the input is read-only (no interactions).
  */
 export function useInputState<T>({ value, onChange, defaultValue }: UseInputStateProps<T>): UseInputStateResult<T> {
+  const { onWarn } = useContext(ErrorContext)
   const [initialValue] = useState<T | undefined>(value)
 
   // for uncontrolled inputs
@@ -49,7 +52,7 @@ export function useInputState<T>({ value, onChange, defaultValue }: UseInputStat
   // - controlled (no local state)
   if (initialValue !== undefined) {
     if (value === undefined) {
-      console.warn('The value is controlled (it has no local state) because the property was initially defined. It cannot be set to undefined now (it is set back to the initial value).')
+      onWarn('The value is controlled (it has no local state) because the property was initially defined. It cannot be set to undefined now (it is set back to the initial value).')
     }
     return {
       value: value ?? initialValue,
@@ -60,7 +63,7 @@ export function useInputState<T>({ value, onChange, defaultValue }: UseInputStat
 
   // - uncontrolled (local state)
   if (value !== undefined) {
-    console.warn('The value is uncontrolled (it only has a local state) because the property was initially undefined. It cannot be set to a value now and is ignored.')
+    onWarn('The value is uncontrolled (it only has a local state) because the property was initially undefined. It cannot be set to a value now and is ignored.')
   }
   return { value: localValue, onChange: uncontrolledOnChange }
 }

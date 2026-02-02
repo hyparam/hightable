@@ -138,28 +138,26 @@ describe('in uncontrolled selection state (onSelection prop), ', () => {
     expect(onSelectionChange).not.toHaveBeenCalled()
   })
 
-  it('passing the selection prop is ignored and a warning is printed in the console', async () => {
+  it('passing the selection prop is ignored and a warning is emitted', async () => {
     const start = 2
-    const selection = undefined
     const onSelectionChange = vi.fn()
-    console.warn = vi.fn()
+    const onWarn = vi.fn()
 
-    const { queryByRole, findByRole, rerender } = render(<HighTable data={data} selection={selection} onSelectionChange={onSelectionChange} />)
+    const { queryByRole, findByRole, rerender } = render(<HighTable data={data} selection={undefined} onSelectionChange={onSelectionChange} onWarn={onWarn} />)
     // await because we have to wait for the data to be fetched first
     await findByRole('cell', { name: 'row 2' })
     expect(queryByRole('row', { selected: true })).toBeNull()
-    expect(console.warn).not.toHaveBeenCalled()
+    expect(onWarn).not.toHaveBeenCalled()
 
     const newSelection = { ranges: [{ start, end: start + 1 }], anchor: start }
-    rerender(<HighTable data={data} selection={newSelection} onSelectionChange={onSelectionChange} />)
+    rerender(<HighTable data={data} selection={newSelection} onSelectionChange={onSelectionChange} onWarn={onWarn} />)
     // no need to await because the data is already fetched
     expect(queryByRole('row', { selected: true })).toBeNull()
-    expect(console.warn).toHaveBeenNthCalledWith(1, expect.stringMatching(/cannot be set to a value/))
+    expect(onWarn).toHaveBeenNthCalledWith(1, expect.stringMatching(/cannot be set to a value/))
   })
 
   it.for(['Control', 'Meta'])('%s+A selects all the rows', async (ctrlKey) => {
     const onSelectionChange = vi.fn()
-    console.warn = vi.fn()
 
     const { user, queryAllByRole, findByRole } = render(<HighTable data={data} onSelectionChange={onSelectionChange} />)
     // await because we have to wait for the data to be fetched first

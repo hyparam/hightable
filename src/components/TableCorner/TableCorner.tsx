@@ -1,6 +1,7 @@
 import type { ChangeEvent, CSSProperties, KeyboardEvent, ReactNode } from 'react'
-import { useCallback } from 'react'
+import { useCallback, useContext } from 'react'
 
+import { ErrorContext } from '../../contexts/ErrorContext.js'
 import { useCellFocus } from '../../hooks/useCellFocus.js'
 
 interface Props {
@@ -15,6 +16,7 @@ interface Props {
 }
 
 export default function TableCorner({ children, checked, onCheckboxPress, pendingSelectionGesture, style, ariaColIndex, ariaRowIndex, setTableCornerSize }: Props) {
+  const { onWarn } = useContext(ErrorContext)
   const { tabIndex, navigateToCell, focusCellIfNeeded } = useCellFocus({ ariaColIndex, ariaRowIndex })
 
   const handleClick = useCallback(() => {
@@ -61,7 +63,7 @@ export default function TableCorner({ children, checked, onCheckboxPress, pendin
     // listener
     const resizeObserver = new window.ResizeObserver(([entry]) => {
       if (!entry) {
-        console.warn('ResizeObserver entry is not available.')
+        onWarn('ResizeObserver entry is not available.')
         return
       }
       updateTableCornerSize()
@@ -72,7 +74,7 @@ export default function TableCorner({ children, checked, onCheckboxPress, pendin
       resizeObserver.disconnect()
     }
     /* Track the size of the table corner */
-  }, [setTableCornerSize])
+  }, [onWarn, setTableCornerSize])
 
   const ref = useCallback((tableCorner: HTMLTableCellElement | null) => {
     focusCellIfNeeded(tableCorner)

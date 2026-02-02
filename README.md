@@ -108,6 +108,7 @@ interface TableProps {
   onColumnsVisibilityChange?: (columnVisibilityStates: Record<string, MaybeHiddenColumn>) => void // columns visibility change handler
   onDoubleClickCell?: (event: MouseEvent, col: number, row: number) => void // double-click handler
   onError?: (error: Error) => void // error handler
+  onWarn?: (message: string) => void // warning handler
   onKeyDownCell?: (event: KeyboardEvent, col: number, row: number) => void // key down handler. For accessibility, it should be passed if onDoubleClickCell is passed.
   onMouseDownCell?: (event: MouseEvent, col: number, row: number) => void // mouse down handler
   onOrderByChange?: (orderBy: OrderBy) => void // orderBy change handler

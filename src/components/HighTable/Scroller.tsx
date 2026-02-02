@@ -2,6 +2,7 @@ import type { KeyboardEvent } from 'react'
 import { useCallback, useContext, useMemo } from 'react'
 
 import { CellNavigationContext } from '../../contexts/CellNavigationContext.js'
+import { ErrorContext } from '../../contexts/ErrorContext.js'
 import { ScrollContext } from '../../contexts/ScrollContext.js'
 import styles from '../../HighTable.module.css'
 
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export default function Scroller({ children, setViewportWidth }: Props) {
+  const { onWarn } = useContext(ErrorContext)
   const { scrollAndFocusCurrentCell } = useContext(CellNavigationContext)
   const { canvasHeight, sliceTop, setClientHeight, setScrollTop, setScrollTo } = useContext(ScrollContext)
 
@@ -75,7 +77,7 @@ export default function Scroller({ children, setViewportWidth }: Props) {
     const resizeObserver = 'ResizeObserver' in window
       ? new window.ResizeObserver(([entry]) => {
           if (!entry) {
-            console.warn('ResizeObserver entry is not available.')
+            onWarn('ResizeObserver entry is not available.')
             return
           }
           updateViewportSize()
@@ -90,7 +92,7 @@ export default function Scroller({ children, setViewportWidth }: Props) {
       resizeObserver?.disconnect()
       viewport.removeEventListener('scroll', handleScroll)
     }
-  }, [setScrollTo, setViewportWidth, setClientHeight, setScrollTop])
+  }, [onWarn, setScrollTo, setViewportWidth, setClientHeight, setScrollTop])
 
   // TODO(SL): maybe pass CSS variables instead of inline styles?
   // the viewport div scrollHeight will be equal to canvasHeight (unless custom CSS is messing with it)

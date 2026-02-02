@@ -17,7 +17,7 @@ import type { HighTableProps } from '../../types.js'
 import Scroller from './Scroller.js'
 import Slice from './Slice.js'
 
-type Props = Omit<HighTableProps, 'data' | 'maxRowNumber' | 'onError'>
+type Props = Omit<HighTableProps, 'data' | 'maxRowNumber' | 'onError' | 'onWarn'>
 
 export default function Wrapper({
   columnConfiguration,
