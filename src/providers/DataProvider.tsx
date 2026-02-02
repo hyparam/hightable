@@ -17,6 +17,9 @@ export function DataProvider({ children, data, maxRowNumber: propMaxRowNumber }:
   // Note that key={dataId} must be a string or a number, so: we cannot use data directly
   const [dataId, setDataId] = useState<number>(0)
   const [previousData, setPreviousData] = useState<DataFrame>(data)
+
+  // Two elements can change over time: version (if any cell or row number has resolved or changed)
+  // and numRows. They are updated through effects below.
   const [version, setVersion] = useState(0)
   const [numRows, setNumRows] = useState(data.numRows)
 
@@ -38,6 +41,8 @@ export function DataProvider({ children, data, maxRowNumber: propMaxRowNumber }:
     }
   }, [data])
 
+  // If a new data frame is passed, set dataId (used to remount child components), and
+  // reset the state: version and numRows
   if (data !== previousData) {
     setDataId(d => d + 1)
     setPreviousData(data)
