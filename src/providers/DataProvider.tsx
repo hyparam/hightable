@@ -13,12 +13,14 @@ type Props = Pick<HighTableProps, 'data' | 'maxRowNumber'> & {
  * Provides the data frame and related state to the table, through the DataContext.
  */
 export function DataProvider({ children, data, maxRowNumber: propMaxRowNumber }: Props) {
-  // The key helps trigger remounts when the data frame changes
-  const [key, setKey] = useState<number>(0)
+  // dataId can be used as a "key" to trigger remounts when the data frame changes
+  // Note that key={dataId} must be a string or a number, so: we cannot use data directly
+  const [dataId, setDataId] = useState<number>(0)
   const [previousData, setPreviousData] = useState<DataFrame>(data)
   const [version, setVersion] = useState(0)
   const [numRows, setNumRows] = useState(data.numRows)
 
+  // Synchronize version and numRows with data frame events (external system - useEffect is needed)
   useEffect(() => {
     function onResolve() {
       setVersion(prev => prev + 1)
@@ -37,7 +39,7 @@ export function DataProvider({ children, data, maxRowNumber: propMaxRowNumber }:
   }, [data])
 
   if (data !== previousData) {
-    setKey(prevKey => prevKey + 1)
+    setDataId(d => d + 1)
     setPreviousData(data)
     setVersion(0)
     setNumRows(data.numRows)
@@ -50,7 +52,7 @@ export function DataProvider({ children, data, maxRowNumber: propMaxRowNumber }:
   return (
     <DataContext.Provider value={{
       data,
-      key,
+      dataId,
       version,
       maxRowNumber,
       numRows,

@@ -21,10 +21,10 @@ function TestComponent({ data }: { data: DataFrame }) {
   return <DataProvider data={data}><InnerTestComponent /></DataProvider>
 }
 function InnerTestComponent() {
-  const { key, version, numRows } = useContext(DataContext)
+  const { dataId, version, numRows } = useContext(DataContext)
   return (
     <>
-      <div data-testid="key">{key}</div>
+      <div data-testid="dataId">{dataId}</div>
       <div data-testid="version">{version}</div>
       <div data-testid="numRows">{numRows}</div>
     </>
@@ -33,9 +33,9 @@ function InnerTestComponent() {
 
 describe('DataProvider', () => {
   it('should provide an empty data frame by default', () => {
-    const { data, key, version, maxRowNumber, numRows } = renderHook(() => useContext(DataContext)).result.current
+    const { data, dataId, version, maxRowNumber, numRows } = renderHook(() => useContext(DataContext)).result.current
     expect(data.columnDescriptors).toEqual([])
-    expect(key).toBe(0)
+    expect(dataId).toBe(0)
     expect(data.getRowNumber({ row: 0 })).toBeUndefined()
     expect(() => data.getCell({ row: 0, column: 'a' })).toThrow()
     expect(version).toBe(0)
@@ -45,9 +45,9 @@ describe('DataProvider', () => {
   it('should provide the passed dataframe', () => {
     const df = arrayDataFrame([{ a: 1, b: 2 }, { a: 3, b: 4 }])
     const { result } = renderHook(() => useContext(DataContext), { wrapper: createWrapper({ data: df }) })
-    const { data, key, version, maxRowNumber, numRows } = result.current
+    const { data, dataId, version, maxRowNumber, numRows } = result.current
     expect(data).toBe(df)
-    expect(key).toBe(0)
+    expect(dataId).toBe(0)
     expect(version).toBe(0)
     expect(maxRowNumber).toBe(df.numRows)
     expect(numRows).toBe(df.numRows)
@@ -124,7 +124,7 @@ describe('DataProvider', () => {
     const df1 = arrayDataFrame([{ a: 1 }, { a: 2 }])
     const df2 = arrayDataFrame([{ a: 10 }, { a: 20 }, { a: 30 }])
     const { getByTestId, rerender } = render(<TestComponent data={df1} />)
-    expect(getByTestId('key').textContent).toBe('0')
+    expect(getByTestId('dataId').textContent).toBe('0')
     expect(getByTestId('version').textContent).toBe('0')
     expect(getByTestId('numRows').textContent).toBe('2')
     // Change the data frame
@@ -132,7 +132,7 @@ describe('DataProvider', () => {
     await act(async () => {
       rerender(<TestComponent data={df2} />)
     })
-    expect(getByTestId('key').textContent).toBe('1')
+    expect(getByTestId('dataId').textContent).toBe('1')
     expect(getByTestId('version').textContent).toBe('0')
     expect(getByTestId('numRows').textContent).toBe('3')
   })

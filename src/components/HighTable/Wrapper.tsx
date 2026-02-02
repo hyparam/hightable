@@ -37,7 +37,7 @@ export default function Wrapper({
   const ref = useRef<HTMLDivElement>(null)
   const [viewportWidth, setViewportWidth] = useState<number | undefined>(undefined)
   const [tableCornerSize, setTableCornerSize] = useState<{ width: number, height: number } | undefined>(undefined)
-  const { data, key, maxRowNumber, numRows } = useContext(DataContext)
+  const { data, dataId, maxRowNumber, numRows } = useContext(DataContext)
 
   // TODO(SL): pass columnDescriptors in DataContext, not from data
   const columnNames = useMemo(() => data.columnDescriptors.map(d => d.name), [data.columnDescriptors])
@@ -87,7 +87,7 @@ export default function Wrapper({
              * Recreate a context if a new data frame is passed (but not if only the number of rows changed)
              * The user can also pass a cacheKey to force a new set of widths, or keep the current ones.
              */
-            key={cacheKey ?? key}
+            key={cacheKey ?? dataId}
             // TODO(SL): pass cacheKey, memoize
             localStorageKey={cacheKey ? `${cacheKey}${columnWidthsSuffix}` : undefined}
             numColumns={data.columnDescriptors.length}
@@ -99,7 +99,7 @@ export default function Wrapper({
                * Recreate a context if a new data frame is passed (but not if only the number of rows changed)
                * The user can also pass a cacheKey to force a new set of visibility states, or keep the current ones.
                */
-              key={cacheKey ?? key}
+              key={cacheKey ?? dataId}
               // TODO(SL): pass cacheKey, memoize
               localStorageKey={cacheKey ? `${cacheKey}${columnVisibilityStatesSuffix}` : undefined}
               columnNames={columnNames}
@@ -111,7 +111,7 @@ export default function Wrapper({
                  * Recreate a context if a new data frame is passed, to flush the cache (ranks and indexes)
                  * (but not if only the number of rows changed)
                  */
-                key={key}
+                key={dataId}
                 orderBy={orderBy}
                 onOrderByChange={onOrderByChange}
               >
@@ -120,7 +120,7 @@ export default function Wrapper({
                    * Recreate a context if a new data frame is passed, because the selection might not make sense anymore
                    * (but not if only the number of rows changed)
                    */
-                  key={key}
+                  key={dataId}
                   selection={selection}
                   onSelectionChange={onSelectionChange}
                   data={data}
@@ -135,14 +135,14 @@ export default function Wrapper({
                       /**
                        * Recreate a context if a new data frame is passed, because the focused cell might not exist anymore
                        */
-                      key={key}
+                      key={dataId}
                       focus={focus}
                     >
                       <RowsAndColumnsProvider
                         /**
                          * Recreate a context if a new data frame is passed, as it's responsible for fetching the cells.
                          */
-                        key={key}
+                        key={dataId}
                         overscan={overscan}
                       >
 
