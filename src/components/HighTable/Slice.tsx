@@ -163,7 +163,8 @@ export default function Slice({
     }
   }, [data, columnsParameters, renderedRowsStart, renderedRowsEnd, orderBy, version])
 
-  // don't render table if header is empty
+  // don't render table if the data frame has no visible columns
+  // (it can have zero rows, but must have at least one visible column)
   if (!columnsParameters) return
 
   const ariaColCount = columnsParameters.length + 1 // don't forget the selection column
