@@ -1,10 +1,11 @@
 import type { CSSProperties } from 'react'
-import { useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 
 import { PortalContainerContext } from '../../contexts/PortalContainerContext.js'
 import { columnVisibilityStatesSuffix, columnWidthsSuffix, rowHeight } from '../../helpers/constants.js'
 import styles from '../../HighTable.module.css'
 import { useData } from '../../hooks/useData.js'
+import { useHTMLElement } from '../../hooks/useHTMLElement.js'
 import { CellNavigationProvider } from '../../providers/CellNavigationProvider.js'
 import { ColumnParametersProvider } from '../../providers/ColumnParametersProvider.js'
 import { ColumnVisibilityStatesProvider } from '../../providers/ColumnVisibilityStatesProvider.js'
@@ -35,7 +36,6 @@ export default function HighTable({
   onSelectionChange,
   ...rest
 }: HighTableProps) {
-  const ref = useRef<HTMLDivElement>(null)
   const [viewportWidth, setViewportWidth] = useState<number | undefined>(undefined)
   const [tableCornerSize, setTableCornerSize] = useState<{ width: number, height: number } | undefined>(undefined)
   const { dataId, numRows, version } = useData({ data })
@@ -76,13 +76,14 @@ export default function HighTable({
     return `${styles.hightable} ${styled ? styles.styled : ''} ${className}`
   }, [className, styled])
 
+  // Get a reference to the container element
+  const { element: container, onMount } = useHTMLElement<HTMLDivElement>()
+
   return (
-    // TODO(SL): passing a ref to an element is code smell
-    <PortalContainerContext.Provider value={{ containerRef: ref }}>
-      <div ref={ref} className={classes} style={tableScrollStyle}>
+    <div ref={onMount} className={classes} style={tableScrollStyle}>
+      <div className={styles.topBorder} role="presentation" />
 
-        <div className={styles.topBorder} role="presentation" />
-
+      <PortalContainerContext.Provider value={container}>
         <ColumnParametersProvider
           columnConfiguration={columnConfiguration}
           columnDescriptors={data.columnDescriptors}
@@ -173,11 +174,11 @@ export default function HighTable({
             </ColumnVisibilityStatesProvider>
           </ColumnWidthsProvider>
         </ColumnParametersProvider>
+      </PortalContainerContext.Provider>
 
-        {/* puts a background behind the row labels column */}
-        <div className={styles.mockRowLabel}>&nbsp;</div>
+      {/* puts a background behind the row labels column */}
+      <div className={styles.mockRowLabel}>&nbsp;</div>
 
-      </div>
-    </PortalContainerContext.Provider>
+    </div>
   )
 }
