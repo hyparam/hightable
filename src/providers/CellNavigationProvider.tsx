@@ -30,12 +30,10 @@ export function CellNavigationProvider({ children, dataId, numRows: numDataRows,
 
   // number of rows in the table, including the header row
   const rowCount = useMemo(() => numDataRows + 1, [numDataRows])
-  const [previousRowCount, setPreviousRowCount] = useState(rowCount)
 
   // number of columns in the table, including the row header column
   const { numberOfVisibleColumns: numDataColumns } = useContext(ColumnVisibilityStatesContext)
   const colCount = useMemo(() => numDataColumns + 1, [numDataColumns])
-  const [previousColCount, setPreviousColCount] = useState(colCount)
 
   const scrollAndFocusCell = useCallback((cell: Cell) => {
     scrollRowIntoView?.({ rowIndex: cell.rowIndex })
@@ -49,20 +47,14 @@ export function CellNavigationProvider({ children, dataId, numRows: numDataRows,
   }, [scrollAndFocusCell])
 
   // Reset the cell position if the number of rows has decreased and the current row index is out of bounds
-  if (rowCount !== previousRowCount) {
-    setPreviousRowCount(rowCount)
-    if (cell.rowIndex > rowCount) {
-      // Reset the row index to the last row if it goes out of bounds
-      goToCell({ colIndex: cell.colIndex, rowIndex: rowCount })
-    }
+  if (cell.rowIndex > rowCount) {
+    // Reset the row index to the last row if it goes out of bounds
+    goToCell({ colIndex: cell.colIndex, rowIndex: rowCount })
   }
   // Reset the cell position if the number of rows has decreased and the current row index is out of bounds
-  if (colCount !== previousColCount) {
-    setPreviousColCount(colCount)
-    if (cell.colIndex > colCount) {
-      // Reset the column index to the last column if it goes out of bounds
-      goToCell({ colIndex: colCount, rowIndex: cell.rowIndex })
-    }
+  if (cell.colIndex > colCount) {
+    // Reset the column index to the last column if it goes out of bounds
+    goToCell({ colIndex: colCount, rowIndex: cell.rowIndex })
   }
 
   const goToFirstCell = useCallback(() => {
