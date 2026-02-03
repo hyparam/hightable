@@ -45,7 +45,6 @@ export default function HighTable({
     return propMaxRowNumber ?? numRows
   }, [propMaxRowNumber, numRows])
 
-  // TODO(SL): pass columnDescriptors as a prop instead of reading them from data
   const columnNames = useMemo(() => data.columnDescriptors.map(d => d.name), [data.columnDescriptors])
 
   const headerHeight = useMemo(() => {
@@ -139,10 +138,6 @@ export default function HighTable({
                     padding={padding}
                   >
                     <CellNavigationProvider
-                      /**
-                       * Recreate a context if a new data frame is passed, because the focused cell might not exist anymore
-                       */
-                      key={dataId}
                       dataId={dataId}
                       focus={focus}
                       numRows={numRows}
