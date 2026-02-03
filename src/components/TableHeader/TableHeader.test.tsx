@@ -1,23 +1,17 @@
 import { within } from '@testing-library/react'
 import type { ReactNode } from 'react'
-import { useState } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { PortalContainerContext } from '../../contexts/PortalContainerContext.js'
+import { useHTMLElement } from '../../hooks/useHTMLElement.js'
 import { render as _render } from '../../utils/userEvent.js'
 import TableHeader from './TableHeader.js'
 
 function ContainerProvider({ children }: { children: ReactNode }) {
-  const [container, setContainer] = useState<HTMLDivElement | null>(null)
+  const { element, onMount } = useHTMLElement<HTMLDivElement>()
   return (
-    <div ref={(node) => {
-      setContainer(node)
-      return () => {
-        setContainer(null)
-      }
-    }}
-    >
-      <PortalContainerContext.Provider value={container}>
+    <div ref={onMount}>
+      <PortalContainerContext.Provider value={element}>
         {children}
       </PortalContainerContext.Provider>
     </div>

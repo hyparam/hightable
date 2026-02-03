@@ -1,10 +1,11 @@
 import type { CSSProperties } from 'react'
-import { useCallback, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 
 import { PortalContainerContext } from '../../contexts/PortalContainerContext.js'
 import { columnVisibilityStatesSuffix, columnWidthsSuffix, rowHeight } from '../../helpers/constants.js'
 import styles from '../../HighTable.module.css'
 import { useData } from '../../hooks/useData.js'
+import { useHTMLElement } from '../../hooks/useHTMLElement.js'
 import { CellNavigationProvider } from '../../providers/CellNavigationProvider.js'
 import { ColumnParametersProvider } from '../../providers/ColumnParametersProvider.js'
 import { ColumnVisibilityStatesProvider } from '../../providers/ColumnVisibilityStatesProvider.js'
@@ -75,15 +76,11 @@ export default function HighTable({
     return `${styles.hightable} ${styled ? styles.styled : ''} ${className}`
   }, [className, styled])
 
-  const [container, setContainer] = useState<HTMLDivElement | null>(null)
-  const onContainerMount = useCallback((node: HTMLDivElement | null) => {
-    setContainer(node)
-    return () => {
-      setContainer(null)
-    }
-  }, [])
+  // Get a reference to the container element
+  const { element: container, onMount } = useHTMLElement<HTMLDivElement>()
+
   return (
-    <div ref={onContainerMount} className={classes} style={tableScrollStyle}>
+    <div ref={onMount} className={classes} style={tableScrollStyle}>
       <div className={styles.topBorder} role="presentation" />
 
       <PortalContainerContext.Provider value={container}>
