@@ -51,11 +51,13 @@ export function CellNavigationProvider({
     scrollAndFocusCell(cell)
   }, [scrollAndFocusCell])
 
+  // TODO(SL): refactor this logic, since it affects parent components, which is not allowed during render.
   // Reset the cell position if the number of rows has decreased and the current row index is out of bounds
   if (cell.rowIndex > rowCount) {
     // Reset the row index to the last row if it goes out of bounds
     goToCell({ colIndex: cell.colIndex, rowIndex: rowCount })
   }
+  // TODO(SL): refactor this logic, since it affects parent components, which is not allowed during render.
   // Reset the cell position if the number of columns has decreased and the current column index is out of bounds
   if (cell.colIndex > colCount) {
     // Reset the column index to the last column if it goes out of bounds
@@ -70,6 +72,7 @@ export function CellNavigationProvider({
     scrollAndFocusCell(cell)
   }, [scrollAndFocusCell, cell])
 
+  // TODO(SL): refactor this logic, since it affects parent components, which is not allowed during render.
   // Focus the current cell on mount so keyboard navigation works
   // It happens every time the data frame changes, if the provider key= is set to dataId
   // On mount, the current cell is the (default) top left cell (1, 1), which always exists
