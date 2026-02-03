@@ -8,8 +8,6 @@ import { ScrollContext } from '../contexts/ScrollContext.js'
 import type { HighTableProps } from '../types.js'
 
 type CellNavigationProviderProps = Pick<HighTableProps, 'focus'> & {
-  /** The unique identifier for the data frame */
-  dataId: number
   /** The actual number of rows in the data frame */
   numRows: number
   /** Children elements */
@@ -19,12 +17,13 @@ type CellNavigationProviderProps = Pick<HighTableProps, 'focus'> & {
 /**
  * Provide the cell navigation state and logic to the table, through the CellNavigationContext.
  */
-export function CellNavigationProvider({ children, dataId, numRows: numDataRows, focus = true }: CellNavigationProviderProps) {
+export function CellNavigationProvider({ children, numRows: numDataRows, focus = true }: CellNavigationProviderProps) {
   const [cell, setCell] = useState<Cell>(defaultCellNavigationContext.cell)
+  const [focusedOnMount, setFocusedOnMount] = useState(false)
+
   // TODO(SL): this state should be removed, and a state should be added in useCellFocus,
   // since the logic in React is to describe UI state through props and not through imperative code.
   const [shouldFocus, setShouldFocus] = useState(false)
-  const [lastDataId, setLastDataId] = useState<number | undefined>(undefined)
   // for scrolling the cell into view. This provider must be used inside a ScrollProvider
   const { isScrollingProgrammatically, scrollRowIntoView } = useContext(ScrollContext)
 
@@ -65,12 +64,12 @@ export function CellNavigationProvider({ children, dataId, numRows: numDataRows,
     scrollAndFocusCell(cell)
   }, [scrollAndFocusCell, cell])
 
-  // Focus the first cell on mount, or on later changes, so keyboard navigation works
-  if (dataId !== lastDataId) {
-    setLastDataId(dataId)
-    if (focus) {
-      goToFirstCell()
-    }
+  // Focus the current cell on mount so keyboard navigation works
+  // It happens every time the data frame changes, if the provider key= is set to dataId
+  // On mount, the current cell is the (default) top left cell (1, 1), which always exists
+  if (focus && !focusedOnMount) {
+    scrollAndFocusCurrentCell()
+    setFocusedOnMount(true)
   }
 
   const focusCurrentCell = useMemo(() => {

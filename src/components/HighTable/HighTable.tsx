@@ -132,7 +132,7 @@ export default function HighTable({
                     padding={padding}
                   >
                     <CellNavigationProvider
-                      dataId={dataId}
+                      key={dataId}
                       focus={focus}
                       numRows={numRows}
                     >
