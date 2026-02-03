@@ -6,7 +6,7 @@ import { ColumnVisibilityStatesContext } from '../../contexts/ColumnVisibilitySt
 import { OrderByContext } from '../../contexts/OrderByContext.js'
 import { ScrollContext } from '../../contexts/ScrollContext.js'
 import { SelectionContext } from '../../contexts/SelectionContext.js'
-import { ariaOffset, defaultNumRowsPerPage } from '../../helpers/constants.js'
+import { ariaOffset } from '../../helpers/constants.js'
 import { useFetchCells } from '../../hooks/useFetchCells.js'
 import type { HighTableProps } from '../../types.js'
 import { stringify as stringifyDefault } from '../../utils/stringify.js'
@@ -28,7 +28,6 @@ type SliceProps = Pick<HighTableProps, 'data' | 'numRowsPerPage' | 'onDoubleClic
 export default function Slice({
   data,
   numRows,
-  numRowsPerPage = defaultNumRowsPerPage,
   overscan,
   version,
   onDoubleClickCell,
@@ -39,7 +38,7 @@ export default function Slice({
   setTableCornerSize,
   stringify = stringifyDefault,
 }: SliceProps) {
-  const { cell, colCount, rowCount, goToCell } = useContext(CellNavigationContext)
+  const { moveCell } = useContext(CellNavigationContext)
   const { orderBy, onOrderByChange } = useContext(OrderByContext)
   const { selectable, toggleAllRows, pendingSelectionGesture, onTableKeyDown: onSelectionTableKeyDown, allRowsSelected, isRowSelected, toggleRowNumber, toggleRangeToRowNumber } = useContext(SelectionContext)
   const { visibleColumnsParameters: columnsParameters } = useContext(ColumnVisibilityStatesContext)
@@ -48,56 +47,53 @@ export default function Slice({
   // Fetch the required cells if needed (visible + overscan)
   useFetchCells({ data, numRows, overscan, onError })
 
-  // TODO(SL): we depend on cell to trigger the scroll effect, which means we recreate the
-  // callback every time cell changes. Can we avoid that?
-  const onNavigationTableKeyDown = useCallback((event: KeyboardEvent, { numRowsPerPage }: {
-    numRowsPerPage: number // number of rows to skip when navigating with the keyboard (PageUp/PageDown)
-  }) => {
+  const onNavigationTableKeyDown = useCallback((event: KeyboardEvent) => {
     const { key, altKey, ctrlKey, metaKey, shiftKey } = event
     // if the user is pressing Alt, Meta or Shift, do not handle the event
     if (altKey || metaKey || shiftKey) {
       return
     }
-    let { colIndex, rowIndex } = cell
     if (key === 'ArrowRight') {
       if (ctrlKey) {
-        colIndex = colCount
+        moveCell({ type: 'LAST_COLUMN' })
       } else {
-        colIndex = colIndex < colCount ? colIndex + 1 : colCount
+        moveCell({ type: 'NEXT_COLUMN' })
       }
     } else if (key === 'ArrowLeft') {
       if (ctrlKey) {
-        colIndex = 1
+        moveCell({ type: 'FIRST_COLUMN' })
       } else {
-        colIndex = colIndex > 1 ? colIndex - 1 : 1
+        moveCell({ type: 'PREVIOUS_COLUMN' })
       }
     } else if (key === 'ArrowDown') {
       if (ctrlKey) {
-        rowIndex = rowCount
+        moveCell({ type: 'LAST_ROW' })
       } else {
-        rowIndex = rowIndex < rowCount ? rowIndex + 1 : rowCount
+        moveCell({ type: 'NEXT_ROW' })
       }
     } else if (key === 'ArrowUp') {
       if (ctrlKey) {
-        rowIndex = 1
+        moveCell({ type: 'FIRST_ROW' })
       } else {
-        rowIndex = rowIndex > 1 ? rowIndex - 1 : 1
+        moveCell({ type: 'PREVIOUS_ROW' })
       }
     } else if (key === 'Home') {
       if (ctrlKey) {
-        rowIndex = 1
+        moveCell({ type: 'FIRST_CELL' })
+      } else {
+        moveCell({ type: 'FIRST_COLUMN' })
       }
-      colIndex = 1
     } else if (key === 'End') {
       if (ctrlKey) {
-        rowIndex = rowCount
+        moveCell({ type: 'LAST_CELL' })
+      } else {
+        moveCell({ type: 'LAST_COLUMN' })
       }
-      colIndex = colCount
     } else if (key === 'PageDown') {
-      rowIndex = Math.min(rowIndex + numRowsPerPage, rowCount)
+      moveCell({ type: 'NEXT_ROWS_PAGE' })
       // TODO(SL): same for horizontal scrolling with Alt+PageDown?
     } else if (key === 'PageUp') {
-      rowIndex = Math.max(rowIndex - numRowsPerPage, 1)
+      moveCell({ type: 'PREVIOUS_ROWS_PAGE' })
       // TODO(SL): same for horizontal scrolling with Alt+PageUp?
     } else if (key !== ' ') {
       // if the key is not one of the above, do not handle it
@@ -108,13 +104,12 @@ export default function Slice({
     // avoid scrolling the table when the user is navigating with the keyboard
     event.stopPropagation()
     event.preventDefault()
-    goToCell({ colIndex, rowIndex })
-  }, [cell, colCount, rowCount, goToCell])
+  }, [moveCell])
 
   const onTableKeyDown = useCallback((event: KeyboardEvent) => {
-    onNavigationTableKeyDown(event, { numRowsPerPage })
+    onNavigationTableKeyDown(event)
     onSelectionTableKeyDown?.(event)
-  }, [onNavigationTableKeyDown, onSelectionTableKeyDown, numRowsPerPage])
+  }, [onNavigationTableKeyDown, onSelectionTableKeyDown])
 
   const getOnCheckboxPress = useCallback(({ row, rowNumber }: { row: number, rowNumber?: number }) => {
     if (rowNumber === undefined || !toggleRowNumber || !toggleRangeToRowNumber) {

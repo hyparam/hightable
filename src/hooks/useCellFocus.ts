@@ -17,7 +17,7 @@ interface CellFocus {
 }
 
 export function useCellFocus({ ariaColIndex, ariaRowIndex }: CellData): CellFocus {
-  const { cell, goToCell, focusCurrentCell } = useContext(CellNavigationContext)
+  const { cell, moveCell, focusCurrentCell } = useContext(CellNavigationContext)
 
   // Check if the cell is the current navigation cell
   const isCurrentCell = ariaColIndex === cell.colIndex && ariaRowIndex === cell.rowIndex
@@ -37,8 +37,8 @@ export function useCellFocus({ ariaColIndex, ariaRowIndex }: CellData): CellFocu
   const tabIndex = isCurrentCell ? 0 : -1
 
   const navigateToCell = useCallback(() => {
-    goToCell({ colIndex: ariaColIndex, rowIndex: ariaRowIndex })
-  }, [goToCell, ariaColIndex, ariaRowIndex])
+    moveCell({ type: 'CELL', colIndex: ariaColIndex, rowIndex: ariaRowIndex })
+  }, [moveCell, ariaColIndex, ariaRowIndex])
 
   return {
     tabIndex,

@@ -18,6 +18,18 @@ export interface Cell {
   rowIndex: number
 }
 
+export type MoveCellAction = {
+  type:
+    | 'FIRST_COLUMN' | 'PREVIOUS_COLUMN' | 'NEXT_COLUMN' | 'LAST_COLUMN'
+    | 'FIRST_ROW' | 'PREVIOUS_ROW' | 'NEXT_ROW' | 'LAST_ROW'
+    | 'FIRST_CELL' | 'LAST_CELL'
+    | 'NEXT_ROWS_PAGE' | 'PREVIOUS_ROWS_PAGE'
+} | {
+  type: 'CELL'
+  colIndex: number
+  rowIndex: number
+}
+
 interface CellNavigationContextType {
   /** The current (active) cell in the table. Defaults to the top-left cell (1, 1) */
   cell: Cell
@@ -35,13 +47,13 @@ interface CellNavigationContextType {
    */
   focusCurrentCell?: (element: HTMLElement) => void // function to focus the current cell, if needed
   /**
-   * Go to a specific cell in the table.
+   * Move the current cell.
    *
    * The table scrolls to and focuses the cell, even if the cell is unchanged.
    *
-   * @param value The cell to go to
+   * @param action The action to move the cell
    */
-  goToCell: (value: Cell) => void
+  moveCell: (action: MoveCellAction) => void
   /**
    * Go to the first cell in the table (1, 1).
    *
@@ -60,7 +72,7 @@ export const defaultCellNavigationContext: CellNavigationContextType = {
   colCount: 1,
   rowCount: 1,
   focusCurrentCell: undefined,
-  goToCell: () => { /* no-op */ },
+  moveCell: () => { /* no-op */ },
   goToFirstCell: () => { /* no-op */ },
   scrollAndFocusCurrentCell: () => { /* no-op */ },
 }

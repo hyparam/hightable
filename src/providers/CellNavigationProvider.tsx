@@ -1,13 +1,14 @@
 import type { ReactNode } from 'react'
 import { useCallback, useContext, useMemo, useState } from 'react'
 
-import type { Cell } from '../contexts/CellNavigationContext.js'
+import type { Cell, MoveCellAction } from '../contexts/CellNavigationContext.js'
 import { CellNavigationContext, defaultCellNavigationContext } from '../contexts/CellNavigationContext.js'
 import { ColumnVisibilityStatesContext } from '../contexts/ColumnVisibilityStatesContext.js'
 import { ScrollContext } from '../contexts/ScrollContext.js'
+import { defaultNumRowsPerPage } from '../helpers/constants.js'
 import type { HighTableProps } from '../types.js'
 
-type CellNavigationProviderProps = Pick<HighTableProps, 'focus'> & {
+type CellNavigationProviderProps = Pick<HighTableProps, 'focus' | 'numRowsPerPage'> & {
   /** The actual number of rows in the data frame */
   numRows: number
   /** Children elements */
@@ -17,7 +18,12 @@ type CellNavigationProviderProps = Pick<HighTableProps, 'focus'> & {
 /**
  * Provide the cell navigation state and logic to the table, through the CellNavigationContext.
  */
-export function CellNavigationProvider({ children, numRows: numDataRows, focus = true }: CellNavigationProviderProps) {
+export function CellNavigationProvider({
+  numRows: numDataRows,
+  numRowsPerPage = defaultNumRowsPerPage,
+  focus = true,
+  children,
+}: CellNavigationProviderProps) {
   const [cell, setCell] = useState<Cell>(defaultCellNavigationContext.cell)
   const [focusedOnMount, setFocusedOnMount] = useState(false)
 
@@ -93,17 +99,81 @@ export function CellNavigationProvider({ children, numRows: numDataRows, focus =
     }
   }, [isScrollingProgrammatically, shouldFocus])
 
+  // TODO(SL): don't depend on cell, decoupling cell update from scrolling/focusing
+  const moveCell = useCallback((action: MoveCellAction) => {
+    switch (action.type) {
+      case 'LAST_COLUMN': {
+        goToCell({ colIndex: colCount, rowIndex: cell.rowIndex })
+        break
+      }
+      case 'NEXT_COLUMN': {
+        const newColIndex = cell.colIndex < colCount ? cell.colIndex + 1 : colCount
+        goToCell({ colIndex: newColIndex, rowIndex: cell.rowIndex })
+        break
+      }
+      case 'FIRST_COLUMN': {
+        goToCell({ colIndex: 1, rowIndex: cell.rowIndex })
+        break
+      }
+      case 'PREVIOUS_COLUMN': {
+        const newColIndex = cell.colIndex > 1 ? cell.colIndex - 1 : 1
+        goToCell({ colIndex: newColIndex, rowIndex: cell.rowIndex })
+        break
+      }
+      case 'LAST_ROW': {
+        goToCell({ colIndex: cell.colIndex, rowIndex: rowCount })
+        break
+      }
+      case 'NEXT_ROW': {
+        const newRowIndex = cell.rowIndex < rowCount ? cell.rowIndex + 1 : rowCount
+        goToCell({ colIndex: cell.colIndex, rowIndex: newRowIndex })
+        break
+      }
+      case 'FIRST_ROW': {
+        goToCell({ colIndex: cell.colIndex, rowIndex: 1 })
+        break
+      }
+      case 'PREVIOUS_ROW': {
+        const newRowIndex = cell.rowIndex > 1 ? cell.rowIndex - 1 : 1
+        goToCell({ colIndex: cell.colIndex, rowIndex: newRowIndex })
+        break
+      }
+      case 'FIRST_CELL': {
+        goToCell({ colIndex: 1, rowIndex: 1 })
+        break
+      }
+      case 'LAST_CELL': {
+        goToCell({ colIndex: colCount, rowIndex: rowCount })
+        break
+      }
+      case 'NEXT_ROWS_PAGE': {
+        const newRowIndex = Math.min(cell.rowIndex + numRowsPerPage, rowCount)
+        goToCell({ colIndex: cell.colIndex, rowIndex: newRowIndex })
+        break
+      }
+      case 'PREVIOUS_ROWS_PAGE': {
+        const newRowIndex = Math.max(cell.rowIndex - numRowsPerPage, 1)
+        goToCell({ colIndex: cell.colIndex, rowIndex: newRowIndex })
+        break
+      }
+      case 'CELL': {
+        goToCell({ colIndex: action.colIndex, rowIndex: action.rowIndex })
+        break
+      }
+    }
+  }, [cell, goToCell, colCount, rowCount, numRowsPerPage])
+
   const value = useMemo(() => {
     return {
       cell,
       colCount,
       rowCount,
       focusCurrentCell,
-      goToCell,
+      moveCell,
       goToFirstCell,
       scrollAndFocusCurrentCell,
     }
-  }, [cell, colCount, rowCount, focusCurrentCell, goToCell, goToFirstCell, scrollAndFocusCurrentCell])
+  }, [cell, colCount, rowCount, focusCurrentCell, moveCell, goToFirstCell, scrollAndFocusCurrentCell])
 
   return (
     <CellNavigationContext.Provider value={value}>

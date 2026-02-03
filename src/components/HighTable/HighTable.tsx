@@ -24,6 +24,7 @@ export default function HighTable({
   data,
   focus,
   maxRowNumber,
+  numRowsPerPage,
   orderBy,
   padding,
   selection,
@@ -135,6 +136,7 @@ export default function HighTable({
                       key={dataId}
                       focus={focus}
                       numRows={numRows}
+                      numRowsPerPage={numRowsPerPage}
                     >
 
                       <Scroller
