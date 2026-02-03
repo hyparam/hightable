@@ -15,7 +15,7 @@ interface Props {
 }
 
 export default function TableCorner({ children, checked, onCheckboxPress, pendingSelectionGesture, style, ariaColIndex, ariaRowIndex, setTableCornerSize }: Props) {
-  const { tabIndex, navigateToCell, focusCellIfNeeded } = useCellFocus({ ariaColIndex, ariaRowIndex })
+  const { tabIndex, navigateToCell, focusIfNeeded } = useCellFocus({ ariaColIndex, ariaRowIndex })
 
   const handleClick = useCallback(() => {
     navigateToCell()
@@ -75,10 +75,10 @@ export default function TableCorner({ children, checked, onCheckboxPress, pendin
   }, [setTableCornerSize])
 
   const ref = useCallback((tableCorner: HTMLTableCellElement | null) => {
-    focusCellIfNeeded(tableCorner)
+    focusIfNeeded?.(tableCorner)
     // return the cleanup function from size tracking
     return trackSize(tableCorner)
-  }, [focusCellIfNeeded, trackSize])
+  }, [focusIfNeeded, trackSize])
 
   return (
     <td

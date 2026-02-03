@@ -44,7 +44,7 @@ interface Props {
  * @param {number} [props.rowNumber] the row index in the original data, undefined if the value has not been fetched yet
  */
 export default function Cell({ cell, onDoubleClickCell, onMouseDownCell, onKeyDownCell, stringify, columnIndex, visibleColumnIndex, className, ariaColIndex, ariaRowIndex, rowNumber, renderCellContent }: Props) {
-  const { tabIndex, navigateToCell, focusCellIfNeeded } = useCellFocus({ ariaColIndex, ariaRowIndex })
+  const { tabIndex, navigateToCell, focusIfNeeded } = useCellFocus({ ariaColIndex, ariaRowIndex })
 
   // Get the column width from the context (use visibleColumnIndex for styling)
   const columnStyle = useContext(ColumnWidthsContext).getStyle?.(visibleColumnIndex)
@@ -89,7 +89,7 @@ export default function Cell({ cell, onDoubleClickCell, onMouseDownCell, onKeyDo
 
   return (
     <td
-      ref={focusCellIfNeeded}
+      ref={focusIfNeeded}
       role="cell"
       aria-busy={cell === undefined}
       aria-rowindex={ariaRowIndex}

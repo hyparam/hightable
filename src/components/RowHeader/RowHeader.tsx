@@ -22,7 +22,7 @@ function formatRowNumber(rowIndex?: number): string {
 }
 
 export default function RowHeader({ onCheckboxPress, pendingSelectionGesture, style, ariaColIndex, ariaRowIndex, selected, rowNumber }: Props) {
-  const { tabIndex, navigateToCell, focusCellIfNeeded } = useCellFocus({ ariaColIndex, ariaRowIndex })
+  const { tabIndex, navigateToCell, focusIfNeeded } = useCellFocus({ ariaColIndex, ariaRowIndex })
   const handleClick = useCallback((event: MouseEvent) => {
     navigateToCell()
     onCheckboxPress?.({ shiftKey: event.shiftKey })
@@ -46,7 +46,7 @@ export default function RowHeader({ onCheckboxPress, pendingSelectionGesture, st
 
   return (
     <th
-      ref={focusCellIfNeeded}
+      ref={focusIfNeeded}
       scope="row"
       role="rowheader"
       style={style}
