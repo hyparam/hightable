@@ -4,12 +4,14 @@ import { useCallback, useContext, useMemo, useState } from 'react'
 import type { Cell } from '../contexts/CellNavigationContext.js'
 import { CellNavigationContext, defaultCellNavigationContext } from '../contexts/CellNavigationContext.js'
 import { ColumnVisibilityStatesContext } from '../contexts/ColumnVisibilityStatesContext.js'
-import { DataContext } from '../contexts/DataContext.js'
 import { ScrollContext } from '../contexts/ScrollContext.js'
-import type { DataFrame } from '../helpers/dataframe/index.js'
 import type { HighTableProps } from '../types.js'
 
 type CellNavigationProviderProps = Pick<HighTableProps, 'focus'> & {
+  /** The unique identifier for the data frame */
+  dataId: number
+  /** The actual number of rows in the data frame */
+  numRows: number
   /** Children elements */
   children: ReactNode
 }
@@ -17,16 +19,14 @@ type CellNavigationProviderProps = Pick<HighTableProps, 'focus'> & {
 /**
  * Provide the cell navigation state and logic to the table, through the CellNavigationContext.
  */
-export function CellNavigationProvider({ children, focus = true }: CellNavigationProviderProps) {
+export function CellNavigationProvider({ children, dataId, numRows: numDataRows, focus = true }: CellNavigationProviderProps) {
   const [cell, setCell] = useState<Cell>(defaultCellNavigationContext.cell)
   const [shouldFocus, setShouldFocus] = useState(false)
-  const [lastData, setLastData] = useState<Omit<DataFrame, 'numRows'> | undefined>(undefined)
-  const { data } = useContext(DataContext)
+  const [lastDataId, setLastDataId] = useState<number | undefined>(undefined)
   // for scrolling the cell into view. This provider must be used inside a ScrollProvider
   const { isScrollingProgrammatically, scrollRowIntoView } = useContext(ScrollContext)
 
   // number of rows in the table, including the header row
-  const { numRows: numDataRows } = useContext(DataContext)
   const rowCount = useMemo(() => numDataRows + 1, [numDataRows])
   const [previousRowCount, setPreviousRowCount] = useState(rowCount)
 
@@ -72,8 +72,8 @@ export function CellNavigationProvider({ children, focus = true }: CellNavigatio
   }, [scrollAndFocusCell, cell])
 
   // Focus the first cell on mount, or on later changes, so keyboard navigation works
-  if (data !== lastData) {
-    setLastData(data)
+  if (dataId !== lastDataId) {
+    setLastDataId(dataId)
     if (focus) {
       goToFirstCell()
     }

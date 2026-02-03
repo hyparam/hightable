@@ -2,7 +2,6 @@ import type { KeyboardEvent } from 'react'
 import { useCallback, useContext, useMemo } from 'react'
 
 import { CellNavigationContext } from '../../contexts/CellNavigationContext.js'
-import { DataContext } from '../../contexts/DataContext.js'
 import { OrderByContext } from '../../contexts/OrderByContext.js'
 import { RowsAndColumnsContext } from '../../contexts/RowsAndColumnsContext.js'
 import { ScrollContext } from '../../contexts/ScrollContext.js'
@@ -16,13 +15,20 @@ import RowHeader from '../RowHeader/RowHeader.js'
 import TableCorner from '../TableCorner/TableCorner.js'
 import TableHeader from '../TableHeader/TableHeader.js'
 
-type SliceProps = Pick<HighTableProps, 'numRowsPerPage' | 'onDoubleClickCell' | 'onKeyDownCell' | 'onMouseDownCell' | 'renderCellContent' | 'stringify'> & {
+type SliceProps = Pick<HighTableProps, 'data' | 'numRowsPerPage' | 'onDoubleClickCell' | 'onKeyDownCell' | 'onMouseDownCell' | 'renderCellContent' | 'stringify'> & {
+  /** The actual number of rows in the data frame */
+  numRows: number
+  /** A version number that increments whenever a data frame is updated or resolved (the key remains the same). */
+  version: number
   /** Callback to set the current table corner size */
   setTableCornerSize?: (size: { width: number, height: number }) => void
 }
 
 export default function Slice({
+  data,
+  numRows,
   numRowsPerPage = defaultNumRowsPerPage,
+  version,
   onDoubleClickCell,
   onKeyDownCell,
   onMouseDownCell,
@@ -30,7 +36,6 @@ export default function Slice({
   setTableCornerSize,
   stringify = stringifyDefault,
 }: SliceProps) {
-  const { data, version, numRows } = useContext(DataContext)
   const { cell, colCount, rowCount, goToCell } = useContext(CellNavigationContext)
   const { orderBy, onOrderByChange } = useContext(OrderByContext)
   const { selectable, toggleAllRows, pendingSelectionGesture, onTableKeyDown: onSelectionTableKeyDown, allRowsSelected, isRowSelected, toggleRowNumber, toggleRangeToRowNumber } = useContext(SelectionContext)
