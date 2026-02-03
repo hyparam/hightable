@@ -24,7 +24,7 @@ export default function HighTable({
   className = '',
   data,
   focus,
-  maxRowNumber: propMaxRowNumber,
+  maxRowNumber,
   orderBy,
   overscan,
   padding,
@@ -39,11 +39,6 @@ export default function HighTable({
   const [viewportWidth, setViewportWidth] = useState<number | undefined>(undefined)
   const [tableCornerSize, setTableCornerSize] = useState<{ width: number, height: number } | undefined>(undefined)
   const { dataId, numRows, version } = useData({ data })
-
-  /** The maximum number of rows to display (for row headers). Useful for filtered data. */
-  const maxRowNumber = useMemo(() => {
-    return propMaxRowNumber ?? numRows
-  }, [propMaxRowNumber, numRows])
 
   const columnNames = useMemo(() => data.columnDescriptors.map(d => d.name), [data.columnDescriptors])
 
@@ -65,12 +60,12 @@ export default function HighTable({
 
   const tableScrollStyle = useMemo(() => {
     // reserve space for at least 3 characters
-    const numCharacters = Math.max(maxRowNumber.toLocaleString('en-US').length, 3)
+    const numCharacters = Math.max((maxRowNumber ?? numRows).toLocaleString('en-US').length, 3)
     return {
       '--column-header-height': `${headerHeight}px`,
       '--row-number-characters': `${numCharacters}`,
     } as CSSProperties
-  }, [maxRowNumber, headerHeight])
+  }, [headerHeight, maxRowNumber, numRows])
 
   const classes = useMemo(() => {
     return `${styles.hightable} ${styled ? styles.styled : ''} ${className}`
