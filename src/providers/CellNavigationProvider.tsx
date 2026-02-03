@@ -9,7 +9,7 @@ import type { HighTableProps } from '../types.js'
 
 type CellNavigationProviderProps = Pick<HighTableProps, 'focus'> & {
   /** The unique identifier for the data frame */
-  dataId?: number
+  dataId: number
   /** The actual number of rows in the data frame */
   numRows: number
   /** Children elements */

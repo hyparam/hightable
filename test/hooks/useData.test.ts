@@ -12,7 +12,6 @@ describe('useData', () => {
     const data = arrayDataFrame([{ a: 1, b: 2 }, { a: 3, b: 4 }])
     const { result } = renderHook(useData, { initialProps: { data } })
     const { dataId, version, numRows } = result.current
-    expect(data).toBe(data)
     expect(dataId).toBe(0)
     expect(version).toBe(0)
     expect(numRows).toBe(data.numRows)

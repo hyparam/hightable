@@ -44,7 +44,7 @@ describe('CellsNavigationProvider', () => {
       const numberOfVisibleColumns = 4
       const { getByTestId, rerender } = render(
         <ColumnVisibilityStatesContext.Provider value={{ numberOfVisibleColumns }}>
-          <CellNavigationProvider numRows={9}>
+          <CellNavigationProvider numRows={9} dataId={0}>
             <RowCountComponent />
           </CellNavigationProvider>
         </ColumnVisibilityStatesContext.Provider>
@@ -65,7 +65,7 @@ describe('CellsNavigationProvider', () => {
       // a new data object and trigger a focus on the first cell
       rerender(
         <ColumnVisibilityStatesContext.Provider value={{ numberOfVisibleColumns }}>
-          <CellNavigationProvider numRows={4}>
+          <CellNavigationProvider numRows={4} dataId={0}>
             <RowCountComponent />
           </CellNavigationProvider>
         </ColumnVisibilityStatesContext.Provider>
@@ -75,7 +75,7 @@ describe('CellsNavigationProvider', () => {
       // Increase rowCount to 15, rowIndex should remain 5
       rerender(
         <ColumnVisibilityStatesContext.Provider value={{ numberOfVisibleColumns }}>
-          <CellNavigationProvider numRows={14}>
+          <CellNavigationProvider numRows={14} dataId={0}>
             <RowCountComponent />
           </CellNavigationProvider>
         </ColumnVisibilityStatesContext.Provider>
@@ -86,7 +86,7 @@ describe('CellsNavigationProvider', () => {
     it('resets colIndex if out of bounds when colCount changes', () => {
       const { getByTestId, rerender } = render(
         <ColumnVisibilityStatesContext.Provider value={{ numberOfVisibleColumns: 9 }}>
-          <CellNavigationProvider numRows={9}>
+          <CellNavigationProvider numRows={9} dataId={0}>
             <ColCountComponent />
           </CellNavigationProvider>
         </ColumnVisibilityStatesContext.Provider>
@@ -105,7 +105,7 @@ describe('CellsNavigationProvider', () => {
       // Decrease colCount to 5, which should reset colIndex to 5
       rerender(
         <ColumnVisibilityStatesContext.Provider value={{ numberOfVisibleColumns: 4 }}>
-          <CellNavigationProvider numRows={9}>
+          <CellNavigationProvider numRows={9} dataId={0}>
             <ColCountComponent />
           </CellNavigationProvider>
         </ColumnVisibilityStatesContext.Provider>
@@ -115,7 +115,7 @@ describe('CellsNavigationProvider', () => {
       // Increase rowCount to 15, rowIndex should remain 5
       rerender(
         <ColumnVisibilityStatesContext.Provider value={{ numberOfVisibleColumns: 14 }}>
-          <CellNavigationProvider numRows={9}>
+          <CellNavigationProvider numRows={9} dataId={0}>
             <ColCountComponent />
           </CellNavigationProvider>
         </ColumnVisibilityStatesContext.Provider>
@@ -144,7 +144,7 @@ describe('CellsNavigationProvider', () => {
     it('does not focus first cell on mount when focus is false', () => {
       const { getByTestId } = render(
         <ColumnVisibilityStatesContext.Provider value={{ numberOfVisibleColumns: 4 }}>
-          <CellNavigationProvider numRows={9} focus={false}>
+          <CellNavigationProvider numRows={9} focus={false} dataId={0}>
             <RowCountComponent />
           </CellNavigationProvider>
         </ColumnVisibilityStatesContext.Provider>
