@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 
 /**
  * Props for the useInputState hook.
@@ -44,25 +44,26 @@ export function useInputState<T>({ value, onChange, defaultValue }: UseInputStat
     setLocalValue(selection)
   }, [onChange])
 
-  // The input is forever in one of these two modes:
-
-  // - controlled (no local state)
-  if (initialValue !== undefined) {
-    if (value === undefined) {
-      console.warn('The value is controlled (it has no local state) because the property was initially defined. It cannot be set to undefined now (it is set back to the initial value).')
+  return useMemo(() => {
+    // The input is forever in one of these two modes:
+    // - controlled (no local state)
+    if (initialValue !== undefined) {
+      if (value === undefined) {
+        console.warn('The value is controlled (it has no local state) because the property was initially defined. It cannot be set to undefined now (it is set back to the initial value).')
+      }
+      return {
+        value: value ?? initialValue,
+        // read-only if onChange is undefined
+        onChange,
+      }
     }
-    return {
-      value: value ?? initialValue,
-      // read-only if onChange is undefined
-      onChange,
-    }
-  }
 
-  // - uncontrolled (local state)
-  if (value !== undefined) {
-    console.warn('The value is uncontrolled (it only has a local state) because the property was initially undefined. It cannot be set to a value now and is ignored.')
-  }
-  return { value: localValue, onChange: uncontrolledOnChange }
+    // - uncontrolled (local state)
+    if (value !== undefined) {
+      console.warn('The value is uncontrolled (it only has a local state) because the property was initially undefined. It cannot be set to a value now and is ignored.')
+    }
+    return { value: localValue, onChange: uncontrolledOnChange }
+  }, [value, onChange, initialValue, localValue, uncontrolledOnChange])
 }
 
 /**
