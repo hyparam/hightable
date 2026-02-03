@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react'
-import { useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 
 import { PortalContainerContext } from '../../contexts/PortalContainerContext.js'
 import { columnVisibilityStatesSuffix, columnWidthsSuffix, rowHeight } from '../../helpers/constants.js'
@@ -35,7 +35,6 @@ export default function HighTable({
   onSelectionChange,
   ...rest
 }: HighTableProps) {
-  const ref = useRef<HTMLDivElement>(null)
   const [viewportWidth, setViewportWidth] = useState<number | undefined>(undefined)
   const [tableCornerSize, setTableCornerSize] = useState<{ width: number, height: number } | undefined>(undefined)
   const { dataId, numRows, version } = useData({ data })
@@ -76,13 +75,18 @@ export default function HighTable({
     return `${styles.hightable} ${styled ? styles.styled : ''} ${className}`
   }, [className, styled])
 
+  const [container, setContainer] = useState<HTMLDivElement | null>(null)
+  const onContainerMount = useCallback((node: HTMLDivElement | null) => {
+    setContainer(node)
+    return () => {
+      setContainer(null)
+    }
+  }, [])
   return (
-    // TODO(SL): passing a ref to an element is code smell
-    <PortalContainerContext.Provider value={{ containerRef: ref }}>
-      <div ref={ref} className={classes} style={tableScrollStyle}>
+    <div ref={onContainerMount} className={classes} style={tableScrollStyle}>
+      <div className={styles.topBorder} role="presentation" />
 
-        <div className={styles.topBorder} role="presentation" />
-
+      <PortalContainerContext.Provider value={container}>
         <ColumnParametersProvider
           columnConfiguration={columnConfiguration}
           columnDescriptors={data.columnDescriptors}
@@ -173,11 +177,11 @@ export default function HighTable({
             </ColumnVisibilityStatesProvider>
           </ColumnWidthsProvider>
         </ColumnParametersProvider>
+      </PortalContainerContext.Provider>
 
-        {/* puts a background behind the row labels column */}
-        <div className={styles.mockRowLabel}>&nbsp;</div>
+      {/* puts a background behind the row labels column */}
+      <div className={styles.mockRowLabel}>&nbsp;</div>
 
-      </div>
-    </PortalContainerContext.Provider>
+    </div>
   )
 }

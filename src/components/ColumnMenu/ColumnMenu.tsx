@@ -1,5 +1,5 @@
 import type { KeyboardEvent, MouseEvent, ReactNode } from 'react'
-import { useCallback, useContext, useEffect, useId, useMemo, useRef, useState } from 'react'
+import { useCallback, useContext, useId, useMemo, useRef } from 'react'
 import { createPortal } from 'react-dom'
 
 import { CellNavigationContext } from '../../contexts/CellNavigationContext.js'
@@ -101,14 +101,7 @@ export default function ColumnMenu({
   close,
   id,
 }: ColumnMenuProps) {
-  const { containerRef } = useContext(PortalContainerContext)
-  const [container, setContainer] = useState<HTMLElement | undefined>(undefined)
-  useEffect(() => {
-    if (container || !containerRef.current) {
-      return
-    }
-    setContainer(containerRef.current)
-  }, [container, containerRef])
+  const container = useContext(PortalContainerContext)
 
   const { top, left } = position
   const menuRef = useRef<HTMLDivElement | null>(null)
