@@ -1,5 +1,5 @@
 import type { KeyboardEvent, MouseEvent, ReactNode } from 'react'
-import { useCallback, useContext, useMemo } from 'react'
+import { useCallback, useContext, useEffect, useMemo, useRef } from 'react'
 
 import { ColumnWidthsContext } from '../../contexts/ColumnWidthsContext.js'
 import type { ResolvedValue } from '../../helpers/dataframe/index.js'
@@ -44,7 +44,13 @@ interface Props {
  * @param {number} [props.rowNumber] the row index in the original data, undefined if the value has not been fetched yet
  */
 export default function Cell({ cell, onDoubleClickCell, onMouseDownCell, onKeyDownCell, stringify, columnIndex, visibleColumnIndex, className, ariaColIndex, ariaRowIndex, rowNumber, renderCellContent }: Props) {
-  const { tabIndex, navigateToCell, focusCellIfNeeded } = useCellFocus({ ariaColIndex, ariaRowIndex })
+  const { tabIndex, navigateToCell, focusIfNeeded } = useCellFocus({ ariaColIndex, ariaRowIndex })
+
+  // Focus the cell if needed. We use an effect, as it acts on the DOM element after render.
+  const ref = useRef<HTMLTableCellElement | null>(null)
+  useEffect(() => {
+    focusIfNeeded?.(ref.current)
+  }, [focusIfNeeded])
 
   // Get the column width from the context (use visibleColumnIndex for styling)
   const columnStyle = useContext(ColumnWidthsContext).getStyle?.(visibleColumnIndex)
@@ -89,7 +95,7 @@ export default function Cell({ cell, onDoubleClickCell, onMouseDownCell, onKeyDo
 
   return (
     <td
-      ref={focusCellIfNeeded}
+      ref={ref}
       role="cell"
       aria-busy={cell === undefined}
       aria-rowindex={ariaRowIndex}

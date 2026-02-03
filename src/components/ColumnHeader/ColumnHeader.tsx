@@ -30,17 +30,17 @@ interface Props {
 }
 
 export default function ColumnHeader({ columnIndex, columnName, columnConfig, canMeasureWidth, direction, toggleOrderBy, orderByIndex, orderBySize, ariaColIndex, ariaRowIndex, className, children }: Props) {
+  // The ref is used to position the menu in handleMenuClick, to measure width, and to focus the cell
   const ref = useRef<HTMLTableCellElement | null>(null)
-  const { tabIndex, navigateToCell, focusCellIfNeeded } = useCellFocus({ ariaColIndex, ariaRowIndex })
+  const { tabIndex, navigateToCell, focusIfNeeded } = useCellFocus({ ariaColIndex, ariaRowIndex })
   const { sortable } = columnConfig
   const { isOpen, position, menuId, close, handleMenuClick } = useColumnMenu(ref, navigateToCell)
   const { getHideColumn, showAllColumns } = useContext(ColumnVisibilityStatesContext)
 
-  const refCallback = useCallback((node: HTMLTableCellElement | null) => {
-    // set the current ref, it will be used to position the menu in handleMenuClick
-    ref.current = node
-    focusCellIfNeeded(node)
-  }, [focusCellIfNeeded])
+  // Focus the cell if needed. We use an effect, as it acts on the DOM element after render.
+  useEffect(() => {
+    focusIfNeeded?.(ref.current)
+  }, [focusIfNeeded])
 
   const handleClick = useCallback(() => {
     navigateToCell()
@@ -156,7 +156,7 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
 
   return (
     <th
-      ref={refCallback}
+      ref={ref}
       scope="col"
       role="columnheader"
       aria-sort={direction ?? (sortable ? 'none' : undefined)}

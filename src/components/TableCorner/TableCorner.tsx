@@ -1,5 +1,5 @@
 import type { ChangeEvent, CSSProperties, KeyboardEvent, ReactNode } from 'react'
-import { useCallback } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 
 import { useCellFocus } from '../../hooks/useCellFocus.js'
 
@@ -15,7 +15,13 @@ interface Props {
 }
 
 export default function TableCorner({ children, checked, onCheckboxPress, pendingSelectionGesture, style, ariaColIndex, ariaRowIndex, setTableCornerSize }: Props) {
-  const { tabIndex, navigateToCell, focusCellIfNeeded } = useCellFocus({ ariaColIndex, ariaRowIndex })
+  const { tabIndex, navigateToCell, focusIfNeeded } = useCellFocus({ ariaColIndex, ariaRowIndex })
+
+  // Focus the cell if needed. We use an effect, as it acts on the DOM element after render.
+  const ref = useRef<HTMLTableCellElement | null>(null)
+  useEffect(() => {
+    focusIfNeeded?.(ref.current)
+  }, [focusIfNeeded])
 
   const handleClick = useCallback(() => {
     navigateToCell()
@@ -74,15 +80,15 @@ export default function TableCorner({ children, checked, onCheckboxPress, pendin
     /* Track the size of the table corner */
   }, [setTableCornerSize])
 
-  const ref = useCallback((tableCorner: HTMLTableCellElement | null) => {
-    focusCellIfNeeded(tableCorner)
-    // return the cleanup function from size tracking
-    return trackSize(tableCorner)
-  }, [focusCellIfNeeded, trackSize])
+  const refCallback = useCallback((tableCorner: HTMLTableCellElement | null) => {
+    ref.current = tableCorner
+    const removeSizeTracking = trackSize(tableCorner)
+    return removeSizeTracking
+  }, [trackSize])
 
   return (
     <td
-      ref={ref}
+      ref={refCallback}
       style={style}
       onClick={handleClick}
       onKeyDown={handleKeyDown}

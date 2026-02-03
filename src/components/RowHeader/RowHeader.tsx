@@ -1,5 +1,5 @@
 import type { ChangeEvent, CSSProperties, KeyboardEvent, MouseEvent } from 'react'
-import { useCallback, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 
 import { useCellFocus } from '../../hooks/useCellFocus.js'
 import { useOnCopy } from '../../hooks/useOnCopyToClipboard.js'
@@ -22,7 +22,14 @@ function formatRowNumber(rowIndex?: number): string {
 }
 
 export default function RowHeader({ onCheckboxPress, pendingSelectionGesture, style, ariaColIndex, ariaRowIndex, selected, rowNumber }: Props) {
-  const { tabIndex, navigateToCell, focusCellIfNeeded } = useCellFocus({ ariaColIndex, ariaRowIndex })
+  const { tabIndex, navigateToCell, focusIfNeeded } = useCellFocus({ ariaColIndex, ariaRowIndex })
+
+  // Focus the cell if needed. We use an effect, as it acts on the DOM element after render.
+  const ref = useRef<HTMLTableCellElement | null>(null)
+  useEffect(() => {
+    focusIfNeeded?.(ref.current)
+  }, [focusIfNeeded])
+
   const handleClick = useCallback((event: MouseEvent) => {
     navigateToCell()
     onCheckboxPress?.({ shiftKey: event.shiftKey })
@@ -46,7 +53,7 @@ export default function RowHeader({ onCheckboxPress, pendingSelectionGesture, st
 
   return (
     <th
-      ref={focusCellIfNeeded}
+      ref={ref}
       scope="row"
       role="rowheader"
       style={style}

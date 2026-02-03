@@ -24,6 +24,7 @@ export default function HighTable({
   data,
   focus,
   maxRowNumber,
+  numRowsPerPage,
   orderBy,
   padding,
   selection,
@@ -132,9 +133,10 @@ export default function HighTable({
                     padding={padding}
                   >
                     <CellNavigationProvider
-                      dataId={dataId}
+                      key={dataId}
                       focus={focus}
                       numRows={numRows}
+                      numRowsPerPage={numRowsPerPage}
                     >
 
                       <Scroller
