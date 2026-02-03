@@ -56,7 +56,7 @@ export function CellNavigationProvider({
     // Reset the row index to the last row if it goes out of bounds
     goToCell({ colIndex: cell.colIndex, rowIndex: rowCount })
   }
-  // Reset the cell position if the number of rows has decreased and the current row index is out of bounds
+  // Reset the cell position if the number of columns has decreased and the current column index is out of bounds
   if (cell.colIndex > colCount) {
     // Reset the column index to the last column if it goes out of bounds
     goToCell({ colIndex: colCount, rowIndex: cell.rowIndex })
