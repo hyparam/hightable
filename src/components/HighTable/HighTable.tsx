@@ -42,10 +42,6 @@ export default function HighTable({
 
   const columnNames = useMemo(() => data.columnDescriptors.map(d => d.name), [data.columnDescriptors])
 
-  const headerHeight = useMemo(() => {
-    return tableCornerSize?.height ?? rowHeight
-  }, [tableCornerSize])
-
   const initialVisibilityStates = useMemo(() => {
     if (!columnConfiguration) return undefined
     const states: Record<string, { hidden: true } | undefined> = {}
@@ -57,6 +53,10 @@ export default function HighTable({
     }
     return states
   }, [columnConfiguration, data.columnDescriptors])
+
+  const headerHeight = useMemo(() => {
+    return tableCornerSize?.height ?? rowHeight
+  }, [tableCornerSize])
 
   const tableScrollStyle = useMemo(() => {
     // reserve space for at least 3 characters
