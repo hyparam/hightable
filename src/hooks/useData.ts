@@ -4,7 +4,7 @@ import type { DataFrame } from '../helpers/dataframe/index.js'
 import type { HighTableProps } from '../types.js'
 
 /**
- * Provides the data frame and related state to the table, through the DataContext.
+ * Provides the dataId, version and numRows states derived from the data frame.
  */
 export function useData({ data }: Pick<HighTableProps, 'data'>) {
   // dataId can be used as a "key" to trigger remounts when the data frame changes
