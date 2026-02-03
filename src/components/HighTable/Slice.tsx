@@ -48,9 +48,8 @@ export default function Slice({
   // Fetch the required cells if needed (visible + overscan)
   useFetchCells({ data, numRows, overscan, onError })
 
-  // TODO(SL): we depend on rowIndex to trigger the scroll effect, which means we recreate the
-  // callback every time the rowIndex changes. Can we avoid that?
-  // For now, we don't need to depend on colIndex, we can set the state using the update function form.
+  // TODO(SL): we depend on cell to trigger the scroll effect, which means we recreate the
+  // callback every time cell changes. Can we avoid that?
   const onNavigationTableKeyDown = useCallback((event: KeyboardEvent, { numRowsPerPage }: {
     numRowsPerPage: number // number of rows to skip when navigating with the keyboard (PageUp/PageDown)
   }) => {
