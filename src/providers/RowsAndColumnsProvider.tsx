@@ -3,7 +3,6 @@ import { useContext, useEffect, useEffectEvent, useMemo } from 'react'
 
 import { ColumnVisibilityStatesContext } from '../contexts/ColumnVisibilityStatesContext.js'
 import { OrderByContext } from '../contexts/OrderByContext.js'
-import { RowsAndColumnsContext } from '../contexts/RowsAndColumnsContext.js'
 import { ScrollContext } from '../contexts/ScrollContext.js'
 import { defaultOverscan } from '../helpers/constants.js'
 import type { HighTableProps } from '../types.js'
@@ -16,7 +15,7 @@ type RowsAndColumnsProviderProps = Pick<HighTableProps, 'data' | 'onError' | 'ov
 }
 
 /**
- * Provide the column parameters, through the RowsAndColumnsContext, and fetch the required rows (visible + overscan).
+ * Fetch the required rows (visible + overscan).
  */
 export function RowsAndColumnsProvider({ data, numRows, overscan = defaultOverscan, onError, children }: RowsAndColumnsProviderProps) {
   const { visibleRowsStart, visibleRowsEnd } = useContext(ScrollContext)
@@ -72,13 +71,5 @@ export function RowsAndColumnsProvider({ data, numRows, overscan = defaultOversc
     }
   }, [data, fetchedRowsStart, fetchedRowsEnd, columnNames, orderBy])
 
-  const value = useMemo(() => ({
-    columnsParameters: visibleColumnsParameters,
-  }), [visibleColumnsParameters])
-
-  return (
-    <RowsAndColumnsContext.Provider value={value}>
-      {children}
-    </RowsAndColumnsContext.Provider>
-  )
+  return (<>{ children }</>)
 }

@@ -2,8 +2,8 @@ import type { KeyboardEvent } from 'react'
 import { useCallback, useContext, useMemo } from 'react'
 
 import { CellNavigationContext } from '../../contexts/CellNavigationContext.js'
+import { ColumnVisibilityStatesContext } from '../../contexts/ColumnVisibilityStatesContext.js'
 import { OrderByContext } from '../../contexts/OrderByContext.js'
-import { RowsAndColumnsContext } from '../../contexts/RowsAndColumnsContext.js'
 import { ScrollContext } from '../../contexts/ScrollContext.js'
 import { SelectionContext } from '../../contexts/SelectionContext.js'
 import { ariaOffset, defaultNumRowsPerPage } from '../../helpers/constants.js'
@@ -39,7 +39,7 @@ export default function Slice({
   const { cell, colCount, rowCount, goToCell } = useContext(CellNavigationContext)
   const { orderBy, onOrderByChange } = useContext(OrderByContext)
   const { selectable, toggleAllRows, pendingSelectionGesture, onTableKeyDown: onSelectionTableKeyDown, allRowsSelected, isRowSelected, toggleRowNumber, toggleRangeToRowNumber } = useContext(SelectionContext)
-  const { columnsParameters } = useContext(RowsAndColumnsContext)
+  const { visibleColumnsParameters: columnsParameters } = useContext(ColumnVisibilityStatesContext)
   const { renderedRowsStart, renderedRowsEnd } = useContext(ScrollContext)
 
   // TODO(SL): we depend on rowIndex to trigger the scroll effect, which means we recreate the
