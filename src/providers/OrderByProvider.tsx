@@ -1,4 +1,4 @@
-import { type ReactNode, useMemo } from 'react'
+import type { ReactNode } from 'react'
 
 import { OrderByContext } from '../contexts/OrderByContext.js'
 import type { OrderBy } from '../helpers/sort.js'
@@ -21,13 +21,13 @@ export function OrderByProvider({ children, orderBy, onOrderByChange }: Props) {
     onChange: onOrderByChange,
     defaultValue: [],
   })
-  const value = useMemo(() => ({
-    orderBy: state.value,
-    onOrderByChange: state.onChange,
-  }), [state])
 
   return (
-    <OrderByContext.Provider value={value}>
+    <OrderByContext.Provider value={{
+      orderBy: state.value,
+      onOrderByChange: state.onChange,
+    }}
+    >
       {children}
     </OrderByContext.Provider>
   )
