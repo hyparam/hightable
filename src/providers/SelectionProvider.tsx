@@ -1,7 +1,6 @@
 import type { KeyboardEvent, ReactNode } from 'react'
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react'
 
-import { ErrorContext } from '../contexts/ErrorContext.js'
 import { OrderByContext } from '../contexts/OrderByContext.js'
 import { SelectionContext } from '../contexts/SelectionContext.js'
 import { checkSignal } from '../helpers/dataframe/helpers.js'
@@ -14,7 +13,7 @@ import { useInputOrDisabledState } from '../hooks/useInputState.js'
 import type { HighTableProps } from '../types.js'
 
 // TODO(SL): get data and numRows from DataContext instead of props?
-type Props = Pick<HighTableProps, 'data' | 'selection' | 'onSelectionChange'> & {
+type Props = Pick<HighTableProps, 'data' | 'selection' | 'onError' | 'onSelectionChange'> & {
   /** The actual number of rows in the data frame */
   numRows: number
   /** Child components */
@@ -30,7 +29,7 @@ interface Gesture {
  *
  * Only the data rows can be selected, not the header row, so row numbers are 0-based.
  */
-export function SelectionProvider({ children, data, numRows, selection: inputSelection, onSelectionChange: inputOnSelectionChange }: Props) {
+export function SelectionProvider({ children, data, numRows, selection: inputSelection, onError, onSelectionChange: inputOnSelectionChange }: Props) {
   const [previousNumRows, setPreviousNumRows] = useState(numRows)
   const inputOrDisabledState = useInputOrDisabledState<Selection>({
     value: inputSelection,
@@ -44,7 +43,6 @@ export function SelectionProvider({ children, data, numRows, selection: inputSel
   const [allRowsSelected, setAllRowsSelected] = useState<boolean | undefined>(areAllSelected({ numRows, selection }))
 
   const { orderBy } = useContext(OrderByContext)
-  const { onError } = useContext(ErrorContext)
 
   if (numRows !== previousNumRows) {
     setPreviousNumRows(numRows)

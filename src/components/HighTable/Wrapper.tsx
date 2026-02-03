@@ -17,8 +17,6 @@ import type { HighTableProps } from '../../types.js'
 import Scroller from './Scroller.js'
 import Slice from './Slice.js'
 
-type Props = Omit<HighTableProps, 'onError'>
-
 export default function Wrapper({
   columnConfiguration,
   cacheKey,
@@ -27,15 +25,16 @@ export default function Wrapper({
   focus,
   maxRowNumber: propMaxRowNumber,
   orderBy,
-  padding,
   overscan,
+  padding,
   selection,
   styled = true,
   onColumnsVisibilityChange,
+  onError,
   onOrderByChange,
   onSelectionChange,
   ...rest
-}: Props) {
+}: HighTableProps) {
   const ref = useRef<HTMLDivElement>(null)
   const [viewportWidth, setViewportWidth] = useState<number | undefined>(undefined)
   const [tableCornerSize, setTableCornerSize] = useState<{ width: number, height: number } | undefined>(undefined)
@@ -129,6 +128,7 @@ export default function Wrapper({
                    */
                   key={dataId}
                   selection={selection}
+                  onError={onError}
                   onSelectionChange={onSelectionChange}
                   data={data}
                   numRows={numRows}
@@ -154,6 +154,7 @@ export default function Wrapper({
                         key={dataId}
                         data={data}
                         numRows={numRows}
+                        onError={onError}
                         overscan={overscan}
                       >
 
