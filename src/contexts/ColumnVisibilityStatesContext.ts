@@ -1,8 +1,12 @@
 import { createContext } from 'react'
 
+import type { ColumnParameters } from './ColumnParametersContext'
+
 interface ColumnVisibilityStatesContextType {
   /** Number of visible columns */
   numberOfVisibleColumns: number
+  /** Visible columns parameters */
+  visibleColumnsParameters?: ColumnParameters[]
   /**
    * Get a function to hide a column by its name
    *

@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react'
 import { useContext, useEffect, useEffectEvent, useMemo } from 'react'
 
-import { ColumnParametersContext } from '../contexts/ColumnParametersContext.js'
 import { ColumnVisibilityStatesContext } from '../contexts/ColumnVisibilityStatesContext.js'
 import { OrderByContext } from '../contexts/OrderByContext.js'
 import { RowsAndColumnsContext } from '../contexts/RowsAndColumnsContext.js'
@@ -21,16 +20,8 @@ type RowsAndColumnsProviderProps = Pick<HighTableProps, 'data' | 'onError' | 'ov
  */
 export function RowsAndColumnsProvider({ data, numRows, overscan = defaultOverscan, onError, children }: RowsAndColumnsProviderProps) {
   const { visibleRowsStart, visibleRowsEnd } = useContext(ScrollContext)
-
+  const { visibleColumnsParameters } = useContext(ColumnVisibilityStatesContext)
   const { orderBy } = useContext(OrderByContext)
-  const allColumnsParameters = useContext(ColumnParametersContext)
-  const { isHiddenColumn } = useContext(ColumnVisibilityStatesContext)
-
-  const columnsParameters = useMemo(() => {
-    return allColumnsParameters.filter((col) => {
-      return !isHiddenColumn?.(col.name)
-    })
-  }, [allColumnsParameters, isHiddenColumn])
 
   const fetchedRowsStart = useMemo(() => {
     if (visibleRowsStart === undefined) return undefined
@@ -43,8 +34,8 @@ export function RowsAndColumnsProvider({ data, numRows, overscan = defaultOversc
   }, [visibleRowsEnd, numRows, overscan])
 
   const columnNames = useMemo(() => {
-    return columnsParameters.map(({ name }) => name)
-  }, [columnsParameters])
+    return (visibleColumnsParameters ?? []).map(({ name }) => name)
+  }, [visibleColumnsParameters])
 
   // Call onError (if provided) when a fetch fails.
   // Not in the effect directly to avoid having to add onError to the effect dependencies,
@@ -82,8 +73,8 @@ export function RowsAndColumnsProvider({ data, numRows, overscan = defaultOversc
   }, [data, fetchedRowsStart, fetchedRowsEnd, columnNames, orderBy])
 
   const value = useMemo(() => ({
-    columnsParameters,
-  }), [columnsParameters])
+    columnsParameters: visibleColumnsParameters,
+  }), [visibleColumnsParameters])
 
   return (
     <RowsAndColumnsContext.Provider value={value}>
