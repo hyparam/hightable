@@ -11,7 +11,6 @@ import { ColumnParametersProvider } from '../../providers/ColumnParametersProvid
 import { ColumnVisibilityStatesProvider } from '../../providers/ColumnVisibilityStatesProvider.js'
 import { ColumnWidthsProvider } from '../../providers/ColumnWidthsProvider.js'
 import { OrderByProvider } from '../../providers/OrderByProvider.js'
-import { RowsAndColumnsProvider } from '../../providers/RowsAndColumnsProvider.js'
 import { ScrollProvider } from '../../providers/ScrollProvider.js'
 import { SelectionProvider } from '../../providers/SelectionProvider.js'
 import type { HighTableProps } from '../../types.js'
@@ -26,7 +25,6 @@ export default function HighTable({
   focus,
   maxRowNumber,
   orderBy,
-  overscan,
   padding,
   selection,
   styled = true,
@@ -138,30 +136,20 @@ export default function HighTable({
                       focus={focus}
                       numRows={numRows}
                     >
-                      <RowsAndColumnsProvider
-                        /**
-                         * Recreate a context if a new data frame is passed, as it's responsible for fetching the cells.
-                         */
-                        key={dataId}
-                        data={data}
-                        numRows={numRows}
-                        onError={onError}
-                        overscan={overscan}
+
+                      <Scroller
+                        setViewportWidth={setViewportWidth}
                       >
+                        <Slice
+                          data={data}
+                          numRows={numRows}
+                          onError={onError}
+                          setTableCornerSize={setTableCornerSize}
+                          version={version}
+                          {...rest}
+                        />
+                      </Scroller>
 
-                        <Scroller
-                          setViewportWidth={setViewportWidth}
-                        >
-                          <Slice
-                            data={data}
-                            numRows={numRows}
-                            setTableCornerSize={setTableCornerSize}
-                            version={version}
-                            {...rest}
-                          />
-                        </Scroller>
-
-                      </RowsAndColumnsProvider>
                     </CellNavigationProvider>
                   </ScrollProvider>
                 </SelectionProvider>

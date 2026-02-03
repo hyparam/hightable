@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react'
 import { useContext, useEffect, useEffectEvent, useMemo } from 'react'
 
 import { ColumnVisibilityStatesContext } from '../contexts/ColumnVisibilityStatesContext.js'
@@ -7,17 +6,15 @@ import { ScrollContext } from '../contexts/ScrollContext.js'
 import { defaultOverscan } from '../helpers/constants.js'
 import type { HighTableProps } from '../types.js'
 
-type RowsAndColumnsProviderProps = Pick<HighTableProps, 'data' | 'onError' | 'overscan'> & {
+type Props = Pick<HighTableProps, 'data' | 'onError' | 'overscan'> & {
   /** The actual number of rows in the data frame */
   numRows: number
-  /** Children elements */
-  children: ReactNode
 }
 
 /**
- * Fetch the required rows (visible + overscan).
+ * Fetch the required cells (visible + overscan).
  */
-export function RowsAndColumnsProvider({ data, numRows, overscan = defaultOverscan, onError, children }: RowsAndColumnsProviderProps) {
+export function useFetchCells({ data, numRows, overscan = defaultOverscan, onError }: Props) {
   const { visibleRowsStart, visibleRowsEnd } = useContext(ScrollContext)
   const { visibleColumnsParameters } = useContext(ColumnVisibilityStatesContext)
   const { orderBy } = useContext(OrderByContext)
@@ -70,6 +67,4 @@ export function RowsAndColumnsProvider({ data, numRows, overscan = defaultOversc
       abortController.abort()
     }
   }, [data, fetchedRowsStart, fetchedRowsEnd, columnNames, orderBy])
-
-  return (<>{ children }</>)
 }
