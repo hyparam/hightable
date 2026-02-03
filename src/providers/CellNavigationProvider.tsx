@@ -21,6 +21,8 @@ type CellNavigationProviderProps = Pick<HighTableProps, 'focus'> & {
  */
 export function CellNavigationProvider({ children, dataId, numRows: numDataRows, focus = true }: CellNavigationProviderProps) {
   const [cell, setCell] = useState<Cell>(defaultCellNavigationContext.cell)
+  // TODO(SL): this state should be removed, and a state should be added in useCellFocus,
+  // since the logic in React is to describe UI state through props and not through imperative code.
   const [shouldFocus, setShouldFocus] = useState(false)
   const [lastDataId, setLastDataId] = useState<number | undefined>(undefined)
   // for scrolling the cell into view. This provider must be used inside a ScrollProvider

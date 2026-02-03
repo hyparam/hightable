@@ -19,7 +19,7 @@ export interface HighTableProps {
   cacheKey?: string
   /** Additional CSS class names for the component */
   className?: string
-  /** Configuration for the columns */
+  /** User-provided configuration for the columns, keyed by column name */
   columnConfiguration?: ColumnConfiguration
   /** Whether to focus the first cell on mount, or when a new data frame is passed. Defaults to true. */
   focus?: boolean

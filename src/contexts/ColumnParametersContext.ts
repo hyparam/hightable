@@ -4,6 +4,8 @@ import type { ColumnConfig } from '../helpers/columnConfiguration.js'
 import type { ColumnDescriptor } from '../helpers/dataframe/index.js'
 
 /**
+ * Descriptors (name, sortable) and configuration (headerComponent, initiallyHidden, etc.) for a single column in the table.
+ *
  * The column parameters don't include the `metadata` field from `ColumnDescriptor`
  */
 export interface ColumnParameters extends ColumnConfig, Omit<ColumnDescriptor, 'metadata'> {
@@ -12,7 +14,7 @@ export interface ColumnParameters extends ColumnConfig, Omit<ColumnDescriptor, '
 }
 
 /**
- * The context type is an array of column parameters, one per column, in the order they should be displayed.
+ * An array of column parameters, one per column, in the order they should be displayed.
  */
 type ColumnParametersContextType = ColumnParameters[]
 
