@@ -7,7 +7,7 @@ import { arrayDataFrame } from '../../src/helpers/dataframe/index.js'
 import { createEventTarget } from '../../src/helpers/typedEventTarget.js'
 import { useData } from '../../src/hooks/useData.js'
 
-describe('DataProvider', () => {
+describe('useData', () => {
   it('should provide the passed dataframe', () => {
     const data = arrayDataFrame([{ a: 1, b: 2 }, { a: 3, b: 4 }])
     const { result } = renderHook(useData, { initialProps: { data } })
