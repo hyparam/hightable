@@ -1,10 +1,10 @@
 import type { CSSProperties } from 'react'
-import { useContext, useMemo, useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 
-import { DataContext } from '../../contexts/DataContext.js'
 import { PortalContainerContext } from '../../contexts/PortalContainerContext.js'
 import { columnVisibilityStatesSuffix, columnWidthsSuffix, rowHeight } from '../../helpers/constants.js'
 import styles from '../../HighTable.module.css'
+import { useData } from '../../hooks/useData.js'
 import { CellNavigationProvider } from '../../providers/CellNavigationProvider.js'
 import { ColumnParametersProvider } from '../../providers/ColumnParametersProvider.js'
 import { ColumnVisibilityStatesProvider } from '../../providers/ColumnVisibilityStatesProvider.js'
@@ -17,12 +17,13 @@ import type { HighTableProps } from '../../types.js'
 import Scroller from './Scroller.js'
 import Slice from './Slice.js'
 
-type Props = Omit<HighTableProps, 'data' | 'onError'>
+type Props = Omit<HighTableProps, 'onError'>
 
 export default function Wrapper({
   columnConfiguration,
   cacheKey,
   className = '',
+  data,
   focus,
   maxRowNumber: propMaxRowNumber,
   orderBy,
@@ -38,7 +39,7 @@ export default function Wrapper({
   const ref = useRef<HTMLDivElement>(null)
   const [viewportWidth, setViewportWidth] = useState<number | undefined>(undefined)
   const [tableCornerSize, setTableCornerSize] = useState<{ width: number, height: number } | undefined>(undefined)
-  const { data, dataId, numRows } = useContext(DataContext)
+  const { dataId, numRows, version } = useData({ data })
 
   /** The maximum number of rows to display (for row headers). Useful for filtered data. */
   const maxRowNumber = useMemo(() => {
@@ -142,13 +143,17 @@ export default function Wrapper({
                        * Recreate a context if a new data frame is passed, because the focused cell might not exist anymore
                        */
                       key={dataId}
+                      dataId={dataId}
                       focus={focus}
+                      numRows={numRows}
                     >
                       <RowsAndColumnsProvider
                         /**
                          * Recreate a context if a new data frame is passed, as it's responsible for fetching the cells.
                          */
                         key={dataId}
+                        data={data}
+                        numRows={numRows}
                         overscan={overscan}
                       >
 
@@ -156,7 +161,10 @@ export default function Wrapper({
                           setViewportWidth={setViewportWidth}
                         >
                           <Slice
+                            data={data}
+                            numRows={numRows}
                             setTableCornerSize={setTableCornerSize}
+                            version={version}
                             {...rest}
                           />
                         </Scroller>

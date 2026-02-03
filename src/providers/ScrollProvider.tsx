@@ -1,14 +1,15 @@
 import { type ReactNode, useCallback, useMemo, useReducer, useState } from 'react'
 
-import type { DataContextType } from '../contexts/DataContext.js'
 import { ScrollContext } from '../contexts/ScrollContext.js'
 import { defaultPadding, maxElementHeight, rowHeight } from '../helpers/constants.js'
 import { computeDerivedValues, createScale, getScrollActionForRow, initializeScrollState, scrollReducer } from '../helpers/scroll.js'
 import type { HighTableProps } from '../types.js'
 
-type ScrollProviderProps = Pick<HighTableProps, 'padding'> & Pick<DataContextType, 'numRows'> & {
+type ScrollProviderProps = Pick<HighTableProps, 'padding'> & {
   /** Height of the header row, in pixels */
   headerHeight: number
+  /** The actual number of rows in the data frame */
+  numRows: number
   /** Child components */
   children: ReactNode
 }

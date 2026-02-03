@@ -1,18 +1,12 @@
-import type { ReactNode } from 'react'
 import { useEffect, useState } from 'react'
 
-import { DataContext } from '../contexts/DataContext.js'
 import type { DataFrame } from '../helpers/dataframe/index.js'
 import type { HighTableProps } from '../types.js'
-
-type Props = Pick<HighTableProps, 'data'> & {
-  children: ReactNode
-}
 
 /**
  * Provides the data frame and related state to the table, through the DataContext.
  */
-export function DataProvider({ children, data }: Props) {
+export function useData({ data }: Pick<HighTableProps, 'data'>) {
   // dataId can be used as a "key" to trigger remounts when the data frame changes
   // Note that key={dataId} must be a string or a number, so: we cannot use data directly
   const [dataId, setDataId] = useState<number>(0)
@@ -54,15 +48,9 @@ export function DataProvider({ children, data }: Props) {
     setNumRows(data.numRows)
   }
 
-  return (
-    <DataContext.Provider value={{
-      data,
-      dataId,
-      version,
-      numRows,
-    }}
-    >
-      {children}
-    </DataContext.Provider>
-  )
+  return {
+    dataId,
+    version,
+    numRows,
+  }
 }

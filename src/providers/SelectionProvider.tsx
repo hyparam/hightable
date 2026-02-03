@@ -1,7 +1,6 @@
 import type { KeyboardEvent, ReactNode } from 'react'
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react'
 
-import type { DataContextType } from '../contexts/DataContext.js'
 import { ErrorContext } from '../contexts/ErrorContext.js'
 import { OrderByContext } from '../contexts/OrderByContext.js'
 import { SelectionContext } from '../contexts/SelectionContext.js'
@@ -15,7 +14,9 @@ import { useInputOrDisabledState } from '../hooks/useInputState.js'
 import type { HighTableProps } from '../types.js'
 
 // TODO(SL): get data and numRows from DataContext instead of props?
-type Props = Pick<HighTableProps, 'selection' | 'onSelectionChange'> & Pick<DataContextType, 'data' | 'numRows'> & {
+type Props = Pick<HighTableProps, 'data' | 'selection' | 'onSelectionChange'> & {
+  /** The actual number of rows in the data frame */
+  numRows: number
   /** Child components */
   children: ReactNode
 }

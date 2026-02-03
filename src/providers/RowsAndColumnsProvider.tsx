@@ -3,7 +3,6 @@ import { useContext, useEffect, useEffectEvent, useMemo } from 'react'
 
 import { ColumnParametersContext } from '../contexts/ColumnParametersContext.js'
 import { ColumnVisibilityStatesContext } from '../contexts/ColumnVisibilityStatesContext.js'
-import { DataContext } from '../contexts/DataContext.js'
 import { ErrorContext } from '../contexts/ErrorContext.js'
 import { OrderByContext } from '../contexts/OrderByContext.js'
 import { RowsAndColumnsContext } from '../contexts/RowsAndColumnsContext.js'
@@ -11,7 +10,9 @@ import { ScrollContext } from '../contexts/ScrollContext.js'
 import { defaultOverscan } from '../helpers/constants.js'
 import type { HighTableProps } from '../types.js'
 
-type RowsAndColumnsProviderProps = Pick<HighTableProps, 'overscan'> & {
+type RowsAndColumnsProviderProps = Pick<HighTableProps, 'data' | 'overscan'> & {
+  /** The actual number of rows in the data frame */
+  numRows: number
   /** Children elements */
   children: ReactNode
 }
@@ -19,11 +20,10 @@ type RowsAndColumnsProviderProps = Pick<HighTableProps, 'overscan'> & {
 /**
  * Provide the column parameters, through the RowsAndColumnsContext, and fetch the required rows (visible + overscan).
  */
-export function RowsAndColumnsProvider({ overscan = defaultOverscan, children }: RowsAndColumnsProviderProps) {
+export function RowsAndColumnsProvider({ data, numRows, overscan = defaultOverscan, children }: RowsAndColumnsProviderProps) {
   const { visibleRowsStart, visibleRowsEnd } = useContext(ScrollContext)
 
   const { onError } = useContext(ErrorContext)
-  const { data, numRows } = useContext(DataContext)
   const { orderBy } = useContext(OrderByContext)
   const allColumnsParameters = useContext(ColumnParametersContext)
   const { isHiddenColumn } = useContext(ColumnVisibilityStatesContext)
