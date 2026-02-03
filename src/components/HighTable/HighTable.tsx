@@ -45,7 +45,7 @@ export default function HighTable({
     return propMaxRowNumber ?? numRows
   }, [propMaxRowNumber, numRows])
 
-  // TODO(SL): pass columnDescriptors in DataContext, not from data
+  // TODO(SL): pass columnDescriptors as a prop instead of reading them from data
   const columnNames = useMemo(() => data.columnDescriptors.map(d => d.name), [data.columnDescriptors])
 
   const headerHeight = useMemo(() => {
