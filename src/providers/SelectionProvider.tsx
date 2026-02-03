@@ -12,7 +12,6 @@ import { serializeOrderBy } from '../helpers/sort.js'
 import { useInputOrDisabledState } from '../hooks/useInputState.js'
 import type { HighTableProps } from '../types.js'
 
-// TODO(SL): get data and numRows from DataContext instead of props?
 type Props = Pick<HighTableProps, 'data' | 'selection' | 'onError' | 'onSelectionChange'> & {
   /** The actual number of rows in the data frame */
   numRows: number
