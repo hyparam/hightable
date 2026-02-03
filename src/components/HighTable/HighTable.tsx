@@ -11,7 +11,6 @@ import { ColumnParametersProvider } from '../../providers/ColumnParametersProvid
 import { ColumnVisibilityStatesProvider } from '../../providers/ColumnVisibilityStatesProvider.js'
 import { ColumnWidthsProvider } from '../../providers/ColumnWidthsProvider.js'
 import { OrderByProvider } from '../../providers/OrderByProvider.js'
-import { RowsAndColumnsProvider } from '../../providers/RowsAndColumnsProvider.js'
 import { ScrollProvider } from '../../providers/ScrollProvider.js'
 import { SelectionProvider } from '../../providers/SelectionProvider.js'
 import type { HighTableProps } from '../../types.js'
@@ -24,9 +23,8 @@ export default function HighTable({
   className = '',
   data,
   focus,
-  maxRowNumber: propMaxRowNumber,
+  maxRowNumber,
   orderBy,
-  overscan,
   padding,
   selection,
   styled = true,
@@ -40,16 +38,7 @@ export default function HighTable({
   const [tableCornerSize, setTableCornerSize] = useState<{ width: number, height: number } | undefined>(undefined)
   const { dataId, numRows, version } = useData({ data })
 
-  /** The maximum number of rows to display (for row headers). Useful for filtered data. */
-  const maxRowNumber = useMemo(() => {
-    return propMaxRowNumber ?? numRows
-  }, [propMaxRowNumber, numRows])
-
   const columnNames = useMemo(() => data.columnDescriptors.map(d => d.name), [data.columnDescriptors])
-
-  const headerHeight = useMemo(() => {
-    return tableCornerSize?.height ?? rowHeight
-  }, [tableCornerSize])
 
   const initialVisibilityStates = useMemo(() => {
     if (!columnConfiguration) return undefined
@@ -63,14 +52,18 @@ export default function HighTable({
     return states
   }, [columnConfiguration, data.columnDescriptors])
 
+  const headerHeight = useMemo(() => {
+    return tableCornerSize?.height ?? rowHeight
+  }, [tableCornerSize])
+
   const tableScrollStyle = useMemo(() => {
     // reserve space for at least 3 characters
-    const numCharacters = Math.max(maxRowNumber.toLocaleString('en-US').length, 3)
+    const numCharacters = Math.max((maxRowNumber ?? numRows).toLocaleString('en-US').length, 3)
     return {
       '--column-header-height': `${headerHeight}px`,
       '--row-number-characters': `${numCharacters}`,
     } as CSSProperties
-  }, [maxRowNumber, headerHeight])
+  }, [headerHeight, maxRowNumber, numRows])
 
   const classes = useMemo(() => {
     return `${styles.hightable} ${styled ? styles.styled : ''} ${className}`
@@ -143,30 +136,20 @@ export default function HighTable({
                       focus={focus}
                       numRows={numRows}
                     >
-                      <RowsAndColumnsProvider
-                        /**
-                         * Recreate a context if a new data frame is passed, as it's responsible for fetching the cells.
-                         */
-                        key={dataId}
-                        data={data}
-                        numRows={numRows}
-                        onError={onError}
-                        overscan={overscan}
+
+                      <Scroller
+                        setViewportWidth={setViewportWidth}
                       >
+                        <Slice
+                          data={data}
+                          numRows={numRows}
+                          onError={onError}
+                          setTableCornerSize={setTableCornerSize}
+                          version={version}
+                          {...rest}
+                        />
+                      </Scroller>
 
-                        <Scroller
-                          setViewportWidth={setViewportWidth}
-                        >
-                          <Slice
-                            data={data}
-                            numRows={numRows}
-                            setTableCornerSize={setTableCornerSize}
-                            version={version}
-                            {...rest}
-                          />
-                        </Scroller>
-
-                      </RowsAndColumnsProvider>
                     </CellNavigationProvider>
                   </ScrollProvider>
                 </SelectionProvider>

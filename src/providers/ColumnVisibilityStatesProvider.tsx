@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
-import { useCallback, useMemo } from 'react'
+import { useCallback, useContext, useMemo } from 'react'
 
+import { ColumnParametersContext } from '../contexts/ColumnParametersContext.js'
 import { ColumnVisibilityStatesContext } from '../contexts/ColumnVisibilityStatesContext.js'
 import { useLocalStorageState } from '../hooks/useLocalStorageState.js'
 import type { HighTableProps } from '../types.js'
@@ -102,11 +103,18 @@ export function ColumnVisibilityStatesProvider({ children, localStorageKey, colu
     }
   }, [numberOfHiddenColumns, setColumnVisibilityStates, onColumnsVisibilityChange])
 
+  const allColumnsParameters = useContext(ColumnParametersContext)
+  const visibleColumnsParameters = useMemo(() => {
+    return allColumnsParameters.filter((col) => {
+      return !isHiddenColumn(col.name)
+    })
+  }, [allColumnsParameters, isHiddenColumn])
+
   const value = useMemo(() => {
     return {
-      getHideColumn, showAllColumns, isHiddenColumn, numberOfVisibleColumns,
+      getHideColumn, showAllColumns, isHiddenColumn, numberOfVisibleColumns, visibleColumnsParameters,
     }
-  }, [getHideColumn, showAllColumns, isHiddenColumn, numberOfVisibleColumns])
+  }, [getHideColumn, showAllColumns, isHiddenColumn, numberOfVisibleColumns, visibleColumnsParameters])
 
   return (
     <ColumnVisibilityStatesContext.Provider value={value}>

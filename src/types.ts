@@ -19,7 +19,7 @@ export interface HighTableProps {
   cacheKey?: string
   /** Additional CSS class names for the component */
   className?: string
-  /** Configuration for the columns */
+  /** User-provided configuration for the columns, keyed by column name */
   columnConfiguration?: ColumnConfiguration
   /** Whether to focus the first cell on mount, or when a new data frame is passed. Defaults to true. */
   focus?: boolean
@@ -56,7 +56,9 @@ export interface HighTableProps {
   // TODO(SL): replace col: number with col: string?
   onDoubleClickCell?: (event: MouseEvent, col: number, row: number) => void
   /**
-   * Optional function called when an error occurs.
+   * Optional function called when an error occurs, generally from a catch block.
+   *
+   * It is generally an Error object, but for type safety, it is typed as unknown.
    *
    * Ignored if not set.
    *

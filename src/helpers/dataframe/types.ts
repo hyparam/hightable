@@ -31,6 +31,9 @@ export interface DataFrameEvents {
   update: undefined
 }
 
+/**
+ * Descriptor for a single column in a DataFrame.
+ */
 export interface ColumnDescriptor<C extends Obj = Obj> {
   /** Column name */
   name: string
@@ -63,7 +66,7 @@ export interface DataFrame<M extends Obj = Obj, C extends Obj = Obj> {
    */
   numRows: number
   /**
-   * Descriptors for the columns in the data frame.
+   * Descriptors for all columns in the data frame, in order.
    *
    * Includes the column name, whether it's sortable, and any custom metadata.
    */

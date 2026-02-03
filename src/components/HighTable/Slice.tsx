@@ -2,11 +2,12 @@ import type { KeyboardEvent } from 'react'
 import { useCallback, useContext, useMemo } from 'react'
 
 import { CellNavigationContext } from '../../contexts/CellNavigationContext.js'
+import { ColumnVisibilityStatesContext } from '../../contexts/ColumnVisibilityStatesContext.js'
 import { OrderByContext } from '../../contexts/OrderByContext.js'
-import { RowsAndColumnsContext } from '../../contexts/RowsAndColumnsContext.js'
 import { ScrollContext } from '../../contexts/ScrollContext.js'
 import { SelectionContext } from '../../contexts/SelectionContext.js'
 import { ariaOffset, defaultNumRowsPerPage } from '../../helpers/constants.js'
+import { useFetchCells } from '../../hooks/useFetchCells.js'
 import type { HighTableProps } from '../../types.js'
 import { stringify as stringifyDefault } from '../../utils/stringify.js'
 import Cell from '../Cell/Cell.js'
@@ -15,7 +16,7 @@ import RowHeader from '../RowHeader/RowHeader.js'
 import TableCorner from '../TableCorner/TableCorner.js'
 import TableHeader from '../TableHeader/TableHeader.js'
 
-type SliceProps = Pick<HighTableProps, 'data' | 'numRowsPerPage' | 'onDoubleClickCell' | 'onKeyDownCell' | 'onMouseDownCell' | 'renderCellContent' | 'stringify'> & {
+type SliceProps = Pick<HighTableProps, 'data' | 'numRowsPerPage' | 'onDoubleClickCell' | 'onError' | 'onKeyDownCell' | 'onMouseDownCell' | 'overscan' | 'renderCellContent' | 'stringify'> & {
   /** The actual number of rows in the data frame */
   numRows: number
   /** A version number that increments whenever a data frame is updated or resolved (the key remains the same). */
@@ -28,8 +29,10 @@ export default function Slice({
   data,
   numRows,
   numRowsPerPage = defaultNumRowsPerPage,
+  overscan,
   version,
   onDoubleClickCell,
+  onError,
   onKeyDownCell,
   onMouseDownCell,
   renderCellContent,
@@ -39,8 +42,11 @@ export default function Slice({
   const { cell, colCount, rowCount, goToCell } = useContext(CellNavigationContext)
   const { orderBy, onOrderByChange } = useContext(OrderByContext)
   const { selectable, toggleAllRows, pendingSelectionGesture, onTableKeyDown: onSelectionTableKeyDown, allRowsSelected, isRowSelected, toggleRowNumber, toggleRangeToRowNumber } = useContext(SelectionContext)
-  const { columnsParameters } = useContext(RowsAndColumnsContext)
+  const { visibleColumnsParameters: columnsParameters } = useContext(ColumnVisibilityStatesContext)
   const { renderedRowsStart, renderedRowsEnd } = useContext(ScrollContext)
+
+  // Fetch the required cells if needed (visible + overscan)
+  useFetchCells({ data, numRows, overscan, onError })
 
   // TODO(SL): we depend on rowIndex to trigger the scroll effect, which means we recreate the
   // callback every time the rowIndex changes. Can we avoid that?
@@ -139,10 +145,10 @@ export default function Slice({
     const canMeasureColumn: Record<string, boolean> = {}
     const rowContents = rows.map((row) => {
       const rowNumber = data.getRowNumber({ row, orderBy })?.value
-      const cells = (columnsParameters ?? []).map(({ name: column, index: originalColumnIndex }) => {
+      const cells = (columnsParameters ?? []).map(({ name: column, index: originalColumnIndex, className }) => {
         const cell = data.getCell({ row, column, orderBy })
         canMeasureColumn[column] ||= cell !== undefined
-        return { columnIndex: originalColumnIndex, cell }
+        return { columnIndex: originalColumnIndex, cell, className }
       })
       return {
         row,
@@ -214,8 +220,7 @@ export default function Slice({
                 ariaColIndex={1}
                 ariaRowIndex={ariaRowIndex}
               />
-              {cells.map(({ columnIndex, cell }, visibleColumnIndex) => {
-                const columnClassName = columnsParameters[visibleColumnIndex]?.className
+              {cells.map(({ columnIndex, cell, className }, visibleColumnIndex) => {
                 return (
                   <Cell
                     key={columnIndex}
@@ -225,7 +230,7 @@ export default function Slice({
                     stringify={stringify}
                     columnIndex={columnIndex}
                     visibleColumnIndex={visibleColumnIndex}
-                    className={columnClassName}
+                    className={className}
                     ariaColIndex={visibleColumnIndex + ariaOffset}
                     ariaRowIndex={ariaRowIndex}
                     cell={cell}
