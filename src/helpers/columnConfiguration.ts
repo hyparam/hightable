@@ -24,7 +24,7 @@ export interface ColumnConfig {
    * A React node or a function that returns a React node to render as the column header.
    */
   headerComponent?: HeaderComponent
-  /** Whether the column is sortable (default false) */
+  /** Minimum width of the column in pixels */
   minWidth?: number
   /** Whether the column is initially hidden (default false) */
   initiallyHidden?: boolean
