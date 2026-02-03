@@ -139,10 +139,10 @@ export default function Slice({
     const canMeasureColumn: Record<string, boolean> = {}
     const rowContents = rows.map((row) => {
       const rowNumber = data.getRowNumber({ row, orderBy })?.value
-      const cells = (columnsParameters ?? []).map(({ name: column, index: originalColumnIndex }) => {
+      const cells = (columnsParameters ?? []).map(({ name: column, index: originalColumnIndex, className }) => {
         const cell = data.getCell({ row, column, orderBy })
         canMeasureColumn[column] ||= cell !== undefined
-        return { columnIndex: originalColumnIndex, cell }
+        return { columnIndex: originalColumnIndex, cell, className }
       })
       return {
         row,
@@ -214,8 +214,7 @@ export default function Slice({
                 ariaColIndex={1}
                 ariaRowIndex={ariaRowIndex}
               />
-              {cells.map(({ columnIndex, cell }, visibleColumnIndex) => {
-                const columnClassName = columnsParameters[visibleColumnIndex]?.className
+              {cells.map(({ columnIndex, cell, className }, visibleColumnIndex) => {
                 return (
                   <Cell
                     key={columnIndex}
@@ -225,7 +224,7 @@ export default function Slice({
                     stringify={stringify}
                     columnIndex={columnIndex}
                     visibleColumnIndex={visibleColumnIndex}
-                    className={columnClassName}
+                    className={className}
                     ariaColIndex={visibleColumnIndex + ariaOffset}
                     ariaRowIndex={ariaRowIndex}
                     cell={cell}
