@@ -17,9 +17,9 @@ type Props = Pick<HighTableProps, 'orderBy' | 'onOrderByChange'> & {
  */
 export function OrderByProvider({ children, orderBy, onOrderByChange }: Props) {
   const state = useInputState<OrderBy>({
-    value: orderBy,
+    controlledValue: orderBy,
     onChange: onOrderByChange,
-    defaultValue: [],
+    initialUncontrolledValue: [],
   })
 
   const value = useMemo(() => ({
