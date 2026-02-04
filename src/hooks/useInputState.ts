@@ -32,7 +32,7 @@ interface UseInputStateProps<T> {
    *
    * Contrary to the 'controlledValue' prop, this callback can be toggled between defined and undefined at any time.
    */
-  onChange?: ((state: T) => void)
+  onChange?: ((value: T) => void)
 }
 
 /**
@@ -71,9 +71,9 @@ export function useInputState<T>({ controlledValue, onChange, initialUncontrolle
   // the local state and the uncontrolledOnChange callback are created unconditionally to
   // follow the Rules of Hooks, but are not used in controlled mode
   const [localValue, setLocalValue] = useState<T>(initialUncontrolledValue)
-  const uncontrolledOnChange = useCallback((selection: T) => {
-    onChange?.(selection)
-    setLocalValue(selection)
+  const uncontrolledOnChange = useCallback((value: T) => {
+    onChange?.(value)
+    setLocalValue(value)
   }, [onChange])
 
   return useMemo(() => {
