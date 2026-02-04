@@ -9,7 +9,7 @@ import type { Selection } from '../helpers/selection.js'
 import { countSelectedRows, getDefaultSelection, isSelected, selectIndex, toggleIndex, toggleIndexInSelection, unselectIndex } from '../helpers/selection.js'
 import type { OrderBy } from '../helpers/sort.js'
 import { serializeOrderBy } from '../helpers/sort.js'
-import { useInputOrDisabledState } from '../hooks/useInputState.js'
+import { useInputState } from '../hooks/useInputState.js'
 import type { HighTableProps } from '../types.js'
 
 type Props = Pick<HighTableProps, 'data' | 'selection' | 'onError' | 'onSelectionChange'> & {
@@ -30,13 +30,14 @@ interface Gesture {
  */
 export function SelectionProvider({ children, data, numRows, selection: inputSelection, onError, onSelectionChange: inputOnSelectionChange }: Props) {
   const [previousNumRows, setPreviousNumRows] = useState(numRows)
-  const inputOrDisabledState = useInputOrDisabledState<Selection>({
-    value: inputSelection,
+  const [isEnabled] = useState<boolean>(() => inputSelection !== undefined || inputOnSelectionChange !== undefined)
+  const inputState = useInputState<Selection>({
+    controlledValue: inputSelection,
     onChange: inputOnSelectionChange,
-    defaultValue: getDefaultSelection(),
+    initialUncontrolledValue: getDefaultSelection(),
   })
-  const selection = inputOrDisabledState?.value
-  const onSelectionChange = inputOrDisabledState?.onChange
+  const selection = isEnabled ? inputState.value : undefined
+  const onSelectionChange = isEnabled ? inputState.onChange : undefined
 
   const [rowByRowNumberAndOrderBy] = useState<Map<string, Map<number, number | undefined>>>(() => new Map())
   const [allRowsSelected, setAllRowsSelected] = useState<boolean | undefined>(areAllSelected({ numRows, selection }))
