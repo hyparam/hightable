@@ -21,6 +21,8 @@ interface CellNavigationContextType {
   colCount: number
   /** The total number of rows in the table */
   rowCount: number
+  /** whether the current cell should be scrolled to */
+  shouldScroll: boolean
   /**
    * Focus the current cell.
    *
@@ -47,6 +49,10 @@ interface CellNavigationContextType {
    * Scroll to and focus the current (active) cell.
    */
   goToCurrentCell?: () => void
+  /**
+   * Acknowledge that the current cell should be scrolled to (reset the shouldScroll state to false).
+   */
+  acknowledgeScroll: () => void
 }
 
 // the default context assumes a one-cell table (the top left corner is always present)
@@ -55,6 +61,8 @@ export const defaultCellNavigationContext: CellNavigationContextType = {
   colCount: 1,
   rowCount: 1,
   focusCurrentCell: undefined,
+  shouldScroll: false,
+  acknowledgeScroll: () => { /* no-op */ },
 }
 
 export const CellNavigationContext = createContext<CellNavigationContextType>(defaultCellNavigationContext)

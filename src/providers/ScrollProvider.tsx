@@ -20,7 +20,7 @@ type ScrollProviderProps = Pick<HighTableProps, 'padding'> & {
  */
 export function ScrollProvider({ children, headerHeight, numRows, padding = defaultPadding }: ScrollProviderProps) {
   const [{ scale, scrollTop, scrollTopAnchor, localOffset }, dispatch] = useReducer(scrollReducer, undefined, initializeScrollState)
-  const { cellPosition } = useContext(CellNavigationContext)
+  const { cellPosition, shouldScroll, acknowledgeScroll } = useContext(CellNavigationContext)
 
   const [scrollTo, setScrollTo] = useState<HTMLElement['scrollTo'] | undefined>(undefined)
   const setScrollTop = useCallback((scrollTop: number) => {
@@ -57,11 +57,12 @@ export function ScrollProvider({ children, headerHeight, numRows, padding = defa
    */
   useEffect(() => {
     const { rowIndex } = cellPosition
-    if (!scale || scrollTopAnchor === undefined) {
+    if (!scale || scrollTopAnchor === undefined || !shouldScroll) {
       return
     }
     const action = getScrollActionForRow({ rowIndex, scale, scrollTopAnchor, localOffset })
     if (!action) {
+      acknowledgeScroll()
       return
     }
     // side effect: scroll to the new position while updating the state optimistically
@@ -74,7 +75,8 @@ export function ScrollProvider({ children, headerHeight, numRows, padding = defa
     }
     // update the state
     dispatch(action)
-  }, [cellPosition, scrollTo, scrollTopAnchor, localOffset, scale])
+    acknowledgeScroll()
+  }, [shouldScroll, acknowledgeScroll, cellPosition, scrollTo, scrollTopAnchor, localOffset, scale])
 
   const value = useMemo(() => {
     return {
