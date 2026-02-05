@@ -11,13 +11,13 @@ interface OrderByContextType {
    */
   orderBy?: OrderBy
   /**
-   * Callback to call when a user interaction changes the order.
+   * Function to set the order.
    *
    * The interactions are disabled if undefined.
    *
    * @param orderBy The new orderBy value
    */
-  onOrderByChange?: (orderBy: OrderBy) => void
+  setOrderBy?: (orderBy: OrderBy) => void
 }
 
 export const defaultOrderByContext: OrderByContextType = {}

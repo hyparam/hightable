@@ -39,7 +39,7 @@ export default function Slice({
   stringify = stringifyDefault,
 }: SliceProps) {
   const { moveCell } = useContext(CellNavigationContext)
-  const { orderBy, onOrderByChange } = useContext(OrderByContext)
+  const { orderBy, setOrderBy } = useContext(OrderByContext)
   const { selectable, toggleAllRows, pendingSelectionGesture, onTableKeyDown: onSelectionTableKeyDown, allRowsSelected, isRowSelected, toggleRowNumber, toggleRangeToRowNumber } = useContext(SelectionContext)
   const { visibleColumnsParameters: columnsParameters } = useContext(ColumnVisibilityStatesContext)
   const { renderedRowsStart, renderedRowsEnd } = useContext(ScrollContext)
@@ -188,7 +188,7 @@ export default function Slice({
             canMeasureColumn={slice.canMeasureColumn}
             columnsParameters={columnsParameters}
             orderBy={orderBy}
-            onOrderByChange={onOrderByChange}
+            setOrderBy={setOrderBy}
             ariaRowIndex={1}
             exclusiveSort={data.exclusiveSort === true}
           />

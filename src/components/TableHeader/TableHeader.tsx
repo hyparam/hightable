@@ -10,7 +10,7 @@ interface TableHeaderProps {
   columnsParameters: ColumnParameters[]
   ariaRowIndex: number // aria row index for the header
   orderBy?: OrderBy // array of column order by clauses. If undefined, the table is unordered, the sort elements are hidden and the interactions are disabled.
-  onOrderByChange?: (orderBy: OrderBy) => void // callback to call when a user interaction changes the order. The interactions are disabled if undefined.
+  setOrderBy?: (orderBy: OrderBy) => void // function to set the order. The interactions are disabled if undefined.
   canMeasureColumn?: Record<string, boolean> // indicates if the width of a column can be measured.
   exclusiveSort?: boolean // whether to use exclusive sort mode
 }
@@ -19,17 +19,16 @@ interface TableHeaderProps {
  * Render a header for a table.
  */
 export default function TableHeader({
-  columnsParameters, orderBy, onOrderByChange, canMeasureColumn, ariaRowIndex, exclusiveSort,
+  columnsParameters, orderBy, setOrderBy, canMeasureColumn, ariaRowIndex, exclusiveSort,
 }: TableHeaderProps) {
   // Function to handle click for changing orderBy
   const getToggleOrderBy = useCallback((columnHeader: string) => {
-    if (!onOrderByChange || !orderBy) return undefined
+    if (!setOrderBy || !orderBy) return undefined
     return () => {
       const next = exclusiveSort ? toggleColumnExclusive(columnHeader, orderBy) : toggleColumn(columnHeader, orderBy)
-      onOrderByChange(next)
+      setOrderBy(next)
     }
-  }, [orderBy, onOrderByChange, exclusiveSort]
-  )
+  }, [orderBy, setOrderBy, exclusiveSort])
 
   const orderByColumn = useMemo(() => {
     return new Map((orderBy ?? []).map(({ column, direction }, index) => [column, { direction, index }]))
