@@ -24,7 +24,7 @@ export function OrderByProvider({ children, orderBy, onOrderByChange }: Props) {
 
   const value = useMemo(() => ({
     orderBy: state,
-    onOrderByChange: setState,
+    setOrderBy: setState,
   }), [state, setState])
 
   return (
