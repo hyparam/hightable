@@ -92,7 +92,6 @@ export function CellNavigationProvider({
     }
   }, [shouldFocus])
 
-  // TODO(SL): don't depend on cell, decoupling cell update from scrolling/focusing
   const moveCell = useMemo(() => {
     if (goToCell) {
       const { rowIndex, colIndex } = cellPosition
