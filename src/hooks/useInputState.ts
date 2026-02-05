@@ -108,7 +108,6 @@ export function useInputState<T>({ controlledValue, onChange, initialUncontrolle
     }
   })
 
-  // maybe an issue with the first render (don't notify the first value)
   useEffect(() => {
     notifyUncontrolledChange(localValue)
   }, [localValue])
