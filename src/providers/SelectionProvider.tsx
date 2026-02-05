@@ -36,8 +36,7 @@ export function SelectionProvider({ children, data, numRows, selection: inputSel
     onChange: inputOnSelectionChange,
     initialUncontrolledValue: getDefaultSelection(),
   })
-  const selection = isEnabled ? inputState.value : undefined
-  const onSelectionChange = isEnabled ? inputState.onChange : undefined
+  const [selection, onSelectionChange] = isEnabled ? inputState : [undefined, undefined]
 
   const [rowByRowNumberAndOrderBy] = useState<Map<string, Map<number, number | undefined>>>(() => new Map())
   const [allRowsSelected, setAllRowsSelected] = useState<boolean | undefined>(areAllSelected({ numRows, selection }))

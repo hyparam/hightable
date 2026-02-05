@@ -17,26 +17,31 @@ describe('useInputState', () => {
 
     it('the interactions are enabled', () => {
       const { result } = renderHook(() => useInputState({ controlledValue, onChange, initialUncontrolledValue }))
-      expect(result.current.onChange).toBeDefined()
+      const [, setValue] = result.current
+      expect(setValue).toBeDefined()
     })
 
     it('the initial value is controlledValue, not initialUncontrolledValue', () => {
       const { result } = renderHook(() => useInputState({ controlledValue, onChange, initialUncontrolledValue }))
-      expect(result.current.value).toBe(controlledValue)
+      const [value] = result.current
+      expect(value).toBe(controlledValue)
     })
 
     it('the onChange prop is called on input change and the value remains to the prop controlledValue', () => {
       const { result } = renderHook(() => useInputState({ controlledValue, onChange, initialUncontrolledValue }))
+      const [, setValue] = result.current
       act(() => {
-        result.current.onChange?.(newValue)
+        setValue?.(newValue)
       })
       expect(onChange).toHaveBeenCalledWith(newValue)
-      expect(result.current.value).toBe(controlledValue)
+      const [value] = result.current
+      expect(value).toBe(controlledValue)
     })
 
     it('if the onChange prop is undefined, the value remains to the prop controlledValue on input change, and the interactions are disabled', () => {
       const { result } = renderHook(() => useInputState({ controlledValue, initialUncontrolledValue }))
-      expect(result.current.onChange).toBeUndefined()
+      const [, setValue] = result.current
+      expect(setValue).toBeUndefined()
     })
 
     it('the prop controlledValue cannot be set to undefined afterwards', () => {
@@ -45,7 +50,8 @@ describe('useInputState', () => {
         rerender({ controlledValue: undefined, onChange, initialUncontrolledValue })
       })
       expect(onChange).not.toHaveBeenCalled()
-      expect(result.current.value).toBe(controlledValue)
+      const [value] = result.current
+      expect(value).toBe(controlledValue)
     })
   })
 
@@ -61,21 +67,25 @@ describe('useInputState', () => {
 
     it('the interactions are enabled', () => {
       const { result } = renderHook(() => useInputState({ onChange, initialUncontrolledValue }))
-      expect(result.current.onChange).toBeDefined()
+      const [, setValue] = result.current
+      expect(setValue).toBeDefined()
     })
 
     it('the initial value is initialUncontrolledValue', () => {
       const { result } = renderHook(() => useInputState({ onChange, initialUncontrolledValue }))
-      expect(result.current.value).toBe(initialUncontrolledValue)
+      const [value] = result.current
+      expect(value).toBe(initialUncontrolledValue)
     })
 
     it('the prop onChange function is called on input change and the value is set to the new value', () => {
       const { result } = renderHook(() => useInputState({ onChange, initialUncontrolledValue }))
+      const [, setValue] = result.current
       act(() => {
-        result.current.onChange?.(newValue)
+        setValue?.(newValue)
       })
       expect(onChange).toHaveBeenCalledWith(newValue)
-      expect(result.current.value).toBe(newValue)
+      const [value] = result.current
+      expect(value).toBe(newValue)
     })
 
     it('the prop controlledValue cannot be defined afterwards', () => {
@@ -84,7 +94,8 @@ describe('useInputState', () => {
         rerender({ controlledValue, onChange, initialUncontrolledValue })
       })
       expect(onChange).not.toHaveBeenCalled()
-      expect(result.current.value).toBe(initialUncontrolledValue)
+      const [value] = result.current
+      expect(value).toBe(initialUncontrolledValue)
     })
   })
 })
