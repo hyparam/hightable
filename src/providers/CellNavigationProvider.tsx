@@ -22,10 +22,10 @@ function reducer(state: FocusState, action: FocusAction): FocusState {
     case 'CANNOT_SCROLL_YET':
     case 'LOCAL_SCROLLING_STARTED':
       // one extra render is needed for local scrolling, or at start if the scroll parameters are not ready yet
-      // To avoid infinite loops in case of unexpected issues, we use a counter to stop trying to scroll after 5 attempts (2 should be enough).
-      if (state.counter >= 5) {
-        console.warn('Cannot scroll to the cell after 5 attempts, stopping the scroll-focus process to avoid infinite loops.')
-        return { status: 'idle', counter: 0 }
+      // To avoid infinite loops in case of unexpected issues, we use a counter to stop trying to scroll after 3 attempts (2 should be enough).
+      if (state.counter >= 3) {
+        // console.warn('Cannot scroll to the cell after 5 attempts. To avoid infinite loops, try to focus it now.')
+        return { status: 'should_focus', counter: 0 }
       }
       return { ...state, counter: state.counter + 1 }
     case 'GLOBAL_SCROLLING_STARTED':

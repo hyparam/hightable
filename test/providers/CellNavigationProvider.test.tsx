@@ -7,20 +7,17 @@ import { ColumnVisibilityStatesContext } from '../../src/contexts/ColumnVisibili
 import { CellNavigationProvider } from '../../src/providers/CellNavigationProvider.js'
 
 function RowCountComponent() {
-  const { cellPosition: { colIndex, rowIndex }, moveCell, focusCurrentCell } = useContext(CellNavigationContext)
+  const { cellPosition: { colIndex, rowIndex }, moveCell, focusState, focusDispatch } = useContext(CellNavigationContext)
 
   return (
     <div>
       <span data-testid="cell-position">{`col:${colIndex},row:${rowIndex}`}</span>
-      <span data-testid="should-focus">{`${focusCurrentCell !== undefined}`}</span>
+      <span data-testid="should-focus">{`${focusState.status !== 'idle'}`}</span>
       <button data-testid="go-to-row-10" onClick={() => { moveCell?.({ type: 'CELL', colIndex, rowIndex: 10 }) }}>Set Row to 10</button>
       <button
         data-testid="remove-focus"
         onClick={() => {
-          // jsdom does not provide scrollIntoView
-          const element = document.body
-          element.scrollIntoView = () => { /* no-op */ }
-          focusCurrentCell?.(element)
+          focusDispatch?.({ type: 'FOCUSED' })
         }}
       >
         Remove focus
