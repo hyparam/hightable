@@ -40,10 +40,16 @@ interface UseInputStateProps<T> {
  *
  */
 type UseInputStateResult<T> = [
-  /** the current input value */
-  value: T,
-  /** the callback to call when the input changes. If undefined, the user interactions (or optimistical updates) should be disabled. */
-  onChange?: ((value: T) => void)
+  /** the current state value */
+  T,
+  /**
+   * The state setter.
+   *
+   * Comparing to the useState setter:
+   * - it can be undefined, in which case the state cannot be set, i.e. the user interactions should be disabled;
+   * - it can only be called with the new value directly, and not with a function updater.
+   */
+  ((value: T) => void) | undefined
 ]
 
 /**
