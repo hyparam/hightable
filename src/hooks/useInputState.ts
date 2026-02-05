@@ -73,10 +73,6 @@ type UseInputStateResult<T> = [
  */
 export function useInputState<T>({ controlledValue, onChange, initialUncontrolledValue, notifyChange }: UseInputStateProps<T>): UseInputStateResult<T> {
   const [initialControlledValue] = useState<T | undefined>(controlledValue)
-
-  // for uncontrolled inputs
-  // the local state and the uncontrolledOnChange callback are created unconditionally to
-  // follow the Rules of Hooks, but are not used in controlled mode
   const [localValue, setLocalValue] = useState<T>(() => controlledValue ?? initialUncontrolledValue)
   const setLocalValueAndNotify = useCallback((value: T) => {
     setLocalValue(value)
