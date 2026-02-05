@@ -25,9 +25,14 @@ export function CellNavigationProvider({
   children,
 }: CellNavigationProviderProps) {
   const [shouldFocus, setShouldFocus] = useState(focus)
+  const [shouldScroll, setShouldScroll] = useState(focus)
+  const acknowledgeScroll = useCallback(() => {
+    setShouldScroll(false)
+  }, [])
 
   const notifyChange = useCallback(() => {
     setShouldFocus(true)
+    setShouldScroll(true)
   }, [])
 
   // restart scroll + focus process when the cell position changes,
@@ -169,8 +174,10 @@ export function CellNavigationProvider({
       moveCell,
       goToFirstCell,
       goToCurrentCell,
+      shouldScroll,
+      acknowledgeScroll,
     }
-  }, [cellPosition, colCount, rowCount, focusCurrentCell, moveCell, goToFirstCell, goToCurrentCell])
+  }, [cellPosition, colCount, rowCount, focusCurrentCell, moveCell, goToFirstCell, goToCurrentCell, shouldScroll, acknowledgeScroll])
 
   return (
     <CellNavigationContext.Provider value={value}>
