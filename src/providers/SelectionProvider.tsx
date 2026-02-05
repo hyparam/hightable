@@ -28,15 +28,16 @@ interface Gesture {
  *
  * Only the data rows can be selected, not the header row, so row numbers are 0-based.
  */
-export function SelectionProvider({ children, data, numRows, selection: inputSelection, onError, onSelectionChange: inputOnSelectionChange }: Props) {
+export function SelectionProvider({ children, data, numRows, selection: controlledSelection, onError, onSelectionChange }: Props) {
   const [previousNumRows, setPreviousNumRows] = useState(numRows)
-  const [isEnabled] = useState<boolean>(() => inputSelection !== undefined || inputOnSelectionChange !== undefined)
+  // The selection is only useful for the parent component. If no props are passed, hide the selection feature.
+  const [isEnabled] = useState<boolean>(() => controlledSelection !== undefined || onSelectionChange !== undefined)
   const inputState = useInputState<Selection>({
-    controlledValue: inputSelection,
-    onChange: inputOnSelectionChange,
+    controlledValue: controlledSelection,
+    onChange: onSelectionChange,
     initialUncontrolledValue: getDefaultSelection(),
   })
-  const [selection, onSelectionChange] = isEnabled ? inputState : [undefined, undefined]
+  const [selection, setSelection] = isEnabled ? inputState : [undefined, undefined]
 
   const [rowByRowNumberAndOrderBy] = useState<Map<string, Map<number, number | undefined>>>(() => new Map())
   const [allRowsSelected, setAllRowsSelected] = useState<boolean | undefined>(areAllSelected({ numRows, selection }))
@@ -93,21 +94,21 @@ export function SelectionProvider({ children, data, numRows, selection: inputSel
   }, [selection])
 
   const toggleRowNumber = useMemo(() => {
-    if (!selection || !onSelectionChange) {
+    if (!selection || !setSelection) {
       return undefined
     }
     return ({ rowNumber }: { rowNumber: number }) => {
       const gesture = startGesture()
       try {
-        onSelectionChange(toggleIndexInSelection({ selection, index: rowNumber }))
+        setSelection(toggleIndexInSelection({ selection, index: rowNumber }))
       } finally {
         stopGesture({ gesture })
       }
     }
-  }, [onSelectionChange, selection, startGesture, stopGesture])
+  }, [setSelection, selection, startGesture, stopGesture])
 
   const toggleRangeToRowNumber = useMemo(() => {
-    if (!selection || !onSelectionChange) {
+    if (!selection || !setSelection) {
       return undefined
     }
     return ({ row, rowNumber }: { row: number, rowNumber: number }) => {
@@ -115,7 +116,7 @@ export function SelectionProvider({ children, data, numRows, selection: inputSel
       const { signal } = gesture.controller
       toggleRange({ data, numRows, row, rowNumber, selection, orderBy, signal, rowByRowNumberAndOrderBy })
         .finally(() => { stopGesture({ gesture }) })
-        .then((newSelection) => { onSelectionChange(newSelection) })
+        .then((newSelection) => { setSelection(newSelection) })
         .catch((error: unknown) => {
           if (error instanceof Error && error.name === 'AbortError') {
           // the request was aborted, do nothing
@@ -124,17 +125,17 @@ export function SelectionProvider({ children, data, numRows, selection: inputSel
           onError?.(error)
         })
     }
-  }, [onSelectionChange, selection, rowByRowNumberAndOrderBy, data, numRows, orderBy, startGesture, stopGesture, onError])
+  }, [setSelection, selection, rowByRowNumberAndOrderBy, data, numRows, orderBy, startGesture, stopGesture, onError])
 
   const toggleAllRows = useMemo(() => {
-    if (!selection || !onSelectionChange) return
+    if (!selection || !setSelection) return
     return () => {
       const gesture = startGesture()
       const { signal } = gesture.controller
       // toggle a range to the row number
       toggleAll({ data, numRows, selection, signal })
         .finally(() => { stopGesture({ gesture }) })
-        .then((newSelection) => { onSelectionChange(newSelection) })
+        .then((newSelection) => { setSelection(newSelection) })
         .catch((error: unknown) => {
           if (error instanceof Error && error.name === 'AbortError') {
             // the request was aborted, do nothing
@@ -143,7 +144,7 @@ export function SelectionProvider({ children, data, numRows, selection: inputSel
           onError?.(error)
         })
     }
-  }, [onSelectionChange, data, numRows, selection, startGesture, stopGesture, onError])
+  }, [setSelection, data, numRows, selection, startGesture, stopGesture, onError])
 
   const onTableKeyDown = useCallback((event: KeyboardEvent) => {
     const { key, shiftKey } = event
@@ -152,7 +153,7 @@ export function SelectionProvider({ children, data, numRows, selection: inputSel
       const gesture = startGesture()
       try {
         // if the user presses Escape, we want to clear the selection
-        onSelectionChange?.(getDefaultSelection())
+        setSelection?.(getDefaultSelection())
       } finally {
         stopGesture({ gesture })
       }
@@ -162,10 +163,10 @@ export function SelectionProvider({ children, data, numRows, selection: inputSel
       // if the user presses Ctrl+A, we want to select all rows
       event.preventDefault()
       // only select if selection is enabled, but prevent the default behavior in all cases for consistency
-      if (selection && onSelectionChange) {
+      if (selection && setSelection) {
         toggleAll({ data, numRows, selection, signal })
           .finally(() => { stopGesture({ gesture }) })
-          .then((newSelection) => { onSelectionChange(newSelection) })
+          .then((newSelection) => { setSelection(newSelection) })
           .catch((error: unknown) => {
             if (error instanceof Error && error.name === 'AbortError') {
               // the request was aborted, do nothing
@@ -177,7 +178,7 @@ export function SelectionProvider({ children, data, numRows, selection: inputSel
     } else if (key === ' ' && shiftKey) {
       // if the user presses Shift+Space, we want to toggle the current row in the selection
       const { target } = event
-      if (!selection || !onSelectionChange || !(target instanceof HTMLTableCellElement)) {
+      if (!selection || !setSelection || !(target instanceof HTMLTableCellElement)) {
         return
       }
       const index = Number(target.getAttribute('data-rownumber'))
@@ -188,12 +189,12 @@ export function SelectionProvider({ children, data, numRows, selection: inputSel
       event.preventDefault()
       const gesture = startGesture()
       try {
-        onSelectionChange({ ranges: toggleIndex({ ranges: selection.ranges, index }), anchor: index })
+        setSelection({ ranges: toggleIndex({ ranges: selection.ranges, index }), anchor: index })
       } finally {
         stopGesture({ gesture })
       }
     }
-  }, [selection, onSelectionChange, startGesture, stopGesture, data, numRows, onError])
+  }, [selection, setSelection, startGesture, stopGesture, data, numRows, onError])
 
   useEffect(() => {
     if (!selection) return undefined
