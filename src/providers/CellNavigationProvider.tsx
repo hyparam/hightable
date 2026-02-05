@@ -76,7 +76,7 @@ export function CellNavigationProvider({
     if (shouldFocus) {
       return (element: HTMLElement) => {
         // horizontally scroll the cell into view and focus it, once the row is rendered and scrolled into view vertically
-        // (thanks to the scrollRowIntoView function)
+        // vertical scrolling happens automatically in ScrollProvider's useEffect when cellPosition changes
         //
         // scroll-padding-inline-start is set in the CSS
         // to avoid the cell being hidden by the row headers
