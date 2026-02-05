@@ -10,6 +10,7 @@ import type { Fetch, ResolvedValue } from '../../helpers/dataframe/types.js'
 import type { Selection } from '../../helpers/selection.js'
 import type { OrderBy } from '../../helpers/sort.js'
 import { createEventTarget } from '../../helpers/typedEventTarget.js'
+import type { CellPosition } from '../../types.js'
 import type { CellContentProps } from '../Cell/Cell.js'
 import HighTable from './HighTable.js'
 
@@ -639,5 +640,45 @@ export const LargeData: Story = {
 export const SmallData: Story = {
   args: {
     data: createSmallData(),
+  },
+}
+
+export const JumpToCell: Story = {
+  render: ({ data }) => {
+    const [cellPosition, setCellPosition] = useState<CellPosition>({
+      rowIndex: 500,
+      colIndex: 2,
+    })
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
+        <div style={{ marginBottom: '12px' }}>
+          <button type="button" onClick={() => { setCellPosition({ rowIndex: 1, colIndex: 1 }) }} style={{ marginRight: '8px' }}>
+            Go to row 1, column 1
+          </button>
+          <button type="button" onClick={() => { setCellPosition({ rowIndex: 2, colIndex: 2 }) }} style={{ marginRight: '8px' }}>
+            Go to row 2, column 2
+          </button>
+          <button type="button" onClick={() => { setCellPosition({ rowIndex: 500, colIndex: 2 }) }} style={{ marginRight: '8px' }}>
+            Go to row 500, column 2
+          </button>
+          <button type="button" onClick={() => { setCellPosition({ rowIndex: 999, colIndex: 1 }) }} style={{ marginRight: '8px' }}>
+            Go to row 999, column 1
+          </button>
+          <button type="button" onClick={() => { setCellPosition({ rowIndex: 750, colIndex: 4 }) }}>
+            Go to row 750, column 4
+          </button>
+        </div>
+        {/* focus is broken */}
+        <HighTable
+          data={data}
+          cellPosition={cellPosition}
+          onCellPositionChange={setCellPosition}
+        />
+      </div>
+    )
+  },
+  args: {
+    // data: createUnsortableData(),
+    data: createLargeData(),
   },
 }

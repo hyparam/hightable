@@ -20,6 +20,7 @@ import Slice from './Slice.js'
 export default function HighTable({
   columnConfiguration,
   cacheKey,
+  cellPosition,
   className = '',
   data,
   focus,
@@ -29,6 +30,7 @@ export default function HighTable({
   padding,
   selection,
   styled = true,
+  onCellPositionChange,
   onColumnsVisibilityChange,
   onError,
   onOrderByChange,
@@ -130,9 +132,11 @@ export default function HighTable({
 
                   <CellNavigationProvider
                     key={dataId}
+                    cellPosition={cellPosition}
                     focus={focus}
                     numRows={numRows}
                     numRowsPerPage={numRowsPerPage}
+                    onCellPositionChange={onCellPositionChange}
                   >
                     <ScrollProvider
                       numRows={numRows}

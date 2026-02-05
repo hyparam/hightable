@@ -8,7 +8,7 @@ import { defaultNumRowsPerPage } from '../helpers/constants.js'
 import { useInputState } from '../hooks/useInputState.js'
 import type { HighTableProps } from '../types.js'
 
-type CellNavigationProviderProps = Pick<HighTableProps, 'focus' | 'numRowsPerPage'> & {
+type CellNavigationProviderProps = Pick<HighTableProps, 'cellPosition' | 'focus' | 'numRowsPerPage' | 'onCellPositionChange'> & {
   /** The actual number of rows in the data frame */
   numRows: number
   /** Children elements */
@@ -48,9 +48,11 @@ function initializeFocusState(focus: boolean): FocusState {
  * Provide the cell navigation state and logic to the table, through the CellNavigationContext.
  */
 export function CellNavigationProvider({
+  cellPosition: controlledCellPosition,
   focus = true,
   numRows: numDataRows,
   numRowsPerPage = defaultNumRowsPerPage,
+  onCellPositionChange,
   children,
 }: CellNavigationProviderProps) {
   const [focusState, focusDispatch] = useReducer(reducer, focus, initializeFocusState)
@@ -60,8 +62,11 @@ export function CellNavigationProvider({
   }, [])
 
   // restart scroll + focus process when the cell position changes,
-  // to ensure the cell is scrolled into view and focused when it changes.
+  // to ensure the cell is scrolled into view and focused when it changes,
+  // even from an external source (e.g. clicking on a cell, or updating the cell position from an external source)
   const [cellPosition, goToCell] = useInputState({
+    controlledValue: controlledCellPosition,
+    onChange: onCellPositionChange,
     initialUncontrolledValue: { colIndex: 1, rowIndex: 1 },
     notifyChange,
   })

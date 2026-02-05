@@ -35,6 +35,14 @@ export interface HighTableProps {
 
   /** Key used to persist column widths in localStorage. If undefined, the column widths are not persisted. It is expected to be unique for each table. */
   cacheKey?: string
+  /**
+   * The current cell position. If undefined, the component manages the active cell position internally.
+   *
+   * This prop is expected to stay in the same mode during the lifecycle of the component:
+   * - if it is set on the first render, the component is in controlled mode and the parent component is responsible for updating the 'cellPosition' prop on user interactions (see onCellPositionChange);
+   * - if it is undefined on the first render, the component is in uncontrolled mode and manages the active cell position internally.
+   */
+  cellPosition?: CellPosition
   /** Additional CSS class names for the component */
   className?: string
   /** User-provided configuration for the columns, keyed by column name */
@@ -58,6 +66,20 @@ export interface HighTableProps {
 
   // optional function props
 
+  /**
+   * Optional function called when the active cell position changes.
+   *
+   * - if uncontrolled (cellPosition prop is not set): this callback is called on top of the local state setter, e.g. to notify the parent of the local change.
+   * - if controlled (cellPosition prop is set): this callback is called to notify the parent of the requested change, and it's the responsibility of the parent
+   *   component to update the 'cellPosition' prop on next render (the user interaction will not trigger a change of the active cell if the parent does not update the 'cellPosition' prop accordingly).
+   *
+   * If the callback is undefined (default):
+   * - in uncontrolled mode (default), the cell position is updated locally but the parent is not notified.
+   * - in controlled mode, the component is read-only, and the cell position cannot be changed by user interactions.
+   *
+   * @param cellPosition The new active cell position
+   */
+  onCellPositionChange?: (cellPosition: CellPosition) => void
   /**
    * Optional function called whenever the set of hidden columns changes.
    *
