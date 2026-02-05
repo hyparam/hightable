@@ -31,7 +31,7 @@ function reducer(state: FocusState, action: FocusAction): FocusState {
     case 'GLOBAL_SCROLLING_STARTED':
       return { status: 'scrolling_into_view', counter: 0 }
     case 'SCROLLED_EVENT_RECEIVED':
-      return state.status === 'scrolling_into_view' ? { status: 'should_focus', counter: 0 } : state
+      return state.status === 'scrolling_into_view' ? { status: 'should_scroll_into_view', counter: 0 } : state
     case 'NO_NEED_TO_SCROLL':
       return { status: 'should_focus', counter: 0 }
     case 'FOCUSED':
