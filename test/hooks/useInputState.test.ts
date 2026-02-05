@@ -31,6 +31,14 @@ describe('useInputState', () => {
       expect(onChange).toHaveBeenCalledExactlyOnceWith(newValue)
     })
 
+    it('onChange is not called when controlledValue changes', () => {
+      const { rerender } = renderHook(({ controlledValue }) => useInputState({ controlledValue, onChange, initialUncontrolledValue }), { initialProps: { controlledValue } })
+      act(() => {
+        rerender({ controlledValue: newValue })
+      })
+      expect(onChange).not.toHaveBeenCalled()
+    })
+
     it('the initial state value is controlledValue, not initialUncontrolledValue', () => {
       const { result } = renderHook(() => useInputState({ controlledValue, onChange, initialUncontrolledValue }))
       const [value] = result.current
@@ -48,7 +56,7 @@ describe('useInputState', () => {
       expect(value).toBe(controlledValue)
     })
 
-    it.each([onChange, undefined])('the prop controlledValue cannot be set to undefined afterwards, no matter the value of onChange', (onChangeProp) => {
+    it.each([onChange, undefined])('controlledValue cannot be set to undefined afterwards, no matter the value of onChange', (onChangeProp) => {
       const { result, rerender } = renderHook(() => useInputState({ controlledValue, onChange: onChangeProp, initialUncontrolledValue }))
       act(() => {
         rerender({ controlledValue: undefined, onChange: onChangeProp, initialUncontrolledValue })
@@ -72,12 +80,14 @@ describe('useInputState', () => {
       expect(notifyChange).toHaveBeenCalledExactlyOnceWith()
     })
 
-    it('onChange is not called when the controlledValue changes', () => {
-      const { rerender } = renderHook(({ controlledValue }) => useInputState({ controlledValue, onChange, initialUncontrolledValue }), { initialProps: { controlledValue } })
+    it('notifyChange is not called when setting the state (ie. calling onChange)', () => {
+      const notifyChange = vi.fn()
+      const { result } = renderHook(() => useInputState({ controlledValue, onChange, initialUncontrolledValue, notifyChange }))
+      const [, setValue] = result.current
       act(() => {
-        rerender({ controlledValue: newValue })
+        setValue?.(newValue)
       })
-      expect(onChange).not.toHaveBeenCalled()
+      expect(notifyChange).not.toHaveBeenCalled()
     })
   })
 
