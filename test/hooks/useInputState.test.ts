@@ -15,43 +15,79 @@ describe('useInputState', () => {
       vi.clearAllMocks()
     })
 
-    it('the interactions are enabled', () => {
-      const { result } = renderHook(() => useInputState({ controlledValue, onChange, initialUncontrolledValue }))
-      const [, setValue] = result.current
-      expect(setValue).toBeDefined()
-    })
-
-    it('the initial value is controlledValue, not initialUncontrolledValue', () => {
-      const { result } = renderHook(() => useInputState({ controlledValue, onChange, initialUncontrolledValue }))
-      const [value] = result.current
-      expect(value).toBe(controlledValue)
-    })
-
-    it('the onChange prop is called on input change and the value remains to the prop controlledValue', () => {
-      const { result } = renderHook(() => useInputState({ controlledValue, onChange, initialUncontrolledValue }))
-      const [, setValue] = result.current
-      act(() => {
-        setValue?.(newValue)
-      })
-      expect(onChange).toHaveBeenCalledWith(newValue)
-      const [value] = result.current
-      expect(value).toBe(controlledValue)
-    })
-
-    it('if the onChange prop is undefined, the value remains to the prop controlledValue on input change, and the interactions are disabled', () => {
+    it('if onChange is undefined, the state setter is undefined', () => {
       const { result } = renderHook(() => useInputState({ controlledValue, initialUncontrolledValue }))
       const [, setValue] = result.current
       expect(setValue).toBeUndefined()
     })
 
-    it('the prop controlledValue cannot be set to undefined afterwards', () => {
-      const { result, rerender } = renderHook(() => useInputState({ controlledValue, onChange, initialUncontrolledValue }))
+    it('if onChange is defined, the state setter is equal to onChange, and thus onChange is called when setting a new value', () => {
+      const { result } = renderHook(() => useInputState({ controlledValue, onChange, initialUncontrolledValue }))
+      const [, setValue] = result.current
+      expect(setValue).toEqual(onChange)
       act(() => {
-        rerender({ controlledValue: undefined, onChange, initialUncontrolledValue })
+        setValue?.(newValue)
+      })
+      expect(onChange).toHaveBeenCalledExactlyOnceWith(newValue)
+    })
+
+    it('onChange is not called when controlledValue changes', () => {
+      const { rerender } = renderHook(({ controlledValue }) => useInputState({ controlledValue, onChange, initialUncontrolledValue }), { initialProps: { controlledValue } })
+      act(() => {
+        rerender({ controlledValue: newValue })
       })
       expect(onChange).not.toHaveBeenCalled()
+    })
+
+    it('the initial state value is controlledValue, not initialUncontrolledValue', () => {
+      const { result } = renderHook(() => useInputState({ controlledValue, onChange, initialUncontrolledValue }))
       const [value] = result.current
       expect(value).toBe(controlledValue)
+      expect(value).not.toBe(initialUncontrolledValue)
+    })
+
+    it.each([onChange, undefined])('after calling the state setter, the value is still controlledValue (as the state is controlled), no matter the value of onChange', (onChangeProp) => {
+      const { result } = renderHook(() => useInputState({ controlledValue, onChange: onChangeProp, initialUncontrolledValue }))
+      const [, setValue] = result.current
+      act(() => {
+        setValue?.(newValue)
+      })
+      const [value] = result.current
+      expect(value).toBe(controlledValue)
+    })
+
+    it.each([onChange, undefined])('controlledValue cannot be set to undefined afterwards, no matter the value of onChange', (onChangeProp) => {
+      const { result, rerender } = renderHook(() => useInputState({ controlledValue, onChange: onChangeProp, initialUncontrolledValue }))
+      act(() => {
+        rerender({ controlledValue: undefined, onChange: onChangeProp, initialUncontrolledValue })
+      })
+      const [value] = result.current
+      expect(value).toBe(controlledValue)
+    })
+
+    it.each([onChange, undefined])('notifyChange is not called on init, no matter the value of onChange', (onChangeProp) => {
+      const notifyChange = vi.fn()
+      renderHook(() => useInputState({ controlledValue, onChange: onChangeProp, initialUncontrolledValue, notifyChange }))
+      expect(notifyChange).not.toHaveBeenCalled()
+    })
+
+    it.each([onChange, undefined])('notifyChange is called when the controlledValue changes, no matter the value of onChange', (onChangeProp) => {
+      const notifyChange = vi.fn()
+      const { rerender } = renderHook(({ controlledValue }) => useInputState({ controlledValue, onChange: onChangeProp, initialUncontrolledValue, notifyChange }), { initialProps: { controlledValue } })
+      act(() => {
+        rerender({ controlledValue: newValue })
+      })
+      expect(notifyChange).toHaveBeenCalledExactlyOnceWith(newValue)
+    })
+
+    it('notifyChange is not called when setting the state (ie. calling onChange)', () => {
+      const notifyChange = vi.fn()
+      const { result } = renderHook(() => useInputState({ controlledValue, onChange, initialUncontrolledValue, notifyChange }))
+      const [, setValue] = result.current
+      act(() => {
+        setValue?.(newValue)
+      })
+      expect(notifyChange).not.toHaveBeenCalled()
     })
   })
 
@@ -65,37 +101,63 @@ describe('useInputState', () => {
       vi.clearAllMocks()
     })
 
-    it('the interactions are enabled', () => {
-      const { result } = renderHook(() => useInputState({ onChange, initialUncontrolledValue }))
+    it.each([onChange, undefined])('a state setter is returned and updates the state value, no matter the value of onChange', (onChangeProp) => {
+      const { result } = renderHook(() => useInputState({ onChange: onChangeProp, initialUncontrolledValue }))
       const [, setValue] = result.current
       expect(setValue).toBeDefined()
-    })
-
-    it('the initial value is initialUncontrolledValue', () => {
-      const { result } = renderHook(() => useInputState({ onChange, initialUncontrolledValue }))
+      act(() => {
+        setValue?.(newValue)
+      })
       const [value] = result.current
-      expect(value).toBe(initialUncontrolledValue)
+      expect(value).toBe(newValue)
     })
 
-    it('the prop onChange function is called on input change and the value is set to the new value', () => {
+    it('if onChange is defined, it is called on input change', () => {
       const { result } = renderHook(() => useInputState({ onChange, initialUncontrolledValue }))
       const [, setValue] = result.current
       act(() => {
         setValue?.(newValue)
       })
-      expect(onChange).toHaveBeenCalledWith(newValue)
-      const [value] = result.current
-      expect(value).toBe(newValue)
+      expect(onChange).toHaveBeenCalledExactlyOnceWith(newValue)
     })
 
-    it('the prop controlledValue cannot be defined afterwards', () => {
-      const { result, rerender } = renderHook(() => useInputState({ onChange, initialUncontrolledValue }))
+    it.each([onChange, undefined])('the initial value is initialUncontrolledValue, no matter the value of onChange', (onChangeProp) => {
+      const { result } = renderHook(() => useInputState({ onChange: onChangeProp, initialUncontrolledValue }))
+      const [value] = result.current
+      expect(value).toBe(initialUncontrolledValue)
+    })
+
+    it.each([onChange, undefined])('if controlledValue is defined afterward, the value is ignored, no matter the value of onChange', (onChangeProp) => {
+      const { result, rerender } = renderHook(() => useInputState({ onChange: onChangeProp, initialUncontrolledValue }))
+      act(() => {
+        rerender({ controlledValue, onChange: onChangeProp, initialUncontrolledValue })
+      })
+      const [value] = result.current
+      expect(value).toBe(initialUncontrolledValue)
+    })
+
+    it('if controlledValue is defined afterward, onChange is not called if defined', () => {
+      const { rerender } = renderHook(() => useInputState({ onChange, initialUncontrolledValue }))
       act(() => {
         rerender({ controlledValue, onChange, initialUncontrolledValue })
       })
       expect(onChange).not.toHaveBeenCalled()
-      const [value] = result.current
-      expect(value).toBe(initialUncontrolledValue)
+    })
+
+    it('notifyChange is not called on init', () => {
+      const notifyChange = vi.fn()
+      renderHook(() => useInputState({ onChange, initialUncontrolledValue, notifyChange }))
+      expect(notifyChange).not.toHaveBeenCalled()
+    })
+
+    it('notifyChange is called when the value changes', () => {
+      const notifyChange = vi.fn()
+      const { result } = renderHook(() => useInputState({ onChange, initialUncontrolledValue, notifyChange }))
+      const [, setValue] = result.current
+      act(() => {
+        setValue?.(newValue)
+      })
+      expect(notifyChange).toHaveBeenCalledExactlyOnceWith(newValue)
     })
   })
 })
