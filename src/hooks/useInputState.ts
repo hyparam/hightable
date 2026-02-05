@@ -33,6 +33,16 @@ interface UseInputStateProps<T> {
    * Contrary to the 'controlledValue' prop, this callback can be toggled between defined and undefined at any time.
    */
   onChange?: ((value: T) => void)
+  /**
+   * The optional callback to call when the state value changed, either from the local state or from the controlled value.
+   *
+   * The difference with the onChange callback is that this callback is called whenever the value changes,
+   * regardless of the mode (controlled or uncontrolled), and even if the change is not triggered by a user
+   * interaction (e.g. when the controlled value changes from an external source).
+   *
+   * Also note that the value is not passed.
+   */
+  notifyChange?: () => void
 }
 
 /**
@@ -61,17 +71,36 @@ type UseInputStateResult<T> = [
  *
  * If the initial controlled value is defined, but not the onChange prop, the input is read-only (no interactions).
  */
-export function useInputState<T>({ controlledValue, onChange, initialUncontrolledValue }: UseInputStateProps<T>): UseInputStateResult<T> {
+export function useInputState<T>({ controlledValue, onChange, initialUncontrolledValue, notifyChange }: UseInputStateProps<T>): UseInputStateResult<T> {
   const [initialControlledValue] = useState<T | undefined>(controlledValue)
 
   // for uncontrolled inputs
   // the local state and the uncontrolledOnChange callback are created unconditionally to
   // follow the Rules of Hooks, but are not used in controlled mode
-  const [localValue, setLocalValue] = useState<T>(initialUncontrolledValue)
+  const [localValue, setLocalValue] = useState<T>(() => controlledValue ?? initialUncontrolledValue)
+  const setLocalValueAndNotify = useCallback((value: T) => {
+    setLocalValue(value)
+    notifyChange?.()
+  }, [notifyChange])
+
   const uncontrolledOnChange = useCallback((value: T) => {
     onChange?.(value)
-    setLocalValue(value)
-  }, [onChange])
+    setLocalValueAndNotify(value)
+  }, [onChange, setLocalValueAndNotify])
+
+  if (
+    initialControlledValue !== undefined
+    && controlledValue !== localValue
+    && (
+      controlledValue !== undefined
+      // if controlledValue is undefined, set localValue to initialControlledValue, but only once
+      || localValue !== initialControlledValue
+    )
+  ) {
+    // if the input is controlled and the value has changed,
+    // store the new value, and notify the change.
+    setLocalValueAndNotify(controlledValue ?? initialControlledValue)
+  }
 
   return useMemo(() => {
     // The input is forever in one of these two modes:
