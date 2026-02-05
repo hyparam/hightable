@@ -1,4 +1,4 @@
-import { useCallback, useContext, useMemo } from 'react'
+import { useContext, useMemo } from 'react'
 
 import { CellNavigationContext } from '../contexts/CellNavigationContext.js'
 
@@ -13,14 +13,14 @@ interface CellFocus {
   /** ref callback to focus the cell if it is the current navigation cell and needs to be focused. Undefined otherwise. */
   focusIfNeeded?: (element: HTMLElement | null) => void
   /** function to set the cell as the current navigation cell */
-  navigateToCell: () => void
+  navigateToCell?: () => void
 }
 
 export function useCellFocus({ ariaColIndex, ariaRowIndex }: CellData): CellFocus {
-  const { cell, moveCell, focusCurrentCell } = useContext(CellNavigationContext)
+  const { cellPosition, moveCell, focusCurrentCell } = useContext(CellNavigationContext)
 
   // Check if the cell is the current navigation cell
-  const isCurrentCell = ariaColIndex === cell.colIndex && ariaRowIndex === cell.rowIndex
+  const isCurrentCell = ariaColIndex === cellPosition.colIndex && ariaRowIndex === cellPosition.rowIndex
 
   const focusIfNeeded = useMemo(() => {
     if (isCurrentCell && focusCurrentCell) {
@@ -36,8 +36,12 @@ export function useCellFocus({ ariaColIndex, ariaRowIndex }: CellData): CellFocu
   // All other cells are focusable only with javascript .focus() (tabindex = -1)
   const tabIndex = isCurrentCell ? 0 : -1
 
-  const navigateToCell = useCallback(() => {
-    moveCell({ type: 'CELL', colIndex: ariaColIndex, rowIndex: ariaRowIndex })
+  const navigateToCell = useMemo(() => {
+    if (moveCell) {
+      return () => {
+        moveCell({ type: 'CELL', colIndex: ariaColIndex, rowIndex: ariaRowIndex })
+      }
+    }
   }, [moveCell, ariaColIndex, ariaRowIndex])
 
   return {

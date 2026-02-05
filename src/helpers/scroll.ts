@@ -24,10 +24,8 @@ export interface Scale {
  * - scrollTopAnchor: the scrollTop position that anchors the virtual scroll calculations. It differs from scrollTop when local scrolling is applied.
  * - localOffset: the local offset added to the virtual scrollTop to scroll locally (for small scroll deltas)
  * - scale: the scale mapping scrollTop to virtual scrollTop
- * - isScrollingProgrammatically: semaphore telling whether a programmatic scroll action is in progress
  */
 export interface ScrollState {
-  isScrollingProgrammatically: boolean
   scale: Scale | undefined
   scrollTop: number | undefined
   scrollTopAnchor: number | undefined
@@ -43,7 +41,6 @@ type ScrollAction
 
 export function initializeScrollState(): ScrollState {
   return {
-    isScrollingProgrammatically: false,
     scale: undefined,
     scrollTop: undefined,
     scrollTopAnchor: undefined,
@@ -86,21 +83,17 @@ export function scrollReducer(state: ScrollState, action: ScrollAction): ScrollS
     }
     case 'SCROLL_TO': {
       // update the state optimistically, while waiting for the scroll event to arrive
-      return {
-        ...scrollReducer(state, { type: 'GLOBAL_SCROLL', scrollTop: action.scrollTop }),
-        isScrollingProgrammatically: true,
-      }
+      return scrollReducer(state, { type: 'GLOBAL_SCROLL', scrollTop: action.scrollTop })
     }
     case 'ON_SCROLL': {
       const { scrollTop } = action
 
       const { localOffset, scrollTopAnchor, scrollTop: oldScrollTop, scale } = state
 
-      // in either case, after a scroll event, save the scrollTop value, and clear the isScrollingProgrammatically semaphore
+      // in either case, after a scroll event, save the scrollTop value
       const nextState = {
         ...state,
         scrollTop,
-        isScrollingProgrammatically: false,
       }
 
       const delta = oldScrollTop === undefined ? undefined : scrollTop - oldScrollTop
@@ -145,7 +138,7 @@ export function scrollReducer(state: ScrollState, action: ScrollAction): ScrollS
 }
 
 /* Compute the derived values */
-export function computeDerivedValues({ scale, scrollTop, scrollTopAnchor, localOffset, padding }: Omit<ScrollState, 'isScrollingProgrammatically'> & { padding: number }): {
+export function computeDerivedValues({ scale, scrollTop, scrollTopAnchor, localOffset, padding }: ScrollState & { padding: number }): {
   sliceTop?: number | undefined
   visibleRowsStart?: number | undefined
   visibleRowsEnd?: number | undefined
@@ -318,7 +311,8 @@ export function getScrollActionForRow({
   const { headerHeight, rowHeight, numRows } = scale.parameters
 
   if (rowIndex < 1 || rowIndex > numRows + 1 || !Number.isInteger(rowIndex)) {
-    throw new Error(`Invalid row index: ${rowIndex}. It should be an integer between 1 and ${numRows + 1}.`)
+    console.warn(`Invalid row index: ${rowIndex}. It should be an integer between 1 and ${numRows + 1}.`)
+    return
   }
 
   if (rowIndex === 1) {

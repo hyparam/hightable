@@ -24,7 +24,7 @@ export default function TableCorner({ children, checked, onCheckboxPress, pendin
   }, [focusIfNeeded])
 
   const handleClick = useCallback(() => {
-    navigateToCell()
+    navigateToCell?.()
     onCheckboxPress?.()
   }, [onCheckboxPress, navigateToCell])
   const handleKeyDown = useCallback((event: KeyboardEvent) => {

@@ -7,13 +7,13 @@ import { ColumnVisibilityStatesContext } from '../../src/contexts/ColumnVisibili
 import { CellNavigationProvider } from '../../src/providers/CellNavigationProvider.js'
 
 function RowCountComponent() {
-  const { cell: { colIndex, rowIndex }, moveCell, focusCurrentCell } = useContext(CellNavigationContext)
+  const { cellPosition: { colIndex, rowIndex }, moveCell, focusCurrentCell } = useContext(CellNavigationContext)
 
   return (
     <div>
       <span data-testid="cell-position">{`col:${colIndex},row:${rowIndex}`}</span>
       <span data-testid="should-focus">{`${focusCurrentCell !== undefined}`}</span>
-      <button data-testid="go-to-row-10" onClick={() => { moveCell({ type: 'CELL', colIndex, rowIndex: 10 }) }}>Set Row to 10</button>
+      <button data-testid="go-to-row-10" onClick={() => { moveCell?.({ type: 'CELL', colIndex, rowIndex: 10 }) }}>Set Row to 10</button>
       <button
         data-testid="remove-focus"
         onClick={() => {
@@ -29,11 +29,11 @@ function RowCountComponent() {
   )
 }
 function ColCountComponent() {
-  const { cell: { colIndex, rowIndex }, moveCell } = useContext(CellNavigationContext)
+  const { cellPosition: { colIndex, rowIndex }, moveCell } = useContext(CellNavigationContext)
   return (
     <div>
       <span data-testid="cell-position">{`col:${colIndex},row:${rowIndex}`}</span>
-      <button data-testid="go-to-col-10" onClick={() => { moveCell({ type: 'CELL', colIndex: 10, rowIndex }) }}>Set Col to 10</button>
+      <button data-testid="go-to-col-10" onClick={() => { moveCell?.({ type: 'CELL', colIndex: 10, rowIndex }) }}>Set Col to 10</button>
     </div>
   )
 }

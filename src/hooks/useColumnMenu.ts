@@ -3,7 +3,7 @@ import { useCallback, useId, useState } from 'react'
 
 export function useColumnMenu(
   ref: RefObject<HTMLTableCellElement | null>,
-  navigateToCell: () => void
+  navigateToCell?: () => void
 ) {
   const [position, setPosition] = useState({ left: 0, top: 0 })
   const [isOpen, setIsOpen] = useState(false)
@@ -25,7 +25,7 @@ export function useColumnMenu(
         top: rect?.bottom ?? 0,
       })
 
-      navigateToCell()
+      navigateToCell?.()
       setIsOpen(current => !current)
     },
     [ref, navigateToCell]
