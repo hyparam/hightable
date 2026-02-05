@@ -208,9 +208,8 @@ function createFilteredData(): DataFrame {
   return df
 }
 
-function createLargeData(): DataFrame {
-  // 1 peta rows (1 million billion, 10^15)
-  const numRows = 1_000_000_000_000_000
+function createLargeData(numRows = 1_000_000_000_000_000): DataFrame {
+  // default: 1 peta rows (1 million billion, 10^15)
   const columnDescriptors = ['ID1', 'LongString1', 'Value1', 'ID2', 'LongString2', 'Value2', 'ID3', 'LongString3', 'Value3', 'ID4', 'LongString4', 'Value4'].map(name => ({ name }))
   function getCell({ row, column }: { row: number, column: string }): ResolvedValue | undefined {
     return {
@@ -650,22 +649,22 @@ export const JumpToCell: Story = {
       colIndex: 2,
     })
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
-        <div style={{ marginBottom: '12px' }}>
-          <button type="button" onClick={() => { setCellPosition({ rowIndex: 1, colIndex: 1 }) }} style={{ marginRight: '8px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+        <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', padding: '12px' }}>
+          <button type="button" onClick={() => { setCellPosition({ rowIndex: 1, colIndex: 1 }) }}>
             Go to row 1, column 1
           </button>
-          <button type="button" onClick={() => { setCellPosition({ rowIndex: 2, colIndex: 2 }) }} style={{ marginRight: '8px' }}>
+          <button type="button" onClick={() => { setCellPosition({ rowIndex: 2, colIndex: 2 }) }}>
             Go to row 2, column 2
           </button>
-          <button type="button" onClick={() => { setCellPosition({ rowIndex: 500, colIndex: 2 }) }} style={{ marginRight: '8px' }}>
-            Go to row 500, column 2
-          </button>
-          <button type="button" onClick={() => { setCellPosition({ rowIndex: 100_000, colIndex: 1 }) }} style={{ marginRight: '8px' }}>
-            Go to row 100,000, column 1
+          <button type="button" onClick={() => { setCellPosition({ rowIndex: 500, colIndex: 3 }) }}>
+            Go to row 500, column 3
           </button>
           <button type="button" onClick={() => { setCellPosition({ rowIndex: 100_000_000, colIndex: 2 }) }}>
             Go to row 100,000,000, column 4
+          </button>
+          <button type="button" onClick={() => { setCellPosition({ rowIndex: data.numRows + 1, colIndex: 3 }) }}>
+            {`Go to row ${data.numRows + 1}, column 3`}
           </button>
         </div>
         {/* focus is broken */}
@@ -679,6 +678,6 @@ export const JumpToCell: Story = {
   },
   args: {
     // data: createUnsortableData(),
-    data: createLargeData(),
+    data: createLargeData(1_000_000_000),
   },
 }
