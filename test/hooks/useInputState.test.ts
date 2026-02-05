@@ -15,11 +15,6 @@ describe('useInputState', () => {
       vi.clearAllMocks()
     })
 
-    it('the input is in controlled mode', () => {
-      const { result } = renderHook(() => useInputState({ controlledValue, onChange, initialUncontrolledValue }))
-      expect(result.current.type).toBe('controlled')
-    })
-
     it('the interactions are enabled', () => {
       const { result } = renderHook(() => useInputState({ controlledValue, onChange, initialUncontrolledValue }))
       expect(result.current.onChange).toBeDefined()
@@ -51,7 +46,6 @@ describe('useInputState', () => {
       })
       expect(onChange).not.toHaveBeenCalled()
       expect(result.current.value).toBe(controlledValue)
-      expect(result.current.type).toBe('controlled')
     })
   })
 
@@ -63,11 +57,6 @@ describe('useInputState', () => {
 
     beforeEach(() => {
       vi.clearAllMocks()
-    })
-
-    it('the input is in uncontrolled mode', () => {
-      const { result } = renderHook(() => useInputState({ onChange, initialUncontrolledValue }))
-      expect(result.current.type).toBe('uncontrolled')
     })
 
     it('the interactions are enabled', () => {
@@ -96,7 +85,6 @@ describe('useInputState', () => {
       })
       expect(onChange).not.toHaveBeenCalled()
       expect(result.current.value).toBe(initialUncontrolledValue)
-      expect(result.current.type).toBe('uncontrolled')
     })
   })
 })

@@ -39,20 +39,11 @@ interface UseInputStateProps<T> {
  * Result of the useInputState hook.
  *
  */
-type UseInputStateResult<T> = {
-  /** the mode of the input state, either controlled (parent state) or uncontrolled (local state) */
-  type: 'controlled'
+interface UseInputStateResult<T> {
   /** the current input value */
   value: T
   /** the callback to call when the input changes. If undefined, the user interactions (or optimistical updates) should be disabled. */
   onChange?: ((value: T) => void)
-} | {
-  /** the mode of the input state, either controlled (parent state) or uncontrolled (local state) */
-  type: 'uncontrolled'
-  /** the current input value */
-  value: T
-  /** the callback to call when the input changes. */
-  onChange: ((value: T) => void)
 }
 
 /**
@@ -84,7 +75,6 @@ export function useInputState<T>({ controlledValue, onChange, initialUncontrolle
         console.warn('The value is controlled (it has no local state) because the property was initially defined. It cannot be set to undefined now (it is set back to the initial value).')
       }
       return {
-        type: 'controlled',
         value: controlledValue ?? initialControlledValue,
         // read-only if onChange is undefined
         onChange,
@@ -96,7 +86,6 @@ export function useInputState<T>({ controlledValue, onChange, initialUncontrolle
       console.warn('The value is uncontrolled (it only has a local state) because the property was initially undefined. It cannot be set to a value now and is ignored.')
     }
     return {
-      type: 'uncontrolled',
       value: localValue,
       onChange: uncontrolledOnChange,
     }
