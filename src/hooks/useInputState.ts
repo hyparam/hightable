@@ -55,7 +55,7 @@ type UseInputStateResult<T> = [
   /**
    * The state setter.
    *
-   * Comparing to the useState setter:
+   * Compared to the useState setter:
    * - it can be undefined, in which case the state cannot be set, i.e. the user interactions should be disabled;
    * - it can only be called with the new value directly, and not with a function updater.
    */
