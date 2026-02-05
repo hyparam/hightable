@@ -28,7 +28,7 @@ describe('useInputState', () => {
       act(() => {
         setValue?.(newValue)
       })
-      expect(onChange).toHaveBeenCalledWith(newValue)
+      expect(onChange).toHaveBeenCalledExactlyOnceWith(newValue)
     })
 
     it('the initial state value is controlledValue, not initialUncontrolledValue', () => {
@@ -69,7 +69,7 @@ describe('useInputState', () => {
       act(() => {
         rerender({ controlledValue: newValue })
       })
-      expect(notifyChange).toHaveBeenCalled()
+      expect(notifyChange).toHaveBeenCalledExactlyOnceWith()
     })
 
     it('onChange is not called when the controlledValue changes', () => {
@@ -108,7 +108,7 @@ describe('useInputState', () => {
       act(() => {
         setValue?.(newValue)
       })
-      expect(onChange).toHaveBeenCalledWith(newValue)
+      expect(onChange).toHaveBeenCalledExactlyOnceWith(newValue)
     })
 
     it.each([onChange, undefined])('the initial value is initialUncontrolledValue, no matter the value of onChange', (onChangeProp) => {
@@ -147,7 +147,7 @@ describe('useInputState', () => {
       act(() => {
         setValue?.(newValue)
       })
-      expect(notifyChange).toHaveBeenCalled()
+      expect(notifyChange).toHaveBeenCalledExactlyOnceWith()
     })
   })
 })
