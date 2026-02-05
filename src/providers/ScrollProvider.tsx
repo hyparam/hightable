@@ -57,12 +57,17 @@ export function ScrollProvider({ children, headerHeight, numRows, padding = defa
    */
   useEffect(() => {
     const { rowIndex } = cellPosition
-    if (!scale || scrollTopAnchor === undefined || !shouldScroll) {
+    if (!shouldScroll) {
+      return
+    }
+    // The scroll request has been handled (even if it might fail the condition checks below).
+    // We call acknowledgeScroll to reset the shouldScroll flag, and avoid re-entering this effect on the next render.
+    acknowledgeScroll()
+    if (!scale || scrollTopAnchor === undefined) {
       return
     }
     const action = getScrollActionForRow({ rowIndex, scale, scrollTopAnchor, localOffset })
     if (!action) {
-      acknowledgeScroll()
       return
     }
     // side effect: scroll to the new position while updating the state optimistically
@@ -75,7 +80,6 @@ export function ScrollProvider({ children, headerHeight, numRows, padding = defa
     }
     // update the state
     dispatch(action)
-    acknowledgeScroll()
   }, [shouldScroll, acknowledgeScroll, cellPosition, scrollTo, scrollTopAnchor, localOffset, scale])
 
   const value = useMemo(() => {
