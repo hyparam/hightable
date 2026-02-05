@@ -77,7 +77,7 @@ describe('useInputState', () => {
       act(() => {
         rerender({ controlledValue: newValue })
       })
-      expect(notifyChange).toHaveBeenCalledExactlyOnceWith()
+      expect(notifyChange).toHaveBeenCalledExactlyOnceWith(newValue)
     })
 
     it('notifyChange is not called when setting the state (ie. calling onChange)', () => {
@@ -157,7 +157,7 @@ describe('useInputState', () => {
       act(() => {
         setValue?.(newValue)
       })
-      expect(notifyChange).toHaveBeenCalledExactlyOnceWith()
+      expect(notifyChange).toHaveBeenCalledExactlyOnceWith(newValue)
     })
   })
 })

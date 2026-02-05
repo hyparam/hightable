@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useEffectEvent, useMemo, useState } from 'react'
 
 /**
  * Props for the useInputState hook.
@@ -39,10 +39,8 @@ interface UseInputStateProps<T> {
    * The difference with the onChange callback is that this callback is called whenever the value changes,
    * regardless of the mode (controlled or uncontrolled), and even if the change is not triggered by a user
    * interaction (e.g. when the controlled value changes from an external source).
-   *
-   * Also note that the value is not passed.
    */
-  notifyChange?: () => void
+  notifyChange?: (newValue: T) => void
 }
 
 /**
@@ -74,15 +72,11 @@ type UseInputStateResult<T> = [
 export function useInputState<T>({ controlledValue, onChange, initialUncontrolledValue, notifyChange }: UseInputStateProps<T>): UseInputStateResult<T> {
   const [initialControlledValue] = useState<T | undefined>(controlledValue)
   const [localValue, setLocalValue] = useState<T>(() => controlledValue ?? initialUncontrolledValue)
-  const setLocalValueAndNotify = useCallback((value: T) => {
-    setLocalValue(value)
-    notifyChange?.()
-  }, [notifyChange])
 
-  const uncontrolledOnChange = useCallback((value: T) => {
+  const uncontrolledSetState = useCallback((value: T) => {
     onChange?.(value)
-    setLocalValueAndNotify(value)
-  }, [onChange, setLocalValueAndNotify])
+    setLocalValue(value)
+  }, [onChange, setLocalValue])
 
   if (
     initialControlledValue !== undefined
@@ -94,9 +88,30 @@ export function useInputState<T>({ controlledValue, onChange, initialUncontrolle
     )
   ) {
     // if the input is controlled and the value has changed,
-    // store the new value, and notify the change.
-    setLocalValueAndNotify(controlledValue ?? initialControlledValue)
+    // store the new value, and immediately notify the change.
+    const newValue = controlledValue ?? initialControlledValue
+    setLocalValue(newValue)
+    notifyChange?.(newValue)
   }
+
+  const [mounted, setMounted] = useState(false)
+
+  const notifyUncontrolledChange = useEffectEvent((newValue: T) => {
+    // don't notify a change for the initial value.
+    if (!mounted) {
+      setMounted(true)
+      return
+    }
+    // notify a change if the value has changed in uncontrolled mode, i.e. when the local state changes without the controlled value changing
+    if (initialControlledValue === undefined && notifyChange) {
+      notifyChange(newValue)
+    }
+  })
+
+  // maybe an issue with the first render (don't notify the first value)
+  useEffect(() => {
+    notifyUncontrolledChange(localValue)
+  }, [localValue])
 
   return useMemo(() => {
     // The input is forever in one of these two modes:
@@ -116,6 +131,6 @@ export function useInputState<T>({ controlledValue, onChange, initialUncontrolle
     if (controlledValue !== undefined) {
       console.warn('The value is uncontrolled (it only has a local state) because the property was initially undefined. It cannot be set to a value now and is ignored.')
     }
-    return [localValue, uncontrolledOnChange]
-  }, [controlledValue, onChange, initialControlledValue, localValue, uncontrolledOnChange])
+    return [localValue, uncontrolledSetState]
+  }, [controlledValue, onChange, initialControlledValue, localValue, uncontrolledSetState])
 }
