@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { useCallback, useContext, useEffect, useMemo, useReducer } from 'react'
 
-import type { MoveCellAction } from '../contexts/CellNavigationContext.js'
+import type { FocusAction, FocusState, MoveCellAction } from '../contexts/CellNavigationContext.js'
 import { CellNavigationContext } from '../contexts/CellNavigationContext.js'
 import { ColumnVisibilityStatesContext } from '../contexts/ColumnVisibilityStatesContext.js'
 import { defaultNumRowsPerPage } from '../helpers/constants.js'
@@ -15,6 +15,35 @@ type CellNavigationProviderProps = Pick<HighTableProps, 'focus' | 'numRowsPerPag
   children: ReactNode
 }
 
+function reducer(state: FocusState, action: FocusAction): FocusState {
+  switch (action.type) {
+    case 'START':
+      return { status: 'should_scroll_into_view', counter: 0 }
+    case 'CANNOT_SCROLL_YET':
+    case 'LOCAL_SCROLLING_STARTED':
+      // one extra render is needed for local scrolling, or at start if the scroll parameters are not ready yet
+      // To avoid infinite loops in case of unexpected issues, we use a counter to stop trying to scroll after 3 attempts (2 should be enough).
+      if (state.counter >= 3) {
+        // console.warn('Cannot scroll to the cell after 5 attempts. To avoid infinite loops, try to focus it now.')
+        return { status: 'should_focus', counter: 0 }
+      }
+      return { ...state, counter: state.counter + 1 }
+    case 'GLOBAL_SCROLLING_STARTED':
+      return { status: 'scrolling_into_view', counter: 0 }
+    case 'SCROLLED_EVENT_RECEIVED':
+      return state.status === 'scrolling_into_view' ? { status: 'should_focus', counter: 0 } : state
+    case 'NO_NEED_TO_SCROLL':
+      return { status: 'should_focus', counter: 0 }
+    case 'FOCUSED':
+      return { status: 'idle', counter: 0 }
+  }
+}
+
+function initializeFocusState(focus: boolean): FocusState {
+  const state = { counter: 0, status: 'idle' as const }
+  return focus ? reducer(state, { type: 'START' }) : state
+}
+
 /**
  * Provide the cell navigation state and logic to the table, through the CellNavigationContext.
  */
@@ -24,15 +53,10 @@ export function CellNavigationProvider({
   numRowsPerPage = defaultNumRowsPerPage,
   children,
 }: CellNavigationProviderProps) {
-  const [shouldFocus, setShouldFocus] = useState(focus)
-  const [shouldScroll, setShouldScroll] = useState(focus)
-  const acknowledgeScroll = useCallback(() => {
-    setShouldScroll(false)
-  }, [])
+  const [focusState, focusDispatch] = useReducer(reducer, focus, initializeFocusState)
 
   const notifyChange = useCallback(() => {
-    setShouldFocus(true)
-    setShouldScroll(true)
+    focusDispatch({ type: 'START' })
   }, [])
 
   // restart scroll + focus process when the cell position changes,
@@ -78,7 +102,7 @@ export function CellNavigationProvider({
   }, [cellPosition, rowCount, colCount, goToCell])
 
   const focusCurrentCell = useMemo(() => {
-    if (shouldFocus) {
+    if (focusState.status === 'should_focus') {
       return (element: HTMLElement) => {
         // horizontally scroll the cell into view and focus it, once the row is rendered and scrolled into view vertically
         // vertical scrolling happens automatically in ScrollProvider's useEffect when cellPosition changes
@@ -92,10 +116,10 @@ export function CellNavigationProvider({
         // But `inline: nearest` feels more natural for navigation. So, we use scrollIntoView first, then focus with `preventScroll: true`.
         element.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'nearest' })
         element.focus({ preventScroll: true })
-        setShouldFocus(false)
+        focusDispatch({ type: 'FOCUSED' })
       }
     }
-  }, [shouldFocus])
+  }, [focusState])
 
   const moveCell = useMemo(() => {
     if (goToCell) {
@@ -174,10 +198,10 @@ export function CellNavigationProvider({
       moveCell,
       goToFirstCell,
       goToCurrentCell,
-      shouldScroll,
-      acknowledgeScroll,
+      focusState,
+      focusDispatch,
     }
-  }, [cellPosition, colCount, rowCount, focusCurrentCell, moveCell, goToFirstCell, goToCurrentCell, shouldScroll, acknowledgeScroll])
+  }, [cellPosition, colCount, rowCount, focusCurrentCell, moveCell, goToFirstCell, goToCurrentCell, focusState, focusDispatch])
 
   return (
     <CellNavigationContext.Provider value={value}>

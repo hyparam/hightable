@@ -20,12 +20,13 @@ type ScrollProviderProps = Pick<HighTableProps, 'padding'> & {
  */
 export function ScrollProvider({ children, headerHeight, numRows, padding = defaultPadding }: ScrollProviderProps) {
   const [{ scale, scrollTop, scrollTopAnchor, localOffset }, dispatch] = useReducer(scrollReducer, undefined, initializeScrollState)
-  const { cellPosition, shouldScroll, acknowledgeScroll } = useContext(CellNavigationContext)
+  const { cellPosition, focusState, focusDispatch } = useContext(CellNavigationContext)
 
   const [scrollTo, setScrollTo] = useState<HTMLElement['scrollTo'] | undefined>(undefined)
   const setScrollTop = useCallback((scrollTop: number) => {
     dispatch({ type: 'ON_SCROLL', scrollTop })
-  }, [])
+    focusDispatch?.({ type: 'SCROLLED_EVENT_RECEIVED' })
+  }, [focusDispatch])
   const [clientHeight, _setClientHeight] = useState<number | undefined>(undefined)
   const setClientHeight = useCallback((clientHeight: number) => {
     // TODO(SL): remove this fallback? It's only for the tests in Node.js, where the elements have zero height
@@ -57,30 +58,33 @@ export function ScrollProvider({ children, headerHeight, numRows, padding = defa
    */
   useEffect(() => {
     const { rowIndex } = cellPosition
-    if (!shouldScroll) {
+    if (!focusDispatch || focusState.status !== 'should_scroll_into_view') {
       return
     }
-    // The scroll request has been handled (even if it might fail the condition checks below).
-    // We call acknowledgeScroll to reset the shouldScroll flag, and avoid re-entering this effect on the next render.
-    acknowledgeScroll()
     if (!scale || scrollTopAnchor === undefined) {
+      focusDispatch({ type: 'CANNOT_SCROLL_YET' })
       return
     }
     const action = getScrollActionForRow({ rowIndex, scale, scrollTopAnchor, localOffset })
     if (!action) {
+      focusDispatch({ type: 'NO_NEED_TO_SCROLL' })
       return
     }
     // side effect: scroll to the new position while updating the state optimistically
     if (action.type === 'SCROLL_TO') {
       if (!scrollTo) {
         // Safe-guard for the tests with jsdom, which don't provide scrollTo
+        focusDispatch({ type: 'CANNOT_SCROLL_YET' })
         return
       }
       scrollTo({ top: action.scrollTop, behavior: 'instant' })
+      focusDispatch({ type: 'GLOBAL_SCROLLING_STARTED' })
+      dispatch(action)
+    } else {
+      focusDispatch({ type: 'LOCAL_SCROLLING_STARTED' })
+      dispatch(action)
     }
-    // update the state
-    dispatch(action)
-  }, [shouldScroll, acknowledgeScroll, cellPosition, scrollTo, scrollTopAnchor, localOffset, scale])
+  }, [cellPosition, scrollTo, scrollTopAnchor, localOffset, scale, focusDispatch, focusState])
 
   const value = useMemo(() => {
     return {
