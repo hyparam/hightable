@@ -7,6 +7,24 @@ import type { Selection } from './helpers/selection.js'
 import type { OrderBy } from './helpers/sort.js'
 import type { MaybeHiddenColumn } from './providers/ColumnVisibilityStatesProvider.js'
 
+/**
+ * The position of a cell in the table, identified by its column and row indices.
+ */
+export interface CellPosition {
+  /**
+   * The column index of the cell
+   *
+   * It's the same semantic as aria-colindex: 1-based, includes row headers
+   */
+  colIndex: number
+  /**
+   * The row index of the cell
+   *
+   * It's the same semantic as aria-rowindex: 1-based, includes column headers
+   */
+  rowIndex: number
+}
+
 // TODO(SL): update orderBy, onOrderByChange, selection, onSelectionChange docstrings to reflect the reality
 
 export interface HighTableProps {

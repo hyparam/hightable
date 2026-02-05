@@ -47,68 +47,78 @@ export default function Slice({
   // Fetch the required cells if needed (visible + overscan)
   useFetchCells({ data, numRows, overscan, onError })
 
-  const onNavigationTableKeyDown = useCallback((event: KeyboardEvent) => {
-    const { key, altKey, ctrlKey, metaKey, shiftKey } = event
-    // if the user is pressing Alt, Meta or Shift, do not handle the event
-    if (altKey || metaKey || shiftKey) {
+  const onNavigationTableKeyDown = useMemo(() => {
+    if (!moveCell) {
+      // disable keyboard navigation if moveCell is not provided
       return
     }
-    if (key === 'ArrowRight') {
-      if (ctrlKey) {
-        moveCell({ type: 'LAST_COLUMN' })
-      } else {
-        moveCell({ type: 'NEXT_COLUMN' })
+    return (event: KeyboardEvent) => {
+      const { key, altKey, ctrlKey, metaKey, shiftKey } = event
+      // if the user is pressing Alt, Meta or Shift, do not handle the event
+      if (altKey || metaKey || shiftKey) {
+        return
       }
-    } else if (key === 'ArrowLeft') {
-      if (ctrlKey) {
-        moveCell({ type: 'FIRST_COLUMN' })
-      } else {
-        moveCell({ type: 'PREVIOUS_COLUMN' })
+      if (key === 'ArrowRight') {
+        if (ctrlKey) {
+          moveCell({ type: 'LAST_COLUMN' })
+        } else {
+          moveCell({ type: 'NEXT_COLUMN' })
+        }
+      } else if (key === 'ArrowLeft') {
+        if (ctrlKey) {
+          moveCell({ type: 'FIRST_COLUMN' })
+        } else {
+          moveCell({ type: 'PREVIOUS_COLUMN' })
+        }
+      } else if (key === 'ArrowDown') {
+        if (ctrlKey) {
+          moveCell({ type: 'LAST_ROW' })
+        } else {
+          moveCell({ type: 'NEXT_ROW' })
+        }
+      } else if (key === 'ArrowUp') {
+        if (ctrlKey) {
+          moveCell({ type: 'FIRST_ROW' })
+        } else {
+          moveCell({ type: 'PREVIOUS_ROW' })
+        }
+      } else if (key === 'Home') {
+        if (ctrlKey) {
+          moveCell({ type: 'FIRST_CELL' })
+        } else {
+          moveCell({ type: 'FIRST_COLUMN' })
+        }
+      } else if (key === 'End') {
+        if (ctrlKey) {
+          moveCell({ type: 'LAST_CELL' })
+        } else {
+          moveCell({ type: 'LAST_COLUMN' })
+        }
+      } else if (key === 'PageDown') {
+        moveCell({ type: 'NEXT_ROWS_PAGE' })
+        // TODO(SL): same for horizontal scrolling with Alt+PageDown?
+      } else if (key === 'PageUp') {
+        moveCell({ type: 'PREVIOUS_ROWS_PAGE' })
+        // TODO(SL): same for horizontal scrolling with Alt+PageUp?
+      } else if (key !== ' ') {
+        // if the key is not one of the above, do not handle it
+        // special case: no action is associated with the Space key, but it's captured
+        // anyway to prevent the default action (scrolling the page) and stay in navigation mode
+        return
       }
-    } else if (key === 'ArrowDown') {
-      if (ctrlKey) {
-        moveCell({ type: 'LAST_ROW' })
-      } else {
-        moveCell({ type: 'NEXT_ROW' })
-      }
-    } else if (key === 'ArrowUp') {
-      if (ctrlKey) {
-        moveCell({ type: 'FIRST_ROW' })
-      } else {
-        moveCell({ type: 'PREVIOUS_ROW' })
-      }
-    } else if (key === 'Home') {
-      if (ctrlKey) {
-        moveCell({ type: 'FIRST_CELL' })
-      } else {
-        moveCell({ type: 'FIRST_COLUMN' })
-      }
-    } else if (key === 'End') {
-      if (ctrlKey) {
-        moveCell({ type: 'LAST_CELL' })
-      } else {
-        moveCell({ type: 'LAST_COLUMN' })
-      }
-    } else if (key === 'PageDown') {
-      moveCell({ type: 'NEXT_ROWS_PAGE' })
-      // TODO(SL): same for horizontal scrolling with Alt+PageDown?
-    } else if (key === 'PageUp') {
-      moveCell({ type: 'PREVIOUS_ROWS_PAGE' })
-      // TODO(SL): same for horizontal scrolling with Alt+PageUp?
-    } else if (key !== ' ') {
-      // if the key is not one of the above, do not handle it
-      // special case: no action is associated with the Space key, but it's captured
-      // anyway to prevent the default action (scrolling the page) and stay in navigation mode
-      return
+      // avoid scrolling the table when the user is navigating with the keyboard
+      event.stopPropagation()
+      event.preventDefault()
     }
-    // avoid scrolling the table when the user is navigating with the keyboard
-    event.stopPropagation()
-    event.preventDefault()
   }, [moveCell])
 
-  const onTableKeyDown = useCallback((event: KeyboardEvent) => {
-    onNavigationTableKeyDown(event)
-    onSelectionTableKeyDown?.(event)
+  const onTableKeyDown = useMemo(() => {
+    if (onNavigationTableKeyDown || onSelectionTableKeyDown) {
+      return (event: KeyboardEvent) => {
+        onNavigationTableKeyDown?.(event)
+        onSelectionTableKeyDown?.(event)
+      }
+    }
   }, [onNavigationTableKeyDown, onSelectionTableKeyDown])
 
   const getOnCheckboxPress = useCallback(({ row, rowNumber }: { row: number, rowNumber?: number }) => {

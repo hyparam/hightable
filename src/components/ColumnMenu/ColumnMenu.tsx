@@ -166,7 +166,9 @@ export default function ColumnMenu({
 
       // The header cell was focused when opening the menu.
       // Move the focus to the left cell to keep ability to navigate with keyboard.
-      goToFirstCell()
+      // TODO(SL): if this function is undefined (meaning the cell navigation is disabled),
+      // the focus is lost. We could instead focus the table?
+      goToFirstCell?.()
 
       close()
     }

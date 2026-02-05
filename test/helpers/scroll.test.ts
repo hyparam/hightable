@@ -161,7 +161,6 @@ describe('initializeScrollState', () => {
   it('returns the initial scroll state', () => {
     const state = initializeScrollState()
     expect(state).toEqual({
-      isScrollingProgrammatically: false,
       scale: undefined,
       scrollTop: undefined,
       scrollTopAnchor: undefined,
@@ -388,7 +387,6 @@ describe('scrollReducer', () => {
       const scale = createNormalScale()
       const newState = scrollReducer(initialState, { type: 'SET_SCALE', scale })
       expect(newState.scale).toBe(scale)
-      expect(newState.isScrollingProgrammatically).toBe(false)
       expect(newState.scrollTop).toBeUndefined()
       expect(newState.scrollTopAnchor).toBeUndefined()
       expect(newState.localOffset).toBe(0)
@@ -396,7 +394,6 @@ describe('scrollReducer', () => {
 
     it('does not change other state properties when setting scale', () => {
       const initialState: ScrollState = {
-        isScrollingProgrammatically: true,
         scale: undefined,
         scrollTop: 100,
         scrollTopAnchor: 200,
@@ -405,7 +402,6 @@ describe('scrollReducer', () => {
       const scale = createNormalScale()
       const newState = scrollReducer(initialState, { type: 'SET_SCALE', scale })
       expect(newState.scale).toBe(scale)
-      expect(newState.isScrollingProgrammatically).toBe(true)
       expect(newState.scrollTop).toBe(100)
       expect(newState.scrollTopAnchor).toBe(200)
       expect(newState.localOffset).toBe(10)
@@ -414,7 +410,6 @@ describe('scrollReducer', () => {
     // TODO(SL): maybe it should reset scrollTopAnchor and localOffset if the scale changes
     it('does not change other state properties when updating scale', () => {
       const initialState: ScrollState = {
-        isScrollingProgrammatically: false,
         scale: createNormalScale(),
         scrollTop: 100,
         scrollTopAnchor: 200,
@@ -423,7 +418,6 @@ describe('scrollReducer', () => {
       const newScale = createNormalScale()
       const newState = scrollReducer(initialState, { type: 'SET_SCALE', scale: newScale })
       expect(newState.scale).toBe(newScale)
-      expect(newState.isScrollingProgrammatically).toBe(false)
       expect(newState.scrollTop).toBe(100)
       expect(newState.scrollTopAnchor).toBe(200)
       expect(newState.localOffset).toBe(0)
@@ -446,7 +440,6 @@ describe('scrollReducer', () => {
 
     it('does not modify other state properties when adding delta', () => {
       const initialState: ScrollState = {
-        isScrollingProgrammatically: true,
         scale: createVirtualScale(),
         scrollTop: 100,
         scrollTopAnchor: 200,
@@ -454,7 +447,6 @@ describe('scrollReducer', () => {
       }
       const newState = scrollReducer(initialState, { type: 'LOCAL_SCROLL', delta: 15 })
       expect(newState.localOffset).toBe(25)
-      expect(newState.isScrollingProgrammatically).toBe(true)
       expect(newState.scale).toBe(initialState.scale)
       expect(newState.scrollTop).toBe(100)
       expect(newState.scrollTopAnchor).toBe(200)
@@ -475,7 +467,6 @@ describe('scrollReducer', () => {
       const initialState = {
         scale: virtualScale,
         // arbitrary initial values
-        isScrollingProgrammatically: true,
         scrollTop: 150,
         scrollTopAnchor: 800,
         localOffset: 120,
@@ -488,9 +479,8 @@ describe('scrollReducer', () => {
   })
 
   describe('SCROLL_TO action', () => {
-    it.each([undefined, 'normal', 'virtual'])('globally scrolls and sets isScrollingProgrammatically to true if scale is %s', (scale) => {
+    it.each([undefined, 'normal', 'virtual'])('globally scrolls if scale is %s', (scale) => {
       const initialState = {
-        isScrollingProgrammatically: false,
         scale: scale === 'normal' ? createNormalScale() : scale === 'virtual' ? createVirtualScale() : undefined,
         scrollTop: 150,
         scrollTopAnchor: 800,
@@ -500,7 +490,6 @@ describe('scrollReducer', () => {
       expect(newState.scrollTop).toBe(250)
       expect(newState.scrollTopAnchor).toBe(250)
       expect(newState.localOffset).toBe(0)
-      expect(newState.isScrollingProgrammatically).toBe(true)
     })
   })
 
@@ -509,16 +498,14 @@ describe('scrollReducer', () => {
     const farScrollTop = initialScrollTop + 50000
     const nearScrollTop = initialScrollTop + 200
     const initialState = {
-      isScrollingProgrammatically: true,
       scale: createVirtualScale(),
       scrollTop: initialScrollTop,
       scrollTopAnchor: initialScrollTop,
       localOffset: 200,
     }
 
-    it.each([true, false])('is run, without checking the value of isScrollingProgrammatically', (isScrollingProgrammatically) => {
-      const newState = scrollReducer({ ...initialState, isScrollingProgrammatically }, { type: 'ON_SCROLL', scrollTop: farScrollTop })
-      expect(newState.isScrollingProgrammatically).toBe(false)
+    it('updates the state', () => {
+      const newState = scrollReducer({ ...initialState }, { type: 'ON_SCROLL', scrollTop: farScrollTop })
       expect(newState.scrollTop).toBe(farScrollTop)
       expect(newState.scrollTopAnchor).toBe(farScrollTop)
       expect(newState.localOffset).toBe(0)
@@ -526,7 +513,6 @@ describe('scrollReducer', () => {
 
     it('scrolls locally when possible in virtual scrolling mode', () => {
       const newState = scrollReducer(initialState, { type: 'ON_SCROLL', scrollTop: nearScrollTop })
-      expect(newState.isScrollingProgrammatically).toBe(false)
       expect(newState.scrollTop).toBe(nearScrollTop)
       expect(newState.scrollTopAnchor).toBe(initialState.scrollTopAnchor) // unchanged
       expect(newState.localOffset).toBe(400)
@@ -534,7 +520,6 @@ describe('scrollReducer', () => {
 
     it('scrolls globally when scrollTopAnchor is undefined', () => {
       const newState = scrollReducer({ ...initialState, scrollTopAnchor: undefined }, { type: 'ON_SCROLL', scrollTop: nearScrollTop })
-      expect(newState.isScrollingProgrammatically).toBe(false)
       expect(newState.scrollTop).toBe(nearScrollTop)
       expect(newState.scrollTopAnchor).toBe(nearScrollTop)
       expect(newState.localOffset).toBe(0)
@@ -542,7 +527,6 @@ describe('scrollReducer', () => {
 
     it('scrolls globally when the previous scrollTop is undefined', () => {
       const newState = scrollReducer({ ...initialState, scrollTop: undefined }, { type: 'ON_SCROLL', scrollTop: nearScrollTop })
-      expect(newState.isScrollingProgrammatically).toBe(false)
       expect(newState.scrollTop).toBe(nearScrollTop)
       expect(newState.scrollTopAnchor).toBe(nearScrollTop)
       expect(newState.localOffset).toBe(0)
@@ -550,7 +534,6 @@ describe('scrollReducer', () => {
 
     it('scrolls globally when scale is undefined', () => {
       const newState = scrollReducer({ ...initialState, scale: undefined }, { type: 'ON_SCROLL', scrollTop: nearScrollTop })
-      expect(newState.isScrollingProgrammatically).toBe(false)
       expect(newState.scrollTop).toBe(nearScrollTop)
       expect(newState.scrollTopAnchor).toBe(nearScrollTop)
       expect(newState.localOffset).toBe(0)
@@ -559,7 +542,6 @@ describe('scrollReducer', () => {
     it('scrolls globally when the scale is in normal mode', () => {
       const normalScaleState = { ...initialState, scale: createNormalScale() }
       const newState = scrollReducer(normalScaleState, { type: 'ON_SCROLL', scrollTop: nearScrollTop })
-      expect(newState.isScrollingProgrammatically).toBe(false)
       expect(newState.scrollTop).toBe(nearScrollTop)
       expect(newState.scrollTopAnchor).toBe(nearScrollTop)
       expect(newState.localOffset).toBe(0)
@@ -567,7 +549,6 @@ describe('scrollReducer', () => {
 
     it('scrolls globally when the scrollTop change is too large', () => {
       const newState = scrollReducer(initialState, { type: 'ON_SCROLL', scrollTop: farScrollTop })
-      expect(newState.isScrollingProgrammatically).toBe(false)
       expect(newState.scrollTop).toBe(farScrollTop)
       expect(newState.scrollTopAnchor).toBe(farScrollTop)
       expect(newState.localOffset).toBe(0)
@@ -579,7 +560,6 @@ describe('scrollReducer', () => {
         localOffset: 16_499, // below the largeScrollPx threshold (500 * 33 = 16,500)
       }
       const newState = scrollReducer(stateWithLargeLocalOffset, { type: 'ON_SCROLL', scrollTop: nearScrollTop })
-      expect(newState.isScrollingProgrammatically).toBe(false)
       expect(newState.scrollTop).toBe(nearScrollTop)
       expect(newState.scrollTopAnchor).toBe(nearScrollTop)
       expect(newState.localOffset).toBe(0)
@@ -587,7 +567,6 @@ describe('scrollReducer', () => {
 
     it('scrolls globally, and scrollTopAnchor is clamped, when scrollTop is non-positive', () => {
       const newState = scrollReducer(initialState, { type: 'ON_SCROLL', scrollTop: -50 })
-      expect(newState.isScrollingProgrammatically).toBe(false)
       expect(newState.scrollTop).toBe(-50)
       expect(newState.scrollTopAnchor).toBe(0)
       expect(newState.localOffset).toBe(0)
@@ -600,7 +579,6 @@ describe('scrollReducer', () => {
         scrollTop: maxScrollTop - 100,
         scrollTopAnchor: maxScrollTop - 100,
       }, { type: 'ON_SCROLL', scrollTop: maxScrollTop + 100 })
-      expect(newState.isScrollingProgrammatically).toBe(false)
       expect(newState.scrollTop).toBe(maxScrollTop + 100)
       expect(newState.scrollTopAnchor).toBe(maxScrollTop)
       expect(newState.localOffset).toBe(0)

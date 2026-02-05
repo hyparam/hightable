@@ -1,5 +1,6 @@
-import { type ReactNode, useCallback, useMemo, useReducer, useState } from 'react'
+import { type ReactNode, useCallback, useContext, useEffect, useMemo, useReducer, useState } from 'react'
 
+import { CellNavigationContext } from '../contexts/CellNavigationContext.js'
 import { ScrollContext } from '../contexts/ScrollContext.js'
 import { defaultPadding, maxElementHeight, rowHeight } from '../helpers/constants.js'
 import { computeDerivedValues, createScale, getScrollActionForRow, initializeScrollState, scrollReducer } from '../helpers/scroll.js'
@@ -18,7 +19,9 @@ type ScrollProviderProps = Pick<HighTableProps, 'padding'> & {
  * Provide the scroll state and logic to the table, through the ScrollContext.
  */
 export function ScrollProvider({ children, headerHeight, numRows, padding = defaultPadding }: ScrollProviderProps) {
-  const [{ scale, scrollTop, scrollTopAnchor, isScrollingProgrammatically, localOffset }, dispatch] = useReducer(scrollReducer, undefined, initializeScrollState)
+  const [{ scale, scrollTop, scrollTopAnchor, localOffset }, dispatch] = useReducer(scrollReducer, undefined, initializeScrollState)
+  const { cellPosition } = useContext(CellNavigationContext)
+
   const [scrollTo, setScrollTo] = useState<HTMLElement['scrollTo'] | undefined>(undefined)
   const setScrollTop = useCallback((scrollTop: number) => {
     dispatch({ type: 'ON_SCROLL', scrollTop })
@@ -52,7 +55,8 @@ export function ScrollProvider({ children, headerHeight, numRows, padding = defa
    * - row numRows + 1: last data row
    * @param rowIndex The row to scroll to (same semantic as aria-rowindex: 1-based, includes header)
    */
-  const scrollRowIntoView = useCallback(({ rowIndex }: { rowIndex: number }) => {
+  useEffect(() => {
+    const { rowIndex } = cellPosition
     if (!scale || scrollTopAnchor === undefined) {
       return
     }
@@ -70,16 +74,14 @@ export function ScrollProvider({ children, headerHeight, numRows, padding = defa
     }
     // update the state
     dispatch(action)
-  }, [scrollTo, scrollTopAnchor, localOffset, scale])
+  }, [cellPosition, scrollTo, scrollTopAnchor, localOffset, scale])
 
   const value = useMemo(() => {
     return {
       scrollMode: 'virtual' as const,
       canvasHeight: scale ? scale.canvasHeight : undefined,
-      isScrollingProgrammatically,
       setClientHeight,
       setScrollTop,
-      scrollRowIntoView,
       setScrollTo,
       ...computeDerivedValues({
         scale,
@@ -89,7 +91,7 @@ export function ScrollProvider({ children, headerHeight, numRows, padding = defa
         padding,
       }),
     }
-  }, [scale, scrollTop, scrollTopAnchor, localOffset, padding, isScrollingProgrammatically, setClientHeight, setScrollTop, scrollRowIntoView])
+  }, [scale, scrollTop, scrollTopAnchor, localOffset, padding, setClientHeight, setScrollTop])
   return (
     <ScrollContext.Provider value={value}>
       {children}

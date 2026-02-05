@@ -13,7 +13,7 @@ interface Props {
 }
 
 export default function Scroller({ children, setViewportWidth }: Props) {
-  const { scrollAndFocusCurrentCell } = useContext(CellNavigationContext)
+  const { goToCurrentCell } = useContext(CellNavigationContext)
   const { canvasHeight, sliceTop, setClientHeight, setScrollTop, setScrollTo } = useContext(ScrollContext)
 
   /**
@@ -31,9 +31,9 @@ export default function Scroller({ children, setViewportWidth }: Props) {
     if ((key === 'Tab' && !event.shiftKey) || key === 'Enter' || key === ' ') {
       event.stopPropagation()
       event.preventDefault()
-      scrollAndFocusCurrentCell()
+      goToCurrentCell?.()
     }
-  }, [scrollAndFocusCurrentCell])
+  }, [goToCurrentCell])
 
   /**
    * Track viewport size and scroll position

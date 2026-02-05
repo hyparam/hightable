@@ -31,7 +31,7 @@ export default function RowHeader({ onCheckboxPress, pendingSelectionGesture, st
   }, [focusIfNeeded])
 
   const handleClick = useCallback((event: MouseEvent) => {
-    navigateToCell()
+    navigateToCell?.()
     onCheckboxPress?.({ shiftKey: event.shiftKey })
   }, [onCheckboxPress, navigateToCell])
   const handleKeyDown = useCallback((event: KeyboardEvent) => {

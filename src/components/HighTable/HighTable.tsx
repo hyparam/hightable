@@ -127,16 +127,17 @@ export default function HighTable({
                   data={data}
                   numRows={numRows}
                 >
-                  <ScrollProvider
+
+                  <CellNavigationProvider
+                    key={dataId}
+                    focus={focus}
                     numRows={numRows}
-                    headerHeight={headerHeight}
-                    padding={padding}
+                    numRowsPerPage={numRowsPerPage}
                   >
-                    <CellNavigationProvider
-                      key={dataId}
-                      focus={focus}
+                    <ScrollProvider
                       numRows={numRows}
-                      numRowsPerPage={numRowsPerPage}
+                      headerHeight={headerHeight}
+                      padding={padding}
                     >
 
                       <Scroller
@@ -152,8 +153,9 @@ export default function HighTable({
                         />
                       </Scroller>
 
-                    </CellNavigationProvider>
-                  </ScrollProvider>
+                    </ScrollProvider>
+                  </CellNavigationProvider>
+
                 </SelectionProvider>
               </OrderByProvider>
             </ColumnVisibilityStatesProvider>

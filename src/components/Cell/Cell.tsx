@@ -74,13 +74,13 @@ export default function Cell({ cell, onDoubleClickCell, onMouseDownCell, onKeyDo
   }, [cell, stringify, columnIndex, rowNumber, renderCellContent, str])
 
   const handleMouseDown = useCallback((event: MouseEvent) => {
-    navigateToCell()
+    navigateToCell?.()
     if (onMouseDownCell && rowNumber !== undefined) {
       onMouseDownCell(event, columnIndex, rowNumber)
     }
   }, [navigateToCell, onMouseDownCell, rowNumber, columnIndex])
   const handleDoubleClick = useCallback((event: MouseEvent) => {
-    navigateToCell()
+    navigateToCell?.()
     if (onDoubleClickCell && rowNumber !== undefined) {
       onDoubleClickCell(event, columnIndex, rowNumber)
     }

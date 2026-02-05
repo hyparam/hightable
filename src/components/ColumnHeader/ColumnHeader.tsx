@@ -43,7 +43,7 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
   }, [focusIfNeeded])
 
   const handleClick = useCallback(() => {
-    navigateToCell()
+    navigateToCell?.()
     if (sortable) toggleOrderBy?.()
   }, [toggleOrderBy, navigateToCell, sortable])
 

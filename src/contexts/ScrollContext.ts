@@ -3,8 +3,6 @@ import { createContext } from 'react'
 export interface ScrollContextType {
   /** Total scrollable height, in pixels */
   canvasHeight?: number
-  /** Whether the table is currently being scrolled programmatically */
-  isScrollingProgrammatically?: boolean
   /** Offset of the top of the visible slice from the top of the canvas, in pixels */
   sliceTop?: number
   /** Index of the first row visible in the viewport (inclusive). Indexes refer to the virtual table domain. */
@@ -15,17 +13,6 @@ export interface ScrollContextType {
   renderedRowsStart?: number
   /** Index of the last row rendered in the DOM as a table row (exclusive). */
   renderedRowsEnd?: number
-  /**
-   * Function to scroll so that the row is visible in the table
-   *
-   * Beware:
-   * - row 1: header
-   * - row 2: first data row
-   * - row numRows + 1: last data row
-   *
-   * @param rowIndex The row to scroll to (same semantic as aria-rowindex: 1-based, includes header)
-   */
-  scrollRowIntoView?: ({ rowIndex }: { rowIndex: number }) => void
   /**
    * Function to call when the current viewport height changes (on resize)
    *
