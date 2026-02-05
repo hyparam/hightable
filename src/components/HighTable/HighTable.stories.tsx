@@ -661,11 +661,11 @@ export const JumpToCell: Story = {
           <button type="button" onClick={() => { setCellPosition({ rowIndex: 500, colIndex: 2 }) }} style={{ marginRight: '8px' }}>
             Go to row 500, column 2
           </button>
-          <button type="button" onClick={() => { setCellPosition({ rowIndex: 999, colIndex: 1 }) }} style={{ marginRight: '8px' }}>
-            Go to row 999, column 1
+          <button type="button" onClick={() => { setCellPosition({ rowIndex: 100_000, colIndex: 1 }) }} style={{ marginRight: '8px' }}>
+            Go to row 100,000, column 1
           </button>
-          <button type="button" onClick={() => { setCellPosition({ rowIndex: 750, colIndex: 4 }) }}>
-            Go to row 750, column 4
+          <button type="button" onClick={() => { setCellPosition({ rowIndex: 100_000_000, colIndex: 2 }) }}>
+            Go to row 100,000,000, column 4
           </button>
         </div>
         {/* focus is broken */}
