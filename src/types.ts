@@ -5,7 +5,7 @@ import type { ColumnConfiguration } from './helpers/columnConfiguration.js'
 import type { DataFrame } from './helpers/dataframe/index.js'
 import type { Selection } from './helpers/selection.js'
 import type { OrderBy } from './helpers/sort.js'
-import type { MaybeHiddenColumn } from './providers/ColumnVisibilityStatesProvider.js'
+import type { ColumnsVisibility } from './providers/ColumnsVisibilityProvider.js'
 
 /**
  * The position of a cell in the table, identified by its column and row indices.
@@ -24,8 +24,6 @@ export interface CellPosition {
    */
   rowIndex: number
 }
-
-export type ColumnsVisibility = Record<string, MaybeHiddenColumn>
 
 // TODO(SL): update orderBy, onOrderByChange, selection, onSelectionChange docstrings to reflect the reality
 
@@ -85,7 +83,7 @@ export interface HighTableProps {
   /**
    * Optional function called whenever the set of hidden columns changes.
    *
-   * @param columns A record of column visibility states keyed by column name
+   * @param columns A record of column visibility keyed by column name
    */
   onColumnsVisibilityChange?: (columns: ColumnsVisibility) => void
   /**

@@ -8,7 +8,8 @@ import { useData } from '../../hooks/useData.js'
 import { useHTMLElement } from '../../hooks/useHTMLElement.js'
 import { CellNavigationProvider } from '../../providers/CellNavigationProvider.js'
 import { ColumnParametersProvider } from '../../providers/ColumnParametersProvider.js'
-import { ColumnVisibilityStatesProvider } from '../../providers/ColumnVisibilityStatesProvider.js'
+import type { ColumnsVisibility } from '../../providers/ColumnsVisibilityProvider.js'
+import { ColumnsVisibilityProvider } from '../../providers/ColumnsVisibilityProvider.js'
 import { ColumnWidthsProvider } from '../../providers/ColumnWidthsProvider.js'
 import { OrderByProvider } from '../../providers/OrderByProvider.js'
 import { ScrollProvider } from '../../providers/ScrollProvider.js'
@@ -43,16 +44,16 @@ export default function HighTable({
 
   const columnNames = useMemo(() => data.columnDescriptors.map(d => d.name), [data.columnDescriptors])
 
-  const initialVisibilityStates = useMemo(() => {
+  const initialColumnsVisibility = useMemo(() => {
     if (!columnConfiguration) return undefined
-    const states: Record<string, { hidden: true } | undefined> = {}
+    const columnsVisibility: ColumnsVisibility = {}
     for (const descriptor of data.columnDescriptors) {
       const config = columnConfiguration[descriptor.name]
       if (config?.initiallyHidden) {
-        states[descriptor.name] = { hidden: true as const }
+        columnsVisibility[descriptor.name] = { hidden: true as const }
       }
     }
-    return states
+    return columnsVisibility
   }, [columnConfiguration, data.columnDescriptors])
 
   const headerHeight = useMemo(() => {
@@ -96,13 +97,13 @@ export default function HighTable({
             viewportWidth={viewportWidth}
             tableCornerWidth={tableCornerSize?.width}
           >
-            <ColumnVisibilityStatesProvider
+            <ColumnsVisibilityProvider
               /**
                * Recreate a context if a new data frame is passed (but not if only the number of rows changed)
                */
               key={dataId}
               columnNames={columnNames}
-              initialVisibilityStates={initialVisibilityStates}
+              initialColumnsVisibility={initialColumnsVisibility}
               onColumnsVisibilityChange={onColumnsVisibilityChange}
             >
               <OrderByProvider
@@ -159,7 +160,7 @@ export default function HighTable({
 
                 </SelectionProvider>
               </OrderByProvider>
-            </ColumnVisibilityStatesProvider>
+            </ColumnsVisibilityProvider>
           </ColumnWidthsProvider>
         </ColumnParametersProvider>
       </PortalContainerContext.Provider>

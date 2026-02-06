@@ -1,6 +1,6 @@
 import { useContext, useEffect, useEffectEvent, useMemo } from 'react'
 
-import { ColumnVisibilityStatesContext } from '../contexts/ColumnVisibilityStatesContext.js'
+import { ColumnsVisibilityContext } from '../contexts/ColumnsVisibilityContext.js'
 import { OrderByContext } from '../contexts/OrderByContext.js'
 import { ScrollContext } from '../contexts/ScrollContext.js'
 import { defaultOverscan } from '../helpers/constants.js'
@@ -16,7 +16,7 @@ type Props = Pick<HighTableProps, 'data' | 'onError' | 'overscan'> & {
  */
 export function useFetchCells({ data, numRows, overscan = defaultOverscan, onError }: Props) {
   const { visibleRowsStart, visibleRowsEnd } = useContext(ScrollContext)
-  const { visibleColumnsParameters } = useContext(ColumnVisibilityStatesContext)
+  const { visibleColumnsParameters } = useContext(ColumnsVisibilityContext)
   const { orderBy } = useContext(OrderByContext)
 
   const fetchedRowsStart = useMemo(() => {
