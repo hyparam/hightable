@@ -94,10 +94,12 @@ export function toggleColumnExclusive(column: string, orderBy: OrderBy): OrderBy
   return [{ column, direction: 'ascending' }]
 }
 
-// TODO(SL): test
 export function computeRanks(values: any[]): number[] {
   const valuesWithIndex = values.map((value, index) => ({ value, index }))
   const sortedValuesWithIndex = Array.from(valuesWithIndex).sort(({ value: a }, { value: b }) => {
+    if (a == null && b == null) return 0
+    if (a == null) return 1
+    if (b == null) return -1
     if (a < b) return -1
     if (a > b) return 1
     return 0

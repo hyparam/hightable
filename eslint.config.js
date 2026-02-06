@@ -25,7 +25,7 @@ export default defineConfig([
       js.configs.recommended,
     ],
     rules: {
-      eqeqeq: 'error',
+      eqeqeq: ['error', 'always', { null: 'ignore' }],
       'func-style': ['error', 'declaration', { allowTypeAnnotation: true }],
       'prefer-destructuring': ['error', { object: true, array: false }],
     },

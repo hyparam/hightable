@@ -94,4 +94,30 @@ describe('computeRanks', () => {
     const ranks = computeRanks(values)
     expect(ranks).toEqual([2, 3, 0, 0])
   })
+
+  it('should sort null after other values', () => {
+    expect(computeRanks([null, 1, 2])).toEqual([2, 0, 1])
+    expect(computeRanks([1, null, 2])).toEqual([0, 2, 1])
+    expect(computeRanks([1, 2, null])).toEqual([0, 1, 2])
+  })
+
+  it('should sort undefined after other values', () => {
+    expect(computeRanks([undefined, 1, 2])).toEqual([2, 0, 1])
+    expect(computeRanks([1, undefined, 2])).toEqual([0, 2, 1])
+  })
+
+  it('should sort null and undefined after other values', () => {
+    expect(computeRanks([null, undefined, 1])).toEqual([1, 2, 0])
+    expect(computeRanks([1, null, undefined])).toEqual([0, 1, 2])
+  })
+
+  it('should sort null and false as different values', () => {
+    expect(computeRanks([null, false, true])).toEqual([2, 0, 1])
+    expect(computeRanks([false, null, true])).toEqual([0, 2, 1])
+  })
+
+  it('should sort null after zero', () => {
+    expect(computeRanks([null, 0, 1])).toEqual([2, 0, 1])
+    expect(computeRanks([0, null, 1])).toEqual([0, 2, 1])
+  })
 })
