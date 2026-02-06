@@ -295,8 +295,6 @@ interface ScrollToAction {
   scrollTop: number
 }
 
-// TODO(SL): this logic should be shared with the 'ON_SCROLL' action in the reducer, to avoid code duplication
-// and to ensure consistent behavior
 export function getScrollActionForRow({
   rowIndex,
   scale,

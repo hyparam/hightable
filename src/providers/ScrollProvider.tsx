@@ -54,7 +54,6 @@ export function ScrollProvider({ children, headerHeight, numRows, padding = defa
    * - row 1: header
    * - row 2: first data row
    * - row numRows + 1: last data row
-   * @param rowIndex The row to scroll to (same semantic as aria-rowindex: 1-based, includes header)
    */
   useEffect(() => {
     const { rowIndex } = cellPosition

@@ -10,6 +10,7 @@ import type { Fetch, ResolvedValue } from '../../helpers/dataframe/types.js'
 import type { Selection } from '../../helpers/selection.js'
 import type { OrderBy } from '../../helpers/sort.js'
 import { createEventTarget } from '../../helpers/typedEventTarget.js'
+import type { CellPosition } from '../../types.js'
 import type { CellContentProps } from '../Cell/Cell.js'
 import HighTable from './HighTable.js'
 
@@ -207,9 +208,8 @@ function createFilteredData(): DataFrame {
   return df
 }
 
-function createLargeData(): DataFrame {
-  // 1 peta rows (1 million billion, 10^15)
-  const numRows = 1_000_000_000_000_000
+function createLargeData(numRows = 1_000_000_000_000_000): DataFrame {
+  // default: 1 peta rows (1 million billion, 10^15)
   const columnDescriptors = ['ID1', 'LongString1', 'Value1', 'ID2', 'LongString2', 'Value2', 'ID3', 'LongString3', 'Value3', 'ID4', 'LongString4', 'Value4'].map(name => ({ name }))
   function getCell({ row, column }: { row: number, column: string }): ResolvedValue | undefined {
     return {
@@ -639,5 +639,45 @@ export const LargeData: Story = {
 export const SmallData: Story = {
   args: {
     data: createSmallData(),
+  },
+}
+
+export const JumpToCell: Story = {
+  render: ({ data }) => {
+    const [cellPosition, setCellPosition] = useState<CellPosition>({
+      rowIndex: 500,
+      colIndex: 2,
+    })
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+        <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', padding: '12px' }}>
+          <button type="button" onClick={() => { setCellPosition({ rowIndex: 1, colIndex: 1 }) }}>
+            Go to row 1, column 1
+          </button>
+          <button type="button" onClick={() => { setCellPosition({ rowIndex: 2, colIndex: 2 }) }}>
+            Go to row 2, column 2
+          </button>
+          <button type="button" onClick={() => { setCellPosition({ rowIndex: 500, colIndex: 3 }) }}>
+            Go to row 500, column 3
+          </button>
+          <button type="button" onClick={() => { setCellPosition({ rowIndex: 100_000_000, colIndex: 2 }) }}>
+            Go to row 100,000,000, column 4
+          </button>
+          <button type="button" onClick={() => { setCellPosition({ rowIndex: data.numRows + 1, colIndex: 3 }) }}>
+            {`Go to row ${data.numRows + 1}, column 3`}
+          </button>
+        </div>
+        {/* focus is broken */}
+        <HighTable
+          data={data}
+          cellPosition={cellPosition}
+          onCellPositionChange={setCellPosition}
+        />
+      </div>
+    )
+  },
+  args: {
+    // data: createUnsortableData(),
+    data: createLargeData(1_000_000_000),
   },
 }
