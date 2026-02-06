@@ -47,6 +47,17 @@ export interface HighTableProps {
   className?: string
   /** User-provided configuration for the columns, keyed by column name */
   columnConfiguration?: ColumnConfiguration
+  /**
+   * The columns visibility, i.e. which columns are hidden.
+   *
+   * If undefined, the component manages the columns visibility internally, and all columns are shown by default
+   * (except if 'initiallyHidden' is set in the column parameters, in which case the corresponding columns are hidden by default).
+   *
+   * This prop is expected to stay in the same mode during the lifecycle of the component:
+   * - if it is set on the first render, the component is in controlled mode and the parent component is responsible for updating the 'columnsVisibility' prop on user interactions (see onColumnsVisibilityChange);
+   * - if it is undefined on the first render, the component is in uncontrolled mode and manages the columns visibility internally.
+   */
+  columnsVisibility?: ColumnsVisibility
   /** Whether to focus the first cell on mount, or when a new data frame is passed. Defaults to true. */
   focus?: boolean
   /** The maximum number of rows to display (for row headers). Useful for filtered data. If undefined, the number of rows in the data frame is applied. */
@@ -82,6 +93,14 @@ export interface HighTableProps {
   onCellPositionChange?: (cellPosition: CellPosition) => void
   /**
    * Optional function called whenever the set of hidden columns changes.
+   *
+   * - if uncontrolled (columnsVisibility prop is not set): this callback is called on top of the local state setter, e.g. to notify the parent of the local change.
+   * - if controlled (columnsVisibility prop is set): this callback is called to notify the parent of the requested change, and it's the responsibility of the parent
+   *   component to update the 'columnsVisibility' prop on next render (the user interaction will not trigger a change of the columns visibility if the parent does not update the 'columnsVisibility' prop accordingly).
+   *
+   * If the callback is undefined (default):
+   * - in uncontrolled mode (default), the columns visibility is updated locally but the parent is not notified.
+   * - in controlled mode, the component is read-only, and the columns visibility cannot be changed by user interactions.
    *
    * @param columns A record of column visibility keyed by column name
    */

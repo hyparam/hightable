@@ -1,4 +1,4 @@
-import { act, renderHook } from '@testing-library/react'
+import { act, render, renderHook } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { useContext } from 'react'
 import { describe, expect, it, vi } from 'vitest'
@@ -15,6 +15,33 @@ interface Props {
   onColumnsVisibilityChange?: (columnsVisibility: ColumnsVisibility) => void
 }
 
+function TestComponent() {
+  const columnsVisibilityContext = useContext(ColumnsVisibilityContext)
+  return (
+    <div>
+      <div>
+        Number of visible columns:
+        <span data-testid="number-of-visible-columns">{columnsVisibilityContext.numberOfVisibleColumns}</span>
+      </div>
+      <div>
+        Visible columns:
+        <span data-testid="visible-columns">{columnsVisibilityContext.visibleColumnsParameters?.map(c => c.name).join(',')}</span>
+      </div>
+      <button data-testid="hide-column1" onClick={() => columnsVisibilityContext.getHideColumn?.('column1')?.()}>
+        Hide column1
+      </button>
+      <button data-testid="hide-column2" onClick={() => columnsVisibilityContext.getHideColumn?.('column2')?.()}>
+        Hide column2
+      </button>
+      <button data-testid="hide-column3" onClick={() => columnsVisibilityContext.getHideColumn?.('column3')?.()}>
+        Hide column3
+      </button>
+      <button data-testid="show-all-columns" onClick={() => columnsVisibilityContext.showAllColumns?.()}>
+        Show all columns
+      </button>
+    </div>
+  )
+}
 function WrapperComponent({ columnParameters, columnsVisibility, onColumnsVisibilityChange, children }: Props & { children: ReactNode }) {
   return (
     <ColumnParametersContext value={columnParameters}>
@@ -244,6 +271,24 @@ describe('ColumnsVisibilityProvider', () => {
           expect(result.current.getHideColumn?.('column3')).toBeDefined()
         })
       })
+      describe('if columnsVisibility is changed from undefined to a value', () => {
+        it('the prop is ignore (uncontrolled mode is permanent)', () => {
+          const { getByTestId, rerender } = render(
+            <WrapperComponent columnParameters={columnParameters} columnsVisibility={undefined}>
+              <TestComponent />
+            </WrapperComponent>
+          )
+          expect(getByTestId('number-of-visible-columns').textContent).toBe('3')
+          expect(getByTestId('visible-columns').textContent).toEqual('column1,column2,column3')
+          rerender(
+            <WrapperComponent columnParameters={columnParameters} columnsVisibility={{ column1: { hidden: true } }}>
+              <TestComponent />
+            </WrapperComponent>
+          )
+          expect(getByTestId('number-of-visible-columns').textContent).toBe('3')
+          expect(getByTestId('visible-columns').textContent).toEqual('column1,column2,column3')
+        })
+      })
     })
 
     describe('if there are no columns', () => {
@@ -307,6 +352,105 @@ describe('ColumnsVisibilityProvider', () => {
             expect(onColumnsVisibilityChange).toHaveBeenCalledWith({})
           })
         })
+      })
+    })
+  })
+
+  describe('in controlled mode (with columnsVisibility)', () => {
+    it('the columnsVisibility prop is used initially', () => {
+      const columnParameters = getDefaultColumnParameters(['column1', 'column2', 'column3'])
+      const columnsVisibility = { column1: { hidden: true as const }, column2: { hidden: true as const } }
+      const { getByTestId } = render(
+        <WrapperComponent columnParameters={columnParameters} columnsVisibility={columnsVisibility}>
+          <TestComponent />
+        </WrapperComponent>
+      )
+      expect(getByTestId('number-of-visible-columns').textContent).toBe('1')
+      expect(getByTestId('visible-columns').textContent).toEqual('column3')
+    })
+    it('the columnsVisibility prop is used when it changes', () => {
+      const columnParameters = getDefaultColumnParameters(['column1', 'column2', 'column3'])
+      const { getByTestId, rerender } = render(
+        <WrapperComponent columnParameters={columnParameters} columnsVisibility={{ column1: { hidden: true as const } }}>
+          <TestComponent />
+        </WrapperComponent>
+      )
+      expect(getByTestId('number-of-visible-columns').textContent).toBe('2')
+      expect(getByTestId('visible-columns').textContent).toEqual('column2,column3')
+      rerender(
+        <WrapperComponent columnParameters={columnParameters} columnsVisibility={{ column1: { hidden: true as const }, column2: { hidden: true as const } }}>
+          <TestComponent />
+        </WrapperComponent>
+      )
+      expect(getByTestId('number-of-visible-columns').textContent).toBe('1')
+      expect(getByTestId('visible-columns').textContent).toEqual('column3')
+    })
+    describe('if onColumnsVisibilityChange is provided', () => {
+      it('is not called on init', () => {
+        const onColumnsVisibilityChange = vi.fn()
+        render(
+          <WrapperComponent columnParameters={[]} columnsVisibility={{}} onColumnsVisibilityChange={onColumnsVisibilityChange}>
+            <TestComponent />
+          </WrapperComponent>
+        )
+        expect(onColumnsVisibilityChange).not.toHaveBeenCalled()
+      })
+      it('is not called when columnsVisibility prop changes, as the component is in controlled mode', () => {
+        const columnParameters = getDefaultColumnParameters(['column1', 'column2', 'column3'])
+        const onColumnsVisibilityChange = vi.fn()
+        const { rerender } = render(
+          <WrapperComponent columnParameters={columnParameters} columnsVisibility={{}} onColumnsVisibilityChange={onColumnsVisibilityChange}>
+            <TestComponent />
+          </WrapperComponent>
+        )
+        expect(onColumnsVisibilityChange).not.toHaveBeenCalled()
+        rerender(
+          <WrapperComponent columnParameters={columnParameters} columnsVisibility={{ column1: { hidden: true as const } }} onColumnsVisibilityChange={onColumnsVisibilityChange}>
+            <TestComponent />
+          </WrapperComponent>
+        )
+        expect(onColumnsVisibilityChange).not.toHaveBeenCalled()
+      })
+      it('is called when the state is change from user interactions, but as the component is in controlled mode the state does not change', () => {
+        const columnParameters = getDefaultColumnParameters(['column1', 'column2', 'column3'])
+        const onColumnsVisibilityChange = vi.fn()
+        const { getByTestId } = render(
+          <WrapperComponent columnParameters={columnParameters} columnsVisibility={{}} onColumnsVisibilityChange={onColumnsVisibilityChange}>
+            <TestComponent />
+          </WrapperComponent>
+        )
+        act(() => {
+          getByTestId('hide-column1').click()
+        })
+        expect(onColumnsVisibilityChange).toHaveBeenCalledExactlyOnceWith({ column1: { hidden: true } })
+        expect(getByTestId('number-of-visible-columns').textContent).toBe('3')
+        expect(getByTestId('visible-columns').textContent).toEqual('column1,column2,column3')
+      })
+    })
+    describe('if columnsVisibility changes from a value to undefined', () => {
+      it('the initial value of the prop is used (controlled mode is permanent)', () => {
+        const columnParameters = getDefaultColumnParameters(['column1', 'column2', 'column3'])
+        const { getByTestId, rerender } = render(
+          <WrapperComponent columnParameters={columnParameters} columnsVisibility={{ column1: { hidden: true } }}>
+            <TestComponent />
+          </WrapperComponent>
+        )
+        expect(getByTestId('number-of-visible-columns').textContent).toBe('2')
+        expect(getByTestId('visible-columns').textContent).toEqual('column2,column3')
+        rerender(
+          <WrapperComponent columnParameters={columnParameters} columnsVisibility={{ column1: { hidden: true }, column2: { hidden: true } }}>
+            <TestComponent />
+          </WrapperComponent>
+        )
+        expect(getByTestId('number-of-visible-columns').textContent).toBe('1')
+        expect(getByTestId('visible-columns').textContent).toEqual('column3')
+        rerender(
+          <WrapperComponent columnParameters={columnParameters} columnsVisibility={undefined}>
+            <TestComponent />
+          </WrapperComponent>
+        )
+        expect(getByTestId('number-of-visible-columns').textContent).toBe('2')
+        expect(getByTestId('visible-columns').textContent).toEqual('column2,column3')
       })
     })
   })

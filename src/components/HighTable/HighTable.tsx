@@ -22,6 +22,7 @@ export default function HighTable({
   cacheKey,
   cellPosition,
   className = '',
+  columnsVisibility,
   data,
   focus,
   maxRowNumber,
@@ -87,6 +88,7 @@ export default function HighTable({
                * Recreate a context if a new data frame is passed (but not if only the number of rows changed)
                */
               key={dataId}
+              columnsVisibility={columnsVisibility}
               onColumnsVisibilityChange={onColumnsVisibilityChange}
             >
               <OrderByProvider
