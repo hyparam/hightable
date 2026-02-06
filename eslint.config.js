@@ -7,7 +7,7 @@ import { defineConfig } from 'eslint/config'
 import importPlugin from 'eslint-plugin-import'
 import react from 'eslint-plugin-react'
 import reactHooks from 'eslint-plugin-react-hooks'
-import reactRefresh from 'eslint-plugin-react-refresh'
+import { reactRefresh } from 'eslint-plugin-react-refresh'
 import simpleImportSort from 'eslint-plugin-simple-import-sort'
 import storybook from 'eslint-plugin-storybook'
 import globals from 'globals'
@@ -89,7 +89,7 @@ export default defineConfig([
       react.configs.flat.recommended,
       react.configs.flat['jsx-runtime'],
       reactHooks.configs.flat.recommended,
-      reactRefresh.configs.recommended,
+      reactRefresh.configs.vite(),
     ],
     rules: {
       '@typescript-eslint/consistent-type-exports': 'error',
