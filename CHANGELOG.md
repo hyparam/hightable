@@ -1,5 +1,30 @@
 # CHANGELOG
 
+## [0.26.1](https://github.com/hyparam/hightable/compare/v0.26.0...v0.26.1) - 2026-02-06
+
+### Added
+
+- add `cellPosition` and `onCellPositionChange` props to `HighTable` to control the focused cell from outside the component ([#420](https://github.com/hyparam/hightable/pull/420)).
+
+### Changed
+
+- arrayDataFrame gets the column names from the first 100 rows, instead of the first one only ([#406](https://github.com/hyparam/hightable/pull/406)).
+- handle Error types in stringify ([#397](https://github.com/hyparam/hightable/pull/397)).
+- increase float precision from 3 to 7 in stringify ([#424](https://github.com/hyparam/hightable/pull/424)).
+
+### Fixed
+
+- focus the nearest cell, instead of losing the focus, when the focused cell is removed or hidden ([#398](https://github.com/hyparam/hightable/pull/398)).
+
+### Refactored
+
+- upgrade development dependencies ([#425](https://github.com/hyparam/hightable/pull/425)).
+- refactor scroll and focus code ([#391](https://github.com/hyparam/hightable/pull/391), [#392](https://github.com/hyparam/hightable/pull/392), [#398](https://github.com/hyparam/hightable/pull/398), [#400](https://github.com/hyparam/hightable/pull/400), [#401](https://github.com/hyparam/hightable/pull/401), [#413](https://github.com/hyparam/hightable/pull/413), [#419](https://github.com/hyparam/hightable/pull/419), [#421](https://github.com/hyparam/hightable/pull/421), [#422](https://github.com/hyparam/hightable/pull/422)).
+- refactor useInputState hook ([#399](https://github.com/hyparam/hightable/pull/399), [#416](https://github.com/hyparam/hightable/pull/416), [#417](https://github.com/hyparam/hightable/pull/417), [#418](https://github.com/hyparam/hightable/pull/418)).
+- move HighTable prop types to types.ts file, refactor HighTable structure, and memoize where needed ([#402](https://github.com/hyparam/hightable/pull/402), [#408](https://github.com/hyparam/hightable/pull/408), [#409](https://github.com/hyparam/hightable/pull/409), [#410](https://github.com/hyparam/hightable/pull/410), [#411](https://github.com/hyparam/hightable/pull/411), [#412](https://github.com/hyparam/hightable/pull/412)).
+- add doc strings ([#402](https://github.com/hyparam/hightable/pull/402), [#403](https://github.com/hyparam/hightable/pull/403), [#411](https://github.com/hyparam/hightable/pull/411)).
+- eslint configuration ([#392](https://github.com/hyparam/hightable/pull/392), [#425](https://github.com/hyparam/hightable/pull/425)).
+
 ## [0.26.0](https://github.com/hyparam/hightable/compare/v0.25.2...v0.26.0) - 2026-01-14
 
 ### Changed
