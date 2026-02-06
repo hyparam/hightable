@@ -2,7 +2,7 @@ import type { CSSProperties } from 'react'
 import { useMemo, useState } from 'react'
 
 import { PortalContainerContext } from '../../contexts/PortalContainerContext.js'
-import { columnVisibilityStatesSuffix, columnWidthsSuffix, rowHeight } from '../../helpers/constants.js'
+import { columnWidthsSuffix, rowHeight } from '../../helpers/constants.js'
 import styles from '../../HighTable.module.css'
 import { useData } from '../../hooks/useData.js'
 import { useHTMLElement } from '../../hooks/useHTMLElement.js'
@@ -99,11 +99,8 @@ export default function HighTable({
             <ColumnVisibilityStatesProvider
               /**
                * Recreate a context if a new data frame is passed (but not if only the number of rows changed)
-               * The user can also pass a cacheKey to force a new set of visibility states, or keep the current ones.
                */
-              key={cacheKey ?? dataId}
-              // TODO(SL): pass cacheKey, memoize
-              localStorageKey={cacheKey ? `${cacheKey}${columnVisibilityStatesSuffix}` : undefined}
+              key={dataId}
               columnNames={columnNames}
               initialVisibilityStates={initialVisibilityStates}
               onColumnsVisibilityChange={onColumnsVisibilityChange}

@@ -1,18 +1,15 @@
 import type { ReactNode } from 'react'
-import { useCallback, useContext, useMemo } from 'react'
+import { useCallback, useContext, useMemo, useState } from 'react'
 
 import { ColumnParametersContext } from '../contexts/ColumnParametersContext.js'
 import { ColumnVisibilityStatesContext } from '../contexts/ColumnVisibilityStatesContext.js'
-import { useLocalStorageState } from '../hooks/useLocalStorageState.js'
-import type { HighTableProps } from '../types.js'
+import type { ColumnsVisibility, HighTableProps } from '../types.js'
 
 type ColumnVisibilityStatesProviderProps = Pick<HighTableProps, 'onColumnsVisibilityChange'> & {
-  /** Optional key to use for local storage (no local storage if not provided) */
-  localStorageKey?: string
   /** Array of column names, in order */
   columnNames: string[]
-  /** Initial visibility states for columns by name (used only if no local storage value exists) */
-  initialVisibilityStates?: Record<string, MaybeHiddenColumn>
+  /** Initial visibility states for columns by name */
+  initialVisibilityStates?: ColumnsVisibility
   /** Children components */
   children: ReactNode
 }
@@ -28,41 +25,16 @@ export type MaybeHiddenColumn = HiddenColumn | undefined
 /**
  * Provide the column visibility states to the table, i.e. which columns are hidden, plus actions to hide/show columns,
  * through the ColumnVisibilityStatesContext.
- *
- * Pass a new "key" to create a new set of hidden columns if the data has changed, but keep it if only the number of rows changed, for example.
  */
-export function ColumnVisibilityStatesProvider({ children, localStorageKey, columnNames, initialVisibilityStates, onColumnsVisibilityChange }: ColumnVisibilityStatesProviderProps) {
+export function ColumnVisibilityStatesProvider({ children, columnNames, initialVisibilityStates, onColumnsVisibilityChange }: ColumnVisibilityStatesProviderProps) {
   const numColumns = columnNames.length
 
   // A record of column visibility states keyed by column name
-  const [columnVisibilityStates, setColumnVisibilityStates] = useLocalStorageState<Record<string, MaybeHiddenColumn>>({ key: localStorageKey, parse, stringify })
-  function stringify(columnVisibilityStates: Record<string, MaybeHiddenColumn>) {
-    return JSON.stringify(columnVisibilityStates)
-  }
-  function parse(json: string): Record<string, MaybeHiddenColumn> {
-    const parsed = JSON.parse(json)
-    if (typeof parsed !== 'object' || parsed === null) {
-      return {}
-    }
-    const result: Record<string, MaybeHiddenColumn> = {}
-    // only keep the hidden: true fields
-    for (const [key, value] of Object.entries(parsed as Record<string, unknown>)) {
-      if (value !== null && value !== undefined && typeof value === 'object' && 'hidden' in value && value.hidden === true) {
-        result[key] = { hidden: true }
-      }
-    }
-    return result
-  }
-
-  // Apply initial visibility states if no persisted state exists
-  const effectiveColumnVisibilityStates = useMemo(
-    () => columnVisibilityStates ?? initialVisibilityStates ?? {},
-    [columnVisibilityStates, initialVisibilityStates]
-  )
+  const [columnVisibilityStates, setColumnVisibilityStates] = useState<ColumnsVisibility>(() => initialVisibilityStates ?? {})
 
   const isHiddenColumn = useCallback((columnName: string) => {
-    return effectiveColumnVisibilityStates[columnName]?.hidden === true
-  }, [effectiveColumnVisibilityStates])
+    return columnVisibilityStates[columnName]?.hidden === true
+  }, [columnVisibilityStates])
 
   const { numberOfHiddenColumns, numberOfVisibleColumns } = useMemo(() => {
     let numberOfHiddenColumns = 0
@@ -84,13 +56,13 @@ export function ColumnVisibilityStatesProvider({ children, localStorageKey, colu
     }
     return () => {
       setColumnVisibilityStates((currentStates) => {
-        const nextColumnVisibilityStates = { ...currentStates ?? initialVisibilityStates ?? {} }
+        const nextColumnVisibilityStates = { ...currentStates }
         nextColumnVisibilityStates[columnName] = { hidden: true }
         onColumnsVisibilityChange?.(nextColumnVisibilityStates)
         return nextColumnVisibilityStates
       })
     }
-  }, [canBeHidden, columnNames, setColumnVisibilityStates, onColumnsVisibilityChange, initialVisibilityStates])
+  }, [canBeHidden, columnNames, setColumnVisibilityStates, onColumnsVisibilityChange])
 
   const showAllColumns = useMemo(() => {
     if (numberOfHiddenColumns === 0) {

@@ -25,6 +25,8 @@ export interface CellPosition {
   rowIndex: number
 }
 
+export type ColumnsVisibility = Record<string, MaybeHiddenColumn>
+
 // TODO(SL): update orderBy, onOrderByChange, selection, onSelectionChange docstrings to reflect the reality
 
 export interface HighTableProps {
@@ -85,7 +87,7 @@ export interface HighTableProps {
    *
    * @param columns A record of column visibility states keyed by column name
    */
-  onColumnsVisibilityChange?: (columns: Record<string, MaybeHiddenColumn>) => void
+  onColumnsVisibilityChange?: (columns: ColumnsVisibility) => void
   /**
    * Optional function called on double click of a cell.
    *
