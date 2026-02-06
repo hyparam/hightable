@@ -43,7 +43,7 @@
     "lint": "eslint",
     "lint:fix": "eslint --fix",
     "prepublishOnly": "npm run build",
-    "storybook": "storybook dev -p 6006",
+    "storybook": "storybook dev -p 6006 --disable-telemetry",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
