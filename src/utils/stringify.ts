@@ -3,7 +3,9 @@
  */
 export function stringify(value: unknown): string | undefined {
   if (typeof value === 'string') return value
-  if (typeof value === 'number' || typeof value === 'bigint') return value.toLocaleString('en-US')
+  if (typeof value === 'number' || typeof value === 'bigint') {
+    return value.toLocaleString('en-US', { maximumFractionDigits: 7 })
+  }
   if (typeof value === 'boolean') return value.toString()
   if (Array.isArray(value)) {
     return `[\n${value.map(v => indent(stringify(v), 2)).join(',\n')}\n]`
