@@ -6,10 +6,6 @@ import { ColumnsVisibilityContext } from '../contexts/ColumnsVisibilityContext.j
 import type { HighTableProps } from '../types.js'
 
 type ColumnsVisibilityProviderProps = Pick<HighTableProps, 'onColumnsVisibilityChange'> & {
-  /** Array of column names, in order */
-  columnNames: string[]
-  /** Initial columns visibility */
-  initialColumnsVisibility?: ColumnsVisibility
   /** Children components */
   children: ReactNode
 }
@@ -29,11 +25,19 @@ export type ColumnsVisibility = Record<string, ColumnVisibility>
  * Provide the columns visibility to the table, i.e. which columns are hidden, plus actions to hide/show columns,
  * through the ColumnsVisibilityContext.
  */
-export function ColumnsVisibilityProvider({ children, columnNames, initialColumnsVisibility, onColumnsVisibilityChange }: ColumnsVisibilityProviderProps) {
-  const numColumns = columnNames.length
+export function ColumnsVisibilityProvider({ children, onColumnsVisibilityChange }: ColumnsVisibilityProviderProps) {
+  const allColumnsParameters = useContext(ColumnParametersContext)
+  const columnNames = useMemo(() => new Set(allColumnsParameters.map(c => c.name)), [allColumnsParameters])
+  const initialColumnsVisibility = useMemo(() => {
+    return Object.fromEntries(
+      allColumnsParameters
+        .filter(({ initiallyHidden }) => initiallyHidden)
+        .map(({ name }) => [name, { hidden: true as const }])
+    )
+  }, [allColumnsParameters])
 
   // A record of column visibility keyed by column name
-  const [columnsVisibility, setColumnsVisibility] = useState<ColumnsVisibility>(() => initialColumnsVisibility ?? {})
+  const [columnsVisibility, setColumnsVisibility] = useState<ColumnsVisibility>(initialColumnsVisibility)
 
   const isHiddenColumn = useCallback((columnName: string) => {
     return columnsVisibility[columnName]?.hidden === true
@@ -41,31 +45,30 @@ export function ColumnsVisibilityProvider({ children, columnNames, initialColumn
 
   const { numberOfHiddenColumns, numberOfVisibleColumns } = useMemo(() => {
     let numberOfHiddenColumns = 0
-    for (const columnName of columnNames) {
-      if (isHiddenColumn(columnName)) {
+    for (const name of columnNames) {
+      if (isHiddenColumn(name)) {
         numberOfHiddenColumns++
       }
     }
-    return { numberOfHiddenColumns, numberOfVisibleColumns: numColumns - numberOfHiddenColumns }
-  }, [columnNames, isHiddenColumn, numColumns])
+    return { numberOfHiddenColumns, numberOfVisibleColumns: columnNames.size - numberOfHiddenColumns }
+  }, [columnNames, isHiddenColumn])
 
   const canBeHidden = useCallback((columnName: string) => {
-    return !isHiddenColumn(columnName) && numberOfVisibleColumns > 1
-  }, [isHiddenColumn, numberOfVisibleColumns])
+    return columnNames.has(columnName) && !isHiddenColumn(columnName) && numberOfVisibleColumns > 1
+  }, [columnNames, isHiddenColumn, numberOfVisibleColumns])
 
   const getHideColumn = useCallback((columnName: string) => {
-    if (!columnNames.includes(columnName) || !canBeHidden(columnName)) {
+    if (!canBeHidden(columnName)) {
       return undefined
     }
     return () => {
       setColumnsVisibility((current) => {
-        const next = { ...current }
-        next[columnName] = { hidden: true }
+        const next = { ...current, [columnName]: { hidden: true as const } }
         onColumnsVisibilityChange?.(next)
         return next
       })
     }
-  }, [canBeHidden, columnNames, setColumnsVisibility, onColumnsVisibilityChange])
+  }, [canBeHidden, setColumnsVisibility, onColumnsVisibilityChange])
 
   const showAllColumns = useMemo(() => {
     if (numberOfHiddenColumns === 0) {
@@ -78,7 +81,6 @@ export function ColumnsVisibilityProvider({ children, columnNames, initialColumn
     }
   }, [numberOfHiddenColumns, setColumnsVisibility, onColumnsVisibilityChange])
 
-  const allColumnsParameters = useContext(ColumnParametersContext)
   const visibleColumnsParameters = useMemo(() => {
     return allColumnsParameters.filter((col) => {
       return !isHiddenColumn(col.name)

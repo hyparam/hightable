@@ -8,7 +8,6 @@ import { useData } from '../../hooks/useData.js'
 import { useHTMLElement } from '../../hooks/useHTMLElement.js'
 import { CellNavigationProvider } from '../../providers/CellNavigationProvider.js'
 import { ColumnParametersProvider } from '../../providers/ColumnParametersProvider.js'
-import type { ColumnsVisibility } from '../../providers/ColumnsVisibilityProvider.js'
 import { ColumnsVisibilityProvider } from '../../providers/ColumnsVisibilityProvider.js'
 import { ColumnWidthsProvider } from '../../providers/ColumnWidthsProvider.js'
 import { OrderByProvider } from '../../providers/OrderByProvider.js'
@@ -41,20 +40,6 @@ export default function HighTable({
   const [viewportWidth, setViewportWidth] = useState<number | undefined>(undefined)
   const [tableCornerSize, setTableCornerSize] = useState<{ width: number, height: number } | undefined>(undefined)
   const { dataId, numRows, version } = useData({ data })
-
-  const columnNames = useMemo(() => data.columnDescriptors.map(d => d.name), [data.columnDescriptors])
-
-  const initialColumnsVisibility = useMemo(() => {
-    if (!columnConfiguration) return undefined
-    const columnsVisibility: ColumnsVisibility = {}
-    for (const descriptor of data.columnDescriptors) {
-      const config = columnConfiguration[descriptor.name]
-      if (config?.initiallyHidden) {
-        columnsVisibility[descriptor.name] = { hidden: true as const }
-      }
-    }
-    return columnsVisibility
-  }, [columnConfiguration, data.columnDescriptors])
 
   const headerHeight = useMemo(() => {
     return tableCornerSize?.height ?? rowHeight
@@ -102,8 +87,6 @@ export default function HighTable({
                * Recreate a context if a new data frame is passed (but not if only the number of rows changed)
                */
               key={dataId}
-              columnNames={columnNames}
-              initialColumnsVisibility={initialColumnsVisibility}
               onColumnsVisibilityChange={onColumnsVisibilityChange}
             >
               <OrderByProvider
