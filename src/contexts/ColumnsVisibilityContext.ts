@@ -2,7 +2,7 @@ import { createContext } from 'react'
 
 import type { ColumnParameters } from './ColumnParametersContext'
 
-interface ColumnVisibilityStatesContextType {
+interface ColumnsVisibilityContextType {
   /** Number of visible columns */
   numberOfVisibleColumns: number
   /** Visible columns parameters */
@@ -29,8 +29,8 @@ interface ColumnVisibilityStatesContextType {
   isHiddenColumn?: (columnName: string) => boolean // returns true if the column is hidden
 }
 
-export const defaultColumnVisibilityStatesContext: ColumnVisibilityStatesContextType = {
+export const defaultColumnsVisibilityContext: ColumnsVisibilityContextType = {
   numberOfVisibleColumns: 0,
 }
 
-export const ColumnVisibilityStatesContext = createContext<ColumnVisibilityStatesContextType>(defaultColumnVisibilityStatesContext)
+export const ColumnsVisibilityContext = createContext<ColumnsVisibilityContextType>(defaultColumnsVisibilityContext)

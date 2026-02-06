@@ -2,7 +2,7 @@ import type { KeyboardEvent } from 'react'
 import { useCallback, useContext, useMemo } from 'react'
 
 import { CellNavigationContext } from '../../contexts/CellNavigationContext.js'
-import { ColumnVisibilityStatesContext } from '../../contexts/ColumnVisibilityStatesContext.js'
+import { ColumnsVisibilityContext } from '../../contexts/ColumnsVisibilityContext.js'
 import { OrderByContext } from '../../contexts/OrderByContext.js'
 import { ScrollContext } from '../../contexts/ScrollContext.js'
 import { SelectionContext } from '../../contexts/SelectionContext.js'
@@ -41,7 +41,7 @@ export default function Slice({
   const { moveCell } = useContext(CellNavigationContext)
   const { orderBy, setOrderBy } = useContext(OrderByContext)
   const { selectable, toggleAllRows, pendingSelectionGesture, onTableKeyDown: onSelectionTableKeyDown, allRowsSelected, isRowSelected, toggleRowNumber, toggleRangeToRowNumber } = useContext(SelectionContext)
-  const { visibleColumnsParameters: columnsParameters } = useContext(ColumnVisibilityStatesContext)
+  const { visibleColumnsParameters: columnsParameters } = useContext(ColumnsVisibilityContext)
   const { renderedRowsStart, renderedRowsEnd } = useContext(ScrollContext)
 
   // Fetch the required cells if needed (visible + overscan)

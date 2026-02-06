@@ -105,7 +105,7 @@ interface TableProps {
   numRowsPerPage?: number // number of rows per page for keyboard navigation (default 20)
   selection?: Selection // selection state (if defined, the component selection is controlled by the parent)
   styled?: boolean // use styled component? (default true)
-  onColumnsVisibilityChange?: (columnVisibilityStates: Record<string, MaybeHiddenColumn>) => void // columns visibility change handler
+  onColumnsVisibilityChange?: (columnsVisibility: Record<string, { hidden: true } | undefined>) => void // columns visibility change handler
   onDoubleClickCell?: (event: MouseEvent, col: number, row: number) => void // double-click handler
   onError?: (error: Error) => void // error handler
   onKeyDownCell?: (event: KeyboardEvent, col: number, row: number) => void // key down handler. For accessibility, it should be passed if onDoubleClickCell is passed.

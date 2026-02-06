@@ -3,7 +3,7 @@ import { useCallback, useContext, useEffect, useMemo, useRef } from 'react'
 import { flushSync } from 'react-dom'
 
 import type { ColumnParameters } from '../../contexts/ColumnParametersContext.js'
-import { ColumnVisibilityStatesContext } from '../../contexts/ColumnVisibilityStatesContext.js'
+import { ColumnsVisibilityContext } from '../../contexts/ColumnsVisibilityContext.js'
 import { ColumnWidthsContext } from '../../contexts/ColumnWidthsContext.js'
 import type { Direction } from '../../helpers/sort.js'
 import { getOffsetWidth } from '../../helpers/width.js'
@@ -35,7 +35,7 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
   const { tabIndex, navigateToCell, focusIfNeeded } = useCellFocus({ ariaColIndex, ariaRowIndex })
   const { sortable } = columnConfig
   const { isOpen, position, menuId, close, handleMenuClick } = useColumnMenu(ref, navigateToCell)
-  const { getHideColumn, showAllColumns } = useContext(ColumnVisibilityStatesContext)
+  const { getHideColumn, showAllColumns } = useContext(ColumnsVisibilityContext)
 
   // Focus the cell if needed. We use an effect, as it acts on the DOM element after render.
   useEffect(() => {

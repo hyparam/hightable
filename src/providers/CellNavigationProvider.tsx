@@ -3,7 +3,7 @@ import { useCallback, useContext, useEffect, useMemo, useReducer } from 'react'
 
 import type { FocusAction, FocusState, MoveCellAction } from '../contexts/CellNavigationContext.js'
 import { CellNavigationContext } from '../contexts/CellNavigationContext.js'
-import { ColumnVisibilityStatesContext } from '../contexts/ColumnVisibilityStatesContext.js'
+import { ColumnsVisibilityContext } from '../contexts/ColumnsVisibilityContext.js'
 import { defaultNumRowsPerPage } from '../helpers/constants.js'
 import { useInputState } from '../hooks/useInputState.js'
 import type { HighTableProps } from '../types.js'
@@ -75,7 +75,7 @@ export function CellNavigationProvider({
   const rowCount = useMemo(() => numDataRows + 1, [numDataRows])
 
   // number of columns in the table, including the row header column
-  const { numberOfVisibleColumns: numDataColumns } = useContext(ColumnVisibilityStatesContext)
+  const { numberOfVisibleColumns: numDataColumns } = useContext(ColumnsVisibilityContext)
   const colCount = useMemo(() => numDataColumns + 1, [numDataColumns])
 
   const goToCurrentCell = useCallback(() => {
