@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## [0.26.3](https://github.com/hyparam/hightable/compare/v0.26.2...v0.26.3) - 2026-02-09
+
+### Added
+
+- add `columnsVisibility` prop to `HighTable` to control the columns visibility from outside the component ([#427](https://github.com/hyparam/hightable/pull/427), [#432](https://github.com/hyparam/hightable/pull/432)).
+
+
+## [0.26.2](https://github.com/hyparam/hightable/compare/v0.26.1...v0.26.2) - 2026-02-06
+
+### Fixed
+
+- fix sorting of falsey values ([#429](https://github.com/hyparam/hightable/pull/429)).
+
 ## [0.26.1](https://github.com/hyparam/hightable/compare/v0.26.0...v0.26.1) - 2026-02-06
 
 ### Added
