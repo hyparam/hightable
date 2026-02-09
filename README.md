@@ -97,6 +97,7 @@ interface TableProps {
   cacheKey?: string // used to persist column widths. If undefined, the column widths are not persisted. It is expected to be unique for each table.
   className?: string // additional class name for the table container
   columnConfiguration?: Record<string, ColumnConfig> // allows for additional configuration of columns
+  columnsVisibility?: Record<string, { hidden: true } | undefined> // allows controlling column visibility. If undefined, all columns are visible.
   focus?: boolean // focus table on mount? (default true)
   maxRowNumber?: number // maximum row number to display (for row headers). Useful for filtered data. If undefined, the number of rows in the data frame is applied.
   orderBy?: OrderBy // order by column (if defined, the component order is controlled by the parent)
