@@ -10,6 +10,7 @@ import type { Fetch, ResolvedValue } from '../../helpers/dataframe/types.js'
 import type { Selection } from '../../helpers/selection.js'
 import type { OrderBy } from '../../helpers/sort.js'
 import { createEventTarget } from '../../helpers/typedEventTarget.js'
+import type { ColumnsVisibility } from '../../providers/ColumnsVisibilityProvider.js'
 import type { CellPosition } from '../../types.js'
 import type { CellContentProps } from '../Cell/Cell.js'
 import HighTable from './HighTable.js'
@@ -679,5 +680,55 @@ export const JumpToCell: Story = {
   args: {
     // data: createUnsortableData(),
     data: createLargeData(1_000_000_000),
+  },
+}
+export const ColumnsVisibilityControlled: Story = {
+  render: ({ data }) => {
+    const [columnsVisibility, setColumnsVisibility] = useState<ColumnsVisibility>({
+      Value1: { hidden: true },
+      Value3: { hidden: true },
+    })
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+
+        <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', padding: '12px' }}>
+          {
+            data.columnDescriptors.map(({ name }) => {
+              const isHidden = columnsVisibility[name]?.hidden === true
+              return (
+                <button
+                  key={name}
+                  type="button"
+                  onClick={() => {
+                    setColumnsVisibility({
+                      ...columnsVisibility,
+                      [name]: isHidden ? undefined : { hidden: true },
+                    })
+                  }}
+                >
+                  {isHidden ? `Show ${name}` : `Hide ${name}`}
+                </button>
+              )
+            })
+          }
+        </div>
+        <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', padding: '12px', alignItems: 'center' }}>
+          <button type="button" onClick={() => { setColumnsVisibility({}) }}>
+            Show all columns
+          </button>
+          <div>
+            {`Hidden columns: ${Object.entries(columnsVisibility).filter(([, visibility]) => visibility?.hidden).map(([name]) => name).join(', ') || 'None'}`}
+          </div>
+        </div>
+        <HighTable
+          data={data}
+          columnsVisibility={columnsVisibility}
+          onColumnsVisibilityChange={setColumnsVisibility}
+        />
+      </div>
+    )
+  },
+  args: {
+    data: createUnsortableData(),
   },
 }

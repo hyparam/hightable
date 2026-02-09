@@ -2,13 +2,13 @@ import type { CSSProperties } from 'react'
 import { useMemo, useState } from 'react'
 
 import { PortalContainerContext } from '../../contexts/PortalContainerContext.js'
-import { columnVisibilityStatesSuffix, columnWidthsSuffix, rowHeight } from '../../helpers/constants.js'
+import { columnWidthsSuffix, rowHeight } from '../../helpers/constants.js'
 import styles from '../../HighTable.module.css'
 import { useData } from '../../hooks/useData.js'
 import { useHTMLElement } from '../../hooks/useHTMLElement.js'
 import { CellNavigationProvider } from '../../providers/CellNavigationProvider.js'
 import { ColumnParametersProvider } from '../../providers/ColumnParametersProvider.js'
-import { ColumnVisibilityStatesProvider } from '../../providers/ColumnVisibilityStatesProvider.js'
+import { ColumnsVisibilityProvider } from '../../providers/ColumnsVisibilityProvider.js'
 import { ColumnWidthsProvider } from '../../providers/ColumnWidthsProvider.js'
 import { OrderByProvider } from '../../providers/OrderByProvider.js'
 import { ScrollProvider } from '../../providers/ScrollProvider.js'
@@ -22,6 +22,7 @@ export default function HighTable({
   cacheKey,
   cellPosition,
   className = '',
+  columnsVisibility,
   data,
   focus,
   maxRowNumber,
@@ -40,20 +41,6 @@ export default function HighTable({
   const [viewportWidth, setViewportWidth] = useState<number | undefined>(undefined)
   const [tableCornerSize, setTableCornerSize] = useState<{ width: number, height: number } | undefined>(undefined)
   const { dataId, numRows, version } = useData({ data })
-
-  const columnNames = useMemo(() => data.columnDescriptors.map(d => d.name), [data.columnDescriptors])
-
-  const initialVisibilityStates = useMemo(() => {
-    if (!columnConfiguration) return undefined
-    const states: Record<string, { hidden: true } | undefined> = {}
-    for (const descriptor of data.columnDescriptors) {
-      const config = columnConfiguration[descriptor.name]
-      if (config?.initiallyHidden) {
-        states[descriptor.name] = { hidden: true as const }
-      }
-    }
-    return states
-  }, [columnConfiguration, data.columnDescriptors])
 
   const headerHeight = useMemo(() => {
     return tableCornerSize?.height ?? rowHeight
@@ -96,16 +83,12 @@ export default function HighTable({
             viewportWidth={viewportWidth}
             tableCornerWidth={tableCornerSize?.width}
           >
-            <ColumnVisibilityStatesProvider
+            <ColumnsVisibilityProvider
               /**
                * Recreate a context if a new data frame is passed (but not if only the number of rows changed)
-               * The user can also pass a cacheKey to force a new set of visibility states, or keep the current ones.
                */
-              key={cacheKey ?? dataId}
-              // TODO(SL): pass cacheKey, memoize
-              localStorageKey={cacheKey ? `${cacheKey}${columnVisibilityStatesSuffix}` : undefined}
-              columnNames={columnNames}
-              initialVisibilityStates={initialVisibilityStates}
+              key={dataId}
+              columnsVisibility={columnsVisibility}
               onColumnsVisibilityChange={onColumnsVisibilityChange}
             >
               <OrderByProvider
@@ -162,7 +145,7 @@ export default function HighTable({
 
                 </SelectionProvider>
               </OrderByProvider>
-            </ColumnVisibilityStatesProvider>
+            </ColumnsVisibilityProvider>
           </ColumnWidthsProvider>
         </ColumnParametersProvider>
       </PortalContainerContext.Provider>
