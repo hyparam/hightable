@@ -1,6 +1,6 @@
 {
   "name": "hightable",
-  "version": "0.26.2",
+  "version": "0.26.3",
   "description": "A dynamic windowed scrolling table component for react",
   "author": "Hyperparam",
   "homepage": "https://hyperparam.app",
@@ -54,7 +54,7 @@
     "@stylistic/eslint-plugin": "5.7.1",
     "@testing-library/react": "16.3.2",
     "@testing-library/user-event": "14.6.1",
-    "@types/node": "25.2.1",
+    "@types/node": "25.2.2",
     "@types/react": "19.2.13",
     "@types/react-dom": "19.2.3",
     "@vitejs/plugin-react": "5.1.3",
