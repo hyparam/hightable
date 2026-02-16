@@ -19,8 +19,6 @@ import TableHeader from '../TableHeader/TableHeader.js'
 type SliceProps = Pick<HighTableProps, 'data' | 'numRowsPerPage' | 'onDoubleClickCell' | 'onError' | 'onKeyDownCell' | 'onMouseDownCell' | 'overscan' | 'renderCellContent' | 'stringify'> & {
   /** The actual number of rows in the data frame */
   numRows: number
-  /** A version number that increments whenever a data frame is updated or resolved (the key remains the same). */
-  version: number
   /** Callback to set the current table corner size */
   setTableCornerSize?: (size: { width: number, height: number }) => void
 }
@@ -29,7 +27,6 @@ export default function Slice({
   data,
   numRows,
   overscan,
-  version,
   onDoubleClickCell,
   onError,
   onKeyDownCell,
@@ -141,7 +138,6 @@ export default function Slice({
       return {
         rowContents: [],
         canMeasureColumn: {},
-        version,
       }
     }
     const rows = Array.from({ length: renderedRowsEnd - renderedRowsStart }, (_, i) => renderedRowsStart + i)
@@ -163,9 +159,8 @@ export default function Slice({
     return {
       rowContents,
       canMeasureColumn,
-      version,
     }
-  }, [data, columnsParameters, renderedRowsStart, renderedRowsEnd, orderBy, version])
+  }, [data, columnsParameters, renderedRowsStart, renderedRowsEnd, orderBy])
 
   // don't render table if the data frame has no visible columns
   // (it can have zero rows, but must have at least one visible column)
