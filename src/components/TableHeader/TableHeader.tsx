@@ -30,6 +30,14 @@ export default function TableHeader({
     }
   }, [orderBy, setOrderBy, exclusiveSort])
 
+  const toggleOrderBys = useMemo(() => {
+    const toggleOrderBysMap: Record<string, (() => void) | undefined> = {}
+    columnsParameters.forEach(({ name }) => {
+      toggleOrderBysMap[name] = getToggleOrderBy(name)
+    })
+    return toggleOrderBysMap
+  }, [columnsParameters, getToggleOrderBy])
+
   const orderByColumn = useMemo(() => {
     return new Map((orderBy ?? []).map(({ column, direction }, index) => [column, { direction, index }]))
   }, [orderBy])
@@ -47,7 +55,7 @@ export default function TableHeader({
         direction={orderByColumn.get(name)?.direction}
         orderByIndex={orderByColumn.get(name)?.index}
         orderBySize={orderBy?.length}
-        toggleOrderBy={getToggleOrderBy(name)}
+        toggleOrderBy={toggleOrderBys[name]}
         columnName={name}
         columnIndex={columnIndex}
         className={className}
