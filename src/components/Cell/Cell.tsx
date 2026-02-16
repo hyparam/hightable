@@ -14,37 +14,46 @@ export interface CellContentProps {
 }
 
 interface Props {
+  /** aria column index */
   ariaColIndex: number
+  /** aria row index */
   ariaRowIndex: number
-  columnIndex: number // original column index in the dataframe (used for callbacks like onDoubleClickCell)
-  visibleColumnIndex: number // index in the visible columns array (used for styling/widths)
+  /** column index in the original dataframe, used for callbacks like onDoubleClickCell */
+  columnIndex: number
+  /** index in the visible columns array (used for styling/widths) */
+  visibleColumnIndex: number
+  /** function to stringify the cell value, used for default rendering and for copy to clipboard */
   stringify: (value: unknown) => string | undefined
-  cell?: ResolvedValue
+  /** cell value, undefined if the value has not been fetched yet, or if the value is actually undefined. Use hasResolved to distinguish these cases. */
+  cellValue?: unknown
+  /** whether the cell value has been resolved */
+  hasResolved?: boolean
+  /** class name */
   className?: string
+  /** double click callback */
   onDoubleClickCell?: (event: MouseEvent, col: number, row: number) => void
+  /** mouse down callback */
   onMouseDownCell?: (event: MouseEvent, col: number, row: number) => void
-  onKeyDownCell?: (event: KeyboardEvent, col: number, row: number) => void // for accessibility, it should be passed if onDoubleClickCell is passed. It can handle more than that action though.
-  rowNumber?: number // the row index in the original data, undefined if the value has not been fetched yet
-  renderCellContent?: (props: CellContentProps) => ReactNode // custom cell content component, if not provided, the default stringified value will be used
+  /** key down callback, for accessibility, it should be passed if onDoubleClickCell is passed. It can handle more than that action though. */
+  onKeyDownCell?: (event: KeyboardEvent, col: number, row: number) => void
+  /** the row index in the original data, undefined if the value has not been fetched yet */
+  rowNumber?: number
+  /** custom cell content component, if not provided, the default stringified value will be used */
+  renderCellContent?: (props: CellContentProps) => ReactNode
 }
 
 /**
  * Render a table cell <td> with title and optional custom rendering
- *
- * @param {Object} props
- * @param {number} props.ariaColIndex aria col index
- * @param {number} props.ariaRowIndex aria row index
- * @param {number} props.columnIndex column index in the table (0-based)
- * @param {function} props.stringify function to stringify the value
- * @param {ResolvedValue} [props.cell] cell value, undefined if the value has not been fetched yet
- * @param {string} [props.className] class name
- * @param {function} [props.onDoubleClick] double click callback
- * @param {function} [props.onMouseDown] mouse down callback
- * @param {function} [props.onKeyDown] key down callback
- * @param {number} [props.rowNumber] the row index in the original data, undefined if the value has not been fetched yet
  */
-export default function Cell({ cell, onDoubleClickCell, onMouseDownCell, onKeyDownCell, stringify, columnIndex, visibleColumnIndex, className, ariaColIndex, ariaRowIndex, rowNumber, renderCellContent }: Props) {
+export default function Cell({ cellValue, hasResolved, onDoubleClickCell, onMouseDownCell, onKeyDownCell, stringify, columnIndex, visibleColumnIndex, className, ariaColIndex, ariaRowIndex, rowNumber, renderCellContent }: Props) {
   const { tabIndex, navigateToCell, focusIfNeeded } = useCellFocus({ ariaColIndex, ariaRowIndex })
+
+  const cell = useMemo(() => {
+    if (!hasResolved) {
+      return undefined
+    }
+    return { value: cellValue }
+  }, [hasResolved, cellValue])
 
   // Focus the cell if needed. We use an effect, as it acts on the DOM element after render.
   const ref = useRef<HTMLTableCellElement | null>(null)

@@ -238,7 +238,8 @@ export default function Slice({
                     className={className}
                     ariaColIndex={visibleColumnIndex + ariaOffset}
                     ariaRowIndex={ariaRowIndex}
-                    cell={cell}
+                    cellValue={cell?.value}
+                    hasResolved={cell !== undefined}
                     rowNumber={rowNumber}
                     renderCellContent={renderCellContent}
                   />

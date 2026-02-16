@@ -25,7 +25,8 @@ describe('Cell', () => {
         <tbody>
           <tr>
             <Cell
-              cell={{ value }}
+              cellValue={value}
+              hasResolved={true}
               {...rest}
             />
           </tr>
@@ -41,7 +42,8 @@ describe('Cell', () => {
         <tbody>
           <tr>
             <Cell
-              cell={{ value: 'custom' }}
+              cellValue="custom"
+              hasResolved={true}
               renderCellContent={({ cell }) => (
                 <span>
                   {`Value: ${cell?.value}`}
@@ -62,7 +64,8 @@ describe('Cell', () => {
         <tbody>
           <tr>
             <Cell
-              cell={{ value: 123 }}
+              cellValue={123}
+              hasResolved={true}
               {...rest}
             />
           </tr>
