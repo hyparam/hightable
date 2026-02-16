@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react'
+import { useMemo } from 'react'
 
 import type { ColumnParameters } from '../../contexts/ColumnParametersContext.js'
 import { ariaOffset } from '../../helpers/constants.js'
@@ -21,22 +21,17 @@ interface TableHeaderProps {
 export default function TableHeader({
   columnsParameters, orderBy, setOrderBy, canMeasureColumn, ariaRowIndex, exclusiveSort,
 }: TableHeaderProps) {
-  // Function to handle click for changing orderBy
-  const getToggleOrderBy = useCallback((columnHeader: string) => {
-    if (!setOrderBy || !orderBy) return undefined
-    return () => {
-      const next = exclusiveSort ? toggleColumnExclusive(columnHeader, orderBy) : toggleColumn(columnHeader, orderBy)
-      setOrderBy(next)
-    }
-  }, [orderBy, setOrderBy, exclusiveSort])
-
   const toggleOrderBys = useMemo(() => {
-    const toggleOrderBysMap: Record<string, (() => void) | undefined> = {}
-    columnsParameters.forEach(({ name }) => {
-      toggleOrderBysMap[name] = getToggleOrderBy(name)
-    })
-    return toggleOrderBysMap
-  }, [columnsParameters, getToggleOrderBy])
+    return Object.fromEntries(columnsParameters.map(({ name }) => {
+      const toggleOrderBy = (!setOrderBy || !orderBy)
+        ? undefined
+        : () => {
+            const next = exclusiveSort ? toggleColumnExclusive(name, orderBy) : toggleColumn(name, orderBy)
+            setOrderBy(next)
+          }
+      return [name, toggleOrderBy]
+    }))
+  }, [columnsParameters, orderBy, setOrderBy, exclusiveSort])
 
   const orderByColumn = useMemo(() => {
     return new Map((orderBy ?? []).map(({ column, direction }, index) => [column, { direction, index }]))
