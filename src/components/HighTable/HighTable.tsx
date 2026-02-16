@@ -131,11 +131,11 @@ export default function HighTable({
                         setViewportWidth={setViewportWidth}
                       >
                         <Slice
-                          key={version}
                           data={data}
                           numRows={numRows}
                           onError={onError}
                           setTableCornerSize={setTableCornerSize}
+                          version={version}
                           {...rest}
                         />
                       </Scroller>
