@@ -132,35 +132,20 @@ export default function Slice({
   }, [toggleRowNumber, toggleRangeToRowNumber])
 
   // Prepare the slice of data to render
-  // TODO(SL): also compute progress percentage here, to show a loading indicator
-  const slice = useMemo(() => {
-    if (renderedRowsStart === undefined || renderedRowsEnd === undefined) {
-      return {
-        rowContents: [],
-        canMeasureColumn: {},
-      }
-    }
-    const rows = Array.from({ length: renderedRowsEnd - renderedRowsStart }, (_, i) => renderedRowsStart + i)
+  const rows = useMemo(() => {
+    return renderedRowsStart === undefined || renderedRowsEnd === undefined ? [] : Array.from({ length: renderedRowsEnd - renderedRowsStart }, (_, i) => renderedRowsStart + i)
+  }, [renderedRowsStart, renderedRowsEnd])
 
+  const canMeasureColumn = useMemo(() => {
     const canMeasureColumn: Record<string, boolean> = {}
-    const rowContents = rows.map((row) => {
-      const rowNumber = data.getRowNumber({ row, orderBy })?.value
-      const cells = (columnsParameters ?? []).map(({ name: column, index: originalColumnIndex, className }) => {
-        const cell = data.getCell({ row, column, orderBy })
-        canMeasureColumn[column] ||= cell !== undefined
-        return { columnIndex: originalColumnIndex, cell, className }
+    for (const { name: columnName } of columnsParameters ?? []) {
+      canMeasureColumn[columnName] = rows.some((row) => {
+        const cell = data.getCell({ row, column: columnName, orderBy })
+        return cell !== undefined
       })
-      return {
-        row,
-        rowNumber,
-        cells,
-      }
-    })
-    return {
-      rowContents,
-      canMeasureColumn,
     }
-  }, [data, columnsParameters, renderedRowsStart, renderedRowsEnd, orderBy])
+    return canMeasureColumn
+  }, [data, rows, columnsParameters, orderBy])
 
   // don't render table if the data frame has no visible columns
   // (it can have zero rows, but must have at least one visible column)
@@ -190,7 +175,7 @@ export default function Slice({
             setTableCornerSize={setTableCornerSize}
           />
           <TableHeader
-            canMeasureColumn={slice.canMeasureColumn}
+            canMeasureColumn={canMeasureColumn}
             columnsParameters={columnsParameters}
             orderBy={orderBy}
             setOrderBy={setOrderBy}
@@ -200,8 +185,9 @@ export default function Slice({
         </Row>
       </thead>
       <tbody role="rowgroup">
-        {slice.rowContents.map(({ row, rowNumber, cells }) => {
+        {rows.map((row) => {
           const ariaRowIndex = row + ariaOffset
+          const rowNumber = data.getRowNumber({ row, orderBy })?.value
           const selected = isRowSelected?.({ rowNumber })
           const rowKey = `${row}`
           return (
@@ -220,7 +206,8 @@ export default function Slice({
                 ariaColIndex={1}
                 ariaRowIndex={ariaRowIndex}
               />
-              {cells.map(({ columnIndex, cell, className }, visibleColumnIndex) => {
+              {columnsParameters.map(({ name: column, index: columnIndex, className }, visibleColumnIndex) => {
+                const cell = data.getCell({ row, column, orderBy })
                 return (
                   <Cell
                     key={columnIndex}
