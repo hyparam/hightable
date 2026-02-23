@@ -49,7 +49,7 @@ export function initializeScrollState(): ScrollState {
 }
 
 // conditions for local scroll:
-function canBeLocalScroll({ delta, scale, localOffset}: { delta: number, scale: Scale, localOffset: number }): boolean {
+function canBeLocalScroll({ delta, scale, localOffset }: { delta: number, scale: Scale, localOffset: number }): boolean {
   return (
     // there is virtual scroll
     scale.factor !== 1
