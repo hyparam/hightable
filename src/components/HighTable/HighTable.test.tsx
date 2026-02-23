@@ -305,14 +305,21 @@ describe('with async data, HighTable', () => {
   })
 
   it('handles scroll to load more rows', async () => {
-    const asyncData = createAsyncDataFrame()
-    const { getByLabelText, findByRole, queryByRole } = render(<HighTable className="myclass" data={asyncData} />)
+    vi.useFakeTimers()
+
+    const ms = 10
+    const asyncData = createAsyncDataFrame({ ms })
+    const { getByLabelText, queryByRole } = render(<HighTable className="myclass" data={asyncData} />)
     const scrollDiv = getByLabelText('Virtual-scroll table')
-    await waitFor(() => {
-      expect(asyncData.getCell).toHaveBeenCalledWith({ row: visibleRows + defaultPadding - 2, column: 'Age', orderBy: [] })
-      expect(asyncData.getCell).not.toHaveBeenCalledWith({ row: visibleRows + defaultPadding - 1, column: 'Age', orderBy: [] })
+
+    // Wait for initial fetch to complete
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(ms)
     })
-    await findByRole('cell', { name: 'async 0' })
+
+    expect(asyncData.getCell).toHaveBeenCalledWith({ row: visibleRows + defaultPadding - 2, column: 'Age', orderBy: [] })
+    expect(asyncData.getCell).not.toHaveBeenCalledWith({ row: visibleRows + defaultPadding - 1, column: 'Age', orderBy: [] })
+    expect(queryByRole('cell', { name: 'async 0' })).not.toBeNull()
     expect(queryByRole('cell', { name: 'async 24' })).toBeNull()
 
     act(() => {
@@ -321,10 +328,13 @@ describe('with async data, HighTable', () => {
       fireEvent.scroll(scrollDiv, { target: { scrollTop: 500 } })
     })
 
-    await waitFor(() => {
-      expect(asyncData.getCell).toHaveBeenCalledWith({ row: visibleRows + defaultPadding, column: 'Age', orderBy: [] })
+    // Wait for fetch after scroll
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(ms)
     })
-    await findByRole('cell', { name: 'async 24' })
+
+    expect(asyncData.getCell).toHaveBeenCalledWith({ row: visibleRows + defaultPadding, column: 'Age', orderBy: [] })
+    expect(queryByRole('cell', { name: 'async 24' })).not.toBeNull()
     expect(queryByRole('cell', { name: 'async 50' })).toBeNull()
 
     act(() => {
@@ -332,10 +342,14 @@ describe('with async data, HighTable', () => {
       // https://github.com/testing-library/user-event/issues/475
       fireEvent.scroll(scrollDiv, { target: { scrollTop: 1500 } })
     })
-    await waitFor(() => {
-      expect(asyncData.getCell).toHaveBeenCalledWith({ row: 50, column: 'Age', orderBy: [] })
+
+    // Wait for fetch after scroll
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(ms)
     })
-    await findByRole('cell', { name: 'async 50' })
+
+    expect(asyncData.getCell).toHaveBeenCalledWith({ row: 50, column: 'Age', orderBy: [] })
+    expect(queryByRole('cell', { name: 'async 50' })).not.toBeNull()
 
     expect(asyncData._forTests.signalAborted).toHaveLength(0) // the fetches are too fast to be cancelled (10ms)
   })
