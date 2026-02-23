@@ -682,6 +682,42 @@ export const JumpToCell: Story = {
     data: createLargeData(1_000_000_000),
   },
 }
+export const CustomMenuGroups: Story = {
+  args: {
+    data: sortableDataFrame(createUnsortableData()),
+    columnConfiguration: {
+      ID: {
+        menuGroups: [
+          {
+            title: 'Actions',
+            items: [
+              { label: 'Copy column name', onClick: (columnName) => { alert(`Copied: ${columnName}`) } },
+              { label: 'Filter by value', onClick: (columnName) => { alert(`Filtering ${columnName}`) } },
+            ],
+          },
+        ],
+      },
+      Count: {
+        menuGroups: [
+          {
+            title: 'Statistics',
+            items: [
+              { label: 'Show min/max', onClick: (columnName) => { alert(`Stats for ${columnName}`) } },
+              { label: 'Show histogram', onClick: (columnName) => { alert(`Histogram for ${columnName}`) } },
+            ],
+          },
+          {
+            title: 'Format',
+            items: [
+              { label: 'As percentage', onClick: (columnName) => { alert(`Format ${columnName} as %`) } },
+              { label: 'As currency', onClick: (columnName) => { alert(`Format ${columnName} as $`) } },
+            ],
+          },
+        ],
+      },
+    },
+  },
+}
 export const ColumnsVisibilityControlled: Story = {
   render: ({ data }) => {
     const [columnsVisibility, setColumnsVisibility] = useState<ColumnsVisibility>({
