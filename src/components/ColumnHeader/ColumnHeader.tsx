@@ -52,9 +52,10 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
   }, [getHideColumn, columnName])
 
   const isMenuEnabled = useMemo(() => {
-    const hideMenu = !sortable && !hideColumn && !showAllColumns
+    const hasCustomMenuGroups = columnConfig.menuGroups && columnConfig.menuGroups.length > 0
+    const hideMenu = !sortable && !hideColumn && !showAllColumns && !hasCustomMenuGroups
     return !hideMenu
-  }, [sortable, hideColumn, showAllColumns])
+  }, [sortable, hideColumn, showAllColumns, columnConfig.menuGroups])
 
   // Get the column width from the context
   const { getStyle, getDataFixedWidth, getWidth, setMeasuredWidth, setFixedWidth, releaseWidth } = useContext(ColumnWidthsContext)
@@ -208,6 +209,7 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
         showAllColumns={showAllColumns}
         close={close}
         id={menuId}
+        menuGroups={columnConfig.menuGroups}
       />
     </th>
   )

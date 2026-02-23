@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom'
 
 import { CellNavigationContext } from '../../contexts/CellNavigationContext.js'
 import { PortalContainerContext } from '../../contexts/PortalContainerContext.js'
+import type { CustomMenuGroup } from '../../helpers/columnConfiguration.js'
 import type { Direction } from '../../helpers/sort'
 import { useFocusManagement } from '../../hooks/useFocusManagement.js'
 
@@ -87,6 +88,7 @@ interface ColumnMenuProps {
   showAllColumns?: () => void // returns a function to show all columns, or undefined
   close: () => void
   id?: string
+  menuGroups?: CustomMenuGroup[]
 }
 
 export default function ColumnMenu({
@@ -100,6 +102,7 @@ export default function ColumnMenu({
   showAllColumns,
   close,
   id,
+  menuGroups,
 }: ColumnMenuProps) {
   const container = useContext(PortalContainerContext)
 
@@ -239,6 +242,20 @@ export default function ColumnMenu({
                 )}
             </MenuGroup>
           )}
+        {menuGroups?.map(group => (
+          <MenuGroup key={group.title} title={group.title}>
+            {group.items.map(item => (
+              <MenuItem
+                key={item.label}
+                onClick={() => {
+                  item.onClick(columnName)
+                  close()
+                }}
+                label={item.label}
+              />
+            ))}
+          </MenuGroup>
+        ))}
       </div>
     </>,
     container
