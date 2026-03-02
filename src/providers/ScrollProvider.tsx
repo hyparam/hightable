@@ -19,6 +19,7 @@ type ScrollProviderProps = Pick<HighTableProps, 'padding'> & {
  * Provide the scroll state and logic to the table, through the ScrollContext.
  */
 export function ScrollProvider({ children, headerHeight, numRows, padding = defaultPadding }: ScrollProviderProps) {
+  'use no memo'
   const [{ scale, scrollTop, scrollTopAnchor, localOffset }, dispatch] = useReducer(scrollReducer, undefined, initializeScrollState)
   const { cellPosition, focusState, focusDispatch } = useContext(CellNavigationContext)
 
