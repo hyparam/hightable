@@ -64,7 +64,6 @@ function State({
             key={cacheKey}
             // TODO(SL): pass cacheKey, memoize
             localStorageKey={cacheKey ? `${cacheKey}${columnWidthsSuffix}` : undefined}
-            numColumns={data.columnDescriptors.length}
           >
             <ColumnsVisibilityProvider
               columnsVisibility={columnsVisibility}

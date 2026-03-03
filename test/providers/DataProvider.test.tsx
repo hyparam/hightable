@@ -2,7 +2,7 @@ import { render } from '@testing-library/react'
 import { act } from 'react'
 import { describe, expect, it } from 'vitest'
 
-import { useDataKey, useDataVersion, useNumRows } from '../../src/contexts/DataContext.js'
+import { useDataKey, useDataVersion, useNumColumns, useNumRows } from '../../src/contexts/DataContext.js'
 import type { DataFrame, DataFrameEvents } from '../../src/helpers/dataframe/index.js'
 import { arrayDataFrame } from '../../src/helpers/dataframe/index.js'
 import { createEventTarget } from '../../src/helpers/typedEventTarget.js'
@@ -12,12 +12,14 @@ function DisplayComponent() {
   const dataKey = useDataKey()
   const dataVersion = useDataVersion()
   const numRows = useNumRows()
+  const numColumns = useNumColumns()
 
   return (
     <div>
       <span data-testid="data-key">{dataKey}</span>
       <span data-testid="data-version">{dataVersion}</span>
       <span data-testid="num-rows">{numRows}</span>
+      <span data-testid="num-columns">{numColumns}</span>
     </div>
   )
 }
@@ -36,6 +38,7 @@ describe('DataProvider', () => {
     const { getByTestId } = render(<TestComponent data={data} />)
     expect(getByTestId('data-version').textContent).toBe('0')
     expect(getByTestId('num-rows').textContent).toBe(data.numRows.toString())
+    expect(getByTestId('num-columns').textContent).toBe(data.columnDescriptors.length.toString())
   })
   it('should increment version on data resolution, but keep the same key', async () => {
     const data = arrayDataFrame([{ a: 1 }, { a: 2 }])
@@ -127,5 +130,15 @@ describe('DataProvider', () => {
     expect(getByTestId('data-version').textContent).toBe('0')
     expect(getByTestId('num-rows').textContent).toBe('3')
     expect(getByTestId('data-key').textContent).not.toBe(initialKey)
+  })
+  it('should provide the initial number of columns from the data frame, not the current one, if changed', () => {
+    const data = arrayDataFrame([{ a: 1, b: 2 }, { a: 3, b: 4 }])
+    const { getByTestId, rerender } = render(<TestComponent data={data} />)
+    expect(getByTestId('num-columns').textContent).toBe(data.columnDescriptors.length.toString())
+    // Change the number of columns in the data frame
+    data.columnDescriptors.push({ name: 'c' })
+    // force a re-render without changing the data frame instance
+    rerender(<TestComponent data={data} />)
+    expect(getByTestId('num-columns').textContent).toBe('2')
   })
 })
