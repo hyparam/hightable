@@ -9,7 +9,7 @@ const dataInstanceKeys = new WeakMap<object, number>()
 let nextDataInstanceKey = 0
 function getDataKey(data: HighTableProps['data']): number {
   let k = dataInstanceKeys.get(data)
-  if (!k) {
+  if (k === undefined) {
     k = nextDataInstanceKey++
     dataInstanceKeys.set(data, k)
   }
