@@ -1,7 +1,20 @@
 import { type ReactNode, useEffect, useState } from 'react'
 
-import { DataVersionContext, NumRowsContext } from '../contexts/DataContext.js'
+import { DataKeyContext, DataVersionContext, NumRowsContext } from '../contexts/DataContext.js'
 import type { HighTableProps } from '../types.js'
+
+// Assign stable numeric ids to data instances without triggering state
+// updates during render, using a WeakMap keyed by the data object.
+const dataInstanceKeys = new WeakMap<object, number>()
+let nextDataInstanceKey = 0
+function getDataKey(data: HighTableProps['data']): number {
+  let k = dataInstanceKeys.get(data)
+  if (!k) {
+    k = nextDataInstanceKey++
+    dataInstanceKeys.set(data, k)
+  }
+  return k
+}
 
 type Props = Pick<HighTableProps, 'data'> & {
   /** Child components */
@@ -12,6 +25,20 @@ type Props = Pick<HighTableProps, 'data'> & {
  * Provides the number of rows and the version of the data frame.
  */
 export function DataProvider({ children, data }: Props) {
+  const key = getDataKey(data)
+
+  return (
+    <DataKeyContext.Provider value={key}>
+      <KeyedDataProvider data={data} key={key}>
+        {children}
+      </KeyedDataProvider>
+    </DataKeyContext.Provider>
+  )
+}
+
+// The data provider is keyed by the data instance, so that it resets its internal state
+// when a new data frame is provided.
+function KeyedDataProvider({ children, data }: Props) {
   // Two data frame elements can change over time:
   // - version (if any cell or row number has resolved or changed)
   // - numRows.

@@ -17,29 +17,16 @@ import Scroller from './Scroller.js'
 import Slice from './Slice.js'
 import Wrapper from './Wrapper.js'
 
-// Assign stable numeric ids to data instances without triggering state
-// updates during render, using a WeakMap keyed by the data object.
-const dataInstanceKeys = new WeakMap<object, number>()
-let nextDataInstanceKey = 1
-function getDataKey(data: HighTableProps['data']): number {
-  let k = dataInstanceKeys.get(data)
-  if (!k) {
-    k = nextDataInstanceKey++
-    dataInstanceKeys.set(data, k)
-  }
-  return k
-}
-
 export default function HighTable(props: HighTableProps) {
-  // Derive a stable numeric key for the `data` instance.
-  // Remount the component when the `data` instance changes, to reset all internal state.
-  // TODO(SL): more fine-grained approach to preserve state and don't remount the DOM elements.
-  const key = getDataKey(props.data)
-
   return (
-    <State {...props} key={key}>
-      <DOM {...props} />
-    </State>
+    // The DataProvider is remounted on data change, so everything is recreated.
+    // TODO(SL): if this becomes a performance issue, we can revisit this behavior, and update the
+    // state more granularly.
+    <DataProvider data={props.data}>
+      <State {...props}>
+        <DOM {...props} />
+      </State>
+    </DataProvider>
   )
 }
 
@@ -68,48 +55,46 @@ function State({
     /* The state is handled with contexts, even if it creates a "Providers hell". No need for state library for now. */
     <ViewportSizeProvider>
       <TableCornerSizeProvider>
-        <DataProvider data={data}>
-          <ColumnParametersProvider
-            columnConfiguration={columnConfiguration}
-            columnDescriptors={data.columnDescriptors}
+        <ColumnParametersProvider
+          columnConfiguration={columnConfiguration}
+          columnDescriptors={data.columnDescriptors}
+        >
+          <ColumnWidthsProvider
+            // Recreate a context if a new cacheKey is provided.
+            key={cacheKey}
+            // TODO(SL): pass cacheKey, memoize
+            localStorageKey={cacheKey ? `${cacheKey}${columnWidthsSuffix}` : undefined}
+            numColumns={data.columnDescriptors.length}
           >
-            <ColumnWidthsProvider
-              // Recreate a context if a new cacheKey is provided.
-              key={cacheKey}
-              // TODO(SL): pass cacheKey, memoize
-              localStorageKey={cacheKey ? `${cacheKey}${columnWidthsSuffix}` : undefined}
-              numColumns={data.columnDescriptors.length}
+            <ColumnsVisibilityProvider
+              columnsVisibility={columnsVisibility}
+              onColumnsVisibilityChange={onColumnsVisibilityChange}
             >
-              <ColumnsVisibilityProvider
-                columnsVisibility={columnsVisibility}
-                onColumnsVisibilityChange={onColumnsVisibilityChange}
+              <OrderByProvider
+                orderBy={orderBy}
+                onOrderByChange={onOrderByChange}
               >
-                <OrderByProvider
-                  orderBy={orderBy}
-                  onOrderByChange={onOrderByChange}
+                <SelectionProvider
+                  selection={selection}
+                  onError={onError}
+                  onSelectionChange={onSelectionChange}
+                  data={data}
                 >
-                  <SelectionProvider
-                    selection={selection}
-                    onError={onError}
-                    onSelectionChange={onSelectionChange}
-                    data={data}
+                  <CellNavigationProvider
+                    cellPosition={cellPosition}
+                    focus={focus}
+                    numRowsPerPage={numRowsPerPage}
+                    onCellPositionChange={onCellPositionChange}
                   >
-                    <CellNavigationProvider
-                      cellPosition={cellPosition}
-                      focus={focus}
-                      numRowsPerPage={numRowsPerPage}
-                      onCellPositionChange={onCellPositionChange}
-                    >
-                      <ScrollProvider padding={padding}>
-                        {children}
-                      </ScrollProvider>
-                    </CellNavigationProvider>
-                  </SelectionProvider>
-                </OrderByProvider>
-              </ColumnsVisibilityProvider>
-            </ColumnWidthsProvider>
-          </ColumnParametersProvider>
-        </DataProvider>
+                    <ScrollProvider padding={padding}>
+                      {children}
+                    </ScrollProvider>
+                  </CellNavigationProvider>
+                </SelectionProvider>
+              </OrderByProvider>
+            </ColumnsVisibilityProvider>
+          </ColumnWidthsProvider>
+        </ColumnParametersProvider>
       </TableCornerSizeProvider>
     </ViewportSizeProvider>
   )
