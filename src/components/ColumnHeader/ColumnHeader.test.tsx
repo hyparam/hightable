@@ -229,7 +229,7 @@ describe('ColumnHeader', () => {
     const { user, getByRole } = render(
       <NumColumnsContext.Provider value={1}>
         <ColumnParametersProvider columnConfiguration={columnConfiguration} columnDescriptors={columnDescriptors}>
-          <ColumnWidthsProvider localStorageKey={cacheKey}minWidth={globalMinWidth}>
+          <ColumnWidthsProvider localStorageKey={cacheKey} minWidth={globalMinWidth}>
             <table><thead><tr><ColumnHeader columnName="test" canMeasureWidth={true} {...defaultProps} /></tr></thead></table>
           </ColumnWidthsProvider>
         </ColumnParametersProvider>
