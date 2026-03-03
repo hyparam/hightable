@@ -30,16 +30,10 @@ function getDataKey(data: HighTableProps['data']): number {
   return k
 }
 
-export default function HighTable({
-  data,
-  ...rest
-}: HighTableProps) {
-  // Derive a stable numeric key for the `data` instance.
-  const dataKey = getDataKey(data)
-
+export default function HighTable(props: HighTableProps) {
   return (
-    <State key={dataKey} data={data} {...rest}>
-      <DOM data={data} {...rest} />
+    <State {...props}>
+      <DOM {...props} />
     </State>
   )
 }
@@ -47,7 +41,16 @@ export default function HighTable({
 type StateProps = Pick<HighTableProps, 'columnConfiguration' | 'cacheKey' | 'cellPosition' | 'columnsVisibility' | 'data' | 'focus' | 'numRowsPerPage' | 'orderBy' | 'padding' | 'selection' | 'onCellPositionChange' | 'onColumnsVisibilityChange' | 'onError' | 'onOrderByChange' | 'onSelectionChange'>
   & { children: ReactNode }
 
-function State({
+function State(props: StateProps) {
+  // Derive a stable numeric key for the `data` instance.
+  const dataKey = getDataKey(props.data)
+
+  return (
+    <KeyState {...props} key={dataKey} />
+  )
+}
+
+function KeyState({
   children,
   columnConfiguration,
   cacheKey,
