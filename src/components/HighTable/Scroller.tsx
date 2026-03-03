@@ -3,16 +3,17 @@ import { useCallback, useContext, useMemo } from 'react'
 
 import { CellNavigationContext } from '../../contexts/CellNavigationContext.js'
 import { ScrollContext } from '../../contexts/ScrollContext.js'
+import { useSetViewportWidth } from '../../contexts/ViewportContext.js'
 import styles from '../../HighTable.module.css'
 
 interface Props {
-  /** Callback to set the current viewport width */
-  setViewportWidth: (width: number) => void
   /** Child components */
   children?: React.ReactNode
 }
 
-export default function Scroller({ children, setViewportWidth }: Props) {
+export default function Scroller({ children }: Props) {
+  /** Callback to set the current viewport width */
+  const setViewportWidth = useSetViewportWidth()
   const { goToCurrentCell } = useContext(CellNavigationContext)
   const { canvasHeight, sliceTop, setClientHeight, setScrollTop, setScrollTo } = useContext(ScrollContext)
 
@@ -46,7 +47,7 @@ export default function Scroller({ children, setViewportWidth }: Props) {
     // Use arrow functions to get correct viewport type (not null)
     // eslint-disable-next-line func-style
     const updateViewportSize = () => {
-      setViewportWidth(viewport.clientWidth)
+      setViewportWidth?.(viewport.clientWidth)
       setClientHeight?.(viewport.clientHeight)
     }
 
