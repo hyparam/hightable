@@ -8,9 +8,9 @@ interface Props {
 }
 
 /**
- * Handles the viewport width state.
+ * Handles the viewport size (width and height) state.
  *
- * Provides the current viewport width and a callback to update it.
+ * Provides the current viewport width and height via context, and a callback to update them.
  */
 export function ViewportSizeProvider({ children }: Props) {
   const [viewportWidth, setViewportWidth] = useState<number | undefined>(undefined)
