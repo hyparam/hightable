@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { useState } from 'react'
 
 import { columnWidthsSuffix } from '../../helpers/constants.js'
@@ -21,106 +22,127 @@ export default function HighTable({
   data,
   ...rest
 }: HighTableProps) {
-  // Remount if the data frame changes, to reset all the internal state (caches, etc).
-  const [dataId, setDataId] = useState<number>(0)
+  // Recreate the internal state if the data frame changes.
+  const [stateKey, setStateKey] = useState<number>(0)
   const [previousData, setPreviousData] = useState<HighTableProps['data']>(data)
   if (data !== previousData) {
-    setDataId(d => d + 1)
+    setStateKey(k => k + 1)
     setPreviousData(data)
   }
 
-  return <DataHighTable key={dataId} data={data} {...rest} />
+  return (
+    <State key={stateKey} data={data} {...rest}>
+      <DOM data={data} {...rest} />
+    </State>
+  )
 }
 
-function DataHighTable({
+type StateProps = Pick<HighTableProps, 'columnConfiguration' | 'cacheKey' | 'cellPosition' | 'columnsVisibility' | 'data' | 'focus' | 'numRowsPerPage' | 'orderBy' | 'padding' | 'selection' | 'onCellPositionChange' | 'onColumnsVisibilityChange' | 'onError' | 'onOrderByChange' | 'onSelectionChange'>
+  & { children: ReactNode }
+
+function State({
+  children,
   columnConfiguration,
   cacheKey,
   cellPosition,
-  className = '',
   columnsVisibility,
   data,
   focus,
-  maxRowNumber,
   numRowsPerPage,
   orderBy,
   padding,
   selection,
-  styled = true,
   onCellPositionChange,
   onColumnsVisibilityChange,
   onError,
   onOrderByChange,
   onSelectionChange,
-  ...rest
-}: HighTableProps) {
+}: StateProps) {
   return (
     /* The state is handled with contexts, even if it creates a "Providers hell". No need for state library for now. */
     <ViewportSizeProvider>
       <TableCornerSizeProvider>
         <DataProvider data={data}>
-          <Wrapper styled={styled} maxRowNumber={maxRowNumber} className={className}>
-
-            <div className={styles.topBorder} role="presentation" />
-
-            <ColumnParametersProvider
-              columnConfiguration={columnConfiguration}
-              columnDescriptors={data.columnDescriptors}
+          <ColumnParametersProvider
+            columnConfiguration={columnConfiguration}
+            columnDescriptors={data.columnDescriptors}
+          >
+            <ColumnWidthsProvider
+              // Recreate a context if a new cacheKey is provided.
+              key={cacheKey}
+              // TODO(SL): pass cacheKey, memoize
+              localStorageKey={cacheKey ? `${cacheKey}${columnWidthsSuffix}` : undefined}
+              numColumns={data.columnDescriptors.length}
             >
-              <ColumnWidthsProvider
-                /**
-                 * Recreate a context if a new cacheKey is provided.
-                 */
-                key={cacheKey}
-                // TODO(SL): pass cacheKey, memoize
-                localStorageKey={cacheKey ? `${cacheKey}${columnWidthsSuffix}` : undefined}
-                numColumns={data.columnDescriptors.length}
+              <ColumnsVisibilityProvider
+                columnsVisibility={columnsVisibility}
+                onColumnsVisibilityChange={onColumnsVisibilityChange}
               >
-                <ColumnsVisibilityProvider
-                  columnsVisibility={columnsVisibility}
-                  onColumnsVisibilityChange={onColumnsVisibilityChange}
+                <OrderByProvider
+                  orderBy={orderBy}
+                  onOrderByChange={onOrderByChange}
                 >
-                  <OrderByProvider
-                    orderBy={orderBy}
-                    onOrderByChange={onOrderByChange}
+                  <SelectionProvider
+                    selection={selection}
+                    onError={onError}
+                    onSelectionChange={onSelectionChange}
+                    data={data}
                   >
-                    <SelectionProvider
-                      selection={selection}
-                      onError={onError}
-                      onSelectionChange={onSelectionChange}
-                      data={data}
+                    <CellNavigationProvider
+                      cellPosition={cellPosition}
+                      focus={focus}
+                      numRowsPerPage={numRowsPerPage}
+                      onCellPositionChange={onCellPositionChange}
                     >
-
-                      <CellNavigationProvider
-                        cellPosition={cellPosition}
-                        focus={focus}
-                        numRowsPerPage={numRowsPerPage}
-                        onCellPositionChange={onCellPositionChange}
-                      >
-                        <ScrollProvider padding={padding}>
-
-                          <Scroller>
-                            <Slice
-                              data={data}
-                              onError={onError}
-                              {...rest}
-                            />
-                          </Scroller>
-
-                        </ScrollProvider>
-                      </CellNavigationProvider>
-
-                    </SelectionProvider>
-                  </OrderByProvider>
-                </ColumnsVisibilityProvider>
-              </ColumnWidthsProvider>
-            </ColumnParametersProvider>
-
-            {/* puts a background behind the row labels column */}
-            <div className={styles.mockRowLabel}>&nbsp;</div>
-
-          </Wrapper>
+                      <ScrollProvider padding={padding}>
+                        {children}
+                      </ScrollProvider>
+                    </CellNavigationProvider>
+                  </SelectionProvider>
+                </OrderByProvider>
+              </ColumnsVisibilityProvider>
+            </ColumnWidthsProvider>
+          </ColumnParametersProvider>
         </DataProvider>
       </TableCornerSizeProvider>
     </ViewportSizeProvider>
+  )
+}
+
+type DOMProps = Pick<HighTableProps, 'className' | 'data' | 'maxRowNumber' | 'onError' | 'styled' | 'numRowsPerPage' | 'onDoubleClickCell' | 'onKeyDownCell' | 'onMouseDownCell' | 'overscan' | 'renderCellContent' | 'stringify'>
+
+function DOM({
+  className = '',
+  data,
+  maxRowNumber,
+  overscan,
+  styled = true,
+  onDoubleClickCell,
+  onError,
+  onKeyDownCell,
+  onMouseDownCell,
+  renderCellContent,
+  stringify,
+}: DOMProps) {
+  return (
+    <Wrapper styled={styled} maxRowNumber={maxRowNumber} className={className}>
+      <div className={styles.topBorder} role="presentation" />
+
+      <Scroller>
+        <Slice
+          data={data}
+          overscan={overscan}
+          onDoubleClickCell={onDoubleClickCell}
+          onError={onError}
+          onKeyDownCell={onKeyDownCell}
+          onMouseDownCell={onMouseDownCell}
+          renderCellContent={renderCellContent}
+          stringify={stringify}
+        />
+      </Scroller>
+
+      {/* puts a background behind the row labels column */}
+      <div className={styles.mockRowLabel}>&nbsp;</div>
+    </Wrapper>
   )
 }
