@@ -4,13 +4,12 @@ import { useCallback, useContext, useEffect, useMemo, useReducer } from 'react'
 import type { FocusAction, FocusState, MoveCellAction } from '../contexts/CellNavigationContext.js'
 import { CellNavigationContext } from '../contexts/CellNavigationContext.js'
 import { ColumnsVisibilityContext } from '../contexts/ColumnsVisibilityContext.js'
+import { useNumRows } from '../contexts/DataContext.js'
 import { defaultNumRowsPerPage } from '../helpers/constants.js'
 import { useInputState } from '../hooks/useInputState.js'
 import type { HighTableProps } from '../types.js'
 
 type CellNavigationProviderProps = Pick<HighTableProps, 'cellPosition' | 'focus' | 'numRowsPerPage' | 'onCellPositionChange'> & {
-  /** The actual number of rows in the data frame */
-  numRows: number
   /** Children elements */
   children: ReactNode
 }
@@ -50,12 +49,13 @@ function initializeFocusState(focus: boolean): FocusState {
 export function CellNavigationProvider({
   cellPosition: controlledCellPosition,
   focus = true,
-  numRows: numDataRows,
   numRowsPerPage = defaultNumRowsPerPage,
   onCellPositionChange,
   children,
 }: CellNavigationProviderProps) {
   const [focusState, focusDispatch] = useReducer(reducer, focus, initializeFocusState)
+  /** The actual number of rows in the data frame */
+  const numDataRows = useNumRows()
 
   const notifyChange = useCallback(() => {
     focusDispatch({ type: 'START' })

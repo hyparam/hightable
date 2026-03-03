@@ -1,6 +1,7 @@
 import type { KeyboardEvent, ReactNode } from 'react'
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react'
 
+import { useNumRows } from '../contexts/DataContext.js'
 import { OrderByContext } from '../contexts/OrderByContext.js'
 import { SelectionContext } from '../contexts/SelectionContext.js'
 import { checkSignal } from '../helpers/dataframe/helpers.js'
@@ -13,8 +14,6 @@ import { useInputState } from '../hooks/useInputState.js'
 import type { HighTableProps } from '../types.js'
 
 type Props = Pick<HighTableProps, 'data' | 'selection' | 'onError' | 'onSelectionChange'> & {
-  /** The actual number of rows in the data frame */
-  numRows: number
   /** Child components */
   children: ReactNode
 }
@@ -28,7 +27,9 @@ interface Gesture {
  *
  * Only the data rows can be selected, not the header row, so row numbers are 0-based.
  */
-export function SelectionProvider({ children, data, numRows, selection: controlledSelection, onError, onSelectionChange }: Props) {
+export function SelectionProvider({ children, data, selection: controlledSelection, onError, onSelectionChange }: Props) {
+  /** The actual number of rows in the data frame */
+  const numRows = useNumRows()
   const [previousNumRows, setPreviousNumRows] = useState(numRows)
   // The selection is only useful for the parent component. If no props are passed, hide the selection feature.
   const [isEnabled] = useState<boolean>(() => controlledSelection !== undefined || onSelectionChange !== undefined)

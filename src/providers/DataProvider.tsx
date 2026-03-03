@@ -1,17 +1,19 @@
-import { useEffect, useState } from 'react'
+import { type ReactNode, useEffect, useState } from 'react'
 
-import type { DataFrame } from '../helpers/dataframe/index.js'
+import { DataVersionContext, NumRowsContext } from '../contexts/DataContext.js'
 import type { HighTableProps } from '../types.js'
 
-/**
- * Provides the dataId, version and numRows states derived from the data frame.
- */
-export function useData({ data }: Pick<HighTableProps, 'data'>) {
-  // dataId can be used as a "key" to trigger remounts when the data frame changes
-  // Note that key={dataId} must be a string or a number, so: we cannot use data directly
-  const [dataId, setDataId] = useState<number>(0)
-  const [previousData, setPreviousData] = useState<DataFrame>(data)
+type Props = Pick<HighTableProps, 'data'> & {
+  /** Child components */
+  children: ReactNode
+}
 
+/**
+ * Handles the viewport size (width and height) state.
+ *
+ * Provides the current viewport width and height via context, and a callback to update them.
+ */
+export function DataProvider({ children, data }: Props) {
   // Two data frame elements can change over time:
   // - version (if any cell or row number has resolved or changed)
   // - numRows.
@@ -39,18 +41,12 @@ export function useData({ data }: Pick<HighTableProps, 'data'>) {
     }
   }, [data])
 
-  // If a new data frame is passed, set dataId (used to remount child components), and
-  // reset the state: version and numRows
-  if (data !== previousData) {
-    setDataId(d => d + 1)
-    setPreviousData(data)
-    setVersion(0)
-    setNumRows(data.numRows)
-  }
-
-  return {
-    dataId,
-    version,
-    numRows,
-  }
+  // Multiple contexts, to avoid unnecessary re-renders of the components consuming the API when only the data changes, and vice-versa. See https://react.dev/reference/react/useContext#caveats for more details.
+  return (
+    <DataVersionContext.Provider value={version}>
+      <NumRowsContext.Provider value={numRows}>
+        {children}
+      </NumRowsContext.Provider>
+    </DataVersionContext.Provider>
+  )
 }

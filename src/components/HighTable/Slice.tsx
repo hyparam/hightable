@@ -3,6 +3,7 @@ import { useCallback, useContext, useMemo } from 'react'
 
 import { CellNavigationContext } from '../../contexts/CellNavigationContext.js'
 import { ColumnsVisibilityContext } from '../../contexts/ColumnsVisibilityContext.js'
+import { useDataVersion, useNumRows } from '../../contexts/DataContext.js'
 import { OrderByContext } from '../../contexts/OrderByContext.js'
 import { ScrollContext } from '../../contexts/ScrollContext.js'
 import { SelectionContext } from '../../contexts/SelectionContext.js'
@@ -16,18 +17,11 @@ import RowHeader from '../RowHeader/RowHeader.js'
 import TableCorner from '../TableCorner/TableCorner.js'
 import TableHeader from '../TableHeader/TableHeader.js'
 
-type SliceProps = Pick<HighTableProps, 'data' | 'numRowsPerPage' | 'onDoubleClickCell' | 'onError' | 'onKeyDownCell' | 'onMouseDownCell' | 'overscan' | 'renderCellContent' | 'stringify'> & {
-  /** The actual number of rows in the data frame */
-  numRows: number
-  /** A version number that increments whenever a data frame is updated or resolved (the key remains the same). */
-  version: number
-}
+type SliceProps = Pick<HighTableProps, 'data' | 'numRowsPerPage' | 'onDoubleClickCell' | 'onError' | 'onKeyDownCell' | 'onMouseDownCell' | 'overscan' | 'renderCellContent' | 'stringify'>
 
 export default function Slice({
   data,
-  numRows,
   overscan,
-  version,
   onDoubleClickCell,
   onError,
   onKeyDownCell,
@@ -40,6 +34,10 @@ export default function Slice({
   const { selectable, toggleAllRows, pendingSelectionGesture, onTableKeyDown: onSelectionTableKeyDown, allRowsSelected, isRowSelected, toggleRowNumber, toggleRangeToRowNumber } = useContext(SelectionContext)
   const { visibleColumnsParameters: columnsParameters } = useContext(ColumnsVisibilityContext)
   const { renderedRowsStart, renderedRowsEnd } = useContext(ScrollContext)
+  /** A version number that increments whenever a data frame is updated or resolved (the key remains the same). */
+  const version = useDataVersion()
+  /** The actual number of rows in the data frame */
+  const numRows = useNumRows()
 
   // Fetch the required cells if needed (visible + overscan)
   useFetchCells({ data, numRows, overscan, onError })
