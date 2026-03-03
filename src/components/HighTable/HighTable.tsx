@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect } from 'react'
+import { type ReactNode } from 'react'
 
 import { columnWidthsSuffix } from '../../helpers/constants.js'
 import styles from '../../HighTable.module.css'
