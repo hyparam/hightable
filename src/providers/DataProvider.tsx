@@ -9,9 +9,7 @@ type Props = Pick<HighTableProps, 'data'> & {
 }
 
 /**
- * Handles the viewport size (width and height) state.
- *
- * Provides the current viewport width and height via context, and a callback to update them.
+ * Provides the number of rows and the version of the data frame.
  */
 export function DataProvider({ children, data }: Props) {
   // Two data frame elements can change over time:
