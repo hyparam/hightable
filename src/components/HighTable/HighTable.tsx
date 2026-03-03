@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { type ReactNode, useEffect } from 'react'
 
 import { columnWidthsSuffix } from '../../helpers/constants.js'
 import styles from '../../HighTable.module.css'
@@ -31,8 +31,13 @@ function getDataKey(data: HighTableProps['data']): number {
 }
 
 export default function HighTable(props: HighTableProps) {
+  // Derive a stable numeric key for the `data` instance.
+  // Remount the component when the `data` instance changes, to reset all internal state.
+  // TODO(SL): more fine-grained approach to preserve state and don't remount the DOM elements.
+  const key = getDataKey(props.data)
+
   return (
-    <State {...props}>
+    <State {...props} key={key}>
       <DOM {...props} />
     </State>
   )
@@ -41,16 +46,7 @@ export default function HighTable(props: HighTableProps) {
 type StateProps = Pick<HighTableProps, 'columnConfiguration' | 'cacheKey' | 'cellPosition' | 'columnsVisibility' | 'data' | 'focus' | 'numRowsPerPage' | 'orderBy' | 'padding' | 'selection' | 'onCellPositionChange' | 'onColumnsVisibilityChange' | 'onError' | 'onOrderByChange' | 'onSelectionChange'>
   & { children: ReactNode }
 
-function State(props: StateProps) {
-  // Derive a stable numeric key for the `data` instance.
-  const dataKey = getDataKey(props.data)
-
-  return (
-    <KeyState {...props} key={dataKey} />
-  )
-}
-
-function KeyState({
+function State({
   children,
   columnConfiguration,
   cacheKey,
