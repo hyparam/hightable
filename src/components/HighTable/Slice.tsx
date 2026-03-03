@@ -21,8 +21,6 @@ type SliceProps = Pick<HighTableProps, 'data' | 'numRowsPerPage' | 'onDoubleClic
   numRows: number
   /** A version number that increments whenever a data frame is updated or resolved (the key remains the same). */
   version: number
-  /** Callback to set the current table corner size */
-  setTableCornerSize?: (size: { width: number, height: number }) => void
 }
 
 export default function Slice({
@@ -35,7 +33,6 @@ export default function Slice({
   onKeyDownCell,
   onMouseDownCell,
   renderCellContent,
-  setTableCornerSize,
   stringify = stringifyDefault,
 }: SliceProps) {
   const { moveCell } = useContext(CellNavigationContext)
@@ -192,7 +189,6 @@ export default function Slice({
             pendingSelectionGesture={pendingSelectionGesture}
             ariaColIndex={1}
             ariaRowIndex={1}
-            setTableCornerSize={setTableCornerSize}
           />
           <TableHeader
             canMeasureColumn={slice.canMeasureColumn}

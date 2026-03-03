@@ -16,6 +16,8 @@ export function ViewportSizeProvider({ children }: Props) {
   const [viewportWidth, setViewportWidth] = useState<number | undefined>(undefined)
   const [viewportHeight, setViewportHeight] = useState<number | undefined>(undefined)
   const setViewportSize = useCallback((element: HTMLElement) => {
+    // we use clientWidth and clientHeight as they represent the inner size of the element, excluding borders and scrollbars
+
     setViewportWidth(element.clientWidth)
 
     // TODO(SL): remove this fallback? It's only for the tests in Node.js, where the elements have zero height

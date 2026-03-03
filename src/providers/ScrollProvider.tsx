@@ -2,14 +2,13 @@ import { type ReactNode, useCallback, useContext, useEffect, useMemo, useReducer
 
 import { CellNavigationContext } from '../contexts/CellNavigationContext.js'
 import { ScrollContext } from '../contexts/ScrollContext.js'
+import { useHeaderHeight } from '../contexts/TableCornerSizeContext.js'
 import { useViewportHeight } from '../contexts/ViewportSizeContext.js'
 import { defaultPadding, maxElementHeight, rowHeight } from '../helpers/constants.js'
 import { computeDerivedValues, createScale, getScrollActionForRow, initializeScrollState, scrollReducer } from '../helpers/scroll.js'
 import type { HighTableProps } from '../types.js'
 
 type ScrollProviderProps = Pick<HighTableProps, 'padding'> & {
-  /** Height of the header row, in pixels */
-  headerHeight: number
   /** The actual number of rows in the data frame */
   numRows: number
   /** Child components */
@@ -19,10 +18,12 @@ type ScrollProviderProps = Pick<HighTableProps, 'padding'> & {
 /**
  * Provide the scroll state and logic to the table, through the ScrollContext.
  */
-export function ScrollProvider({ children, headerHeight, numRows, padding = defaultPadding }: ScrollProviderProps) {
+export function ScrollProvider({ children, numRows, padding = defaultPadding }: ScrollProviderProps) {
   const [{ scale, scrollTop, scrollTopAnchor, localOffset }, dispatch] = useReducer(scrollReducer, undefined, initializeScrollState)
   const { cellPosition, focusState, focusDispatch } = useContext(CellNavigationContext)
   const clientHeight = useViewportHeight()
+  /** Height of the header row, in pixels */
+  const headerHeight = useHeaderHeight()
 
   const [scrollTo, setScrollTo] = useState<HTMLElement['scrollTo'] | undefined>(undefined)
   const setScrollTop = useCallback((scrollTop: number) => {
