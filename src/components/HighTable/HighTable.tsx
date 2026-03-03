@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 
 import { PortalContainerContext } from '../../contexts/PortalContainerContext.js'
 import { columnWidthsSuffix, rowHeight } from '../../helpers/constants.js'
@@ -42,28 +42,23 @@ export default function HighTable({
   const [tableCornerSize, setTableCornerSize] = useState<{ width: number, height: number } | undefined>(undefined)
   const { dataId, numRows, version } = useData({ data })
 
-  const headerHeight = useMemo(() => {
-    return tableCornerSize?.height ?? rowHeight
-  }, [tableCornerSize])
+  const headerHeight = tableCornerSize?.height ?? rowHeight
 
-  const tableScrollStyle = useMemo(() => {
-    // reserve space for at least 3 characters
-    const numCharacters = Math.max((maxRowNumber ?? numRows).toLocaleString('en-US').length, 3)
-    return {
-      '--column-header-height': `${headerHeight}px`,
-      '--row-number-characters': `${numCharacters}`,
-    } as CSSProperties
-  }, [headerHeight, maxRowNumber, numRows])
-
-  const classes = useMemo(() => {
-    return `${styles.hightable} ${styled ? styles.styled : ''} ${className}`
-  }, [className, styled])
+  // reserve space for at least 3 characters
+  const numCharacters = Math.max((maxRowNumber ?? numRows).toLocaleString('en-US').length, 3)
 
   // Get a reference to the container element
   const { element: container, onMount } = useHTMLElement<HTMLDivElement>()
 
   return (
-    <div ref={onMount} className={classes} style={tableScrollStyle}>
+    <div
+      ref={onMount}
+      className={`${styles.hightable} ${styled ? styles.styled : ''} ${className}`}
+      style={{
+        '--column-header-height': `${headerHeight}px`,
+        '--row-number-characters': `${numCharacters}`,
+      } as CSSProperties}
+    >
       <div className={styles.topBorder} role="presentation" />
 
       <PortalContainerContext.Provider value={container}>
