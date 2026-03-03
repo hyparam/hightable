@@ -3,7 +3,8 @@ import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'r
 
 import { ColumnParametersContext } from '../contexts/ColumnParametersContext.js'
 import { ColumnWidthsContext } from '../contexts/ColumnWidthsContext.js'
-import { TableCornerWidthContext } from '../contexts/TableCornerSizeContext.js'
+import { useNumColumns } from '../contexts/DataContext.js'
+import { useTableCornerWidth } from '../contexts/TableCornerSizeContext.js'
 import { useViewportWidth } from '../contexts/ViewportSizeContext.js'
 import { cellStyle } from '../helpers/width.js'
 import { useLocalStorageState } from '../hooks/useLocalStorageState.js'
@@ -59,8 +60,6 @@ const underfillMargin = 3
 interface ColumnWidthsProviderProps {
   /** Optional key to use for local storage (no local storage if not provided) */
   localStorageKey?: string
-  /** Number of columns (used to initialize the widths array, and compute the widths) */
-  numColumns: number
   /** Minimum width for a column in pixels */
   minWidth?: number
   /** Children elements */
@@ -72,11 +71,13 @@ interface ColumnWidthsProviderProps {
  *
  * Provides the ColumnWidthsContext.
  */
-export function ColumnWidthsProvider({ children, localStorageKey, numColumns, minWidth }: ColumnWidthsProviderProps) {
+export function ColumnWidthsProvider({ children, localStorageKey, minWidth }: ColumnWidthsProviderProps) {
   /** Current viewport width (used to compute the maximum total width) */
   const viewportWidth = useViewportWidth()
   /** Current table corner width (used to compute the maximum total width) */
-  const tableCornerWidth = useContext(TableCornerWidthContext)
+  const tableCornerWidth = useTableCornerWidth()
+  /** Number of columns (used to initialize the widths array, and compute the widths) */
+  const numColumns = useNumColumns()
 
   // Number of columns
   if (!Number.isInteger(numColumns) || numColumns < 0) {

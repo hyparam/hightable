@@ -1,6 +1,7 @@
 import { act, fireEvent } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { NumColumnsContext } from '../../contexts/DataContext.js'
 import { getOffsetWidth } from '../../helpers/width.js'
 import { ColumnParametersProvider } from '../../providers/ColumnParametersProvider.js'
 import { ColumnWidthsProvider } from '../../providers/ColumnWidthsProvider.js'
@@ -62,9 +63,11 @@ describe('ColumnHeader', () => {
 
   it('measures the width if canMeasureWidth is true', () => {
     render(
-      <ColumnWidthsProvider numColumns={1} minWidth={10}>
-        <table><thead><tr><ColumnHeader columnName="test" {...defaultProps} canMeasureWidth={true} /></tr></thead></table>
-      </ColumnWidthsProvider>
+      <NumColumnsContext.Provider value={1}>
+        <ColumnWidthsProvider minWidth={10}>
+          <table><thead><tr><ColumnHeader columnName="test" {...defaultProps} canMeasureWidth={true} /></tr></thead></table>
+        </ColumnWidthsProvider>
+      </NumColumnsContext.Provider>
     )
     expect(getOffsetWidth).toHaveBeenCalled()
   })
@@ -93,9 +96,11 @@ describe('ColumnHeader', () => {
     localStorage.setItem(cacheKey, JSON.stringify([savedWidth]))
 
     const { getByRole } = render(
-      <ColumnWidthsProvider localStorageKey={cacheKey} numColumns={1} minWidth={10}>
-        <table><thead><tr><ColumnHeader columnName="test" {...defaultProps} /></tr></thead></table>
-      </ColumnWidthsProvider>
+      <NumColumnsContext.Provider value={1}>
+        <ColumnWidthsProvider localStorageKey={cacheKey} minWidth={10}>
+          <table><thead><tr><ColumnHeader columnName="test" {...defaultProps} /></tr></thead></table>
+        </ColumnWidthsProvider>
+      </NumColumnsContext.Provider>
     )
     const header = getByRole('columnheader')
     expect(header.style.maxWidth).toEqual(`${savedWidth}px`)
@@ -109,9 +114,11 @@ describe('ColumnHeader', () => {
     localStorage.setItem(cacheKey, JSON.stringify([savedWidth]))
 
     const { getByRole } = render(
-      <ColumnWidthsProvider localStorageKey={cacheKey} numColumns={1} minWidth={minWidth}>
-        <table><thead><tr><ColumnHeader columnName="test" {...defaultProps} /></tr></thead></table>
-      </ColumnWidthsProvider>
+      <NumColumnsContext.Provider value={1}>
+        <ColumnWidthsProvider localStorageKey={cacheKey} minWidth={minWidth}>
+          <table><thead><tr><ColumnHeader columnName="test" {...defaultProps} /></tr></thead></table>
+        </ColumnWidthsProvider>
+      </NumColumnsContext.Provider>
     )
     const header = getByRole('columnheader')
     expect(header.style.maxWidth).toEqual(expected)
@@ -124,9 +131,11 @@ describe('ColumnHeader', () => {
     localStorage.setItem(cacheKey, JSON.stringify([savedWidth]))
 
     const { user, getByRole } = render(
-      <ColumnWidthsProvider localStorageKey={cacheKey} numColumns={1} minWidth={minWidth}>
-        <table><thead><tr><ColumnHeader columnName="test" canMeasureWidth={true} {...defaultProps} /></tr></thead></table>
-      </ColumnWidthsProvider>
+      <NumColumnsContext.Provider value={1}>
+        <ColumnWidthsProvider localStorageKey={cacheKey} minWidth={minWidth}>
+          <table><thead><tr><ColumnHeader columnName="test" canMeasureWidth={true} {...defaultProps} /></tr></thead></table>
+        </ColumnWidthsProvider>
+      </NumColumnsContext.Provider>
     )
     const header = getByRole('columnheader')
     const resizeHandle = getByRole('spinbutton')
@@ -148,9 +157,11 @@ describe('ColumnHeader', () => {
     localStorage.setItem(cacheKey, JSON.stringify([savedWidth]))
 
     const { user, getByRole } = render(
-      <ColumnWidthsProvider localStorageKey={cacheKey} numColumns={1} minWidth={10}>
-        <table><thead><tr><ColumnHeader columnName="test" {...defaultProps} /></tr></thead></table>
-      </ColumnWidthsProvider>
+      <NumColumnsContext.Provider value={1}>
+        <ColumnWidthsProvider localStorageKey={cacheKey} minWidth={10}>
+          <table><thead><tr><ColumnHeader columnName="test" {...defaultProps} /></tr></thead></table>
+        </ColumnWidthsProvider>
+      </NumColumnsContext.Provider>
     )
 
     // Simulate resizing the column
@@ -180,11 +191,13 @@ describe('ColumnHeader', () => {
     const columnDescriptors = [{ name: 'test' }]
 
     const { user, getByRole } = render(
-      <ColumnParametersProvider columnConfiguration={columnConfiguration} columnDescriptors={columnDescriptors}>
-        <ColumnWidthsProvider localStorageKey={cacheKey} numColumns={1} minWidth={10}>
-          <table><thead><tr><ColumnHeader columnName="test" canMeasureWidth={true} {...defaultProps} /></tr></thead></table>
-        </ColumnWidthsProvider>
-      </ColumnParametersProvider>
+      <NumColumnsContext.Provider value={1}>
+        <ColumnParametersProvider columnConfiguration={columnConfiguration} columnDescriptors={columnDescriptors}>
+          <ColumnWidthsProvider localStorageKey={cacheKey} minWidth={10}>
+            <table><thead><tr><ColumnHeader columnName="test" canMeasureWidth={true} {...defaultProps} /></tr></thead></table>
+          </ColumnWidthsProvider>
+        </ColumnParametersProvider>
+      </NumColumnsContext.Provider>
     )
 
     const header = getByRole('columnheader')
@@ -204,7 +217,7 @@ describe('ColumnHeader', () => {
     expect(header.style.maxWidth).toEqual(`${columnMinWidth}px`)
   })
 
-  it('uses global minWidth when column minWidth is less than global minWidth', async () => {
+  it('uses column minWidth even if it is less than global minWidth', async () => {
     const savedWidth = 50
     const globalMinWidth = 30
     const columnMinWidth = 20 // Less than global minWidth
@@ -214,11 +227,13 @@ describe('ColumnHeader', () => {
     const columnDescriptors = [{ name: 'test' }]
 
     const { user, getByRole } = render(
-      <ColumnParametersProvider columnConfiguration={columnConfiguration} columnDescriptors={columnDescriptors}>
-        <ColumnWidthsProvider localStorageKey={cacheKey} numColumns={1} minWidth={globalMinWidth}>
-          <table><thead><tr><ColumnHeader columnName="test" canMeasureWidth={true} {...defaultProps} /></tr></thead></table>
-        </ColumnWidthsProvider>
-      </ColumnParametersProvider>
+      <NumColumnsContext.Provider value={1}>
+        <ColumnParametersProvider columnConfiguration={columnConfiguration} columnDescriptors={columnDescriptors}>
+          <ColumnWidthsProvider localStorageKey={cacheKey} minWidth={globalMinWidth}>
+            <table><thead><tr><ColumnHeader columnName="test" canMeasureWidth={true} {...defaultProps} /></tr></thead></table>
+          </ColumnWidthsProvider>
+        </ColumnParametersProvider>
+      </NumColumnsContext.Provider>
     )
 
     const header = getByRole('columnheader')
@@ -245,16 +260,20 @@ describe('ColumnHeader', () => {
     localStorage.setItem(cacheKey2, JSON.stringify([width2]))
 
     const { rerender, getByRole } = render(
-      <ColumnWidthsProvider localStorageKey={cacheKey} numColumns={1} minWidth={10}>
-        <table><thead><tr><ColumnHeader columnName="test" {...defaultProps} /></tr></thead></table>
-      </ColumnWidthsProvider>
+      <NumColumnsContext.Provider value={1}>
+        <ColumnWidthsProvider localStorageKey={cacheKey} minWidth={10}>
+          <table><thead><tr><ColumnHeader columnName="test" {...defaultProps} /></tr></thead></table>
+        </ColumnWidthsProvider>
+      </NumColumnsContext.Provider>
     )
     const header = getByRole('columnheader')
     expect(header.style.maxWidth).toEqual(`${width1}px`)
     rerender(
-      <ColumnWidthsProvider localStorageKey={cacheKey2} numColumns={1} minWidth={10}>
-        <table><thead><tr><ColumnHeader columnName="test" {...defaultProps} /></tr></thead></table>
-      </ColumnWidthsProvider>
+      <NumColumnsContext.Provider value={1}>
+        <ColumnWidthsProvider localStorageKey={cacheKey2} minWidth={10}>
+          <table><thead><tr><ColumnHeader columnName="test" {...defaultProps} /></tr></thead></table>
+        </ColumnWidthsProvider>
+      </NumColumnsContext.Provider>
     )
     expect(header.style.maxWidth).toEqual(`${width2}px`)
   })
