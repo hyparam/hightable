@@ -3,7 +3,7 @@ import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'r
 
 import { ColumnParametersContext } from '../contexts/ColumnParametersContext.js'
 import { ColumnWidthsContext } from '../contexts/ColumnWidthsContext.js'
-import { TableCornerWidthContext } from '../contexts/TableCornerSizeContext.js'
+import { useTableCornerWidth } from '../contexts/TableCornerSizeContext.js'
 import { useViewportWidth } from '../contexts/ViewportSizeContext.js'
 import { cellStyle } from '../helpers/width.js'
 import { useLocalStorageState } from '../hooks/useLocalStorageState.js'
@@ -76,7 +76,7 @@ export function ColumnWidthsProvider({ children, localStorageKey, numColumns, mi
   /** Current viewport width (used to compute the maximum total width) */
   const viewportWidth = useViewportWidth()
   /** Current table corner width (used to compute the maximum total width) */
-  const tableCornerWidth = useContext(TableCornerWidthContext)
+  const tableCornerWidth = useTableCornerWidth()
 
   // Number of columns
   if (!Number.isInteger(numColumns) || numColumns < 0) {
