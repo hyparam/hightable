@@ -3,7 +3,7 @@ import { useCallback, useContext, useMemo } from 'react'
 
 import { CellNavigationContext } from '../../contexts/CellNavigationContext.js'
 import { ScrollContext } from '../../contexts/ScrollContext.js'
-import { useSetViewportWidth } from '../../contexts/ViewportContext.js'
+import { useSetViewportSize } from '../../contexts/ViewportSizeContext.js'
 import styles from '../../HighTable.module.css'
 
 interface Props {
@@ -12,10 +12,10 @@ interface Props {
 }
 
 export default function Scroller({ children }: Props) {
-  /** Callback to set the current viewport width */
-  const setViewportWidth = useSetViewportWidth()
+  /** Callback to set the current viewport size */
+  const setViewportSize = useSetViewportSize()
   const { goToCurrentCell } = useContext(CellNavigationContext)
-  const { canvasHeight, sliceTop, setClientHeight, setScrollTop, setScrollTo } = useContext(ScrollContext)
+  const { canvasHeight, sliceTop, setScrollTop, setScrollTo } = useContext(ScrollContext)
 
   /**
    * Handle keyboard events for scrolling
@@ -44,13 +44,6 @@ export default function Scroller({ children }: Props) {
       return
     }
 
-    // Use arrow functions to get correct viewport type (not null)
-    // eslint-disable-next-line func-style
-    const updateViewportSize = () => {
-      setViewportWidth?.(viewport.clientWidth)
-      setClientHeight?.(viewport.clientHeight)
-    }
-
     // eslint-disable-next-line func-style
     const handleScroll = () => {
       // TODO(SL): throttle? see https://github.com/hyparam/hightable/pull/347
@@ -58,7 +51,7 @@ export default function Scroller({ children }: Props) {
     }
 
     // run once
-    updateViewportSize()
+    setViewportSize?.(viewport)
     handleScroll()
 
     // register scrollTo
@@ -79,7 +72,7 @@ export default function Scroller({ children }: Props) {
             console.warn('ResizeObserver entry is not available.')
             return
           }
-          updateViewportSize()
+          setViewportSize?.(viewport)
         })
       // for jsdom
       : undefined
@@ -91,7 +84,7 @@ export default function Scroller({ children }: Props) {
       resizeObserver?.disconnect()
       viewport.removeEventListener('scroll', handleScroll)
     }
-  }, [setScrollTo, setViewportWidth, setClientHeight, setScrollTop])
+  }, [setScrollTo, setViewportSize, setScrollTop])
 
   // TODO(SL): maybe pass CSS variables instead of inline styles?
   // the viewport div scrollHeight will be equal to canvasHeight (unless custom CSS is messing with it)

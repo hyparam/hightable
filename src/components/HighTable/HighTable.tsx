@@ -13,7 +13,7 @@ import { ColumnWidthsProvider } from '../../providers/ColumnWidthsProvider.js'
 import { OrderByProvider } from '../../providers/OrderByProvider.js'
 import { ScrollProvider } from '../../providers/ScrollProvider.js'
 import { SelectionProvider } from '../../providers/SelectionProvider.js'
-import { ViewportProvider } from '../../providers/ViewportProvider.js'
+import { ViewportSizeProvider } from '../../providers/ViewportSizeProvider.js'
 import type { HighTableProps } from '../../types.js'
 import Scroller from './Scroller.js'
 import Slice from './Slice.js'
@@ -67,7 +67,7 @@ export default function HighTable({
           columnConfiguration={columnConfiguration}
           columnDescriptors={data.columnDescriptors}
         >
-          <ViewportProvider>
+          <ViewportSizeProvider>
             <ColumnWidthsProvider
             /**
              * Recreate a context if a new data frame is passed (but not if only the number of rows changed)
@@ -141,7 +141,7 @@ export default function HighTable({
                 </OrderByProvider>
               </ColumnsVisibilityProvider>
             </ColumnWidthsProvider>
-          </ViewportProvider>
+          </ViewportSizeProvider>
         </ColumnParametersProvider>
       </PortalContainerContext.Provider>
 

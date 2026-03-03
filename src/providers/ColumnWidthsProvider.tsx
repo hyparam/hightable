@@ -3,7 +3,7 @@ import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'r
 
 import { ColumnParametersContext } from '../contexts/ColumnParametersContext.js'
 import { ColumnWidthsContext } from '../contexts/ColumnWidthsContext.js'
-import { useViewportWidth } from '../contexts/ViewportContext.js'
+import { useViewportWidth } from '../contexts/ViewportSizeContext.js'
 import { cellStyle } from '../helpers/width.js'
 import { useLocalStorageState } from '../hooks/useLocalStorageState.js'
 
