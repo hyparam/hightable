@@ -1,5 +1,5 @@
 import type { KeyboardEvent, ReactNode } from 'react'
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { useCallback, useContext, useEffect, useEffectEvent, useMemo, useState } from 'react'
 
 import { useNumRows } from '../contexts/DataContext.js'
 import { OrderByContext } from '../contexts/OrderByContext.js'
@@ -30,7 +30,6 @@ interface Gesture {
 export function SelectionProvider({ children, data, selection: controlledSelection, onError, onSelectionChange }: Props) {
   /** The actual number of rows in the data frame */
   const numRows = useNumRows()
-  const [previousNumRows, setPreviousNumRows] = useState(numRows)
   // The selection is only useful for the parent component. If no props are passed, hide the selection feature.
   const [isEnabled] = useState<boolean>(() => controlledSelection !== undefined || onSelectionChange !== undefined)
   const inputState = useInputState<Selection>({
@@ -45,15 +44,19 @@ export function SelectionProvider({ children, data, selection: controlledSelecti
 
   const { orderBy } = useContext(OrderByContext)
 
-  if (numRows !== previousNumRows) {
-    setPreviousNumRows(numRows)
-    // recompute if all rows are selected
+  const onNumRowsChange = useEffectEvent((numRows: number) => {
+    // when numRows changes, we need to check if all rows are selected, and update the cache
     setAllRowsSelected(areAllSelected({ numRows, selection }))
     // we need to clear the cache when numRows changes, because it might be invalid
     // unfortunately, this has a performance cost since the cache will need to be rebuilt
     // TODO(SL): find a better way to handle this
     rowByRowNumberAndOrderBy.clear()
-  }
+  })
+
+  // replace by listening to an event when the number of rows changes?
+  useEffect(() => {
+    onNumRowsChange(numRows)
+  }, [numRows])
 
   const [gesture, setGesture] = useState<Gesture | undefined>(undefined)
   const stopGesture = useCallback(({ gesture }: { gesture: Gesture }) => {
