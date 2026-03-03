@@ -768,3 +768,30 @@ export const ColumnsVisibilityControlled: Story = {
     data: createUnsortableData(),
   },
 }
+
+export const ChangeDataProp: Story = {
+  render: () => {
+    const [data, setData] = useState<DataFrame>(createUnsortableData())
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+        <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', padding: '12px' }}>
+          <button type="button" onClick={() => { setData(createUnsortableData()) }}>
+            New unsortable data
+          </button>
+          <button type="button" onClick={() => { setData(sortableDataFrame(createUnsortableData())) }}>
+            New sortable data
+          </button>
+          <button type="button" onClick={() => { setData(createLongStringsData()) }}>
+            New long strings data
+          </button>
+          <button type="button" onClick={() => { setData(createManyColumnsData()) }}>
+            New many columns data
+          </button>
+        </div>
+        <HighTable
+          data={data}
+        />
+      </div>
+    )
+  },
+}

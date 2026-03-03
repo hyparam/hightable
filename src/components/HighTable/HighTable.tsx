@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react'
-import { useState } from 'react'
 
 import { columnWidthsSuffix } from '../../helpers/constants.js'
 import styles from '../../HighTable.module.css'
@@ -18,20 +17,29 @@ import Scroller from './Scroller.js'
 import Slice from './Slice.js'
 import Wrapper from './Wrapper.js'
 
+// Assign stable numeric ids to data instances without triggering state
+// updates during render. Uses a WeakMap for object/function keys and a
+// Map for primitive values.
+const dataInstanceKeys = new WeakMap<object, number>()
+let nextDataInstanceKey = 1
+function getDataKey(data: HighTableProps['data']): number {
+  let k = dataInstanceKeys.get(data)
+  if (!k) {
+    k = nextDataInstanceKey++
+    dataInstanceKeys.set(data, k)
+  }
+  return k
+}
+
 export default function HighTable({
   data,
   ...rest
 }: HighTableProps) {
-  // Recreate the internal state if the data frame changes.
-  const [stateKey, setStateKey] = useState<number>(0)
-  const [previousData, setPreviousData] = useState<HighTableProps['data']>(data)
-  if (data !== previousData) {
-    setStateKey(k => k + 1)
-    setPreviousData(data)
-  }
+  // Derive a stable numeric key for the `data` instance.
+  const dataKey = getDataKey(data)
 
   return (
-    <State key={stateKey} data={data} {...rest}>
+    <State key={dataKey} data={data} {...rest}>
       <DOM data={data} {...rest} />
     </State>
   )
