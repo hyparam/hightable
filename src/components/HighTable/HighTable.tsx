@@ -40,21 +40,21 @@ export default function HighTable({
 
   return (
     /* The state is handled with contexts, even if it creates a "Providers hell". No need for state library for now. */
-    <TableCornerSizeProvider>
-      <Wrapper styled={styled} numRows={numRows} maxRowNumber={maxRowNumber} className={className}>
+    <ViewportSizeProvider>
+      <TableCornerSizeProvider>
+        <Wrapper styled={styled} numRows={numRows} maxRowNumber={maxRowNumber} className={className}>
 
-        <div className={styles.topBorder} role="presentation" />
+          <div className={styles.topBorder} role="presentation" />
 
-        <ColumnParametersProvider
-          columnConfiguration={columnConfiguration}
-          columnDescriptors={data.columnDescriptors}
-        >
-          <ViewportSizeProvider>
+          <ColumnParametersProvider
+            columnConfiguration={columnConfiguration}
+            columnDescriptors={data.columnDescriptors}
+          >
             <ColumnWidthsProvider
               /**
-             * Recreate a context if a new data frame is passed (but not if only the number of rows changed)
-             * The user can also pass a cacheKey to force a new set of widths, or keep the current ones.
-             */
+               * Recreate a context if a new data frame is passed (but not if only the number of rows changed)
+               * The user can also pass a cacheKey to force a new set of widths, or keep the current ones.
+               */
               key={cacheKey ?? dataId}
               // TODO(SL): pass cacheKey, memoize
               localStorageKey={cacheKey ? `${cacheKey}${columnWidthsSuffix}` : undefined}
@@ -62,26 +62,26 @@ export default function HighTable({
             >
               <ColumnsVisibilityProvider
                 /**
-               * Recreate a context if a new data frame is passed (but not if only the number of rows changed)
-               */
+                 * Recreate a context if a new data frame is passed (but not if only the number of rows changed)
+                 */
                 key={dataId}
                 columnsVisibility={columnsVisibility}
                 onColumnsVisibilityChange={onColumnsVisibilityChange}
               >
                 <OrderByProvider
                   /**
-                 * Recreate a context if a new data frame is passed, to flush the cache (ranks and indexes)
-                 * (but not if only the number of rows changed)
-                 */
+                   * Recreate a context if a new data frame is passed, to flush the cache (ranks and indexes)
+                   * (but not if only the number of rows changed)
+                   */
                   key={dataId}
                   orderBy={orderBy}
                   onOrderByChange={onOrderByChange}
                 >
                   <SelectionProvider
                     /**
-                   * Recreate a context if a new data frame is passed, because the selection might not make sense anymore
-                   * (but not if only the number of rows changed)
-                   */
+                     * Recreate a context if a new data frame is passed, because the selection might not make sense anymore
+                     * (but not if only the number of rows changed)
+                     */
                     key={dataId}
                     selection={selection}
                     onError={onError}
@@ -120,13 +120,13 @@ export default function HighTable({
                 </OrderByProvider>
               </ColumnsVisibilityProvider>
             </ColumnWidthsProvider>
-          </ViewportSizeProvider>
-        </ColumnParametersProvider>
+          </ColumnParametersProvider>
 
-        {/* puts a background behind the row labels column */}
-        <div className={styles.mockRowLabel}>&nbsp;</div>
+          {/* puts a background behind the row labels column */}
+          <div className={styles.mockRowLabel}>&nbsp;</div>
 
-      </Wrapper>
-    </TableCornerSizeProvider>
+        </Wrapper>
+      </TableCornerSizeProvider>
+    </ViewportSizeProvider>
   )
 }
