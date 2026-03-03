@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 
 import { PortalContainerContext } from '../../contexts/PortalContainerContext.js'
 import { columnWidthsSuffix, rowHeight } from '../../helpers/constants.js'
@@ -13,6 +13,7 @@ import { ColumnWidthsProvider } from '../../providers/ColumnWidthsProvider.js'
 import { OrderByProvider } from '../../providers/OrderByProvider.js'
 import { ScrollProvider } from '../../providers/ScrollProvider.js'
 import { SelectionProvider } from '../../providers/SelectionProvider.js'
+import { ViewportSizeProvider } from '../../providers/ViewportSizeProvider.js'
 import type { HighTableProps } from '../../types.js'
 import Scroller from './Scroller.js'
 import Slice from './Slice.js'
@@ -38,115 +39,109 @@ export default function HighTable({
   onSelectionChange,
   ...rest
 }: HighTableProps) {
-  const [viewportWidth, setViewportWidth] = useState<number | undefined>(undefined)
   const [tableCornerSize, setTableCornerSize] = useState<{ width: number, height: number } | undefined>(undefined)
   const { dataId, numRows, version } = useData({ data })
 
-  const headerHeight = useMemo(() => {
-    return tableCornerSize?.height ?? rowHeight
-  }, [tableCornerSize])
+  const headerHeight = tableCornerSize?.height ?? rowHeight
 
-  const tableScrollStyle = useMemo(() => {
-    // reserve space for at least 3 characters
-    const numCharacters = Math.max((maxRowNumber ?? numRows).toLocaleString('en-US').length, 3)
-    return {
-      '--column-header-height': `${headerHeight}px`,
-      '--row-number-characters': `${numCharacters}`,
-    } as CSSProperties
-  }, [headerHeight, maxRowNumber, numRows])
-
-  const classes = useMemo(() => {
-    return `${styles.hightable} ${styled ? styles.styled : ''} ${className}`
-  }, [className, styled])
+  // reserve space for at least 3 characters
+  const numCharacters = Math.max((maxRowNumber ?? numRows).toLocaleString('en-US').length, 3)
 
   // Get a reference to the container element
   const { element: container, onMount } = useHTMLElement<HTMLDivElement>()
 
   return (
-    <div ref={onMount} className={classes} style={tableScrollStyle}>
+    <div
+      ref={onMount}
+      className={`${styles.hightable} ${styled ? styles.styled : ''} ${className}`}
+      style={{
+        '--column-header-height': `${headerHeight}px`,
+        '--row-number-characters': `${numCharacters}`,
+      } as CSSProperties}
+    >
       <div className={styles.topBorder} role="presentation" />
 
+      {/* The state is handled with contexts, even if it creates a "Providers hell". No need for state library for now. */}
       <PortalContainerContext.Provider value={container}>
         <ColumnParametersProvider
           columnConfiguration={columnConfiguration}
           columnDescriptors={data.columnDescriptors}
         >
-          <ColumnWidthsProvider
+          <ViewportSizeProvider>
+            <ColumnWidthsProvider
             /**
              * Recreate a context if a new data frame is passed (but not if only the number of rows changed)
              * The user can also pass a cacheKey to force a new set of widths, or keep the current ones.
              */
-            key={cacheKey ?? dataId}
-            // TODO(SL): pass cacheKey, memoize
-            localStorageKey={cacheKey ? `${cacheKey}${columnWidthsSuffix}` : undefined}
-            numColumns={data.columnDescriptors.length}
-            viewportWidth={viewportWidth}
-            tableCornerWidth={tableCornerSize?.width}
-          >
-            <ColumnsVisibilityProvider
+              key={cacheKey ?? dataId}
+              // TODO(SL): pass cacheKey, memoize
+              localStorageKey={cacheKey ? `${cacheKey}${columnWidthsSuffix}` : undefined}
+              numColumns={data.columnDescriptors.length}
+              tableCornerWidth={tableCornerSize?.width}
+            >
+              <ColumnsVisibilityProvider
               /**
                * Recreate a context if a new data frame is passed (but not if only the number of rows changed)
                */
-              key={dataId}
-              columnsVisibility={columnsVisibility}
-              onColumnsVisibilityChange={onColumnsVisibilityChange}
-            >
-              <OrderByProvider
+                key={dataId}
+                columnsVisibility={columnsVisibility}
+                onColumnsVisibilityChange={onColumnsVisibilityChange}
+              >
+                <OrderByProvider
                 /**
                  * Recreate a context if a new data frame is passed, to flush the cache (ranks and indexes)
                  * (but not if only the number of rows changed)
                  */
-                key={dataId}
-                orderBy={orderBy}
-                onOrderByChange={onOrderByChange}
-              >
-                <SelectionProvider
+                  key={dataId}
+                  orderBy={orderBy}
+                  onOrderByChange={onOrderByChange}
+                >
+                  <SelectionProvider
                   /**
                    * Recreate a context if a new data frame is passed, because the selection might not make sense anymore
                    * (but not if only the number of rows changed)
                    */
-                  key={dataId}
-                  selection={selection}
-                  onError={onError}
-                  onSelectionChange={onSelectionChange}
-                  data={data}
-                  numRows={numRows}
-                >
-
-                  <CellNavigationProvider
                     key={dataId}
-                    cellPosition={cellPosition}
-                    focus={focus}
+                    selection={selection}
+                    onError={onError}
+                    onSelectionChange={onSelectionChange}
+                    data={data}
                     numRows={numRows}
-                    numRowsPerPage={numRowsPerPage}
-                    onCellPositionChange={onCellPositionChange}
                   >
-                    <ScrollProvider
+
+                    <CellNavigationProvider
+                      key={dataId}
+                      cellPosition={cellPosition}
+                      focus={focus}
                       numRows={numRows}
-                      headerHeight={headerHeight}
-                      padding={padding}
+                      numRowsPerPage={numRowsPerPage}
+                      onCellPositionChange={onCellPositionChange}
                     >
-
-                      <Scroller
-                        setViewportWidth={setViewportWidth}
+                      <ScrollProvider
+                        numRows={numRows}
+                        headerHeight={headerHeight}
+                        padding={padding}
                       >
-                        <Slice
-                          data={data}
-                          numRows={numRows}
-                          onError={onError}
-                          setTableCornerSize={setTableCornerSize}
-                          version={version}
-                          {...rest}
-                        />
-                      </Scroller>
 
-                    </ScrollProvider>
-                  </CellNavigationProvider>
+                        <Scroller>
+                          <Slice
+                            data={data}
+                            numRows={numRows}
+                            onError={onError}
+                            setTableCornerSize={setTableCornerSize}
+                            version={version}
+                            {...rest}
+                          />
+                        </Scroller>
 
-                </SelectionProvider>
-              </OrderByProvider>
-            </ColumnsVisibilityProvider>
-          </ColumnWidthsProvider>
+                      </ScrollProvider>
+                    </CellNavigationProvider>
+
+                  </SelectionProvider>
+                </OrderByProvider>
+              </ColumnsVisibilityProvider>
+            </ColumnWidthsProvider>
+          </ViewportSizeProvider>
         </ColumnParametersProvider>
       </PortalContainerContext.Provider>
 

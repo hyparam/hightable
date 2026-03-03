@@ -2,6 +2,7 @@ import { type ReactNode, useCallback, useContext, useEffect, useMemo, useReducer
 
 import { CellNavigationContext } from '../contexts/CellNavigationContext.js'
 import { ScrollContext } from '../contexts/ScrollContext.js'
+import { useViewportHeight } from '../contexts/ViewportSizeContext.js'
 import { defaultPadding, maxElementHeight, rowHeight } from '../helpers/constants.js'
 import { computeDerivedValues, createScale, getScrollActionForRow, initializeScrollState, scrollReducer } from '../helpers/scroll.js'
 import type { HighTableProps } from '../types.js'
@@ -21,19 +22,13 @@ type ScrollProviderProps = Pick<HighTableProps, 'padding'> & {
 export function ScrollProvider({ children, headerHeight, numRows, padding = defaultPadding }: ScrollProviderProps) {
   const [{ scale, scrollTop, scrollTopAnchor, localOffset }, dispatch] = useReducer(scrollReducer, undefined, initializeScrollState)
   const { cellPosition, focusState, focusDispatch } = useContext(CellNavigationContext)
+  const clientHeight = useViewportHeight()
 
   const [scrollTo, setScrollTo] = useState<HTMLElement['scrollTo'] | undefined>(undefined)
   const setScrollTop = useCallback((scrollTop: number) => {
     dispatch({ type: 'ON_SCROLL', scrollTop })
     focusDispatch?.({ type: 'SCROLLED_EVENT_RECEIVED' })
   }, [focusDispatch])
-  const [clientHeight, _setClientHeight] = useState<number | undefined>(undefined)
-  const setClientHeight = useCallback((clientHeight: number) => {
-    // TODO(SL): remove this fallback? It's only for the tests in Node.js, where the elements have zero height
-    // instead, it should return without updating the visible rows range, or set it to undefined.
-    // TODO(SL): test in the browser (playwright)
-    _setClientHeight(clientHeight === 0 ? 100 : clientHeight)
-  }, [])
 
   const currentScale = useMemo(() => {
     if (clientHeight === undefined) {
@@ -89,7 +84,6 @@ export function ScrollProvider({ children, headerHeight, numRows, padding = defa
     return {
       scrollMode: 'virtual' as const,
       canvasHeight: scale ? scale.canvasHeight : undefined,
-      setClientHeight,
       setScrollTop,
       setScrollTo,
       ...computeDerivedValues({
@@ -100,7 +94,7 @@ export function ScrollProvider({ children, headerHeight, numRows, padding = defa
         padding,
       }),
     }
-  }, [scale, scrollTop, scrollTopAnchor, localOffset, padding, setClientHeight, setScrollTop])
+  }, [scale, scrollTop, scrollTopAnchor, localOffset, padding, setScrollTop])
   return (
     <ScrollContext.Provider value={value}>
       {children}
