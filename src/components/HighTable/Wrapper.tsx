@@ -4,7 +4,7 @@ import { PortalContainerContext } from '../../contexts/PortalContainerContext.js
 import { useHeaderHeight } from '../../contexts/TableCornerSizeContext.js'
 import styles from '../../HighTable.module.css'
 import { useHTMLElement } from '../../hooks/useHTMLElement.js'
-import type { HighTableProps } from '../../types'
+import type { HighTableProps } from '../../types.js'
 
 type Props = Pick<HighTableProps, 'className' | 'maxRowNumber' | 'styled'> & {
   /** Number of rows in the data frame */
