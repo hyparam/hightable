@@ -18,8 +18,7 @@ import Slice from './Slice.js'
 import Wrapper from './Wrapper.js'
 
 // Assign stable numeric ids to data instances without triggering state
-// updates during render. Uses a WeakMap for object/function keys and a
-// Map for primitive values.
+// updates during render, using a WeakMap keyed by the data object.
 const dataInstanceKeys = new WeakMap<object, number>()
 let nextDataInstanceKey = 1
 function getDataKey(data: HighTableProps['data']): number {
