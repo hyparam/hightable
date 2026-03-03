@@ -217,7 +217,7 @@ describe('ColumnHeader', () => {
     expect(header.style.maxWidth).toEqual(`${columnMinWidth}px`)
   })
 
-  it('uses global minWidth when column minWidth is less than global minWidth', async () => {
+  it('uses column minWidth even if it is less than global minWidth', async () => {
     const savedWidth = 50
     const globalMinWidth = 30
     const columnMinWidth = 20 // Less than global minWidth
