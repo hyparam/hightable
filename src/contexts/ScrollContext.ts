@@ -14,12 +14,6 @@ export interface ScrollContextType {
   /** Index of the last row rendered in the DOM as a table row (exclusive). */
   renderedRowsEnd?: number
   /**
-   * Function to call when the current viewport height changes (on resize)
-   *
-   * @param clientHeight The new viewport height in pixels
-   */
-  setClientHeight?: (clientHeight: number) => void
-  /**
    * Function to set the scrollTo function
    *
    * @param scrollTo The scrollTo function of the viewport element (on component mount), or undefined (on unmount)
