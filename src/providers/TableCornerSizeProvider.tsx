@@ -16,7 +16,7 @@ export function TableCornerSizeProvider({ children }: Props) {
   const [tableCornerWidth, setTableCornerWidth] = useState<number | undefined>(undefined)
   const [tableCornerHeight, setTableCornerHeight] = useState<number | undefined>(undefined)
   const setTableCornerSize = useCallback((element: HTMLElement) => {
-    // we use offsetWidth and offsetHeight as they include the padding
+    // we use offsetWidth and offsetHeight as they include padding, borders, and scrollbars (when present)
     setTableCornerWidth(element.offsetWidth)
     setTableCornerHeight(element.offsetHeight)
   }, [])
