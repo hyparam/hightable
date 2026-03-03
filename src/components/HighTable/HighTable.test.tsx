@@ -61,15 +61,15 @@ interface MockedUnsortableDataFrame extends DataFrame {
   fetch: Mock<Fetch>
   getCell: Mock<DataFrame['getCell']>
 }
-function createMockData(): MockedUnsortableDataFrame {
+function createMockData({ firstColumn = 'ID' }: { firstColumn?: string } = {}): MockedUnsortableDataFrame {
   const numRows = 100
-  const columnDescriptors = ['ID', 'Name', 'Age'].map(name => ({ name }))
+  const columnDescriptors = [firstColumn, 'Name', 'Age'].map(name => ({ name }))
   const getCell = vi.fn(({ row, column, orderBy }: { row: number, column: string, orderBy?: OrderBy }) => {
     validateGetCellParams({ column, row, orderBy, data: { numRows, columnDescriptors } })
     if (row < 0 || row >= 1000) {
       throw new Error(`Invalid row index: ${row}`)
     }
-    if (column === 'ID') {
+    if (column === firstColumn) {
       return { value: row }
     } else if (column === 'Name') {
       return { value: `Name ${row}` }
@@ -102,6 +102,20 @@ describe('HighTable', () => {
       expect(mockData.getCell).toHaveBeenCalledWith({ row: 0, column: 'ID', orderBy: [] })
       expect(mockData.getCell).toHaveBeenCalledWith({ row: visibleRows + defaultPadding - 2, column: 'Age', orderBy: [] })
       expect(mockData.getCell).not.toHaveBeenCalledWith({ row: visibleRows + defaultPadding - 1, column: 'Age', orderBy: [] })
+    })
+  })
+
+  it('remounts when the data frame instance changes', async () => {
+    const { getByText, rerender } = render(<HighTable data={mockData} />)
+    await waitFor(() => {
+      getByText('ID')
+      expect(mockData.getCell).toHaveBeenCalledWith({ row: 0, column: 'ID', orderBy: [] })
+    })
+    const newData = createMockData({ firstColumn: 'ID2' })
+    rerender(<HighTable data={newData} />)
+    await waitFor(() => {
+      getByText('ID2')
+      expect(newData.getCell).toHaveBeenCalledWith({ row: 0, column: 'ID2', orderBy: [] })
     })
   })
 
