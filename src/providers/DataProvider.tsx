@@ -22,7 +22,9 @@ type Props = Pick<HighTableProps, 'data'> & {
 }
 
 /**
- * Provides the number of rows and the version of the data frame.
+ * Provides the number of rows and columns, and the version of the data frame.
+ *
+ * It also providers a data key for testing purposes.
  */
 export function DataProvider({ children, data }: Props) {
   const key = getDataKey(data)
