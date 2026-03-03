@@ -1,6 +1,7 @@
 import type { ChangeEvent, CSSProperties, KeyboardEvent, ReactNode } from 'react'
 import { useCallback, useEffect, useRef } from 'react'
 
+import { useSetTableCornerSize } from '../../contexts/TableCornerSizeContext.js'
 import { useCellFocus } from '../../hooks/useCellFocus.js'
 
 interface Props {
@@ -11,11 +12,11 @@ interface Props {
   style?: CSSProperties
   ariaColIndex: number
   ariaRowIndex: number
-  setTableCornerSize?: (size: { width: number, height: number }) => void // callback to set the current table corner size
 }
 
-export default function TableCorner({ children, checked, onCheckboxPress, pendingSelectionGesture, style, ariaColIndex, ariaRowIndex, setTableCornerSize }: Props) {
+export default function TableCorner({ children, checked, onCheckboxPress, pendingSelectionGesture, style, ariaColIndex, ariaRowIndex }: Props) {
   const { tabIndex, navigateToCell, focusIfNeeded } = useCellFocus({ ariaColIndex, ariaRowIndex })
+  const setTableCornerSize = useSetTableCornerSize()
 
   // Focus the cell if needed. We use an effect, as it acts on the DOM element after render.
   const ref = useRef<HTMLTableCellElement | null>(null)
@@ -58,7 +59,7 @@ export default function TableCorner({ children, checked, onCheckboxPress, pendin
     // Use an arrow function to get correct tableCorner type (not null)
     // eslint-disable-next-line func-style
     const updateTableCornerSize = () => {
-      setTableCornerSize({ width: tableCorner.offsetWidth, height: tableCorner.offsetHeight })
+      setTableCornerSize(tableCorner)
     }
 
     // run once
