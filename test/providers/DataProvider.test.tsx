@@ -82,7 +82,7 @@ describe('DataProvider', () => {
     expect(updatedNumRows).toBe(5)
     expect(updatedVersion).toBe(initialVersion)
   })
-  it('should update numRows and version when rows are pushed to a dataframe creates with arrayDataFrame', async () => {
+  it('should update numRows and version when rows are pushed to a dataframe created with arrayDataFrame', async () => {
     const data = arrayDataFrame([{ a: 1 }, { a: 2 }])
     const { getByTestId } = render(<TestComponent data={data} />)
 
