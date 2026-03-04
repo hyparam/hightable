@@ -34,11 +34,22 @@ export function useOrderBy() {
  */
 export function useColumnOrderBy(columnName: string) {
   const orderBy = useOrderBy()
-  // no need to memoize, building a map is fast
-  const orderByMap = new Map(orderBy.map(({ column, direction }, index) => [column, { direction, index }]))
+
+  let direction: OrderBy[number]['direction'] | undefined
+  let orderByIndex: number | undefined
+
+  for (let index = 0; index < orderBy.length; index += 1) {
+    const entry = orderBy[index]
+    if (entry.column === columnName) {
+      direction = entry.direction
+      orderByIndex = index
+      break
+    }
+  }
+
   return {
-    direction: orderByMap.get(columnName)?.direction,
-    orderByIndex: orderByMap.get(columnName)?.index,
+    direction,
+    orderByIndex,
   }
 }
 
