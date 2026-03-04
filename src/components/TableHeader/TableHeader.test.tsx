@@ -153,19 +153,14 @@ describe('TableHeader', () => {
 
   describe('Column Menu Integration', () => {
     it('integrates menu button with table header accessibility', async () => {
-      const setOrderBy = vi.fn()
       const { user, getByRole } = render(
         <table>
           <thead>
             <tr>
-              <SetOrderByContext.Provider value={setOrderBy}>
-                <OrderByContext.Provider value={[]}>
-                  <TableHeader
-                    columnsParameters={columnsParameters}
-                    ariaRowIndex={1}
-                  />
-                </OrderByContext.Provider>
-              </SetOrderByContext.Provider>
+              <TableHeader
+                columnsParameters={columnsParameters}
+                ariaRowIndex={1}
+              />
             </tr>
           </thead>
         </table>
@@ -192,19 +187,14 @@ describe('TableHeader', () => {
     })
 
     it('maintains proper focus management within table context', async () => {
-      const setOrderBy = vi.fn()
       const { user, getByRole, queryByRole } = render(
         <table>
           <thead>
             <tr>
-              <SetOrderByContext.Provider value={setOrderBy}>
-                <OrderByContext.Provider value={[]}>
-                  <TableHeader
-                    columnsParameters={columnsParameters}
-                    ariaRowIndex={1}
-                  />
-                </OrderByContext.Provider>
-              </SetOrderByContext.Provider>
+              <TableHeader
+                columnsParameters={columnsParameters}
+                ariaRowIndex={1}
+              />
             </tr>
           </thead>
         </table>
