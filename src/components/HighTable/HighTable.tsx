@@ -96,7 +96,7 @@ function State({
   )
 }
 
-type DOMProps = Pick<HighTableProps, 'className' | 'maxRowNumber' | 'onError' | 'styled' | 'numRowsPerPage' | 'onDoubleClickCell' | 'onKeyDownCell' | 'onMouseDownCell' | 'overscan' | 'renderCellContent' | 'stringify'>
+type DOMProps = Pick<HighTableProps, 'className' | 'maxRowNumber' | 'onError' | 'styled' | 'onDoubleClickCell' | 'onKeyDownCell' | 'onMouseDownCell' | 'overscan' | 'renderCellContent' | 'stringify'>
 
 function DOM({
   className = '',
