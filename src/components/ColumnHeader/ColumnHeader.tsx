@@ -40,7 +40,7 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
     console.warn(`Column "${columnName}" has an order in orderBy but is not sortable. Fix the orderBy state or set the column as sortable. The column is not shown as ordered.`)
   }
   const ariaSort = sortable ? (direction ?? 'none') : undefined
-  const canSort = sortable && toggleColumnOrderBy
+  const canSort = sortable === true && toggleColumnOrderBy !== undefined
 
   const toggleOrderBy = useMemo(() => {
     if (!toggleColumnOrderBy || !sortable) {
