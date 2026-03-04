@@ -1,6 +1,6 @@
 import { type ReactNode, useEffect, useState } from 'react'
 
-import { ColumnDescriptorsContext, DataKeyContext, DataVersionContext, NumColumnsContext, NumRowsContext } from '../contexts/DataContext.js'
+import { ColumnDescriptorsContext, DataKeyContext, DataVersionContext, ExclusiveSortContext, NumColumnsContext, NumRowsContext } from '../contexts/DataContext.js'
 import type { HighTableProps } from '../types.js'
 
 // Assign stable numeric ids to data instances without triggering state
@@ -50,10 +50,11 @@ function KeyedDataProvider({ children, data }: Props) {
   const [version, setVersion] = useState(0)
   const [numRows, setNumRows] = useState(data.numRows)
 
-  // The column descriptors, hence the number of columns, are expected to be stable
-  // for a given data frame. We keep their initial value, no setter.
+  // Some dataframe properties are expected to be stable for a given data frame.
+  // We keep their initial value, no setter.
   const [columnDescriptors] = useState(() => data.columnDescriptors.map(({ name, sortable }) => ({ name, sortable })))
   const numColumns = columnDescriptors.length
+  const [exclusiveSort] = useState(() => data.exclusiveSort === true)
 
   // Synchronize version and numRows with data frame events (external system - useEffect is needed)
   useEffect(() => {
@@ -76,13 +77,15 @@ function KeyedDataProvider({ children, data }: Props) {
   // Multiple contexts, to avoid unnecessary re-renders of the components consuming the API when only the data changes, and vice-versa. See https://react.dev/reference/react/useContext#caveats for more details.
   return (
     <DataVersionContext.Provider value={version}>
-      <NumRowsContext.Provider value={numRows}>
-        <ColumnDescriptorsContext.Provider value={columnDescriptors}>
-          <NumColumnsContext.Provider value={numColumns}>
-            {children}
-          </NumColumnsContext.Provider>
-        </ColumnDescriptorsContext.Provider>
-      </NumRowsContext.Provider>
+      <ColumnDescriptorsContext.Provider value={columnDescriptors}>
+        <NumColumnsContext.Provider value={numColumns}>
+          <ExclusiveSortContext.Provider value={exclusiveSort}>
+            <NumRowsContext.Provider value={numRows}>
+              {children}
+            </NumRowsContext.Provider>
+          </ExclusiveSortContext.Provider>
+        </NumColumnsContext.Provider>
+      </ColumnDescriptorsContext.Provider>
     </DataVersionContext.Provider>
   )
 }
