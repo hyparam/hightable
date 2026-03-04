@@ -23,14 +23,14 @@ export default function HighTable({ data, ...props }: HighTableProps) {
     // TODO(SL): if this becomes a performance issue, we can revisit this behavior, and update the
     // state more granularly.
     <DataProvider data={data}>
-      <State data={data} {...props}>
+      <State {...props}>
         <DOM {...props} />
       </State>
     </DataProvider>
   )
 }
 
-type StateProps = Pick<HighTableProps, 'columnConfiguration' | 'cacheKey' | 'cellPosition' | 'columnsVisibility' | 'data' | 'focus' | 'numRowsPerPage' | 'orderBy' | 'padding' | 'selection' | 'onCellPositionChange' | 'onColumnsVisibilityChange' | 'onError' | 'onOrderByChange' | 'onSelectionChange'>
+type StateProps = Pick<HighTableProps, 'columnConfiguration' | 'cacheKey' | 'cellPosition' | 'columnsVisibility' | 'focus' | 'numRowsPerPage' | 'orderBy' | 'padding' | 'selection' | 'onCellPositionChange' | 'onColumnsVisibilityChange' | 'onError' | 'onOrderByChange' | 'onSelectionChange'>
   & { children: ReactNode }
 
 function State({
@@ -39,7 +39,6 @@ function State({
   cacheKey,
   cellPosition,
   columnsVisibility,
-  data,
   focus,
   numRowsPerPage,
   orderBy,
@@ -74,7 +73,6 @@ function State({
                   selection={selection}
                   onError={onError}
                   onSelectionChange={onSelectionChange}
-                  data={data}
                 >
                   <CellNavigationProvider
                     cellPosition={cellPosition}

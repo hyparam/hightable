@@ -1,11 +1,11 @@
 import type { KeyboardEvent, ReactNode } from 'react'
 import { useCallback, useContext, useEffect, useEffectEvent, useMemo, useState } from 'react'
 
-import { useNumRows } from '../contexts/DataContext.js'
+import type { DataFrameMethods } from '../contexts/DataContext.js'
+import { useData, useNumRows } from '../contexts/DataContext.js'
 import { OrderByContext } from '../contexts/OrderByContext.js'
 import { SelectionContext } from '../contexts/SelectionContext.js'
 import { checkSignal } from '../helpers/dataframe/helpers.js'
-import type { DataFrame } from '../helpers/dataframe/index.js'
 import type { Selection } from '../helpers/selection.js'
 import { countSelectedRows, getDefaultSelection, isSelected, selectIndex, toggleIndex, toggleIndexInSelection, unselectIndex } from '../helpers/selection.js'
 import type { OrderBy } from '../helpers/sort.js'
@@ -13,7 +13,7 @@ import { serializeOrderBy } from '../helpers/sort.js'
 import { useInputState } from '../hooks/useInputState.js'
 import type { HighTableProps } from '../types.js'
 
-type Props = Pick<HighTableProps, 'data' | 'selection' | 'onError' | 'onSelectionChange'> & {
+type Props = Pick<HighTableProps, 'selection' | 'onError' | 'onSelectionChange'> & {
   /** Child components */
   children: ReactNode
 }
@@ -27,9 +27,10 @@ interface Gesture {
  *
  * Only the data rows can be selected, not the header row, so row numbers are 0-based.
  */
-export function SelectionProvider({ children, data, selection: controlledSelection, onError, onSelectionChange }: Props) {
+export function SelectionProvider({ children, selection: controlledSelection, onError, onSelectionChange }: Props) {
   /** The actual number of rows in the data frame */
   const numRows = useNumRows()
+  const data = useData()
   // The selection is only useful for the parent component. If no props are passed, hide the selection feature.
   const [isEnabled] = useState<boolean>(() => controlledSelection !== undefined || onSelectionChange !== undefined)
   const inputState = useInputState<Selection>({
@@ -235,7 +236,7 @@ export function SelectionProvider({ children, data, selection: controlledSelecti
 }
 
 // fetch the row numbers in the range
-async function fetchRowNumbers({ data, rowStart, rowEnd, orderBy, signal }: { data: Omit<DataFrame, 'numRows'>, rowStart: number, rowEnd: number, orderBy?: OrderBy, signal?: AbortSignal }) {
+async function fetchRowNumbers({ data, rowStart, rowEnd, orderBy, signal }: { data: DataFrameMethods, rowStart: number, rowEnd: number, orderBy?: OrderBy, signal?: AbortSignal }) {
   await data.fetch?.({ rowStart, rowEnd, orderBy, signal })
   const rowNumbers = Array.from({ length: rowEnd - rowStart }, (_, i) => {
     const row = i + rowStart
@@ -248,7 +249,7 @@ async function fetchRowNumbers({ data, rowStart, rowEnd, orderBy, signal }: { da
   return rowNumbers
 }
 
-async function fetchRow({ data, numRows, rowNumber, orderBy, signal, rowByRowNumberAndOrderBy }: { data: Omit<DataFrame, 'numRows'>, numRows: number, rowNumber: number, orderBy?: OrderBy, signal?: AbortSignal, rowByRowNumberAndOrderBy?: Map<string, Map<number, number | undefined>> }) {
+async function fetchRow({ data, numRows, rowNumber, orderBy, signal, rowByRowNumberAndOrderBy }: { data: DataFrameMethods, numRows: number, rowNumber: number, orderBy?: OrderBy, signal?: AbortSignal, rowByRowNumberAndOrderBy?: Map<string, Map<number, number | undefined>> }) {
   checkSignal(signal)
   const orderByKey = serializeOrderBy(orderBy ?? [])
   const cachedMap = rowByRowNumberAndOrderBy?.get(orderByKey)
@@ -276,7 +277,7 @@ async function fetchRow({ data, numRows, rowNumber, orderBy, signal, rowByRowNum
   return rowByRowNumber.get(rowNumber)
 }
 
-async function toggleRange({ data, numRows, row, rowNumber, selection, orderBy, signal, rowByRowNumberAndOrderBy }: { data: Omit<DataFrame, 'numRows'>, numRows: number, row: number, rowNumber: number, selection: Selection, orderBy?: OrderBy, signal?: AbortSignal, rowByRowNumberAndOrderBy?: Map<string, Map<number, number | undefined>> }): Promise<Selection> {
+async function toggleRange({ data, numRows, row, rowNumber, selection, orderBy, signal, rowByRowNumberAndOrderBy }: { data: DataFrameMethods, numRows: number, row: number, rowNumber: number, selection: Selection, orderBy?: OrderBy, signal?: AbortSignal, rowByRowNumberAndOrderBy?: Map<string, Map<number, number | undefined>> }): Promise<Selection> {
   const { anchor } = selection
   if (anchor === undefined || anchor === rowNumber) {
     // toggle the row without the anchor
@@ -313,7 +314,7 @@ async function toggleRange({ data, numRows, row, rowNumber, selection, orderBy, 
   return { ranges, anchor: newAnchor }
 }
 
-async function toggleAll({ data, numRows, selection, signal }: { data: Omit<DataFrame, 'numRows'>, numRows: number, selection: Selection, signal?: AbortSignal }): Promise<Selection> {
+async function toggleAll({ data, numRows, selection, signal }: { data: DataFrameMethods, numRows: number, selection: Selection, signal?: AbortSignal }): Promise<Selection> {
   // check if all the rows are already selected
   const areAllSelected = await fetchAreAllSelected({ data, numRows, selection, signal })
   const rowNumbers = await fetchRowNumbers({ data, rowStart: 0, rowEnd: numRows, signal })
@@ -343,7 +344,7 @@ function areAllSelected({ numRows, selection }: { numRows: number, selection?: S
   // At that point, we don't know: it requires an async operation to check if all rows are selected
 }
 
-async function fetchAreAllSelected({ data, numRows, selection, signal }: { data: Omit<DataFrame, 'numRows'>, numRows: number, selection: Selection, signal?: AbortSignal }): Promise<boolean> {
+async function fetchAreAllSelected({ data, numRows, selection, signal }: { data: DataFrameMethods, numRows: number, selection: Selection, signal?: AbortSignal }): Promise<boolean> {
   const syncAnswer = areAllSelected({ numRows, selection })
   if (syncAnswer !== undefined) {
     return syncAnswer
