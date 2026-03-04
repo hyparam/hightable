@@ -17,13 +17,13 @@ import Scroller from './Scroller.js'
 import Slice from './Slice.js'
 import Wrapper from './Wrapper.js'
 
-export default function HighTable(props: HighTableProps) {
+export default function HighTable({ data, ...props }: HighTableProps) {
   return (
-    // The DataProvider is remounted on data change, so everything is recreated.
+    // Part of the DataProvider is remounted on data change, so everything inside is recreated.
     // TODO(SL): if this becomes a performance issue, we can revisit this behavior, and update the
     // state more granularly.
-    <DataProvider data={props.data}>
-      <State {...props}>
+    <DataProvider data={data}>
+      <State data={data} {...props}>
         <DOM {...props} />
       </State>
     </DataProvider>
@@ -96,11 +96,10 @@ function State({
   )
 }
 
-type DOMProps = Pick<HighTableProps, 'className' | 'data' | 'maxRowNumber' | 'onError' | 'styled' | 'numRowsPerPage' | 'onDoubleClickCell' | 'onKeyDownCell' | 'onMouseDownCell' | 'overscan' | 'renderCellContent' | 'stringify'>
+type DOMProps = Pick<HighTableProps, 'className' | 'maxRowNumber' | 'onError' | 'styled' | 'onDoubleClickCell' | 'onKeyDownCell' | 'onMouseDownCell' | 'overscan' | 'renderCellContent' | 'stringify'>
 
 function DOM({
   className = '',
-  data,
   maxRowNumber,
   overscan,
   styled = true,
@@ -117,7 +116,6 @@ function DOM({
 
       <Scroller>
         <Slice
-          data={data}
           overscan={overscan}
           onDoubleClickCell={onDoubleClickCell}
           onError={onError}
