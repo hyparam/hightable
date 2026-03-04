@@ -63,7 +63,7 @@ function MenuItem({ onClick, label }: MenuItemProps) {
     }
   }, [onClick])
 
-  // TODO(SL): if onClick is undefined, this item should be disabled.
+  // TODO(SL): if onClick is undefined, this item should be disabled. We currently only set 'aria-disabled', which is a semantic indication.
   // We would need to add some styles for that, and also handle the keyboard events to prevent interaction, but ensure the focus navigation still works.
   return (
     <button
@@ -72,6 +72,7 @@ function MenuItem({ onClick, label }: MenuItemProps) {
       onKeyDown={handleKeyDown}
       tabIndex={0}
       type="button"
+      aria-disabled={onClick === undefined}
     >
       {label}
     </button>

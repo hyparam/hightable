@@ -193,6 +193,7 @@ describe('ColumnMenu', () => {
       )
 
       const sortButton = getByRole('menuitem')
+      expect(sortButton.getAttribute('aria-disabled')).toBe('false')
       await user.click(sortButton)
       expect(document.activeElement).toBe(sortButton)
     })
@@ -202,6 +203,7 @@ describe('ColumnMenu', () => {
         <ColumnMenu {...defaultProps} sortable={true} />
       )
       const sortButton = getByRole('menuitem')
+      expect(sortButton.getAttribute('aria-disabled')).toBe('true')
       await user.click(sortButton)
       expect(document.activeElement).toBe(sortButton)
     })
