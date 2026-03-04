@@ -4,6 +4,7 @@ import { useContext } from 'react'
 import { describe, expect, it } from 'vitest'
 
 import { ColumnParametersContext } from '../../src/contexts/ColumnParametersContext.js'
+import { ColumnDescriptorsContext } from '../../src/contexts/DataContext.js'
 import type { ColumnConfiguration } from '../../src/helpers/columnConfiguration.js'
 import type { ColumnDescriptor } from '../../src/helpers/dataframe/index.js'
 import { ColumnParametersProvider } from '../../src/providers/ColumnParametersProvider.js'
@@ -11,9 +12,11 @@ import { ColumnParametersProvider } from '../../src/providers/ColumnParametersPr
 function createWrapper(columnDescriptors: ColumnDescriptor[], columnConfiguration?: ColumnConfiguration) {
   function wrapper({ children }: { children: ReactNode }) {
     return (
-      <ColumnParametersProvider columnDescriptors={columnDescriptors} columnConfiguration={columnConfiguration}>
-        {children}
-      </ColumnParametersProvider>
+      <ColumnDescriptorsContext.Provider value={columnDescriptors}>
+        <ColumnParametersProvider columnConfiguration={columnConfiguration}>
+          {children}
+        </ColumnParametersProvider>
+      </ColumnDescriptorsContext.Provider>
     )
   }
   return wrapper

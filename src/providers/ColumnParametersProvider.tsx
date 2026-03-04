@@ -1,10 +1,10 @@
 import { type ReactNode, useMemo } from 'react'
 
 import { type ColumnParameters, ColumnParametersContext } from '../contexts/ColumnParametersContext.js'
-import type { DataFrame } from '../helpers/dataframe/index.js'
+import { useColumnDescriptors } from '../contexts/DataContext.js'
 import type { HighTableProps } from '../types.js'
 
-type Props = Pick<HighTableProps, 'columnConfiguration'> & Pick<DataFrame, 'columnDescriptors'> & {
+type Props = Pick<HighTableProps, 'columnConfiguration'> & {
   /** Child components */
   children: ReactNode
 }
@@ -14,7 +14,8 @@ type Props = Pick<HighTableProps, 'columnConfiguration'> & Pick<DataFrame, 'colu
  *
  * It merges the column descriptors from the data frame with the user-provided configuration.
  */
-export function ColumnParametersProvider({ columnConfiguration, columnDescriptors, children }: Props) {
+export function ColumnParametersProvider({ columnConfiguration, children }: Props) {
+  const columnDescriptors = useColumnDescriptors()
   const value = useMemo(() => {
     const inHeader = new Set(columnDescriptors.map(c => c.name))
 
