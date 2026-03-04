@@ -3,7 +3,7 @@ import { useCallback, useContext, useMemo } from 'react'
 
 import { CellNavigationContext } from '../../contexts/CellNavigationContext.js'
 import { ColumnsVisibilityContext } from '../../contexts/ColumnsVisibilityContext.js'
-import { useDataVersion, useExclusiveSort, useNumRows } from '../../contexts/DataContext.js'
+import { useData, useDataVersion, useExclusiveSort, useNumRows } from '../../contexts/DataContext.js'
 import { OrderByContext } from '../../contexts/OrderByContext.js'
 import { ScrollContext } from '../../contexts/ScrollContext.js'
 import { SelectionContext } from '../../contexts/SelectionContext.js'
@@ -17,10 +17,9 @@ import RowHeader from '../RowHeader/RowHeader.js'
 import TableCorner from '../TableCorner/TableCorner.js'
 import TableHeader from '../TableHeader/TableHeader.js'
 
-type SliceProps = Pick<HighTableProps, 'data' | 'numRowsPerPage' | 'onDoubleClickCell' | 'onError' | 'onKeyDownCell' | 'onMouseDownCell' | 'overscan' | 'renderCellContent' | 'stringify'>
+type SliceProps = Pick<HighTableProps, 'numRowsPerPage' | 'onDoubleClickCell' | 'onError' | 'onKeyDownCell' | 'onMouseDownCell' | 'overscan' | 'renderCellContent' | 'stringify'>
 
 export default function Slice({
-  data,
   overscan,
   onDoubleClickCell,
   onError,
@@ -39,9 +38,11 @@ export default function Slice({
   /** The actual number of rows in the data frame */
   const numRows = useNumRows()
   const exclusiveSort = useExclusiveSort()
+  const data = useData()
 
   // Fetch the required cells if needed (visible + overscan)
-  useFetchCells({ data, numRows, overscan, onError })
+  // it's a side-effect.
+  useFetchCells({ overscan, onError })
 
   const onNavigationTableKeyDown = useMemo(() => {
     if (!moveCell) {
@@ -144,9 +145,9 @@ export default function Slice({
 
     const canMeasureColumn: Record<string, boolean> = {}
     const rowContents = rows.map((row) => {
-      const rowNumber = data.getRowNumber({ row, orderBy })?.value
+      const rowNumber = data?.getRowNumber({ row, orderBy })?.value
       const cells = (columnsParameters ?? []).map(({ name: column, index: originalColumnIndex, className }) => {
-        const cell = data.getCell({ row, column, orderBy })
+        const cell = data?.getCell({ row, column, orderBy })
         canMeasureColumn[column] ||= cell !== undefined
         return { columnIndex: originalColumnIndex, cell, className }
       })

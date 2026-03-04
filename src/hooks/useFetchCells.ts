@@ -1,23 +1,23 @@
 import { useContext, useEffect, useEffectEvent, useMemo } from 'react'
 
 import { ColumnsVisibilityContext } from '../contexts/ColumnsVisibilityContext.js'
+import { useData, useNumRows } from '../contexts/DataContext.js'
 import { OrderByContext } from '../contexts/OrderByContext.js'
 import { ScrollContext } from '../contexts/ScrollContext.js'
 import { defaultOverscan } from '../helpers/constants.js'
 import type { HighTableProps } from '../types.js'
 
-type Props = Pick<HighTableProps, 'data' | 'onError' | 'overscan'> & {
-  /** The actual number of rows in the data frame */
-  numRows: number
-}
+type Props = Pick<HighTableProps, 'onError' | 'overscan'>
 
 /**
  * Fetch the required cells (visible + overscan).
  */
-export function useFetchCells({ data, numRows, overscan = defaultOverscan, onError }: Props) {
+export function useFetchCells({ overscan = defaultOverscan, onError }: Props) {
   const { visibleRowsStart, visibleRowsEnd } = useContext(ScrollContext)
   const { visibleColumnsParameters } = useContext(ColumnsVisibilityContext)
   const { orderBy } = useContext(OrderByContext)
+  const data = useData()
+  const numRows = useNumRows()
 
   const fetchedRowsStart = useMemo(() => {
     if (visibleRowsStart === undefined) return undefined
@@ -44,7 +44,7 @@ export function useFetchCells({ data, numRows, overscan = defaultOverscan, onErr
   // Keep this inside an effect so we don't update state
   // or perform side-effects during render, for example when calling onError.
   useEffect(() => {
-    if (data.fetch === undefined || fetchedRowsStart === undefined || fetchedRowsEnd === undefined) return
+    if (data?.fetch === undefined || fetchedRowsStart === undefined || fetchedRowsEnd === undefined) return
 
     // Create an AbortController per fetch and clean it up on dependency changes.
     const abortController = new AbortController()
