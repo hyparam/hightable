@@ -144,7 +144,7 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
       {(ariaSort !== undefined)
         && (
           <span role="img" aria-hidden="true">
-            {direction === 'ascending' ? '⭡' : direction === 'descending' ? '⭣' : '⇅'}
+            {direction === 'ascending' ? '⭡' : direction === 'descending' ? '⭣' : canSort ? '⇅' : ''}
           </span>
         )}
       {isMenuEnabled
@@ -160,7 +160,7 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
         )}
     </div>
   ),
-  [ariaSort, direction, isMenuEnabled, handleMenuClick, navigateToCell, tabIndex, isOpen, menuId, columnName])
+  [ariaSort, direction, isMenuEnabled, handleMenuClick, navigateToCell, tabIndex, isOpen, menuId, columnName, canSort])
 
   const headerContent = useMemo(() => {
     const { headerComponent } = columnConfig
