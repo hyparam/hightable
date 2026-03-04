@@ -58,6 +58,7 @@ type UseInputStateResult<T> = [
    * - it can only be called with the new value directly, and not with a function updater.
    */
   ((value: T) => void) | undefined
+  // TODO(SL): allow function updater for the uncontrolled mode?
 ]
 
 /**
