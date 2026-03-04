@@ -35,22 +35,13 @@ export function useOrderBy() {
 export function useColumnOrderBy(columnName: string) {
   const orderBy = useOrderBy()
 
-  let direction: OrderBy[number]['direction'] | undefined
-  let orderByIndex: number | undefined
-
-  for (let index = 0; index < orderBy.length; index += 1) {
-    const entry = orderBy[index]
-    if (entry.column === columnName) {
-      direction = entry.direction
-      orderByIndex = index
-      break
+  // no need to memoize, looping should be fast as orderBy is usually short
+  for (const [orderByIndex, { column, direction }] of orderBy.entries()) {
+    if (column === columnName) {
+      return { direction, orderByIndex }
     }
   }
-
-  return {
-    direction,
-    orderByIndex,
-  }
+  return { direction: undefined, orderByIndex: undefined }
 }
 
 export function useToggleColumnOrderBy() {
