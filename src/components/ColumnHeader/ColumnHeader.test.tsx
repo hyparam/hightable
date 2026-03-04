@@ -323,46 +323,48 @@ describe('ColumnHeader', () => {
     expect(toggleOrderBy).toHaveBeenCalled()
   })
 
-  it('does not call toggleOrderBy when clicking on the header when sortable is set to false', async () => {
-    const toggleOrderBy = vi.fn()
-    const props = { ...defaultProps, sortable: false }
-    const { user, getByRole } = render(
-      <table>
-        <thead>
-          <tr>
-            <ToggleColumnOrderByContext.Provider value={toggleOrderBy}>
-              <ColumnHeader columnName="test" {...props} />
-            </ToggleColumnOrderByContext.Provider>
-          </tr>
-        </thead>
-      </table>
-    )
-    const header = getByRole('columnheader')
-    const resizeHandle = getByRole('spinbutton')
-    await user.click(resizeHandle)
-    expect(toggleOrderBy).not.toHaveBeenCalled()
-    await user.click(header)
-    expect(toggleOrderBy).toHaveBeenCalled()
-  })
+  describe('if sortable is set to false', () => {
+    it('does not call toggleOrderBy when clicking on the header', async () => {
+      const toggleOrderBy = vi.fn()
+      const props = { ...defaultProps, columnConfig: { sortable: false } }
+      const { user, getByRole } = render(
+        <table>
+          <thead>
+            <tr>
+              <ToggleColumnOrderByContext.Provider value={toggleOrderBy}>
+                <ColumnHeader columnName="test" {...props} />
+              </ToggleColumnOrderByContext.Provider>
+            </tr>
+          </thead>
+        </table>
+      )
+      const header = getByRole('columnheader')
+      const resizeHandle = getByRole('spinbutton')
+      await user.click(resizeHandle)
+      expect(toggleOrderBy).not.toHaveBeenCalled()
+      await user.click(header)
+      expect(toggleOrderBy).not.toHaveBeenCalled()
+    })
 
-  it.for(['{ }', '{Enter}'])('does not call toggleOrderBy when pressing "%s" while the header is focused', async (key) => {
-    const toggleOrderBy = vi.fn()
-    const props = { ...defaultProps, sortable: false }
-    const { user, getByRole } = render(
-      <table>
-        <thead>
-          <tr>
-            <ToggleColumnOrderByContext.Provider value={toggleOrderBy}>
-              <ColumnHeader columnName="test" {...props} />
-            </ToggleColumnOrderByContext.Provider>
-          </tr>
-        </thead>
-      </table>
-    )
-    const header = getByRole('columnheader')
-    header.focus()
-    await user.keyboard(key)
-    expect(toggleOrderBy).toHaveBeenCalled()
+    it.for(['{ }', '{Enter}'])('does not call toggleOrderBy when pressing "%s"', async (key) => {
+      const toggleOrderBy = vi.fn()
+      const props = { ...defaultProps, columnConfig: { sortable: false } }
+      const { user, getByRole } = render(
+        <table>
+          <thead>
+            <tr>
+              <ToggleColumnOrderByContext.Provider value={toggleOrderBy}>
+                <ColumnHeader columnName="test" {...props} />
+              </ToggleColumnOrderByContext.Provider>
+            </tr>
+          </thead>
+        </table>
+      )
+      const header = getByRole('columnheader')
+      header.focus()
+      await user.keyboard(key)
+      expect(toggleOrderBy).not.toHaveBeenCalled()
+    })
   })
 
   it('copies the column name to clipboard on copy event', async () => {
