@@ -19,7 +19,7 @@ import Wrapper from './Wrapper.js'
 
 export default function HighTable({ data, ...props }: HighTableProps) {
   return (
-    // The DataProvider is remounted on data change, so everything is recreated.
+    // Part of the DataProvider is remounted on data change, so everything inside is recreated.
     // TODO(SL): if this becomes a performance issue, we can revisit this behavior, and update the
     // state more granularly.
     <DataProvider data={data}>
