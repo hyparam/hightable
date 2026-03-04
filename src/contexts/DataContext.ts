@@ -38,6 +38,10 @@ export function useExclusiveSort() {
   return useContext(ExclusiveSortContext)
 }
 
-export function useData() {
-  return useContext(DataContext)
+export function useData(): DataFrameMethods {
+  const data = useContext(DataContext)
+  if (data === undefined) {
+    throw new Error('useData must be used within a DataContext.Provider with a valid DataFrameMethods value')
+  }
+  return data
 }
