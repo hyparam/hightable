@@ -186,32 +186,24 @@ describe('ColumnMenu', () => {
       expect(toggleOrderBy).toHaveBeenCalled()
     })
 
-    it('focuses enabled button when clicked', async () => {
+    it('focuses sort button when clicked if not read-only', async () => {
       const toggleOrderBy = vi.fn()
       const { user, getByRole } = render(
         <ColumnMenu {...defaultProps} sortable={true} toggleOrderBy={toggleOrderBy} />
       )
 
       const sortButton = getByRole('menuitem')
-      if (!('disabled' in sortButton)) {
-        throw new Error('Menu item should be a button with disabled property')
-      }
-      expect(sortButton.disabled).toBe(false)
       await user.click(sortButton)
       expect(document.activeElement).toBe(sortButton)
     })
 
-    it('does not focus disabled button when clicked', async () => {
+    it('focuses sort button when clicked if read-only', async () => {
       const { user, getByRole } = render(
         <ColumnMenu {...defaultProps} sortable={true} />
       )
       const sortButton = getByRole('menuitem')
-      if (!('disabled' in sortButton)) {
-        throw new Error('Menu item should be a button with disabled property')
-      }
-      expect(sortButton.disabled).toBe(true)
       await user.click(sortButton)
-      expect(document.activeElement).not.toBe(sortButton)
+      expect(document.activeElement).toBe(sortButton)
     })
   })
 
