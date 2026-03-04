@@ -1,16 +1,14 @@
 import { useMemo } from 'react'
 
 import type { ColumnParameters } from '../../contexts/ColumnParametersContext.js'
+import { useOrderBy, useSetOrderBy } from '../../contexts/OrderByContext.js'
 import { ariaOffset } from '../../helpers/constants.js'
-import type { OrderBy } from '../../helpers/sort.js'
 import { toggleColumn, toggleColumnExclusive } from '../../helpers/sort.js'
 import ColumnHeader from '../ColumnHeader/ColumnHeader.js'
 
 interface TableHeaderProps {
   columnsParameters: ColumnParameters[]
   ariaRowIndex: number // aria row index for the header
-  orderBy?: OrderBy // array of column order by clauses. If undefined, the table is unordered, the sort elements are hidden and the interactions are disabled.
-  setOrderBy?: (orderBy: OrderBy) => void // function to set the order. The interactions are disabled if undefined.
   canMeasureColumn?: Record<string, boolean> // indicates if the width of a column can be measured.
   exclusiveSort?: boolean // whether to use exclusive sort mode
 }
@@ -19,8 +17,13 @@ interface TableHeaderProps {
  * Render a header for a table.
  */
 export default function TableHeader({
-  columnsParameters, orderBy, setOrderBy, canMeasureColumn, ariaRowIndex, exclusiveSort,
+  columnsParameters, canMeasureColumn, ariaRowIndex, exclusiveSort,
 }: TableHeaderProps) {
+  /* array of column order by clauses. If undefined, the table is unordered, the sort elements are hidden and the interactions are disabled. */
+  const orderBy = useOrderBy()
+  /* function to set the order. The interactions are disabled if undefined. */
+  const setOrderBy = useSetOrderBy()
+  // TODO(SL): provide toggleOrderBy from the context
   const toggleOrderBys = useMemo(() => {
     return Object.fromEntries(columnsParameters.map(({ name }) => {
       const toggleOrderBy = (!setOrderBy || !orderBy)

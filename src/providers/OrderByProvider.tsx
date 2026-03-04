@@ -1,6 +1,6 @@
-import { type ReactNode, useMemo } from 'react'
+import { type ReactNode } from 'react'
 
-import { OrderByContext } from '../contexts/OrderByContext.js'
+import { OrderByContext, SetOrderByContext } from '../contexts/OrderByContext.js'
 import type { OrderBy } from '../helpers/sort.js'
 import { useInputState } from '../hooks/useInputState.js'
 import type { HighTableProps } from '../types.js'
@@ -22,14 +22,11 @@ export function OrderByProvider({ children, orderBy, onOrderByChange }: Props) {
     initialUncontrolledValue: [],
   })
 
-  const value = useMemo(() => ({
-    orderBy: state,
-    setOrderBy: setState,
-  }), [state, setState])
-
   return (
-    <OrderByContext.Provider value={value}>
-      {children}
-    </OrderByContext.Provider>
+    <SetOrderByContext.Provider value={setState}>
+      <OrderByContext.Provider value={state}>
+        {children}
+      </OrderByContext.Provider>
+    </SetOrderByContext.Provider>
   )
 }

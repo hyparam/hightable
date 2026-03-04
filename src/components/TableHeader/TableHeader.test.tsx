@@ -2,6 +2,7 @@ import { within } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { OrderByContext, SetOrderByContext } from '../../contexts/OrderByContext.js'
 import { PortalContainerContext } from '../../contexts/PortalContainerContext.js'
 import { useHTMLElement } from '../../hooks/useHTMLElement.js'
 import { render as _render } from '../../utils/userEvent.js'
@@ -55,12 +56,14 @@ describe('TableHeader', () => {
       <table>
         <thead>
           <tr>
-            <TableHeader
-              columnsParameters={columnsParameters}
-              orderBy={[]}
-              setOrderBy={setOrderBy}
-              ariaRowIndex={1}
-            />
+            <SetOrderByContext.Provider value={setOrderBy}>
+              <OrderByContext.Provider value={[]}>
+                <TableHeader
+                  columnsParameters={columnsParameters}
+                  ariaRowIndex={1}
+                />
+              </OrderByContext.Provider>
+            </SetOrderByContext.Provider>
           </tr>
         </thead>
       </table>
@@ -78,12 +81,15 @@ describe('TableHeader', () => {
       <table>
         <thead>
           <tr>
-            <TableHeader
-              columnsParameters={columnsParameters}
-              setOrderBy={setOrderBy}
-              orderBy={[{ column: 'Age', direction: 'ascending' }]}
-              ariaRowIndex={1}
-            />
+
+            <SetOrderByContext.Provider value={setOrderBy}>
+              <OrderByContext.Provider value={[{ column: 'Age', direction: 'ascending' }]}>
+                <TableHeader
+                  columnsParameters={columnsParameters}
+                  ariaRowIndex={1}
+                />
+              </OrderByContext.Provider>
+            </SetOrderByContext.Provider>
           </tr>
         </thead>
       </table>
@@ -101,12 +107,14 @@ describe('TableHeader', () => {
       <table>
         <thead>
           <tr>
-            <TableHeader
-              columnsParameters={columnsParameters}
-              setOrderBy={setOrderBy}
-              orderBy={[{ column: 'Age', direction: 'descending' }]}
-              ariaRowIndex={1}
-            />
+            <SetOrderByContext.Provider value={setOrderBy}>
+              <OrderByContext.Provider value={[{ column: 'Age', direction: 'descending' }]}>
+                <TableHeader
+                  columnsParameters={columnsParameters}
+                  ariaRowIndex={1}
+                />
+              </OrderByContext.Provider>
+            </SetOrderByContext.Provider>
           </tr>
         </thead>
       </table>
@@ -124,12 +132,14 @@ describe('TableHeader', () => {
       <table>
         <thead>
           <tr>
-            <TableHeader
-              columnsParameters={columnsParameters}
-              setOrderBy={setOrderBy}
-              orderBy={[{ column: 'Age', direction: 'ascending' }]}
-              ariaRowIndex={1}
-            />
+            <SetOrderByContext.Provider value={setOrderBy}>
+              <OrderByContext.Provider value={[{ column: 'Age', direction: 'ascending' }]}>
+                <TableHeader
+                  columnsParameters={columnsParameters}
+                  ariaRowIndex={1}
+                />
+              </OrderByContext.Provider>
+            </SetOrderByContext.Provider>
           </tr>
         </thead>
       </table>
@@ -148,12 +158,14 @@ describe('TableHeader', () => {
         <table>
           <thead>
             <tr>
-              <TableHeader
-                columnsParameters={columnsParameters}
-                ariaRowIndex={1}
-                setOrderBy={setOrderBy}
-                orderBy={[]}
-              />
+              <SetOrderByContext.Provider value={setOrderBy}>
+                <OrderByContext.Provider value={[]}>
+                  <TableHeader
+                    columnsParameters={columnsParameters}
+                    ariaRowIndex={1}
+                  />
+                </OrderByContext.Provider>
+              </SetOrderByContext.Provider>
             </tr>
           </thead>
         </table>
@@ -185,12 +197,14 @@ describe('TableHeader', () => {
         <table>
           <thead>
             <tr>
-              <TableHeader
-                columnsParameters={columnsParameters}
-                ariaRowIndex={1}
-                setOrderBy={setOrderBy}
-                orderBy={[]}
-              />
+              <SetOrderByContext.Provider value={setOrderBy}>
+                <OrderByContext.Provider value={[]}>
+                  <TableHeader
+                    columnsParameters={columnsParameters}
+                    ariaRowIndex={1}
+                  />
+                </OrderByContext.Provider>
+              </SetOrderByContext.Provider>
             </tr>
           </thead>
         </table>
