@@ -1,45 +1,19 @@
-import { useMemo } from 'react'
-
 import type { ColumnParameters } from '../../contexts/ColumnParametersContext.js'
-import { useOrderBy, useSetOrderBy } from '../../contexts/OrderByContext.js'
 import { ariaOffset } from '../../helpers/constants.js'
-import { toggleColumn, toggleColumnExclusive } from '../../helpers/sort.js'
 import ColumnHeader from '../ColumnHeader/ColumnHeader.js'
 
 interface TableHeaderProps {
   columnsParameters: ColumnParameters[]
   ariaRowIndex: number // aria row index for the header
   canMeasureColumn?: Record<string, boolean> // indicates if the width of a column can be measured.
-  exclusiveSort?: boolean // whether to use exclusive sort mode
 }
 
 /**
  * Render a header for a table.
  */
 export default function TableHeader({
-  columnsParameters, canMeasureColumn, ariaRowIndex, exclusiveSort,
+  columnsParameters, canMeasureColumn, ariaRowIndex,
 }: TableHeaderProps) {
-  /* array of column order by clauses. If undefined, the table is unordered, the sort elements are hidden and the interactions are disabled. */
-  const orderBy = useOrderBy()
-  /* function to set the order. The interactions are disabled if undefined. */
-  const setOrderBy = useSetOrderBy()
-  // TODO(SL): provide toggleOrderBy from the context
-  const toggleOrderBys = useMemo(() => {
-    return Object.fromEntries(columnsParameters.map(({ name }) => {
-      const toggleOrderBy = (!setOrderBy || !orderBy)
-        ? undefined
-        : () => {
-            const next = exclusiveSort ? toggleColumnExclusive(name, orderBy) : toggleColumn(name, orderBy)
-            setOrderBy(next)
-          }
-      return [name, toggleOrderBy]
-    }))
-  }, [columnsParameters, orderBy, setOrderBy, exclusiveSort])
-
-  const orderByColumn = useMemo(() => {
-    return new Map((orderBy ?? []).map(({ column, direction }, index) => [column, { direction, index }]))
-  }, [orderBy])
-
   return columnsParameters.map((columnParameters, visibleColumnIndex) => {
     const { name, index: columnIndex, className } = columnParameters
     // Note: columnIndex is the index of the column in the dataframe header
@@ -50,9 +24,6 @@ export default function TableHeader({
       <ColumnHeader
         key={columnIndex}
         canMeasureWidth={canMeasureColumn?.[name] === true}
-        direction={orderByColumn.get(name)?.direction}
-        orderByIndex={orderByColumn.get(name)?.index}
-        toggleOrderBy={toggleOrderBys[name]}
         columnName={name}
         columnIndex={columnIndex}
         className={className}

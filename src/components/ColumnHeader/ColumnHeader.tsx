@@ -5,7 +5,7 @@ import { flushSync } from 'react-dom'
 import type { ColumnParameters } from '../../contexts/ColumnParametersContext.js'
 import { ColumnsVisibilityContext } from '../../contexts/ColumnsVisibilityContext.js'
 import { ColumnWidthsContext } from '../../contexts/ColumnWidthsContext.js'
-import type { Direction } from '../../helpers/sort.js'
+import { useColumnOrderBy, useToggleColumnOrderBy } from '../../contexts/OrderByContext.js'
 import { getOffsetWidth } from '../../helpers/width.js'
 import { useCellFocus } from '../../hooks/useCellFocus.js'
 import { useColumnMenu } from '../../hooks/useColumnMenu.js'
@@ -20,21 +20,28 @@ interface Props {
   columnConfig: Omit<ColumnParameters, 'name' | 'index'> // column configuration, excluding name and index
   children?: ReactNode
   canMeasureWidth?: boolean
-  direction?: Direction
-  toggleOrderBy?: () => void
-  orderByIndex?: number // index of the column in the orderBy array (0-based)
   ariaColIndex: number // aria col index for the header
   ariaRowIndex: number // aria row index for the header
   className?: string // optional class name
 }
 
-export default function ColumnHeader({ columnIndex, columnName, columnConfig, canMeasureWidth, direction, toggleOrderBy, orderByIndex, ariaColIndex, ariaRowIndex, className, children }: Props) {
+export default function ColumnHeader({ columnIndex, columnName, columnConfig, canMeasureWidth, ariaColIndex, ariaRowIndex, className, children }: Props) {
   // The ref is used to position the menu in handleMenuClick, to measure width, and to focus the cell
   const ref = useRef<HTMLTableCellElement | null>(null)
   const { tabIndex, navigateToCell, focusIfNeeded } = useCellFocus({ ariaColIndex, ariaRowIndex })
   const { sortable } = columnConfig
   const { isOpen, position, menuId, close, handleMenuClick } = useColumnMenu(ref, navigateToCell)
   const { getHideColumn, showAllColumns } = useContext(ColumnsVisibilityContext)
+  const toggleColumnOrderBy = useToggleColumnOrderBy()
+  const toggleOrderBy = useMemo(() => {
+    if (!toggleColumnOrderBy || !sortable) {
+      return undefined
+    }
+    return () => {
+      toggleColumnOrderBy(columnName)
+    }
+  }, [toggleColumnOrderBy, sortable, columnName])
+  const { direction, orderByIndex } = useColumnOrderBy(columnName)
 
   // Focus the cell if needed. We use an effect, as it acts on the DOM element after render.
   useEffect(() => {
@@ -43,8 +50,8 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
 
   const handleClick = useCallback(() => {
     navigateToCell?.()
-    if (sortable) toggleOrderBy?.()
-  }, [toggleOrderBy, navigateToCell, sortable])
+    toggleOrderBy?.()
+  }, [toggleOrderBy, navigateToCell])
 
   const hideColumn = useMemo(() => {
     return getHideColumn?.(columnName)

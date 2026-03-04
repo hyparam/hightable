@@ -3,7 +3,7 @@ import { useCallback, useContext, useMemo } from 'react'
 
 import { CellNavigationContext } from '../../contexts/CellNavigationContext.js'
 import { ColumnsVisibilityContext } from '../../contexts/ColumnsVisibilityContext.js'
-import { useData, useDataVersion, useExclusiveSort, useNumRows } from '../../contexts/DataContext.js'
+import { useData, useDataVersion, useNumRows } from '../../contexts/DataContext.js'
 import { useOrderBy } from '../../contexts/OrderByContext.js'
 import { ScrollContext } from '../../contexts/ScrollContext.js'
 import { SelectionContext } from '../../contexts/SelectionContext.js'
@@ -37,7 +37,6 @@ export default function Slice({
   const version = useDataVersion()
   /** The actual number of rows in the data frame */
   const numRows = useNumRows()
-  const exclusiveSort = useExclusiveSort()
   const data = useData()
 
   // Fetch the required cells if needed (visible + overscan)
@@ -194,7 +193,6 @@ export default function Slice({
             canMeasureColumn={slice.canMeasureColumn}
             columnsParameters={columnsParameters}
             ariaRowIndex={1}
-            exclusiveSort={exclusiveSort}
           />
         </Row>
       </thead>
