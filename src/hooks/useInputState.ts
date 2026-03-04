@@ -99,6 +99,7 @@ export function useInputState<T>({ controlledValue, onChange, initialUncontrolle
   // - controlled (no local state)
   if (initialControlledValue !== undefined) {
     if (controlledValue === undefined) {
+      // TODO(SL): only show the warning once, instead of on every render
       console.warn('The value is controlled (it has no local state) because the property was initially defined. It cannot be set to undefined now (it is set back to the initial value).')
     }
     return [
@@ -110,6 +111,7 @@ export function useInputState<T>({ controlledValue, onChange, initialUncontrolle
 
   // - uncontrolled (local state)
   if (controlledValue !== undefined) {
+    // TODO(SL): only show the warning once, instead of on every render
     console.warn('The value is uncontrolled (it only has a local state) because the property was initially undefined. It cannot be set to a value now and is ignored.')
   }
   return [localValue, uncontrolledSetState]
