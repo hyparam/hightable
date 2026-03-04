@@ -44,7 +44,7 @@ export function useFetchCells({ overscan = defaultOverscan, onError }: Props) {
   // Keep this inside an effect so we don't update state
   // or perform side-effects during render, for example when calling onError.
   useEffect(() => {
-    if (data?.fetch === undefined || fetchedRowsStart === undefined || fetchedRowsEnd === undefined) return
+    if (data.fetch === undefined || fetchedRowsStart === undefined || fetchedRowsEnd === undefined) return
 
     // Create an AbortController per fetch and clean it up on dependency changes.
     const abortController = new AbortController()

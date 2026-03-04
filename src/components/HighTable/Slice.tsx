@@ -145,9 +145,9 @@ export default function Slice({
 
     const canMeasureColumn: Record<string, boolean> = {}
     const rowContents = rows.map((row) => {
-      const rowNumber = data?.getRowNumber({ row, orderBy })?.value
+      const rowNumber = data.getRowNumber({ row, orderBy })?.value
       const cells = (columnsParameters ?? []).map(({ name: column, index: originalColumnIndex, className }) => {
-        const cell = data?.getCell({ row, column, orderBy })
+        const cell = data.getCell({ row, column, orderBy })
         canMeasureColumn[column] ||= cell !== undefined
         return { columnIndex: originalColumnIndex, cell, className }
       })
