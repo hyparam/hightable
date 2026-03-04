@@ -23,13 +23,12 @@ interface Props {
   direction?: Direction
   toggleOrderBy?: () => void
   orderByIndex?: number // index of the column in the orderBy array (0-based)
-  orderBySize?: number // size of the orderBy array
   ariaColIndex: number // aria col index for the header
   ariaRowIndex: number // aria row index for the header
   className?: string // optional class name
 }
 
-export default function ColumnHeader({ columnIndex, columnName, columnConfig, canMeasureWidth, direction, toggleOrderBy, orderByIndex, orderBySize, ariaColIndex, ariaRowIndex, className, children }: Props) {
+export default function ColumnHeader({ columnIndex, columnName, columnConfig, canMeasureWidth, direction, toggleOrderBy, orderByIndex, ariaColIndex, ariaRowIndex, className, children }: Props) {
   // The ref is used to position the menu in handleMenuClick, to measure width, and to focus the cell
   const ref = useRef<HTMLTableCellElement | null>(null)
   const { tabIndex, navigateToCell, focusIfNeeded } = useCellFocus({ ariaColIndex, ariaRowIndex })
@@ -161,8 +160,7 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
       scope="col"
       role="columnheader"
       aria-sort={direction ?? (sortable ? 'none' : undefined)}
-      data-order-by-index={orderBySize !== undefined ? orderByIndex : undefined}
-      data-order-by-size={orderBySize}
+      data-order-by-index={orderByIndex}
       data-functional-header={isFunctionalHeader ? 'true' : undefined}
       aria-label={columnName}
       aria-description={description}

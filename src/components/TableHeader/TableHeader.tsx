@@ -52,7 +52,6 @@ export default function TableHeader({
         canMeasureWidth={canMeasureColumn?.[name] === true}
         direction={orderByColumn.get(name)?.direction}
         orderByIndex={orderByColumn.get(name)?.index}
-        orderBySize={orderBy?.length}
         toggleOrderBy={toggleOrderBys[name]}
         columnName={name}
         columnIndex={columnIndex}
