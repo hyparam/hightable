@@ -39,17 +39,27 @@ interface MenuItemProps {
 }
 
 function MenuItem({ onClick, label }: MenuItemProps) {
-  const handleClick = useCallback((e: MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault()
-    e.stopPropagation()
-    onClick?.()
+  const handleClick = useMemo(() => {
+    if (!onClick) {
+      return undefined
+    }
+    return (e: MouseEvent<HTMLButtonElement>) => {
+      e.preventDefault()
+      e.stopPropagation()
+      onClick()
+    }
   }, [onClick])
 
-  const handleKeyDown = useCallback((e: KeyboardEvent<HTMLButtonElement>) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.stopPropagation()
-      e.preventDefault()
-      onClick?.()
+  const handleKeyDown = useMemo(() => {
+    if (!onClick) {
+      return undefined
+    }
+    return (e: KeyboardEvent<HTMLButtonElement>) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.stopPropagation()
+        e.preventDefault()
+        onClick()
+      }
     }
   }, [onClick])
 
@@ -60,6 +70,7 @@ function MenuItem({ onClick, label }: MenuItemProps) {
       onKeyDown={handleKeyDown}
       tabIndex={0}
       type="button"
+      disabled={onClick === undefined}
     >
       {label}
     </button>
