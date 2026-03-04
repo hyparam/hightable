@@ -39,6 +39,9 @@ export function OrderByProvider({ children, orderBy, onOrderByChange }: Props) {
     }
   }, [exclusiveSort, state, setState])
 
+  // toggleColumnOrderBy depends on state, so splitting the contexts here does not
+  // prevent unnecessary re-renders per se.
+  // But it helps anyway during testing, and it follows the principle of providing the minimal necessary context.
   return (
     <ToggleColumnOrderByContext.Provider value={toggleColumnOrderBy}>
       <OrderByContext.Provider value={state}>
