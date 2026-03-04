@@ -53,7 +53,7 @@ function KeyedDataProvider({ children, data }: Props) {
   // The column descriptors, hence the number of columns, are expected to be stable
   // for a given data frame. We keep their initial value, no setter.
   const [columnDescriptors] = useState(() => data.columnDescriptors.map(({ name, sortable }) => ({ name, sortable })))
-  const [numColumns] = useState(columnDescriptors.length)
+  const numColumns = columnDescriptors.length
 
   // Synchronize version and numRows with data frame events (external system - useEffect is needed)
   useEffect(() => {
