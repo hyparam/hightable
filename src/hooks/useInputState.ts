@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useState } from 'react'
 
 /**
  * Props for the useInputState hook.
@@ -95,24 +95,22 @@ export function useInputState<T>({ controlledValue, onChange, initialUncontrolle
     notifyChange?.(newValue)
   }
 
-  return useMemo(() => {
-    // The input is forever in one of these two modes:
-    // - controlled (no local state)
-    if (initialControlledValue !== undefined) {
-      if (controlledValue === undefined) {
-        console.warn('The value is controlled (it has no local state) because the property was initially defined. It cannot be set to undefined now (it is set back to the initial value).')
-      }
-      return [
-        controlledValue ?? initialControlledValue,
-        // read-only if onChange is undefined
-        onChange,
-      ]
+  // The input is forever in one of these two modes:
+  // - controlled (no local state)
+  if (initialControlledValue !== undefined) {
+    if (controlledValue === undefined) {
+      console.warn('The value is controlled (it has no local state) because the property was initially defined. It cannot be set to undefined now (it is set back to the initial value).')
     }
+    return [
+      controlledValue ?? initialControlledValue,
+      // read-only if onChange is undefined
+      onChange,
+    ]
+  }
 
-    // - uncontrolled (local state)
-    if (controlledValue !== undefined) {
-      console.warn('The value is uncontrolled (it only has a local state) because the property was initially undefined. It cannot be set to a value now and is ignored.')
-    }
-    return [localValue, uncontrolledSetState]
-  }, [controlledValue, onChange, initialControlledValue, localValue, uncontrolledSetState])
+  // - uncontrolled (local state)
+  if (controlledValue !== undefined) {
+    console.warn('The value is uncontrolled (it only has a local state) because the property was initially undefined. It cannot be set to a value now and is ignored.')
+  }
+  return [localValue, uncontrolledSetState]
 }
