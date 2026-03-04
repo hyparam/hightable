@@ -291,36 +291,57 @@ describe('Navigating HighTable with the keyboard', () => {
       expect(spinbutton.getAttribute('aria-valuenow')).toBe(initialValue)
     })
 
-    it.for(['{ }', '{Enter}'])('the column sort is toggled, if the dataframe is sortable, when %s is pressed', async (key) => {
-      const sortableData = sortableDataFrame(data)
-      const { user, getByRole } = render(<HighTable data={sortableData} />)
-      // go to the header cell (ID)
-      await user.keyboard('{ArrowRight}')
-      const cell = document.activeElement
-      const columnHeader = getByRole('columnheader', { name: 'ID' })
-      expect(columnHeader.getAttribute('aria-sort')).toBe('none')
-      // press the key to sort ascending
-      await user.keyboard(key)
-      expect(columnHeader.getAttribute('aria-sort')).toBe('ascending')
-      // press the key to sort descending
-      await user.keyboard(key)
-      expect(columnHeader.getAttribute('aria-sort')).toBe('descending')
-      // press the key to remove sorting
-      await user.keyboard(key)
-      expect(columnHeader.getAttribute('aria-sort')).toBe('none')
-      expect(document.activeElement).toBe(cell)
+    describe('if the column is sortable', () => {
+      it.for(['{ }', '{Enter}'])('the column sort is toggled when %s is pressed', async (key) => {
+        const sortableData = sortableDataFrame(data)
+        const { user, getByRole } = render(<HighTable data={sortableData} />)
+        // go to the header cell (ID)
+        await user.keyboard('{ArrowRight}')
+        const cell = document.activeElement
+        const columnHeader = getByRole('columnheader', { name: 'ID' })
+        expect(columnHeader.getAttribute('aria-sort')).toBe('none')
+        // press the key to sort ascending
+        await user.keyboard(key)
+        expect(columnHeader.getAttribute('aria-sort')).toBe('ascending')
+        // press the key to sort descending
+        await user.keyboard(key)
+        expect(columnHeader.getAttribute('aria-sort')).toBe('descending')
+        // press the key to remove sorting
+        await user.keyboard(key)
+        expect(columnHeader.getAttribute('aria-sort')).toBe('none')
+        expect(document.activeElement).toBe(cell)
+      })
+
+      describe('if exclusiveSort is true', () => {
+        it('toggling the sort of a column removes the sort of the other sorted column', async () => {
+          const sortableData = sortableDataFrame(data, { exclusiveSort: true })
+          const { user, getByRole } = render(<HighTable data={sortableData} />)
+          // go to the header cell (ID) and sort ascending
+          await user.keyboard('{ArrowRight}{ }')
+          const idColumnHeader = getByRole('columnheader', { name: 'ID' })
+          const countColumnHeader = getByRole('columnheader', { name: 'Count' })
+          expect(idColumnHeader.getAttribute('aria-sort')).toBe('ascending')
+          expect(countColumnHeader.getAttribute('aria-sort')).toBe('none')
+          // go to the header cell (Count) and sort ascending
+          await user.keyboard('{ArrowRight}{ }')
+          expect(idColumnHeader.getAttribute('aria-sort')).toBe('none')
+          expect(countColumnHeader.getAttribute('aria-sort')).toBe('ascending')
+        })
+      })
     })
 
-    it.for(['{ }', '{Enter}'])('if the dataframe is not sortable, pressing %s when the column header is focused is a no-op', async (key) => {
-      const { user, getByRole } = render(<HighTable data={data} />)
-      // go to the header cell (Count)
-      await user.keyboard('{ArrowRight}{ArrowRight}')
-      const columnHeader = getByRole('columnheader', { name: 'Count' })
-      expect(columnHeader.getAttribute('aria-sort')).toBe(null)
-      // press the key
-      await user.keyboard(key)
-      // no change
-      expect(columnHeader.getAttribute('aria-sort')).toBe(null)
+    describe('if the column is not sortable', () => {
+      it.for(['{ }', '{Enter}'])('pressing %s when the column header is focused is a no-op', async (key) => {
+        const { user, getByRole } = render(<HighTable data={data} />)
+        // go to the header cell (Count)
+        await user.keyboard('{ArrowRight}{ArrowRight}')
+        const columnHeader = getByRole('columnheader', { name: 'Count' })
+        expect(columnHeader.getAttribute('aria-sort')).toBe(null)
+        // press the key
+        await user.keyboard(key)
+        // no change
+        expect(columnHeader.getAttribute('aria-sort')).toBe(null)
+      })
     })
   })
 })
