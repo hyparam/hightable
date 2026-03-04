@@ -66,19 +66,29 @@
 
   /* sortable */
   th[aria-sort] {
-    cursor: pointer;
-
     &::after {
-      content: "⇅";
+      /* By default, don't fill the sort hint */
+      content: "";
       position: absolute;
       right: 0;
       top: 0;
     }
     &[aria-sort="ascending"]::after {
+      /* Show an ascending sort hint, even in read-only mode */
       content: "⭡";
     }
     &[aria-sort="descending"]::after {
+      /* Show a descending sort hint, even in read-only mode */
       content: "⭣";
+    }
+  }
+
+  th[data-can-sort="true"] {
+    cursor: pointer;
+
+    &[aria-sort="none"]::after {
+      /* Show a sort hint only if the header is actionable */
+      content: "⇅";
     }
   }
 

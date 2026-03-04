@@ -40,6 +40,7 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
     console.warn(`Column "${columnName}" has an order in orderBy but is not sortable. Fix the orderBy state or set the column as sortable. The column is not shown as ordered.`)
   }
   const ariaSort = sortable ? (direction ?? 'none') : undefined
+  const canSort = sortable && toggleColumnOrderBy
 
   const toggleOrderBy = useMemo(() => {
     if (!toggleColumnOrderBy || !sortable) {
@@ -177,6 +178,7 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
       scope="col"
       role="columnheader"
       aria-sort={ariaSort}
+      data-can-sort={canSort ? 'true' : undefined}
       data-order-by-index={orderByIndex}
       data-functional-header={isFunctionalHeader ? 'true' : undefined}
       aria-label={columnName}
