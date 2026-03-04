@@ -1,6 +1,6 @@
 import { type ReactNode, useEffect, useState } from 'react'
 
-import { DataKeyContext, DataVersionContext, NumColumnsContext, NumRowsContext } from '../contexts/DataContext.js'
+import { ColumnDescriptorsContext, DataKeyContext, DataVersionContext, NumColumnsContext, NumRowsContext } from '../contexts/DataContext.js'
 import type { HighTableProps } from '../types.js'
 
 // Assign stable numeric ids to data instances without triggering state
@@ -50,8 +50,10 @@ function KeyedDataProvider({ children, data }: Props) {
   const [version, setVersion] = useState(0)
   const [numRows, setNumRows] = useState(data.numRows)
 
-  // The number of columns is expected to be stable for a given data frame. We keep the initial value.
-  const [numColumns] = useState(data.columnDescriptors.length)
+  // The column descriptors, hence the number of columns, are expected to be stable
+  // for a given data frame. We keep their initial value, no setter.
+  const [columnDescriptors] = useState(() => data.columnDescriptors.map(({ name, sortable }) => ({ name, sortable })))
+  const [numColumns] = useState(columnDescriptors.length)
 
   // Synchronize version and numRows with data frame events (external system - useEffect is needed)
   useEffect(() => {
@@ -75,9 +77,11 @@ function KeyedDataProvider({ children, data }: Props) {
   return (
     <DataVersionContext.Provider value={version}>
       <NumRowsContext.Provider value={numRows}>
-        <NumColumnsContext.Provider value={numColumns}>
-          {children}
-        </NumColumnsContext.Provider>
+        <ColumnDescriptorsContext.Provider value={columnDescriptors}>
+          <NumColumnsContext.Provider value={numColumns}>
+            {children}
+          </NumColumnsContext.Provider>
+        </ColumnDescriptorsContext.Provider>
       </NumRowsContext.Provider>
     </DataVersionContext.Provider>
   )

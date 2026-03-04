@@ -1,7 +1,7 @@
 import { act, fireEvent } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { NumColumnsContext } from '../../contexts/DataContext.js'
+import { ColumnDescriptorsContext, NumColumnsContext } from '../../contexts/DataContext.js'
 import { getOffsetWidth } from '../../helpers/width.js'
 import { ColumnParametersProvider } from '../../providers/ColumnParametersProvider.js'
 import { ColumnWidthsProvider } from '../../providers/ColumnWidthsProvider.js'
@@ -191,13 +191,15 @@ describe('ColumnHeader', () => {
     const columnDescriptors = [{ name: 'test' }]
 
     const { user, getByRole } = render(
-      <NumColumnsContext.Provider value={1}>
-        <ColumnParametersProvider columnConfiguration={columnConfiguration} columnDescriptors={columnDescriptors}>
-          <ColumnWidthsProvider localStorageKey={cacheKey} minWidth={10}>
-            <table><thead><tr><ColumnHeader columnName="test" canMeasureWidth={true} {...defaultProps} /></tr></thead></table>
-          </ColumnWidthsProvider>
-        </ColumnParametersProvider>
-      </NumColumnsContext.Provider>
+      <ColumnDescriptorsContext.Provider value={columnDescriptors}>
+        <NumColumnsContext.Provider value={1}>
+          <ColumnParametersProvider columnConfiguration={columnConfiguration}>
+            <ColumnWidthsProvider localStorageKey={cacheKey} minWidth={10}>
+              <table><thead><tr><ColumnHeader columnName="test" canMeasureWidth={true} {...defaultProps} /></tr></thead></table>
+            </ColumnWidthsProvider>
+          </ColumnParametersProvider>
+        </NumColumnsContext.Provider>
+      </ColumnDescriptorsContext.Provider>
     )
 
     const header = getByRole('columnheader')
@@ -227,13 +229,15 @@ describe('ColumnHeader', () => {
     const columnDescriptors = [{ name: 'test' }]
 
     const { user, getByRole } = render(
-      <NumColumnsContext.Provider value={1}>
-        <ColumnParametersProvider columnConfiguration={columnConfiguration} columnDescriptors={columnDescriptors}>
-          <ColumnWidthsProvider localStorageKey={cacheKey} minWidth={globalMinWidth}>
-            <table><thead><tr><ColumnHeader columnName="test" canMeasureWidth={true} {...defaultProps} /></tr></thead></table>
-          </ColumnWidthsProvider>
-        </ColumnParametersProvider>
-      </NumColumnsContext.Provider>
+      <ColumnDescriptorsContext.Provider value={columnDescriptors}>
+        <NumColumnsContext.Provider value={1}>
+          <ColumnParametersProvider columnConfiguration={columnConfiguration}>
+            <ColumnWidthsProvider localStorageKey={cacheKey} minWidth={globalMinWidth}>
+              <table><thead><tr><ColumnHeader columnName="test" canMeasureWidth={true} {...defaultProps} /></tr></thead></table>
+            </ColumnWidthsProvider>
+          </ColumnParametersProvider>
+        </NumColumnsContext.Provider>
+      </ColumnDescriptorsContext.Provider>
     )
 
     const header = getByRole('columnheader')

@@ -55,10 +55,7 @@ function State({
     /* The state is handled with contexts, even if it creates a "Providers hell". No need for state library for now. */
     <ViewportSizeProvider>
       <TableCornerSizeProvider>
-        <ColumnParametersProvider
-          columnConfiguration={columnConfiguration}
-          columnDescriptors={data.columnDescriptors}
-        >
+        <ColumnParametersProvider columnConfiguration={columnConfiguration}>
           <ColumnWidthsProvider
             // Recreate a context if a new cacheKey is provided.
             key={cacheKey}
