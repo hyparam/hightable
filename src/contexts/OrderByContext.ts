@@ -1,25 +1,49 @@
-import { createContext } from 'react'
+import { createContext, useContext } from 'react'
 
 import type { OrderBy } from '../helpers/sort.js'
 
-interface OrderByContextType {
-  /** Order used to fetch and render the rows.
-   *
-   * If undefined, or an empty array, the table is unordered.
-   *
-   * If undefined, the sort controls are hidden and the interactions are disabled.
-   */
-  orderBy?: OrderBy
-  /**
-   * Function to set the order.
-   *
-   * The interactions are disabled if undefined.
-   *
-   * @param orderBy The new orderBy value
-   */
-  setOrderBy?: (orderBy: OrderBy) => void
+/** Order used to fetch and render the rows.
+ *
+ * If an empty array, the table is unordered.
+ */
+export const OrderByContext = createContext<OrderBy>([])
+
+/**
+ * Function to toggle the order of a column.
+ *
+ * It depends on the current order and the exclusiveSort mode (see DataContext)
+ * and can be used to toggle between ascending, descending and no order for a column.
+ *
+ * @param columnName The name of the column to toggle
+ */
+export type ToggleColumnOrderBy = (columnName: string) => void
+
+/**
+ * Context to provide the function to toggle the order of a column.
+ *
+ * If undefined, the interactions are disabled.
+ */
+export const ToggleColumnOrderByContext = createContext<ToggleColumnOrderBy | undefined>(undefined)
+
+export function useOrderBy() {
+  return useContext(OrderByContext)
 }
 
-export const defaultOrderByContext: OrderByContextType = {}
+/**
+ * Returns the order and index (0-based) of a column in the orderBy array.
+ */
+export function useColumnOrderBy(columnName: string) {
+  const orderBy = useOrderBy()
 
-export const OrderByContext = createContext<OrderByContextType>(defaultOrderByContext)
+  // no need to memoize, looping should be fast as orderBy is usually short
+  for (const [orderByIndex, { column, direction }] of orderBy.entries()) {
+    if (column === columnName) {
+      return { direction, orderByIndex }
+    }
+  }
+  return { direction: undefined, orderByIndex: undefined }
+}
+
+export function useToggleColumnOrderBy() {
+  return useContext(ToggleColumnOrderByContext)
+}

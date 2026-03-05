@@ -1,7 +1,8 @@
 import { type ReactNode, useMemo } from 'react'
 
-import { OrderByContext } from '../contexts/OrderByContext.js'
-import type { OrderBy } from '../helpers/sort.js'
+import { useExclusiveSort } from '../contexts/DataContext.js'
+import { OrderByContext, ToggleColumnOrderByContext } from '../contexts/OrderByContext.js'
+import { type OrderBy, toggleColumn, toggleColumnExclusive } from '../helpers/sort.js'
 import { useInputState } from '../hooks/useInputState.js'
 import type { HighTableProps } from '../types.js'
 
@@ -13,23 +14,39 @@ type Props = Pick<HighTableProps, 'orderBy' | 'onOrderByChange'> & {
 /**
  * Handles sorting.
  *
- * Provides the current orderBy state and a callback to update it.
+ * Provides the current orderBy state and a function to toggle a column.
  */
 export function OrderByProvider({ children, orderBy, onOrderByChange }: Props) {
+  const exclusiveSort = useExclusiveSort()
   const [state, setState] = useInputState<OrderBy>({
     controlledValue: orderBy,
     onChange: onOrderByChange,
     initialUncontrolledValue: [],
   })
 
-  const value = useMemo(() => ({
-    orderBy: state,
-    setOrderBy: setState,
-  }), [state, setState])
+  const toggleColumnOrderBy = useMemo(() => {
+    if (!setState) {
+      return undefined
+    }
+    if (exclusiveSort) {
+      return (columnName: string) => {
+        setState(toggleColumnExclusive(columnName, state))
+      }
+    } else {
+      return (columnName: string) => {
+        setState(toggleColumn(columnName, state))
+      }
+    }
+  }, [exclusiveSort, state, setState])
 
+  // toggleColumnOrderBy depends on state, so splitting the contexts here does not
+  // prevent unnecessary re-renders per se.
+  // But it helps anyway during testing, and it follows the principle of providing the minimal necessary context.
   return (
-    <OrderByContext.Provider value={value}>
-      {children}
-    </OrderByContext.Provider>
+    <ToggleColumnOrderByContext.Provider value={toggleColumnOrderBy}>
+      <OrderByContext.Provider value={state}>
+        {children}
+      </OrderByContext.Provider>
+    </ToggleColumnOrderByContext.Provider>
   )
 }

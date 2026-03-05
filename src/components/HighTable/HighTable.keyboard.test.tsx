@@ -300,6 +300,7 @@ describe('Navigating HighTable with the keyboard', () => {
         const cell = document.activeElement
         const columnHeader = getByRole('columnheader', { name: 'ID' })
         expect(columnHeader.getAttribute('aria-sort')).toBe('none')
+        expect(columnHeader.getAttribute('data-can-sort')).toBe('true')
         // press the key to sort ascending
         await user.keyboard(key)
         expect(columnHeader.getAttribute('aria-sort')).toBe('ascending')
@@ -310,6 +311,26 @@ describe('Navigating HighTable with the keyboard', () => {
         await user.keyboard(key)
         expect(columnHeader.getAttribute('aria-sort')).toBe('none')
         expect(document.activeElement).toBe(cell)
+      })
+
+      describe('if the order is read-only', () => {
+        it.for(['{ }', '{Enter}'])('the column sort is not toggled when %s is pressed', async (key) => {
+          const sortableData = sortableDataFrame(data)
+          const orderBy = [{ column: 'ID', direction: 'ascending' as const }]
+          // No onOrderByChange is provided, so the order is read-only
+          const { user, getByRole } = render(<HighTable data={sortableData} orderBy={orderBy} />)
+          // go to the header cell (ID)
+          await user.keyboard('{ArrowRight}')
+          const cell = document.activeElement
+          const columnHeader = getByRole('columnheader', { name: 'ID' })
+          expect(columnHeader.getAttribute('aria-sort')).toBe('ascending')
+          expect(columnHeader.getAttribute('data-order-by-index')).toBe('0')
+          expect(columnHeader.getAttribute('data-can-sort')).toBe(null) // not sortable because order is read-only
+          // press the key
+          await user.keyboard(key)
+          expect(columnHeader.getAttribute('aria-sort')).toBe('ascending')
+          expect(document.activeElement).toBe(cell)
+        })
       })
 
       describe('if exclusiveSort is true', () => {
@@ -337,6 +358,7 @@ describe('Navigating HighTable with the keyboard', () => {
         await user.keyboard('{ArrowRight}{ArrowRight}')
         const columnHeader = getByRole('columnheader', { name: 'Count' })
         expect(columnHeader.getAttribute('aria-sort')).toBe(null)
+        expect(columnHeader.getAttribute('data-can-sort')).toBe(null)
         // press the key
         await user.keyboard(key)
         // no change

@@ -186,12 +186,24 @@ describe('ColumnMenu', () => {
       expect(toggleOrderBy).toHaveBeenCalled()
     })
 
-    it('focuses button when clicked', async () => {
+    it('focuses sort button when clicked if not read-only', async () => {
+      const toggleOrderBy = vi.fn()
       const { user, getByRole } = render(
-        <ColumnMenu {...defaultProps} sortable={true} />
+        <ColumnMenu {...defaultProps} sortable={true} toggleOrderBy={toggleOrderBy} />
       )
 
       const sortButton = getByRole('menuitem')
+      expect(sortButton.getAttribute('aria-disabled')).toBe('false')
+      await user.click(sortButton)
+      expect(document.activeElement).toBe(sortButton)
+    })
+
+    it('focuses sort button when clicked if read-only', async () => {
+      const { user, getByRole } = render(
+        <ColumnMenu {...defaultProps} sortable={true} />
+      )
+      const sortButton = getByRole('menuitem')
+      expect(sortButton.getAttribute('aria-disabled')).toBe('true')
       await user.click(sortButton)
       expect(document.activeElement).toBe(sortButton)
     })

@@ -5,7 +5,7 @@ import { flushSync } from 'react-dom'
 import type { ColumnParameters } from '../../contexts/ColumnParametersContext.js'
 import { ColumnsVisibilityContext } from '../../contexts/ColumnsVisibilityContext.js'
 import { ColumnWidthsContext } from '../../contexts/ColumnWidthsContext.js'
-import type { Direction } from '../../helpers/sort.js'
+import { useColumnOrderBy, useToggleColumnOrderBy } from '../../contexts/OrderByContext.js'
 import { getOffsetWidth } from '../../helpers/width.js'
 import { useCellFocus } from '../../hooks/useCellFocus.js'
 import { useColumnMenu } from '../../hooks/useColumnMenu.js'
@@ -20,22 +20,36 @@ interface Props {
   columnConfig: Omit<ColumnParameters, 'name' | 'index'> // column configuration, excluding name and index
   children?: ReactNode
   canMeasureWidth?: boolean
-  direction?: Direction
-  toggleOrderBy?: () => void
-  orderByIndex?: number // index of the column in the orderBy array (0-based)
-  orderBySize?: number // size of the orderBy array
   ariaColIndex: number // aria col index for the header
   ariaRowIndex: number // aria row index for the header
   className?: string // optional class name
 }
 
-export default function ColumnHeader({ columnIndex, columnName, columnConfig, canMeasureWidth, direction, toggleOrderBy, orderByIndex, orderBySize, ariaColIndex, ariaRowIndex, className, children }: Props) {
+export default function ColumnHeader({ columnIndex, columnName, columnConfig, canMeasureWidth, ariaColIndex, ariaRowIndex, className, children }: Props) {
   // The ref is used to position the menu in handleMenuClick, to measure width, and to focus the cell
   const ref = useRef<HTMLTableCellElement | null>(null)
   const { tabIndex, navigateToCell, focusIfNeeded } = useCellFocus({ ariaColIndex, ariaRowIndex })
-  const { sortable } = columnConfig
   const { isOpen, position, menuId, close, handleMenuClick } = useColumnMenu(ref, navigateToCell)
   const { getHideColumn, showAllColumns } = useContext(ColumnsVisibilityContext)
+  const toggleColumnOrderBy = useToggleColumnOrderBy()
+  const { sortable } = columnConfig
+  const readOnlyOrderBy = toggleColumnOrderBy === undefined
+  const { direction, orderByIndex } = useColumnOrderBy(columnName)
+
+  if (!sortable && direction !== undefined) {
+    console.warn(`Column "${columnName}" has an order in orderBy but is not sortable. Fix the orderBy state or set the column as sortable. The column is not shown as ordered.`)
+  }
+  const ariaSort = sortable ? (direction ?? 'none') : undefined
+  const canSort = sortable === true && toggleColumnOrderBy !== undefined
+
+  const toggleOrderBy = useMemo(() => {
+    if (!toggleColumnOrderBy || !sortable) {
+      return undefined
+    }
+    return () => {
+      toggleColumnOrderBy(columnName)
+    }
+  }, [toggleColumnOrderBy, sortable, columnName])
 
   // Focus the cell if needed. We use an effect, as it acts on the DOM element after render.
   useEffect(() => {
@@ -44,8 +58,8 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
 
   const handleClick = useCallback(() => {
     navigateToCell?.()
-    if (sortable) toggleOrderBy?.()
-  }, [toggleOrderBy, navigateToCell, sortable])
+    toggleOrderBy?.()
+  }, [toggleOrderBy, navigateToCell])
 
   const hideColumn = useMemo(() => {
     return getHideColumn?.(columnName)
@@ -97,6 +111,8 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
   const description = useMemo(() => {
     if (!sortable) {
       return `The column ${columnName} cannot be sorted`
+    } else if (readOnlyOrderBy) {
+      return `The column ${columnName} order is read-only`
     } else if (orderByIndex !== undefined && orderByIndex > 0) {
       return `Press to sort by ${columnName} in ascending order`
     } else if (direction === 'ascending') {
@@ -106,17 +122,17 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
     } else {
       return `Press to sort by ${columnName} in ascending order`
     }
-  }, [sortable, columnName, direction, orderByIndex])
+  }, [sortable, readOnlyOrderBy, columnName, direction, orderByIndex])
 
   const onKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.target !== ref.current || !sortable) {
-      // only handle keyboard events when the header is focused, and if the column is sortable
+    if (e.target !== ref.current || !sortable || !toggleOrderBy) {
+      // only handle keyboard events when the header is focused, the column is sortable and can be toggled
       return
     }
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault()
       e.stopPropagation()
-      toggleOrderBy?.()
+      toggleOrderBy()
     }
   }, [sortable, toggleOrderBy])
   const handleCopy = useOnCopy(columnName)
@@ -124,10 +140,17 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
   // If the hightable user provides a custom header component, they can choose where to place these controls inside it
   const controls = useMemo(() => (
     <div role="group">
-      {sortable
+      {/**
+       * note about the empty space (''):
+       * - read-only mode (ariaSort===true, canSort===false): the column could be sorted, but is not currently, so we show the space, as an indication that it could be sorted at some point
+       * - not sortable (ariaSort===false): we don't show the space, as an indication that it will never be sorted.
+       *
+       * note: if the column is not sortable, but is present in orderBy (contradiction), we hide the sort indicator (ariaSort is set to false).
+      */}
+      {(ariaSort !== undefined)
         && (
           <span role="img" aria-hidden="true">
-            {direction === 'ascending' ? '⭡' : direction === 'descending' ? '⭣' : '⇅'}
+            {direction === 'ascending' ? '⭡' : direction === 'descending' ? '⭣' : canSort ? '⇅' : ''}
           </span>
         )}
       {isMenuEnabled
@@ -143,7 +166,7 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
         )}
     </div>
   ),
-  [sortable, direction, isMenuEnabled, handleMenuClick, navigateToCell, tabIndex, isOpen, menuId, columnName])
+  [ariaSort, direction, isMenuEnabled, handleMenuClick, navigateToCell, tabIndex, isOpen, menuId, columnName, canSort])
 
   const headerContent = useMemo(() => {
     const { headerComponent } = columnConfig
@@ -160,9 +183,9 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
       ref={ref}
       scope="col"
       role="columnheader"
-      aria-sort={direction ?? (sortable ? 'none' : undefined)}
-      data-order-by-index={orderBySize !== undefined ? orderByIndex : undefined}
-      data-order-by-size={orderBySize}
+      aria-sort={ariaSort}
+      data-can-sort={canSort ? 'true' : undefined}
+      data-order-by-index={orderByIndex}
       data-functional-header={isFunctionalHeader ? 'true' : undefined}
       aria-label={columnName}
       aria-description={description}

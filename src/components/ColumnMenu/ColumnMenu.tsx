@@ -39,20 +39,32 @@ interface MenuItemProps {
 }
 
 function MenuItem({ onClick, label }: MenuItemProps) {
-  const handleClick = useCallback((e: MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault()
-    e.stopPropagation()
-    onClick?.()
-  }, [onClick])
-
-  const handleKeyDown = useCallback((e: KeyboardEvent<HTMLButtonElement>) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.stopPropagation()
+  const handleClick = useMemo(() => {
+    if (!onClick) {
+      return undefined
+    }
+    return (e: MouseEvent<HTMLButtonElement>) => {
       e.preventDefault()
-      onClick?.()
+      e.stopPropagation()
+      onClick()
     }
   }, [onClick])
 
+  const handleKeyDown = useMemo(() => {
+    if (!onClick) {
+      return undefined
+    }
+    return (e: KeyboardEvent<HTMLButtonElement>) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.stopPropagation()
+        e.preventDefault()
+        onClick()
+      }
+    }
+  }, [onClick])
+
+  // TODO(SL): if onClick is undefined, this item should be disabled. We currently only set 'aria-disabled', which is a semantic indication.
+  // We would need to add some styles for that, and also handle the keyboard events to prevent interaction, but ensure the focus navigation still works.
   return (
     <button
       role="menuitem"
@@ -60,6 +72,7 @@ function MenuItem({ onClick, label }: MenuItemProps) {
       onKeyDown={handleKeyDown}
       tabIndex={0}
       type="button"
+      aria-disabled={onClick === undefined}
     >
       {label}
     </button>

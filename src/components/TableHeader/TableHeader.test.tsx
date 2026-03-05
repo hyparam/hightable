@@ -2,6 +2,7 @@ import { within } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { ToggleColumnOrderByContext } from '../../contexts/OrderByContext.js'
 import { PortalContainerContext } from '../../contexts/PortalContainerContext.js'
 import { useHTMLElement } from '../../hooks/useHTMLElement.js'
 import { render as _render } from '../../utils/userEvent.js'
@@ -49,18 +50,18 @@ describe('TableHeader', () => {
     })
   })
 
-  it('sets orderBy to the column name (ascending order) when a header is clicked', async () => {
-    const setOrderBy = vi.fn()
+  it('calls toggleColumnOrderBy with the column name when a header is clicked', async () => {
+    const toggleColumnOrderBy = vi.fn()
     const { user, getByText } = render(
       <table>
         <thead>
           <tr>
-            <TableHeader
-              columnsParameters={columnsParameters}
-              orderBy={[]}
-              setOrderBy={setOrderBy}
-              ariaRowIndex={1}
-            />
+            <ToggleColumnOrderByContext.Provider value={toggleColumnOrderBy}>
+              <TableHeader
+                columnsParameters={columnsParameters}
+                ariaRowIndex={1}
+              />
+            </ToggleColumnOrderByContext.Provider>
           </tr>
         </thead>
       </table>
@@ -69,81 +70,11 @@ describe('TableHeader', () => {
     const ageHeader = getByText('Age')
     await user.click(ageHeader)
 
-    expect(setOrderBy).toHaveBeenCalledWith([{ column: 'Age', direction: 'ascending' }])
-  })
-
-  it('sets orderBy to the column name (descending order) when a header is clicked if it was already sorted by ascending order', async () => {
-    const setOrderBy = vi.fn()
-    const { user, getByText } = render(
-      <table>
-        <thead>
-          <tr>
-            <TableHeader
-              columnsParameters={columnsParameters}
-              setOrderBy={setOrderBy}
-              orderBy={[{ column: 'Age', direction: 'ascending' }]}
-              ariaRowIndex={1}
-            />
-          </tr>
-        </thead>
-      </table>
-    )
-
-    const ageHeader = getByText('Age')
-    await user.click(ageHeader)
-
-    expect(setOrderBy).toHaveBeenCalledWith([{ column: 'Age', direction: 'descending' }])
-  })
-
-  it('sets orderBy to undefined when a header is clicked if it was already sorted by descending order', async () => {
-    const setOrderBy = vi.fn()
-    const { user, getByText } = render(
-      <table>
-        <thead>
-          <tr>
-            <TableHeader
-              columnsParameters={columnsParameters}
-              setOrderBy={setOrderBy}
-              orderBy={[{ column: 'Age', direction: 'descending' }]}
-              ariaRowIndex={1}
-            />
-          </tr>
-        </thead>
-      </table>
-    )
-
-    const ageHeader = getByText('Age')
-    await user.click(ageHeader)
-
-    expect(setOrderBy).toHaveBeenCalledWith([])
-  })
-
-  it('prepends a new column with ascending order to orderBy when a different header is clicked', async () => {
-    const setOrderBy = vi.fn()
-    const { user, getByText } = render(
-      <table>
-        <thead>
-          <tr>
-            <TableHeader
-              columnsParameters={columnsParameters}
-              setOrderBy={setOrderBy}
-              orderBy={[{ column: 'Age', direction: 'ascending' }]}
-              ariaRowIndex={1}
-            />
-          </tr>
-        </thead>
-      </table>
-    )
-
-    const addressHeader = getByText('Address')
-    await user.click(addressHeader)
-
-    expect(setOrderBy).toHaveBeenCalledWith([{ column: 'Address', direction: 'ascending' }, { column: 'Age', direction: 'ascending' }])
+    expect(toggleColumnOrderBy).toHaveBeenCalledWith('Age')
   })
 
   describe('Column Menu Integration', () => {
     it('integrates menu button with table header accessibility', async () => {
-      const setOrderBy = vi.fn()
       const { user, getByRole } = render(
         <table>
           <thead>
@@ -151,8 +82,6 @@ describe('TableHeader', () => {
               <TableHeader
                 columnsParameters={columnsParameters}
                 ariaRowIndex={1}
-                setOrderBy={setOrderBy}
-                orderBy={[]}
               />
             </tr>
           </thead>
@@ -180,7 +109,6 @@ describe('TableHeader', () => {
     })
 
     it('maintains proper focus management within table context', async () => {
-      const setOrderBy = vi.fn()
       const { user, getByRole, queryByRole } = render(
         <table>
           <thead>
@@ -188,8 +116,6 @@ describe('TableHeader', () => {
               <TableHeader
                 columnsParameters={columnsParameters}
                 ariaRowIndex={1}
-                setOrderBy={setOrderBy}
-                orderBy={[]}
               />
             </tr>
           </thead>
