@@ -2,7 +2,8 @@ import { within } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { ToggleColumnOrderByContext } from '../../contexts/OrderByContext.js'
+import { ColumnsVisibilityContext } from '../../contexts/ColumnsVisibilityContext.js'
+import { SortInfoAndActionsByColumnContext } from '../../contexts/OrderByContext.js'
 import { PortalContainerContext } from '../../contexts/PortalContainerContext.js'
 import { useHTMLElement } from '../../hooks/useHTMLElement.js'
 import { render as _render } from '../../utils/userEvent.js'
@@ -50,18 +51,19 @@ describe('TableHeader', () => {
     })
   })
 
-  it('calls toggleColumnOrderBy with the column name when a header is clicked', async () => {
-    const toggleColumnOrderBy = vi.fn()
+  it('calls toggleOrderBy when a header is clicked', async () => {
+    const toggleOrderBy = vi.fn()
+    const sortInfoAndActionsByColumn = new Map([['Age', { toggleOrderBy }]])
     const { user, getByText } = render(
       <table>
         <thead>
           <tr>
-            <ToggleColumnOrderByContext.Provider value={toggleColumnOrderBy}>
+            <SortInfoAndActionsByColumnContext.Provider value={sortInfoAndActionsByColumn}>
               <TableHeader
                 columnsParameters={columnsParameters}
                 ariaRowIndex={1}
               />
-            </ToggleColumnOrderByContext.Provider>
+            </SortInfoAndActionsByColumnContext.Provider>
           </tr>
         </thead>
       </table>
@@ -70,19 +72,25 @@ describe('TableHeader', () => {
     const ageHeader = getByText('Age')
     await user.click(ageHeader)
 
-    expect(toggleColumnOrderBy).toHaveBeenCalledWith('Age')
+    expect(toggleOrderBy).toHaveBeenCalled()
   })
 
   describe('Column Menu Integration', () => {
+    function getHideColumn() {
+      return vi.fn()
+    }
     it('integrates menu button with table header accessibility', async () => {
       const { user, getByRole } = render(
         <table>
           <thead>
             <tr>
-              <TableHeader
-                columnsParameters={columnsParameters}
-                ariaRowIndex={1}
-              />
+              {/* pass the visibility context, to get the "Hide column" button */}
+              <ColumnsVisibilityContext.Provider value={{ getHideColumn, numberOfVisibleColumns: columnsParameters.length }}>
+                <TableHeader
+                  columnsParameters={columnsParameters}
+                  ariaRowIndex={1}
+                />
+              </ColumnsVisibilityContext.Provider>
             </tr>
           </thead>
         </table>
@@ -113,10 +121,13 @@ describe('TableHeader', () => {
         <table>
           <thead>
             <tr>
-              <TableHeader
-                columnsParameters={columnsParameters}
-                ariaRowIndex={1}
-              />
+              {/* pass the visibility context, to get the "Hide column" button */}
+              <ColumnsVisibilityContext.Provider value={{ getHideColumn, numberOfVisibleColumns: columnsParameters.length }}>
+                <TableHeader
+                  columnsParameters={columnsParameters}
+                  ariaRowIndex={1}
+                />
+              </ColumnsVisibilityContext.Provider>
             </tr>
           </thead>
         </table>

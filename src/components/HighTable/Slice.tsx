@@ -4,7 +4,7 @@ import { useCallback, useContext, useMemo } from 'react'
 import { CellNavigationContext } from '../../contexts/CellNavigationContext.js'
 import { ColumnsVisibilityContext } from '../../contexts/ColumnsVisibilityContext.js'
 import { useData, useDataVersion, useNumRows } from '../../contexts/DataContext.js'
-import { useOrderBy } from '../../contexts/OrderByContext.js'
+import { OrderByContext } from '../../contexts/OrderByContext.js'
 import { ScrollContext } from '../../contexts/ScrollContext.js'
 import { SelectionContext } from '../../contexts/SelectionContext.js'
 import { ariaOffset } from '../../helpers/constants.js'
@@ -29,7 +29,7 @@ export default function Slice({
   stringify = stringifyDefault,
 }: SliceProps) {
   const { moveCell } = useContext(CellNavigationContext)
-  const orderBy = useOrderBy()
+  const orderBy = useContext(OrderByContext)
   const { selectable, toggleAllRows, pendingSelectionGesture, onTableKeyDown: onSelectionTableKeyDown, allRowsSelected, isRowSelected, toggleRowNumber, toggleRangeToRowNumber } = useContext(SelectionContext)
   const { visibleColumnsParameters: columnsParameters } = useContext(ColumnsVisibilityContext)
   const { renderedRowsStart, renderedRowsEnd } = useContext(ScrollContext)

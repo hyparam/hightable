@@ -1,9 +1,9 @@
 import type { KeyboardEvent, ReactNode } from 'react'
-import { useCallback, useEffect, useEffectEvent, useMemo, useState } from 'react'
+import { useCallback, useContext, useEffect, useEffectEvent, useMemo, useState } from 'react'
 
 import type { DataFrameMethods } from '../contexts/DataContext.js'
 import { useData, useNumRows } from '../contexts/DataContext.js'
-import { useOrderBy } from '../contexts/OrderByContext.js'
+import { OrderByContext } from '../contexts/OrderByContext.js'
 import { SelectionContext } from '../contexts/SelectionContext.js'
 import { checkSignal } from '../helpers/dataframe/helpers.js'
 import type { Selection } from '../helpers/selection.js'
@@ -43,7 +43,7 @@ export function SelectionProvider({ children, selection: controlledSelection, on
   const [rowByRowNumberAndOrderBy] = useState<Map<string, Map<number, number | undefined>>>(() => new Map())
   const [allRowsSelected, setAllRowsSelected] = useState<boolean | undefined>(areAllSelected({ numRows, selection }))
 
-  const orderBy = useOrderBy()
+  const orderBy = useContext(OrderByContext)
 
   const onNumRowsChange = useEffectEvent((numRows: number) => {
     // when numRows changes, we need to check if all rows are selected, and update the cache
