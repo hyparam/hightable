@@ -320,7 +320,7 @@ describe('getScrollActionForRow', () => {
       expect(action.scrollTop).toBeCloseTo(expectedScrollTop, 0)
     })
 
-    it('returns a scrollTop action when the accumulated delta would exceed largeScrollPx threshold', () => {
+    it('returns a local scroll action event if the accumulated delta would exceed largeScrollPx threshold', () => {
       const scale = createScale({
         clientHeight: 1_000,
         headerHeight: 50,
@@ -334,10 +334,7 @@ describe('getScrollActionForRow', () => {
       // should add a small delta (2_317), but the accumulated delta (18_817) exceeds largeScrollPx, so: scrollTop is returned to synchronize properly
       // TODO(SL): directly set scrollTopAnchor instead of virtualScrollBase
       const action = getScrollActionForRow({ scale, rowIndex, scrollTopAnchor: scale.fromVirtual(virtualScrollBase), localOffset })
-      if (!action || !('scrollTop' in action)) {
-        throw new Error('Expected a scrollTop action')
-      }
-      expect(action.scrollTop).toBeCloseTo(5_284, 0)
+      expect(action?.type).toBe('LOCAL_SCROLL')
     })
 
     it.each([
@@ -554,15 +551,16 @@ describe('scrollReducer', () => {
       expect(newState.localOffset).toBe(0)
     })
 
-    it('scrolls globally when the accumulated localOffset would be too large', () => {
+    it('scrolls locally even if the accumulated localOffset is large', () => {
+      const largeLocalOffset = 16_499 // below the largeScrollPx threshold (500 * 33 = 16,500)
       const stateWithLargeLocalOffset: ScrollState = {
         ...initialState,
-        localOffset: 16_499, // below the largeScrollPx threshold (500 * 33 = 16,500)
+        localOffset: largeLocalOffset,
       }
       const newState = scrollReducer(stateWithLargeLocalOffset, { type: 'ON_SCROLL', scrollTop: nearScrollTop })
       expect(newState.scrollTop).toBe(nearScrollTop)
-      expect(newState.scrollTopAnchor).toBe(nearScrollTop)
-      expect(newState.localOffset).toBe(0)
+      expect(newState.scrollTopAnchor).toBe(initialScrollTop) // unchanged
+      expect(newState.localOffset).toBe(largeLocalOffset + (nearScrollTop - initialScrollTop)) // accumulated local offset is above the threshold, but we still scroll locally
     })
 
     it('scrolls globally, and scrollTopAnchor is clamped, when scrollTop is non-positive', () => {
