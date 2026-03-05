@@ -82,9 +82,9 @@ describe('ColumnMenu', () => {
   })
 
   describe('Sort functionality', () => {
-    it('renders sort button when sortable is true', () => {
+    it('renders sort button when ariaSort is defined', () => {
       const { getByRole } = render(
-        <ColumnMenu {...defaultProps} sortable={true} />
+        <ColumnMenu {...defaultProps} ariaSort="none" />
       )
 
       const sortButton = getByRole('menuitem')
@@ -93,29 +93,23 @@ describe('ColumnMenu', () => {
 
     it('shows correct sort direction text', () => {
       const { getByRole, rerender } = render(
-        <ColumnMenu {...defaultProps} sortable={true} direction="ascending" />
+        <ColumnMenu {...defaultProps} ariaSort="ascending" />
       )
 
       expect(getByRole('menuitem').textContent).toBe('Ascending')
 
       rerender( // We need to set ContainerProvider, because rerender is not wrapped automatically
         <ContainerProvider>
-          <ColumnMenu {...defaultProps} sortable={true} direction="descending" />
+          <ColumnMenu {...defaultProps} ariaSort="descending" />
         </ContainerProvider>
       )
       expect(getByRole('menuitem').textContent).toBe('Descending')
     })
 
-    it('does not render sort button when sortable is false', () => {
+    it('does not render sort button when ariaSort is undefined', () => {
       const { queryByRole } = render(
-        <ColumnMenu {...defaultProps} sortable={false} />
+        <ColumnMenu {...defaultProps} />
       )
-
-      expect(queryByRole('menuitem')).toBeNull()
-    })
-
-    it('does not render sort button when sortable is undefined', () => {
-      const { queryByRole } = render(<ColumnMenu {...defaultProps} />)
 
       expect(queryByRole('menuitem')).toBeNull()
     })
@@ -167,7 +161,7 @@ describe('ColumnMenu', () => {
   describe('MenuItem component', () => {
     it('renders with correct ARIA attributes', () => {
       const { getByRole } = render(
-        <ColumnMenu {...defaultProps} sortable={true} />
+        <ColumnMenu {...defaultProps} ariaSort="none" />
       )
 
       const menuItem = getByRole('menuitem')
@@ -178,7 +172,7 @@ describe('ColumnMenu', () => {
     it('calls toggleOrderBy when sort button is clicked', async () => {
       const toggleOrderBy = vi.fn()
       const { user, getByRole } = render(
-        <ColumnMenu {...defaultProps} sortable={true} toggleOrderBy={toggleOrderBy} />
+        <ColumnMenu {...defaultProps} ariaSort="none" toggleOrderBy={toggleOrderBy} />
       )
 
       const sortButton = getByRole('menuitem')
@@ -189,7 +183,7 @@ describe('ColumnMenu', () => {
     it('focuses sort button when clicked if not read-only', async () => {
       const toggleOrderBy = vi.fn()
       const { user, getByRole } = render(
-        <ColumnMenu {...defaultProps} sortable={true} toggleOrderBy={toggleOrderBy} />
+        <ColumnMenu {...defaultProps} ariaSort="none" toggleOrderBy={toggleOrderBy} />
       )
 
       const sortButton = getByRole('menuitem')
@@ -200,7 +194,7 @@ describe('ColumnMenu', () => {
 
     it('focuses sort button when clicked if read-only', async () => {
       const { user, getByRole } = render(
-        <ColumnMenu {...defaultProps} sortable={true} />
+        <ColumnMenu {...defaultProps} ariaSort="none" />
       )
       const sortButton = getByRole('menuitem')
       expect(sortButton.getAttribute('aria-disabled')).toBe('true')
@@ -223,7 +217,7 @@ describe('ColumnMenu', () => {
     it('calls toggleOrderBy on Enter key when sortable', async () => {
       const toggleOrderBy = vi.fn()
       const { user, getByRole } = render(
-        <ColumnMenu {...defaultProps} sortable={true} toggleOrderBy={toggleOrderBy} />
+        <ColumnMenu {...defaultProps} ariaSort="none" toggleOrderBy={toggleOrderBy} />
       )
 
       const sortButton = getByRole('menuitem')
@@ -236,7 +230,7 @@ describe('ColumnMenu', () => {
     it('calls toggleOrderBy on Space key when sortable', async () => {
       const toggleOrderBy = vi.fn()
       const { user, getByRole } = render(
-        <ColumnMenu {...defaultProps} sortable={true} toggleOrderBy={toggleOrderBy} />
+        <ColumnMenu {...defaultProps} ariaSort="none" toggleOrderBy={toggleOrderBy} />
       )
 
       const sortButton = getByRole('menuitem')
@@ -250,7 +244,7 @@ describe('ColumnMenu', () => {
     describe('Arrow key navigation', () => {
       it('handles ArrowUp key', async () => {
         const { user, getByRole } = render(
-          <ColumnMenu {...defaultProps} sortable={true} hideColumn={() => undefined} />
+          <ColumnMenu {...defaultProps} ariaSort="none" hideColumn={() => undefined} />
         )
 
         const menu = getByRole('menu')
@@ -262,7 +256,7 @@ describe('ColumnMenu', () => {
 
       it('handles ArrowDown key', async () => {
         const { user, getByRole } = render(
-          <ColumnMenu {...defaultProps} sortable={true} />
+          <ColumnMenu {...defaultProps} ariaSort="none" />
         )
 
         const menu = getByRole('menu')
@@ -272,7 +266,7 @@ describe('ColumnMenu', () => {
 
       it('handles ArrowLeft key', async () => {
         const { user, getByRole } = render(
-          <ColumnMenu {...defaultProps} sortable={true} />
+          <ColumnMenu {...defaultProps} ariaSort="none" />
         )
 
         const menu = getByRole('menu')
@@ -282,7 +276,7 @@ describe('ColumnMenu', () => {
 
       it('handles ArrowRight key', async () => {
         const { user, getByRole } = render(
-          <ColumnMenu {...defaultProps} sortable={true} />
+          <ColumnMenu {...defaultProps} ariaSort="none" />
         )
 
         const menu = getByRole('menu')
@@ -295,7 +289,7 @@ describe('ColumnMenu', () => {
     describe('Tab navigation', () => {
       it('handles Tab key', async () => {
         const { user, getByRole } = render(
-          <ColumnMenu {...defaultProps} sortable={true} />
+          <ColumnMenu {...defaultProps} ariaSort="none" />
         )
 
         const menu = getByRole('menu')
@@ -305,7 +299,7 @@ describe('ColumnMenu', () => {
 
       it('handles Shift+Tab key', async () => {
         const { user, getByRole } = render(
-          <ColumnMenu {...defaultProps} sortable={true} />
+          <ColumnMenu {...defaultProps} ariaSort="none" />
         )
 
         const menu = getByRole('menu')
@@ -318,7 +312,7 @@ describe('ColumnMenu', () => {
     describe('Home/End keys', () => {
       it('handles Home key', async () => {
         const { user, getByRole } = render(
-          <ColumnMenu {...defaultProps} sortable={true} />
+          <ColumnMenu {...defaultProps} ariaSort="none" />
         )
         const menu = getByRole('menu')
         menu.focus()
@@ -327,7 +321,7 @@ describe('ColumnMenu', () => {
       })
       it('handles End key', async () => {
         const { user, getByRole } = render(
-          <ColumnMenu {...defaultProps} sortable={true} />
+          <ColumnMenu {...defaultProps} ariaSort="none" />
         )
         const menu = getByRole('menu')
         menu.focus()
@@ -338,7 +332,7 @@ describe('ColumnMenu', () => {
 
     it('prevents default and stops propagation for all handled keys', async () => {
       const { user, getByRole } = render(
-        <ColumnMenu {...defaultProps} sortable={true} />
+        <ColumnMenu {...defaultProps} ariaSort="none" />
       )
 
       const menu = getByRole('menu')
@@ -393,7 +387,7 @@ describe('ColumnMenu', () => {
   describe('Edge cases', () => {
     it('works without toggleOrderBy handler', () => {
       const { getByRole } = render(
-        <ColumnMenu {...defaultProps} sortable={true} />
+        <ColumnMenu {...defaultProps} />
       )
 
       getByRole('menu')

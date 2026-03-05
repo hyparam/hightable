@@ -5,16 +5,17 @@ import { createPortal } from 'react-dom'
 import { CellNavigationContext } from '../../contexts/CellNavigationContext.js'
 import { PortalContainerContext } from '../../contexts/PortalContainerContext.js'
 import type { CustomMenuGroup } from '../../helpers/columnConfiguration.js'
-import type { Direction } from '../../helpers/sort'
 import { useFocusManagement } from '../../hooks/useFocusManagement.js'
 
-function getSortDirection(direction?: Direction) {
-  switch (direction) {
+export type AriaSort = 'ascending' | 'descending' | 'none'
+
+function getSortLabel(ariaSort: AriaSort) {
+  switch (ariaSort) {
     case 'ascending':
       return 'Ascending'
     case 'descending':
       return 'Descending'
-    case undefined:
+    case 'none':
       return 'No sort'
   }
 }
@@ -94,8 +95,7 @@ interface ColumnMenuProps {
     left: number
     top: number
   }
-  direction?: Direction
-  sortable?: boolean
+  ariaSort?: AriaSort
   toggleOrderBy?: () => void
   hideColumn?: () => void // returns a function to hide the column, or undefined if the column cannot be hidden
   showAllColumns?: () => void // returns a function to show all columns, or undefined
@@ -108,8 +108,7 @@ export default function ColumnMenu({
   columnName,
   isOpen,
   position,
-  direction,
-  sortable,
+  ariaSort,
   toggleOrderBy,
   hideColumn,
   showAllColumns,
@@ -204,10 +203,6 @@ export default function ColumnMenu({
     return null
   }
 
-  const sortDirection = getSortDirection(direction)
-
-  const showVisibilityGroup = !(!hideColumnAndClose && !showAllColumnsAndClose)
-
   if (!container) {
     return null
   }
@@ -227,16 +222,16 @@ export default function ColumnMenu({
         onClick={onWrapperClick}
       >
         <div role="presentation" id={labelId} aria-hidden="true">{columnName}</div>
-        {sortable
+        {ariaSort !== undefined
           && (
             <MenuGroup title="Sort order">
               <MenuItem
                 onClick={toggleOrderBy}
-                label={sortDirection}
+                label={getSortLabel(ariaSort)}
               />
             </MenuGroup>
           )}
-        {showVisibilityGroup
+        {(hideColumnAndClose !== undefined || showAllColumnsAndClose !== undefined)
           && (
             <MenuGroup title="Visibility">
               {hideColumnAndClose

@@ -2,7 +2,7 @@ import { act, fireEvent } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { ColumnDescriptorsContext, NumColumnsContext } from '../../contexts/DataContext.js'
-import { OrderByContext, ToggleColumnOrderByContext } from '../../contexts/OrderByContext.js'
+import { SortInfoAndActionsByColumnContext } from '../../contexts/OrderByContext.js'
 import { getOffsetWidth } from '../../helpers/width.js'
 import { ColumnParametersProvider } from '../../providers/ColumnParametersProvider.js'
 import { ColumnWidthsProvider } from '../../providers/ColumnWidthsProvider.js'
@@ -31,10 +31,8 @@ const defaultProps = {
   columnIndex: 0,
   ariaColIndex: 1,
   ariaRowIndex: 1,
-  columnConfig: { sortable: true },
+  columnConfig: {},
 }
-
-const nonSortableProps = { ...defaultProps, columnConfig: { sortable: false } }
 
 describe('ColumnHeader', () => {
   const cacheKey = 'key'
@@ -45,7 +43,7 @@ describe('ColumnHeader', () => {
 
   it('renders column header correctly', () => {
     const content = 'test'
-    const { getByRole } = render(<table><thead><tr><ColumnHeader columnName={content} {...nonSortableProps}>{content}</ColumnHeader></tr></thead></table>)
+    const { getByRole } = render(<table><thead><tr><ColumnHeader columnName={content} {...defaultProps}>{content}</ColumnHeader></tr></thead></table>)
     const element = getByRole('columnheader')
     expect(element.textContent).toEqual(content)
     expect(getOffsetWidth).not.toHaveBeenCalled()
@@ -285,13 +283,14 @@ describe('ColumnHeader', () => {
 
   it('call toggleOrderBy (eg. to change orderBy) when clicking on the header, but not when clicking on the resize handle', async () => {
     const toggleOrderBy = vi.fn()
+    const sortInfoAndActionsByColumn = new Map([['test', { toggleOrderBy }]])
     const { user, getByRole } = render(
       <table>
         <thead>
           <tr>
-            <ToggleColumnOrderByContext.Provider value={toggleOrderBy}>
+            <SortInfoAndActionsByColumnContext.Provider value={sortInfoAndActionsByColumn}>
               <ColumnHeader columnName="test" {...defaultProps} />
-            </ToggleColumnOrderByContext.Provider>
+            </SortInfoAndActionsByColumnContext.Provider>
           </tr>
         </thead>
       </table>
@@ -306,13 +305,14 @@ describe('ColumnHeader', () => {
 
   it.for(['{ }', '{Enter}'])('call toggleOrderBy (eg. to change orderBy) when pressing "%s" while the header is focused', async (key) => {
     const toggleOrderBy = vi.fn()
+    const sortInfoAndActionsByColumn = new Map([['test', { toggleOrderBy }]])
     const { user, getByRole } = render(
       <table>
         <thead>
           <tr>
-            <ToggleColumnOrderByContext.Provider value={toggleOrderBy}>
+            <SortInfoAndActionsByColumnContext.Provider value={sortInfoAndActionsByColumn}>
               <ColumnHeader columnName="test" {...defaultProps} />
-            </ToggleColumnOrderByContext.Provider>
+            </SortInfoAndActionsByColumnContext.Provider>
           </tr>
         </thead>
       </table>
@@ -321,70 +321,6 @@ describe('ColumnHeader', () => {
     header.focus()
     await user.keyboard(key)
     expect(toggleOrderBy).toHaveBeenCalled()
-  })
-
-  describe('if sortable is set to false', () => {
-    it('does not call toggleOrderBy when clicking on the header', async () => {
-      const toggleOrderBy = vi.fn()
-      const props = { ...defaultProps, columnConfig: { sortable: false } }
-      const { user, getByRole } = render(
-        <table>
-          <thead>
-            <tr>
-              <ToggleColumnOrderByContext.Provider value={toggleOrderBy}>
-                <ColumnHeader columnName="test" {...props} />
-              </ToggleColumnOrderByContext.Provider>
-            </tr>
-          </thead>
-        </table>
-      )
-      const header = getByRole('columnheader')
-      const resizeHandle = getByRole('spinbutton')
-      await user.click(resizeHandle)
-      expect(toggleOrderBy).not.toHaveBeenCalled()
-      await user.click(header)
-      expect(toggleOrderBy).not.toHaveBeenCalled()
-    })
-
-    it.for(['{ }', '{Enter}'])('does not call toggleOrderBy when pressing "%s"', async (key) => {
-      const toggleOrderBy = vi.fn()
-      const props = { ...defaultProps, columnConfig: { sortable: false } }
-      const { user, getByRole } = render(
-        <table>
-          <thead>
-            <tr>
-              <ToggleColumnOrderByContext.Provider value={toggleOrderBy}>
-                <ColumnHeader columnName="test" {...props} />
-              </ToggleColumnOrderByContext.Provider>
-            </tr>
-          </thead>
-        </table>
-      )
-      const header = getByRole('columnheader')
-      header.focus()
-      await user.keyboard(key)
-      expect(toggleOrderBy).not.toHaveBeenCalled()
-    })
-
-    describe('but the column is present in orderBy (contradiction)', () => {
-      it('does not indicate that the column is sorted (aria-sort and data-can-sort are not set)', () => {
-        const props = { ...defaultProps, columnConfig: { sortable: false } }
-        const { getByRole } = render(
-          <table>
-            <thead>
-              <tr>
-                <OrderByContext.Provider value={[{ column: 'test', direction: 'ascending' }]}>
-                  <ColumnHeader columnName="test" {...props} />
-                </OrderByContext.Provider>
-              </tr>
-            </thead>
-          </table>
-        )
-        const header = getByRole('columnheader')
-        expect(header.getAttribute('aria-sort')).toBe(null)
-        expect(header.dataset.canSort).toBeUndefined()
-      })
-    })
   })
 
   it('copies the column name to clipboard on copy event', async () => {
