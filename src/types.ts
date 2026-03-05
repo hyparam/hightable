@@ -64,7 +64,7 @@ export interface HighTableProps {
   maxRowNumber?: number
   /** Number of rows per page for keyboard navigation (default 20) */
   numRowsPerPage?: number
-  /** Order used to fetch the rows. If undefined, the table is unordered, the sort controls are hidden and the interactions are disabled. Pass [] to fetch the rows in the original order. */
+  /** Order used to fetch the rows. If undefined, the table is unordered, the sort controls are hidden and the interactions are disabled. Pass [] to fetch the rows in the original order. Columns the data frame marks as non-sortable will be ignored. */
   orderBy?: OrderBy
   /** Number of rows to fetch beyond the visible table cells. Defaults to 20. */
   overscan?: number
