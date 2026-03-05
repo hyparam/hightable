@@ -76,15 +76,16 @@ describe('TableHeader', () => {
   })
 
   describe('Column Menu Integration', () => {
-    const getHideColumn = vi.fn()
-    const showAllColumns = vi.fn()
+    function getHideColumn() {
+      return vi.fn()
+    }
     it('integrates menu button with table header accessibility', async () => {
       const { user, getByRole } = render(
         <table>
           <thead>
             <tr>
-              {/* pass the visibility context, to get the Hide column button */}
-              <ColumnsVisibilityContext.Provider value={{ getHideColumn, showAllColumns, numberOfVisibleColumns: columnsParameters.length }}>
+              {/* pass the visibility context, to get the "Hide column" button */}
+              <ColumnsVisibilityContext.Provider value={{ getHideColumn, numberOfVisibleColumns: columnsParameters.length }}>
                 <TableHeader
                   columnsParameters={columnsParameters}
                   ariaRowIndex={1}
@@ -120,8 +121,8 @@ describe('TableHeader', () => {
         <table>
           <thead>
             <tr>
-              {/* pass the visibility context, to get the Hide column button */}
-              <ColumnsVisibilityContext.Provider value={{ getHideColumn, showAllColumns, numberOfVisibleColumns: columnsParameters.length }}>
+              {/* pass the visibility context, to get the "Hide column" button */}
+              <ColumnsVisibilityContext.Provider value={{ getHideColumn, numberOfVisibleColumns: columnsParameters.length }}>
                 <TableHeader
                   columnsParameters={columnsParameters}
                   ariaRowIndex={1}
