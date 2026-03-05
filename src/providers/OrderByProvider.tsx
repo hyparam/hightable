@@ -63,7 +63,7 @@ export function OrderByProvider({ children, orderBy: controlledOrderBy, onOrderB
 
   const sortInfoAndActionsByColumn = useMemo(() => {
     const sortInfoByColumn = new Map(
-      orderBy.map(({ column, direction }, index) => {
+      filteredOrderBy.map(({ column, direction }, index) => {
         return [column, { direction, index }]
       })
     )
@@ -75,7 +75,7 @@ export function OrderByProvider({ children, orderBy: controlledOrderBy, onOrderB
         }]
       })
     )
-  }, [sortableColumns, orderBy, toggleColumnOrderBy])
+  }, [sortableColumns, filteredOrderBy, toggleColumnOrderBy])
 
   return (
     <OrderByContext.Provider value={filteredOrderBy}>
