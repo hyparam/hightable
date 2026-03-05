@@ -64,7 +64,19 @@ export interface HighTableProps {
   maxRowNumber?: number
   /** Number of rows per page for keyboard navigation (default 20) */
   numRowsPerPage?: number
-  /** Order used to fetch the rows. If undefined, the table is unordered, the sort controls are hidden and the interactions are disabled. Pass [] to fetch the rows in the original order. Columns the data frame marks as non-sortable will be ignored. */
+  /**
+   * Order used to fetch the rows.
+   *
+   * If undefined on the first render, the component is in uncontrolled mode and manages
+   * the sort state internally: the table remains sortable and the sort controls are visible.
+   *
+   * If it is set on the first render, the component is in controlled mode and the parent
+   * component is responsible for updating the 'orderBy' prop on user interactions
+   * (see onOrderByChange).
+   *
+   * Pass [] to fetch the rows in the original order. Columns the data frame marks as
+   * non-sortable will be ignored.
+   */
   orderBy?: OrderBy
   /** Number of rows to fetch beyond the visible table cells. Defaults to 20. */
   overscan?: number

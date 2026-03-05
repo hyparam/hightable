@@ -39,7 +39,7 @@ export function OrderByProvider({ children, orderBy: controlledOrderBy, onOrderB
     // ^ memoizing this check to avoid logging warnings on every render, and only when orderBy or columnParameters change.
     return orderBy.filter(({ column }) => {
       if (!sortableColumns.has(column)) {
-        console.warn(`Column "${column}" is in orderBy but is not sortable. It will be ignored. Fix the orderBy state or set the column as sortable.`)
+        console.warn(`Column "${column}" is in orderBy but is not sortable. It will be ignored. Fix the orderBy state or mark the column as sortable in the DataFrame's columnDescriptors.`)
         return false
       }
       return true

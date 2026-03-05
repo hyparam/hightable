@@ -63,7 +63,7 @@ describe('OrderByProvider', () => {
     expect(getByTestId('order-by').textContent).toBe(JSON.stringify([{ column: 'col2', direction: 'descending' }]))
     expect(getByTestId('col1-direction').textContent).toBe('')
     expect(getByTestId('col1-order-by-index').textContent).toBe('')
-    expect(consoleWarnSpy).toHaveBeenCalledWith('Column "col1" is in orderBy but is not sortable. It will be ignored. Fix the orderBy state or set the column as sortable.')
+    expect(consoleWarnSpy).toHaveBeenCalledWith('Column "col1" is in orderBy but is not sortable. It will be ignored. Fix the orderBy state or mark the column as sortable in the DataFrame\'s columnDescriptors.')
     consoleWarnSpy.mockRestore()
   })
 
