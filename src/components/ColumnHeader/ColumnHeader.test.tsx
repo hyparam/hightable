@@ -2,7 +2,7 @@ import { act, fireEvent } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { ColumnDescriptorsContext, NumColumnsContext } from '../../contexts/DataContext.js'
-import { ToggleColumnOrderByContext } from '../../contexts/OrderByContext.js'
+import { OrderByContext, ToggleColumnOrderByContext } from '../../contexts/OrderByContext.js'
 import { getOffsetWidth } from '../../helpers/width.js'
 import { ColumnParametersProvider } from '../../providers/ColumnParametersProvider.js'
 import { ColumnWidthsProvider } from '../../providers/ColumnWidthsProvider.js'
@@ -364,6 +364,26 @@ describe('ColumnHeader', () => {
       header.focus()
       await user.keyboard(key)
       expect(toggleOrderBy).not.toHaveBeenCalled()
+    })
+
+    describe('but the column is present in orderBy (contradiction)', () => {
+      it('does not indicate that the column is sorted (aria-sort and data-can-sort are not set)', () => {
+        const props = { ...defaultProps, columnConfig: { sortable: false } }
+        const { getByRole } = render(
+          <table>
+            <thead>
+              <tr>
+                <OrderByContext.Provider value={[{ column: 'test', direction: 'ascending' }]}>
+                  <ColumnHeader columnName="test" {...props} />
+                </OrderByContext.Provider>
+              </tr>
+            </thead>
+          </table>
+        )
+        const header = getByRole('columnheader')
+        expect(header.getAttribute('aria-sort')).toBe(null)
+        expect(header.dataset.canSort).toBeUndefined()
+      })
     })
   })
 
