@@ -52,7 +52,11 @@ function useSortInformation(columnName: string) {
       ? '⭣'
       : toggleOrderBy !== undefined
         ? '⇅'
-        : '' // the column might be sorted later, so we reserve the space for the indicator to avoid layout shift when sorting
+        : ''
+        // ^ last case: read-only mode and not sorted.
+        // As the column might be sorted later, we pass '' to differentiate it from
+        // undefined, which means "not sortable", so that the component can reserve
+        // space and avoid layout shift if it becomes sorted.
   return { ariaSort, orderByIndex: sortInfo?.index, sortDescription, sortIndicator, toggleOrderBy }
 }
 export default function ColumnHeader({ columnIndex, columnName, columnConfig, canMeasureWidth, ariaColIndex, ariaRowIndex, className, children }: Props) {
