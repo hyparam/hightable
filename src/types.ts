@@ -25,7 +25,7 @@ export interface CellPosition {
   rowIndex: number
 }
 
-// TODO(SL): update orderBy, onOrderByChange, selection, onSelectionChange docstrings to reflect the reality
+// TODO(SL): update selection, onSelectionChange docstrings to reflect the reality
 
 export interface HighTableProps {
   /** Data provider for the table */
