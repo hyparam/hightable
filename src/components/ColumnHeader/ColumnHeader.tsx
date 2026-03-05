@@ -140,7 +140,13 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
   // If the hightable user provides a custom header component, they can choose where to place these controls inside it
   const controls = useMemo(() => (
     <div role="group">
-      {/* if the column is not sortable, but is present in orderBy (contradiction), we hide the sort indicator. */}
+      {/**
+       * note about the empty space (''):
+       * - read-only mode (ariaSort===true, canSort===false): the column could be sorted, but is not currently, so we show the space, as an indication that it could be sorted at some point
+       * - not sortable (ariaSort===false): we don't show the space, as an indication that it will never be sorted.
+       *
+       * note: if the column is not sortable, but is present in orderBy (contradiction), we hide the sort indicator (ariaSort is set to false).
+      */}
       {(ariaSort !== undefined)
         && (
           <span role="img" aria-hidden="true">
