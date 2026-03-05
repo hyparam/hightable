@@ -36,9 +36,13 @@ export default function ColumnHeader({ columnIndex, columnName, columnConfig, ca
   const readOnlyOrderBy = toggleColumnOrderBy === undefined
   const { direction, orderByIndex } = useColumnOrderBy(columnName)
 
-  if (!sortable && direction !== undefined) {
-    console.warn(`Column "${columnName}" has an order in orderBy but is not sortable. Fix the orderBy state or set the column as sortable. The column is not shown as ordered.`)
-  }
+  useEffect(() => {
+    // inside a useEffect, to warn only once, and not on every render
+    if (!sortable && direction !== undefined) {
+      console.warn(`Column "${columnName}" has an order in orderBy but is not sortable. Fix the orderBy state or set the column as sortable. The column is not shown as ordered.`)
+    }
+  }, [sortable, direction, columnName])
+
   const ariaSort = sortable ? (direction ?? 'none') : undefined
   const canSort = sortable === true && toggleColumnOrderBy !== undefined
 
