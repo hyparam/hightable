@@ -200,5 +200,24 @@ describe('OrderByProvider', () => {
         expect(onOrderByChange).not.toHaveBeenCalled()
       })
     })
+
+    it('removes all non-sortable columns from the orderBy state when toggling a column', () => {
+      const orderBy = [{ column: 'col1', direction: 'ascending' as const }, { column: 'col2', direction: 'ascending' as const }, { column: 'col3', direction: 'descending' as const }]
+      const onOrderByChange = vi.fn()
+      const { getByTestId } = render(
+        // col1 is in orderBy, but is not sortable. It will be removed when toggling col2
+        <SortableColumnsContext.Provider value={new Set(['col2', 'col3'])}>
+          <OrderByProvider orderBy={orderBy} onOrderByChange={onOrderByChange}>
+            <TestComponent />
+          </OrderByProvider>
+        </SortableColumnsContext.Provider>
+      )
+
+      const toggleCol2Button = getByTestId('toggle-column-col2')
+      act(() => {
+        fireEvent.click(toggleCol2Button)
+      })
+      expect(onOrderByChange).toHaveBeenCalledWith([{ column: 'col2', direction: 'descending' }, { column: 'col3', direction: 'descending' }])
+    })
   })
 })

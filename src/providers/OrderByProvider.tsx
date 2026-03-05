@@ -52,14 +52,14 @@ export function OrderByProvider({ children, orderBy: controlledOrderBy, onOrderB
     }
     if (exclusiveSort) {
       return (columnName: string) => {
-        setOrderBy(toggleColumnExclusive(columnName, orderBy))
+        setOrderBy(toggleColumnExclusive(columnName, filteredOrderBy))
       }
     } else {
       return (columnName: string) => {
-        setOrderBy(toggleColumn(columnName, orderBy))
+        setOrderBy(toggleColumn(columnName, filteredOrderBy))
       }
     }
-  }, [exclusiveSort, orderBy, setOrderBy])
+  }, [exclusiveSort, filteredOrderBy, setOrderBy])
 
   const sortInfoAndActionsByColumn = useMemo(() => {
     const sortInfoByColumn = new Map(
