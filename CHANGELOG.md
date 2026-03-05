@@ -1,5 +1,21 @@
 # CHANGELOG
 
+## [0.26.4](https://github.com/hyparam/hightable/compare/v0.26.3...v0.26.4) - 2026-03-05
+
+### Added
+
+- pass custom column menu items and menu groups via the column configurations ([#441](https://github.com/hyparam/hightable/pull/441)).
+
+### Fixed
+
+- fix a flaky test ([#442](https://github.com/hyparam/hightable/pull/442)).
+
+### Refactored
+
+- reduce the number of re-renders by memoizing where needed, removing unneeded dependencies, and splitting contexts ([#436](https://github.com/hyparam/hightable/pull/436), [#448](https://github.com/hyparam/hightable/pull/448), [#450](https://github.com/hyparam/hightable/pull/450), [#451](https://github.com/hyparam/hightable/pull/451), [#452](https://github.com/hyparam/hightable/pull/452), [#453](https://github.com/hyparam/hightable/pull/453), [#454](https://github.com/hyparam/hightable/pull/454), [#455](https://github.com/hyparam/hightable/pull/455), [#456](https://github.com/hyparam/hightable/pull/456), [#457](https://github.com/hyparam/hightable/pull/457), [#458](https://github.com/hyparam/hightable/pull/458), [#459](https://github.com/hyparam/hightable/pull/459)).
+- upgrade development dependencies ([#439](https://github.com/hyparam/hightable/pull/439), [#460](https://github.com/hyparam/hightable/pull/460)).
+- add React Scan to storybook, limited to isolation mode ([#444](https://github.com/hyparam/hightable/pull/444)).
+
 ## [0.26.3](https://github.com/hyparam/hightable/compare/v0.26.2...v0.26.3) - 2026-02-09
 
 ### Added
