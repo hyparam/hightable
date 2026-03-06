@@ -12,7 +12,7 @@ type Props = Pick<HighTableProps, 'columnConfiguration'> & {
 /**
  * Provide the columns configuration to the table, through the ColumnParametersContext.
  *
- * It merges the column descriptors from the data frame with the user-provided configuration.
+ * It merges the column names with the user-provided configuration.
  */
 export function ColumnParametersProvider({ columnConfiguration, children }: Props) {
   const columnNames = useContext(ColumnNamesContext)
@@ -20,7 +20,7 @@ export function ColumnParametersProvider({ columnConfiguration, children }: Prop
   const columnParameters = useMemo(() => {
     const inHeader = new Set(columnNames)
 
-    // Build descriptors following DataFrame columns order
+    // Build column parameters following column names order
     const cols: ColumnParameters[] = columnNames.map((name, index) => ({
       name,
       index,

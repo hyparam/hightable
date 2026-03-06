@@ -12,7 +12,7 @@ export type DataFrameWithoutMethods = Omit<DataFrame, 'getRowNumber' | 'getCell'
 /**
  * A set of the names of the sortable columns. Used to check if a column is sortable, and to provide the toggle function in the OrderByContext.
  */
-type SortableColumnsContextType = Set<string>
+type SortableColumnsContextType = ReadonlySet<string>
 
 export const DataVersionContext = createContext<number>(0)
 export const NumRowsContext = createContext<number>(0)
