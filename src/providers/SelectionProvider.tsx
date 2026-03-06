@@ -2,7 +2,7 @@ import type { KeyboardEvent, ReactNode } from 'react'
 import { useCallback, useContext, useEffect, useEffectEvent, useMemo, useState } from 'react'
 
 import type { DataFrameMethods } from '../contexts/DataContext.js'
-import { useData, useNumRows } from '../contexts/DataContext.js'
+import { DataContext, NumRowsContext } from '../contexts/DataContext.js'
 import { OrderByContext } from '../contexts/OrderByContext.js'
 import { SelectionContext } from '../contexts/SelectionContext.js'
 import { checkSignal } from '../helpers/dataframe/helpers.js'
@@ -29,8 +29,8 @@ interface Gesture {
  */
 export function SelectionProvider({ children, selection: controlledSelection, onError, onSelectionChange }: Props) {
   /** The actual number of rows in the data frame */
-  const numRows = useNumRows()
-  const data = useData()
+  const numRows = useContext(NumRowsContext)
+  const data = useContext(DataContext)
   // The selection is only useful for the parent component. If no props are passed, hide the selection feature.
   const [isEnabled] = useState<boolean>(() => controlledSelection !== undefined || onSelectionChange !== undefined)
   const inputState = useInputState<Selection>({

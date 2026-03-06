@@ -1,8 +1,8 @@
-import type { CSSProperties, ReactNode } from 'react'
+import { type CSSProperties, type ReactNode, useContext } from 'react'
 
-import { useNumRows } from '../../contexts/DataContext.js'
+import { NumRowsContext } from '../../contexts/DataContext.js'
 import { PortalContainerContext } from '../../contexts/PortalContainerContext.js'
-import { useHeaderHeight } from '../../contexts/TableCornerSizeContext.js'
+import { TableCornerHeightContext } from '../../contexts/TableCornerSizeContext.js'
 import styles from '../../HighTable.module.css'
 import { useHTMLElement } from '../../hooks/useHTMLElement.js'
 import type { HighTableProps } from '../../types.js'
@@ -14,9 +14,9 @@ type Props = Pick<HighTableProps, 'className' | 'maxRowNumber' | 'styled'> & {
 
 export default function Wrapper({ children, className, maxRowNumber, styled }: Props) {
   /** Number of rows in the data frame */
-  const numRows = useNumRows()
+  const numRows = useContext(NumRowsContext)
   /** Height of the header, used to set a CSS variable for row height calculation in the cells */
-  const headerHeight = useHeaderHeight()
+  const headerHeight = useContext(TableCornerHeightContext)
 
   // reserve space for at least 3 characters
   const numCharacters = Math.max((maxRowNumber ?? numRows).toLocaleString('en-US').length, 3)

@@ -1,7 +1,7 @@
 import type { ChangeEvent, CSSProperties, KeyboardEvent, ReactNode } from 'react'
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useContext, useEffect, useRef } from 'react'
 
-import { useSetTableCornerSize } from '../../contexts/TableCornerSizeContext.js'
+import { SetTableCornerSizeContext } from '../../contexts/TableCornerSizeContext.js'
 import { useCellFocus } from '../../hooks/useCellFocus.js'
 
 interface Props {
@@ -16,7 +16,7 @@ interface Props {
 
 export default function TableCorner({ children, checked, onCheckboxPress, pendingSelectionGesture, style, ariaColIndex, ariaRowIndex }: Props) {
   const { tabIndex, navigateToCell, focusIfNeeded } = useCellFocus({ ariaColIndex, ariaRowIndex })
-  const setTableCornerSize = useSetTableCornerSize()
+  const setTableCornerSize = useContext(SetTableCornerSizeContext)
 
   // Focus the cell if needed. We use an effect, as it acts on the DOM element after render.
   const ref = useRef<HTMLTableCellElement | null>(null)

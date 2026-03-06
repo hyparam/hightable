@@ -1,7 +1,7 @@
 import { type ReactNode, useContext, useMemo } from 'react'
 
 import { SortableColumnsContext } from '../contexts/ColumnParametersContext.js'
-import { useExclusiveSort } from '../contexts/DataContext.js'
+import { ExclusiveSortContext } from '../contexts/DataContext.js'
 import { OrderByContext, SortInfoAndActionsByColumnContext } from '../contexts/OrderByContext.js'
 import { type OrderBy, toggleColumn, toggleColumnExclusive } from '../helpers/sort.js'
 import { useInputState } from '../hooks/useInputState.js'
@@ -24,7 +24,7 @@ type Props = Pick<HighTableProps, 'orderBy' | 'onOrderByChange'> & {
  * The context value is memoized and won't change unless the orderBy or the sortable columns change, to avoid unnecessary re-renders of the consumers.
  */
 export function OrderByProvider({ children, orderBy: controlledOrderBy, onOrderByChange }: Props) {
-  const exclusiveSort = useExclusiveSort()
+  const exclusiveSort = useContext(ExclusiveSortContext)
   const sortableColumns = useContext(SortableColumnsContext)
 
   const [orderBy, setOrderBy] = useInputState<OrderBy>({

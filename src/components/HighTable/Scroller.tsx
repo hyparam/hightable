@@ -3,7 +3,7 @@ import { useCallback, useContext, useMemo } from 'react'
 
 import { CellNavigationContext } from '../../contexts/CellNavigationContext.js'
 import { ScrollContext } from '../../contexts/ScrollContext.js'
-import { useSetViewportSize } from '../../contexts/ViewportSizeContext.js'
+import { SetViewportSizeContext } from '../../contexts/ViewportSizeContext.js'
 import styles from '../../HighTable.module.css'
 
 interface Props {
@@ -13,7 +13,7 @@ interface Props {
 
 export default function Scroller({ children }: Props) {
   /** Callback to set the current viewport size */
-  const setViewportSize = useSetViewportSize()
+  const setViewportSize = useContext(SetViewportSizeContext)
   const { goToCurrentCell } = useContext(CellNavigationContext)
   const { canvasHeight, sliceTop, setScrollTop, setScrollTo } = useContext(ScrollContext)
 

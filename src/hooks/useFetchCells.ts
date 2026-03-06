@@ -1,7 +1,7 @@
 import { useContext, useEffect, useEffectEvent, useMemo } from 'react'
 
 import { ColumnsVisibilityContext } from '../contexts/ColumnsVisibilityContext.js'
-import { useData, useNumRows } from '../contexts/DataContext.js'
+import { DataContext, NumRowsContext } from '../contexts/DataContext.js'
 import { OrderByContext } from '../contexts/OrderByContext.js'
 import { ScrollContext } from '../contexts/ScrollContext.js'
 import { defaultOverscan } from '../helpers/constants.js'
@@ -16,8 +16,8 @@ export function useFetchCells({ overscan = defaultOverscan, onError }: Props) {
   const { visibleRowsStart, visibleRowsEnd } = useContext(ScrollContext)
   const { visibleColumnsParameters } = useContext(ColumnsVisibilityContext)
   const orderBy = useContext(OrderByContext)
-  const data = useData()
-  const numRows = useNumRows()
+  const data = useContext(DataContext)
+  const numRows = useContext(NumRowsContext)
 
   const fetchedRowsStart = useMemo(() => {
     if (visibleRowsStart === undefined) return undefined

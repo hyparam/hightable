@@ -3,7 +3,7 @@ import { useCallback, useContext, useMemo } from 'react'
 
 import { CellNavigationContext } from '../../contexts/CellNavigationContext.js'
 import { ColumnsVisibilityContext } from '../../contexts/ColumnsVisibilityContext.js'
-import { useData, useDataVersion, useNumRows } from '../../contexts/DataContext.js'
+import { DataContext, DataVersionContext, NumRowsContext } from '../../contexts/DataContext.js'
 import { OrderByContext } from '../../contexts/OrderByContext.js'
 import { ScrollContext } from '../../contexts/ScrollContext.js'
 import { SelectionContext } from '../../contexts/SelectionContext.js'
@@ -34,10 +34,10 @@ export default function Slice({
   const { visibleColumnsParameters: columnsParameters } = useContext(ColumnsVisibilityContext)
   const { renderedRowsStart, renderedRowsEnd } = useContext(ScrollContext)
   /** A version number that increments whenever a data frame is updated or resolved (the key remains the same). */
-  const version = useDataVersion()
+  const version = useContext(DataVersionContext)
   /** The actual number of rows in the data frame */
-  const numRows = useNumRows()
-  const data = useData()
+  const numRows = useContext(NumRowsContext)
+  const data = useContext(DataContext)
 
   // Fetch the required cells if needed (visible + overscan)
   // it's a side-effect.

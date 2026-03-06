@@ -1,22 +1,20 @@
 import { render } from '@testing-library/react'
-import { act } from 'react'
+import { act, useContext } from 'react'
 import { describe, expect, it } from 'vitest'
 
-import { useColumnDescriptors, useData, useDataKey, useDataVersion, useExclusiveSort, useNumColumns, useNumRows } from '../../src/contexts/DataContext.js'
+import { ColumnDescriptorsContext, DataKeyContext, DataVersionContext, ExclusiveSortContext, NumColumnsContext, NumRowsContext } from '../../src/contexts/DataContext.js'
 import type { DataFrame, DataFrameEvents } from '../../src/helpers/dataframe/index.js'
 import { arrayDataFrame } from '../../src/helpers/dataframe/index.js'
 import { createEventTarget } from '../../src/helpers/typedEventTarget.js'
 import { DataProvider } from '../../src/providers/DataProvider.js'
 
 function DisplayComponent() {
-  const dataKey = useDataKey()
-  const dataVersion = useDataVersion()
-  const numRows = useNumRows()
-  const columnDescriptors = useColumnDescriptors()
-  const numColumns = useNumColumns()
-  const exclusiveSort = useExclusiveSort() ? 'true' : 'false'
-  // used only to check if the data can be obtained (no error thrown)
-  useData()
+  const dataKey = useContext(DataKeyContext)
+  const dataVersion = useContext(DataVersionContext)
+  const numRows = useContext(NumRowsContext)
+  const columnDescriptors = useContext(ColumnDescriptorsContext)
+  const numColumns = useContext(NumColumnsContext)
+  const exclusiveSort = useContext(ExclusiveSortContext) ? 'true' : 'false'
 
   return (
     <div>
