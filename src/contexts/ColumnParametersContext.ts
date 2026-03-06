@@ -18,9 +18,3 @@ export interface ColumnParameters extends ColumnConfig, Pick<ColumnDescriptor, '
  */
 type ColumnParametersContextType = ColumnParameters[]
 export const ColumnParametersContext = createContext<ColumnParametersContextType>([])
-
-/**
- * A set of the names of the sortable columns. Used to check if a column is sortable, and to provide the toggle function in the OrderByContext.
- */
-type SortableColumnsContextType = Set<string>
-export const SortableColumnsContext = createContext<SortableColumnsContextType>(new Set())

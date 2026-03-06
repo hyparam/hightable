@@ -2,8 +2,7 @@ import { fireEvent, render } from '@testing-library/react'
 import { act, useContext } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 
-import { SortableColumnsContext } from '../../src/contexts/ColumnParametersContext.js'
-import { ExclusiveSortContext } from '../../src/contexts/DataContext.js'
+import { ExclusiveSortContext, SortableColumnsContext } from '../../src/contexts/DataContext.js'
 import { OrderByContext, SortInfoAndActionsByColumnContext } from '../../src/contexts/OrderByContext.js'
 import { OrderByProvider } from '../../src/providers/OrderByProvider.js'
 

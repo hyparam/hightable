@@ -2,7 +2,7 @@ import { render } from '@testing-library/react'
 import { act, useContext } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 
-import { ColumnDescriptorsContext, DataFrameMethodsContext, DataKeyContext, DataVersionContext, ExclusiveSortContext, NumColumnsContext, NumRowsContext } from '../../src/contexts/DataContext.js'
+import { ColumnNamesContext, DataFrameMethodsContext, DataKeyContext, DataVersionContext, ExclusiveSortContext, NumRowsContext, SortableColumnsContext } from '../../src/contexts/DataContext.js'
 import type { DataFrame, DataFrameEvents } from '../../src/helpers/dataframe/index.js'
 import { arrayDataFrame } from '../../src/helpers/dataframe/index.js'
 import { createEventTarget } from '../../src/helpers/typedEventTarget.js'
@@ -12,8 +12,8 @@ function DisplayComponent() {
   const dataKey = useContext(DataKeyContext)
   const dataVersion = useContext(DataVersionContext)
   const numRows = useContext(NumRowsContext)
-  const columnDescriptors = useContext(ColumnDescriptorsContext)
-  const numColumns = useContext(NumColumnsContext)
+  const columnNames = useContext(ColumnNamesContext)
+  const sortableColumns = useContext(SortableColumnsContext)
   const exclusiveSort = useContext(ExclusiveSortContext) ? 'true' : 'false'
   const dataFrameMethods = useContext(DataFrameMethodsContext)
 
@@ -22,8 +22,8 @@ function DisplayComponent() {
       <span data-testid="data-key">{dataKey}</span>
       <span data-testid="data-version">{dataVersion}</span>
       <span data-testid="num-rows">{numRows}</span>
-      <span data-testid="column-descriptors">{JSON.stringify(columnDescriptors)}</span>
-      <span data-testid="num-columns">{numColumns}</span>
+      <span data-testid="column-names">{JSON.stringify(columnNames)}</span>
+      <span data-testid="sortable-columns">{JSON.stringify(Array.from(sortableColumns))}</span>
       <span data-testid="exclusive-sort">{exclusiveSort}</span>
       <button
         data-testid="get-cell"
@@ -67,7 +67,8 @@ describe('DataProvider', () => {
     const { getByTestId } = render(<TestComponent data={data} />)
     expect(getByTestId('data-version').textContent).toBe('0')
     expect(getByTestId('num-rows').textContent).toBe(data.numRows.toString())
-    expect(getByTestId('num-columns').textContent).toBe(data.columnDescriptors.length.toString())
+    expect(getByTestId('column-names').textContent).toBe(JSON.stringify(['a', 'b']))
+    expect(getByTestId('sortable-columns').textContent).toBe(JSON.stringify([]))
     expect(getByTestId('exclusive-sort').textContent).toBe('false')
   })
 
@@ -191,31 +192,34 @@ describe('DataProvider', () => {
   })
 
   describe('on unobservable data frame change', () => {
-    it('should provide the initial column descriptors', () => {
+    it('should provide the initial column names', () => {
       const data = arrayDataFrame([{ a: 1, b: 2 }, { a: 3, b: 4 }])
       const { getByTestId, rerender } = render(<TestComponent data={data} />)
-      const initialColumnDescriptors = JSON.stringify(data.columnDescriptors)
-      expect(getByTestId('column-descriptors').textContent).toBe(initialColumnDescriptors)
+      const initialColumnNames = JSON.stringify(['a', 'b'])
+      expect(getByTestId('column-names').textContent).toBe(initialColumnNames)
       // Change the column descriptors in the data frame
       data.columnDescriptors.push({ name: 'c', sortable: true })
-      if (data.columnDescriptors[0] === undefined || data.columnDescriptors[1] === undefined) {
+      if (data.columnDescriptors[0] === undefined) {
         throw new Error('Not enough column descriptors')
       }
       data.columnDescriptors[0].name = 'x'
+      // force a re-render without changing the data frame instance
+      rerender(<TestComponent data={data} />)
+      expect(getByTestId('column-names').textContent).toBe(initialColumnNames)
+    })
+    it('should provide the initial sortable columns based on column descriptors', () => {
+      const data = arrayDataFrame([{ a: 1, b: 2 }, { a: 3, b: 4 }])
+      if (data.columnDescriptors[0] === undefined || data.columnDescriptors[1] === undefined) {
+        throw new Error('Not enough column descriptors')
+      }
+      data.columnDescriptors[0].sortable = true
+      const { getByTestId, rerender } = render(<TestComponent data={data} />)
+      expect(getByTestId('sortable-columns').textContent).toBe(JSON.stringify(['a']))
+      // Change the sortable property of the column descriptors in the data frame
       data.columnDescriptors[1].sortable = true
       // force a re-render without changing the data frame instance
       rerender(<TestComponent data={data} />)
-      expect(getByTestId('column-descriptors').textContent).toBe(initialColumnDescriptors)
-    })
-    it('should provide the initial number of columns', () => {
-      const data = arrayDataFrame([{ a: 1, b: 2 }, { a: 3, b: 4 }])
-      const { getByTestId, rerender } = render(<TestComponent data={data} />)
-      expect(getByTestId('num-columns').textContent).toBe(data.columnDescriptors.length.toString())
-      // Change the number of columns in the data frame
-      data.columnDescriptors.push({ name: 'c' })
-      // force a re-render without changing the data frame instance
-      rerender(<TestComponent data={data} />)
-      expect(getByTestId('num-columns').textContent).toBe('2')
+      expect(getByTestId('sortable-columns').textContent).toBe(JSON.stringify(['a']))
     })
     it('should provide the initial exclusiveSort value', () => {
       const data = arrayDataFrame([{ a: 1, b: 2 }, { a: 3, b: 4 }])

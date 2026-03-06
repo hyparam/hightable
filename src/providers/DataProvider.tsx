@@ -1,7 +1,7 @@
 import { type ReactNode, useEffect, useState } from 'react'
 
 import type { DataFrameWithoutMethods } from '../contexts/DataContext.js'
-import { ColumnDescriptorsContext, DataFrameMethodsContext, DataKeyContext, DataVersionContext, ExclusiveSortContext, NumColumnsContext, NumRowsContext } from '../contexts/DataContext.js'
+import { ColumnNamesContext, DataFrameMethodsContext, DataKeyContext, DataVersionContext, ExclusiveSortContext, NumRowsContext, SortableColumnsContext } from '../contexts/DataContext.js'
 import type { HighTableProps } from '../types.js'
 
 // Assign stable numeric ids to data instances without triggering state
@@ -23,9 +23,15 @@ type Props = Pick<HighTableProps, 'data'> & {
 }
 
 /**
- * Provides the number of rows and columns, and the version of the data frame.
+ * Provides the data frame parts as separate contexts:
+ * - number of rows
+ * - version of the data frame (incremented on each update or resolve event)
+ * - column names
+ * - sortable columns
+ * - exclusive sort flag
+ * - getRowNumber, getCell, and fetch methods
  *
- * It also providers a data key for testing purposes.
+ * It also provides a data key for testing purposes.
  */
 export function DataProvider({ children, data }: Props) {
   const key = getDataKey(data)
@@ -63,9 +69,9 @@ function KeyedDataProvider({ children, data }: KeyedDataProviderProps) {
 
   // Some dataframe properties are expected to be stable for a given data frame.
   // We keep their initial value, no setter.
-  const [columnDescriptors] = useState(() => data.columnDescriptors.map(({ name, sortable }) => ({ name, sortable })))
-  const numColumns = columnDescriptors.length
   const [exclusiveSort] = useState(() => data.exclusiveSort === true)
+  const [columnNames] = useState(() => data.columnDescriptors.map(({ name }) => name))
+  const [sortableColumns] = useState(() => new Set(data.columnDescriptors.filter(({ sortable }) => sortable).map(({ name }) => name)))
 
   // Synchronize version and numRows with data frame events (external system - useEffect is needed)
   useEffect(() => {
@@ -87,16 +93,16 @@ function KeyedDataProvider({ children, data }: KeyedDataProviderProps) {
 
   // Multiple contexts, to avoid unnecessary re-renders of the components consuming the API when only the data changes, and vice-versa. See https://react.dev/reference/react/useContext#caveats for more details.
   return (
-    <DataVersionContext.Provider value={version}>
-      <ColumnDescriptorsContext.Provider value={columnDescriptors}>
-        <NumColumnsContext.Provider value={numColumns}>
-          <ExclusiveSortContext.Provider value={exclusiveSort}>
+    <ColumnNamesContext.Provider value={columnNames}>
+      <SortableColumnsContext.Provider value={sortableColumns}>
+        <ExclusiveSortContext.Provider value={exclusiveSort}>
+          <DataVersionContext.Provider value={version}>
             <NumRowsContext.Provider value={numRows}>
               {children}
             </NumRowsContext.Provider>
-          </ExclusiveSortContext.Provider>
-        </NumColumnsContext.Provider>
-      </ColumnDescriptorsContext.Provider>
-    </DataVersionContext.Provider>
+          </DataVersionContext.Provider>
+        </ExclusiveSortContext.Provider>
+      </SortableColumnsContext.Provider>
+    </ColumnNamesContext.Provider>
   )
 }

@@ -3,7 +3,7 @@ import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'r
 
 import { ColumnParametersContext } from '../contexts/ColumnParametersContext.js'
 import { ColumnWidthsContext } from '../contexts/ColumnWidthsContext.js'
-import { NumColumnsContext } from '../contexts/DataContext.js'
+import { ColumnNamesContext } from '../contexts/DataContext.js'
 import { TableCornerWidthContext } from '../contexts/TableCornerSizeContext.js'
 import { ViewportWidthContext } from '../contexts/ViewportSizeContext.js'
 import { cellStyle } from '../helpers/width.js'
@@ -77,12 +77,8 @@ export function ColumnWidthsProvider({ children, localStorageKey, minWidth }: Co
   /** Current table corner width (used to compute the maximum total width) */
   const tableCornerWidth = useContext(TableCornerWidthContext)
   /** Number of columns (used to initialize the widths array, and compute the widths) */
-  const numColumns = useContext(NumColumnsContext)
+  const numColumns = useContext(ColumnNamesContext).length
 
-  // Number of columns
-  if (!Number.isInteger(numColumns) || numColumns < 0) {
-    throw new Error(`Invalid numColumns: ${numColumns}. It must be a positive integer.`)
-  }
   const isValidIndex = useCallback((index?: number): index is number => {
     return index !== undefined && Number.isInteger(index) && index >= 0 && index < numColumns
   }, [numColumns])

@@ -1,7 +1,7 @@
 import { type ReactNode, useContext, useMemo } from 'react'
 
-import { type ColumnParameters, ColumnParametersContext, SortableColumnsContext } from '../contexts/ColumnParametersContext.js'
-import { ColumnDescriptorsContext } from '../contexts/DataContext.js'
+import { type ColumnParameters, ColumnParametersContext } from '../contexts/ColumnParametersContext.js'
+import { ColumnNamesContext } from '../contexts/DataContext.js'
 import type { HighTableProps } from '../types.js'
 
 type Props = Pick<HighTableProps, 'columnConfiguration'> & {
@@ -12,21 +12,16 @@ type Props = Pick<HighTableProps, 'columnConfiguration'> & {
 /**
  * Provide the columns configuration to the table, through the ColumnParametersContext.
  *
- * It merges the column descriptors from the data frame with the user-provided configuration.
+ * It merges the column names with the user-provided configuration.
  */
 export function ColumnParametersProvider({ columnConfiguration, children }: Props) {
-  const columnDescriptors = useContext(ColumnDescriptorsContext)
-
-  // A column is sortable iif it's marked as sortable in the column descriptors from the data frame. The user configuration can't change that.
-  const sortableColumns = useMemo(() => {
-    return new Set(columnDescriptors.filter(({ sortable }) => sortable).map(({ name }) => name))
-  }, [columnDescriptors])
+  const columnNames = useContext(ColumnNamesContext)
 
   const columnParameters = useMemo(() => {
-    const inHeader = new Set(columnDescriptors.map(c => c.name))
+    const inHeader = new Set(columnNames)
 
-    // Build descriptors following DataFrame columns order
-    const cols: ColumnParameters[] = columnDescriptors.map(({ name }, index) => ({
+    // Build column parameters following column names order
+    const cols: ColumnParameters[] = columnNames.map((name, index) => ({
       name,
       index,
       ...columnConfiguration?.[name] ?? {},
@@ -43,13 +38,11 @@ export function ColumnParametersProvider({ columnConfiguration, children }: Prop
     }
 
     return cols
-  }, [columnDescriptors, columnConfiguration])
+  }, [columnNames, columnConfiguration])
 
   return (
     <ColumnParametersContext.Provider value={columnParameters}>
-      <SortableColumnsContext.Provider value={sortableColumns}>
-        {children}
-      </SortableColumnsContext.Provider>
+      {children}
     </ColumnParametersContext.Provider>
   )
 }
