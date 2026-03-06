@@ -37,7 +37,7 @@
   ],
   "scripts": {
     "build:bundle": "vite build",
-    "build:types": "tsc -b",
+    "build:types": "tsc -p tsconfig.build.json",
     "build": "npm run build:bundle && npm run build:types",
     "coverage": "vitest run --coverage --coverage.include=src --coverage.exclude=src/**/*.stories.tsx",
     "lint": "eslint",
@@ -45,7 +45,7 @@
     "prepublishOnly": "npm run build",
     "storybook": "storybook dev -p 6006 --disable-telemetry",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc"
   },
   "devDependencies": {
     "@eslint/compat": "2.0.2",

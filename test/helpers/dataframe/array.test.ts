@@ -105,7 +105,11 @@ describe('arrayDataFrame', () => {
     df.eventTarget?.addEventListener('update', resolveListener)
 
     // when a property of an array element (a cell) is changed, no event is dispatched, because the proxy is shallow
-    df._array[0].name = 'Alicia'
+    const originalRow = df._array[0]
+    if (originalRow === undefined) {
+      throw new Error('Original row is undefined')
+    }
+    originalRow.name = 'Alicia'
     expect(resolveListener).toHaveBeenCalledTimes(0)
     expect(df.getCell({ row: 0, column: 'name' })?.value).toBe('Alicia')
   })

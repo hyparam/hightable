@@ -198,6 +198,9 @@ describe('DataProvider', () => {
       expect(getByTestId('column-descriptors').textContent).toBe(initialColumnDescriptors)
       // Change the column descriptors in the data frame
       data.columnDescriptors.push({ name: 'c', sortable: true })
+      if (data.columnDescriptors[0] === undefined || data.columnDescriptors[1] === undefined) {
+        throw new Error('Not enough column descriptors')
+      }
       data.columnDescriptors[0].name = 'x'
       data.columnDescriptors[1].sortable = true
       // force a re-render without changing the data frame instance
