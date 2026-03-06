@@ -91,6 +91,27 @@ describe('DataProvider', () => {
     expect(data.fetch).toHaveBeenCalledWith({ rowStart: 0, rowEnd: 10 })
   })
 
+  it('uses the current data frame methods, even if they change after the initial render', () => {
+    const data = arrayDataFrame([{ a: 1, b: 2 }, { a: 3, b: 4 }])
+    const getCell1 = vi.fn()
+    const getCell2 = vi.fn()
+    data.getCell = getCell1
+    const { getByTestId, rerender } = render(<TestComponent data={data} />)
+    act(() => {
+      getByTestId('get-cell').click()
+    })
+    expect(getCell1).toHaveBeenCalledWith({ row: 0, column: 'col1' })
+
+    // Change the getCell method in the data frame
+    data.getCell = getCell2
+    // force a re-render without changing the data frame instance
+    rerender(<TestComponent data={data} />)
+    act(() => {
+      getByTestId('get-cell').click()
+    })
+    expect(getCell2).toHaveBeenCalledWith({ row: 0, column: 'col1' })
+  })
+
   describe('on observable data frame change', () => {
     it('should increment version on data resolution, but keep the same key', async () => {
       const data = arrayDataFrame([{ a: 1 }, { a: 2 }])
