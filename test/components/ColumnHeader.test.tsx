@@ -2,7 +2,7 @@ import { act, fireEvent } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import ColumnHeader from '../../src/components/ColumnHeader.js'
-import { ColumnNamesContext, NumColumnsContext } from '../../src/contexts/DataContext.js'
+import { ColumnNamesContext } from '../../src/contexts/DataContext.js'
 import { SortInfoAndActionsByColumnContext } from '../../src/contexts/OrderByContext.js'
 import { getOffsetWidth } from '../../src/helpers/width.js'
 import { ColumnParametersProvider } from '../../src/providers/ColumnParametersProvider.js'
@@ -62,11 +62,11 @@ describe('ColumnHeader', () => {
 
   it('measures the width if canMeasureWidth is true', () => {
     render(
-      <NumColumnsContext.Provider value={1}>
+      <ColumnNamesContext.Provider value={['test']}>
         <ColumnWidthsProvider minWidth={10}>
           <table><thead><tr><ColumnHeader columnName="test" {...defaultProps} canMeasureWidth={true} /></tr></thead></table>
         </ColumnWidthsProvider>
-      </NumColumnsContext.Provider>
+      </ColumnNamesContext.Provider>
     )
     expect(getOffsetWidth).toHaveBeenCalled()
   })
@@ -95,11 +95,11 @@ describe('ColumnHeader', () => {
     localStorage.setItem(cacheKey, JSON.stringify([savedWidth]))
 
     const { getByRole } = render(
-      <NumColumnsContext.Provider value={1}>
+      <ColumnNamesContext.Provider value={['test']}>
         <ColumnWidthsProvider localStorageKey={cacheKey} minWidth={10}>
           <table><thead><tr><ColumnHeader columnName="test" {...defaultProps} /></tr></thead></table>
         </ColumnWidthsProvider>
-      </NumColumnsContext.Provider>
+      </ColumnNamesContext.Provider>
     )
     const header = getByRole('columnheader')
     expect(header.style.maxWidth).toEqual(`${savedWidth}px`)
@@ -113,11 +113,11 @@ describe('ColumnHeader', () => {
     localStorage.setItem(cacheKey, JSON.stringify([savedWidth]))
 
     const { getByRole } = render(
-      <NumColumnsContext.Provider value={1}>
+      <ColumnNamesContext.Provider value={['test']}>
         <ColumnWidthsProvider localStorageKey={cacheKey} minWidth={minWidth}>
           <table><thead><tr><ColumnHeader columnName="test" {...defaultProps} /></tr></thead></table>
         </ColumnWidthsProvider>
-      </NumColumnsContext.Provider>
+      </ColumnNamesContext.Provider>
     )
     const header = getByRole('columnheader')
     expect(header.style.maxWidth).toEqual(expected)
@@ -130,11 +130,11 @@ describe('ColumnHeader', () => {
     localStorage.setItem(cacheKey, JSON.stringify([savedWidth]))
 
     const { user, getByRole } = render(
-      <NumColumnsContext.Provider value={1}>
+      <ColumnNamesContext.Provider value={['test']}>
         <ColumnWidthsProvider localStorageKey={cacheKey} minWidth={minWidth}>
           <table><thead><tr><ColumnHeader columnName="test" canMeasureWidth={true} {...defaultProps} /></tr></thead></table>
         </ColumnWidthsProvider>
-      </NumColumnsContext.Provider>
+      </ColumnNamesContext.Provider>
     )
     const header = getByRole('columnheader')
     const resizeHandle = getByRole('spinbutton')
@@ -156,11 +156,11 @@ describe('ColumnHeader', () => {
     localStorage.setItem(cacheKey, JSON.stringify([savedWidth]))
 
     const { user, getByRole } = render(
-      <NumColumnsContext.Provider value={1}>
+      <ColumnNamesContext.Provider value={['test']}>
         <ColumnWidthsProvider localStorageKey={cacheKey} minWidth={10}>
           <table><thead><tr><ColumnHeader columnName="test" {...defaultProps} /></tr></thead></table>
         </ColumnWidthsProvider>
-      </NumColumnsContext.Provider>
+      </ColumnNamesContext.Provider>
     )
 
     // Simulate resizing the column
@@ -191,13 +191,13 @@ describe('ColumnHeader', () => {
 
     const { user, getByRole } = render(
       <ColumnNamesContext.Provider value={columnNames}>
-        <NumColumnsContext.Provider value={1}>
+        <ColumnNamesContext.Provider value={['test']}>
           <ColumnParametersProvider columnConfiguration={columnConfiguration}>
             <ColumnWidthsProvider localStorageKey={cacheKey} minWidth={10}>
               <table><thead><tr><ColumnHeader columnName="test" canMeasureWidth={true} {...defaultProps} /></tr></thead></table>
             </ColumnWidthsProvider>
           </ColumnParametersProvider>
-        </NumColumnsContext.Provider>
+        </ColumnNamesContext.Provider>
       </ColumnNamesContext.Provider>
     )
 
@@ -229,13 +229,13 @@ describe('ColumnHeader', () => {
 
     const { user, getByRole } = render(
       <ColumnNamesContext.Provider value={columnNames}>
-        <NumColumnsContext.Provider value={1}>
+        <ColumnNamesContext.Provider value={['test']}>
           <ColumnParametersProvider columnConfiguration={columnConfiguration}>
             <ColumnWidthsProvider localStorageKey={cacheKey} minWidth={globalMinWidth}>
               <table><thead><tr><ColumnHeader columnName="test" canMeasureWidth={true} {...defaultProps} /></tr></thead></table>
             </ColumnWidthsProvider>
           </ColumnParametersProvider>
-        </NumColumnsContext.Provider>
+        </ColumnNamesContext.Provider>
       </ColumnNamesContext.Provider>
     )
 
@@ -263,20 +263,20 @@ describe('ColumnHeader', () => {
     localStorage.setItem(cacheKey2, JSON.stringify([width2]))
 
     const { rerender, getByRole } = render(
-      <NumColumnsContext.Provider value={1}>
+      <ColumnNamesContext.Provider value={['test']}>
         <ColumnWidthsProvider localStorageKey={cacheKey} minWidth={10}>
           <table><thead><tr><ColumnHeader columnName="test" {...defaultProps} /></tr></thead></table>
         </ColumnWidthsProvider>
-      </NumColumnsContext.Provider>
+      </ColumnNamesContext.Provider>
     )
     const header = getByRole('columnheader')
     expect(header.style.maxWidth).toEqual(`${width1}px`)
     rerender(
-      <NumColumnsContext.Provider value={1}>
+      <ColumnNamesContext.Provider value={['test']}>
         <ColumnWidthsProvider localStorageKey={cacheKey2} minWidth={10}>
           <table><thead><tr><ColumnHeader columnName="test" {...defaultProps} /></tr></thead></table>
         </ColumnWidthsProvider>
-      </NumColumnsContext.Provider>
+      </ColumnNamesContext.Provider>
     )
     expect(header.style.maxWidth).toEqual(`${width2}px`)
   })

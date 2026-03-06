@@ -2,7 +2,7 @@ import { render } from '@testing-library/react'
 import { act, useContext } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 
-import { ColumnNamesContext, DataFrameMethodsContext, DataKeyContext, DataVersionContext, ExclusiveSortContext, NumColumnsContext, NumRowsContext, SortableColumnsContext } from '../../src/contexts/DataContext.js'
+import { ColumnNamesContext, DataFrameMethodsContext, DataKeyContext, DataVersionContext, ExclusiveSortContext, NumRowsContext, SortableColumnsContext } from '../../src/contexts/DataContext.js'
 import type { DataFrame, DataFrameEvents } from '../../src/helpers/dataframe/index.js'
 import { arrayDataFrame } from '../../src/helpers/dataframe/index.js'
 import { createEventTarget } from '../../src/helpers/typedEventTarget.js'
@@ -13,7 +13,6 @@ function DisplayComponent() {
   const dataVersion = useContext(DataVersionContext)
   const numRows = useContext(NumRowsContext)
   const columnNames = useContext(ColumnNamesContext)
-  const numColumns = useContext(NumColumnsContext)
   const sortableColumns = useContext(SortableColumnsContext)
   const exclusiveSort = useContext(ExclusiveSortContext) ? 'true' : 'false'
   const dataFrameMethods = useContext(DataFrameMethodsContext)
@@ -24,7 +23,6 @@ function DisplayComponent() {
       <span data-testid="data-version">{dataVersion}</span>
       <span data-testid="num-rows">{numRows}</span>
       <span data-testid="column-names">{JSON.stringify(columnNames)}</span>
-      <span data-testid="num-columns">{numColumns}</span>
       <span data-testid="sortable-columns">{JSON.stringify(Array.from(sortableColumns))}</span>
       <span data-testid="exclusive-sort">{exclusiveSort}</span>
       <button
@@ -70,7 +68,6 @@ describe('DataProvider', () => {
     expect(getByTestId('data-version').textContent).toBe('0')
     expect(getByTestId('num-rows').textContent).toBe(data.numRows.toString())
     expect(getByTestId('column-names').textContent).toBe(JSON.stringify(['a', 'b']))
-    expect(getByTestId('num-columns').textContent).toBe('2')
     expect(getByTestId('sortable-columns').textContent).toBe(JSON.stringify([]))
     expect(getByTestId('exclusive-sort').textContent).toBe('false')
   })
@@ -209,16 +206,6 @@ describe('DataProvider', () => {
       // force a re-render without changing the data frame instance
       rerender(<TestComponent data={data} />)
       expect(getByTestId('column-names').textContent).toBe(initialColumnNames)
-    })
-    it('should provide the initial number of columns', () => {
-      const data = arrayDataFrame([{ a: 1, b: 2 }, { a: 3, b: 4 }])
-      const { getByTestId, rerender } = render(<TestComponent data={data} />)
-      expect(getByTestId('num-columns').textContent).toBe(data.columnDescriptors.length.toString())
-      // Change the number of columns in the data frame
-      data.columnDescriptors.push({ name: 'c' })
-      // force a re-render without changing the data frame instance
-      rerender(<TestComponent data={data} />)
-      expect(getByTestId('num-columns').textContent).toBe('2')
     })
     it('should provide the initial sortable columns based on column descriptors', () => {
       const data = arrayDataFrame([{ a: 1, b: 2 }, { a: 3, b: 4 }])

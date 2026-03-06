@@ -1,7 +1,7 @@
 import { type ReactNode, useEffect, useState } from 'react'
 
 import type { DataFrameWithoutMethods } from '../contexts/DataContext.js'
-import { ColumnNamesContext, DataFrameMethodsContext, DataKeyContext, DataVersionContext, ExclusiveSortContext, NumColumnsContext, NumRowsContext, SortableColumnsContext } from '../contexts/DataContext.js'
+import { ColumnNamesContext, DataFrameMethodsContext, DataKeyContext, DataVersionContext, ExclusiveSortContext, NumRowsContext, SortableColumnsContext } from '../contexts/DataContext.js'
 import type { HighTableProps } from '../types.js'
 
 // Assign stable numeric ids to data instances without triggering state
@@ -66,7 +66,6 @@ function KeyedDataProvider({ children, data }: KeyedDataProviderProps) {
   const [exclusiveSort] = useState(() => data.exclusiveSort === true)
   const [columnNames] = useState(() => data.columnDescriptors.map(({ name }) => name))
   const [sortableColumns] = useState(() => new Set(data.columnDescriptors.filter(({ sortable }) => sortable).map(({ name }) => name)))
-  const numColumns = columnNames.length
 
   // Synchronize version and numRows with data frame events (external system - useEffect is needed)
   useEffect(() => {
@@ -91,13 +90,11 @@ function KeyedDataProvider({ children, data }: KeyedDataProviderProps) {
     <DataVersionContext.Provider value={version}>
       <ColumnNamesContext.Provider value={columnNames}>
         <SortableColumnsContext.Provider value={sortableColumns}>
-          <NumColumnsContext.Provider value={numColumns}>
-            <ExclusiveSortContext.Provider value={exclusiveSort}>
-              <NumRowsContext.Provider value={numRows}>
-                {children}
-              </NumRowsContext.Provider>
-            </ExclusiveSortContext.Provider>
-          </NumColumnsContext.Provider>
+          <ExclusiveSortContext.Provider value={exclusiveSort}>
+            <NumRowsContext.Provider value={numRows}>
+              {children}
+            </NumRowsContext.Provider>
+          </ExclusiveSortContext.Provider>
         </SortableColumnsContext.Provider>
       </ColumnNamesContext.Provider>
     </DataVersionContext.Provider>

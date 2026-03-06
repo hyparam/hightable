@@ -20,7 +20,6 @@ export const NumRowsContext = createContext<number>(0)
  * The list of column names, in the order they are defined in the data frame.
  */
 export const ColumnNamesContext = createContext<string[]>([])
-export const NumColumnsContext = createContext<number>(0)
 export const SortableColumnsContext = createContext<SortableColumnsContextType>(new Set())
 export const ExclusiveSortContext = createContext<boolean>(false)
 export const DataFrameMethodsContext = createContext<DataFrameMethods>({
