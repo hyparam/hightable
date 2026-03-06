@@ -75,7 +75,7 @@ describe('DataProvider', () => {
     const data = arrayDataFrame([{ a: 1, b: 2 }, { a: 3, b: 4 }])
     data.getCell = vi.fn()
     data.getRowNumber = vi.fn()
-    data.fetch = vi.fn()
+    data.fetch = vi.fn().mockResolvedValue(undefined)
     const { getByTestId } = render(<TestComponent data={data} />)
     act(() => {
       getByTestId('get-cell').click()
