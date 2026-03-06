@@ -1,7 +1,7 @@
 import { type ReactNode, useEffect, useState } from 'react'
 
 import type { DataFrameWithoutMethods } from '../contexts/DataContext.js'
-import { ColumnDescriptorsContext, DataFrameMethodsContext, DataKeyContext, DataVersionContext, ExclusiveSortContext, NumColumnsContext, NumRowsContext, SortableColumnsContext } from '../contexts/DataContext.js'
+import { ColumnNamesContext, DataFrameMethodsContext, DataKeyContext, DataVersionContext, ExclusiveSortContext, NumColumnsContext, NumRowsContext, SortableColumnsContext } from '../contexts/DataContext.js'
 import type { HighTableProps } from '../types.js'
 
 // Assign stable numeric ids to data instances without triggering state
@@ -64,9 +64,9 @@ function KeyedDataProvider({ children, data }: KeyedDataProviderProps) {
   // Some dataframe properties are expected to be stable for a given data frame.
   // We keep their initial value, no setter.
   const [exclusiveSort] = useState(() => data.exclusiveSort === true)
-  const [columnDescriptors] = useState(() => data.columnDescriptors.map(({ name, sortable }) => ({ name, sortable })))
-  const [sortableColumns] = useState(() => new Set(columnDescriptors.filter(({ sortable }) => sortable).map(({ name }) => name)))
-  const numColumns = columnDescriptors.length
+  const [columnNames] = useState(() => data.columnDescriptors.map(({ name }) => name))
+  const [sortableColumns] = useState(() => new Set(data.columnDescriptors.filter(({ sortable }) => sortable).map(({ name }) => name)))
+  const numColumns = columnNames.length
 
   // Synchronize version and numRows with data frame events (external system - useEffect is needed)
   useEffect(() => {
@@ -89,17 +89,17 @@ function KeyedDataProvider({ children, data }: KeyedDataProviderProps) {
   // Multiple contexts, to avoid unnecessary re-renders of the components consuming the API when only the data changes, and vice-versa. See https://react.dev/reference/react/useContext#caveats for more details.
   return (
     <DataVersionContext.Provider value={version}>
-      <ColumnDescriptorsContext.Provider value={columnDescriptors}>
-        <NumColumnsContext.Provider value={numColumns}>
-          <ExclusiveSortContext.Provider value={exclusiveSort}>
-            <NumRowsContext.Provider value={numRows}>
-              <SortableColumnsContext.Provider value={sortableColumns}>
+      <ColumnNamesContext.Provider value={columnNames}>
+        <SortableColumnsContext.Provider value={sortableColumns}>
+          <NumColumnsContext.Provider value={numColumns}>
+            <ExclusiveSortContext.Provider value={exclusiveSort}>
+              <NumRowsContext.Provider value={numRows}>
                 {children}
-              </SortableColumnsContext.Provider>
-            </NumRowsContext.Provider>
-          </ExclusiveSortContext.Provider>
-        </NumColumnsContext.Provider>
-      </ColumnDescriptorsContext.Provider>
+              </NumRowsContext.Provider>
+            </ExclusiveSortContext.Provider>
+          </NumColumnsContext.Provider>
+        </SortableColumnsContext.Provider>
+      </ColumnNamesContext.Provider>
     </DataVersionContext.Provider>
   )
 }

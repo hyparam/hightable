@@ -3,7 +3,7 @@ import { useContext } from 'react'
 import { describe, expect, it } from 'vitest'
 
 import { ColumnParametersContext } from '../../src/contexts/ColumnParametersContext.js'
-import { ColumnDescriptorsContext } from '../../src/contexts/DataContext.js'
+import { ColumnNamesContext } from '../../src/contexts/DataContext.js'
 import type { ColumnConfiguration } from '../../src/helpers/columnConfiguration.js'
 import { ColumnParametersProvider } from '../../src/providers/ColumnParametersProvider.js'
 
@@ -17,15 +17,15 @@ function TestComponent() {
 }
 
 describe('ColumnParametersProvider', () => {
-  it('returns parameters in DataFrame column descriptors order', () => {
-    const columnDescriptors = ['id', 'name', 'status'].map(name => ({ name }))
+  it('returns parameters in column names order', () => {
+    const columnNames = ['id', 'name', 'status']
 
     const { getByTestId } = render(
-      <ColumnDescriptorsContext.Provider value={columnDescriptors}>
+      <ColumnNamesContext.Provider value={columnNames}>
         <ColumnParametersProvider>
           <TestComponent />
         </ColumnParametersProvider>
-      </ColumnDescriptorsContext.Provider>
+      </ColumnNamesContext.Provider>
     )
 
     expect(getByTestId('column-parameters').textContent).toBe(JSON.stringify([
@@ -36,18 +36,18 @@ describe('ColumnParametersProvider', () => {
   })
 
   it('merges columnConfiguration props into parameters', () => {
-    const columnDescriptors = ['id', 'name', 'status'].map(name => ({ name }))
+    const columnNames = ['id', 'name', 'status']
     const headerComponent = <strong>Name</strong>
     const columnConfiguration: ColumnConfiguration = {
       name: { headerComponent },
     }
 
     const { getByTestId } = render(
-      <ColumnDescriptorsContext.Provider value={columnDescriptors}>
+      <ColumnNamesContext.Provider value={columnNames}>
         <ColumnParametersProvider columnConfiguration={columnConfiguration}>
           <TestComponent />
         </ColumnParametersProvider>
-      </ColumnDescriptorsContext.Provider>
+      </ColumnNamesContext.Provider>
     )
 
     expect(getByTestId('column-parameters').textContent).toBe(JSON.stringify([
@@ -58,17 +58,17 @@ describe('ColumnParametersProvider', () => {
   })
 
   it('includes minWidth in column configuration', () => {
-    const columnDescriptors = ['id', 'name'].map(name => ({ name }))
+    const columnNames = ['id', 'name']
     const columnConfiguration: ColumnConfiguration = {
       name: { minWidth: 150 },
     }
 
     const { getByTestId } = render(
-      <ColumnDescriptorsContext.Provider value={columnDescriptors}>
+      <ColumnNamesContext.Provider value={columnNames}>
         <ColumnParametersProvider columnConfiguration={columnConfiguration}>
           <TestComponent />
         </ColumnParametersProvider>
-      </ColumnDescriptorsContext.Provider>
+      </ColumnNamesContext.Provider>
     )
 
     expect(getByTestId('column-parameters').textContent).toBe(JSON.stringify([
@@ -77,19 +77,19 @@ describe('ColumnParametersProvider', () => {
     ]))
   })
 
-  it('ignores configuration keys that are not in DataFrame.columnDescriptors', () => {
-    const columnDescriptors = [{ name: 'id' }]
+  it('ignores configuration keys that are not in column names', () => {
+    const columnNames = ['id']
     const columnConfiguration = {
       id: { width: 50 },
       extraneous: { width: 123 },
     } as unknown as ColumnConfiguration // stray key on purpose
 
     const { getByTestId } = render(
-      <ColumnDescriptorsContext.Provider value={columnDescriptors}>
+      <ColumnNamesContext.Provider value={columnNames}>
         <ColumnParametersProvider columnConfiguration={columnConfiguration}>
           <TestComponent />
         </ColumnParametersProvider>
-      </ColumnDescriptorsContext.Provider>
+      </ColumnNamesContext.Provider>
     )
 
     expect(getByTestId('column-parameters').textContent).toBe(JSON.stringify([

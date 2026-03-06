@@ -1,6 +1,6 @@
 import { createContext } from 'react'
 
-import type { ColumnDescriptor, DataFrame } from '../helpers/dataframe/types.js'
+import type { DataFrame } from '../helpers/dataframe/types.js'
 
 /**
  * The data frame, limited to the getRowNumber, getCell, and fetch methods.
@@ -16,7 +16,10 @@ type SortableColumnsContextType = Set<string>
 
 export const DataVersionContext = createContext<number>(0)
 export const NumRowsContext = createContext<number>(0)
-export const ColumnDescriptorsContext = createContext<Pick<ColumnDescriptor, 'name' | 'sortable'>[]>([])
+/**
+ * The list of column names, in the order they are defined in the data frame.
+ */
+export const ColumnNamesContext = createContext<string[]>([])
 export const NumColumnsContext = createContext<number>(0)
 export const SortableColumnsContext = createContext<SortableColumnsContextType>(new Set())
 export const ExclusiveSortContext = createContext<boolean>(false)

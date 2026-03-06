@@ -2,7 +2,7 @@ import { act, fireEvent } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import ColumnHeader from '../../src/components/ColumnHeader.js'
-import { ColumnDescriptorsContext, NumColumnsContext } from '../../src/contexts/DataContext.js'
+import { ColumnNamesContext, NumColumnsContext } from '../../src/contexts/DataContext.js'
 import { SortInfoAndActionsByColumnContext } from '../../src/contexts/OrderByContext.js'
 import { getOffsetWidth } from '../../src/helpers/width.js'
 import { ColumnParametersProvider } from '../../src/providers/ColumnParametersProvider.js'
@@ -187,10 +187,10 @@ describe('ColumnHeader', () => {
     localStorage.setItem(cacheKey, JSON.stringify([savedWidth]))
 
     const columnConfiguration = { test: { minWidth: columnMinWidth } }
-    const columnDescriptors = [{ name: 'test' }]
+    const columnNames = ['test']
 
     const { user, getByRole } = render(
-      <ColumnDescriptorsContext.Provider value={columnDescriptors}>
+      <ColumnNamesContext.Provider value={columnNames}>
         <NumColumnsContext.Provider value={1}>
           <ColumnParametersProvider columnConfiguration={columnConfiguration}>
             <ColumnWidthsProvider localStorageKey={cacheKey} minWidth={10}>
@@ -198,7 +198,7 @@ describe('ColumnHeader', () => {
             </ColumnWidthsProvider>
           </ColumnParametersProvider>
         </NumColumnsContext.Provider>
-      </ColumnDescriptorsContext.Provider>
+      </ColumnNamesContext.Provider>
     )
 
     const header = getByRole('columnheader')
@@ -225,10 +225,10 @@ describe('ColumnHeader', () => {
     localStorage.setItem(cacheKey, JSON.stringify([savedWidth]))
 
     const columnConfiguration = { test: { minWidth: columnMinWidth } }
-    const columnDescriptors = [{ name: 'test' }]
+    const columnNames = ['test']
 
     const { user, getByRole } = render(
-      <ColumnDescriptorsContext.Provider value={columnDescriptors}>
+      <ColumnNamesContext.Provider value={columnNames}>
         <NumColumnsContext.Provider value={1}>
           <ColumnParametersProvider columnConfiguration={columnConfiguration}>
             <ColumnWidthsProvider localStorageKey={cacheKey} minWidth={globalMinWidth}>
@@ -236,7 +236,7 @@ describe('ColumnHeader', () => {
             </ColumnWidthsProvider>
           </ColumnParametersProvider>
         </NumColumnsContext.Provider>
-      </ColumnDescriptorsContext.Provider>
+      </ColumnNamesContext.Provider>
     )
 
     const header = getByRole('columnheader')
