@@ -3,6 +3,7 @@ import { useContext } from 'react'
 import { describe, expect, it } from 'vitest'
 
 import { SetTableCornerSizeContext, TableCornerHeightContext, TableCornerWidthContext } from '../../src/contexts/TableCornerSizeContext.js'
+import { rowHeight } from '../../src/helpers/constants.js'
 import { TableCornerSizeProvider } from '../../src/providers/TableCornerSizeProvider.js'
 
 function TestComponent() {
@@ -32,7 +33,7 @@ describe('TableCornerSizeProvider', () => {
 
     // Initially, the width is undefined and the height is the default value
     expect(getByTestId('width').textContent).toBe('')
-    expect(getByTestId('height').textContent).toBe('33')
+    expect(getByTestId('height').textContent).toBe(rowHeight.toString())
 
     // Click the button to set the size
     act(() => {
