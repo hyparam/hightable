@@ -2,12 +2,12 @@ import { within } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { ColumnsVisibilityContext } from '../../contexts/ColumnsVisibilityContext.js'
-import { SortInfoAndActionsByColumnContext } from '../../contexts/OrderByContext.js'
-import { PortalContainerContext } from '../../contexts/PortalContainerContext.js'
-import { useHTMLElement } from '../../hooks/useHTMLElement.js'
-import { render as _render } from '../../utils/userEvent.js'
-import TableHeader from './TableHeader.js'
+import TableHeader from '../../src/components/TableHeader.js'
+import { ColumnsVisibilityContext } from '../../src/contexts/ColumnsVisibilityContext.js'
+import { SortInfoAndActionsByColumnContext } from '../../src/contexts/OrderByContext.js'
+import { PortalContainerContext } from '../../src/contexts/PortalContainerContext.js'
+import { useHTMLElement } from '../../src/hooks/useHTMLElement.js'
+import { render as _render } from '../../src/utils/userEvent.js'
 
 function ContainerProvider({ children }: { children: ReactNode }) {
   const { element, onMount } = useHTMLElement<HTMLDivElement>()

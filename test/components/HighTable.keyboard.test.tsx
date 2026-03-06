@@ -1,12 +1,12 @@
 import type { UserEvent } from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { createGetRowNumber, validateGetCellParams } from '../../helpers/dataframe/helpers.js'
-import { type DataFrame, sortableDataFrame } from '../../helpers/dataframe/index.js'
-import type { Obj } from '../../helpers/dataframe/types.js'
-import type { OrderBy } from '../../helpers/sort.js'
-import { render } from '../../utils/userEvent.js'
-import HighTable from './HighTable.js'
+import HighTable from '../../src/components/HighTable.js'
+import { createGetRowNumber, validateGetCellParams } from '../../src/helpers/dataframe/helpers.js'
+import { type DataFrame, sortableDataFrame } from '../../src/helpers/dataframe/index.js'
+import type { Obj } from '../../src/helpers/dataframe/types.js'
+import type { OrderBy } from '../../src/helpers/sort.js'
+import { render } from '../../src/utils/userEvent.js'
 
 Element.prototype.scrollIntoView = vi.fn()
 

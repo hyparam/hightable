@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { render } from '../../utils/userEvent.js'
-import ColumnMenuButton from './ColumnMenuButton.js'
+import ColumnMenuButton from '../../src/components/ColumnMenuButton.js'
+import { render } from '../../src/utils/userEvent.js'
 
 describe('ColumnMenuButton', () => {
   const defaultProps = {

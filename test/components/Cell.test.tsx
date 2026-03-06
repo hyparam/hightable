@@ -1,8 +1,8 @@
 import { act, fireEvent } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 
-import { render } from '../../utils/userEvent.js'
-import Cell from './Cell.js'
+import Cell from '../../src/components/Cell.js'
+import { render } from '../../src/utils/userEvent.js'
 
 const rest = {
   ariaColIndex: 1,

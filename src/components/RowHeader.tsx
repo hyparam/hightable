@@ -1,8 +1,8 @@
 import type { ChangeEvent, CSSProperties, KeyboardEvent, MouseEvent } from 'react'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 
-import { useCellFocus } from '../../hooks/useCellFocus.js'
-import { useOnCopy } from '../../hooks/useOnCopyToClipboard.js'
+import { useCellFocus } from '../hooks/useCellFocus.js'
+import { useOnCopy } from '../hooks/useOnCopyToClipboard.js'
 
 interface Props {
   selected?: boolean

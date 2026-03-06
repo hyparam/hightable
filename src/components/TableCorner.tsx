@@ -1,8 +1,8 @@
 import type { ChangeEvent, CSSProperties, KeyboardEvent, ReactNode } from 'react'
 import { useCallback, useContext, useEffect, useRef } from 'react'
 
-import { SetTableCornerSizeContext } from '../../contexts/TableCornerSizeContext.js'
-import { useCellFocus } from '../../hooks/useCellFocus.js'
+import { SetTableCornerSizeContext } from '../contexts/TableCornerSizeContext.js'
+import { useCellFocus } from '../hooks/useCellFocus.js'
 
 interface Props {
   checked?: boolean
