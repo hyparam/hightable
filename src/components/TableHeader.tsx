@@ -1,6 +1,6 @@
-import type { ColumnParameters } from '../../contexts/ColumnParametersContext.js'
-import { ariaOffset } from '../../helpers/constants.js'
-import ColumnHeader from '../ColumnHeader/ColumnHeader.js'
+import type { ColumnParameters } from '../contexts/ColumnParametersContext.js'
+import { ariaOffset } from '../helpers/constants.js'
+import ColumnHeader from './ColumnHeader.js'
 
 interface TableHeaderProps {
   columnsParameters: ColumnParameters[]

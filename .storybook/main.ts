@@ -8,7 +8,7 @@ const config: StorybookConfig = {
     },
   },
   stories: [
-    '../src/**/*.stories.@(js|jsx|mjs|ts|tsx)',
+    '../stories/**/*.stories.@(js|jsx|mjs|ts|tsx)',
   ],
   core: {
     disableTelemetry: true,

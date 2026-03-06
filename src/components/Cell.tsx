@@ -1,10 +1,10 @@
 import type { KeyboardEvent, MouseEvent, ReactNode } from 'react'
 import { useCallback, useContext, useEffect, useMemo, useRef } from 'react'
 
-import { ColumnWidthsContext } from '../../contexts/ColumnWidthsContext.js'
-import type { ResolvedValue } from '../../helpers/dataframe/index.js'
-import { useCellFocus } from '../../hooks/useCellFocus.js'
-import { useOnCopy } from '../../hooks/useOnCopyToClipboard.js'
+import { ColumnWidthsContext } from '../contexts/ColumnWidthsContext.js'
+import type { ResolvedValue } from '../helpers/dataframe/index.js'
+import { useCellFocus } from '../hooks/useCellFocus.js'
+import { useOnCopy } from '../hooks/useOnCopyToClipboard.js'
 
 export interface CellContentProps {
   stringify: (value: unknown) => string | undefined

@@ -2,16 +2,16 @@ import { act, fireEvent, waitFor, within } from '@testing-library/react'
 import type { Mock } from 'vitest'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { defaultOverscan, defaultPadding } from '../../helpers/constants.js'
-import { createGetRowNumber, validateFetchParams, validateGetCellParams, validateGetRowNumberParams } from '../../helpers/dataframe/helpers.js'
-import type { DataFrame, DataFrameEvents, Fetch } from '../../helpers/dataframe/index.js'
-import { arrayDataFrame } from '../../helpers/dataframe/index.js'
-import { sortableDataFrame } from '../../helpers/dataframe/sort.js'
-import type { Obj } from '../../helpers/dataframe/types.js'
-import type { OrderBy } from '../../helpers/sort.js'
-import { createEventTarget } from '../../helpers/typedEventTarget.js'
-import { render } from '../../utils/userEvent.js'
-import HighTable from './HighTable.js'
+import HighTable from '../../src/components/HighTable.js'
+import { defaultOverscan, defaultPadding } from '../../src/helpers/constants.js'
+import { createGetRowNumber, validateFetchParams, validateGetCellParams, validateGetRowNumberParams } from '../../src/helpers/dataframe/helpers.js'
+import type { DataFrame, DataFrameEvents, Fetch } from '../../src/helpers/dataframe/index.js'
+import { arrayDataFrame } from '../../src/helpers/dataframe/index.js'
+import { sortableDataFrame } from '../../src/helpers/dataframe/sort.js'
+import type { Obj } from '../../src/helpers/dataframe/types.js'
+import type { OrderBy } from '../../src/helpers/sort.js'
+import { createEventTarget } from '../../src/helpers/typedEventTarget.js'
+import { render } from '../../src/utils/userEvent.js'
 
 Element.prototype.scrollIntoView = vi.fn()
 
@@ -540,7 +540,7 @@ const initialWidth = 62 // initial width of the columns, in pixels, above the de
 const getOffsetWidth = vi.fn(() => initialWidth)
 const columnWidthsSuffix = ':2:column:widths'
 const keyItem = `key${columnWidthsSuffix}`
-vi.mock(import('../../helpers/width.js'), async (importOriginal) => {
+vi.mock(import('../../src/helpers/width.js'), async (importOriginal) => {
   const actual = await importOriginal()
   return {
     ...actual,

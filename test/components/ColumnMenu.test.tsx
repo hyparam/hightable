@@ -1,10 +1,10 @@
 import type { ReactNode } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { PortalContainerContext } from '../../contexts/PortalContainerContext.js'
-import { useHTMLElement } from '../../hooks/useHTMLElement.js'
-import { render as _render } from '../../utils/userEvent.js'
-import ColumnMenu from './ColumnMenu.js'
+import ColumnMenu from '../../src/components/ColumnMenu.js'
+import { PortalContainerContext } from '../../src/contexts/PortalContainerContext.js'
+import { useHTMLElement } from '../../src/hooks/useHTMLElement.js'
+import { render as _render } from '../../src/utils/userEvent.js'
 
 function ContainerProvider({ children }: { children: ReactNode }) {
   const { element, onMount } = useHTMLElement<HTMLDivElement>()

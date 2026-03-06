@@ -1,10 +1,10 @@
 import type { KeyboardEvent } from 'react'
 import { useCallback, useContext, useMemo } from 'react'
 
-import { CellNavigationContext } from '../../contexts/CellNavigationContext.js'
-import { ScrollContext } from '../../contexts/ScrollContext.js'
-import { SetViewportSizeContext } from '../../contexts/ViewportSizeContext.js'
-import styles from '../../HighTable.module.css'
+import { CellNavigationContext } from '../contexts/CellNavigationContext.js'
+import { ScrollContext } from '../contexts/ScrollContext.js'
+import { SetViewportSizeContext } from '../contexts/ViewportSizeContext.js'
+import styles from '../HighTable.module.css'
 
 interface Props {
   /** Child components */

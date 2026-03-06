@@ -1,15 +1,15 @@
 import { act, fireEvent } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { ColumnDescriptorsContext, NumColumnsContext } from '../../contexts/DataContext.js'
-import { SortInfoAndActionsByColumnContext } from '../../contexts/OrderByContext.js'
-import { getOffsetWidth } from '../../helpers/width.js'
-import { ColumnParametersProvider } from '../../providers/ColumnParametersProvider.js'
-import { ColumnWidthsProvider } from '../../providers/ColumnWidthsProvider.js'
-import { render } from '../../utils/userEvent.js'
-import ColumnHeader from './ColumnHeader.js'
+import ColumnHeader from '../../src/components/ColumnHeader.js'
+import { ColumnDescriptorsContext, NumColumnsContext } from '../../src/contexts/DataContext.js'
+import { SortInfoAndActionsByColumnContext } from '../../src/contexts/OrderByContext.js'
+import { getOffsetWidth } from '../../src/helpers/width.js'
+import { ColumnParametersProvider } from '../../src/providers/ColumnParametersProvider.js'
+import { ColumnWidthsProvider } from '../../src/providers/ColumnWidthsProvider.js'
+import { render } from '../../src/utils/userEvent.js'
 
-vi.mock('../../helpers/width.js', { spy: true })
+vi.mock('../../src/helpers/width.js', { spy: true })
 
 vi.stubGlobal('localStorage', (() => {
   const store = new Map<string, string>()

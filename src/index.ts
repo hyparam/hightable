@@ -1,5 +1,5 @@
-import HighTable from './components/HighTable/HighTable.js'
-export { type CellContentProps } from './components/Cell/Cell.js'
+import HighTable from './components/HighTable.js'
+export { type CellContentProps } from './components/Cell.js'
 export type { ColumnConfig, ColumnConfiguration, CustomMenuGroup, CustomMenuItem } from './helpers/columnConfiguration.js'
 export type { Cells, DataFrame, DataFrameEvents, ResolvedValue } from './helpers/dataframe/index.js'
 export { arrayDataFrame, checkSignal, createGetRowNumber, sortableDataFrame, validateColumn, validateFetchParams, validateGetCellParams, validateGetRowNumberParams, validateOrderBy, validateRow } from './helpers/dataframe/index.js'

@@ -1,8 +1,8 @@
 import { act, fireEvent } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { render } from '../../utils/userEvent.js'
-import RowHeader from './RowHeader.js'
+import RowHeader from '../../src/components/RowHeader.js'
+import { render } from '../../src/utils/userEvent.js'
 
 const defaultProps = {
   ariaColIndex: 1,

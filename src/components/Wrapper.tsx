@@ -1,11 +1,11 @@
 import { type CSSProperties, type ReactNode, useContext } from 'react'
 
-import { NumRowsContext } from '../../contexts/DataContext.js'
-import { PortalContainerContext } from '../../contexts/PortalContainerContext.js'
-import { TableCornerHeightContext } from '../../contexts/TableCornerSizeContext.js'
-import styles from '../../HighTable.module.css'
-import { useHTMLElement } from '../../hooks/useHTMLElement.js'
-import type { HighTableProps } from '../../types.js'
+import { NumRowsContext } from '../contexts/DataContext.js'
+import { PortalContainerContext } from '../contexts/PortalContainerContext.js'
+import { TableCornerHeightContext } from '../contexts/TableCornerSizeContext.js'
+import styles from '../HighTable.module.css'
+import { useHTMLElement } from '../hooks/useHTMLElement.js'
+import type { HighTableProps } from '../types.js'
 
 type Props = Pick<HighTableProps, 'className' | 'maxRowNumber' | 'styled'> & {
   /** Child components */

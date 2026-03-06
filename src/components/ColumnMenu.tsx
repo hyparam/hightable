@@ -2,10 +2,10 @@ import type { KeyboardEvent, MouseEvent, ReactNode } from 'react'
 import { useCallback, useContext, useId, useMemo, useRef } from 'react'
 import { createPortal } from 'react-dom'
 
-import { CellNavigationContext } from '../../contexts/CellNavigationContext.js'
-import { PortalContainerContext } from '../../contexts/PortalContainerContext.js'
-import type { CustomMenuGroup } from '../../helpers/columnConfiguration.js'
-import { useFocusManagement } from '../../hooks/useFocusManagement.js'
+import { CellNavigationContext } from '../contexts/CellNavigationContext.js'
+import { PortalContainerContext } from '../contexts/PortalContainerContext.js'
+import type { CustomMenuGroup } from '../helpers/columnConfiguration.js'
+import { useFocusManagement } from '../hooks/useFocusManagement.js'
 
 export type AriaSort = 'ascending' | 'descending' | 'none'
 
