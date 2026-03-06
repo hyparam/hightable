@@ -1,13 +1,14 @@
 import { act, render } from '@testing-library/react'
+import { useContext } from 'react'
 import { describe, expect, it } from 'vitest'
 
-import { useSetViewportSize, useViewportHeight, useViewportWidth } from '../../src/contexts/ViewportSizeContext.js'
+import { SetViewportSizeContext, ViewportHeightContext, ViewportWidthContext } from '../../src/contexts/ViewportSizeContext.js'
 import { ViewportSizeProvider } from '../../src/providers/ViewportSizeProvider.js'
 
 function TestComponent() {
-  const viewportWidth = useViewportWidth()
-  const viewportHeight = useViewportHeight()
-  const setViewportSize = useSetViewportSize()
+  const viewportWidth = useContext(ViewportWidthContext)
+  const viewportHeight = useContext(ViewportHeightContext)
+  const setViewportSize = useContext(SetViewportSizeContext)
   return (
     <div>
       <div data-testid="width">

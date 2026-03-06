@@ -1,7 +1,7 @@
-import { type ReactNode, useMemo } from 'react'
+import { type ReactNode, useContext, useMemo } from 'react'
 
 import { type ColumnParameters, ColumnParametersContext, SortableColumnsContext } from '../contexts/ColumnParametersContext.js'
-import { useColumnDescriptors } from '../contexts/DataContext.js'
+import { ColumnDescriptorsContext } from '../contexts/DataContext.js'
 import type { HighTableProps } from '../types.js'
 
 type Props = Pick<HighTableProps, 'columnConfiguration'> & {
@@ -15,7 +15,7 @@ type Props = Pick<HighTableProps, 'columnConfiguration'> & {
  * It merges the column descriptors from the data frame with the user-provided configuration.
  */
 export function ColumnParametersProvider({ columnConfiguration, children }: Props) {
-  const columnDescriptors = useColumnDescriptors()
+  const columnDescriptors = useContext(ColumnDescriptorsContext)
 
   // A column is sortable iif it's marked as sortable in the column descriptors from the data frame. The user configuration can't change that.
   const sortableColumns = useMemo(() => {

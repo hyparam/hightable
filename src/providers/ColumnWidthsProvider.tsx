@@ -3,9 +3,9 @@ import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'r
 
 import { ColumnParametersContext } from '../contexts/ColumnParametersContext.js'
 import { ColumnWidthsContext } from '../contexts/ColumnWidthsContext.js'
-import { useNumColumns } from '../contexts/DataContext.js'
-import { useTableCornerWidth } from '../contexts/TableCornerSizeContext.js'
-import { useViewportWidth } from '../contexts/ViewportSizeContext.js'
+import { NumColumnsContext } from '../contexts/DataContext.js'
+import { TableCornerWidthContext } from '../contexts/TableCornerSizeContext.js'
+import { ViewportWidthContext } from '../contexts/ViewportSizeContext.js'
 import { cellStyle } from '../helpers/width.js'
 import { useLocalStorageState } from '../hooks/useLocalStorageState.js'
 
@@ -73,11 +73,11 @@ interface ColumnWidthsProviderProps {
  */
 export function ColumnWidthsProvider({ children, localStorageKey, minWidth }: ColumnWidthsProviderProps) {
   /** Current viewport width (used to compute the maximum total width) */
-  const viewportWidth = useViewportWidth()
+  const viewportWidth = useContext(ViewportWidthContext)
   /** Current table corner width (used to compute the maximum total width) */
-  const tableCornerWidth = useTableCornerWidth()
+  const tableCornerWidth = useContext(TableCornerWidthContext)
   /** Number of columns (used to initialize the widths array, and compute the widths) */
-  const numColumns = useNumColumns()
+  const numColumns = useContext(NumColumnsContext)
 
   // Number of columns
   if (!Number.isInteger(numColumns) || numColumns < 0) {

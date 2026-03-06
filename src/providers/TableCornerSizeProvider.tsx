@@ -1,6 +1,6 @@
 import { type ReactNode, useCallback, useState } from 'react'
 
-import { SetTableCornerSizeContext, TableCornerHeightContext, TableCornerWidthContext } from '../contexts/TableCornerSizeContext.js'
+import { defaultTableCornerHeight, SetTableCornerSizeContext, TableCornerHeightContext, TableCornerWidthContext } from '../contexts/TableCornerSizeContext.js'
 
 interface Props {
   /** Child components */
@@ -14,7 +14,7 @@ interface Props {
  */
 export function TableCornerSizeProvider({ children }: Props) {
   const [tableCornerWidth, setTableCornerWidth] = useState<number | undefined>(undefined)
-  const [tableCornerHeight, setTableCornerHeight] = useState<number | undefined>(undefined)
+  const [tableCornerHeight, setTableCornerHeight] = useState<number>(defaultTableCornerHeight)
   const setTableCornerSize = useCallback((element: HTMLElement) => {
     // we use offsetWidth and offsetHeight as they include padding, borders, and scrollbars (when present)
     setTableCornerWidth(element.offsetWidth)

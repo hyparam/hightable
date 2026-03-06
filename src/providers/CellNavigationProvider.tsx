@@ -4,7 +4,7 @@ import { useCallback, useContext, useEffect, useMemo, useReducer } from 'react'
 import type { FocusAction, FocusState, MoveCellAction } from '../contexts/CellNavigationContext.js'
 import { CellNavigationContext } from '../contexts/CellNavigationContext.js'
 import { ColumnsVisibilityContext } from '../contexts/ColumnsVisibilityContext.js'
-import { useNumRows } from '../contexts/DataContext.js'
+import { NumRowsContext } from '../contexts/DataContext.js'
 import { defaultNumRowsPerPage } from '../helpers/constants.js'
 import { useInputState } from '../hooks/useInputState.js'
 import type { HighTableProps } from '../types.js'
@@ -55,7 +55,7 @@ export function CellNavigationProvider({
 }: CellNavigationProviderProps) {
   const [focusState, focusDispatch] = useReducer(reducer, focus, initializeFocusState)
   /** The actual number of rows in the data frame */
-  const numDataRows = useNumRows()
+  const numDataRows = useContext(NumRowsContext)
 
   const notifyChange = useCallback(() => {
     focusDispatch({ type: 'START' })

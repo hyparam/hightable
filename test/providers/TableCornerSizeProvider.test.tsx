@@ -2,14 +2,14 @@ import { act, render } from '@testing-library/react'
 import { useContext } from 'react'
 import { describe, expect, it } from 'vitest'
 
-import { TableCornerHeightContext, useHeaderHeight, useSetTableCornerSize, useTableCornerWidth } from '../../src/contexts/TableCornerSizeContext.js'
+import { SetTableCornerSizeContext, TableCornerHeightContext, TableCornerWidthContext } from '../../src/contexts/TableCornerSizeContext.js'
+import { rowHeight } from '../../src/helpers/constants.js'
 import { TableCornerSizeProvider } from '../../src/providers/TableCornerSizeProvider.js'
 
 function TestComponent() {
-  const tableCornerWidth = useTableCornerWidth()
+  const tableCornerWidth = useContext(TableCornerWidthContext)
   const tableCornerHeight = useContext(TableCornerHeightContext)
-  const headerHeight = useHeaderHeight()
-  const setTableCornerSize = useSetTableCornerSize()
+  const setTableCornerSize = useContext(SetTableCornerSizeContext)
   return (
     <div>
       <div data-testid="width">
@@ -17,9 +17,6 @@ function TestComponent() {
       </div>
       <div data-testid="height">
         {tableCornerHeight}
-      </div>
-      <div data-testid="header-height">
-        {headerHeight}
       </div>
       <button data-testid="set-size" onClick={() => setTableCornerSize?.({ offsetWidth: 200, offsetHeight: 100 } as HTMLElement)}>Set Size</button>
     </div>
@@ -34,11 +31,9 @@ describe('TableCornerSizeProvider', () => {
       </TableCornerSizeProvider>
     )
 
-    // Initially, the size is undefined
+    // Initially, the width is undefined and the height is the default value
     expect(getByTestId('width').textContent).toBe('')
-    expect(getByTestId('height').textContent).toBe('')
-    // The header height should be the default row height (33)
-    expect(getByTestId('header-height').textContent).toBe('33')
+    expect(getByTestId('height').textContent).toBe(rowHeight.toString())
 
     // Click the button to set the size
     act(() => {
@@ -48,6 +43,5 @@ describe('TableCornerSizeProvider', () => {
     // After clicking the button, the size should be updated
     expect(getByTestId('width').textContent).toBe('200')
     expect(getByTestId('height').textContent).toBe('100')
-    expect(getByTestId('header-height').textContent).toBe('100') // the header height should be updated to the new height
   })
 })

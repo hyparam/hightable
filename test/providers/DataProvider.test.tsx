@@ -1,22 +1,21 @@
 import { render } from '@testing-library/react'
-import { act } from 'react'
-import { describe, expect, it } from 'vitest'
+import { act, useContext } from 'react'
+import { describe, expect, it, vi } from 'vitest'
 
-import { useColumnDescriptors, useData, useDataKey, useDataVersion, useExclusiveSort, useNumColumns, useNumRows } from '../../src/contexts/DataContext.js'
+import { ColumnDescriptorsContext, DataFrameMethodsContext, DataKeyContext, DataVersionContext, ExclusiveSortContext, NumColumnsContext, NumRowsContext } from '../../src/contexts/DataContext.js'
 import type { DataFrame, DataFrameEvents } from '../../src/helpers/dataframe/index.js'
 import { arrayDataFrame } from '../../src/helpers/dataframe/index.js'
 import { createEventTarget } from '../../src/helpers/typedEventTarget.js'
 import { DataProvider } from '../../src/providers/DataProvider.js'
 
 function DisplayComponent() {
-  const dataKey = useDataKey()
-  const dataVersion = useDataVersion()
-  const numRows = useNumRows()
-  const columnDescriptors = useColumnDescriptors()
-  const numColumns = useNumColumns()
-  const exclusiveSort = useExclusiveSort() ? 'true' : 'false'
-  // used only to check if the data can be obtained (no error thrown)
-  useData()
+  const dataKey = useContext(DataKeyContext)
+  const dataVersion = useContext(DataVersionContext)
+  const numRows = useContext(NumRowsContext)
+  const columnDescriptors = useContext(ColumnDescriptorsContext)
+  const numColumns = useContext(NumColumnsContext)
+  const exclusiveSort = useContext(ExclusiveSortContext) ? 'true' : 'false'
+  const dataFrameMethods = useContext(DataFrameMethodsContext)
 
   return (
     <div>
@@ -26,6 +25,30 @@ function DisplayComponent() {
       <span data-testid="column-descriptors">{JSON.stringify(columnDescriptors)}</span>
       <span data-testid="num-columns">{numColumns}</span>
       <span data-testid="exclusive-sort">{exclusiveSort}</span>
+      <button
+        data-testid="get-cell"
+        onClick={() => {
+          dataFrameMethods.getCell({ row: 0, column: 'col1' })
+        }}
+      >
+        Get Cell
+      </button>
+      <button
+        data-testid="get-row-number"
+        onClick={() => {
+          dataFrameMethods.getRowNumber({ row: 0 })
+        }}
+      >
+        Get Row Number
+      </button>
+      <button
+        data-testid="fetch"
+        onClick={() => {
+          void dataFrameMethods.fetch?.({ rowStart: 0, rowEnd: 10 })
+        }}
+      >
+        Fetch Rows
+      </button>
     </div>
   )
 }
@@ -46,6 +69,47 @@ describe('DataProvider', () => {
     expect(getByTestId('num-rows').textContent).toBe(data.numRows.toString())
     expect(getByTestId('num-columns').textContent).toBe(data.columnDescriptors.length.toString())
     expect(getByTestId('exclusive-sort').textContent).toBe('false')
+  })
+
+  it('should be able to call the data frame methods from the context', () => {
+    const data = arrayDataFrame([{ a: 1, b: 2 }, { a: 3, b: 4 }])
+    data.getCell = vi.fn()
+    data.getRowNumber = vi.fn()
+    data.fetch = vi.fn().mockResolvedValue(undefined)
+    const { getByTestId } = render(<TestComponent data={data} />)
+    act(() => {
+      getByTestId('get-cell').click()
+    })
+    expect(data.getCell).toHaveBeenCalledWith({ row: 0, column: 'col1' })
+    act(() => {
+      getByTestId('get-row-number').click()
+    })
+    expect(data.getRowNumber).toHaveBeenCalledWith({ row: 0 })
+    act(() => {
+      getByTestId('fetch').click()
+    })
+    expect(data.fetch).toHaveBeenCalledWith({ rowStart: 0, rowEnd: 10 })
+  })
+
+  it('uses the current data frame methods, even if they change after the initial render', () => {
+    const data = arrayDataFrame([{ a: 1, b: 2 }, { a: 3, b: 4 }])
+    const getCell1 = vi.fn()
+    const getCell2 = vi.fn()
+    data.getCell = getCell1
+    const { getByTestId, rerender } = render(<TestComponent data={data} />)
+    act(() => {
+      getByTestId('get-cell').click()
+    })
+    expect(getCell1).toHaveBeenCalledWith({ row: 0, column: 'col1' })
+
+    // Change the getCell method in the data frame
+    data.getCell = getCell2
+    // force a re-render without changing the data frame instance
+    rerender(<TestComponent data={data} />)
+    act(() => {
+      getByTestId('get-cell').click()
+    })
+    expect(getCell2).toHaveBeenCalledWith({ row: 0, column: 'col1' })
   })
 
   describe('on observable data frame change', () => {
