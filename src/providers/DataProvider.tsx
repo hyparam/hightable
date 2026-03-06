@@ -23,9 +23,15 @@ type Props = Pick<HighTableProps, 'data'> & {
 }
 
 /**
- * Provides the number of rows and columns, and the version of the data frame.
+ * Provides the data frame parts as separate contexts:
+ * - number of rows
+ * - version of the data frame (incremented on each update or resolve event)
+ * - column names
+ * - sortable columns
+ * - exclusive sort flag
+ * - getRowNumber, getCell, and fetch methods
  *
- * It also providers a data key for testing purposes.
+ * It also provides a data key for testing purposes.
  */
 export function DataProvider({ children, data }: Props) {
   const key = getDataKey(data)
