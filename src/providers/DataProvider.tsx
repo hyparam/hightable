@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useMemo, useState } from 'react'
+import { type ReactNode, useEffect, useState } from 'react'
 
 import type { DataFrameWithoutMethods } from '../contexts/DataContext.js'
 import { ColumnDescriptorsContext, DataFrameMethodsContext, DataKeyContext, DataVersionContext, ExclusiveSortContext, NumColumnsContext, NumRowsContext, SortableColumnsContext } from '../contexts/DataContext.js'
@@ -65,11 +65,8 @@ function KeyedDataProvider({ children, data }: KeyedDataProviderProps) {
   // We keep their initial value, no setter.
   const [exclusiveSort] = useState(() => data.exclusiveSort === true)
   const [columnDescriptors] = useState(() => data.columnDescriptors.map(({ name, sortable }) => ({ name, sortable })))
+  const [sortableColumns] = useState(() => new Set(columnDescriptors.filter(({ sortable }) => sortable).map(({ name }) => name)))
   const numColumns = columnDescriptors.length
-  // A column is sortable iif it's marked as sortable in the column descriptors from the data frame. The user configuration can't change that.
-  const sortableColumns = useMemo(() => {
-    return new Set(columnDescriptors.filter(({ sortable }) => sortable).map(({ name }) => name))
-  }, [columnDescriptors])
 
   // Synchronize version and numRows with data frame events (external system - useEffect is needed)
   useEffect(() => {
