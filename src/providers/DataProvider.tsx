@@ -93,16 +93,16 @@ function KeyedDataProvider({ children, data }: KeyedDataProviderProps) {
 
   // Multiple contexts, to avoid unnecessary re-renders of the components consuming the API when only the data changes, and vice-versa. See https://react.dev/reference/react/useContext#caveats for more details.
   return (
-    <DataVersionContext.Provider value={version}>
-      <ColumnNamesContext.Provider value={columnNames}>
-        <SortableColumnsContext.Provider value={sortableColumns}>
-          <ExclusiveSortContext.Provider value={exclusiveSort}>
+    <ColumnNamesContext.Provider value={columnNames}>
+      <SortableColumnsContext.Provider value={sortableColumns}>
+        <ExclusiveSortContext.Provider value={exclusiveSort}>
+          <DataVersionContext.Provider value={version}>
             <NumRowsContext.Provider value={numRows}>
               {children}
             </NumRowsContext.Provider>
-          </ExclusiveSortContext.Provider>
-        </SortableColumnsContext.Provider>
-      </ColumnNamesContext.Provider>
-    </DataVersionContext.Provider>
+          </DataVersionContext.Provider>
+        </ExclusiveSortContext.Provider>
+      </SortableColumnsContext.Provider>
+    </ColumnNamesContext.Provider>
   )
 }
