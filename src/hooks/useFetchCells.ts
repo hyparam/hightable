@@ -1,7 +1,7 @@
 import { useContext, useEffect, useEffectEvent, useMemo } from 'react'
 
 import { ColumnsVisibilityContext } from '../contexts/ColumnsVisibilityContext.js'
-import { DataContext, NumRowsContext } from '../contexts/DataContext.js'
+import { DataFrameMethodsContext, NumRowsContext } from '../contexts/DataContext.js'
 import { OrderByContext } from '../contexts/OrderByContext.js'
 import { ScrollContext } from '../contexts/ScrollContext.js'
 import { defaultOverscan } from '../helpers/constants.js'
@@ -16,7 +16,7 @@ export function useFetchCells({ overscan = defaultOverscan, onError }: Props) {
   const { visibleRowsStart, visibleRowsEnd } = useContext(ScrollContext)
   const { visibleColumnsParameters } = useContext(ColumnsVisibilityContext)
   const orderBy = useContext(OrderByContext)
-  const data = useContext(DataContext)
+  const dataFrameMethods = useContext(DataFrameMethodsContext)
   const numRows = useContext(NumRowsContext)
 
   const fetchedRowsStart = useMemo(() => {
@@ -44,13 +44,13 @@ export function useFetchCells({ overscan = defaultOverscan, onError }: Props) {
   // Keep this inside an effect so we don't update state
   // or perform side-effects during render, for example when calling onError.
   useEffect(() => {
-    if (data.fetch === undefined || fetchedRowsStart === undefined || fetchedRowsEnd === undefined) return
+    if (dataFrameMethods.fetch === undefined || fetchedRowsStart === undefined || fetchedRowsEnd === undefined) return
 
     // Create an AbortController per fetch and clean it up on dependency changes.
     const abortController = new AbortController()
 
     // Launch the data fetch. The promise is not awaited here, but it will be aborted if any dependency changes.
-    data.fetch({
+    dataFrameMethods.fetch({
       rowStart: fetchedRowsStart,
       rowEnd: fetchedRowsEnd,
       columns: columnNames,
@@ -66,5 +66,5 @@ export function useFetchCells({ overscan = defaultOverscan, onError }: Props) {
     return () => {
       abortController.abort()
     }
-  }, [data, fetchedRowsStart, fetchedRowsEnd, columnNames, orderBy])
+  }, [dataFrameMethods, fetchedRowsStart, fetchedRowsEnd, columnNames, orderBy])
 }

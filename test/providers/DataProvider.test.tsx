@@ -2,7 +2,7 @@ import { render } from '@testing-library/react'
 import { act, useContext } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 
-import { ColumnDescriptorsContext, DataContext, DataKeyContext, DataVersionContext, ExclusiveSortContext, NumColumnsContext, NumRowsContext } from '../../src/contexts/DataContext.js'
+import { ColumnDescriptorsContext, DataFrameMethodsContext, DataKeyContext, DataVersionContext, ExclusiveSortContext, NumColumnsContext, NumRowsContext } from '../../src/contexts/DataContext.js'
 import type { DataFrame, DataFrameEvents } from '../../src/helpers/dataframe/index.js'
 import { arrayDataFrame } from '../../src/helpers/dataframe/index.js'
 import { createEventTarget } from '../../src/helpers/typedEventTarget.js'
@@ -15,7 +15,7 @@ function DisplayComponent() {
   const columnDescriptors = useContext(ColumnDescriptorsContext)
   const numColumns = useContext(NumColumnsContext)
   const exclusiveSort = useContext(ExclusiveSortContext) ? 'true' : 'false'
-  const data = useContext(DataContext)
+  const dataFrameMethods = useContext(DataFrameMethodsContext)
 
   return (
     <div>
@@ -28,7 +28,7 @@ function DisplayComponent() {
       <button
         data-testid="get-cell"
         onClick={() => {
-          data.getCell({ row: 0, column: 'col1' })
+          dataFrameMethods.getCell({ row: 0, column: 'col1' })
         }}
       >
         Get Cell
@@ -36,7 +36,7 @@ function DisplayComponent() {
       <button
         data-testid="get-row-number"
         onClick={() => {
-          data.getRowNumber({ row: 0 })
+          dataFrameMethods.getRowNumber({ row: 0 })
         }}
       >
         Get Row Number
@@ -44,7 +44,7 @@ function DisplayComponent() {
       <button
         data-testid="fetch"
         onClick={() => {
-          void data.fetch?.({ rowStart: 0, rowEnd: 10 })
+          void dataFrameMethods.fetch?.({ rowStart: 0, rowEnd: 10 })
         }}
       >
         Fetch Rows

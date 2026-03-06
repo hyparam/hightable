@@ -3,7 +3,7 @@ import { useCallback, useContext, useMemo } from 'react'
 
 import { CellNavigationContext } from '../../contexts/CellNavigationContext.js'
 import { ColumnsVisibilityContext } from '../../contexts/ColumnsVisibilityContext.js'
-import { DataContext, DataVersionContext, NumRowsContext } from '../../contexts/DataContext.js'
+import { DataFrameMethodsContext, DataVersionContext, NumRowsContext } from '../../contexts/DataContext.js'
 import { OrderByContext } from '../../contexts/OrderByContext.js'
 import { ScrollContext } from '../../contexts/ScrollContext.js'
 import { SelectionContext } from '../../contexts/SelectionContext.js'
@@ -37,7 +37,7 @@ export default function Slice({
   const version = useContext(DataVersionContext)
   /** The actual number of rows in the data frame */
   const numRows = useContext(NumRowsContext)
-  const data = useContext(DataContext)
+  const dataFrameMethods = useContext(DataFrameMethodsContext)
 
   // Fetch the required cells if needed (visible + overscan)
   // it's a side-effect.
@@ -144,9 +144,9 @@ export default function Slice({
 
     const canMeasureColumn: Record<string, boolean> = {}
     const rowContents = rows.map((row) => {
-      const rowNumber = data.getRowNumber({ row, orderBy })?.value
+      const rowNumber = dataFrameMethods.getRowNumber({ row, orderBy })?.value
       const cells = (columnsParameters ?? []).map(({ name: column, index: originalColumnIndex, className }) => {
-        const cell = data.getCell({ row, column, orderBy })
+        const cell = dataFrameMethods.getCell({ row, column, orderBy })
         canMeasureColumn[column] ||= cell !== undefined
         return { columnIndex: originalColumnIndex, cell, className }
       })
@@ -161,7 +161,7 @@ export default function Slice({
       canMeasureColumn,
       version,
     }
-  }, [data, columnsParameters, renderedRowsStart, renderedRowsEnd, orderBy, version])
+  }, [dataFrameMethods, columnsParameters, renderedRowsStart, renderedRowsEnd, orderBy, version])
 
   // don't render table if the data frame has no visible columns
   // (it can have zero rows, but must have at least one visible column)

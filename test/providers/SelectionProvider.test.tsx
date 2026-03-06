@@ -2,7 +2,7 @@ import { fireEvent, render } from '@testing-library/react'
 import { act, useContext } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 
-import { DataContext, NumRowsContext } from '../../src/contexts/DataContext.js'
+import { DataFrameMethodsContext, NumRowsContext } from '../../src/contexts/DataContext.js'
 import { SelectionContext } from '../../src/contexts/SelectionContext.js'
 import { arrayDataFrame } from '../../src/helpers/dataframe/array.js'
 import { SelectionProvider } from '../../src/providers/SelectionProvider.js'
@@ -25,13 +25,13 @@ describe('SelectionProvider', () => {
       const data = arrayDataFrame(Array.from({ length: 5 }, (_, i) => ({ id: i })))
       const onSelectionChange = vi.fn()
       const { getByTestId, rerender } = render(
-        <DataContext.Provider value={data}>
+        <DataFrameMethodsContext.Provider value={data}>
           <NumRowsContext.Provider value={5}>
             <SelectionProvider onSelectionChange={onSelectionChange}>
               <TestComponent />
             </SelectionProvider>
           </NumRowsContext.Provider>
-        </DataContext.Provider>
+        </DataFrameMethodsContext.Provider>
       )
 
       expect(getByTestId('all-rows-selected').textContent).toBe('false')
@@ -56,13 +56,13 @@ describe('SelectionProvider', () => {
       // eslint-disable-next-line @typescript-eslint/require-await
       await act(async () => {
         rerender(
-          <DataContext.Provider value={data}>
+          <DataFrameMethodsContext.Provider value={data}>
             <NumRowsContext.Provider value={10}>
               <SelectionProvider onSelectionChange={onSelectionChange}>
                 <TestComponent />
               </SelectionProvider>
             </NumRowsContext.Provider>
-          </DataContext.Provider>
+          </DataFrameMethodsContext.Provider>
         )
       })
       expect(getByTestId('all-rows-selected').textContent).toBe('false')

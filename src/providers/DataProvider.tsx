@@ -1,7 +1,7 @@
 import { type ReactNode, useEffect, useState } from 'react'
 
 import type { DataFrameWithoutMethods } from '../contexts/DataContext.js'
-import { ColumnDescriptorsContext, DataContext, DataKeyContext, DataVersionContext, ExclusiveSortContext, NumColumnsContext, NumRowsContext } from '../contexts/DataContext.js'
+import { ColumnDescriptorsContext, DataFrameMethodsContext, DataKeyContext, DataVersionContext, ExclusiveSortContext, NumColumnsContext, NumRowsContext } from '../contexts/DataContext.js'
 import type { HighTableProps } from '../types.js'
 
 // Assign stable numeric ids to data instances without triggering state
@@ -33,11 +33,11 @@ export function DataProvider({ children, data }: Props) {
   return (
     // The data key context is only used in tests
     <DataKeyContext.Provider value={key}>
-      <DataContext.Provider value={data}>
+      <DataFrameMethodsContext.Provider value={data}>
         <KeyedDataProvider data={data} key={key}>
           {children}
         </KeyedDataProvider>
-      </DataContext.Provider>
+      </DataFrameMethodsContext.Provider>
     </DataKeyContext.Provider>
   )
 }
