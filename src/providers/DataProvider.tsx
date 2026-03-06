@@ -1,7 +1,7 @@
-import { type ReactNode, useEffect, useState } from 'react'
+import { type ReactNode, useEffect, useMemo, useState } from 'react'
 
 import type { DataFrameWithoutMethods } from '../contexts/DataContext.js'
-import { ColumnDescriptorsContext, DataFrameMethodsContext, DataKeyContext, DataVersionContext, ExclusiveSortContext, NumColumnsContext, NumRowsContext } from '../contexts/DataContext.js'
+import { ColumnDescriptorsContext, DataFrameMethodsContext, DataKeyContext, DataVersionContext, ExclusiveSortContext, NumColumnsContext, NumRowsContext, SortableColumnsContext } from '../contexts/DataContext.js'
 import type { HighTableProps } from '../types.js'
 
 // Assign stable numeric ids to data instances without triggering state
@@ -63,9 +63,13 @@ function KeyedDataProvider({ children, data }: KeyedDataProviderProps) {
 
   // Some dataframe properties are expected to be stable for a given data frame.
   // We keep their initial value, no setter.
+  const [exclusiveSort] = useState(() => data.exclusiveSort === true)
   const [columnDescriptors] = useState(() => data.columnDescriptors.map(({ name, sortable }) => ({ name, sortable })))
   const numColumns = columnDescriptors.length
-  const [exclusiveSort] = useState(() => data.exclusiveSort === true)
+  // A column is sortable iif it's marked as sortable in the column descriptors from the data frame. The user configuration can't change that.
+  const sortableColumns = useMemo(() => {
+    return new Set(columnDescriptors.filter(({ sortable }) => sortable).map(({ name }) => name))
+  }, [columnDescriptors])
 
   // Synchronize version and numRows with data frame events (external system - useEffect is needed)
   useEffect(() => {
@@ -92,7 +96,9 @@ function KeyedDataProvider({ children, data }: KeyedDataProviderProps) {
         <NumColumnsContext.Provider value={numColumns}>
           <ExclusiveSortContext.Provider value={exclusiveSort}>
             <NumRowsContext.Provider value={numRows}>
-              {children}
+              <SortableColumnsContext.Provider value={sortableColumns}>
+                {children}
+              </SortableColumnsContext.Provider>
             </NumRowsContext.Provider>
           </ExclusiveSortContext.Provider>
         </NumColumnsContext.Provider>

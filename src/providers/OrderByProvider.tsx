@@ -1,7 +1,6 @@
 import { type ReactNode, useContext, useMemo } from 'react'
 
-import { SortableColumnsContext } from '../contexts/ColumnParametersContext.js'
-import { ExclusiveSortContext } from '../contexts/DataContext.js'
+import { ExclusiveSortContext, SortableColumnsContext } from '../contexts/DataContext.js'
 import { OrderByContext, SortInfoAndActionsByColumnContext } from '../contexts/OrderByContext.js'
 import { type OrderBy, toggleColumn, toggleColumnExclusive } from '../helpers/sort.js'
 import { useInputState } from '../hooks/useInputState.js'

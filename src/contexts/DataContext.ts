@@ -9,11 +9,16 @@ import type { ColumnDescriptor, DataFrame } from '../helpers/dataframe/types.js'
  */
 export type DataFrameMethods = Pick<DataFrame, 'getRowNumber' | 'getCell' | 'fetch'>
 export type DataFrameWithoutMethods = Omit<DataFrame, 'getRowNumber' | 'getCell' | 'fetch'>
+/**
+ * A set of the names of the sortable columns. Used to check if a column is sortable, and to provide the toggle function in the OrderByContext.
+ */
+type SortableColumnsContextType = Set<string>
 
 export const DataVersionContext = createContext<number>(0)
 export const NumRowsContext = createContext<number>(0)
 export const ColumnDescriptorsContext = createContext<Pick<ColumnDescriptor, 'name' | 'sortable'>[]>([])
 export const NumColumnsContext = createContext<number>(0)
+export const SortableColumnsContext = createContext<SortableColumnsContextType>(new Set())
 export const ExclusiveSortContext = createContext<boolean>(false)
 export const DataFrameMethodsContext = createContext<DataFrameMethods>({
   getRowNumber: () => undefined,
