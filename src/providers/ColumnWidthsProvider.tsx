@@ -79,10 +79,6 @@ export function ColumnWidthsProvider({ children, localStorageKey, minWidth }: Co
   /** Number of columns (used to initialize the widths array, and compute the widths) */
   const numColumns = useContext(ColumnNamesContext).length
 
-  // Number of columns
-  if (!Number.isInteger(numColumns) || numColumns < 0) {
-    throw new Error(`Invalid numColumns: ${numColumns}. It must be a positive integer.`)
-  }
   const isValidIndex = useCallback((index?: number): index is number => {
     return index !== undefined && Number.isInteger(index) && index >= 0 && index < numColumns
   }, [numColumns])
