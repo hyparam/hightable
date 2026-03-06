@@ -1,8 +1,8 @@
 import { render } from '@testing-library/react'
 import { act, useContext } from 'react'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
-import { ColumnDescriptorsContext, DataKeyContext, DataVersionContext, ExclusiveSortContext, NumColumnsContext, NumRowsContext } from '../../src/contexts/DataContext.js'
+import { ColumnDescriptorsContext, DataContext, DataKeyContext, DataVersionContext, ExclusiveSortContext, NumColumnsContext, NumRowsContext } from '../../src/contexts/DataContext.js'
 import type { DataFrame, DataFrameEvents } from '../../src/helpers/dataframe/index.js'
 import { arrayDataFrame } from '../../src/helpers/dataframe/index.js'
 import { createEventTarget } from '../../src/helpers/typedEventTarget.js'
@@ -15,6 +15,7 @@ function DisplayComponent() {
   const columnDescriptors = useContext(ColumnDescriptorsContext)
   const numColumns = useContext(NumColumnsContext)
   const exclusiveSort = useContext(ExclusiveSortContext) ? 'true' : 'false'
+  const data = useContext(DataContext)
 
   return (
     <div>
@@ -24,6 +25,30 @@ function DisplayComponent() {
       <span data-testid="column-descriptors">{JSON.stringify(columnDescriptors)}</span>
       <span data-testid="num-columns">{numColumns}</span>
       <span data-testid="exclusive-sort">{exclusiveSort}</span>
+      <button
+        data-testid="get-cell"
+        onClick={() => {
+          data.getCell({ row: 0, column: 'col1' })
+        }}
+      >
+        Get Cell
+      </button>
+      <button
+        data-testid="get-row-number"
+        onClick={() => {
+          data.getRowNumber({ row: 0 })
+        }}
+      >
+        Get Row Number
+      </button>
+      <button
+        data-testid="fetch"
+        onClick={() => {
+          void data.fetch?.({ rowStart: 0, rowEnd: 10 })
+        }}
+      >
+        Fetch Rows
+      </button>
     </div>
   )
 }
@@ -44,6 +69,26 @@ describe('DataProvider', () => {
     expect(getByTestId('num-rows').textContent).toBe(data.numRows.toString())
     expect(getByTestId('num-columns').textContent).toBe(data.columnDescriptors.length.toString())
     expect(getByTestId('exclusive-sort').textContent).toBe('false')
+  })
+
+  it('should be able to call the data frame methods from the context', () => {
+    const data = arrayDataFrame([{ a: 1, b: 2 }, { a: 3, b: 4 }])
+    data.getCell = vi.fn()
+    data.getRowNumber = vi.fn()
+    data.fetch = vi.fn()
+    const { getByTestId } = render(<TestComponent data={data} />)
+    act(() => {
+      getByTestId('get-cell').click()
+    })
+    expect(data.getCell).toHaveBeenCalledWith({ row: 0, column: 'col1' })
+    act(() => {
+      getByTestId('get-row-number').click()
+    })
+    expect(data.getRowNumber).toHaveBeenCalledWith({ row: 0 })
+    act(() => {
+      getByTestId('fetch').click()
+    })
+    expect(data.fetch).toHaveBeenCalledWith({ rowStart: 0, rowEnd: 10 })
   })
 
   describe('on observable data frame change', () => {
