@@ -16,15 +16,15 @@ import RowHeader from './RowHeader.js'
 import TableCorner from './TableCorner.js'
 import TableHeader from './TableHeader.js'
 
-type SliceProps = Pick<HighTableProps, 'onDoubleClickCell' | 'onKeyDownCell' | 'onMouseDownCell' | 'renderCellContent' | 'stringify'>
+type TableProps = Pick<HighTableProps, 'onDoubleClickCell' | 'onKeyDownCell' | 'onMouseDownCell' | 'renderCellContent' | 'stringify'>
 
-export default function Slice({
+export default function Table({
   onDoubleClickCell,
   onKeyDownCell,
   onMouseDownCell,
   renderCellContent,
   stringify = stringifyDefault,
-}: SliceProps) {
+}: TableProps) {
   const { moveCell } = useContext(CellNavigationContext)
   const orderBy = useContext(OrderByContext)
   const { selectable, toggleAllRows, pendingSelectionGesture, onTableKeyDown: onSelectionTableKeyDown, allRowsSelected, isRowSelected, toggleRowNumber, toggleRangeToRowNumber } = useContext(SelectionContext)
