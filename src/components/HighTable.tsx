@@ -2,6 +2,7 @@ import { type ReactNode } from 'react'
 
 import { columnWidthsSuffix } from '../helpers/constants.js'
 import styles from '../HighTable.module.css'
+import { CellConfigurationProvider } from '../providers/CellConfigurationProvider.js'
 import { CellNavigationProvider } from '../providers/CellNavigationProvider.js'
 import { ColumnParametersProvider } from '../providers/ColumnParametersProvider.js'
 import { ColumnsVisibilityProvider } from '../providers/ColumnsVisibilityProvider.js'
@@ -31,7 +32,7 @@ export default function HighTable({ data, ...props }: HighTableProps) {
   )
 }
 
-type StateProps = Pick<HighTableProps, 'columnConfiguration' | 'cacheKey' | 'cellPosition' | 'columnsVisibility' | 'focus' | 'numRowsPerPage' | 'orderBy' | 'overscan' | 'padding' | 'selection' | 'onCellPositionChange' | 'onColumnsVisibilityChange' | 'onError' | 'onOrderByChange' | 'onSelectionChange'>
+type StateProps = Pick<HighTableProps, 'columnConfiguration' | 'cacheKey' | 'cellPosition' | 'columnsVisibility' | 'focus' | 'numRowsPerPage' | 'orderBy' | 'overscan' | 'padding' | 'selection' | 'onCellPositionChange' | 'onColumnsVisibilityChange' | 'onDoubleClickCell' | 'onError' | 'onKeyDownCell' | 'onMouseDownCell' | 'onOrderByChange' | 'onSelectionChange' | 'renderCellContent' | 'stringify'>
   & { children: ReactNode }
 
 function State({
@@ -48,65 +49,73 @@ function State({
   selection,
   onCellPositionChange,
   onColumnsVisibilityChange,
+  onDoubleClickCell,
   onError,
+  onKeyDownCell,
+  onMouseDownCell,
   onOrderByChange,
   onSelectionChange,
+  renderCellContent,
+  stringify,
 }: StateProps) {
   return (
     /* The state is handled with contexts, even if it creates a "Providers hell". No need for state library for now. */
     <ViewportSizeProvider>
       <TableCornerSizeProvider>
-        <ColumnParametersProvider columnConfiguration={columnConfiguration}>
-          <ColumnWidthsProvider
+        <CellConfigurationProvider
+          onDoubleClickCell={onDoubleClickCell}
+          onKeyDownCell={onKeyDownCell}
+          onMouseDownCell={onMouseDownCell}
+          renderCellContent={renderCellContent}
+          stringify={stringify}
+        >
+          <ColumnParametersProvider columnConfiguration={columnConfiguration}>
+            <ColumnWidthsProvider
             // Recreate a context if a new cacheKey is provided.
-            key={cacheKey}
-            // TODO(SL): pass cacheKey, memoize
-            localStorageKey={cacheKey ? `${cacheKey}${columnWidthsSuffix}` : undefined}
-          >
-            <ColumnsVisibilityProvider
-              columnsVisibility={columnsVisibility}
-              onColumnsVisibilityChange={onColumnsVisibilityChange}
+              key={cacheKey}
+              // TODO(SL): pass cacheKey, memoize
+              localStorageKey={cacheKey ? `${cacheKey}${columnWidthsSuffix}` : undefined}
             >
-              <OrderByProvider
-                orderBy={orderBy}
-                onOrderByChange={onOrderByChange}
+              <ColumnsVisibilityProvider
+                columnsVisibility={columnsVisibility}
+                onColumnsVisibilityChange={onColumnsVisibilityChange}
               >
-                <SelectionProvider
-                  selection={selection}
-                  onError={onError}
-                  onSelectionChange={onSelectionChange}
+                <OrderByProvider
+                  orderBy={orderBy}
+                  onOrderByChange={onOrderByChange}
                 >
-                  <CellNavigationProvider
-                    cellPosition={cellPosition}
-                    focus={focus}
-                    numRowsPerPage={numRowsPerPage}
-                    onCellPositionChange={onCellPositionChange}
+                  <SelectionProvider
+                    selection={selection}
+                    onError={onError}
+                    onSelectionChange={onSelectionChange}
                   >
-                    <ScrollProvider padding={padding} onError={onError} overscan={overscan}>
-                      {children}
-                    </ScrollProvider>
-                  </CellNavigationProvider>
-                </SelectionProvider>
-              </OrderByProvider>
-            </ColumnsVisibilityProvider>
-          </ColumnWidthsProvider>
-        </ColumnParametersProvider>
+                    <CellNavigationProvider
+                      cellPosition={cellPosition}
+                      focus={focus}
+                      numRowsPerPage={numRowsPerPage}
+                      onCellPositionChange={onCellPositionChange}
+                    >
+                      <ScrollProvider padding={padding} onError={onError} overscan={overscan}>
+                        {children}
+                      </ScrollProvider>
+                    </CellNavigationProvider>
+                  </SelectionProvider>
+                </OrderByProvider>
+              </ColumnsVisibilityProvider>
+            </ColumnWidthsProvider>
+          </ColumnParametersProvider>
+        </CellConfigurationProvider>
       </TableCornerSizeProvider>
     </ViewportSizeProvider>
   )
 }
 
-type DOMProps = Pick<HighTableProps, 'className' | 'maxRowNumber' | 'styled' | 'onDoubleClickCell' | 'onKeyDownCell' | 'onMouseDownCell' | 'renderCellContent' | 'stringify'>
+type DOMProps = Pick<HighTableProps, 'className' | 'maxRowNumber' | 'styled'>
 
 function DOM({
   className = '',
   maxRowNumber,
   styled = true,
-  onDoubleClickCell,
-  onKeyDownCell,
-  onMouseDownCell,
-  renderCellContent,
-  stringify,
 }: DOMProps) {
   return (
     <Wrapper styled={styled} maxRowNumber={maxRowNumber} className={className}>
@@ -114,13 +123,7 @@ function DOM({
 
       <Scroller>
         <Slice>
-          <Table
-            onDoubleClickCell={onDoubleClickCell}
-            onKeyDownCell={onKeyDownCell}
-            onMouseDownCell={onMouseDownCell}
-            renderCellContent={renderCellContent}
-            stringify={stringify}
-          />
+          <Table />
         </Slice>
       </Scroller>
 

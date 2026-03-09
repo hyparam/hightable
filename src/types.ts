@@ -1,8 +1,7 @@
 import type { KeyboardEvent, MouseEvent, ReactNode } from 'react'
 
-import type { CellContentProps } from './components/Cell.js'
 import type { ColumnConfiguration } from './helpers/columnConfiguration.js'
-import type { DataFrame } from './helpers/dataframe/index.js'
+import type { DataFrame, ResolvedValue } from './helpers/dataframe/index.js'
 import type { Selection } from './helpers/selection.js'
 import type { OrderBy } from './helpers/sort.js'
 import type { ColumnsVisibility } from './providers/ColumnsVisibilityProvider.js'
@@ -23,6 +22,13 @@ export interface CellPosition {
    * It's the same semantic as aria-rowindex: 1-based, includes column headers
    */
   rowIndex: number
+}
+
+export interface CellContentProps {
+  stringify: (value: unknown) => string | undefined
+  cell?: ResolvedValue
+  col: number
+  row?: number // the row index in the original data, undefined if the value has not been fetched yet
 }
 
 // TODO(SL): update selection, onSelectionChange docstrings to reflect the reality

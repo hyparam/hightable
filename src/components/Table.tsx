@@ -8,23 +8,13 @@ import { OrderByContext } from '../contexts/OrderByContext.js'
 import { RenderedRowsContext } from '../contexts/ScrollContext.js'
 import { SelectionContext } from '../contexts/SelectionContext.js'
 import { ariaOffset } from '../helpers/constants.js'
-import type { HighTableProps } from '../types.js'
-import { stringify as stringifyDefault } from '../utils/stringify.js'
 import Cell from './Cell.js'
 import Row from './Row.js'
 import RowHeader from './RowHeader.js'
 import TableCorner from './TableCorner.js'
 import TableHeader from './TableHeader.js'
 
-type TableProps = Pick<HighTableProps, 'onDoubleClickCell' | 'onKeyDownCell' | 'onMouseDownCell' | 'renderCellContent' | 'stringify'>
-
-export default function Table({
-  onDoubleClickCell,
-  onKeyDownCell,
-  onMouseDownCell,
-  renderCellContent,
-  stringify = stringifyDefault,
-}: TableProps) {
+export default function Table() {
   const { moveCell } = useContext(CellNavigationContext)
   const orderBy = useContext(OrderByContext)
   const { selectable, toggleAllRows, pendingSelectionGesture, onTableKeyDown: onSelectionTableKeyDown, allRowsSelected, isRowSelected, toggleRowNumber, toggleRangeToRowNumber } = useContext(SelectionContext)
@@ -214,10 +204,6 @@ export default function Table({
                 return (
                   <Cell
                     key={columnIndex}
-                    onDoubleClickCell={onDoubleClickCell}
-                    onMouseDownCell={onMouseDownCell}
-                    onKeyDownCell={onKeyDownCell}
-                    stringify={stringify}
                     columnIndex={columnIndex}
                     visibleColumnIndex={visibleColumnIndex}
                     className={className}
@@ -226,7 +212,6 @@ export default function Table({
                     cellValue={cell?.value}
                     hasResolved={cell !== undefined}
                     rowNumber={rowNumber}
-                    renderCellContent={renderCellContent}
                   />
                 )
               })}
