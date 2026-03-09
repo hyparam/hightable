@@ -1,3 +1,4 @@
+import type { Dispatch, SetStateAction } from 'react'
 import { createContext } from 'react'
 
 /**
@@ -12,7 +13,7 @@ export const SetScrollTopContext = createContext<((scrollTop: number) => void) |
  *
  * @param scrollTo The scrollTo function of the viewport element (on component mount), or undefined (on unmount)
  */
-export const SetScrollToContext = createContext<((scrollTo: HTMLElement['scrollTo'] | undefined) => void) | undefined>(undefined)
+export const SetScrollToContext = createContext<Dispatch<SetStateAction<HTMLElement['scrollTo'] | undefined>> | undefined>(undefined)
 
 /** Total scrollable height, in pixels */
 export const CanvasHeightContext = createContext<number | undefined>(undefined)
