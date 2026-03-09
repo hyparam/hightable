@@ -2,7 +2,7 @@ import type { KeyboardEvent } from 'react'
 import { useCallback, useContext, useMemo } from 'react'
 
 import { CellNavigationContext } from '../contexts/CellNavigationContext.js'
-import { ScrollContext } from '../contexts/ScrollContext.js'
+import { CanvasHeightContext, SetScrollToContext, SetScrollTopContext, SliceTopContext } from '../contexts/ScrollContext.js'
 import { SetViewportSizeContext } from '../contexts/ViewportSizeContext.js'
 import styles from '../HighTable.module.css'
 
@@ -15,7 +15,10 @@ export default function Scroller({ children }: Props) {
   /** Callback to set the current viewport size */
   const setViewportSize = useContext(SetViewportSizeContext)
   const { goToCurrentCell } = useContext(CellNavigationContext)
-  const { canvasHeight, sliceTop, setScrollTop, setScrollTo } = useContext(ScrollContext)
+  const setScrollTop = useContext(SetScrollTopContext)
+  const setScrollTo = useContext(SetScrollToContext)
+  const canvasHeight = useContext(CanvasHeightContext)
+  const sliceTop = useContext(SliceTopContext)
 
   /**
    * Handle keyboard events for scrolling

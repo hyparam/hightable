@@ -5,7 +5,7 @@ import { CellNavigationContext } from '../contexts/CellNavigationContext.js'
 import { ColumnsVisibilityContext } from '../contexts/ColumnsVisibilityContext.js'
 import { DataFrameMethodsContext, DataVersionContext, NumRowsContext } from '../contexts/DataContext.js'
 import { OrderByContext } from '../contexts/OrderByContext.js'
-import { ScrollContext } from '../contexts/ScrollContext.js'
+import { RenderedRowsContext } from '../contexts/ScrollContext.js'
 import { SelectionContext } from '../contexts/SelectionContext.js'
 import { ariaOffset } from '../helpers/constants.js'
 import type { HighTableProps } from '../types.js'
@@ -29,7 +29,7 @@ export default function Slice({
   const orderBy = useContext(OrderByContext)
   const { selectable, toggleAllRows, pendingSelectionGesture, onTableKeyDown: onSelectionTableKeyDown, allRowsSelected, isRowSelected, toggleRowNumber, toggleRangeToRowNumber } = useContext(SelectionContext)
   const { visibleColumnsParameters: columnsParameters } = useContext(ColumnsVisibilityContext)
-  const { renderedRowsStart, renderedRowsEnd } = useContext(ScrollContext)
+  const { renderedRowsStart, renderedRowsEnd } = useContext(RenderedRowsContext)
   /** A version number that increments whenever a data frame is updated or resolved (the key remains the same). */
   const version = useContext(DataVersionContext)
   /** The actual number of rows in the data frame */
