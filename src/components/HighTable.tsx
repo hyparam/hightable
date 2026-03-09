@@ -15,6 +15,7 @@ import { ViewportSizeProvider } from '../providers/ViewportSizeProvider.js'
 import type { HighTableProps } from '../types.js'
 import Scroller from './Scroller.js'
 import Slice from './Slice.js'
+import Table from './Table.js'
 import Wrapper from './Wrapper.js'
 
 export default function HighTable({ data, ...props }: HighTableProps) {
@@ -112,13 +113,15 @@ function DOM({
       <div className={styles.topBorder} role="presentation" />
 
       <Scroller>
-        <Slice
-          onDoubleClickCell={onDoubleClickCell}
-          onKeyDownCell={onKeyDownCell}
-          onMouseDownCell={onMouseDownCell}
-          renderCellContent={renderCellContent}
-          stringify={stringify}
-        />
+        <Slice>
+          <Table
+            onDoubleClickCell={onDoubleClickCell}
+            onKeyDownCell={onKeyDownCell}
+            onMouseDownCell={onMouseDownCell}
+            renderCellContent={renderCellContent}
+            stringify={stringify}
+          />
+        </Slice>
       </Scroller>
 
       {/* puts a background behind the row labels column */}
