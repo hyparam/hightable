@@ -25,8 +25,8 @@ export function useFetchCells({ overscan = defaultOverscan, range = {}, onError 
   const numRows = useContext(NumRowsContext)
   const { visibleRowsStart, visibleRowsEnd } = range
 
-  const fetchedRowsStart = visibleRowsStart ? Math.max(0, visibleRowsStart - overscan) : undefined
-  const fetchedRowsEnd = visibleRowsEnd ? Math.min(numRows, visibleRowsEnd + overscan) : undefined
+  const fetchedRowsStart = visibleRowsStart === undefined ? undefined : Math.max(0, visibleRowsStart - overscan)
+  const fetchedRowsEnd = visibleRowsEnd === undefined ? undefined : Math.min(numRows, visibleRowsEnd + overscan)
 
   const columnNames = useMemo(() => {
     return (visibleColumnsParameters ?? []).map(({ name }) => name)
