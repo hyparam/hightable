@@ -2,22 +2,23 @@ import { type ReactNode, useCallback, useContext, useEffect, useMemo, useReducer
 
 import { CellNavigationContext } from '../contexts/CellNavigationContext.js'
 import { NumRowsContext } from '../contexts/DataContext.js'
-import { ScrollContext } from '../contexts/ScrollContext.js'
+import { CanvasHeightContext, RenderedRowsContext, SetScrollToContext, SetScrollTopContext, SliceTopContext } from '../contexts/ScrollContext.js'
 import { TableCornerHeightContext } from '../contexts/TableCornerSizeContext.js'
 import { ViewportHeightContext } from '../contexts/ViewportSizeContext.js'
 import { defaultPadding, maxElementHeight, rowHeight } from '../helpers/constants.js'
 import { computeDerivedValues, createScale, getScrollActionForRow, initializeScrollState, scrollReducer } from '../helpers/scroll.js'
+import { useFetchCells } from '../hooks/useFetchCells.js'
 import type { HighTableProps } from '../types.js'
 
-type ScrollProviderProps = Pick<HighTableProps, 'padding'> & {
+type ScrollProviderProps = Pick<HighTableProps, 'overscan' | 'padding' | 'onError'> & {
   /** Child components */
   children: ReactNode
 }
 
 /**
- * Provide the scroll state and logic to the table, through the ScrollContext.
+ * Provide the scroll state and logic to the table, through the ScrollContext contexts.
  */
-export function ScrollProvider({ children, padding = defaultPadding }: ScrollProviderProps) {
+export function ScrollProvider({ children, overscan, padding = defaultPadding, onError }: ScrollProviderProps) {
   const [{ scale, scrollTop, scrollTopAnchor, localOffset }, dispatch] = useReducer(scrollReducer, undefined, initializeScrollState)
   const { cellPosition, focusState, focusDispatch } = useContext(CellNavigationContext)
   const clientHeight = useContext(ViewportHeightContext)
@@ -82,24 +83,40 @@ export function ScrollProvider({ children, padding = defaultPadding }: ScrollPro
     }
   }, [cellPosition, scrollTo, scrollTopAnchor, localOffset, scale, focusDispatch, focusState])
 
-  const value = useMemo(() => {
-    return {
-      scrollMode: 'virtual' as const,
-      canvasHeight: scale ? scale.canvasHeight : undefined,
-      setScrollTop,
-      setScrollTo,
-      ...computeDerivedValues({
-        scale,
-        scrollTop,
-        scrollTopAnchor,
-        localOffset,
-        padding,
-      }),
+  const derivedValues = useMemo(() => {
+    if (!scale) {
+      return undefined
     }
-  }, [scale, scrollTop, scrollTopAnchor, localOffset, padding, setScrollTop])
+    return computeDerivedValues({
+      scale,
+      scrollTop,
+      scrollTopAnchor,
+      localOffset,
+      padding })
+  }, [scale, scrollTop, scrollTopAnchor, localOffset, padding])
+
+  const renderedRows = useMemo(() => {
+    return {
+      renderedRowsStart: derivedValues?.renderedRowsStart,
+      renderedRowsEnd: derivedValues?.renderedRowsEnd,
+    }
+  }, [derivedValues])
+
+  // Fetch the required cells if needed (visible + overscan)
+  // it's a side-effect.
+  useFetchCells({ overscan, onError, range: derivedValues })
+
   return (
-    <ScrollContext.Provider value={value}>
-      {children}
-    </ScrollContext.Provider>
+    <SetScrollToContext.Provider value={setScrollTo}>
+      <SetScrollTopContext.Provider value={setScrollTop}>
+        <CanvasHeightContext.Provider value={scale ? scale.canvasHeight : undefined}>
+          <SliceTopContext.Provider value={derivedValues?.sliceTop}>
+            <RenderedRowsContext.Provider value={renderedRows}>
+              {children}
+            </RenderedRowsContext.Provider>
+          </SliceTopContext.Provider>
+        </CanvasHeightContext.Provider>
+      </SetScrollTopContext.Provider>
+    </SetScrollToContext.Provider>
   )
 }

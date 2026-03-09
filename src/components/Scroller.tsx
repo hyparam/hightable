@@ -2,7 +2,7 @@ import type { KeyboardEvent } from 'react'
 import { useCallback, useContext, useMemo } from 'react'
 
 import { CellNavigationContext } from '../contexts/CellNavigationContext.js'
-import { ScrollContext } from '../contexts/ScrollContext.js'
+import { CanvasHeightContext, SetScrollToContext, SetScrollTopContext } from '../contexts/ScrollContext.js'
 import { SetViewportSizeContext } from '../contexts/ViewportSizeContext.js'
 import styles from '../HighTable.module.css'
 
@@ -14,8 +14,11 @@ interface Props {
 export default function Scroller({ children }: Props) {
   /** Callback to set the current viewport size */
   const setViewportSize = useContext(SetViewportSizeContext)
+  // TODO(SL): get a stable function to go to current cell (maybe dispatch('ENTER_CELL_NAVIGATION_MODE'), or setMode('cells'))
   const { goToCurrentCell } = useContext(CellNavigationContext)
-  const { canvasHeight, sliceTop, setScrollTop, setScrollTo } = useContext(ScrollContext)
+  const setScrollTop = useContext(SetScrollTopContext)
+  const setScrollTo = useContext(SetScrollToContext)
+  const canvasHeight = useContext(CanvasHeightContext)
 
   /**
    * Handle keyboard events for scrolling
@@ -92,16 +95,10 @@ export default function Scroller({ children }: Props) {
     return canvasHeight !== undefined ? { height: `${canvasHeight}px` } : {}
   }, [canvasHeight])
 
-  const sliceTopStyle = useMemo(() => {
-    return sliceTop !== undefined ? { top: `${sliceTop}px` } : {}
-  }, [sliceTop])
-
   return (
     <div className={styles.tableScroll} ref={viewportRef} role="group" aria-labelledby="caption" onKeyDown={onKeyDown} tabIndex={0}>
       <div style={canvasHeightStyle}>
-        <div style={sliceTopStyle}>
-          {children}
-        </div>
+        {children}
       </div>
     </div>
   )
