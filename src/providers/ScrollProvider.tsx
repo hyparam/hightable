@@ -102,9 +102,11 @@ export function ScrollProvider({ children, overscan, padding = defaultPadding, o
   const value = useMemo(() => {
     return {
       canvasHeight: scale ? scale.canvasHeight : undefined,
+      renderedRowsStart: derivedValues?.renderedRowsStart,
+      renderedRowsEnd: derivedValues?.renderedRowsEnd,
+      sliceTop: derivedValues?.sliceTop,
       setScrollTop,
       setScrollTo,
-      ...derivedValues,
     }
   }, [scale, setScrollTop, derivedValues])
 
