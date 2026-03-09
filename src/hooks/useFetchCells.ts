@@ -3,21 +3,27 @@ import { useContext, useEffect, useEffectEvent, useMemo } from 'react'
 import { ColumnsVisibilityContext } from '../contexts/ColumnsVisibilityContext.js'
 import { DataFrameMethodsContext, NumRowsContext } from '../contexts/DataContext.js'
 import { OrderByContext } from '../contexts/OrderByContext.js'
-import { ScrollContext } from '../contexts/ScrollContext.js'
 import { defaultOverscan } from '../helpers/constants.js'
 import type { HighTableProps } from '../types.js'
 
-type Props = Pick<HighTableProps, 'onError' | 'overscan'>
+type Props = Pick<HighTableProps, 'onError' | 'overscan'> & {
+  range?: {
+    /** Index of the first row visible in the viewport (inclusive). Indexes refer to the virtual table domain. */
+    visibleRowsStart?: number
+    /** Index of the last row visible in the viewport (exclusive). */
+    visibleRowsEnd?: number
+  }
+}
 
 /**
  * Fetch the required cells (visible + overscan).
  */
-export function useFetchCells({ overscan = defaultOverscan, onError }: Props) {
-  const { visibleRowsStart, visibleRowsEnd } = useContext(ScrollContext)
+export function useFetchCells({ overscan = defaultOverscan, range = {}, onError }: Props) {
   const { visibleColumnsParameters } = useContext(ColumnsVisibilityContext)
   const orderBy = useContext(OrderByContext)
   const dataFrameMethods = useContext(DataFrameMethodsContext)
   const numRows = useContext(NumRowsContext)
+  const { visibleRowsStart, visibleRowsEnd } = range
 
   const fetchedRowsStart = useMemo(() => {
     if (visibleRowsStart === undefined) return undefined

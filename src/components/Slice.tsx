@@ -8,7 +8,6 @@ import { OrderByContext } from '../contexts/OrderByContext.js'
 import { ScrollContext } from '../contexts/ScrollContext.js'
 import { SelectionContext } from '../contexts/SelectionContext.js'
 import { ariaOffset } from '../helpers/constants.js'
-import { useFetchCells } from '../hooks/useFetchCells.js'
 import type { HighTableProps } from '../types.js'
 import { stringify as stringifyDefault } from '../utils/stringify.js'
 import Cell from './Cell.js'
@@ -17,12 +16,10 @@ import RowHeader from './RowHeader.js'
 import TableCorner from './TableCorner.js'
 import TableHeader from './TableHeader.js'
 
-type SliceProps = Pick<HighTableProps, 'onDoubleClickCell' | 'onError' | 'onKeyDownCell' | 'onMouseDownCell' | 'overscan' | 'renderCellContent' | 'stringify'>
+type SliceProps = Pick<HighTableProps, 'onDoubleClickCell' | 'onKeyDownCell' | 'onMouseDownCell' | 'renderCellContent' | 'stringify'>
 
 export default function Slice({
-  overscan,
   onDoubleClickCell,
-  onError,
   onKeyDownCell,
   onMouseDownCell,
   renderCellContent,
@@ -38,10 +35,6 @@ export default function Slice({
   /** The actual number of rows in the data frame */
   const numRows = useContext(NumRowsContext)
   const dataFrameMethods = useContext(DataFrameMethodsContext)
-
-  // Fetch the required cells if needed (visible + overscan)
-  // it's a side-effect.
-  useFetchCells({ overscan, onError })
 
   const onNavigationTableKeyDown = useMemo(() => {
     if (!moveCell) {

@@ -5,10 +5,6 @@ export interface ScrollContextType {
   canvasHeight?: number
   /** Offset of the top of the visible slice from the top of the canvas, in pixels */
   sliceTop?: number
-  /** Index of the first row visible in the viewport (inclusive). Indexes refer to the virtual table domain. */
-  visibleRowsStart?: number
-  /** Index of the last row visible in the viewport (exclusive). */
-  visibleRowsEnd?: number
   /** Index of the first row rendered in the DOM as a table row (inclusive). */
   renderedRowsStart?: number
   /** Index of the last row rendered in the DOM as a table row (exclusive). */

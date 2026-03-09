@@ -30,7 +30,7 @@ export default function HighTable({ data, ...props }: HighTableProps) {
   )
 }
 
-type StateProps = Pick<HighTableProps, 'columnConfiguration' | 'cacheKey' | 'cellPosition' | 'columnsVisibility' | 'focus' | 'numRowsPerPage' | 'orderBy' | 'padding' | 'selection' | 'onCellPositionChange' | 'onColumnsVisibilityChange' | 'onError' | 'onOrderByChange' | 'onSelectionChange'>
+type StateProps = Pick<HighTableProps, 'columnConfiguration' | 'cacheKey' | 'cellPosition' | 'columnsVisibility' | 'focus' | 'numRowsPerPage' | 'orderBy' | 'overscan' | 'padding' | 'selection' | 'onCellPositionChange' | 'onColumnsVisibilityChange' | 'onError' | 'onOrderByChange' | 'onSelectionChange'>
   & { children: ReactNode }
 
 function State({
@@ -42,6 +42,7 @@ function State({
   focus,
   numRowsPerPage,
   orderBy,
+  overscan,
   padding,
   selection,
   onCellPositionChange,
@@ -80,7 +81,7 @@ function State({
                     numRowsPerPage={numRowsPerPage}
                     onCellPositionChange={onCellPositionChange}
                   >
-                    <ScrollProvider padding={padding}>
+                    <ScrollProvider padding={padding} onError={onError} overscan={overscan}>
                       {children}
                     </ScrollProvider>
                   </CellNavigationProvider>
@@ -94,15 +95,13 @@ function State({
   )
 }
 
-type DOMProps = Pick<HighTableProps, 'className' | 'maxRowNumber' | 'onError' | 'styled' | 'onDoubleClickCell' | 'onKeyDownCell' | 'onMouseDownCell' | 'overscan' | 'renderCellContent' | 'stringify'>
+type DOMProps = Pick<HighTableProps, 'className' | 'maxRowNumber' | 'styled' | 'onDoubleClickCell' | 'onKeyDownCell' | 'onMouseDownCell' | 'renderCellContent' | 'stringify'>
 
 function DOM({
   className = '',
   maxRowNumber,
-  overscan,
   styled = true,
   onDoubleClickCell,
-  onError,
   onKeyDownCell,
   onMouseDownCell,
   renderCellContent,
@@ -114,9 +113,7 @@ function DOM({
 
       <Scroller>
         <Slice
-          overscan={overscan}
           onDoubleClickCell={onDoubleClickCell}
-          onError={onError}
           onKeyDownCell={onKeyDownCell}
           onMouseDownCell={onMouseDownCell}
           renderCellContent={renderCellContent}
