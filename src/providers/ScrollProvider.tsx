@@ -101,7 +101,6 @@ export function ScrollProvider({ children, overscan, padding = defaultPadding, o
 
   const value = useMemo(() => {
     return {
-      scrollMode: 'virtual' as const,
       canvasHeight: scale ? scale.canvasHeight : undefined,
       setScrollTop,
       setScrollTo,
