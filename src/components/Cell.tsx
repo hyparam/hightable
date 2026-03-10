@@ -65,7 +65,9 @@ export default function Cell({ cellValue, hasResolved, columnIndex, visibleColum
     }
   }, [str])
   const content = useMemo(() => {
-    return renderCellContent?.({ cell, stringify, col: columnIndex, row: rowNumber }) ?? str
+    return renderCellContent === undefined
+      ? str
+      : renderCellContent({ cell, stringify, col: columnIndex, row: rowNumber })
   }, [cell, stringify, columnIndex, rowNumber, renderCellContent, str])
 
   const handleMouseDown = useCallback((event: MouseEvent) => {
