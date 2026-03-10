@@ -1,17 +1,10 @@
-import type { KeyboardEvent, MouseEvent, ReactNode } from 'react'
+import type { KeyboardEvent, MouseEvent } from 'react'
 import { useCallback, useContext, useEffect, useMemo, useRef } from 'react'
 
+import { CellCallbacksContext, RenderCellContentContext, StringifyContext } from '../contexts/CellConfigurationContext.js'
 import { ColumnWidthsContext } from '../contexts/ColumnWidthsContext.js'
-import type { ResolvedValue } from '../helpers/dataframe/index.js'
 import { useCellFocus } from '../hooks/useCellFocus.js'
 import { useOnCopy } from '../hooks/useOnCopyToClipboard.js'
-
-export interface CellContentProps {
-  stringify: (value: unknown) => string | undefined
-  cell?: ResolvedValue
-  col: number
-  row?: number // the row index in the original data, undefined if the value has not been fetched yet
-}
 
 interface Props {
   /** aria column index */
@@ -22,30 +15,23 @@ interface Props {
   columnIndex: number
   /** index in the visible columns array (used for styling/widths) */
   visibleColumnIndex: number
-  /** function to stringify the cell value, used for default rendering and for copy to clipboard */
-  stringify: (value: unknown) => string | undefined
   /** cell value, undefined if the value has not been fetched yet, or if the value is actually undefined. Use hasResolved to distinguish these cases. */
   cellValue?: unknown
   /** whether the cell value has been resolved */
   hasResolved?: boolean
   /** class name */
   className?: string
-  /** double click callback */
-  onDoubleClickCell?: (event: MouseEvent, col: number, row: number) => void
-  /** mouse down callback */
-  onMouseDownCell?: (event: MouseEvent, col: number, row: number) => void
-  /** key down callback, for accessibility, it should be passed if onDoubleClickCell is passed. It can handle more than that action though. */
-  onKeyDownCell?: (event: KeyboardEvent, col: number, row: number) => void
   /** the row index in the original data, undefined if the value has not been fetched yet */
   rowNumber?: number
-  /** custom cell content component, if not provided, the default stringified value will be used */
-  renderCellContent?: (props: CellContentProps) => ReactNode
 }
 
 /**
  * Render a table cell <td> with title and optional custom rendering
  */
-export default function Cell({ cellValue, hasResolved, onDoubleClickCell, onMouseDownCell, onKeyDownCell, stringify, columnIndex, visibleColumnIndex, className, ariaColIndex, ariaRowIndex, rowNumber, renderCellContent }: Props) {
+export default function Cell({ cellValue, hasResolved, columnIndex, visibleColumnIndex, className, ariaColIndex, ariaRowIndex, rowNumber }: Props) {
+  const { onDoubleClickCell, onMouseDownCell, onKeyDownCell } = useContext(CellCallbacksContext)
+  const stringify = useContext(StringifyContext)
+  const renderCellContent = useContext(RenderCellContentContext)
   const { tabIndex, navigateToCell, focusIfNeeded } = useCellFocus({ ariaColIndex, ariaRowIndex })
 
   const cell = useMemo(() => {
@@ -79,7 +65,9 @@ export default function Cell({ cellValue, hasResolved, onDoubleClickCell, onMous
     }
   }, [str])
   const content = useMemo(() => {
-    return renderCellContent?.({ cell, stringify, col: columnIndex, row: rowNumber }) ?? str
+    return renderCellContent === undefined
+      ? str
+      : renderCellContent({ cell, stringify, col: columnIndex, row: rowNumber })
   }, [cell, stringify, columnIndex, rowNumber, renderCellContent, str])
 
   const handleMouseDown = useCallback((event: MouseEvent) => {

@@ -2,7 +2,6 @@ import type { Meta, StoryObj } from '@storybook/react-vite'
 import type { MouseEvent, ReactNode } from 'react'
 import { useState } from 'react'
 
-import type { CellContentProps } from '../src/components/Cell.js'
 import HighTable from '../src/components/HighTable.js'
 import { checkSignal, createGetRowNumber, validateFetchParams, validateGetCellParams } from '../src/helpers/dataframe/helpers.js'
 import type { DataFrame, DataFrameEvents } from '../src/helpers/dataframe/index.js'
@@ -13,7 +12,7 @@ import type { Selection } from '../src/helpers/selection.js'
 import type { OrderBy } from '../src/helpers/sort.js'
 import { createEventTarget } from '../src/helpers/typedEventTarget.js'
 import type { ColumnsVisibility } from '../src/providers/ColumnsVisibilityProvider.js'
-import type { CellPosition } from '../src/types.js'
+import type { CellContentProps, CellPosition } from '../src/types.js'
 
 function random(seed: number) {
   const x = Math.sin(seed) * 10000

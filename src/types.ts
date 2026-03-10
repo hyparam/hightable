@@ -1,8 +1,7 @@
 import type { KeyboardEvent, MouseEvent, ReactNode } from 'react'
 
-import type { CellContentProps } from './components/Cell.js'
 import type { ColumnConfiguration } from './helpers/columnConfiguration.js'
-import type { DataFrame } from './helpers/dataframe/index.js'
+import type { DataFrame, ResolvedValue } from './helpers/dataframe/index.js'
 import type { Selection } from './helpers/selection.js'
 import type { OrderBy } from './helpers/sort.js'
 import type { ColumnsVisibility } from './providers/ColumnsVisibilityProvider.js'
@@ -23,6 +22,15 @@ export interface CellPosition {
    * It's the same semantic as aria-rowindex: 1-based, includes column headers
    */
   rowIndex: number
+}
+
+export type StringifyFunction = (value: unknown) => string | undefined
+
+export interface CellContentProps {
+  stringify: StringifyFunction
+  cell?: ResolvedValue
+  col: number
+  row?: number // the row index in the original data, undefined if the value has not been fetched yet
 }
 
 // TODO(SL): update selection, onSelectionChange docstrings to reflect the reality
@@ -181,8 +189,10 @@ export interface HighTableProps {
   /**
    * Optional function to stringify cell values for rendering, copy/paste and export.
    *
+   * If not provided, the default stringification will be used.
+   *
    * @param value The cell value
-   * @returns The stringified value, or undefined to use the default stringification
+   * @returns The stringified value, or undefined if the value cannot be stringified
    */
-  stringify?: (value: unknown) => string | undefined
+  stringify?: StringifyFunction
 }
