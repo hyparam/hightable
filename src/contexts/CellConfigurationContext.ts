@@ -10,7 +10,8 @@ export const StringifyContext = createContext<(value: unknown) => string | undef
 /** custom cell content component, if not provided, the default stringified value will be used */
 export const RenderCellContentContext = createContext<((props: CellContentProps) => ReactNode) | undefined>(undefined)
 
-export const CellCallbacksContext = createContext <{
+/** callbacks for cell interactions (click, double click and key down), used for accessibility and custom interactions */
+export const CellCallbacksContext = createContext<{
   /** double click callback */
   onDoubleClickCell?: (event: MouseEvent, col: number, row: number) => void
   /** mouse down callback */
