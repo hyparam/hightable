@@ -24,8 +24,10 @@ export interface CellPosition {
   rowIndex: number
 }
 
+export type StringifyFunction = (value: unknown) => string | undefined
+
 export interface CellContentProps {
-  stringify: (value: unknown) => string | undefined
+  stringify: StringifyFunction
   cell?: ResolvedValue
   col: number
   row?: number // the row index in the original data, undefined if the value has not been fetched yet
@@ -187,8 +189,10 @@ export interface HighTableProps {
   /**
    * Optional function to stringify cell values for rendering, copy/paste and export.
    *
+   * If not provided, the default stringification will be used.
+   *
    * @param value The cell value
-   * @returns The stringified value, or undefined to use the default stringification
+   * @returns The stringified value, or undefined if the value cannot be stringified
    */
-  stringify?: (value: unknown) => string | undefined
+  stringify?: StringifyFunction
 }
