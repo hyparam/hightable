@@ -49,14 +49,12 @@ export function initializeScrollState(): ScrollState {
 }
 
 // conditions for local scroll:
-function canBeLocalScroll({ delta, scale, localOffset }: { delta: number, scale: Scale, localOffset: number }): boolean {
+function canBeLocalScroll({ delta, scale }: { delta: number, scale: Scale }): boolean {
   return (
     // there is virtual scroll
     scale.factor !== 1
     // the last move is small
     && Math.abs(delta) <= largeScrollPx
-    // the accumulated localOffset is small enough
-    && Math.abs(localOffset + delta) <= largeScrollPx
   )
 }
 
@@ -88,7 +86,7 @@ export function scrollReducer(state: ScrollState, action: ScrollAction): ScrollS
     case 'ON_SCROLL': {
       const { scrollTop } = action
 
-      const { localOffset, scrollTopAnchor, scrollTop: oldScrollTop, scale } = state
+      const { scrollTopAnchor, scrollTop: oldScrollTop, scale } = state
 
       // in either case, after a scroll event, save the scrollTop value
       const nextState = {
@@ -105,7 +103,7 @@ export function scrollReducer(state: ScrollState, action: ScrollAction): ScrollS
         // scale is defined
         && scale !== undefined
         // the scroll delta is small enough and the scale is virtual
-        && canBeLocalScroll({ delta, scale, localOffset })
+        && canBeLocalScroll({ delta, scale })
         // scrollTop is greater than 0 - we will still be able to scroll back up
         && scrollTop > 0
         // scrollTop is not at the maximum - we will still be able to scroll further down
@@ -335,7 +333,7 @@ export function getScrollActionForRow({
   // else, it's partly or totally hidden: update the scroll position
 
   const delta = hiddenPixelsBefore > 0 ? -hiddenPixelsBefore : hiddenPixelsAfter
-  if (canBeLocalScroll({ delta, scale, localOffset })) {
+  if (canBeLocalScroll({ delta, scale })) {
     // move slightly: keep scrollTop and scrollTopAnchor untouched, compensate with localOffset
     return { type: 'LOCAL_SCROLL', delta }
   } else {
